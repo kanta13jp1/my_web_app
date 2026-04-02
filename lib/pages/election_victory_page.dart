@@ -1,9 +1,13 @@
 import 'dart:async';
-
+import 'dart:convert';
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:table_calendar/table_calendar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/local_election_plan.dart';
@@ -86,6 +90,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final LocalElectionPlanService _service = const LocalElectionPlanService();
   final LocalElectionRealityService _realityService =
       const LocalElectionRealityService();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _historySectionKey = GlobalKey(debugLabel: 'realityHistory');
+  final GlobalKey _scheduleSectionKey =
+      GlobalKey(debugLabel: 'scheduleCalendar');
+  final GlobalKey _rosterSectionKey = GlobalKey(debugLabel: 'memberRoster');
   late final LocalElectionShareService _shareService =
       LocalElectionShareService(Supabase.instance.client);
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
@@ -102,12 +111,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   bool _isLoading = true;
   bool _isRealityLoading = false;
   bool _isPublishingRealityMemo = false;
+  bool _isGeminiLoading = false;
   String? _realityError;
+  String? _geminiAnalysisResult;
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
   String _memberSearchQuery = '';
   int _visibleMemberCount = _memberPageSize;
+  List<LocalElectionRealityHistoryPoint> _realityHistory =
+      const <LocalElectionRealityHistoryPoint>[];
+  List<Map<String, dynamic>> _pastElectionResults =
+      const <Map<String, dynamic>>[];
+  CalendarFormat _scheduleCalendarFormat = CalendarFormat.month;
+  DateTime _scheduleFocusedDay = DateTime.now();
+  DateTime? _selectedScheduleDay;
 
   bool get _isPublicView => widget.publicView;
 
@@ -117,10 +135,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     _loadInitialState();
   }
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadInitialState() async {
     final results = await Future.wait<dynamic>([
       _service.loadPlan(),
       _realityService.loadCachedSnapshot(),
+      _realityService.loadSnapshotHistory(),
     ]);
     if (!mounted) {
       return;
@@ -128,15 +153,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     final plan = results[0] as LocalElectionPlanDashboard;
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
+    final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
 
     setState(() {
       _plan = plan;
       _realitySnapshot = cachedSnapshot;
+      _realityHistory = cachedHistory;
       _publishedRealityMemo = null;
       if (!plan.regionLabels.contains(_selectedRegion)) {
         _selectedRegion = _allLabel;
       }
       _syncMemberSelection(cachedSnapshot);
+      _syncScheduleSelection(cachedSnapshot);
       _isLoading = false;
     });
 
@@ -192,6 +220,62 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!prefectureLabels.contains(_selectedMemberPrefecture)) {
       _selectedMemberPrefecture = _allLabel;
     }
+  }
+
+  void _syncScheduleSelection(LocalElectionRealitySnapshot? snapshot) {
+    final selectedDay = _bestScheduleSelection(snapshot);
+    _selectedScheduleDay = selectedDay;
+    _scheduleFocusedDay = selectedDay ?? _normalizeDate(DateTime.now());
+  }
+
+  DateTime? _bestScheduleSelection(LocalElectionRealitySnapshot? snapshot) {
+    if (snapshot == null || snapshot.upcomingSchedules.isEmpty) {
+      return null;
+    }
+
+    final normalizedCurrent = _selectedScheduleDay == null
+        ? null
+        : _normalizeDate(_selectedScheduleDay!);
+    if (normalizedCurrent != null &&
+        _scheduleEventsForDay(snapshot, normalizedCurrent).isNotEmpty) {
+      return normalizedCurrent;
+    }
+
+    final now = _normalizeDate(DateTime.now());
+    final upcoming = _sortedScheduleEntries(snapshot);
+    for (final item in upcoming) {
+      final voteDate = item.parsedVoteDate;
+      if (voteDate == null) {
+        continue;
+      }
+      final normalized = _normalizeDate(voteDate.toLocal());
+      if (!normalized.isBefore(now)) {
+        return normalized;
+      }
+    }
+
+    final firstDate = upcoming.first.parsedVoteDate;
+    if (firstDate == null) {
+      return now;
+    }
+    return _normalizeDate(firstDate.toLocal());
+  }
+
+  DateTime _normalizeDate(DateTime date) {
+    return DateTime(date.year, date.month, date.day);
+  }
+
+  Future<void> _scrollToSection(GlobalKey key) async {
+    final targetContext = key.currentContext;
+    if (targetContext == null) {
+      return;
+    }
+    await Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+      alignment: 0.04,
+    );
   }
 
   List<String> _memberPrefectureOptions(LocalElectionRealitySnapshot snapshot) {
@@ -379,14 +463,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     try {
       final snapshot = await _realityService.fetchLatestSnapshot();
+      final history = await _realityService.loadSnapshotHistory();
       if (!mounted) {
         return;
       }
       setState(() {
         _realitySnapshot = snapshot;
+        _realityHistory = history;
         _realityError = null;
         _publishedRealityMemo = null;
         _syncMemberSelection(snapshot);
+        _syncScheduleSelection(snapshot);
       });
       unawaited(_loadPublishedRealityMemo(snapshot));
       if (showSnackBar) {
@@ -418,6 +505,51 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _isRealityLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _runGeminiAnalysis() async {
+    if (_isGeminiLoading) return;
+    setState(() {
+      _isGeminiLoading = true;
+      _geminiAnalysisResult = null;
+    });
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'gemini-election-analysis',
+      );
+      final data = resp.data;
+      String result;
+      if (data is Map) {
+        final politicians =
+            (data['politicians'] as List<dynamic>?)?.length ?? 0;
+        final raw = data as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _pastElectionResults =
+                (raw['pastElectionResults'] as List<dynamic>? ?? [])
+                    .whereType<Map<String, dynamic>>()
+                    .toList();
+          });
+        }
+        final total = ((raw['monthlyKpi']
+                as Map<String, dynamic>?)?['currentTotal'] as num?)
+            ?.toInt();
+        result = 'Gemini AI 分析完了\n'
+            '取得議員数: $politicians 人${total != null ? ' / 目標700 残り${700 - total}人' : ''}';
+      } else {
+        result = data?.toString() ?? '分析結果なし';
+      }
+      if (!mounted) return;
+      setState(() => _geminiAnalysisResult = result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gemini AI 分析が完了しました')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _geminiAnalysisResult = 'エラー: $e');
+    } finally {
+      if (mounted) setState(() => _isGeminiLoading = false);
     }
   }
 
@@ -456,9 +588,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          memo == null
-              ? 'X投稿向けの現職サマリーをコピーしました'
-              : '公開ノートリンク付きのX投稿文をコピーしました',
+          memo == null ? 'X投稿向けの現職サマリーをコピーしました' : '公開ノートリンク付きのX投稿文をコピーしました',
         ),
       ),
     );
@@ -825,6 +955,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       appBar: AppBar(
         title: Text(_isPublicView ? '統一地方選700 公開ダッシュボード' : '統一地方選700 必達管理室'),
         actions: [
+          IconButton(
+            onPressed: _isGeminiLoading ? null : _runGeminiAnalysis,
+            tooltip: 'Gemini AI 分析',
+            icon: _isGeminiLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+          ),
           if (!_isPublicView)
             IconButton(
               onPressed: plan == null ? null : _copySummary,
@@ -871,6 +1012,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
+                controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
@@ -1154,26 +1296,24 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               )
                             : const Icon(Icons.public),
                         label: Text(
-                          _isPublishingRealityMemo
-                              ? '公開中'
-                              : '公開ノート化',
+                          _isPublishingRealityMemo ? '公開中' : '公開ノート化',
                         ),
                       ),
                     if (realitySnapshot != null)
                       FilledButton.tonalIcon(
-                        onPressed: realitySnapshot.hasData &&
-                                !_isPublishingRealityMemo
-                            ? _copyRealityPublicLink
-                            : null,
+                        onPressed:
+                            realitySnapshot.hasData && !_isPublishingRealityMemo
+                                ? _copyRealityPublicLink
+                                : null,
                         icon: const Icon(Icons.link),
                         label: const Text('公開リンクコピー'),
                       ),
                     if (realitySnapshot != null)
                       FilledButton(
-                        onPressed: realitySnapshot.hasData &&
-                                !_isPublishingRealityMemo
-                            ? _shareRealityOnX
-                            : null,
+                        onPressed:
+                            realitySnapshot.hasData && !_isPublishingRealityMemo
+                                ? _shareRealityOnX
+                                : null,
                         child: const Text('X共有'),
                       ),
                     FilledButton.tonalIcon(
@@ -1236,6 +1376,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             else if (realitySnapshot == null)
               _buildEmptyRealityState()
             else ...[
+              if (_isPublicView) ...[
+                _buildPublicRealityNavigator(realitySnapshot),
+                const SizedBox(height: 16),
+              ],
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -1287,9 +1431,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ],
               ),
               const SizedBox(height: 20),
+              _buildRealityHistorySection(realitySnapshot),
+              const SizedBox(height: 20),
               _buildAiInsightSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildRealityPrefectureSection(realitySnapshot),
+              const SizedBox(height: 20),
+              _buildScheduleSection(realitySnapshot),
+              if (realitySnapshot.pastElectionResults.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                _buildPastElectionResultsSection(realitySnapshot),
+              ],
               const SizedBox(height: 20),
               _buildMemberRosterSection(realitySnapshot),
               const SizedBox(height: 20),
@@ -1331,10 +1483,372 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildPublicRealityNavigator(LocalElectionRealitySnapshot snapshot) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '公開ビューの見どころ',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '地方議員数推移グラフ、地方選挙カレンダー、現職地方議員一覧を公開ビューから直接確認できます。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildStatusChip(
+                '推移 ${_formatInt(_historyPointsForDisplay(snapshot).length)} 点',
+                color: const Color(0xFF0891B2),
+              ),
+              _buildStatusChip(
+                '日程 ${_formatInt(snapshot.upcomingSchedules.length)} 件',
+                color: const Color(0xFF2563EB),
+              ),
+              _buildStatusChip(
+                '名簿 ${_formatInt(snapshot.rosterCount)} 人',
+                color: const Color(0xFF7C3AED),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_historySectionKey),
+                icon: const Icon(Icons.show_chart),
+                label: const Text('議員数推移'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_scheduleSectionKey),
+                icon: const Icon(Icons.calendar_month),
+                label: const Text('選挙カレンダー'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => _scrollToSection(_rosterSectionKey),
+                icon: const Icon(Icons.groups_2_outlined),
+                label: const Text('地方議員一覧'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<LocalElectionRealityHistoryPoint> _historyPointsForDisplay(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final history = List<LocalElectionRealityHistoryPoint>.from(_realityHistory)
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+
+    if (!snapshot.hasData) {
+      return history;
+    }
+
+    final currentPoint = LocalElectionRealityHistoryPoint(
+      fetchedAt: snapshot.fetchedAt,
+      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+    );
+    final currentDay = _normalizeDate(currentPoint.fetchedAt.toLocal());
+
+    if (history.isEmpty) {
+      return <LocalElectionRealityHistoryPoint>[currentPoint];
+    }
+
+    final hasCurrentDay = history.any(
+      (item) => _normalizeDate(item.fetchedAt.toLocal()) == currentDay,
+    );
+    if (!hasCurrentDay) {
+      history.add(currentPoint);
+      history.sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+    }
+
+    return history;
+  }
+
+  Widget _buildRealityHistorySection(LocalElectionRealitySnapshot snapshot) {
+    final history = _historyPointsForDisplay(snapshot);
+    final latestPoint = history.isEmpty ? null : history.last;
+    final maxCount = history.isEmpty
+        ? snapshot.officialCurrentLocalMembers
+        : history
+            .map((item) => item.officialCurrentLocalMembers)
+            .reduce((left, right) => left > right ? left : right);
+    final minCount = history.isEmpty
+        ? snapshot.officialCurrentLocalMembers
+        : history
+            .map((item) => item.officialCurrentLocalMembers)
+            .reduce((left, right) => left < right ? left : right);
+
+    return Column(
+      key: _historySectionKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '地方議員数推移',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'ネット取得した公式地方議員数をこの端末で日次履歴として蓄積し、時系列で表示します。取得回数が増えるほど推移グラフが育ちます。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusChip(
+              '履歴 ${_formatInt(history.length)} 点',
+              color: Colors.blueGrey,
+            ),
+            if (latestPoint != null)
+              _buildStatusChip(
+                '最新 ${_formatInt(latestPoint.officialCurrentLocalMembers)} 人',
+                color: const Color(0xFF0891B2),
+              ),
+            _buildStatusChip(
+              '最大 ${_formatInt(maxCount)} 人',
+              color: const Color(0xFF0F766E),
+            ),
+            _buildStatusChip(
+              '最小 ${_formatInt(minCount)} 人',
+              color: const Color(0xFF7C3AED),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (history.isEmpty)
+          _buildInlineNotice(
+            '履歴グラフを描くためのデータがまだありません。最新実データの取得を続けると、ここに地方議員数の推移が蓄積されます。',
+            color: Colors.blueGrey,
+            icon: Icons.show_chart,
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 240,
+                  child: _buildRealityHistoryChart(history),
+                ),
+                if (history.length < 2) ...[
+                  const SizedBox(height: 12),
+                  _buildInlineNotice(
+                    '履歴がまだ1点です。次回以降の取得で時系列の線が伸びます。',
+                    color: Colors.blueGrey,
+                    icon: Icons.timeline,
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRealityHistoryChart(
+    List<LocalElectionRealityHistoryPoint> history,
+  ) {
+    final spots = history.asMap().entries.map((entry) {
+      return FlSpot(
+        entry.key.toDouble(),
+        entry.value.officialCurrentLocalMembers.toDouble(),
+      );
+    }).toList(growable: false);
+    final minCount = history
+        .map((item) => item.officialCurrentLocalMembers)
+        .reduce((left, right) => left < right ? left : right);
+    final maxCount = history
+        .map((item) => item.officialCurrentLocalMembers)
+        .reduce((left, right) => left > right ? left : right);
+    final minY = minCount <= 10 ? 0.0 : (minCount - 5).toDouble();
+    final maxY = (maxCount + 5).toDouble();
+    final maxX = history.length <= 1 ? 1.0 : (history.length - 1).toDouble();
+
+    return LineChart(
+      LineChartData(
+        minX: 0.0,
+        maxX: maxX,
+        minY: minY,
+        maxY: maxY,
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.blueGrey.withValues(alpha: 0.15),
+            strokeWidth: 1,
+          ),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border(
+            left: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 32,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index < 0 || index >= history.length) {
+                  return const SizedBox.shrink();
+                }
+                final point = history[index];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    DateFormat('M/d').format(point.fetchedAt.toLocal()),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 46,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: Theme.of(context).textTheme.labelSmall,
+                );
+              },
+            ),
+          ),
+        ),
+        lineTouchData: LineTouchData(
+          enabled: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipItems: (spots) {
+              return spots.map((spot) {
+                final index = spot.x.toInt();
+                if (index < 0 || index >= history.length) {
+                  return null;
+                }
+                final point = history[index];
+                return LineTooltipItem(
+                  '${_dateOnlyFormat.format(point.fetchedAt.toLocal())}\n'
+                  '${_formatInt(point.officialCurrentLocalMembers)} 人',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: history.length > 2,
+            color: const Color(0xFF0891B2),
+            barWidth: 3,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(
+                  radius: 4,
+                  color: const Color(0xFF0891B2),
+                  strokeWidth: 2,
+                  strokeColor: Colors.white,
+                );
+              },
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: const Color(0xFF0891B2).withValues(alpha: 0.12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAiInsightSection(LocalElectionRealitySnapshot snapshot) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_geminiAnalysisResult != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF1565C0).withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: Color(0xFF1565C0),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _geminiAnalysisResult!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: const Color(0xFF1565C0),
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         Text(
           'AI整理メモ',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -1630,6 +2144,865 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return Colors.amber.shade900;
   }
 
+  Future<void> _downloadElectionDataCsv(
+    LocalElectionRealitySnapshot snapshot,
+  ) async {
+    // 未擁立 (Red) または 単騎 (Yellow) のスケジュールを抽出
+    final alertSchedules = snapshot.upcomingSchedules.where((s) {
+      return s.isAlertRed || s.isAlertYellow;
+    }).toList();
+
+    final pastResults = _pastElectionResults;
+
+    if (alertSchedules.isEmpty && pastResults.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('エクスポート対象の選挙情報がありません')),
+      );
+      return;
+    }
+
+    final buffer = StringBuffer();
+
+    if (alertSchedules.isNotEmpty) {
+      alertSchedules.sort((a, b) {
+        final aDate = a.parsedVoteDate;
+        final bDate = b.parsedVoteDate;
+        if (aDate != null && bDate != null) {
+          return aDate.compareTo(bDate);
+        }
+        return a.voteDate.compareTo(b.voteDate);
+      });
+      buffer.writeln('--- 未擁立・単騎の選挙 ---');
+      buffer.writeln('投票日,都道府県,自治体,選挙名,候補者数,候補者一覧,Xハンドル');
+      for (final s in alertSchedules) {
+        final date = s.voteDate.replaceAll(',', '、');
+        final pref = s.prefecture.replaceAll(',', '、');
+        final muni = s.municipality.replaceAll(',', '、');
+        final name = s.electionName.replaceAll(',', '、');
+        final count = s.kokuminCandidateCount.toString();
+        final candidates =
+            _buildScheduleCandidateSummary(s).replaceAll(',', '、');
+        final handles = _candidateHandles(s)
+            .map((handle) => '@$handle')
+            .join(' / ')
+            .replaceAll(',', '、');
+        buffer.writeln('$date,$pref,$muni,$name,$count,$candidates,$handles');
+      }
+      buffer.writeln('');
+    }
+
+    if (pastResults.isNotEmpty) {
+      buffer.writeln('--- 過去の選挙結果 (AI取得) ---');
+      buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
+      for (final result in pastResults) {
+        final date = result['date']?.toString() ?? '';
+        final location =
+            result['location']?.toString().replaceAll(',', '、') ?? '';
+        final electionName =
+            result['electionName']?.toString().replaceAll(',', '、') ?? '';
+        final candidates = (result['dppCandidates'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .toList();
+
+        if (candidates.isEmpty) {
+          buffer.writeln('$date,$location,$electionName,候補者情報なし,N/A,0');
+        } else {
+          for (final candidate in candidates) {
+            final name = candidate['name']?.toString() ?? '';
+            final status = candidate['status']?.toString() ?? '';
+            final votes = (candidate['votes'] as num?)?.toString() ?? '0';
+            buffer
+                .writeln('$date,$location,$electionName,$name,$status,$votes');
+          }
+        }
+      }
+    }
+
+    final csvData = buffer.toString();
+    final csvBytes = Uint8List.fromList(utf8.encode('\uFEFF$csvData'));
+    final blob = web.Blob(
+      [csvBytes.toJS].toJS,
+      web.BlobPropertyBag(type: 'text/csv;charset=utf-8'),
+    );
+    final url = web.URL.createObjectURL(blob);
+    web.HTMLAnchorElement()
+      ..href = url
+      ..download =
+          'election_data_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv'
+      ..click();
+    web.URL.revokeObjectURL(url);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '選挙情報（${alertSchedules.length + pastResults.length}件分）をCSVファイルとしてダウンロードしました',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
+    final schedules = _sortedScheduleEntries(snapshot);
+    final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
+
+    return Column(
+      key: _scheduleSectionKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                '地方選挙スケジュール',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => _downloadElectionDataCsv(snapshot),
+              icon: const Icon(Icons.download, size: 16),
+              label: const Text('選挙データCSVダウンロード'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '党公式の候補予定者ページとネット上の最新選挙日程を突合しています。'
+          ' 国民民主党の候補予定者が 0 人の選挙は赤、1 人の選挙は黄色で表示します。',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildStatusChip(
+              '監視 ${_formatInt(schedules.length)} 件',
+              color: Colors.blueGrey,
+            ),
+            _buildStatusChip(
+              '14日以内 ${_formatInt(upcomingSoonCount)} 件',
+              color: const Color(0xFF2563EB),
+            ),
+            _buildStatusChip(
+              '未擁立 ${_formatInt(snapshot.redAlertScheduleCount)} 件',
+              color: Theme.of(context).colorScheme.error,
+            ),
+            _buildStatusChip(
+              '単騎 ${_formatInt(snapshot.yellowAlertScheduleCount)} 件',
+              color: Colors.amber.shade800,
+            ),
+          ],
+        ),
+        if (snapshot.scheduleAiSummary.trim().isNotEmpty ||
+            snapshot.scheduleAiAlerts.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1D4ED8).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF1D4ED8).withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (snapshot.scheduleAiSummary.trim().isNotEmpty)
+                  Text(
+                    snapshot.scheduleAiSummary,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                if (snapshot.scheduleAiAlerts.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  for (final item in snapshot.scheduleAiAlerts)
+                    _buildBulletLine(item),
+                ],
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        const Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _PrefectureLegendChip(
+              label: '通常',
+              backgroundColor: Colors.white,
+              borderColor: Color(0xFFD0D5DD),
+            ),
+            _PrefectureLegendChip(
+              label: '単騎',
+              backgroundColor: Color(0xFFFFF4CC),
+              borderColor: Color(0xFFE0A800),
+            ),
+            _PrefectureLegendChip(
+              label: '未擁立',
+              backgroundColor: Color(0xFFFDE2E1),
+              borderColor: Color(0xFFD92D20),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildScheduleCalendar(snapshot),
+        const SizedBox(height: 16),
+        if (schedules.isEmpty)
+          _buildInlineNotice(
+            '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。',
+            color: Colors.blueGrey,
+            icon: Icons.event_busy,
+          )
+        else
+          ..._buildScheduleGroups(schedules),
+      ],
+    );
+  }
+
+  Widget _buildScheduleCalendar(LocalElectionRealitySnapshot snapshot) {
+    final calendarEvents = _scheduleEventMap(snapshot);
+    final selectedDay = _selectedScheduleDay ??
+        _bestScheduleSelection(snapshot) ??
+        _normalizeDate(DateTime.now());
+    final selectedEvents = _scheduleEventsForDay(snapshot, selectedDay);
+    final firstDay = _scheduleCalendarFirstDay(snapshot, selectedDay);
+    final lastDay = _scheduleCalendarLastDay(snapshot, selectedDay);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: TableCalendar<LocalElectionScheduleEntry>(
+            locale: 'ja_JP',
+            firstDay: firstDay,
+            lastDay: lastDay,
+            focusedDay: _scheduleFocusedDay,
+            calendarFormat: _scheduleCalendarFormat,
+            selectedDayPredicate: (day) => isSameDay(day, selectedDay),
+            eventLoader: (day) =>
+                calendarEvents[_normalizeDate(day)] ??
+                const <LocalElectionScheduleEntry>[],
+            startingDayOfWeek: StartingDayOfWeek.monday,
+            availableCalendarFormats: const {
+              CalendarFormat.month: '月',
+              CalendarFormat.twoWeeks: '2週',
+              CalendarFormat.week: '週',
+            },
+            onFormatChanged: (format) {
+              if (_scheduleCalendarFormat == format) {
+                return;
+              }
+              setState(() {
+                _scheduleCalendarFormat = format;
+              });
+            },
+            onDaySelected: (selected, focused) {
+              setState(() {
+                _selectedScheduleDay = _normalizeDate(selected);
+                _scheduleFocusedDay = _normalizeDate(focused);
+              });
+            },
+            onPageChanged: (focused) {
+              setState(() {
+                _scheduleFocusedDay = _normalizeDate(focused);
+              });
+            },
+            calendarStyle: CalendarStyle(
+              outsideDaysVisible: false,
+              canMarkersOverflow: false,
+              markersMaxCount: 1,
+              todayDecoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: const BoxDecoration(
+                color: Color(0xFF1D4ED8),
+                shape: BoxShape.circle,
+              ),
+              markerDecoration: BoxDecoration(
+                color: Colors.blueGrey.shade400,
+                shape: BoxShape.circle,
+              ),
+            ),
+            calendarBuilders: CalendarBuilders(
+              markerBuilder: (context, day, events) {
+                if (events.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                final severity = events
+                    .map(_scheduleSeverity)
+                    .reduce((left, right) => left < right ? left : right);
+                final color = switch (severity) {
+                  0 => Theme.of(context).colorScheme.error,
+                  1 => Colors.amber.shade800,
+                  _ => const Color(0xFF0F766E),
+                };
+                final countLabel =
+                    events.length > 9 ? '9+' : '${events.length}';
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      countLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '選択日 ${_dateOnlyFormat.format(selectedDay)}',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        if (selectedEvents.isEmpty)
+          _buildInlineNotice(
+            '選択日に該当する地方選挙はありません。',
+            color: Colors.blueGrey,
+            icon: Icons.event_available,
+          )
+        else
+          ...selectedEvents.map(_buildScheduleCard),
+        const SizedBox(height: 12),
+        Text(
+          '日程一覧',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ],
+    );
+  }
+
+  Map<DateTime, List<LocalElectionScheduleEntry>> _scheduleEventMap(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final map = <DateTime, List<LocalElectionScheduleEntry>>{};
+    for (final item in _sortedScheduleEntries(snapshot)) {
+      final voteDate = item.parsedVoteDate;
+      if (voteDate == null) {
+        continue;
+      }
+      final key = _normalizeDate(voteDate.toLocal());
+      map.putIfAbsent(key, () => <LocalElectionScheduleEntry>[]).add(item);
+    }
+    return map;
+  }
+
+  List<LocalElectionScheduleEntry> _scheduleEventsForDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime day,
+  ) {
+    return _scheduleEventMap(snapshot)[_normalizeDate(day)] ??
+        const <LocalElectionScheduleEntry>[];
+  }
+
+  DateTime _scheduleCalendarFirstDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime fallback,
+  ) {
+    final dates = snapshot.upcomingSchedules
+        .map((item) => item.parsedVoteDate)
+        .whereType<DateTime>()
+        .map((item) => _normalizeDate(item.toLocal()))
+        .toList();
+    if (dates.isEmpty) {
+      return DateTime(fallback.year, fallback.month, 1);
+    }
+    dates.sort();
+    final first = dates.first;
+    return DateTime(first.year, first.month, 1);
+  }
+
+  DateTime _scheduleCalendarLastDay(
+    LocalElectionRealitySnapshot snapshot,
+    DateTime fallback,
+  ) {
+    final dates = snapshot.upcomingSchedules
+        .map((item) => item.parsedVoteDate)
+        .whereType<DateTime>()
+        .map((item) => _normalizeDate(item.toLocal()))
+        .toList();
+    if (dates.isEmpty) {
+      return DateTime(fallback.year, fallback.month + 3, 0);
+    }
+    dates.sort();
+    final last = dates.last;
+    return DateTime(last.year, last.month + 1, 0);
+  }
+
+  List<Widget> _buildScheduleGroups(
+    List<LocalElectionScheduleEntry> schedules,
+  ) {
+    final widgets = <Widget>[];
+    String? previousDate;
+
+    for (final item in schedules) {
+      if (item.voteDate != previousDate) {
+        if (widgets.isNotEmpty) {
+          widgets.add(const SizedBox(height: 8));
+        }
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              _formatScheduleDate(item.voteDate),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        );
+        previousDate = item.voteDate;
+      }
+      widgets.add(_buildScheduleCard(item));
+    }
+
+    return widgets;
+  }
+
+  List<LocalElectionScheduleEntry> _sortedScheduleEntries(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final schedules = List<LocalElectionScheduleEntry>.from(
+      snapshot.upcomingSchedules,
+    );
+    schedules.sort((left, right) {
+      final leftDate = left.parsedVoteDate;
+      final rightDate = right.parsedVoteDate;
+      if (leftDate != null && rightDate != null) {
+        final dateCompare = leftDate.compareTo(rightDate);
+        if (dateCompare != 0) {
+          return dateCompare;
+        }
+      }
+      final severityCompare = _scheduleSeverity(left).compareTo(
+        _scheduleSeverity(right),
+      );
+      if (severityCompare != 0) {
+        return severityCompare;
+      }
+      final prefectureCompare = left.prefecture.compareTo(right.prefecture);
+      if (prefectureCompare != 0) {
+        return prefectureCompare;
+      }
+      return left.electionName.compareTo(right.electionName);
+    });
+    return schedules;
+  }
+
+  Widget _buildScheduleCard(LocalElectionScheduleEntry item) {
+    final candidateSummary = _buildScheduleCandidateSummary(item);
+    final candidateHandles = _candidateHandles(item);
+
+    return Card(
+      color: _scheduleCardBackgroundColor(context, item),
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: _scheduleCardBorderColor(context, item),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.electionName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item.prefecture} / ${item.electionCategory}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      if (_scheduleStatusLabel(item) case final label?) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _scheduleBadgeBackgroundColor(context, item),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: _scheduleBadgeForegroundColor(
+                                context,
+                                item,
+                              ),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    if (item.detailUrl.trim().isNotEmpty)
+                      IconButton(
+                        onPressed: () => _openUrl(item.detailUrl),
+                        tooltip: '選挙日程ソースを開く',
+                        icon: const Icon(Icons.event_note_outlined, size: 18),
+                      ),
+                    if (item.officialCandidateSourceUrl.trim().isNotEmpty)
+                      IconButton(
+                        onPressed: () =>
+                            _openUrl(item.officialCandidateSourceUrl),
+                        tooltip: '党公式候補ページを開く',
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildMetricChip(
+                  '国民候補',
+                  '${_formatInt(item.kokuminCandidateCount)}人',
+                  color: _scheduleMetricColor(item),
+                ),
+                _buildMetricChip(
+                  '自治体',
+                  item.municipality,
+                  color: const Color(0xFF475569),
+                ),
+                if (item.announcementDate.trim().isNotEmpty)
+                  _buildMetricChip(
+                    '告示日',
+                    _formatScheduleDate(item.announcementDate),
+                    color: const Color(0xFF2563EB),
+                  ),
+                if (item.seatCount > 0 || item.totalCandidateCount > 0)
+                  _buildMetricChip(
+                    '定数/候補者',
+                    '${_formatInt(item.seatCount)} / ${_formatInt(item.totalCandidateCount)}',
+                    color: const Color(0xFF7C3AED),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              candidateSummary,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            if (candidateHandles.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: candidateHandles.map((handle) {
+                  return ActionChip(
+                    avatar: const Icon(Icons.alternate_email, size: 16),
+                    label: Text('@$handle'),
+                    onPressed: () => _openUrl('https://x.com/$handle'),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _scheduleSeverity(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return 0;
+    }
+    if (item.isAlertYellow) {
+      return 1;
+    }
+    return 2;
+  }
+
+  String _buildScheduleCandidateSummary(LocalElectionScheduleEntry item) {
+    if (item.kokuminCandidateNames.isEmpty) {
+      return '党公式候補予定者ページで該当候補を確認できていません。';
+    }
+    return item.kokuminCandidateNames.asMap().entries.map((entry) {
+      final status = entry.key < item.kokuminCandidateStatuses.length
+          ? item.kokuminCandidateStatuses[entry.key].trim()
+          : '';
+      final handle = entry.key < item.kokuminCandidateXHandles.length
+          ? _normalizeXHandle(item.kokuminCandidateXHandles[entry.key])
+          : '';
+      final suffixes = <String>[
+        if (status.isNotEmpty) status,
+        if (handle.isNotEmpty) '@$handle',
+      ];
+      if (suffixes.isEmpty) {
+        return entry.value;
+      }
+      return '${entry.value}（${suffixes.join(' / ')}）';
+    }).join(' / ');
+  }
+
+  List<String> _candidateHandles(LocalElectionScheduleEntry item) {
+    return item.kokuminCandidateXHandles
+        .map(_normalizeXHandle)
+        .where((handle) => handle.isNotEmpty)
+        .toList();
+  }
+
+  String _normalizeXHandle(String raw) {
+    return raw.trim().replaceFirst(RegExp(r'^@+'), '');
+  }
+
+  Color _scheduleCardBackgroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    final surface = Theme.of(context).colorScheme.surface;
+    if (item.isAlertRed) {
+      return Color.alphaBlend(
+        Theme.of(context).colorScheme.error.withValues(alpha: 0.12),
+        surface,
+      );
+    }
+    if (item.isAlertYellow) {
+      return Color.alphaBlend(
+        Colors.amber.withValues(alpha: 0.22),
+        surface,
+      );
+    }
+    return surface;
+  }
+
+  Color _scheduleCardBorderColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
+    }
+    if (item.isAlertYellow) {
+      return Colors.amber.shade700.withValues(alpha: 0.7);
+    }
+    return Theme.of(context).colorScheme.outlineVariant;
+  }
+
+  String? _scheduleStatusLabel(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return '未擁立';
+    }
+    if (item.isAlertYellow) {
+      return '単騎';
+    }
+    return null;
+  }
+
+  Color _scheduleBadgeBackgroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error.withValues(alpha: 0.14);
+    }
+    return Colors.amber.withValues(alpha: 0.25);
+  }
+
+  Color _scheduleBadgeForegroundColor(
+    BuildContext context,
+    LocalElectionScheduleEntry item,
+  ) {
+    if (item.isAlertRed) {
+      return Theme.of(context).colorScheme.error;
+    }
+    return Colors.amber.shade900;
+  }
+
+  Color _scheduleMetricColor(LocalElectionScheduleEntry item) {
+    if (item.isAlertRed) {
+      return const Color(0xFFB91C1C);
+    }
+    if (item.isAlertYellow) {
+      return Colors.amber.shade800;
+    }
+    return const Color(0xFF0F766E);
+  }
+
+  String _formatScheduleDate(String raw) {
+    final normalized = raw.trim();
+    if (normalized.isEmpty) {
+      return '-';
+    }
+    final parsed = DateTime.tryParse(normalized) ??
+        DateTime.tryParse(normalized.replaceAll('/', '-'));
+    if (parsed == null) {
+      return normalized;
+    }
+    return _dateOnlyFormat.format(parsed.toLocal());
+  }
+
+  Widget _buildPastElectionResultsSection(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final results = snapshot.pastElectionResults;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '過去の選挙結果',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '国民民主党候補の当落情報（Gemini AI取得）',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+        ),
+        const SizedBox(height: 10),
+        ...results.map((result) => _buildPastElectionCard(result)),
+      ],
+    );
+  }
+
+  Widget _buildPastElectionCard(PastElectionResult result) {
+    final winCount = result.winCount;
+    final totalCount = result.totalCount;
+    final hasWin = winCount > 0;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: hasWin
+            ? Colors.green.withValues(alpha: 0.06)
+            : Colors.red.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasWin
+              ? Colors.green.withValues(alpha: 0.25)
+              : Colors.red.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  result.electionName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: hasWin ? Colors.green : Colors.red,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$winCount/$totalCount 当選',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${result.location}  ${result.date}',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
+          if (result.dppCandidates.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: result.dppCandidates.map((c) {
+                final isWin = c.isWin;
+                return Chip(
+                  label: Text(
+                    '${c.name} ${c.status}${c.votes > 0 ? ' (${c.votes}票)' : ''}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color:
+                          isWin ? Colors.green.shade800 : Colors.red.shade800,
+                    ),
+                  ),
+                  backgroundColor: isWin
+                      ? Colors.green.withValues(alpha: 0.12)
+                      : Colors.red.withValues(alpha: 0.10),
+                  side: BorderSide(
+                    color: isWin
+                        ? Colors.green.withValues(alpha: 0.35)
+                        : Colors.red.withValues(alpha: 0.28),
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: EdgeInsets.zero,
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildMemberRosterSection(LocalElectionRealitySnapshot snapshot) {
     final prefectureOptions = _memberPrefectureOptions(snapshot);
     final filteredMembers = _filteredRosterMembers(snapshot);
@@ -1640,6 +3013,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         filteredMembers.where((item) => item.profile.trim().isNotEmpty).length;
 
     return Column(
+      key: _rosterSectionKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(

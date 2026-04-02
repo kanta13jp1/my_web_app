@@ -75,6 +75,12 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
+      - name: Build web (wasm) — regression check
+        run: flutter build web --wasm --no-tree-shake-icons
+        continue-on-error: true
+        env:
+          FLUTTER_WEB: true
+
   security-check:
     name: Security Check
     runs-on: ubuntu-latest

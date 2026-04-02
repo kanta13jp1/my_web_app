@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/ai_secretary_page.dart';
 import '../pages/ai_search_page.dart';
 import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
@@ -20,6 +21,7 @@ import '../pages/decision_check_page.dart';
 import '../pages/digest_queue_page.dart';
 import '../pages/edge_function_status_page.dart';
 import '../pages/election_strategy_page.dart';
+import '../pages/election_management_dashboard.dart';
 import '../pages/election_victory_page.dart';
 import '../pages/email_cleanup_page.dart';
 import '../pages/gemini_university_v2_page.dart';
@@ -61,6 +63,31 @@ import '../pages/growth_acquisition_report_page.dart';
 import '../pages/growth_command_center_page.dart';
 import '../pages/growth_share_signal_page.dart';
 import '../pages/growth_weekly_digest_page.dart';
+import '../pages/memo_reactions_page.dart';
+import '../pages/note_comments_page.dart';
+import '../pages/growth_acquisition_signal_page.dart';
+import '../pages/api_playground_page.dart';
+import '../pages/categories_page.dart';
+import '../pages/emergency_meeting_page.dart';
+import '../pages/embedding_lab_page.dart';
+import '../pages/financial_report_page.dart';
+import '../pages/payment_channel_ledger_page.dart';
+import '../pages/feedback_page.dart';
+import '../pages/notifications_page.dart';
+import '../pages/health_page.dart';
+import '../pages/medical_notes_page.dart';
+import '../pages/mental_check_page.dart';
+import '../pages/settings_page.dart';
+import '../pages/stats_page.dart';
+import '../pages/asset_management_page.dart';
+import '../pages/cmo_page.dart';
+import '../pages/team_workspace_page.dart';
+import '../pages/workflow_automation_page.dart';
+import '../pages/social_media_scheduler_page.dart';
+import '../pages/video_meeting_page.dart';
+import '../pages/gantt_timeline_page.dart';
+import '../pages/focus_timer_page.dart';
+import '../pages/ai_writing_assistant_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -237,6 +264,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const ElectionStrategyPage()),
     ),
     HomeToolEntry(
+      id: 'election-dashboard',
+      sectionId: 'special',
+      title: '選挙管理ダッシュボード',
+      subtitle: 'AI分析・議員KPI・スケジュール時系列を統合管理',
+      icon: Icons.dashboard,
+      color: Colors.teal,
+      keywords: const <String>['選挙', 'ダッシュボード', 'KPI', '議員', '統一地方選'],
+      onOpen: (context) =>
+          _pushPage(context, const ElectionManagementDashboard()),
+    ),
+    HomeToolEntry(
       id: 'local-election-700',
       sectionId: 'special',
       title: '2027 統一地方選 700必達管理室',
@@ -245,6 +283,52 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.green,
       keywords: const <String>['統一地方選', '700', '地方議員'],
       onOpen: (context) => _pushPage(context, const ElectionVictoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'local-election-schedule',
+      sectionId: 'special',
+      title: 'Local Election Schedule Room',
+      subtitle: 'Review AI-fetched schedules and candidate alert colors',
+      icon: Icons.event_note,
+      color: Colors.orange,
+      keywords: const <String>[
+        'local election',
+        'schedule',
+        'candidate',
+        'alert',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const ElectionVictoryPage()),
+    ),
+    HomeToolEntry(
+      id: 'emergency-meeting',
+      sectionId: 'special',
+      title: '緊急取締役会',
+      subtitle: 'AI役員が即席の経営会議を開催・PDCA判断を下す',
+      icon: Icons.groups_outlined,
+      color: Colors.deepOrange,
+      keywords: const <String>['緊急', '取締役会', 'AI', '会議', 'PDCA', '経営'],
+      onOpen: (context) => _pushPage(context, const EmergencyMeetingPage()),
+    ),
+    HomeToolEntry(
+      id: 'settings',
+      sectionId: 'personal',
+      title: '設定',
+      subtitle: 'テーマ・プロフィール・資産・フィードバックを管理する',
+      icon: Icons.settings_outlined,
+      color: Colors.grey,
+      keywords: const <String>['設定', 'settings', 'テーマ', 'プロフィール', 'フィードバック'],
+      onOpen: (context) => _pushPage(context, const SettingsPage()),
+    ),
+    HomeToolEntry(
+      id: 'stats',
+      sectionId: 'personal',
+      title: '統計 & 実績',
+      subtitle: 'ゲーミフィケーション進捗とバッジを確認する',
+      icon: Icons.emoji_events_outlined,
+      color: Colors.amber,
+      keywords: const <String>['統計', '実績', 'バッジ', 'ゲーミフィケーション', 'レベル'],
+      onOpen: (context) => _pushPage(context, const StatsPage()),
     ),
     HomeToolEntry(
       id: 'my-struggle',
@@ -449,6 +533,57 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const ChroOfficePage()),
     ),
     HomeToolEntry(
+      id: 'health',
+      sectionId: 'office',
+      title: '健康ログ',
+      subtitle: '体調・睡眠・運動の記録を蓄積する',
+      icon: Icons.monitor_heart_outlined,
+      color: Colors.teal,
+      keywords: const <String>['健康', '体調', '睡眠', '運動', 'ログ'],
+      onOpen: (context) => _pushPage(context, const HealthPage()),
+    ),
+    HomeToolEntry(
+      id: 'mental-check',
+      sectionId: 'office',
+      title: 'メンタルチェック',
+      subtitle: 'ストレス・気分・モチベーションを定期記録',
+      icon: Icons.self_improvement_outlined,
+      color: Colors.purple,
+      keywords: const <String>['メンタル', 'ストレス', '気分', 'セルフケア'],
+      onOpen: (context) => _pushPage(context, const MentalCheckPage()),
+    ),
+    HomeToolEntry(
+      id: 'medical-notes',
+      sectionId: 'office',
+      title: '医療メモ',
+      subtitle: '服薬・通院・症状の記録を管理する',
+      icon: Icons.medication_outlined,
+      color: Colors.red,
+      keywords: const <String>['医療', '通院', '服薬', '症状', '病院'],
+      onOpen: (context) => _pushPage(context, const MedicalNotesPage()),
+    ),
+    HomeToolEntry(
+      id: 'financial-report',
+      sectionId: 'office',
+      title: '財務レポート',
+      subtitle: '収支・残高・予算達成率をグラフで確認する',
+      icon: Icons.bar_chart_outlined,
+      color: Colors.teal,
+      keywords: const <String>['財務', '収支', 'レポート', '予算', 'グラフ'],
+      onOpen: (context) => _pushPage(context, const FinancialReportPage()),
+    ),
+    HomeToolEntry(
+      id: 'payment-channel-ledger',
+      sectionId: 'office',
+      title: '支払いチャネル台帳',
+      subtitle: '支払い手段ごとの残高・履歴を一覧管理',
+      icon: Icons.account_balance_wallet_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['支払い', 'チャネル', '残高', '台帳', 'ledger'],
+      onOpen: (context) =>
+          _pushPage(context, const PaymentChannelLedgerPage()),
+    ),
+    HomeToolEntry(
       id: 'cmo-office',
       sectionId: 'knowledge',
       title: '市場分析 (CMO)',
@@ -469,6 +604,17 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
       requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'ai-secretary',
+      sectionId: 'knowledge',
+      title: 'AI秘書',
+      subtitle: '戦略提案・事業計画・全部署に横断指示',
+      icon: Icons.support_agent,
+      color: Colors.indigo,
+      keywords: const <String>['AI秘書', '戦略', '提案', 'secretary'],
+      onOpen: (context) => _pushPage(context, const AISecretaryPage()),
+      requiresClearDeck: false,
     ),
     HomeToolEntry(
       id: 'note-list',
@@ -544,6 +690,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.teal,
       keywords: const <String>['カンバン', 'タスク', 'board'],
       onOpen: (context) => _pushPage(context, const KanbanBoardPage()),
+    ),
+    HomeToolEntry(
+      id: 'categories',
+      sectionId: 'knowledge',
+      title: 'カテゴリ管理',
+      subtitle: 'メモ・タスクのカテゴリを整理・編集する',
+      icon: Icons.category_outlined,
+      color: Colors.blueGrey,
+      keywords: const <String>['カテゴリ', 'タグ', '分類', '整理'],
+      onOpen: (context) => _pushPage(context, const CategoriesPage()),
     ),
     HomeToolEntry(
       id: 'personality-test',
@@ -799,6 +955,181 @@ List<HomeToolEntry> buildHomeToolCatalog({
       keywords: const <String>['週次', 'ダイジェスト', 'weekly', 'digest'],
       onOpen: (context) =>
           _pushPage(context, const GrowthWeeklyDigestPage()),
+    ),
+    HomeToolEntry(
+      id: 'memo-reactions',
+      sectionId: 'growth',
+      title: 'メモリアクション',
+      subtitle: '公開メモへの絵文字リアクションを確認・投票する',
+      icon: Icons.emoji_emotions_outlined,
+      color: Colors.amber,
+      keywords: const <String>['リアクション', '絵文字', 'メモ', 'reaction'],
+      onOpen: (context) => _pushPage(context, const MemoReactionsPage()),
+    ),
+    HomeToolEntry(
+      id: 'note-comments',
+      sectionId: 'knowledge',
+      title: 'ノートコメント',
+      subtitle: 'ノートへのコメントを閲覧・追加・削除する',
+      icon: Icons.comment_outlined,
+      color: Colors.teal,
+      keywords: const <String>['コメント', 'ノート', 'comment', 'note'],
+      onOpen: (context) => _pushPage(context, const NoteCommentsPage()),
+    ),
+    HomeToolEntry(
+      id: 'embedding-lab',
+      sectionId: 'knowledge',
+      title: 'Embedding ラボ',
+      subtitle: 'Gemini Embedding API でテキスト類似度を実験する',
+      icon: Icons.science_outlined,
+      color: Colors.deepPurple,
+      keywords: const <String>['embedding', '埋め込み', 'Gemini', '類似度', 'ベクトル'],
+      onOpen: (context) => _pushPage(context, const EmbeddingLabPage()),
+    ),
+    HomeToolEntry(
+      id: 'api-playground',
+      sectionId: 'knowledge',
+      title: 'API プレイグラウンド',
+      subtitle: 'Gemini API を直接呼び出してモデルを試す',
+      icon: Icons.terminal_outlined,
+      color: Colors.deepOrange,
+      keywords: const <String>['API', 'Gemini', 'プレイグラウンド', 'テスト', 'モデル'],
+      onOpen: (context) => _pushPage(context, const ApiPlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-acquisition-signal',
+      sectionId: 'growth',
+      title: '集客シグナル記録',
+      subtitle: 'チャネルごとの集客シグナルを手動記録する',
+      icon: Icons.track_changes,
+      color: Colors.green,
+      keywords: const <String>['集客', 'シグナル', 'acquisition', 'signal'],
+      onOpen: (context) =>
+          _pushPage(context, const GrowthAcquisitionSignalPage()),
+    ),
+    HomeToolEntry(
+      id: 'team-workspace',
+      sectionId: 'growth',
+      title: 'チームワークスペース',
+      subtitle: 'チームを作成して招待コードでメンバーを招く',
+      icon: Icons.group_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['チーム', 'team', 'ワークスペース', '招待', '共有', 'コラボ'],
+      onOpen: (context) => _pushPage(context, const TeamWorkspacePage()),
+    ),
+    HomeToolEntry(
+      id: 'notifications',
+      sectionId: 'growth',
+      title: '通知センター',
+      subtitle: '新機能・実績・CS返信などの通知を確認',
+      icon: Icons.notifications_outlined,
+      color: Colors.indigo,
+      keywords: const <String>['通知', 'お知らせ', '既読', '未読', '新機能'],
+      onOpen: (context) => _pushPage(context, const NotificationsPage()),
+    ),
+    HomeToolEntry(
+      id: 'feedback',
+      sectionId: 'growth',
+      title: 'フィードバック送信',
+      subtitle: '機能アイデア・バグ報告・改善要望を送る',
+      icon: Icons.feedback_outlined,
+      color: Colors.blue,
+      keywords: const <String>['フィードバック', 'バグ報告', '機能要望', '改善'],
+      onOpen: (context) => _pushPage(context, const FeedbackPage()),
+    ),
+    HomeToolEntry(
+      id: 'cmo',
+      sectionId: 'growth',
+      title: 'プレスリリース生成 (CMO)',
+      subtitle: 'SNS・Zenn・note 向けの広報文をAIが生成',
+      icon: Icons.campaign_outlined,
+      color: Colors.purple,
+      keywords: const <String>['プレスリリース', '広報', 'SNS', 'CMO', '発信'],
+      onOpen: (context) => _pushPage(context, const CmoPage()),
+    ),
+    HomeToolEntry(
+      id: 'asset-management',
+      sectionId: 'office',
+      title: '資産管理',
+      subtitle: '投資・貯蓄・資産ポートフォリオを一元管理',
+      icon: Icons.pie_chart_outline,
+      color: Colors.teal,
+      keywords: const <String>['資産', '投資', '貯蓄', 'ポートフォリオ', '資産管理'],
+      onOpen: (context) => _pushPage(context, const AssetManagementPage()),
+    ),
+    HomeToolEntry(
+      id: 'workflow-automation',
+      sectionId: 'growth',
+      title: 'AIワークフロー自動化',
+      subtitle: 'Zapier/Power Automate競合。AIでタスクを自動化',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF6366F1),
+      keywords: const <String>[
+        'ワークフロー', '自動化', 'Zapier', 'AI', 'トリガー', 'アクション',
+      ],
+      onOpen: (context) => _pushPage(context, const WorkflowAutomationPage()),
+    ),
+    HomeToolEntry(
+      id: 'social-scheduler',
+      sectionId: 'growth',
+      title: 'SNS投稿スケジューラー',
+      subtitle: 'X・LinkedIn・Instagram・Facebookへの投稿を一元管理',
+      icon: Icons.schedule_send,
+      color: const Color(0xFF1DA1F2),
+      keywords: const <String>[
+        'SNS', 'X', 'Twitter', 'Instagram', '投稿', 'スケジュール', 'ソーシャル',
+      ],
+      onOpen: (context) => _pushPage(context, const SocialMediaSchedulerPage()),
+    ),
+    HomeToolEntry(
+      id: 'video-meeting',
+      sectionId: 'office',
+      title: 'ビデオ会議',
+      subtitle: 'Zoom/Google Meet競合。AI議事録・アクションアイテム自動抽出',
+      icon: Icons.videocam_outlined,
+      color: const Color(0xFF2D8CFF),
+      keywords: const <String>[
+        'ビデオ', '会議', 'Zoom', 'Meet', '議事録', 'オンライン会議', 'ミーティング',
+      ],
+      onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
+    ),
+    HomeToolEntry(
+      id: 'gantt-timeline',
+      sectionId: 'growth',
+      title: 'ガントチャート',
+      subtitle: 'Notion Timeline/Microsoft Project競合。タスク依存・マイルストーン・クリティカルパス管理',
+      icon: Icons.view_timeline_outlined,
+      color: const Color(0xFF8B5CF6),
+      keywords: const <String>[
+        'ガント', 'タイムライン', 'プロジェクト管理', 'スケジュール', 'マイルストーン',
+        'クリティカルパス', 'WBS', '進捗管理', 'Notion',
+      ],
+      onOpen: (context) => _pushPage(context, const GanttTimelinePage()),
+    ),
+    HomeToolEntry(
+      id: 'focus-timer',
+      sectionId: 'growth',
+      title: '集中タイマー',
+      subtitle: 'Forest/Focusmate競合。ポモドーロ+ストリーク管理で集中力を鍛える',
+      icon: Icons.timer_outlined,
+      color: const Color(0xFF10B981),
+      keywords: const <String>[
+        '集中', 'タイマー', 'ポモドーロ', 'Forest', 'フォーカス', '作業', 'ストリーク',
+      ],
+      onOpen: (context) => _pushPage(context, const FocusTimerPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-writing-assistant',
+      sectionId: 'growth',
+      title: 'AI文章アシスタント',
+      subtitle: 'Grammarly/Notion AI競合。文章改善・要約・翻訳・タイトル提案',
+      icon: Icons.auto_fix_high_outlined,
+      color: const Color(0xFF8B5CF6),
+      keywords: const <String>[
+        'AI', '文章', 'Grammarly', '校正', '要約', '翻訳', 'ライティング', 'Notion AI',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const AiWritingAssistantPage()),
     ),
   ];
 }

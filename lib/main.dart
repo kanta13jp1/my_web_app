@@ -36,6 +36,7 @@ import 'package:my_web_app/pages/tech_blog_tracker_page.dart';
 import 'package:my_web_app/pages/thought_anchor_page.dart';
 import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
+import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
@@ -44,6 +45,7 @@ import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
+import 'package:my_web_app/pages/election_management_dashboard.dart';
 import 'package:my_web_app/pages/election_victory_page.dart';
 import 'package:my_web_app/pages/template_marketplace_page.dart';
 import 'package:my_web_app/pages/referral_page.dart';
@@ -61,10 +63,90 @@ import 'package:my_web_app/pages/growth_acquisition_report_page.dart';
 import 'package:my_web_app/pages/growth_command_center_page.dart';
 import 'package:my_web_app/pages/growth_share_signal_page.dart';
 import 'package:my_web_app/pages/growth_weekly_digest_page.dart';
+import 'package:my_web_app/pages/memo_reactions_page.dart';
+import 'package:my_web_app/pages/note_comments_page.dart';
+import 'package:my_web_app/pages/growth_acquisition_signal_page.dart';
+import 'package:my_web_app/pages/enterprise_page.dart';
+import 'package:my_web_app/pages/ai_secretary_page.dart';
+import 'package:my_web_app/pages/api_playground_page.dart';
+import 'package:my_web_app/pages/categories_page.dart';
+import 'package:my_web_app/pages/emergency_meeting_page.dart';
+import 'package:my_web_app/pages/embedding_lab_page.dart';
+import 'package:my_web_app/pages/financial_report_page.dart';
+import 'package:my_web_app/pages/payment_channel_ledger_page.dart';
+import 'package:my_web_app/pages/feedback_page.dart';
+import 'package:my_web_app/pages/health_page.dart';
+import 'package:my_web_app/pages/medical_notes_page.dart';
+import 'package:my_web_app/pages/mental_check_page.dart';
+import 'package:my_web_app/pages/settings_page.dart';
+import 'package:my_web_app/pages/stats_page.dart';
+import 'package:my_web_app/pages/team_workspace_page.dart';
+import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/asset_management_page.dart';
+import 'package:my_web_app/pages/cfo_office_page.dart';
+import 'package:my_web_app/pages/cho_office_page.dart';
+import 'package:my_web_app/pages/chro_office_page.dart';
+import 'package:my_web_app/pages/cmo_office_page.dart';
+import 'package:my_web_app/pages/cmo_page.dart';
+import 'package:my_web_app/pages/election_strategy_page.dart';
+import 'package:my_web_app/pages/mind_map_page.dart';
+import 'package:my_web_app/pages/mindless_task_page.dart';
+import 'package:my_web_app/pages/real_world_danshari_page.dart';
+import 'package:my_web_app/pages/stock_tasks_page.dart';
+import 'package:my_web_app/pages/notifications_page.dart';
+import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:my_web_app/pages/carbon_footprint_tracker_page.dart';
+import 'package:my_web_app/pages/donation_crowdfunding_page.dart';
+import 'package:my_web_app/pages/emergency_contacts_page.dart';
+import 'package:my_web_app/pages/knowledge_base_page.dart';
+import 'package:my_web_app/pages/meeting_manager_page.dart';
+import 'package:my_web_app/pages/news_rss_aggregator_page.dart';
+import 'package:my_web_app/pages/semantic_search_page.dart';
+import 'package:my_web_app/pages/smart_inbox_triage_page.dart';
+import 'package:my_web_app/pages/social_feed_page.dart';
+import 'package:my_web_app/pages/family_sharing_manager_page.dart';
+import 'package:my_web_app/pages/gift_registry_page.dart';
+import 'package:my_web_app/pages/mindmap_diagram_page.dart';
+import 'package:my_web_app/pages/auction_marketplace_page.dart';
+import 'package:my_web_app/pages/qr_code_generator_page.dart';
+import 'package:my_web_app/pages/parking_reservation_page.dart';
+import 'package:my_web_app/pages/referral_program_page.dart';
+import 'package:my_web_app/pages/analytics_export_page.dart';
+import 'package:my_web_app/pages/workflow_templates_page.dart';
+import 'package:my_web_app/pages/customer_feedback_page.dart';
+import 'package:my_web_app/pages/address_book_page.dart';
+import 'package:my_web_app/pages/subscription_billing_page.dart';
+import 'package:my_web_app/pages/appointment_scheduler_page.dart';
+import 'package:my_web_app/pages/budget_financial_planner_page.dart';
+import 'package:my_web_app/pages/feature_flags_page.dart';
+import 'package:my_web_app/pages/workflow_automation_page.dart';
+import 'package:my_web_app/pages/social_media_scheduler_page.dart';
+import 'package:my_web_app/pages/video_meeting_page.dart';
+import 'package:my_web_app/pages/gantt_timeline_page.dart';
+import 'package:my_web_app/pages/ai_image_generator_page.dart';
+import 'package:my_web_app/pages/viral_ad_campaign_page.dart';
+import 'package:my_web_app/pages/virtual_pet_page.dart';
+import 'package:my_web_app/pages/affiliate_marketing_page.dart';
+import 'package:my_web_app/pages/calendar_events_page.dart';
+import 'package:my_web_app/pages/expense_tracker_page.dart';
+import 'package:my_web_app/pages/reading_list_page.dart';
+import 'package:my_web_app/pages/ar_navigation_page.dart';
+import 'package:my_web_app/pages/dns_domain_manager_page.dart';
+import 'package:my_web_app/pages/focus_timer_page.dart';
+import 'package:my_web_app/pages/digital_wallet_page.dart';
+import 'package:my_web_app/pages/loyalty_points_page.dart';
+import 'package:my_web_app/pages/viral_ad_generator_page.dart';
+import 'package:my_web_app/pages/growth_automation_controller_page.dart';
+import 'package:my_web_app/pages/landing_ab_test_page.dart';
+import 'package:my_web_app/pages/video_ad_generator_page.dart';
+import 'package:my_web_app/pages/viral_video_generator_page.dart';
+import 'package:my_web_app/pages/audio_effects_processor_page.dart';
+import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
+import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -253,10 +335,20 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const AiSearchPage(),
             );
+          case '/election-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionManagementDashboard(),
+              settings: const RouteSettings(name: '/election-dashboard'),
+            );
           case '/local-election-700':
             return MaterialPageRoute(
               builder: (_) => const ElectionVictoryPage(),
               settings: const RouteSettings(name: '/local-election-700'),
+            );
+          case '/local-election-schedule':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionVictoryPage(),
+              settings: const RouteSettings(name: '/local-election-schedule'),
             );
           case '/public/local-election-700':
             return MaterialPageRoute(
@@ -432,6 +524,18 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const GrowthWeeklyDigestPage(),
             );
+          case '/memo-reactions':
+            return MaterialPageRoute(
+              builder: (_) => const MemoReactionsPage(),
+            );
+          case '/note-comments':
+            return MaterialPageRoute(
+              builder: (_) => const NoteCommentsPage(),
+            );
+          case '/growth-acquisition-signal':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAcquisitionSignalPage(),
+            );
           case '/compatibility':
             final myType = settings.arguments as String? ?? '';
             return MaterialPageRoute(
@@ -446,6 +550,320 @@ class MyApp extends StatelessWidget {
             final resultTestId = settings.arguments as int? ?? 1;
             return MaterialPageRoute(
               builder: (_) => PersonalityTestResultPage(testId: resultTestId),
+            );
+          case '/enterprise':
+            return MaterialPageRoute(
+              builder: (_) => const EnterprisePage(),
+            );
+          case '/ai-secretary':
+            return MaterialPageRoute(
+              builder: (_) => const AISecretaryPage(),
+            );
+          case '/team-workspace':
+            return MaterialPageRoute(
+              builder: (_) => const TeamWorkspacePage(),
+            );
+          case '/embedding-lab':
+            return MaterialPageRoute(
+              builder: (_) => const EmbeddingLabPage(),
+            );
+          case '/settings':
+            return MaterialPageRoute(
+              builder: (_) => const SettingsPage(),
+            );
+          case '/stats':
+            return MaterialPageRoute(
+              builder: (_) => const StatsPage(),
+            );
+          case '/health':
+            return MaterialPageRoute(
+              builder: (_) => const HealthPage(),
+            );
+          case '/mental-check':
+            return MaterialPageRoute(
+              builder: (_) => const MentalCheckPage(),
+            );
+          case '/feedback':
+            return MaterialPageRoute(
+              builder: (_) => const FeedbackPage(),
+            );
+          case '/admin-feedback':
+            return MaterialPageRoute(
+              builder: (_) => const FeedbackListPage(),
+            );
+          case '/categories':
+            return MaterialPageRoute(
+              builder: (_) => const CategoriesPage(),
+            );
+          case '/medical-notes':
+            return MaterialPageRoute(
+              builder: (_) => const MedicalNotesPage(),
+            );
+          case '/api-playground':
+            return MaterialPageRoute(
+              builder: (_) => const ApiPlaygroundPage(),
+            );
+          case '/financial-report':
+            return MaterialPageRoute(
+              builder: (_) => const FinancialReportPage(),
+            );
+          case '/payment-channel-ledger':
+            return MaterialPageRoute(
+              builder: (_) => const PaymentChannelLedgerPage(),
+            );
+          case '/emergency-meeting':
+            return MaterialPageRoute(
+              builder: (_) => const EmergencyMeetingPage(),
+            );
+          case '/ai-status':
+            return MaterialPageRoute(
+              builder: (_) => const AiStatusPage(),
+            );
+          case '/asset-management':
+            return MaterialPageRoute(
+              builder: (_) => const AssetManagementPage(),
+            );
+          case '/cfo-office':
+            return MaterialPageRoute(
+              builder: (_) => const CfoOfficePage(),
+            );
+          case '/cho-office':
+            return MaterialPageRoute(
+              builder: (_) => const ChoOfficePage(),
+            );
+          case '/chro-office':
+            return MaterialPageRoute(
+              builder: (_) => const ChroOfficePage(),
+            );
+          case '/cmo-office':
+            return MaterialPageRoute(
+              builder: (_) => const CmoOfficePage(),
+            );
+          case '/cmo':
+            return MaterialPageRoute(
+              builder: (_) => const CmoPage(),
+            );
+          case '/election-strategy':
+            return MaterialPageRoute(
+              builder: (_) => const ElectionStrategyPage(),
+            );
+          case '/mind-map':
+            return MaterialPageRoute(
+              builder: (_) => const MindMapPage(),
+            );
+          case '/mindless-task':
+            return MaterialPageRoute(
+              builder: (_) => const MindlessTaskPage(),
+            );
+          case '/real-world-danshari':
+            return MaterialPageRoute(
+              builder: (_) => RealWorldDanshariPage(
+                supabaseClient: supabase,
+              ),
+            );
+          case '/stock-tasks':
+            return MaterialPageRoute(
+              builder: (_) => const StockTasksPage(),
+            );
+          case '/wardrobe':
+            return MaterialPageRoute(
+              builder: (_) => const WardrobePage(),
+            );
+          case '/knowledge-base':
+            return MaterialPageRoute(
+              builder: (_) => const KnowledgeBasePage(),
+            );
+          case '/semantic-search':
+            return MaterialPageRoute(
+              builder: (_) => const SemanticSearchPage(),
+            );
+          case '/social-feed':
+            return MaterialPageRoute(
+              builder: (_) => const SocialFeedPage(),
+            );
+          case '/notifications':
+            return MaterialPageRoute(
+              builder: (_) => const NotificationsPage(),
+            );
+          case '/meeting-manager':
+            return MaterialPageRoute(
+              builder: (_) => const MeetingManagerPage(),
+            );
+          case '/news-rss':
+            return MaterialPageRoute(
+              builder: (_) => const NewsRssAggregatorPage(),
+            );
+          case '/smart-inbox':
+            return MaterialPageRoute(
+              builder: (_) => const SmartInboxTriagePage(),
+            );
+          case '/carbon-footprint':
+            return MaterialPageRoute(
+              builder: (_) => const CarbonFootprintTrackerPage(),
+            );
+          case '/donation':
+            return MaterialPageRoute(
+              builder: (_) => const DonationCrowdfundingPage(),
+            );
+          case '/emergency-contacts':
+            return MaterialPageRoute(
+              builder: (_) => const EmergencyContactsPage(),
+            );
+          case '/family-sharing':
+            return MaterialPageRoute(
+              builder: (_) => const FamilySharingManagerPage(),
+            );
+          case '/gift-registry':
+            return MaterialPageRoute(
+              builder: (_) => const GiftRegistryPage(),
+            );
+          case '/mindmap':
+            return MaterialPageRoute(
+              builder: (_) => const MindmapDiagramPage(),
+            );
+          case '/auction-marketplace':
+            return MaterialPageRoute(
+              builder: (_) => const AuctionMarketplacePage(),
+            );
+          case '/qr-code-generator':
+            return MaterialPageRoute(
+              builder: (_) => const QrCodeGeneratorPage(),
+            );
+          case '/parking-reservation':
+            return MaterialPageRoute(
+              builder: (_) => const ParkingReservationPage(),
+            );
+          case '/referral-program':
+            return MaterialPageRoute(
+              builder: (_) => const ReferralProgramPage(),
+            );
+          case '/analytics-export':
+            return MaterialPageRoute(
+              builder: (_) => const AnalyticsExportPage(),
+            );
+          case '/workflow-templates':
+            return MaterialPageRoute(
+              builder: (_) => const WorkflowTemplatesPage(),
+            );
+          case '/customer-feedback':
+            return MaterialPageRoute(
+              builder: (_) => const CustomerFeedbackPage(),
+            );
+          case '/address-book':
+            return MaterialPageRoute(
+              builder: (_) => const AddressBookPage(),
+            );
+          case '/subscription-billing':
+            return MaterialPageRoute(
+              builder: (_) => const SubscriptionBillingPage(),
+            );
+          case '/appointment-scheduler':
+            return MaterialPageRoute(
+              builder: (_) => const AppointmentSchedulerPage(),
+            );
+          case '/budget-financial-planner':
+            return MaterialPageRoute(
+              builder: (_) => const BudgetFinancialPlannerPage(),
+            );
+          case '/feature-flags':
+            return MaterialPageRoute(
+              builder: (_) => const FeatureFlagsPage(),
+            );
+          case '/workflow-automation':
+            return MaterialPageRoute(
+              builder: (_) => const WorkflowAutomationPage(),
+            );
+          case '/social-scheduler':
+            return MaterialPageRoute(
+              builder: (_) => const SocialMediaSchedulerPage(),
+            );
+          case '/video-meeting':
+            return MaterialPageRoute(
+              builder: (_) => const VideoMeetingPage(),
+            );
+          case '/gantt-timeline':
+            return MaterialPageRoute(
+              builder: (_) => const GanttTimelinePage(),
+            );
+          case '/ai-image-generator':
+            return MaterialPageRoute(
+              builder: (_) => const AiImageGeneratorPage(),
+            );
+          case '/viral-ad-campaign':
+            return MaterialPageRoute(
+              builder: (_) => const ViralAdCampaignPage(),
+            );
+          case '/virtual-pet':
+            return MaterialPageRoute(
+              builder: (_) => const VirtualPetPage(),
+            );
+          case '/affiliate-marketing':
+            return MaterialPageRoute(
+              builder: (_) => const AffiliateMarketingPage(),
+            );
+          case '/calendar-events':
+            return MaterialPageRoute(
+              builder: (_) => const CalendarEventsPage(),
+            );
+          case '/expense-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const ExpenseTrackerPage(),
+            );
+          case '/reading-list':
+            return MaterialPageRoute(
+              builder: (_) => const ReadingListPage(),
+            );
+          case '/ar-navigation':
+            return MaterialPageRoute(
+              builder: (_) => const ArNavigationPage(),
+            );
+          case '/dns-domain-manager':
+            return MaterialPageRoute(
+              builder: (_) => const DnsDomainManagerPage(),
+            );
+          case '/focus-timer':
+            return MaterialPageRoute(
+              builder: (_) => const FocusTimerPage(),
+            );
+          case '/digital-wallet':
+            return MaterialPageRoute(
+              builder: (_) => const DigitalWalletPage(),
+            );
+          case '/loyalty-points':
+            return MaterialPageRoute(
+              builder: (_) => const LoyaltyPointsPage(),
+            );
+          case '/viral-ad-generator':
+            return MaterialPageRoute(
+              builder: (_) => const ViralAdGeneratorPage(),
+            );
+          case '/growth-automation':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAutomationControllerPage(),
+            );
+          case '/landing-ab-test':
+            return MaterialPageRoute(
+              builder: (_) => const LandingAbTestPage(),
+            );
+          case '/video-ad-generator':
+            return MaterialPageRoute(
+              builder: (_) => const VideoAdGeneratorPage(),
+            );
+          case '/viral-video-generator':
+            return MaterialPageRoute(
+              builder: (_) => const ViralVideoGeneratorPage(),
+            );
+          case '/audio-effects-processor':
+            return MaterialPageRoute(
+              builder: (_) => const AudioEffectsProcessorPage(),
+            );
+          case '/guitar-recording-studio':
+            return MaterialPageRoute(
+              builder: (_) => const GuitarRecordingStudioPage(),
+            );
+          case '/music-collaboration':
+            return MaterialPageRoute(
+              builder: (_) => const MusicCollaborationPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

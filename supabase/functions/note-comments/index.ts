@@ -11,7 +11,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -46,7 +46,7 @@ serve(async (req) => {
     return new Response(null, { headers: CORS });
   }
 
-  if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
+  if (SUPABASE_URL === "" || SUPABASE_ANON_KEY === "") {
     return json({ error: "misconfigured" }, 500);
   }
 
@@ -55,7 +55,11 @@ serve(async (req) => {
     return json({ error: "unauthorized" }, 401);
   }
 
-  const client = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+  // Use ANON_KEY + user JWT so RLS policies on note_comments apply at DB level.
+  // SERVICE_ROLE_KEY is intentionally NOT used for user-scoped operations.
+  const authHeader = req.headers.get("authorization") ?? "";
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

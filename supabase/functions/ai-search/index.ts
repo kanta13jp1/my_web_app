@@ -135,7 +135,12 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("Missing authorization header");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing authorization header" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 },
+      );
+    }
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -147,11 +152,29 @@ serve(async (req) => {
       data: { user },
       error: userError,
     } = await supabaseClient.auth.getUser();
-    if (userError || !user) throw new Error("Unauthorized");
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Unauthorized", results: [], totalResults: 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 },
+      );
+    }
 
-    const { query, limit = 20, mode = "auto" }: SearchRequest =
-      await req.json();
-    if (!query) throw new Error("Query is required");
+    let parsedBody: SearchRequest;
+    try {
+      parsedBody = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid JSON body" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+      );
+    }
+    const { query, limit = 20, mode = "auto" } = parsedBody;
+    if (!query) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Query is required", results: [], totalResults: 0 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 },
+      );
+    }
 
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     const useAi = (mode === "ai" || mode === "auto") && !!openaiApiKey;
@@ -225,11 +248,12 @@ serve(async (req) => {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Error in AI search:", error);
+
     return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
+      JSON.stringify({ success: false, error: errorMessage, results: [], totalResults: 0 }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+        status: 500,
       },
     );
   }

@@ -23,7 +23,7 @@ port = 54322
 shadow_port = 54320
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
 # server_version;` on the remote database to check.
-major_version = 15
+major_version = 17
 
 [studio]
 enabled = true
@@ -142,6 +142,11 @@ enabled = true
 verify_jwt = false
 entrypoint = "./functions/memo-reactions/index.ts"
 
+[functions.note-comments]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/note-comments/index.ts"
+
 [functions.get-ogp-public]
 enabled = true
 verify_jwt = false
@@ -151,3 +156,33 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/local-election-intelligence/deno.json"
 entrypoint = "./functions/local-election-intelligence/index.ts"
+
+[functions.gemini-election-analysis]
+enabled = true
+verify_jwt = false
+
+[functions.focus-timer]
+enabled = true
+verify_jwt = true
+
+[functions.ai-writing-assistant]
+enabled = true
+verify_jwt = true
+
+[functions.bookmark-sync]
+enabled = true
+verify_jwt = true
+
+[functions.task-dependency]
+enabled = true
+verify_jwt = true
+
+[functions.note-sharing-enhanced]
+enabled = true
+verify_jwt = true
+
+
+[functions.viral-video-generator]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/viral-video-generator/index.ts"

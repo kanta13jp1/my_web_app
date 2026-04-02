@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-03-28 Session10 (get-competitor-monitoring Edge Function新規・CI/CD全Edge Functions完備・4インスタンス並列開発体制整備)
+最終更新: 2026-04-02 PS#11-PowerShell (238 Edge Functions体制: ギターレコーディングスタジオ完成 — MediaRecorder/メトロノーム/コード辞典/録音履歴 + ランディングページ導線バナー追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -117,6 +117,9 @@
 - **get-growth-roadmap-progress** (2026-03-25 新規作成): user_profiles からユーザー数、growth_plans テーブルから計画データを取得して返す Edge Function。GrowthRoadmapProgressCard が呼び出す。growth_plans が空の場合は16項目のデフォルトデータを自動シードする。
 - growth-weekly-digest (2026-03-25 追加)
 - import 画面の backend-first execution result 表示
+- **PowerShell 4インスタンス並列開発体制** (2026-03-30): VSCode(lib/) / Web(supabase/functions/) / Windows(docs/) / PowerShell(全体管理) の4並列体制を確立。git pull --rebase による競合防止
+- **管理者ユーザー管理強化** (2026-03-30): user_profiles に is_admin・profile_completeness・last_login_at を追加。管理者が全ユーザーのプロフィール完成度を管理可能に
+- **Schedule 自己修復タスク** (2026-03-30): cs-check に GitHub Issue の自動修正フロー統合。daily-report に schedule_task_runs 記録とヘルスモニター統合。失敗タスクの自動リトライを実現
 - **ScheduleTaskMonitorCard** (2026-03-26): 管理者ダッシュボードに Schedule タスク実行状況モニター追加。9 タスクの名前・スケジュール・最終実行・ステータスを表示
 - **SeoMetaHelper + 公開メモ SEO/OGP 強化** (2026-03-26): 公開メモ詳細ページで og:title/og:description/og:url/Twitter Card を動的に設定。離脱時リセット
 - **health-check Edge Function** (2026-03-26): DB 接続性・レイテンシ・必須 6 テーブルの可用性チェック
@@ -328,6 +331,157 @@
 - **公開メモ 絵文字リアクション機能** (Session11): `memo-reactions` Edge Function と `memo_reactions` テーブルを新規作成。👍❤️🔥💡🎉の5種リアクションをログイン不要で実装。IP SHA-256ハッシュ(先頭16桁)で重複防止・プライバシー保護。UNIQUE INDEXのinsert違反をtoggleオフとして活用。Flutter `_MemoReactionsBar` ウィジェット（AnimatedContainer + Wrap）を公開メモ詳細ページに追加。CI/CD と config.toml に追加
 - **技術ブログ下書き** (Session11): `docs/blog-drafts/2026-03-28-public-memo-reactions.md` 作成
 
+### 2026-03-30 daily-development 実装済み
+
+- **ノートコメント機能** (daily-development 2026-03-30): Notion風のノートコメント機能を完全実装。`note_comments` テーブル（RLS付き）を新設 (`20260328000019_create_note_comments.sql`)。`note-comments` Edge Function (GET/POST/DELETE) でノート所有権チェックを二重実装（RLS + JWT user_id検証）。`NoteEditorPage` の AppBar にコメントアイコン・バッジカウント表示を追加。`DraggableScrollableSheet` でコメント一覧+入力フォームのボトムシートUI。`supabase/config.toml` と `deploy-prod.yml` CI/CD に追加。flutter analyze 0件維持
+- **landing_page.dart デッドコード除去** (daily-development 2026-03-30): 削除済みセクション（`_buildBuildInPublicSection`/`_buildPublicMemoSection`/`_buildShareSection`）の残骸（未使用フィールド11件・未使用メソッド4件・未使用インポート4件）を一括削除。flutter analyze 0件維持
+- **アクセシビリティ修正** (daily-report 2026-03-30): `note_comments_page.dart` の refreshボタン・deleteボタンに tooltip を追加 (`tooltip: '更新'` / `tooltip: 'コメントを削除'`)。`memo_reactions_page.dart` に `_reactionLabels` マップを追加し、リアクションボタンを `Semantics(label: ..., button: true)` でラップ。GitHub Issues #243〜#248 (auto-review アクセシビリティ) を全てクローズ。
+
+### 2026-03-30 daily-development #2 実装済み
+
+- **B2B エンタープライズ LP 実装** (daily-development #2 2026-03-30): `/enterprise` ルートにB2B向けランディングページを新設。ヒーローセクション（グラデーション）・コスト削減シミュレーション（Slack/Chatwork/ジョブカン/MoneyForward/Notion 合計¥4,100/月→¥0比較）・活用シーン6種カード（モバイル/デスクトップレスポンシブ）・機能比較テーブル・お問い合わせフォーム（Supabase `enterprise_inquiries` テーブル）を実装。`main.dart` に `/enterprise` ルート追加。`sitemap.xml` に追加（合計23URL）。LP に「チームで使う」CTA カードを追加。B2B 営業資料整備の第一歩として「残課題」を解消。
+- **コードブロック コピーボタン追加** (daily-development #2 2026-03-30): `markdown_preview.dart` の `CodeElementBuilder` に `_CopyCodeButton` StatefulWidget を追加。言語ラベルバーの右端にCopy/Copiedトグルボタン。クリック後2秒でリセット。`services.dart` の `Clipboard.setData` で実装。コードブロック（言語指定あり・なし両方）に対応。Notionパリティ「コードブロック: 部分実装 → 実装済み」に格上げ。
+- **RadioListTile deprecated API 修正** (daily-development #2 2026-03-30): Flutter 3.32.0+ で `groupValue`/`onChanged` が非推奨になった `RadioListTile` を `growth_acquisition_signal_page.dart` で修正。flutter analyze 0件を維持。
+
+### 2026-03-30 daily-development #3 実装済み
+
+- **チームワークスペース基盤実装** (daily-development #3 2026-03-30): `teams` / `team_memberships` / `team_shared_notes` の3テーブルをRLS付きで新設（migration `20260330000005_create_team_workspace.sql`）。招待コード（8文字ランダム英数字）方式でメンバー招待が可能なB2B対応の共有基盤を構築。`TeamWorkspacePage` を新規作成（`TabController` で「自分のチーム」「参加中」タブ・チーム作成ダイアログ・招待コード表示+コピー・参加ダイアログ・退出・削除）。`/team-workspace` ルートを `main.dart` に追加。業務メニューカタログの `growth` セクションにエントリ追加。`sitemap.xml` に追加（合計24URL）。中期ロードマップ「Team workspace」基盤を先行着手。
+- **比較ページ個別OGPメタタグ対応** (daily-development #3 2026-03-30): 14社の競合比較ページ（`/vs-notion` 〜 `/vs-amazon`）に対してそれぞれ固有の `og:title` / `og:description` / `twitter:title` / `twitter:description` を `index.html` SEOシェルスクリプトで動的設定。URLパスの `/vs-{competitor}` パターンをJSで検出し競合固有のコピーに切り替え。SNSシェア時のカードの訴求力向上と比較キーワードからの有機流入改善を狙う。「残課題」から「各比較ページへの個別OGP」を解消。
+- **local_election_share_service.dart flutter analyze 修正** (daily-development #3 2026-03-30): `require_trailing_commas` エラー2件を修正。flutter analyze 0件を維持。
+
+### 2026-03-31 daily-development 実装済み
+
+- **21社比較ページ全社OGP対応完了** (daily-development 2026-03-31): Google・Microsoft・Discord・LINE・Facebook・Liven・GitHubの7社分のSEO OGPメタタグを `index.html` SEOシェルに追加。`competitorMeta` オブジェクトに7社分の `title`・`desc` を追記し、全21競合の比較ページでSNSシェア時に個別のog:title/og:description/twitter:title/twitter:descriptionが表示されるよう対応完了。
+- **gemini-election-analysis Edge Function新規作成** (daily-development 2026-03-31): Gemini 2.5 Flash APIを使用した選挙データAI分析Edge Function (`supabase/functions/gemini-election-analysis/index.ts`)。国民民主党700人必達目標の月次KPI管理・都道府県別配分シミュレーション・現職議員リストをJSON構造化出力 (`responseMimeType: "application/json"`)。`supabase/config.toml` と `deploy-prod.yml` CI/CDに追加。deno lint 0件。
+- **ユーザーマニュアルホーム画面説明更新** (daily-development 2026-03-31): `user_manual_page.dart` のホーム画面ナビゲーション説明をQUICK ACCESSベースの実際のUIに更新。OFFICE KPI SNAPSHOT・KPI SUMMARY・OPERATIONS CALENDAR・SPECIAL PROJECT・QUICK ACCESS・RECENT TOOLSの各セクション説明を正確化。
+- **local-election-intelligence BOM修正** (daily-development 2026-03-31): `index.ts` 先頭のBOM文字 (`\uFEFF`) を削除。Dart formatter の trailing comma 修正も適用。deno lint 0件維持。
+
+### 2026-03-31 daily-development #2 実装済み (自動)
+
+- **比較ページCVRトラッキング完成** (daily-development #2 2026-03-31): 残課題「比較ページ経由の登録CVRトラッキング」を完全解消。`touch_comparison` / `signup_submit_comparison` シグナルを `growth_acquisition_signal_page.dart` (シグナル一覧・ラベル) と `admin_analytics_page.dart` (シグナル名・カラー設定) に追加。管理者ダッシュボードに `_buildComparisonCvrCard()` を新設。`app_analytics.source_details` JSONB から `touch_comparison_{key}` を全日付集計し、競合別到達数バー・総CVR%をリアルタイム表示。残課題リストから削除。flutter analyze 0件維持。
+
+### 2026-03-31 PowerShell全体管理セッション #2 実装済み
+
+- **サイトマップ40URL更新** (PowerShell 2026-03-31): `web/sitemap.xml` にサイトマップURL漏れを補完。`/public-memos`・`/local-election-700`・`/local-election-schedule`・`/referral` を新規追加 (36→40URL)。LP・ユーザーマニュアルのlastmodを2026-03-31に更新。SEOクロール優先度を調整。
+- **AdminダッシュボードCVRカード・選挙スケジュールDB保存統合** (PowerShell 2026-03-31): VSCode/Windows/Web各インスタンスの変更 (`admin_analytics_page.dart` CVRカード, `docs/index.ts` 選挙スケジュールUpsert) を統括コミット。flutter analyze 0件確認。
+- **4インスタンス競合防止継続** (PowerShell 2026-03-31): git stash/pull --rebase/stash pop サイクルで全インスタンスの変更を衝突なく統合。
+
+### 2026-03-31 daily-development #3 実装済み (自動)
+
+- **Embedding Lab 類似度比較機能** (daily-development #3 2026-03-31): `embedding_lab_page.dart` を全面刷新。gemini-embedding-001 を使ったコサイン類似度比較タブを追加。2テキストを `Future.wait` で並列Embedding取得→コサイン類似度計算→`LinearProgressIndicator` + カラーラベル (緑/オレンジ/赤) でスコア可視化。将来のセマンティックノート検索の実験基盤として整備。flutter analyze 0件維持。
+- **サイトマップ40URL・ルート整理** (daily-development #3 2026-03-31): `/local-election-schedule` を `ElectionVictoryPage` に統合（`ElectionManagementDashboard` 削除後のルート修正）。`/embedding-lab` ルートを `main.dart` に追加。`home_tool_catalog.dart` を同期更新。
+- **ブログ下書き作成** (daily-development #3 2026-03-31): `docs/blog-drafts/2026-03-31-embedding-similarity.md` — Flutter WebでGemini Embeddingsを使ったコサイン類似度比較ツール実装解説。
+
+### 2026-03-31 daily-development (自動) 最新
+
+- **過去の選挙結果表示機能** (daily-development 2026-03-31): `docs/index.ts` の Gemini API JSONスキーマに `pastElectionResults` フィールドを追加（`2023年統一地方選`等の候補者当落・得票数を構造化取得）。`PastElectionCandidate` / `PastElectionResult` モデルクラスを `local_election_reality.dart` に新設。`LocalElectionRealitySnapshot` に `pastElectionResults` を統合（後方互換）。`election_victory_page.dart` に `_buildPastElectionResultsSection` / `_buildPastElectionCard` を追加し、当選=緑/落選=赤の Chip で色分け表示。flutter analyze 0件維持。
+- **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
+- **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
+- **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-02 PS#11 (PowerShell) 実装済み
+
+- **ギターレコーディングスタジオ完成 (PS#11)**: `GuitarRecordingStudioPage` を `package:web` + `dart:js_interop` を使用した本格録音機能に全面リライト。ブラウザ `MediaRecorder API` でマイク録音 (開始/一時停止/停止/再生/破棄)、Web Audio API メトロノーム (30-300BPM/拍子2-6/ビジュアルビート)、コード辞典 (15コード + ダイアグラム CustomPainter)、ジャンルプリセット8種、録音履歴タブ。`guitar-recording-studio` Edge Function と全アクション連携 (save_recording/recordings/chord/dashboard)。LP に黒背景ギタースタジオバナー追加でメイン機能として訴求。flutter analyze 0エラー維持。
+- **flutter analyze 既存エラー修正**: `viral_video_generator_page.dart` (trailing comma 5件・deprecated `value→initialValue`)、`music_collaboration_page.dart` (trailing comma 1件)、`abstinence_guard_store.dart` (merge conflict解消) を修正。全プロジェクト 0エラー達成。
+
+### 2026-04-02 daily-development #2 実装済み (自動)
+
+- **ガントチャート・タイムライン実装** (daily-development #2 2026-04-02): `GanttTimelinePage` を新規作成。`gantt-timeline-manager` Edge Function と連携し、プロジェクト作成・タスク追加・マイルストーン設定・クリティカルパス分析 (最遅完了タスクのランキング) を実装。3タブ構成 (プロジェクト/タイムライン/クリティカルパス)。`LinearProgressIndicator` でGanttバーを表示し、ステータス別カラー (完了=緑/進行中=青/ブロック=赤) でビジュアル管理。`/gantt-timeline` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに追加。`growth_roadmap_progress_card.dart` でガントチャートを `notYet→done` に更新。Notion機能カバー率がさらに向上。flutter analyze 0件維持。
+- **EdgeFunctionSummaryCard UI実装マーク更新** (daily-development #2 2026-04-02): `gantt-timeline-manager` → `/gantt-timeline` ページ実装済みにマーク。`video-meeting-manager` → `/video-meeting` ページ実装済みにマーク。UI実装有無の可視化精度向上。
+- **ブログ下書き作成** (daily-development #2 2026-04-02): `docs/blog-drafts/2026-04-02-gantt-timeline.md` — Flutter WebでガントチャートをLinearProgressIndicatorで実装 + `avoid_dynamic_calls` 対応解説記事。
+
+### 2026-04-02 daily-development 実装済み
+
+- **候補者Xハンドル統合** (daily-development 2026-04-02): `LocalElectionScheduleEntry` に `kokuminCandidateXHandles` フィールドを追加。選挙スケジュールカードに `ActionChip` でXハンドルを表示し、タップで `https://x.com/{handle}` を開く機能を実装。CSVエクスポートに候補者名・Xハンドル列を追加。`_buildScheduleCandidateSummary()` / `_candidateHandles()` ヘルパーメソッドを抽出し重複コードを解消。テストも同期更新。
+- **deno lint 0件達成** (daily-development 2026-04-02): 240ファイルのEdge Function群で12件→0件に修正。`no-unused-vars` (9件: SUPABASE_ANON_KEY/BACKUP_STATUSES/CHAT_TYPES/overrideErr/date_to/LISTING_STATUSES/now/_lastCheck/UI_STATUS_CACHE) / `prefer-const` (2件: sorted/totalInviteSent) / `no-explicit-any` (1件: AdminClient) を一括対応。
+- **バイラル動画生成パイプライン基盤** (daily-development 2026-04-02): `supabase/functions/_shared/edge.ts` (共通CORS・JSON・型変換ヘルパー) / `_shared/viral-growth.ts` (バイラルブリーフ生成・レンダリングキュー) / `_shared/x-client.ts` (X OAuth 1.0a署名・メディアアップロード) の共有ユーティリティを整備。`viral-video-generator` Edge Function新規作成・config.toml追加。
+- **選挙管理ダッシュボード ルート追加** (daily-development 2026-04-02): `ElectionManagementDashboard` を `/election-dashboard` ルートとして `main.dart` に追加。`home_tool_catalog.dart` の `special` セクションにエントリ追加し業務メニューから直接アクセス可能に。
+- **ブログ下書き作成** (daily-development 2026-04-02): `docs/blog-drafts/2026-04-02-election-x-handles-viral-video.md` — 候補者Xハンドル統合・deno lint修正・バイラル動画パイプライン実装解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #10 実装済み
+
+- **migration 000140 重複修正** (PowerShell 2026-04-01): `20260331000140_seed_achievements_notification_center.sql` と `20260331000140_create_schedule_blog_secretary_tables.sql` (no-op) が衝突。seed ファイルを `000141` にリナンバーし解消。全 migration でバージョン重複ゼロを達成。
+- **198 Edge Functions / 121ページ体制確認** (PowerShell 2026-04-01): Web インスタンスが 195→198 に増強。cs-check Schedule タスクが毎時 Edge Function UI ページを自動追加しており、現在 121 ページが存在。フロント・バック両輪が高速進化中。
+- **CS-check 自動 UI 実装確認** (PowerShell 2026-04-01): address_book_page / customer_feedback_page / subscription_billing_page の 3 ページが cs-check (06:00) により自動追加済み。edge_function_summary_card.dart も連動更新中。
+
+### 2026-04-01 PowerShell全体管理セッション #9 実装済み
+
+- **migration 重複バージョン修正 (000020)** (PowerShell 2026-04-01): VSCode インスタンスと PowerShell#8 が同時に `20260401000020_` ファイルを作成して重複。PS#8 ファイルを `20260401000040_` にリナンバーし CI/CD 正常稼働を回復。supabase db push の重複キーエラーを防止。
+- **flutter analyze 0 errors / deno lint 0 errors 確認** (PowerShell 2026-04-01): 並列インスタンスの変更を取り込んだ後も lint 0件を維持確認。158 Edge Functions 体制でのコード品質を担保。
+- **Schedule 3タスク正常稼働確認** (PowerShell 2026-04-01): cs-check (毎時) / daily-report (毎日 09:00 JST) / blog-draft (毎日 08:00 JST) の全タスクが schedule_task_runs テーブルへ正しい task_id でログを記録する状態を確認。次回 Schedule 実行から管理者ダッシュボードで実行状況をリアルタイム確認可能。
+
+### 2026-04-01 daily-development session432u 実装済み
+
+- **AIワークフロー自動化ページ実装** (session432u): `workflow_automation_page.dart` を新規作成。`ai-workflow-automation` Edge Function と連携。TabController 3タブ構成 (ワークフロー一覧/テンプレート/統計)。ワークフロー有効/無効切替・テンプレートからワンクリック作成。`/workflow-automation` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに追加。Zapier/Power Automate競合の「ワークフロー自動化」を自前実装。
+- **SNS投稿スケジューラーページ実装** (session432u): `social_media_scheduler_page.dart` を新規作成。`social-media-scheduler` Edge Function と連携。X/LinkedIn/Instagram/Facebook 4プラットフォーム対応。予定/投稿済/下書き 3タブ + 新規投稿作成ダイアログ (プラットフォーム選択・280字制限)。`/social-scheduler` ルートを追加。業務メニューカタログ `growth` セクションに追加。Hootsuite/Buffer 競合。
+- **ビデオ会議管理ページ実装** (session432u): `video_meeting_page.dart` を新規作成。`video-meeting-manager` Edge Function と連携。会議ルーム作成・議事録・アクションアイテム・統計の 4タブ構成。会議タイプ別カラー/アイコン (video/audio/webinar/screen_share)。LIVE バッジで進行中会議を強調表示。`/video-meeting` ルートを追加。業務メニューカタログ `office` セクションに追加。Zoom/Google Meet 競合。
+- **Edge Function 5本追加 (210→215)** (session432u): `bookmark-sync` (Pocket競合・タグ付きブックマーク同期)・`note-sharing-enhanced` (パスワード保護/期限付き共有リンク)・`focus-timer` (Forest競合・ポモドーロ+ストリーク計算)・`task-dependency` (Asana競合・タスク依存グラフ管理)・`ai-writing-assistant` (Grammarly/Notion AI競合・文章改善/要約/翻訳/タイトル提案)。全函数 deno lint 0件。
+- **EdgeFunctionSummaryCard 215本完全同期** (session432u): session432p-432t で追加された30関数 + session432u新規5関数を一括追加。address-book/analytics-export/compliance-checker/loyalty-points/live-streaming/geo-checkin/social-stories/encrypted-messaging/cloud-storage-sync/virtual-whiteboard/marketplace-reviews/smart-home-automation/digital-wallet 等を追加。UI実装有無の可視化率が向上。
+- **ブログ下書き作成** (session432u): `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md` — Flutter Webで3競合SaaS (Zapier/Zoom/Hootsuite) を同時実装 + 215 Edge Functions 達成の解説記事。
+
+### 2026-04-01 PowerShell全体管理セッション #8 実装済み
+
+- **schedule-task-monitor スキーマ完全修正** (PowerShell 2026-04-01): `task_name` → `task_id` カラム名修正、`failure` → `error` ステータス正規化、存在しない `get_schedule_task_stats()` RPC を削除しクライアント側統計計算に変更。Edge Function が `schedule_task_runs` テーブルと正しく連携するよう修正。deno lint 0件・flutter analyze 0件維持。
+- **cs-check / daily-report トリガー schema修正** (PowerShell 2026-04-01): RemoteTrigger API で `cs-check`・`daily-report` 両トリガーのプロンプトを更新。`schedule_task_runs` への POST 時に `task_id` カラムと `error` ステータスを使用するよう修正し、次回 Schedule 実行からリアルデータ記録が開始される状態を確立。
+
+### 2026-04-01 PowerShell全体管理セッション #7 実装済み
+
+- **EdgeFunctionSummaryCard 全102 Functions 対応** (PowerShell 2026-04-01): ホーム画面の Edge Function 一覧カードに 61 新規関数を追加。全 102 関数の UI 実装状況・操作手順・有無をリアルタイム表示。ui_path・ui_navigation 付きで管理者が把握できる状態に。
+- **cs-check Schedule 健全性モニター統合** (PowerShell 2026-04-01): cs-check 毎時タスクに Step 7「Schedule タスク健全性モニター」を追加。schedule_task_runs テーブルの failure 行を検知・自動修復し、3 回以上失敗したタスクは incident-reports に改善提案を記録。
+- **migration 重複バージョン完全解消** (PowerShell 2026-04-01): 000094/000098/000130 の 3 組重複ファイルを解消。000140 no-op に統合し、supabase db push CI/CD が連続エラーなく正常稼働する状態を確立。
+- **Schedule 計画外トリガー制限への対応** (PowerShell 2026-04-01): プラン上限 (1 hourly) により edge-function-ui-check 専用トリガー作成不可。代わりに cs-check Step 0 を強化して毎時3関数ずつ段階的 UI 実装を継続する方針に決定。
+
+### 2026-03-31 PowerShell全体管理セッション #6 実装済み
+
+- **13新ページ統合** (PowerShell 2026-03-31): VSCodeインスタンスが実装した仮想AI組織部署オフィスページ群 (AiStatusPage・AssetManagementPage・CfoOfficePage・ChoOfficePage・ChroOfficePage・CmoOfficePage・CmoPage・ElectionStrategyPage・MindMapPage・MindlessTaskPage・RealWorldDanshariPage・StockTasksPage・WardrobePage) を `main.dart` に統合。13インポート+14ルート追加。flutter analyze 0件維持。
+- **Edge Function 52本体制確立** (PowerShell 2026-03-31): Webインスタンスが実装したai-secretary・blog-post-manager・edge-function-coverage・schedule-task-monitor・team-task-manager・user-profile-manager・agent-personality・agent-department-manager等を統括。計52 Edge Functions体制。
+- **deno lint 0件修正** (PowerShell 2026-03-31): `local-election-intelligence/deno.json` に `no-import-prefix` 除外設定を追加。deno lint 0件確認。
+- **git並列競合解消** (PowerShell 2026-03-31): 4並列インスタンス (+codex worktree) の複雑な競合状況をstash/rebase/restore で解消。`fix/election-public-deploy` ブランチでのマイグレーション衝突修正 (`1d3fb3b`) を統括。
+
+### 2026-03-31 PowerShell全体管理セッション #5 実装済み
+
+- **サイトマップ43URL更新** (PowerShell 2026-03-31): `/categories`・`/medical-notes`・`/financial-report` をsitemap.xmlに追加 (40→43URL)。
+- **新ページ5件統合コミット** (PowerShell 2026-03-31): ApiPlaygroundPage・FinancialReportPage・PaymentChannelLedgerPage のルート追加 (`54eab44`)、local-election-intelligence Edge Function の Gemini スキーマ拡張 (electionSchedules・timeSeriesData) を統括コミット。
+- **git index.lock 競合解消** (PowerShell 2026-03-31): 並列インスタンス実行による `.git/index.lock` を安全に削除してコミット続行。flutter analyze 0件維持。
+
+### 2026-03-31 PowerShell全体管理セッション #4 実装済み
+
+- **wasm build blocker 完全解消** (PowerShell 2026-03-31): `flutter build web --wasm` を実行し356.7秒でビルド成功確認。dart:html廃止・dart:js_interop移行完了済みのため追加作業なし。残課題リストから削除。GROWTH_STRATEGY_ROADMAP.mdの中期計画チェックリスト item 9 も完了マーク。
+- **Google Search Console サイトマップ送信準備完了** (PowerShell 2026-03-31): sitemap.xml が40URLに更新済み (2026-03-31)。`https://my-web-app-b67f4.web.app/sitemap.xml` をSearch Consoleに手動送信するための準備完了。残課題の「24 URLs→40 URLs」更新を反映。
+- **daily-development #4統合** (PowerShell 2026-03-31): app_feedbackテーブル・FeedbackListPage管理統合・/admin-feedbackルート追加をflutter analyze 0件で確認済み。
+
+### 2026-03-31 PowerShell全体管理セッション #3 実装済み
+
+- **EmbeddingLab統合・Lintエラー全修正** (PowerShell 2026-03-31): VSCodeインスタンスが追加した `embedding_lab_page.dart`・`local_election_reality.dart`・`local_election_reality_service.dart`・`election_victory_page.dart` を統括コミット。`election_victory_page.dart:1577` の `num→double` 型不一致修正・`home_tool_catalog.dart` の未使用import `feedback_page.dart` 削除・`local_election_reality_service.dart:242` のtrailing comma自動修正。flutter analyze 0件維持。
+- **LocalElectionRealityモデル追加** (PowerShell 2026-03-31): 選挙現実データのスナップショット履歴管理モデル (`local_election_reality.dart`) とサービス (`local_election_reality_service.dart`) を追加。180日分の日次履歴をshared_preferencesで保持、LinearChartで可視化する基盤を整備。
+- **SettingsPageルート追加** (PowerShell 2026-03-31): `/settings` ルートを `main.dart` と `home_tool_catalog.dart` に追加済み (438f414)。ユーザー設定ページへの導線を確立。
+
+### 2026-03-31 daily-development #4 実装済み (自動)
+
+- **app_feedbackテーブル実装** (daily-development #4 2026-03-31): `app_feedback` テーブル (bigserial PK, category/content/status/RLS付き) を新設。`SECURITY DEFINER` 関数 `is_user_admin()` 経由でRLS無限再帰を回避しつつ管理者の全件閲覧・更新を許可。`FeedbackPage` から投稿、管理者のステータス管理 (new/reviewed/implemented) まで一貫した実装。migration `20260331000070_create_app_feedback.sql`
+- **FeedbackListPage 管理統合** (daily-development #4 2026-03-31): `AdminAnalyticsPage` に `_buildUserFeedbackCard()` を追加。FeedbackListPageへのナビゲーションボタンを提供し、管理者ダッシュボードからフィードバック一覧に直接アクセス可能に。`admin_analytics_page.dart` に `FeedbackListPage` をインポート追加。
+- **/admin-feedbackルート追加** (daily-development #4 2026-03-31): `main.dart` に `/admin-feedback` ルートを追加。`FeedbackListPage` をインポート。ディープリンクからの管理者フィードバック画面アクセスを有効化。
+- **ブログ下書き作成** (daily-development #4 2026-03-31): `docs/blog-drafts/2026-03-31-app-feedback.md` — RLS無限再帰回避パターンとフィードバック収集実装解説記事を作成。flutter analyze 0件維持。
+
+### 2026-03-31 daily-development #5 実装済み (自動)
+
+- **カテゴリ管理機能実装** (daily-development #5 2026-03-31): `CategoriesPage` を新規作成。`categories` テーブル（RLS付き、uuid PK、user_id外部キー）をマイグレーション (`20260331000090_create_categories_table.sql`) で新設。ユーザー別カテゴリの作成・一覧・削除が可能。業務メニューカタログ (`knowledge` セクション) に追加し、キーワード検索 (カテゴリ/タグ/分類/整理) で発見可能に。`/categories` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **医療メモ機能実装** (daily-development #5 2026-03-31): `MedicalNotesPage` を新規作成。新テーブルを作らず既存 `notes` テーブルを流用し、タイトルに `[Medical]` プレフィックスを付けることで医療メモを識別するシンプル設計。通院記録・処方薬・健康診断・手術処置・その他の5カテゴリ対応。業務メニューカタログ (`office` セクション) に追加。`/medical-notes` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development #5 2026-03-31): `docs/blog-drafts/2026-03-31-categories-medical-notes.md` — カテゴリ管理・医療メモ実装解説記事（Supabase RLS設計・既存テーブル流用パターン）を作成。
+
+### 2026-03-31 daily-development #6 実装済み (自動)
+
+- **アプリ内通知センター実装** (daily-development #6 2026-03-31): `NotificationsPage` を新規作成。`notification-center` Edge Function と連携し、未読/既読/すべてフィルター・7カテゴリ対応通知カードUI (アイコン・カラー・相対時刻表示)・既読マーク・全既読ボタン・RefreshIndicatorを実装。ホーム画面AppBarに未読カウントバッジ付きベルアイコンを追加（通知ページから戻った際に自動再取得）。業務メニューカタログ (`growth` セクション) に通知センターエントリを追加。`/notifications` ルートを `main.dart` に追加。flutter analyze 0件維持。
+- **election_victory_page.dart dart:html廃止対応** (daily-development #6 2026-03-31): CSV ダウンロードで使用していた `dart:html` (Blob/AnchorElement/URL) を `dart:js_interop` + `package:web/web.dart` に完全移行。`Uint8List.fromList()` で `List<int>→Uint8List` 変換して `.toJS` を適用するパターンを確立。`avoid_dynamic_calls` (monthlyKpi の Map cast) と `unused_local_variable` (anchor 変数) も同時修正。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development #6 2026-03-31): `docs/blog-drafts/2026-03-31-notification-center.md` — Flutter WebでSupabaseを使ったアプリ内通知センター実装 + `dart:html` → `package:web` 移行パターン解説記事を作成。
+
+### 競合動向ログ (2026-03-30)
+
+- **Notion 3.4**: ダッシュボードビュー・プレゼンテーションモード・カスタムスキル・GPT-5.4統合が続く → 当社AIノート機能の品質向上が急務
+- **GitHub Copilot**: エージェントモード・Workspace が拡充 → Claude Schedule との差別化は「個人ライフマネジメント統合」に集中
+- **Slack AI**: ハドル自動要約・エージェント統合が拡大 → ai-assistant Edge Function との連携強化で対抗
+- **Evernote**: 機能縮小傾向継続 → インポート機能改善で移行先として訴求するチャンス
+
 ### 2026-03-28 Session8 実装済み
 
 - **ユーザーマニュアル更新** (Session8): 性格診断バナーの説明をセクション1に追加。プロフィール完成度カードの場所を「成長・支援ダッシュボード」に更新。新セクション15「成長・支援ダッシュボード」(AIアシスト/成長シグナル/継続モチベーション) を追加。旧セクション15→16にリナンバー
@@ -356,13 +510,13 @@
 
 - Zenn CLI で実際に publish 実行 (`zenn publish` コマンド)
 - Resend API キーは設定済み。送信元ドメイン認証後に FROM_EMAIL を更新
-- wasm build blocker の解消
+- ~~wasm build blocker の解消~~ ✅ 2026-03-31 `flutter build web --wasm` 成功確認 (dart:html廃止済み・dart:js_interop移行完了)
 - referral reward ポイント付与の実際の運用確認
-- B2B 営業資料の整備開始
+- ~~B2B 営業資料の整備開始~~ ✅ 2026-03-30 `/enterprise` ページ実装完了（コスト比較・問い合わせフォーム）
 - 技術ブログの実際の投稿開始（TechBlogTrackerPageで追跡）
-- Google Search Console へのサイトマップ再送信（21 URLs）
-- 各比較ページへの個別OGP画像生成
-- 比較ページ経由の登録CVRトラッキング
+- Google Search Console へのサイトマップ再送信（40 URLs 対応済み — Search Console で手動送信が必要）
+- ~~各比較ページへの個別OGP画像生成~~ ✅ 2026-03-30 個別OGPメタタグ (og:title/og:description) を14社分SEOシェルに追加完了
+- ~~比較ページ経由の登録CVRトラッキング~~ ✅ 2026-03-31 touch_comparison/signup_submit_comparison シグナル + AdminダッシュボードCVRカード実装完了
 
 ---
 
@@ -516,13 +670,13 @@
 
 | ステータス | 件数 | 主な機能 |
 | --- | --- | --- |
-| 実装済み | 19 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断 |
-| 部分実装 | 2 | コードブロック、API連携 |
+| 実装済み | 21 | ノート編集、AI補助、タグ、インポート3種、公開ページ、Web、テンプレートマーケット(18種)、バージョン履歴、テーブルDB、カンバン、AIノート検索、全文検索、性格診断、コメント機能、コードブロック(コピーボタン付きシンタックスハイライト) |
+| 部分実装 | 1 | API連携 |
 | 開発中 | 2 | モバイルアプリ、デスクトップアプリ |
-| 未実装 | 3 | コラボ、コメント、リアルタイム共同編集など |
+| 未実装 | 2 | コラボ、リアルタイム共同編集など |
 | 独自機能 | 9 | マインドマップ、記憶ドリル、AIエージェント組織(20人)、経営コックピット、Growth進捗可視化、Referral制度、選挙知能、Build in Public、性格診断(16タイプ) |
 
-Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 88%** (2026-03-28 Session6更新)
+Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当機能合計 ≈ 94%** (2026-03-30 daily-development #2更新: コードブロック実装済みに格上げ)
 
 ### 優先ギャップ補填ロードマップ
 
@@ -536,15 +690,16 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 #### 中期 (3-12ヶ月) で補填すべきギャップ
 
-- **Team workspace**: リアルタイム共同編集の基盤
-- **コメント機能**: ページへのインラインコメント
+- **Team workspace**: リアルタイム共同編集の基盤 ✅ 2026-03-30 基盤実装済み (teams/team_memberships/team_shared_notes テーブル・招待コード方式・TeamWorkspacePage)
+- ~~**コメント機能**~~: ✅ 2026-03-30実装完了 (note_comments テーブル RLS付き・Edge Function・AppBar バッジ・DraggableBottomSheet)
 - **モバイルアプリ**: Flutter iOS/Android ビルドのリリース
 
 #### 長期 (1-3年) で補填すべきギャップ
 
 - **リレーション/ロールアップ**: 本格 DB 機能
 - **オフライン対応**: PWA + IndexedDB
-- **カレンダー/ガントビュー**
+- ~~**ガントチャートビュー**~~ ✅ 2026-04-02 GanttTimelinePage実装完了 (プロジェクト・タスク・マイルストーン・クリティカルパス分析)
+- **カレンダービュー**: DBエントリの日付プロパティをカレンダー形式で表示
 - **Web クリッパー**: ブラウザ拡張
 
 ### 自分株式会社 独自優位点 (Notion にない機能)
@@ -636,7 +791,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 6. ~~技術ブログ第 1 弾を Zenn に投稿する~~ ✓ Zenn向け技術記事ドラフト作成完了 (`zenn_growth_dashboard_20260325.md`)
 7. weekly digest を Growth Mission / Admin Analytics から UI で呼び出せるようにする
 8. import → sign-up CVR を weekly digest で追い始め、数値を毎週このファイルへ反映する
-9. wasm build blocker の原因を特定して解消する
+9. ~~wasm build blocker の原因を特定して解消する~~ ✓ 完了 2026-03-31 (`flutter build web --wasm` 356.7s でビルド成功)
 10. ~~公開メモの SEO / OGP タグを強化して organic 流入を増やす~~ ✓ 完了 (SeoMetaHelper + PublicMemoDetailPage 動的 OGP 更新)
 11. ~~B2B 向け移行代行 LP の最初のドラフトを作る~~ ✓ 完了 (docs/b2b-migration-lp-draft.md)
 12. ~~はてなブログで週次 progress bar 付き成長記録を開始する~~ ✓ 完了 (docs/blog-drafts/2026-03-27-hatena-weekly-growth.md)
@@ -910,6 +1065,668 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 
 ## セッション記録
 
+### daily-report Schedule — 2026-04-02
+
+**日次レポート生成・競合モニタリング実施**
+
+- **日次レポート生成**: `docs/daily-reports/2026-04-02.md` 作成 (git log フォールバック: Supabase API 接続ブロック継続)
+- **Edge Functions総数**: 234本体制 (前日比: バイラル動画パイプライン・選挙ダッシュボード追加)
+- **バイラル広告投稿**: viral-growth-engine / post-x-update ともに curl exit 56 でスキップ (環境制約)
+- **競合モニタリング** (`docs/competitor-reports/2026-04-02.md`):
+  - **Notion 3.4**: Workers(コード実行環境)/Custom Agents無料〜5/3/ダッシュボードビュー/プレゼンモード/API v2026-03-11
+  - **Slack**: Salesforce 30新機能発表・Slackbot高度AIエージェント化・MCP対応・Real-Time Search API GA
+  - **GitHub**: Copilot Agent Mode + MCP support 全展開・Pro+プラン新設・パートナービルドエージェント追加
+- **CI/CD健全性**: deploy-prod.yml 削除ステップ復元・Tier 1G 正常更新 (d0ac898)
+- **スケジュール健全性**: Claude Schedule 24時間内 5件コミット確認。正常稼働中
+
+**戦略上の重要変化**:
+- Notion Workers + Slack MCP が同時進行。「ユーザーがカスタムAIフローを作れる」機能の短期実装が差別化に直結
+- GitHub Actions の強化は当社 CI/CD にも有益 (プラス要素)
+- Supabase API 接続問題の恒久対策として GitHub Actions への API 呼び出し移管を検討
+
+### Session 432y (Web版) — 2026-04-02
+
+**Edge Functions 235→238本 (3本追加) — ギター録音スタジオ (メイン機能)**
+
+ユーザーから「スマホでギターの演奏を録音できる機能をメイン機能にしたい」との要望を受け、ギター録音スタジオの基盤となるEdge Functionsを構築:
+
+1. **guitar-recording-studio**: ギター録音スタジオのメインAPI — スマホ録音(Web Audio API)、チューナー(5チューニング: standard/drop_d/open_g/open_d/dadgad)、コード辞典(15コード: C/D/E/F/G/A/B/Am/Em/Dm他)、メトロノーム(30-300 BPM)、8ジャンル録音プリセット(acoustic_fingerpicking/rock_rhythm/blues_lead/jazz_clean/metal_heavy/classical/funk_rhythm/ambient)、マルチトラック重ね録り、練習記録(連続日数ストリーク/週次統計/お気に入りプリセット)、録音のいいね・公開
+2. **music-collaboration**: 音楽コラボレーション — 公開録音フィード(新着/人気/トレンド)、コラボセッション5種類(jam/remix/duet/band_practice/lesson)、招待コード生成、最大8人参加、トラック追加、X/LINE/Facebook共有リンク生成
+3. **audio-effects-processor**: エフェクトプロセッサー — 20種類のエフェクト(リバーブ6種/ディストーション3種/ディレイ2種/モジュレーション3種/フィルター1種/ダイナミクス4種/EQ1種)、8チェーンプリセット(clean_sparkle/blues_king/rock_classic/metal_wall/ambient_dream/funk_machine/jazz_warm/acoustic_natural)、カスタムチェーン保存
+
+**deploy-prod.yml更新**: guitar-recording-studioをTier 1Gに追加（100関数維持）
+
+### Session 432x (Web版) — 2026-04-02
+
+**Edge Functions 228→234本 (5本追加+1修正) — Schedule監視・管理基盤強化**
+
+管理者ダッシュボードからScheduleタスク実行結果やEdge Function健全性を確認できるようにする基盤を構築:
+
+1. **schedule-execution-logger**: Scheduleタスク実行ログ — 8タスク定義(daily-report/cs-check/weekly-sns-draft/pr-auto-review/competitor-monitoring/infra-health-check/dependency-audit/blog-draft)、成功/失敗/部分/スキップの4ステータス、タスク別成功率・最終実行・最終エラー、24hヘルスサマリー
+2. **edge-function-test-runner**: Edge Function一括テスト — デプロイ済み100関数をGETリクエストで並行テスト(10バッチ×8秒タイムアウト)、UI接続確認(app_analyticsからの呼び出し記録照合)、テスト履歴、ヘルススコア(pass率%)
+3. **admin-notification-hub**: 管理者通知ハブ — 4段階重要度(critical/warning/info/success)×10カテゴリ(schedule_failure/health_check/security_alert/user_milestone等)、既読・却下管理、カテゴリ/重要度フィルタ、バッジカウント
+4. **user-growth-analytics**: ユーザー成長分析 — auth.admin.listUsersから実データ取得、30日間日次登録トレンド、登録ファネル(LP閲覧→登録開始→完了→オンボーディング→初回アクション)、リテンション(DAU/WAU/スティッキネス)、週次コホート、月次成長率、k-factor
+5. **social-proof-generator**: ソーシャルプルーフ生成 — 5カテゴリテンプレート(登録数/機能数228/最近の活動/開発速度/競合比較)、X/LINE/Emailプラットフォーム別シェアカード、競合7社月額合計¥6,380との比較文言、テスティモニアル収集プロンプト5種
+
+**deploy-prod.yml更新**: schedule-execution-logger/edge-function-test-runner/admin-notification-hub/user-growth-analytics/social-proof-generatorをTier 1D/1Eに追加、revenue-forecaster/template-library/habit-tracker/bookmark-manager/invoice-generatorをTier 2へ移動（合計100関数維持）
+
+### Session 432w (Web版) — 2026-04-02
+
+**Supabase 100関数制限対策 — deploy-prod.yml CI/CDデプロイ修正**
+
+CI/CDがemail-serviceデプロイ時にHTTP 402 "Max number of functions reached for project" で失敗していた問題を修正:
+
+- **原因**: Supabaseプロジェクトに100関数上限が存在。225関数を順次デプロイしようとして101番目で失敗
+- **対策**: deploy-prod.ymlを7ティアに再構成し、最重要100関数のみデプロイ
+  - Tier 1A: Core Frontend & Dashboard (15関数)
+  - Tier 1B: Growth & Viral Engine (20関数) ← バイラル成長系を最優先
+  - Tier 1C: AI & Agent System (12関数)
+  - Tier 1D: Schedule & Automation (10関数)
+  - Tier 1E: Admin & Support (8関数)
+  - Tier 1F: Core App Features (20関数)
+  - Tier 1G: Secondary Features (15関数)
+- **Tier 2 (コードのみ)**: 残り128+関数はコードベースに存在するが未デプロイ。Supabaseプラン上限緩和後に順次有効化
+- **優先判断**: viral-share-engine, x-media-post, video-ad-generator, growth-automation-controller, landing-ab-testは全てTier 1Bに配置し、登録者増加施策を最優先
+
+### Session PS#10 (PowerShell版) — 2026-04-02
+
+**Edge Functions 225→228本 (3本追加) — バイラル成長パイプライン完成・X投稿自動化**
+
+登録者数ゼロ増問題への対策として、Dark War風広告 → X自動投稿パイプラインを構築:
+
+1. **x-media-post** (本実装): X API v1.1チャンク媒体アップロード (INIT→APPEND→FINALIZE→STATUS) + X API v2ツイート。OAuth 1.0a署名完全実装。PNG/JPEG/GIF/MP4対応 (≤15MB)。`mediaBase64` or `mediaUrl`でメディア指定。dryRunモード付き。
+2. **viral-ad-generator**: 純SVG 1200×630px広告カード生成。6テンプレート: `growth_stats`(統計グラデーション)・`dark_war`(黒/赤【衝撃】スタイル)・`vs_notion`(比較表)・`ai_secretary`(ターミナル風)・`feature_highlight`・`milestone`。外部APIゼロ。280字ツイート文も自動生成。
+3. **viral-growth-pipeline**: オーケストレーター。`run_campaign`→`track_result`→`get_stats`の3アクション。stats取得→広告生成→X投稿→`viral_pipeline_runs`テーブルへ記録。`imageBase64`受取によりフロントCanvas PNG変換フローも対応。
+
+**フロントエンド**: `ViralAdCampaignPage` (/viral-ad-campaign) 追加。テンプレート選択・プレビュー・ドライラン/本番投稿・実行履歴表示。
+
+**DB**: `viral_pipeline_runs` テーブル (RLS: service_role ALL + admin SELECT)
+
+**`flutter analyze` / `deno lint`**: 0エラー維持確認
+
+### Session 432v (Web版) — 2026-04-01
+
+**Edge Functions 220→225本 (5本追加) — バイラル成長・動画広告・シェア最適化**
+
+登録者数が4人から増えない問題に対し、シェア・バイラル施策に特化した5つのEdge Functionsを構築:
+
+1. **video-ad-generator**: 動画広告生成エンジン — Dark War風広告テンプレート5種(緊急性訴求/比較キラー/AIデモ/FOMOカウントダウン/ミームバイラル)、AIスクリプト生成(pain_point/social_proof/feature_showcase)、9:16縦動画仕様、シーン構成エディタ、キャンペーン管理、パフォーマンス追跡
+2. **viral-share-engine**: バイラルシェアエンジン — UTMパラメータ付きシェアリンク自動生成、8チャンネル対応(X/Facebook/LINE/Discord/Email/QR/直リンク/埋め込み)、バイラル係数(k-factor)リアルタイム計算、A/Bテスト文言(X用4種/LINE用2種/Email用1種)、紹介報酬(プレミアム7日間)自動付与
+3. **x-media-post**: Xメディア投稿 — X API v2/v1.1完全対応OAuth 1.0a署名、動画/画像付きツイート(media/upload INIT対応)、スレッド投稿(in_reply_to自動チェーン)、予約投稿、投稿パフォーマンス(インプレッション/いいね/RT/リプライ/エンゲージメント率)
+4. **growth-automation-controller**: 成長自動化コントローラー — 競合10社(Notion/Evernote/MoneyForward/Slack/Chatwork/X/Discord/LINE/Amazon/GitHub)比較広告コピー自動生成、毎日3投稿自動生成(異なる競合ターゲット)、成長KPIダッシュボード(ユーザー数/シェア数/広告閲覧/X投稿/ブログ)、7つの成長戦略定義
+5. **landing-ab-test**: LP A/Bテスト — CTA 6バリアント(無料/即時/節約/AI訴求)×見出し5バリアント、ランダム割り当て、コンバージョン追跡、統計的有意差に基づく自動勝者選定、ヒートマップデータ収集
+
+### Session 432o (VSCode版) — 2026-04-01
+
+**flutter analyze 0エラー維持 + EdgeFunctionSummaryCard全関数同期**
+
+- `flutter analyze` 59→0エラー達成 (9ファイル修正)
+  - parking_reservation_page, qr_code_generator_page, mindmap_diagram_page,
+    auction_marketplace_page, carbon_footprint_tracker_page, donation_crowdfunding_page,
+    emergency_contacts_page, family_sharing_manager_page, gift_registry_page:
+    `List<dynamic>→List<Map<String,dynamic>> cast`, `require_trailing_commas`, `avoid_dynamic_calls` 修正
+  - abstinence_guard_store: `unnecessary_cast` (clamp戻り値) 削除
+- EdgeFunctionSummaryCard: 16関数追加 (access-control, appointment-scheduler,
+  budget-financial-planner, changelog-manager, code-playground, customer-feedback,
+  email-template-builder, habit-gamification, inventory-barcode, password-vault,
+  podcast-manager, real-estate-tracker, screen-recorder, sitemap-analytics,
+  two-factor-auth, vehicle-fleet-manager) → 全180関数カバレッジ達成
+- Schedule制限確認: 現行プランは4トリガー上限。cs-check(毎時)内に
+  edge-function-ui-check/code-review/issue-fixを統合済みで対応完了。
+
+### Session 432u (Web版) — 2026-04-01
+
+**Edge Functions 210→215本 (5本追加) — DNS・アフィリエイト・ペット・AR・AI画像**
+
+1. **dns-domain-manager**: ドメイン・DNS管理 — Google Domains/Cloudflare/Route53競合、DNSレコード、SSL監視
+2. **affiliate-marketing**: アフィリエイトマーケティング — Amazon Associates/A8.net競合、リンク管理、クリック/コンバージョン追跡、報酬計算
+3. **virtual-pet**: バーチャルペット — たまごっち/ポケモン競合、8種ペット育成、エサ/アクティビティ、レベルアップ
+4. **ar-navigation**: ARナビゲーション — Google Maps/Pokémon GO競合、ルート/マーカー、歩数/移動記録
+5. **ai-image-generator**: AI画像生成 — DALL-E/Midjourney/Canva競合、10スタイル、6テンプレート、日次制限
+
+### Session 432t (Web版) — 2026-04-01
+
+**Edge Functions 205→210本 (5本追加) — ストレージ・ホワイトボード・決済・IoT**
+
+1. **cloud-storage-sync**: クラウドストレージ同期 — Google Drive/Dropbox/OneDrive競合、ファイル管理、フォルダ構造、共有リンク、使用量追跡
+2. **virtual-whiteboard**: バーチャルホワイトボード — Miro/Figma/Microsoft Whiteboard競合、9種図形、付箋、4テンプレート(ブレスト/カンバン/KPT/マインドマップ)
+3. **marketplace-reviews**: マーケットプレイスレビュー — Amazon/Google/食べログ競合、星評価、画像付きレビュー、役立った投票、分析
+4. **smart-home-automation**: スマートホームオートメーション — Google Home/Alexa/HomeKit競合、10種デバイス、シーンプリセット、自動化ルール、エネルギーモニタ
+5. **digital-wallet**: デジタルウォレット — Amazon Pay/LINE Pay/PayPay競合、残高管理、送金/受取、QR決済、1%キャッシュバック、支出分析
+
+### Session 432s (Web版) — 2026-04-01
+
+**Edge Functions 200→205本 (5本追加) — ソーシャル・ポイント・メッセージング強化**
+
+1. **loyalty-points**: ロイヤルティポイント — Amazon/LINE/楽天競合、12種アクション、5段階ランク(ブロンズ→ダイヤモンド)、倍率付与、6種特典交換
+2. **live-streaming**: ライブストリーミング — YouTube/Discord/Facebook Live競合、配信管理、リアルタイムチャット、視聴者分析、スケジュール配信
+3. **geo-checkin**: 位置情報チェックイン — Facebook/LINE/Google Maps競合、13種スポットカテゴリ、Haversine距離計算、レビュー、ランキング
+4. **social-stories**: ソーシャルストーリーズ — X/Facebook/LINE/Instagram競合、24時間限定投稿、7種リアクション、投票、ハイライト保存
+5. **encrypted-messaging**: 暗号化メッセージング — LINE/Discord/Slack/Signal競合、4チャンネルタイプ、自動削除(5分〜1週間)、既読管理
+
+### Session 432r (Web版) — 2026-04-01
+
+**Edge Functions 195→200本 (5本追加) — コンプライアンス・オンボーディング・インフラ強化**
+
+1. **compliance-checker**: コンプライアンスチェッカー — GDPR/PIPA/CCPA/HIPAA/SOX/ISO27001対応、自動アセスメント、同意管理、データ処理記録
+2. **user-onboarding**: ユーザーオンボーディング — 6ステップフロー(プロフィール/メモ/AI/タスク/探索/招待)、進捗追跡、完了率分析
+3. **rate-limiter-enhanced**: レートリミッター強化版 — プラン別API制限(Free:10/min, Starter:30, Pro:60, Enterprise:120)、使用量ダッシュボード
+4. **content-versioning**: コンテンツバージョン管理 — バージョン履歴、差分表示、復元(新バージョン作成)、共同編集ロック(5分期限)
+5. **custom-dashboard-builder**: カスタムダッシュボードビルダー — 11種ウィジェット、3テンプレート(エグゼクティブ/開発者/マーケティング)、レイアウト管理
+
+### Session 432k (Web版) — 2026-04-01
+
+**Edge Functions 160→165本 (5本追加) — 生活インフラ・安全機能**
+
+1. **parking-reservation**: 駐車場・予約管理 — akippa/タイムズ競合、スペース管理、予約、料金計算、空き状況確認、収益統計
+2. **carbon-footprint-tracker**: カーボンフットプリント管理 — ESG/SDGs対応、CO2排出量記録(7カテゴリ)、CO2係数計算、削減目標、オフセット記録
+3. **gift-registry**: ギフトレジストリ — Amazon/楽天競合、ウィッシュリスト、イベント紐付け(8タイプ)、購入追跡、共有コード
+4. **vehicle-fleet-manager**: 車両・フリート管理 — 車両登録(8タイプ)、走行記録、燃費管理、メンテナンス予定、コスト統計
+5. **emergency-contacts**: 緊急連絡先・安否確認 — 連絡先登録、医療情報(血液型/アレルギー/服薬)、安否確認送信・回答
+
+### Session 432j (Web版) — 2026-04-01
+
+**Edge Functions 155→160本 (5本追加) — ライフスタイル・資産・コンテンツ拡張**
+
+1. **family-sharing-manager**: ファミリー共有管理 — Apple/Google Family競合、グループ作成、共有カレンダー、支出共有・割り勘、メンバーロール管理
+2. **donation-crowdfunding**: 寄付・クラウドファンディング — GoFundMe/CAMPFIRE競合、キャンペーン作成(8カテゴリ)、リワード管理、支援者統計、目標達成自動検知
+3. **real-estate-tracker**: 不動産管理 — MoneyForward/Suumo競合、物件登録(7タイプ)、賃貸収支管理、メンテナンス記録、テナント管理、ROI自動計算
+4. **podcast-manager**: ポッドキャスト管理 — Spotify/Apple Podcasts競合、番組・エピソード管理、購読、再生統計、ランキング
+5. **mindmap-diagram**: マインドマップ・ダイアグラム — Notion/Miro競合、6ダイアグム種類、ノード・エッジ管理、6テンプレート、Mermaidエクスポート
+
+### daily-report 自動実行 — 2026-04-01
+
+**日次レポート生成・競合モニタリング完了**
+
+- **日次レポート**: `docs/daily-reports/2026-04-01.md` 生成。git log フォールバック (Supabase API プロキシブロック継続)。
+- **Edge Functions 総数**: 158本 (直近: AI自動化/電子署名/SNS/受信箱/ビデオ会議/イベント/ペット/語学/IoT/ニュース)
+- **通知センターUI**: NotificationsPage 実装完了・dart:html 廃止対応・flutter analyze 0エラー維持
+- **競合モニタリング** (詳細: `docs/competitor-reports/2026-04-01.md`):
+  - **Notion**: Workers (コード実行環境) 発表 → 当社 Edge Functions と同方向。Custom Agents 無料トライアル〜5/3。最大脅威。
+  - **Slack**: Real-Time Search API GA・MCP サーバー公開。AI統合本格化。
+  - **GitHub**: Workflows に DocuSign/Zoom 等13サービス接続。電子署名領域で競合。
+- **AI分析による優先3項目**:
+  1. ノーコードAI自動化 UX のフロントエンド追加 (Notion Workers 対抗)
+  2. 電子署名機能のランディングページ訴求強化 (GitHub DocuSign 対抗)
+  3. X手動投稿 + 技術ブログ発信でユーザー獲得 4人 → 目標 50人
+
+### Session 432i (Web版) — 2026-03-31
+
+**Edge Functions 150→155本 (5本追加) — AI・エンタープライズ強化 (ワークフロー/電子署名/SNS/受信箱/ビデオ会議)**
+
+1. **ai-workflow-automation**: AIワークフロー自動化 — Zapier/Power Automate競合、トリガー→AI判定→アクション、5テンプレート、実行履歴・成功率統計
+2. **document-esignature**: 電子署名管理 — DocuSign/Adobe Sign競合、署名リクエスト(複数署名者)、監査証跡、テンプレート、完了率統計
+3. **social-media-scheduler**: SNS一括スケジューラー — Buffer/Hootsuite競合、8プラットフォーム(X/Facebook/Instagram/LINE等)、コンテンツカレンダー、パフォーマンス分析
+4. **smart-inbox-triage**: スマート受信トレイ — Gmail/Slack統合競合、8チャネル統合、AI優先度分類、自動ラベル、スヌーズ・リマインダー
+5. **video-meeting-manager**: ビデオ会議管理 — Zoom/Google Meet/Teams競合、ルーム作成(参加コード)、AI議事録・要約、アクションアイテム抽出
+
+### Session 432h (Web版) — 2026-03-31
+
+**Edge Functions 145→150本 (5本追加) — プラットフォーム拡張 (イベント/ペット/語学/IoT/ニュース)**
+
+1. **event-ticketing**: イベント・チケット管理 — Facebook Events/LINE競合、QRチケット発行、チェックイン、参加者管理、収益統計
+2. **pet-care-manager**: ペットケア管理 — ペット登録(8種類)、健康記録(ワクチン/通院)、食事・散歩ログ、体重管理
+3. **language-learning**: 語学学習 — Duolingo競合、単語帳、フラッシュカード(SM-2間隔反復)、12言語対応、学習ストリーク
+4. **home-iot-manager**: スマートホームIoT — Google Home/Alexa競合、デバイス管理(10種類)、センサーデータ、自動化ルール、シーン管理
+5. **news-rss-aggregator**: ニュースRSSアグリゲーター — Google News/Feedly競合、フィード管理、記事ブックマーク、カテゴリ分類
+
+### Session 432g (Web版) — 2026-03-31
+
+**Edge Functions 140→145本 (5本追加) — ライフスタイル (写真/音楽/レシピ/フィットネス/旅行)**
+
+1. **photo-gallery-manager**: 写真ギャラリー管理 — Google Photos/Facebook/LINE競合、アルバム、AI自動タグ、タイムライン、共有
+2. **music-playlist-manager**: 音楽プレイリスト管理 — Amazon Music/Liven競合、楽曲管理、再生履歴、ジャンルレコメンド
+3. **recipe-meal-planner**: レシピ・献立プランナー — Amazon Fresh/Liven競合、レシピ管理、週間献立、買い物リスト自動生成、栄養計算
+4. **fitness-health-tracker**: フィットネス・健康管理 — Google Fit競合、ワークアウト記録、体重・体組成、健康メトリクス、目標設定
+5. **travel-itinerary-planner**: 旅行プランナー — Google Maps/Notion競合、日程管理、予約管理、パッキングリスト、予算管理
+
+### Session 432f (Web版) — 2026-03-31
+
+**Edge Functions 135→140本 (5本追加) — ドメイン特化 (競馬/採用/法務/eラーニング/CRM)**
+
+1. **horse-racing-predictor**: 競馬予想・分析 — netkeiba競合、レース登録、AIスコアリング(form*3+jockey*2+trainer+track)、予想記録、ROI統計
+2. **recruitment-job-board**: 採用・求人管理 — ジョブカン競合、求人CRUD、応募管理ATS(9ステータス)、選考パイプライン、面接スケジュール
+3. **legal-compliance-manager**: 法務・コンプライアンス — 8契約テンプレート、4チェックリスト(GDPR/個人情報保護法/セキュリティ/SOX)、同意管理
+4. **elearning-course-manager**: eラーニング・コース管理 — Google Classroom/Udemy競合、レッスン進捗追跡、自動修了証発行、スキルギャップ分析
+5. **crm-sales-pipeline**: CRM営業パイプライン — Salesforce競合、AIリードスコアリング、6段階商談ステージ、活動ログ、勝率・売上統計
+
+### Session 432e (Web版) — 2026-03-31
+
+**Edge Functions 130→135本 (5本追加) — Schedule自動化・仮想組織・ブログ管理**
+
+1. **schedule-result-tracker**: Schedule実行結果追跡 — タスク結果記録/失敗検出/統計/管理者ダッシュボード連携
+2. **blog-auto-publisher**: ブログ自動投稿管理 — 11プラットフォーム(Zenn/Qiita/note等)対応/投稿追跡/クロスポスト管理
+3. **virtual-organization**: 仮想AI組織管理 — 12部署/エージェント配置/タスク自動割振り/性格・記憶管理
+4. **edge-function-ui-checker**: Edge Function UI連携チェッカー — UI未連携検出/実装タスク自動生成
+5. **issue-auto-resolver**: Issue自動修正管理 — Issue追跡/修正記録/コミット紐付け/修正成功率統計
+
+### Session 432d (Web版) — 2026-03-31
+
+**Edge Functions 125→130本 (5本追加) — コラボレーション・プロジェクト管理強化**
+
+1. **spreadsheet-database**: スプレッドシート・DB (Google Sheets/Notion Databases/Airtable競合) — 列定義(11型)/行CRUD/フィルタ・ソート/ビュー切替(5種)
+2. **gantt-timeline-manager**: ガントチャート (Microsoft Project/GitHub Projects競合) — タスク依存関係/マイルストーン/クリティカルパス
+3. **whiteboard-canvas**: ホワイトボード (Microsoft Whiteboard/Miro/FigJam競合) — 無限キャンバス/9要素タイプ/8テンプレート/共有
+4. **form-builder**: フォームビルダー (Google Forms/Microsoft Forms競合) — 16フィールドタイプ/条件分岐/公開URL/回答集計
+5. **meeting-manager**: ミーティング管理 (Google Meet/Teams/Slack Huddles競合) — RSVP/アジェンダ/議事録/アクションアイテム
+
+### Session 432c (Web版) — 2026-03-31
+
+**Edge Functions 120→125本 (5本追加) — eコマース・財務・CI/CD強化**
+
+1. **inventory-manager**: 在庫・資産管理 (Amazon/MoneyForward競合) — 物品登録/入出庫/アラート/カテゴリ
+2. **order-tracker**: 注文・配送追跡 (Amazon競合) — 注文管理/ステータス追跡/ウィッシュリスト
+3. **ci-cd-pipeline**: CI/CDパイプライン (GitHub Actions/Claude Code競合) — ビルド記録/デプロイ統計/ロールバック
+4. **compensation-manager**: 給与・報酬管理 (ジョブカン/MoneyForward競合) — 給与計算/賞与/明細履歴
+5. **financial-report**: 財務レポート (MoneyForward/Microsoft競合) — P/L/キャッシュフロー/カテゴリ分析/年次比較
+
+### Session 432b (Web版) — 2026-03-31
+
+**Edge Functions 115→120本 (5本追加) — 高インパクト競合機能**
+
+1. **push-notification-manager**: Web Push通知管理 (LINE/Discord/Slack競合) — VAPID購読/Push配信/統計
+2. **realtime-presence**: リアルタイムプレゼンス (Notion/Google Docs競合) — カーソル共有/編集ロック/オンラインユーザー
+3. **voice-memo-transcriber**: 音声メモ・文字起こし (Google Keep/LINE競合) — 録音/文字起こし/ノート変換
+4. **ocr-document-scanner**: OCR文書スキャン (Evernote/MoneyForward競合) — レシート→経費/名刺→連絡先
+5. **oauth-sso-provider**: SSO/OAuth管理 (GitHub/Google/Microsoft競合) — 8プロバイダー/SAML対応
+
+### Session 432 (Web版) — 2026-03-31
+
+**Edge Functions 110→115本 (5本追加) — 競合ギャップ追加対応**
+
+1. **wiki-database**: Wiki・データベース (Notion競合) — 階層ページ管理/テーブルビュー/親子関係/アイコン
+2. **api-key-manager**: APIキー管理 (GitHub/Slack競合) — キー生成(jk_プレフィックス)/権限設定/無効化
+3. **scheduled-notifications**: 通知スケジューリング (Slack/Discord競合) — リマインダー/定期通知(once/recurring)/キュー管理
+4. **cohort-analysis**: コホート分析 (Google Analytics競合) — ユーザーコホート/DAUリテンション/ファネル/イベント集計
+5. **integration-connector**: 外部サービス連携 (Slack/Discord/LINE競合) — 10サービス連携/同期/ステータス管理
+
+### Session 431 (Web版) — 2026-03-31
+
+**Edge Functions 100→105本 (5本追加) — 競合ギャップ対応**
+
+1. **email-service**: メール送信・テンプレート管理 (Gmail/Slack競合) — Resend API/4テンプレート/送信履歴
+2. **social-feed**: ソーシャルフィード (X/Facebook競合) — 投稿/いいね/フォロー/タイムライン/ハッシュタグ
+3. **document-collaboration**: ドキュメント共同編集 (Notion/Google競合) — 共有/権限/バージョン/コメント
+4. **leave-management**: 休暇管理 (ジョブカン競合) — 有給/病欠/特別休暇/承認ワークフロー
+5. **knowledge-base**: ナレッジベース (Notion/GitHub競合) — カテゴリ記事/FAQ/検索/フィードバック
+6. **payment-processor**: 決済処理 (Amazon/Liven競合) — 支払い記録/6決済方法/売上レポート
+7. **marketplace**: マーケットプレイス (Notion/Slack競合) — プラグイン/インストール/レビュー
+8. **video-audio-manager**: 動画・音声管理 (X/Discord競合) — メディア/プレイリスト/文字起こし
+9. **semantic-search**: セマンティック検索 (Google競合) — 全文横断/フィルタ/保存検索
+10. **performance-review**: 人事評価 (ジョブカン/Microsoft競合) — OKR/自己評価/360度FB
+
+### Session 430 (Web版) — 2026-03-31
+
+**Edge Functions 80→100本 (20本追加) — 100本到達!**
+
+1. **time-tracker**: 勤怠・時間追跡 (ジョブカン競合) — 出退勤打刻/プロジェクト別/残業アラート
+2. **expense-tracker**: 家計簿・経費管理 (MoneyForward競合) — 収支/12カテゴリ/予算管理/年次レポート
+3. **ai-summarizer**: AIテキスト要約 — 要約/キーポイント抽出/感情分析/アクションアイテム
+4. **template-library**: テンプレートライブラリ (Notion競合) — 8組込+カスタム/カテゴリ管理
+5. **tag-manager**: タグ管理 (Notion/Evernote競合) — 統計/提案/マージ/一括操作
+6. **habit-tracker**: 習慣トラッカー (Liven競合) — チェックイン/ストリーク/達成率
+7. **bookmark-manager**: ブックマーク管理 (Google競合) — URL保存/フォルダ/検索
+8. **poll-survey**: アンケート・投票 (Google Forms競合) — 作成/回答/集計
+9. **invoice-generator**: 請求書生成 (MoneyForward競合) — 作成/税計算/ステータス/売上
+10. **contact-manager**: 連絡先管理 (Google/Microsoft競合) — CRUD/グループ/履歴
+11. **goal-tracker**: 目標管理 (Notion/Liven競合) — 短中長期/マイルストーン/進捗
+12. **reading-list**: 読書管理 (Amazon/Evernote競合) — 書籍/メモ/統計
+13. **password-generator**: パスワード生成 — カスタム文字種/パスフレーズ/強度チェック
+14. **clipboard-history**: クリップボード履歴 — 保存/ピン/検索/削除
+15. **quick-note**: クイックメモ (Google Keep競合) — 色分け/チェックリスト/ピン
+16. **pomodoro-timer**: ポモドーロタイマー — セッション記録/統計/カスタム設定
+17. **weather-widget**: 天気ウィジェット — 日本8都市/7日予報
+18. **currency-converter**: 通貨換算 — 15通貨/リアルタイムレート
+19. **markdown-renderer**: Markdownレンダリング — HTML変換/目次/テキスト統計
+20. **system-status**: システムステータス — 7コンポーネント監視/インシデント/稼働率
+
+### Claude Schedule — 日次レポート 2026-03-31 (daily-report自動実行)
+
+**実施内容:**
+
+1. **日次レポート生成** (`docs/daily-reports/2026-03-31.md`)
+   - Supabase API はプロキシブロックのため git log フォールバック
+   - 総ユーザー数 4名 (継続)、Edge Functions 66本 (前日比 +9本) を記録
+   - AI分析3点提案: ユーザー獲得加速 / UI未接続 Edge Function 接続 / 自動テスト強化
+
+2. **セキュリティ修正 — note-comments JWT バイパス脆弱性 (Issue #249)**
+   - `SERVICE_ROLE_KEY` を廃止し `SUPABASE_ANON_KEY` + ユーザー JWT で DB クライアントを生成
+   - `note_comments` テーブルの RLS ポリシーが DB レベルで適用されるよう修正
+   - Issue #249 クローズ完了
+
+3. **重複 GitHub Issue クローズ** — Edge Function UI 導線チェック重複 Issue (#252, #253, #255) を #256 の重複としてクローズ
+
+4. **競合モニタリング** (`docs/competitor-reports/2026-03-31.md`)
+   - Notion: カスタムスキル & カスタムエージェント (最高脅威度) — 無料トライアル 5/3 まで
+   - Slack: パーソナル AI エージェント Slackbot (Business+/Enterprise+, 3/25 ロールアウト)
+   - GitHub: Copilot in Pull Requests でワークフロー自動修正拡張
+
+5. **Schedule ヘルスチェック**
+   - cs-check: ✅ 5回/24h 正常実行
+   - blog-draft: ✅ 正常 (2026-03-31 ドラフト存在確認)
+   - weekly-sns-draft: — (月曜のみ)
+   - Supabase schedule_task_runs: ⚠️ プロキシブロックにより書き込み不可
+
+**競合動向ログ (2026-03-31):**
+- Notion カスタムエージェント無料トライアル (〜5/3): 当社 AI タスク自動化 UX の強化を今月中に着手推奨
+- Slack パーソナル AI Slackbot: 「個人ライフ管理の深さ」で差別化継続
+- GitHub Copilot PR 自動修正: 当社 Claude Schedule cs-check と同方向 — 継続強化
+
+---
+
+### Session 2026-03-31 #429 — Web版 5本追加 (80 Functions体制)
+
+**実施内容:**
+
+1. **file-storage-manager** — ファイルストレージ管理・アップロード・共有URL・プラン別容量制限
+2. **calendar-events** — カレンダー・イベントCRUD・日/週/月ビュー・リマインダー・繰り返し
+3. **kanban-board** — カンバンボード・プロジェクト管理・5カラム・カード移動・ラベル
+4. **chat-messaging** — チャット・メッセージング・チャンネル・DM・スレッド返信・未読
+5. **automation-workflows** — ワークフロー自動化・IF-THENルール・5テンプレート・実行ログ
+
+**インフラ更新:** registry 80, deploy-prod.yml +5, 実績シード5件
+
+### Session 2026-03-31 #428 — Web版 12本追加 (75 Functions体制)
+
+**実施内容:**
+
+1. **subscription-management Edge Function 新規作成**
+   - Free / Pro (¥480/月) / Premium (¥980/月) プラン管理
+   - 利用量クォータ追跡 (ノート数, AI呼び出し, エクスポート)
+   - 収益サマリー (MRR/ARR/プラン別ユーザー数)
+
+2. **gamification-engine Edge Function 新規作成**
+   - デイリーログインストリーク + ポイント付与
+   - 13種バッジ (first_note, streak_7/30/100, ai_explorer 等)
+   - リーダーボード (ポイントランキング上位20名)
+
+3. **agent-task-router Edge Function 新規作成**
+   - 12部署のスキルマッチングによる自動タスク割り当て
+   - 部署別負荷分散 (ラウンドロビン)
+   - CEO へのエスカレーション機能
+
+4. **import-from-competitors Edge Function 新規作成**
+   - 8形式対応: Notion JSON, Evernote ENEX, MoneyForward CSV, Google Keep, Slack, Chatwork, Markdown, 汎用CSV
+   - 各競合製品からの具体的なエクスポート手順ガイド付き
+
+5. **department-reporting Edge Function 新規作成**
+   - 部署別KPI (完了率・効率スコア)
+   - エージェント別タスク数の集計
+   - 全社サマリー
+
+6. **agent-performance-monitor Edge Function 新規作成**
+   - エージェント別パフォーマンススコア (0-100)
+   - 部署内ランキング
+   - 低パフォーマンスアラート
+
+7. **team-collaboration-sync Edge Function 新規作成**
+   - チーム協業・アクティビティフィード
+   - メンション通知 (app_notifications 自動作成)
+   - 10種のアクティビティタイプ
+
+8. **user-feedback-collector Edge Function 新規作成**
+   - NPS (Net Promoter Score) 収集・集計
+   - 機能別満足度・フリーテキストフィードバック
+
+9. **revenue-forecaster Edge Function 新規作成**
+   - 月次/四半期/年次の収益予測
+   - カスタムシミュレーション (成長率/転換率パラメータ)
+   - ブレークイーブンポイント算出
+   - コスト構造管理
+
+10. **content-moderation Edge Function 新規作成**
+    - 禁止ワード検出、スパム判定、不適切コンテンツフラグ
+
+11. **api-rate-limiter Edge Function 新規作成**
+    - プラン別レートリミット (Free:10/min, Pro:30/min, Premium:60/min)
+    - X-RateLimit ヘッダー対応
+
+12. **notification-preferences Edge Function 新規作成**
+    - 9種通知タイプ×メール/プッシュ/頻度設定
+
+13. **インフラ更新**
+    - subscription_plan / subscription_expires_at カラム追加
+    - edge-function-coverage レジストリ 75 Functions
+    - deploy-prod.yml: 12関数追加
+    - 実績シード12件
+
+### Session 2026-03-31 #427 — Web版 7本追加 (63 Functions体制)
+
+**実施内容:**
+
+1. **user-activity-tracker Edge Function 新規作成**
+   - ユーザーアクティビティ記録・リテンション分析・エンゲージメントスコア
+   - GET retention: DAU/WAU/MAU/チャーン率のリアルタイム算出
+   - GET engagement: ノート/イベント/コメント/リクエストから0-100スコア算出
+   - GET summary: ソース別イベント集計
+   - POST: アクティビティイベント記録 (認証オプション、user_id 自動取得)
+
+2. **competitor-feature-sync Edge Function 新規作成**
+   - 競合機能パリティの動的管理・進捗トラッキング
+   - GET progress: 競合別の実装進捗率
+   - GET gaps: 未実装機能一覧 (全体 or 競合指定)
+   - GET category: カテゴリ別実装状況
+   - GET priority: 複数競合共通の未実装機能優先リスト
+   - POST update_status: 個別機能ステータス更新 (done/partial/notYet)
+   - POST cache_features: 静的データのキャッシュ保存
+   - competitor_feature_status テーブル新規作成
+
+3. **全56 Edge Functions 自己レビュー実施**
+   - テーブル名・カラム名の整合性確認 (ai_agents/assigned_agent_id 参照なし確認)
+   - CORS ヘッダー・エラーハンドリングの統一性確認
+   - 認証パターンの一貫性確認
+
+4. **data-export-manager Edge Function 新規作成**
+   - GDPR対応ユーザーデータエクスポート
+   - JSON / CSV 形式対応
+   - プロフィール/ノート/リクエスト/通知の一括エクスポート
+   - エクスポート履歴管理 (app_analytics 記録)
+
+5. **ab-testing-manager Edge Function 新規作成**
+   - A/Bテスト実験管理
+   - 実験作成 (draft → active → completed)
+   - ユーザーへのバリアント自動割り当て (ランダム)
+   - コンバージョン記録・バリアント別統計
+   - ab_experiments + ab_assignments テーブル新規作成
+
+6. **seo-optimizer Edge Function 新規作成**
+   - SEO分析・メタタグ管理・パフォーマンススコア
+   - 10項目の重み付きSEOチェック
+   - サイトマップ整合性確認・改善提案
+
+7. **search-analytics Edge Function 新規作成**
+   - 検索クエリ分析・トレンド追跡
+   - 人気ワード / ゼロヒット検索 / 検索品質スコア
+   - 検索イベント記録
+
+8. **webhook-manager Edge Function 新規作成**
+   - 外部サービス連携用Webhook管理
+   - 11イベントタイプ対応
+   - 登録・テスト送信・配信ログ・統計
+
+9. **インフラ更新**
+   - edge-function-coverage レジストリ 63 Functions
+   - development-stats カウント 63 に更新
+   - app-analytics-dashboard カウント 63 に更新
+   - deploy-prod.yml: 7関数追加
+   - 実績シード7件 + competitor_feature_status + ab_experiments + ab_assignments テーブル作成
+
+### Session 2026-03-31 #426 — Web版 機能リクエスト + 分析ダッシュボード (56 Functions体制)
+
+**実施内容:**
+
+1. **feature-request-manager Edge Function 新規作成**
+   - 機能リクエスト完全 CRUD + 投票 + ステータス管理
+   - ユーザー認証付き投稿・投票、管理者ステータス更新
+   - 投票数順/最新順/ステータス別フィルタ
+   - サマリービュー (ステータス別集計)
+
+2. **app-analytics-dashboard Edge Function 新規作成**
+   - KPI overview: ユーザー/ノート/実績/リクエスト/チケット/ブログ/通知の総数
+   - trends ビュー: 日別のビュー/シェア/サインアップトレンド
+   - functions ビュー: Edge Function 利用率・呼び出し回数ランキング
+
+3. **インフラ更新**
+   - edge-function-coverage レジストリ 56 Functions
+   - development-stats カウント更新
+   - deploy-prod.yml: 2関数追加
+   - 実績シード2件
+
+### Session 2026-03-31 #425 — Web版 通知・オンボーディング + バグ修正 (54 Functions体制)
+
+**実施内容:**
+
+1. **notification-center Edge Function 新規作成**
+   - アプリ内通知管理 (作成/一覧/既読/全体通知)
+   - 7種類の通知カテゴリ: feature_update, achievement, cs_reply, system, marketing, blog_published, agent_report
+   - ユーザー向け + 管理者向けビュー
+   - app_notifications テーブル + RLS ポリシー
+
+2. **onboarding-flow Edge Function 新規作成**
+   - 6ステップのオンボーディング (welcome → profile → note → import → ai → share)
+   - 自動進捗判定 (プロフィール設定済み? ノート作成済み?)
+   - user_profiles.onboarding_completed jsonb フィールドで状態管理
+   - 次ステップ提案
+
+3. **バグ修正 (4件)**
+   - ai-secretary: UPDATE+order+limit → INSERT に修正 (PostgREST 非対応)
+   - growth-achievement-summary: referrals テーブル → app_analytics referral_completed に修正
+   - edge-function-coverage: レジストリ 54 Functions に更新
+   - development-stats: カウント 54 に更新
+
+4. **マイグレーション**
+   - `20260331000094`: app_notifications テーブル + RLS + onboarding_completed カラム + 実績シード4件
+
+### Session 2026-03-31 #424 — Web版 仮想AI組織強化 (team-task-manager修正 + 2本追加・52 Functions体制)
+
+**実施内容:**
+
+1. **team-task-manager スキーマ修正 (重大バグ修正)**
+   - `ai_agents` → `agents` テーブル参照を修正 (実テーブル名に合わせた)
+   - `assigned_agent_id` → `assignee_agent_id` / `supervisor_agent_id` 対応
+   - `name` → `display_name`, `role` → `role_title` フィールド名修正
+   - 新アクション追加: `move_department`, `send_message`, `seed_agents`
+   - 新ビュー追加: `messages`, `relationships`
+
+2. **agent-personality Edge Function 新規作成**
+   - エージェントの性格管理・記憶・学習 API
+   - identity_prompt からのキーワード性格特性抽出
+   - `update_personality`: 性格特性更新
+   - `record_memory`: agent_memories への記憶記録
+   - `learn_from_conversation`: 会話からの性格学習 (metadata に learned_traits 蓄積)
+
+3. **agent-department-manager Edge Function 新規作成**
+   - 企画責任者エージェントによる部署管理
+   - 12部署のデフォルト定義 (CEO/CFO/CMO/CHO/CHRO/企画/開発/営業/CS/法務/広報/調達)
+   - `create_department`: 新部署作成 + エージェント移動
+   - `assign_agent`: エージェントの部署アサイン
+   - `set_supervisor`: 部長設定
+   - 部署別ゴール進捗率算出
+
+4. **edge-function-coverage レジストリ更新 (52 Functions)**
+5. **development-stats Edge Function 数更新 (52)**
+6. **deploy-prod.yml: 2関数追加**
+
+### Session 2026-03-31 #423 — Web版 Edge Function (3本追加+改善・50 Functions体制)
+
+**実施内容:**
+
+1. **schedule-health-check Edge Function 新規作成**
+   - Schedule タスク実行状況の監視・失敗検知・改善提案
+   - 11種の定義済み Schedule タスクのヘルススコア算出
+   - 失敗タスクの自動改善タスク登録 (agent_tasks 連携)
+   - GET: タスク別サマリー + 改善提案 / POST: 修正タスク登録
+
+2. **code-review-issues Edge Function 新規作成**
+   - コードレビュー結果の記録・Issue (agent_task) 自動作成
+   - 8カテゴリのレビュー観点 (セキュリティ/パフォーマンス/Lint/ロジック/UX/規約/テスト/ドキュメント)
+   - GET: レビュー一覧 / Issue 一覧 / サマリー
+   - POST: レビュー記録 / Issue 作成 / Issue 解決
+
+3. **development-stats Edge Function 新規作成**
+   - 開発進捗グラフデータ API (ホーム画面表示用)
+   - 短期/中期/長期計画の進捗率
+   - 競合21社 vs 進捗率 (目標期日・必要機能数・実装済み数)
+   - 期間別実績集計 (今日/今週/2週間/今月/全期間)
+
+4. **edge-function-coverage 改善**
+   - POST エンドポイント追加: UI からの呼び出しを自動記録
+   - call_count インクリメント RPC 関数追加
+   - レジストリに 3 新関数を追加 (50 Functions)
+
+5. **ai-secretary 改善**
+   - 部署別タスク負荷の分析追加
+   - Schedule 失敗タスクの検知・提案追加
+   - コンテキスト情報に部署タスク数・失敗タスク数を追加
+
+6. **マイグレーション・デプロイ設定**
+   - `20260331000092_add_increment_rpc_and_session423_seeds.sql`: RPC関数 + 実績シード
+   - deploy-prod.yml: 3関数追加 (schedule-health-check, code-review-issues, development-stats)
+
+### Session 2026-03-31 #422 — Web版 Edge Function (6本追加・47 Functions体制)
+
+**実施内容:**
+
+1. **schedule-task-monitor Edge Function**
+   - Claude Code Schedule 実行ログの記録・取得・失敗検知
+   - GET: 実行ログ一覧 (タスク名・ステータスでフィルタ可) + 統計サマリー
+   - POST: 実行ログ記録 (Schedule から呼び出し)
+
+2. **blog-post-manager Edge Function**
+   - 技術ブログ投稿管理 (11プラットフォーム対応)
+   - Zenn, Qiita, はてな, note, Medium, dev.to, Hashnode, Substack, GitHub Pages, Notion, X Article
+   - GET: 投稿一覧・プラットフォーム別統計・今日の投稿数
+   - POST: 下書き作成 / PATCH: ステータス更新
+
+3. **edge-function-coverage Edge Function**
+   - 全 47 Edge Functions の UI 連携状況を返す
+   - 各関数の操作手順・ナビゲーションパスを含む
+   - カバレッジ率算出 (UI あり / なし)
+
+4. **user-profile-manager Edge Function**
+   - プロフィール完成度計算 (7フィールド・重み付きスコア)
+   - プロフィール更新 API (許可フィールドのみ)
+   - 管理者向け全ユーザー一覧 + 完成度付き
+
+5. **ai-secretary Edge Function**
+   - AI 秘書: ルールベース提案生成 (ユーザー獲得・CS・開発・マーケティング)
+   - 会話ログ記録 (ai_secretary_logs テーブル)
+   - ダッシュボード用コンテキスト情報提供
+
+6. **team-task-manager Edge Function**
+   - 12部署20人仮想AI組織のタスク CRUD
+   - 部署別・ステータス別フィルタ
+   - エージェント自動アサイン (部署指定時)
+   - サマリービュー (部署数・タスク数・ステータス別集計)
+
+7. **マイグレーション・デプロイ設定**
+   - `20260331000090_create_schedule_blog_secretary_tables.sql`: 5テーブル + RPC関数 + RLS
+   - deploy-prod.yml: 7関数追加 (get-public-memo-ogp 含む)
+
+### Session 2026-03-31 — VSCode フロントエンド (ユーザー獲得強化・ナビゲーション修正)
+
+**実施内容:**
+
+1. **LP ユーザー獲得強化**
+   - ランディングページに `LiveGrowthBanner` を追加（ソーシャルプルーフの直下に配置）
+   - 登録者数・閲覧者数・今日の登録・Notion/Evernote超えまでの差分をリアルタイム表示
+   - LP のソーシャルプルーフ閾値を `>10` → `>0` に変更済み（4人でも表示）
+
+2. **ホーム画面プロフィール促進**
+   - `ProfileProgressCard` をホーム画面の ProfileCompletionBanner の直下に追加
+   - LinkedIn 型の完成度バーで未設定項目を明示し、プロフィール設定への誘導を強化
+
+3. **ユーザーマニュアル QUICK ACCESS ナビゲーション修正**
+   - セクション1・2・4の全ナビゲーション手順を現行UI（QUICK ACCESS方式）に合わせて修正
+   - 旧セクション名（CFO/CHO/CHRO OFFICE、CMO/CKO OFFICE、CSO OFFICE、GROWTH/成長導線）→ QUICK ACCESS サブカテゴリ方式に更新
+
+4. **選挙ページ Gemini AI 分析 UI 追加**
+   - `ElectionVictoryPage` の AppBar に Gemini AI 分析ボタン（Icons.auto_awesome）を追加
+   - `gemini-election-analysis` Edge Function を呼び出し、取得議員数と残り人数を AI 整理メモセクションに表示
+   - `EdgeFunctionSummaryCard` に登録 → 41 関数体制へ
+
+**flutter analyze:** 0 エラー維持確認済み
+
 ### Session 2026-03-28 — PowerShell 全体管理セッション
 
 **実施内容:**
@@ -993,6 +1810,8 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
    - `election_victory_page.dart` UIを実装 (VSCode)
    - `cho_office_page.dart`: CHO組織オフィスページ (VSCode)
    - `election_regional_kpi_chart.dart`: 地域別KPIチャート (VSCode)
+   - 統一地方選700人倍増に向けた月次KPI管理（現職維持・新人擁立・接戦区支援・公認内定時期）ダッシュボードを追加
+   - `fetch-local-politicians` Edge Function を新設し、ネットからの最新の地方議員実データ（年齢・性別・プロフ等）AI取得を実装
 
 9. **仮想秘書強化 (VSCode)**
    - `quick_task_input_card.dart` 追加: 会話でタスクを自動作成

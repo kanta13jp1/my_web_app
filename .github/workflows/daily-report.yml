@@ -100,7 +100,7 @@ jobs:
         id: report
         run: |
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
-          DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d %H:%M JST)
+          DATETIME=$(TZ=Asia/Tokyo date +"%Y-%m-%d %H:%M JST")
           FILEPATH="docs/daily-reports/${DATE}.md"
           mkdir -p docs/daily-reports
 

@@ -8,7 +8,9 @@ import '../models/local_election_reality.dart';
 
 class LocalElectionRealityService {
   static const String _snapshotStorageKey =
-      'local_election_reality_snapshot_v2';
+      'local_election_reality_snapshot_v3';
+  static const String _historyStorageKey =
+      'local_election_reality_snapshot_history_v1';
   static const String _memberProfileStoragePrefix =
       'local_election_member_profile_v1_';
 
@@ -59,6 +61,38 @@ class LocalElectionRealityService {
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
     await store.setString(_snapshotStorageKey, jsonEncode(snapshot.toJson()));
+    await _cacheHistoryPoint(snapshot, prefs: store);
+  }
+
+  Future<List<LocalElectionRealityHistoryPoint>> loadSnapshotHistory({
+    SharedPreferences? prefs,
+  }) async {
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final raw = store.getString(_historyStorageKey);
+    if (raw == null || raw.trim().isEmpty) {
+      return const <LocalElectionRealityHistoryPoint>[];
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        return const <LocalElectionRealityHistoryPoint>[];
+      }
+      final points = decoded
+          .whereType<Map>()
+          .map(
+            (item) => LocalElectionRealityHistoryPoint.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .where((item) => item.officialCurrentLocalMembers > 0)
+          .toList()
+        ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+      return points;
+    } catch (error) {
+      debugPrint('Local election history parse failed: $error');
+      return const <LocalElectionRealityHistoryPoint>[];
+    }
   }
 
   Future<LocalElectionLegislatorProfile?> loadCachedMemberProfile(
@@ -184,5 +218,46 @@ class LocalElectionRealityService {
 
   String _memberProfileKey(String detailUrl) {
     return '$_memberProfileStoragePrefix${Uri.encodeComponent(detailUrl)}';
+  }
+
+  Future<void> _cacheHistoryPoint(
+    LocalElectionRealitySnapshot snapshot, {
+    SharedPreferences? prefs,
+  }) async {
+    if (!snapshot.hasData) {
+      return;
+    }
+
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final currentPoint = LocalElectionRealityHistoryPoint(
+      fetchedAt: snapshot.fetchedAt,
+      officialCurrentLocalMembers: snapshot.officialCurrentLocalMembers,
+      actualNetIncreaseRequired: snapshot.actualNetIncreaseRequired,
+    );
+
+    final history = await loadSnapshotHistory(prefs: store);
+    final currentDayKey = _historyDayKey(currentPoint.fetchedAt.toLocal());
+    final updated = history
+        .where(
+          (item) => _historyDayKey(item.fetchedAt.toLocal()) != currentDayKey,
+        )
+        .toList()
+      ..add(currentPoint)
+      ..sort((left, right) => left.fetchedAt.compareTo(right.fetchedAt));
+
+    const maxPoints = 180;
+    final trimmed = updated.length > maxPoints
+        ? updated.sublist(updated.length - maxPoints)
+        : updated;
+
+    await store.setString(
+      _historyStorageKey,
+      jsonEncode(trimmed.map((item) => item.toJson()).toList()),
+    );
+  }
+
+  String _historyDayKey(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return normalized.toIso8601String();
   }
 }

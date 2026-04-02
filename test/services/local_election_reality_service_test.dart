@@ -29,6 +29,11 @@ void main() {
       'aiStrategicNotes': <String>[
         'Track every prefecture monthly and avoid incumbent losses.',
       ],
+      'scheduleAiSummary':
+          'Monitor upcoming local elections and prioritize unstaffed races.',
+      'scheduleAiAlerts': <String>[
+        'Tokyo Tama mayoral race currently has no Kokumin candidate.',
+      ],
       'sources': <Map<String, String>>[
         <String, String>{
           'label': 'Official member page',
@@ -63,6 +68,42 @@ void main() {
           'profile': 'Worked in labor policy before joining local politics.',
         },
       ],
+      'upcomingSchedules': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'electionName': 'Tama mayoral election',
+          'prefecture': 'Tokyo',
+          'municipality': 'Tama',
+          'electionCategory': '首長選挙',
+          'voteDate': '2026-04-12',
+          'announcementDate': '2026-04-05',
+          'detailUrl': 'https://go2senkyo.com/local/senkyo/sample',
+          'officialCandidateSourceUrl':
+              'https://new-kokumin.jp/?post_type=election&prefectures=Tokyo',
+          'seatCount': 1,
+          'totalCandidateCount': 2,
+          'kokuminCandidateCount': 0,
+          'kokuminCandidateNames': <String>[],
+          'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[],
+        },
+        <String, dynamic>{
+          'electionName': 'Nerima mayoral election',
+          'prefecture': 'Tokyo',
+          'municipality': 'Nerima',
+          'electionCategory': 'chief',
+          'voteDate': '2026-04-12',
+          'announcementDate': '2026-04-05',
+          'detailUrl': '',
+          'officialCandidateSourceUrl':
+              'https://new-kokumin.jp/?post_type=election&prefectures=Tokyo',
+          'seatCount': 1,
+          'totalCandidateCount': 3,
+          'kokuminCandidateCount': 1,
+          'kokuminCandidateNames': <String>['おじま紘平'],
+          'kokuminCandidateStatuses': <String>['推薦'],
+          'kokuminCandidateXHandles': <String>['ojimakohei'],
+        },
+      ],
     });
 
     await service.cacheSnapshot(snapshot, prefs: prefs);
@@ -76,6 +117,18 @@ void main() {
     expect(loaded.members, hasLength(1));
     expect(loaded.members.single.name, 'Sample Member');
     expect(loaded.ageAvailableCount, 1);
+    expect(loaded.scheduleAiAlerts, isNotEmpty);
+    expect(loaded.upcomingSchedules, hasLength(2));
+    expect(loaded.redAlertScheduleCount, 1);
+    expect(
+      loaded.upcomingSchedules.last.kokuminCandidateXHandles,
+      <String>['ojimakohei'],
+    );
+
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(1));
+    expect(history.single.officialCurrentLocalMembers, 352);
+    expect(history.single.actualNetIncreaseRequired, 348);
   });
 
   test('caches and reloads member profile details', () async {
@@ -144,5 +197,29 @@ void main() {
     expect(merged.kana, 'roster kana');
     expect(merged.age, 54);
     expect(merged.profile, 'Former labor union leader in Oita.');
+  });
+
+  test('keeps only the latest history point for the same day', () async {
+    const service = LocalElectionRealityService();
+    final prefs = await SharedPreferences.getInstance();
+
+    final first = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-03-28T01:00:00.000Z',
+      'officialCurrentLocalMembers': 345,
+      'actualNetIncreaseRequired': 355,
+    });
+    final second = LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-03-28T12:00:00.000Z',
+      'officialCurrentLocalMembers': 347,
+      'actualNetIncreaseRequired': 353,
+    });
+
+    await service.cacheSnapshot(first, prefs: prefs);
+    await service.cacheSnapshot(second, prefs: prefs);
+
+    final history = await service.loadSnapshotHistory(prefs: prefs);
+    expect(history, hasLength(1));
+    expect(history.single.officialCurrentLocalMembers, 347);
+    expect(history.single.actualNetIncreaseRequired, 353);
   });
 }

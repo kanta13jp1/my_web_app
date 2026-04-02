@@ -474,8 +474,8 @@ const _notionFeatureRows = <_FeatureRow>[
     category: 'データベース',
     feature: 'ガントチャート',
     competitorDetail: 'タイムラインビューでスケジュール管理',
-    status: _FeatureStatus.notYet,
-    appDetail: '未実装',
+    status: _FeatureStatus.done,
+    appDetail: 'GanttTimelinePage実装済み。プロジェクト・タスク・マイルストーン・クリティカルパス分析対応 (2026-04-02)',
   ),
   _FeatureRow(
     category: 'データベース',

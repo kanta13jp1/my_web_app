@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,9 +14,18 @@ class EmbeddingLabPage extends StatefulWidget {
 class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
   static const String _modelName = 'models/gemini-embedding-001';
 
+  // Single embedding mode
   final TextEditingController _inputController = TextEditingController();
-  String _result = '';
+  String _singleResult = '';
+
+  // Similarity mode
+  final TextEditingController _textAController = TextEditingController();
+  final TextEditingController _textBController = TextEditingController();
+  double? _similarityScore;
+  String _similarityLabel = '';
+
   bool _isLoading = false;
+  int _tabIndex = 0; // 0=single, 1=similarity
   String? _apiKey;
 
   @override
@@ -24,86 +34,143 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
     _loadApiKey();
   }
 
+  @override
+  void dispose() {
+    _inputController.dispose();
+    _textAController.dispose();
+    _textBController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadApiKey() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
-
     setState(() {
       _apiKey = prefs.getString('gemini_api_key');
     });
   }
 
-  Future<void> _generateEmbedding() async {
-    if (_apiKey == null || _inputController.text.isEmpty) return;
+  Future<List<double>> _fetchEmbedding(String text) async {
+    final url = Uri.parse(
+      'https://generativelanguage.googleapis.com/v1beta/$_modelName:embedContent',
+    );
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': _apiKey!,
+      },
+      body: jsonEncode({
+        'content': {
+          'parts': [
+            {'text': text},
+          ],
+        },
+      }),
+    );
 
+    if (response.statusCode != 200) {
+      throw Exception('API Error: ${response.statusCode}\n${response.body}');
+    }
+
+    final Map<String, dynamic> data =
+        jsonDecode(response.body) as Map<String, dynamic>;
+    final embeddingData = data['embedding'];
+    if (embeddingData is Map<String, dynamic> &&
+        embeddingData['values'] is List) {
+      return (embeddingData['values'] as List)
+          .map((v) => (v as num).toDouble())
+          .toList();
+    }
+    return [];
+  }
+
+  double _cosineSimilarity(List<double> a, List<double> b) {
+    if (a.isEmpty || b.isEmpty || a.length != b.length) return 0.0;
+    double dot = 0, normA = 0, normB = 0;
+    for (int i = 0; i < a.length; i++) {
+      dot += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+    final denom = sqrt(normA) * sqrt(normB);
+    return denom == 0 ? 0.0 : dot / denom;
+  }
+
+  String _similarityDescription(double score) {
+    if (score >= 0.95) return '非常に似ている (Almost identical)';
+    if (score >= 0.85) return '高い類似度 (Highly similar)';
+    if (score >= 0.70) return '関連あり (Related)';
+    if (score >= 0.50) return 'やや関連 (Somewhat related)';
+    return '異なるトピック (Different topics)';
+  }
+
+  Color _similarityColor(double score) {
+    if (score >= 0.85) return Colors.green;
+    if (score >= 0.70) return Colors.lightGreen;
+    if (score >= 0.50) return Colors.orange;
+    return Colors.red;
+  }
+
+  Future<void> _generateSingleEmbedding() async {
+    if (_apiKey == null || _inputController.text.trim().isEmpty) return;
     setState(() {
       _isLoading = true;
-      _result = '';
+      _singleResult = '';
     });
 
     try {
-      // gemini-embedding-001 は embedContent を使ってテキスト埋め込みを返します。
-      final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/$_modelName:embedContent',
-      );
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': _apiKey!,
-        },
-        body: jsonEncode({
-          'content': {
-            'parts': [
-              {'text': _inputController.text},
-            ],
-          },
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data =
-            jsonDecode(response.body) as Map<String, dynamic>;
-        // レスポンス形式: { "embedding": { "values": [0.1, 0.2, ...] } }
-        final embeddingData = data['embedding'];
-        List<double> vector = [];
-
-        if (embeddingData is Map<String, dynamic> &&
-            embeddingData['values'] is List) {
-          vector = (embeddingData['values'] as List)
-              .map((value) => (value as num).toDouble())
-              .toList();
-        }
-
-        if (mounted) {
-          setState(() {
-            _result = 'モデル: gemini-embedding-001 (via embedContent)\n'
-                '次元数: ${vector.length}\n\n'
-                '--- 先頭データ(10件) ---\n[${vector.take(10).join(', ')}...]\n\n'
-                '※Embedding成功！';
-          });
-        }
-      } else {
-        throw Exception('API Error: ${response.statusCode}\n${response.body}');
+      final vector = await _fetchEmbedding(_inputController.text.trim());
+      if (mounted) {
+        setState(() {
+          _singleResult = 'モデル: gemini-embedding-001\n'
+              '次元数: ${vector.length}\n\n'
+              '--- 先頭10件 ---\n[${vector.take(10).map((v) => v.toStringAsFixed(6)).join(', ')}...]\n\n'
+              '✅ Embedding 生成成功';
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _result = 'エラーが発生しました:\n$e';
+          _singleResult = 'エラー: $e';
         });
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
+  Future<void> _compareSimilarity() async {
+    final textA = _textAController.text.trim();
+    final textB = _textBController.text.trim();
+    if (_apiKey == null || textA.isEmpty || textB.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _similarityScore = null;
+    });
+
+    try {
+      final results = await Future.wait([
+        _fetchEmbedding(textA),
+        _fetchEmbedding(textB),
+      ]);
+      final score = _cosineSimilarity(results[0], results[1]);
+      if (mounted) {
+        setState(() {
+          _similarityScore = score;
+          _similarityLabel = _similarityDescription(score);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('エラー: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -113,102 +180,313 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
         title: const Text('Embedding Lab'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Card(
-              color: Colors.teal,
-              child: Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.science, color: Colors.white, size: 32),
-                    SizedBox(height: 8),
-                    Text(
-                      'モデル: $_modelName',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _tabIndex = 0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _tabIndex == 0
+                              ? Colors.white
+                              : Colors.transparent,
+                          width: 3,
+                        ),
                       ),
                     ),
-                    SizedBox(height: 4),
+                    child: const Text(
+                      'テキスト埋め込み',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: InkWell(
+                  onTap: () => setState(() => _tabIndex = 1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _tabIndex == 1
+                              ? Colors.white
+                              : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      '類似度比較',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: _tabIndex == 0 ? _buildSingleTab() : _buildSimilarityTab(),
+    );
+  }
+
+  Widget _buildSingleTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            color: Colors.teal.shade700,
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.science, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'gemini-embedding-001 — 768次元ベクトルを生成',
+                      style:
+                          TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _inputController,
+            decoration: const InputDecoration(
+              labelText: 'テキストを入力',
+              border: OutlineInputBorder(),
+              hintText: '例: 人工知能の未来について',
+            ),
+            maxLines: 4,
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: (_isLoading || _apiKey == null)
+                ? null
+                : _generateSingleEmbedding,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child:
+                        CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : const Icon(Icons.memory),
+            label: const Text('Embedding を生成'),
+          ),
+          if (_apiKey == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text(
+                '※ 設定画面で Gemini API キーを設定してください',
+                style: TextStyle(color: Colors.red, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  _singleResult.isEmpty ? 'ここに結果が表示されます' : _singleResult,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: _singleResult.isEmpty ? Colors.grey : Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimilarityTab() {
+    final score = _similarityScore;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            color: Colors.indigo.shade700,
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(Icons.compare_arrows, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '2つのテキストのコサイン類似度を計算します',
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _textAController,
+            decoration: const InputDecoration(
+              labelText: 'テキスト A',
+              border: OutlineInputBorder(),
+              hintText: '例: 機械学習はデータからパターンを学ぶ技術です',
+            ),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _textBController,
+            decoration: const InputDecoration(
+              labelText: 'テキスト B',
+              border: OutlineInputBorder(),
+              hintText: '例: ディープラーニングはニューラルネットワークを使います',
+            ),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: (_isLoading || _apiKey == null)
+                ? null
+                : _compareSimilarity,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.compare),
+            label: const Text('類似度を計算'),
+            style: FilledButton.styleFrom(backgroundColor: Colors.indigo),
+          ),
+          if (_apiKey == null)
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text(
+                '※ 設定画面で Gemini API キーを設定してください',
+                style: TextStyle(color: Colors.red, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          const SizedBox(height: 24),
+          if (score != null) ...[
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
                     Text(
-                      'Standard method: embedContent',
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                      '類似度スコア',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      score.toStringAsFixed(4),
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: _similarityColor(score),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: ((score + 1) / 2).clamp(0.0, 1.0),
+                        minHeight: 12,
+                        backgroundColor: Colors.grey.shade200,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _similarityColor(score),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _similarityColor(score).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color:
+                              _similarityColor(score).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Text(
+                        _similarityLabel,
+                        style: TextStyle(
+                          color: _similarityColor(score),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '1.0 = 完全一致 / 0.0 = 無相関 / -1.0 = 逆の意味',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _inputController,
-              decoration: const InputDecoration(
-                labelText: 'テキストを入力 (max 2048 tokens)',
-                border: OutlineInputBorder(),
-                hintText: '例: 人工知能について教えて',
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed:
-                  (_isLoading || _apiKey == null) ? null : _generateEmbedding,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.calculate),
-              label: const Text('Embeddingを実行'),
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-            if (_apiKey == null)
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  '※設定画面でGemini APIキーを設定してください',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            const SizedBox(height: 24),
-            const Text(
-              '実行結果:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    _result.isEmpty ? 'ここに結果が表示されます' : _result,
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      color: _result.isEmpty ? Colors.grey : Colors.black87,
+          ] else if (!_isLoading)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.compare_arrows,
+                      size: 48,
+                      color: Colors.grey.shade400,
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '2つのテキストを入力して\n類似度を計算しましょう',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey.shade500),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

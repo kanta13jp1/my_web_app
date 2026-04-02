@@ -6,6 +6,7 @@ import '../services/growth_mission_service.dart';
 import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import 'ai_secretary_page.dart';
+import 'admin/feedback_list_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
 
@@ -80,6 +81,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // growth-achievement-summary
   Map<String, dynamic>? _growthSummary;
   bool _growthSummaryLoading = false;
+
+  // comparison CVR tracking
+  Map<String, int> _comparisonTouches = {};
+  int _comparisonSignups = 0;
+  bool _comparisonCvrLoading = false;
 
   int _toInt(dynamic value) {
     if (value is int) return value;
@@ -495,6 +501,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadAutomationOps();
     _loadBlogPosts();
     _loadGrowthSummary();
+    _loadComparisonCvr();
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -1498,9 +1505,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 16),
                     _buildBlogPostsCard(),
                     const SizedBox(height: 16),
+                    _buildComparisonCvrCard(),
+                    const SizedBox(height: 16),
                     _buildGrowthAchievementSummaryCard(),
                     const SizedBox(height: 16),
                     _buildWaitlistCard(),
+                    const SizedBox(height: 16),
+                    _buildUserFeedbackCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
@@ -2693,6 +2704,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Public memo touch';
       case 'touch_referral':
         return 'Referral touch';
+      case 'touch_comparison':
+        return 'Comparison page touch';
       case 'import_preview_notion':
         return 'Import preview: Notion';
       case 'import_preview_evernote':
@@ -2711,6 +2724,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return 'Sign-up submit: Public memo';
       case 'signup_submit_referral':
         return 'Sign-up submit: Referral';
+      case 'signup_submit_comparison':
+        return 'Sign-up submit: Comparison';
       default:
         return key;
     }
@@ -2750,6 +2765,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return Colors.orange.shade300;
       case 'touch_referral':
         return Colors.green.shade400;
+      case 'touch_comparison':
+        return Colors.purple.shade300;
       case 'import_preview_notion':
         return Colors.blue.shade400;
       case 'import_preview_evernote':
@@ -2768,6 +2785,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return Colors.deepOrange.shade400;
       case 'signup_submit_referral':
         return Colors.green.shade700;
+      case 'signup_submit_comparison':
+        return Colors.purple.shade700;
       default:
         return Colors.indigo.shade300;
     }
@@ -4463,6 +4482,183 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   // growth-achievement-summary
   // -----------------------------------------------------------------------
 
+  Future<void> _loadComparisonCvr() async {
+    if (!mounted) return;
+    setState(() => _comparisonCvrLoading = true);
+    try {
+      final rows = await _supabase
+          .from('app_analytics')
+          .select('source_details');
+      final touches = <String, int>{};
+      var signups = 0;
+      for (final row in rows) {
+        final sd = row['source_details'];
+        if (sd is! Map) continue;
+        sd.forEach((key, value) {
+          final k = key.toString();
+          final v = (value is num) ? value.toInt() : 0;
+          if (k.startsWith('touch_comparison_')) {
+            final competitor = k.replaceFirst('touch_comparison_', '');
+            touches.update(competitor, (c) => c + v, ifAbsent: () => v);
+          } else if (k == 'signup_submit_comparison') {
+            signups += v;
+          }
+        });
+      }
+      if (mounted) {
+        setState(() {
+          _comparisonTouches = touches;
+          _comparisonSignups = signups;
+          _comparisonCvrLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _comparisonCvrLoading = false);
+    }
+  }
+
+  Widget _buildComparisonCvrCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1A2233) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+
+    final totalTouches =
+        _comparisonTouches.values.fold(0, (a, b) => a + b);
+    final cvrPct = totalTouches > 0
+        ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
+        : '0.0';
+
+    final sorted = _comparisonTouches.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.compare_arrows, color: Colors.purple),
+              const SizedBox(width: 8),
+              const Text(
+                '比較ページ別 CVR',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              if (_comparisonCvrLoading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 18),
+                  onPressed: _loadComparisonCvr,
+                  tooltip: '更新',
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _cvrStat(
+                '総到達数',
+                totalTouches.toString(),
+                Colors.purple.shade300,
+              ),
+              const SizedBox(width: 16),
+              _cvrStat(
+                '比較経由登録',
+                _comparisonSignups.toString(),
+                Colors.green.shade600,
+              ),
+              const SizedBox(width: 16),
+              _cvrStat('CVR', '$cvrPct%', Colors.orange.shade700),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (sorted.isEmpty && !_comparisonCvrLoading)
+            const Text(
+              '比較ページへの到達データがまだありません',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            )
+          else
+            ...sorted.take(14).map((e) {
+              final pct =
+                  totalTouches > 0 ? e.value / totalTouches : 0.0;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: Text(
+                        e.key,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: pct.clamp(0.0, 1.0),
+                          backgroundColor: isDark
+                              ? Colors.white12
+                              : Colors.purple.shade50,
+                          color: Colors.purple.shade400,
+                          minHeight: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      e.value.toString(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _cvrStat(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
   Future<void> _loadGrowthSummary({String? since, String? label}) async {
     if (!mounted) return;
     setState(() => _growthSummaryLoading = true);
@@ -4581,6 +4777,57 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
           Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUserFeedbackCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.feedback_outlined, color: Color(0xFF6366F1), size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'ユーザーフィードバック管理',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ユーザーから寄せられた機能要望・バグ報告・ご意見を管理します。',
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: const Text('フィードバック一覧を開く'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:markdown/markdown.dart' as md;
@@ -162,7 +163,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 言語ラベル
+              // 言語ラベル + コピーボタン
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -190,6 +191,8 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                         fontFamily: 'monospace',
                       ),
                     ),
+                    const Spacer(),
+                    _CopyCodeButton(code: code),
                   ],
                 ),
               ),
@@ -230,26 +233,32 @@ class CodeElementBuilder extends MarkdownElementBuilder {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (language != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8),
-                  topRight: Radius.circular(8),
-                ),
-              ),
-              child: Text(
-                language,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'monospace',
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
               ),
             ),
+            child: Row(
+              children: [
+                if (language != null)
+                  Text(
+                    language,
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                const Spacer(),
+                _CopyCodeButton(code: code),
+              ],
+            ),
+          ),
           Container(
             padding: const EdgeInsets.all(16),
             child: SelectableText(
@@ -315,6 +324,8 @@ class CodeElementBuilder extends MarkdownElementBuilder {
     return spans;
   }
 
+  // _CopyCodeButton is defined below as a standalone widget
+
   Color _getColorForClassName(String? className) {
     switch (className) {
       case 'keyword':
@@ -348,5 +359,56 @@ class CodeElementBuilder extends MarkdownElementBuilder {
       default:
         return Colors.white; // デフォルトは白
     }
+  }
+}
+
+/// コードブロックのコピーボタン
+class _CopyCodeButton extends StatefulWidget {
+  final String code;
+
+  const _CopyCodeButton({required this.code});
+
+  @override
+  State<_CopyCodeButton> createState() => _CopyCodeButtonState();
+}
+
+class _CopyCodeButtonState extends State<_CopyCodeButton> {
+  bool _copied = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.code));
+    if (!mounted) return;
+    setState(() => _copied = true);
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) setState(() => _copied = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: _copy,
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _copied ? Icons.check : Icons.copy,
+              size: 14,
+              color: _copied ? const Color(0xFF10B981) : Colors.white54,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              _copied ? 'Copied!' : 'Copy',
+              style: TextStyle(
+                fontSize: 11,
+                color: _copied ? const Color(0xFF10B981) : Colors.white54,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

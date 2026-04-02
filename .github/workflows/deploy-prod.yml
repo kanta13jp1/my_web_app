@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
@@ -79,25 +83,69 @@ jobs:
       - name: Run Supabase migrations
         run: |
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_PROD }} --password ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
-          supabase db push
+          supabase db push --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
+      - name: Cleanup demoted Edge Functions (free slots for new Tier 1 functions)
+        run: |
+          # CRITICAL: Supabase has a ~100 function limit per project.
+          # Delete all 20 functions demoted from Tier 1 to Tier 2 to free deployment slots.
+          # Using || true so deleting a non-existent function never fails the CI.
+          supabase functions delete poll-survey || true
+          supabase functions delete reading-list || true
+          supabase functions delete password-generator || true
+          supabase functions delete clipboard-history || true
+          supabase functions delete quick-note || true
+          supabase functions delete pomodoro-timer || true
+          supabase functions delete weather-widget || true
+          supabase functions delete currency-converter || true
+          supabase functions delete markdown-renderer || true
+          supabase functions delete local-election-intelligence || true
+          supabase functions delete gemini-election-analysis || true
+          supabase functions delete contact-manager || true
+          supabase functions delete goal-tracker || true
+          supabase functions delete template-library || true
+          supabase functions delete tag-manager || true
+          supabase functions delete habit-tracker || true
+          supabase functions delete bookmark-manager || true
+          supabase functions delete invoice-generator || true
+          supabase functions delete notification-preferences || true
+          supabase functions delete revenue-forecaster || true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Deploy Supabase Edge Functions
         run: |
+          # Supabase project has a max ~100 function limit.
+          # Deploy the 100 most critical functions (Tier 1).
+          # Remaining 125+ functions exist in code but are not deployed.
+          # To deploy overflow functions, swap them with lower-priority Tier 1 entries.
+          #
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
           # preflight requests (which carry no Authorization header) are not
           # rejected by Supabase's platform-level JWT check.
           # Auth is enforced inside each function via the Authorization header.
+
+          # --- Tier 1A: Core Frontend & Dashboard (15) ---
           supabase functions deploy get-public-memo-preview --no-verify-jwt
           supabase functions deploy public-memo-share --no-verify-jwt
           supabase functions deploy memo-reactions --no-verify-jwt
           supabase functions deploy get-ogp --no-verify-jwt
-          supabase functions deploy development-achievements --no-verify-jwt
-          supabase functions deploy get-growth-roadmap-progress --no-verify-jwt
-          supabase functions deploy get-competitor-features --no-verify-jwt
+          supabase functions deploy get-public-memo-ogp --no-verify-jwt
           supabase functions deploy get-home-dashboard --no-verify-jwt
+          supabase functions deploy note-comments
+          supabase functions deploy notification-center --no-verify-jwt
+          supabase functions deploy user-profile-manager --no-verify-jwt
+          supabase functions deploy onboarding-flow --no-verify-jwt
+          supabase functions deploy feature-request-manager --no-verify-jwt
+          supabase functions deploy app-analytics-dashboard --no-verify-jwt
+          supabase functions deploy development-achievements --no-verify-jwt
+          supabase functions deploy development-stats --no-verify-jwt
+          supabase functions deploy system-status --no-verify-jwt
+
+          # --- Tier 1B: Growth & Viral Engine (23) ---
           supabase functions deploy growth-weekly-digest --no-verify-jwt
           supabase functions deploy growth-acquisition-signal --no-verify-jwt
           supabase functions deploy growth-acquisition-report --no-verify-jwt
@@ -105,29 +153,137 @@ jobs:
           supabase functions deploy growth-referral --no-verify-jwt
           supabase functions deploy growth-share-signal --no-verify-jwt
           supabase functions deploy growth-achievement-summary --no-verify-jwt
+          supabase functions deploy growth-import-preview --no-verify-jwt
+          supabase functions deploy growth-import-commit --no-verify-jwt
+          supabase functions deploy get-growth-roadmap-progress --no-verify-jwt
+          supabase functions deploy video-ad-generator --no-verify-jwt
+          supabase functions deploy viral-share-engine --no-verify-jwt
+          supabase functions deploy x-media-post --no-verify-jwt
+          supabase functions deploy growth-automation-controller --no-verify-jwt
+          supabase functions deploy landing-ab-test --no-verify-jwt
+          supabase functions deploy referral-program --no-verify-jwt
+          supabase functions deploy share-quote --no-verify-jwt
+          supabase functions deploy generate-quote-image --no-verify-jwt
+          supabase functions deploy seo-optimizer --no-verify-jwt
+          supabase functions deploy send-waitlist-notification --no-verify-jwt
+          supabase functions deploy viral-ad-generator --no-verify-jwt
+          supabase functions deploy viral-growth-pipeline --no-verify-jwt
+          supabase functions deploy viral-growth-engine --no-verify-jwt
+
+          # --- Tier 1C: AI & Agent System (12) ---
           supabase functions deploy daily-judgment --no-verify-jwt
           supabase functions deploy ai-assistant --no-verify-jwt
           supabase functions deploy ai-search --no-verify-jwt
           supabase functions deploy ai-suggest-tags --no-verify-jwt
-          supabase functions deploy share-quote --no-verify-jwt
-          supabase functions deploy generate-quote-image --no-verify-jwt
-          supabase functions deploy generate-daily-challenges --no-verify-jwt
-          supabase functions deploy growth-import-preview --no-verify-jwt
-          supabase functions deploy growth-import-commit --no-verify-jwt
-          supabase functions deploy send-waitlist-notification --no-verify-jwt
-          supabase functions deploy get-admin-users --no-verify-jwt
-          supabase functions deploy notify-feature-request --no-verify-jwt
+          supabase functions deploy ai-secretary --no-verify-jwt
+          supabase functions deploy ai-summarizer --no-verify-jwt
+          supabase functions deploy agent-runtime-cycle --no-verify-jwt
+          supabase functions deploy agent-personality --no-verify-jwt
+          supabase functions deploy agent-department-manager --no-verify-jwt
+          supabase functions deploy agent-task-router --no-verify-jwt
+          supabase functions deploy agent-performance-monitor --no-verify-jwt
+          supabase functions deploy virtual-organization --no-verify-jwt
+
+          # --- Tier 1D: Schedule & Automation (10) ---
           supabase functions deploy schedule-daily-digest --no-verify-jwt
-          supabase functions deploy get-support-tickets --no-verify-jwt
-          supabase functions deploy reply-support-request --no-verify-jwt
+          supabase functions deploy schedule-task-monitor --no-verify-jwt
+          supabase functions deploy schedule-health-check --no-verify-jwt
           supabase functions deploy post-x-update --no-verify-jwt
+          supabase functions deploy blog-post-manager --no-verify-jwt
+          supabase functions deploy blog-auto-publisher --no-verify-jwt
+          supabase functions deploy health-check --no-verify-jwt
           supabase functions deploy check-competitor-updates --no-verify-jwt
           supabase functions deploy get-competitor-monitoring --no-verify-jwt
-          supabase functions deploy health-check --no-verify-jwt
+          supabase functions deploy edge-function-coverage --no-verify-jwt
+
+          # --- Tier 1E: Admin & Support (8) ---
+          supabase functions deploy get-admin-users --no-verify-jwt
+          supabase functions deploy notify-feature-request --no-verify-jwt
+          supabase functions deploy get-support-tickets --no-verify-jwt
+          supabase functions deploy reply-support-request --no-verify-jwt
+          supabase functions deploy get-competitor-features --no-verify-jwt
+          supabase functions deploy competitor-feature-sync --no-verify-jwt
+          supabase functions deploy import-from-competitors --no-verify-jwt
+          supabase functions deploy code-review-issues --no-verify-jwt
+
+          # --- Tier 1F: Core App Features (20) ---
+          supabase functions deploy subscription-management --no-verify-jwt
+          supabase functions deploy subscription-billing --no-verify-jwt
+          supabase functions deploy email-service --no-verify-jwt
+          supabase functions deploy gamification-engine --no-verify-jwt
+          supabase functions deploy calendar-events --no-verify-jwt
+          supabase functions deploy kanban-board --no-verify-jwt
+          supabase functions deploy chat-messaging --no-verify-jwt
+          supabase functions deploy team-task-manager --no-verify-jwt
+          supabase functions deploy team-collaboration-sync --no-verify-jwt
+          supabase functions deploy file-storage-manager --no-verify-jwt
+          supabase functions deploy expense-tracker --no-verify-jwt
+          supabase functions deploy time-tracker --no-verify-jwt
+          supabase functions deploy automation-workflows --no-verify-jwt
+          supabase functions deploy content-moderation --no-verify-jwt
+          supabase functions deploy user-activity-tracker --no-verify-jwt
+          supabase functions deploy data-export-manager --no-verify-jwt
+          supabase functions deploy user-feedback-collector --no-verify-jwt
+          supabase functions deploy department-reporting --no-verify-jwt
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
-          supabase functions deploy local-election-intelligence --no-verify-jwt
-          supabase functions deploy agent-runtime-cycle --no-verify-jwt
+
+          # --- Tier 1G: Guitar Studio + Monitoring (12) ---
+          supabase functions deploy guitar-recording-studio --no-verify-jwt
+          supabase functions deploy music-collaboration --no-verify-jwt
+          supabase functions deploy audio-effects-processor --no-verify-jwt
+          supabase functions deploy webhook-manager --no-verify-jwt
+          supabase functions deploy api-rate-limiter --no-verify-jwt
+          supabase functions deploy generate-daily-challenges --no-verify-jwt
+          supabase functions deploy schedule-result-tracker --no-verify-jwt
+          supabase functions deploy schedule-execution-logger --no-verify-jwt
+          supabase functions deploy edge-function-test-runner --no-verify-jwt
+          supabase functions deploy admin-notification-hub --no-verify-jwt
+          supabase functions deploy user-growth-analytics --no-verify-jwt
+          supabase functions deploy social-proof-generator --no-verify-jwt
+
+          # Total: 100 functions deployed (Supabase project limit)
+          # ---
+          # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # ab-testing-manager, search-analytics,
+          # contact-manager, goal-tracker, reading-list, password-generator,
+          # clipboard-history, quick-note, pomodoro-timer, weather-widget,
+          # currency-converter, markdown-renderer, social-feed, document-collaboration,
+          # leave-management, knowledge-base, payment-processor, marketplace,
+          # video-audio-manager, semantic-search, performance-review, wiki-database,
+          # api-key-manager, scheduled-notifications, cohort-analysis,
+          # integration-connector, push-notification-manager, realtime-presence,
+          # voice-memo-transcriber, ocr-document-scanner, oauth-sso-provider,
+          # inventory-manager, order-tracker, ci-cd-pipeline, compensation-manager,
+          # financial-report, spreadsheet-database, gantt-timeline-manager,
+          # whiteboard-canvas, form-builder, meeting-manager, schedule-result-tracker,
+          # edge-function-ui-checker, issue-auto-resolver, horse-racing-predictor,
+          # recruitment-job-board, legal-compliance-manager, elearning-course-manager,
+          # crm-sales-pipeline, photo-gallery-manager, music-playlist-manager,
+          # recipe-meal-planner, fitness-health-tracker, travel-itinerary-planner,
+          # event-ticketing, pet-care-manager, language-learning, home-iot-manager,
+          # news-rss-aggregator, ai-workflow-automation, document-esignature,
+          # social-media-scheduler, smart-inbox-triage, video-meeting-manager,
+          # family-sharing-manager, donation-crowdfunding, real-estate-tracker,
+          # podcast-manager, mindmap-diagram, parking-reservation,
+          # carbon-footprint-tracker, gift-registry, vehicle-fleet-manager,
+          # emergency-contacts, auction-marketplace, budget-financial-planner,
+          # code-playground, screen-recorder, qr-code-generator,
+          # appointment-scheduler, password-vault, habit-gamification,
+          # inventory-barcode, customer-feedback, email-template-builder,
+          # sitemap-analytics, two-factor-auth, changelog-manager, access-control,
+          # data-visualization, api-docs-generator, backup-restore,
+          # notification-digest, smart-search, analytics-export, workflow-templates,
+          # status-page, address-book, multi-language, data-pipeline, feature-flags,
+          # audit-trail, compliance-checker, user-onboarding, rate-limiter-enhanced,
+          # content-versioning, custom-dashboard-builder, loyalty-points,
+          # live-streaming, geo-checkin, social-stories, encrypted-messaging,
+          # cloud-storage-sync, virtual-whiteboard, marketplace-reviews,
+          # smart-home-automation, digital-wallet, dns-domain-manager,
+          # affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator,
+          # ai-writing-assistant, bookmark-sync, focus-timer, note-sharing-enhanced,
+          # task-dependency, gemini-election-analysis, poll-survey,
+          # viral-growth-engine, viral-video-ad-generator, viral-video-generator
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

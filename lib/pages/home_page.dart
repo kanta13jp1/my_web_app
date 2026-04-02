@@ -21,6 +21,7 @@ import '../services/theme_service.dart';
 import '../services/waste_tracking_service.dart';
 
 // Pages
+import 'notifications_page.dart';
 import 'abstinence_guard_page.dart';
 import 'emergency_meeting_page.dart';
 import 'landing_page.dart';
@@ -37,6 +38,8 @@ import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
 import '../widgets/profile_completion_banner.dart';
+import '../widgets/profile_progress_card.dart';
+import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/referral_share_card.dart';
 import 'work_menu_page.dart';
@@ -68,6 +71,7 @@ class _HomePageState extends State<HomePage> {
       _CalendarTaskPreviewFilter.all;
   DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
+  int _notifUnreadCount = 0;
 
   @override
   void initState() {
@@ -76,6 +80,23 @@ class _HomePageState extends State<HomePage> {
     _calendarMonthAnchor = DateTime(today.year, today.month, 1);
     _selectedCalendarDate = today;
     _reloadHomeSignals();
+    _fetchNotifUnreadCount();
+  }
+
+  Future<void> _fetchNotifUnreadCount() async {
+    try {
+      final res = await Supabase.instance.client.functions.invoke(
+        'notification-center',
+        queryParameters: {'mode': 'user', 'filter': 'unread', 'limit': '1'},
+      );
+      final data = res.data;
+      if (data is Map<String, dynamic>) {
+        final count = (data['unreadCount'] as num?)?.toInt() ?? 0;
+        if (mounted) setState(() => _notifUnreadCount = count);
+      }
+    } catch (_) {
+      // silent
+    }
   }
 
   DateTime _now() => widget.nowProvider?.call() ?? DateTime.now();
@@ -918,6 +939,16 @@ class _HomePageState extends State<HomePage> {
       abstinencePrimaryLabel: primaryInterference?.item.label,
       abstinencePrimarySignal: primaryInterference?.item.interruptionSignal,
       abstinencePrimaryAction: primaryInterference?.item.eliminationAction,
+      abstinenceDisciplineRepCount:
+          abstinenceSnapshot.disciplineSnapshot.totalRepCount,
+      abstinenceDisciplineMoneySaved:
+          abstinenceSnapshot.disciplineSnapshot.totalMoneySaved,
+      abstinenceDisciplineTimeSavedMinutes:
+          abstinenceSnapshot.disciplineSnapshot.totalTimeSavedMinutes,
+      abstinenceDisciplineStreakDays:
+          abstinenceSnapshot.disciplineSnapshot.streakDays,
+      abstinenceDisciplineStageLabel:
+          abstinenceSnapshot.disciplineSnapshot.mindsetStageLabel,
       completionGoalSnapshot: completionGoalSnapshot,
       calendarDays: calendarDays,
       monthlyCashflowSummary: monthlyCashflowSummary,
@@ -1041,6 +1072,9 @@ class _HomePageState extends State<HomePage> {
 
     if (!hasProtection) {
       return '朝いちで禁止対象を1件だけ固定して、先に逃げ道を塞ぐ。';
+    }
+    if (abstinence.disciplineSnapshot.totalRepCount == 0) {
+      return '今日はまだ我慢の実績がありません。買わない・開かないを1回記録する。';
     }
     if (!morningDone) {
       return '朝の最初にブリーフィングを実施し、優先順位を固定する。';
@@ -2197,6 +2231,7 @@ abstinence_slip_details: $slipDetailsText
     final primaryAction = snapshot.abstinencePrimaryAction;
 
     return Container(
+      key: const Key('home_abstinence_guard_panel'),
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2261,6 +2296,16 @@ abstinence_slip_details: $slipDetailsText
                     ? Colors.orange
                     : Colors.green,
               ),
+              _buildStatusPill(
+                label: '我慢',
+                value: '${snapshot.abstinenceDisciplineRepCount}回',
+                color: Colors.indigo,
+              ),
+              _buildStatusPill(
+                label: '連続',
+                value: '${snapshot.abstinenceDisciplineStreakDays}日',
+                color: Colors.brown,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -2272,6 +2317,76 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white70 : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            key: const Key('home_abstinence_discipline_card'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.indigo.withValues(alpha: 0.18),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '浪費耐性トレーニング',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.indigo.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        snapshot.abstinenceDisciplineStageLabel,
+                        style: const TextStyle(
+                          color: Colors.indigo,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  snapshot.abstinenceDisciplineRepCount == 0
+                      ? '今日はまだ我慢の実績がありません。買わない・開かない・不便に耐えるを1回だけ積みます。'
+                      : '今日の我慢 ${snapshot.abstinenceDisciplineRepCount}回 / 防いだ出費 ${_formatYen(snapshot.abstinenceDisciplineMoneySaved.toDouble())}円 / 取り戻した時間 ${snapshot.abstinenceDisciplineTimeSavedMinutes}分',
+                  key: const Key('home_abstinence_discipline_summary'),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton.tonalIcon(
+                    key: const Key('home_abstinence_open_training_button'),
+                    onPressed: () => _openAbstinenceGuard(context),
+                    icon: const Icon(Icons.fitness_center),
+                    label: Text(
+                      snapshot.abstinenceDisciplineRepCount == 0
+                          ? '最初の我慢を記録'
+                          : '浪費耐性を更新',
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (primaryLabel != null &&
@@ -3855,6 +3970,47 @@ abstinence_slip_details: $slipDetailsText
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                tooltip: '通知',
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsPage(),
+                    ),
+                  );
+                  _fetchNotifUnreadCount();
+                },
+              ),
+              if (_notifUnreadCount > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        _notifUnreadCount > 9 ? '9+' : '$_notifUnreadCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeService.toggleTheme(),
@@ -3958,11 +4114,15 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // 最上部: 競合21社 vs 開発進捗バー
+                            const GrowthRoadmapProgressCard(),
+                            const SizedBox(height: 12),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
                               const SizedBox(height: 10),
                             ],
                             const ProfileCompletionBanner(),
+                            const ProfileProgressCard(),
                             const ReferralShareCard(),
                             const _PersonalityTypeBanner(),
                             const SizedBox(height: 10),
@@ -4242,8 +4402,6 @@ abstinence_slip_details: $slipDetailsText
                               highlightedToolIds: highlightedToolIds,
                               badgeLabels: toolBadgeLabels,
                             ),
-                            const SizedBox(height: 16),
-                            const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
                               'RECENT TOOLS',
@@ -4251,6 +4409,8 @@ abstinence_slip_details: $slipDetailsText
                               Colors.deepPurple,
                             ),
                             _buildRecentToolsMenu(context, isCompact),
+                            const SizedBox(height: 16),
+                            const DevelopmentAchievementsCard(),
                             const SizedBox(height: 16),
                             const EdgeFunctionSummaryCard(),
                             const SizedBox(height: 40),
@@ -6349,6 +6509,11 @@ class _HomeOpsSnapshot {
   final String? abstinencePrimaryLabel;
   final String? abstinencePrimarySignal;
   final String? abstinencePrimaryAction;
+  final int abstinenceDisciplineRepCount;
+  final int abstinenceDisciplineMoneySaved;
+  final int abstinenceDisciplineTimeSavedMinutes;
+  final int abstinenceDisciplineStreakDays;
+  final String abstinenceDisciplineStageLabel;
   final List<_HomeCalendarDay> calendarDays;
 
   const _HomeOpsSnapshot({
@@ -6368,6 +6533,11 @@ class _HomeOpsSnapshot {
     this.abstinencePrimaryLabel,
     this.abstinencePrimarySignal,
     this.abstinencePrimaryAction,
+    this.abstinenceDisciplineRepCount = 0,
+    this.abstinenceDisciplineMoneySaved = 0,
+    this.abstinenceDisciplineTimeSavedMinutes = 0,
+    this.abstinenceDisciplineStreakDays = 0,
+    this.abstinenceDisciplineStageLabel = '未着手',
     this.calendarDays = const [],
   });
 }

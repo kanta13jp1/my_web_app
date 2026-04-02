@@ -76,12 +76,12 @@ serve(async (req) => {
         .select("id", { count: "exact", head: true })
         .gte("created_at", sinceStr),
 
-      // 期間内の紹介成立
+      // 期間内の紹介成立 (app_analytics のリファラルイベント)
       admin
-        .from("referrals")
+        .from("app_analytics")
         .select("id", { count: "exact", head: true })
-        .gte("completed_at", sinceStr)
-        .eq("status", "completed"),
+        .gte("created_at", sinceStr)
+        .eq("source", "referral_completed"),
 
       // 期間内のインポートプレビュー
       admin
