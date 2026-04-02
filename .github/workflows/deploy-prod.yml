@@ -88,13 +88,11 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
-      - name: Cleanup old Supabase Edge Functions (free slots for new functions)
+      - name: Cleanup demoted Edge Functions (free slots for new Tier 1 functions)
         run: |
           # CRITICAL: Supabase has a ~100 function limit per project.
-          # The project already has 100 functions deployed (from the original deploy).
-          # New functions (video-ad-generator, viral-share-engine, etc.) need free slots.
-          # Delete 13 old functions that have been demoted to Tier 2 to make room.
-          # Using || true so deleting a non-existent function doesn't fail.
+          # Delete all 20 functions demoted from Tier 1 to Tier 2 to free deployment slots.
+          # Using || true so deleting a non-existent function never fails the CI.
           supabase functions delete poll-survey || true
           supabase functions delete reading-list || true
           supabase functions delete password-generator || true
@@ -108,6 +106,13 @@ jobs:
           supabase functions delete gemini-election-analysis || true
           supabase functions delete contact-manager || true
           supabase functions delete goal-tracker || true
+          supabase functions delete template-library || true
+          supabase functions delete tag-manager || true
+          supabase functions delete habit-tracker || true
+          supabase functions delete bookmark-manager || true
+          supabase functions delete invoice-generator || true
+          supabase functions delete notification-preferences || true
+          supabase functions delete revenue-forecaster || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -163,7 +168,7 @@ jobs:
           supabase functions deploy send-waitlist-notification --no-verify-jwt
           supabase functions deploy viral-ad-generator --no-verify-jwt
           supabase functions deploy viral-growth-pipeline --no-verify-jwt
-          supabase functions deploy viral-video-ad-generator --no-verify-jwt
+          supabase functions deploy viral-growth-engine --no-verify-jwt
 
           # --- Tier 1C: AI & Agent System (12) ---
           supabase functions deploy daily-judgment --no-verify-jwt
@@ -223,19 +228,18 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Secondary Features (12) ---
+          # --- Tier 1G: Secondary Features + New Monitoring (10) ---
           supabase functions deploy ab-testing-manager --no-verify-jwt
           supabase functions deploy search-analytics --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
-          supabase functions deploy notification-preferences --no-verify-jwt
-          supabase functions deploy revenue-forecaster --no-verify-jwt
           supabase functions deploy generate-daily-challenges --no-verify-jwt
-          supabase functions deploy tag-manager --no-verify-jwt
-          supabase functions deploy template-library --no-verify-jwt
-          supabase functions deploy habit-tracker --no-verify-jwt
-          supabase functions deploy bookmark-manager --no-verify-jwt
-          supabase functions deploy invoice-generator --no-verify-jwt
+          supabase functions deploy schedule-result-tracker --no-verify-jwt
+          supabase functions deploy schedule-execution-logger --no-verify-jwt
+          supabase functions deploy edge-function-test-runner --no-verify-jwt
+          supabase functions deploy admin-notification-hub --no-verify-jwt
+          supabase functions deploy user-growth-analytics --no-verify-jwt
+          supabase functions deploy social-proof-generator --no-verify-jwt
 
           # Total: 100 functions deployed (Supabase project limit)
           # ---
