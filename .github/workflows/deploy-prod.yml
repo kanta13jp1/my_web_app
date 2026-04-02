@@ -228,9 +228,10 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Secondary Features + New Monitoring (10) ---
-          supabase functions deploy ab-testing-manager --no-verify-jwt
-          supabase functions deploy search-analytics --no-verify-jwt
+          # --- Tier 1G: Guitar Studio + Monitoring (12) ---
+          supabase functions deploy guitar-recording-studio --no-verify-jwt
+          supabase functions deploy music-collaboration --no-verify-jwt
+          supabase functions deploy audio-effects-processor --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
           supabase functions deploy generate-daily-challenges --no-verify-jwt
@@ -240,11 +241,11 @@ jobs:
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy user-growth-analytics --no-verify-jwt
           supabase functions deploy social-proof-generator --no-verify-jwt
-          supabase functions deploy guitar-recording-studio --no-verify-jwt
 
           # Total: 100 functions deployed (Supabase project limit)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # ab-testing-manager, search-analytics,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
           # currency-converter, markdown-renderer, social-feed, document-collaboration,

@@ -167,7 +167,7 @@ serve(async (req: Request) => {
         const sessionId = crypto.randomUUID();
         const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        await supabase.from("app_analytics").insert({
+        const { error: createErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
           event_type: "collab_session",
           event_data: {
@@ -187,6 +187,13 @@ serve(async (req: Request) => {
           },
         });
 
+        if (createErr) {
+          return new Response(
+            JSON.stringify({ error: createErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         return new Response(
           JSON.stringify({ success: true, sessionId, inviteCode }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -204,8 +211,7 @@ serve(async (req: Request) => {
           );
         }
 
-        // Log the join event
-        await supabase.from("app_analytics").insert({
+        const { error: joinErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
           event_type: "collab_joined",
           event_data: {
@@ -214,6 +220,13 @@ serve(async (req: Request) => {
             joinedAt: new Date().toISOString(),
           },
         });
+
+        if (joinErr) {
+          return new Response(
+            JSON.stringify({ error: joinErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         return new Response(
           JSON.stringify({ success: true, message: "セッションに参加しました" }),
@@ -225,7 +238,7 @@ serve(async (req: Request) => {
       if (postAction === "add_track") {
         const { sessionId, userId, trackName, instrument, durationSeconds } = body;
 
-        await supabase.from("app_analytics").insert({
+        const { error: trackErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
           event_type: "track_added",
           event_data: {
@@ -237,6 +250,13 @@ serve(async (req: Request) => {
             addedAt: new Date().toISOString(),
           },
         });
+
+        if (trackErr) {
+          return new Response(
+            JSON.stringify({ error: trackErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         return new Response(
           JSON.stringify({ success: true }),
@@ -254,11 +274,18 @@ serve(async (req: Request) => {
           facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://my-web-app-b67f4.web.app/guitar-studio")}`,
         };
 
-        await supabase.from("app_analytics").insert({
+        const { error: shareErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
           event_type: "recording_shared",
           event_data: { recordingId, platform, userId, sharedAt: new Date().toISOString() },
         });
+
+        if (shareErr) {
+          return new Response(
+            JSON.stringify({ error: shareErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         return new Response(
           JSON.stringify({

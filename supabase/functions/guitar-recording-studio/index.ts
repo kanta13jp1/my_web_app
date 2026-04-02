@@ -67,7 +67,7 @@ serve(async (req: Request) => {
       const userId = url.searchParams.get("userId");
 
       // Get user's recordings
-      const { data: recordings, error: recErr } = await supabase
+      const { data: recordings } = await supabase
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
@@ -364,7 +364,7 @@ serve(async (req: Request) => {
           );
         }
 
-        await supabase.from("app_analytics").insert({
+        const { error: practiceErr } = await supabase.from("app_analytics").insert({
           source: "guitar-recording-studio",
           event_type: "practice_session",
           event_data: {
@@ -377,6 +377,13 @@ serve(async (req: Request) => {
           },
         });
 
+        if (practiceErr) {
+          return new Response(
+            JSON.stringify({ error: practiceErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -387,11 +394,18 @@ serve(async (req: Request) => {
       if (postAction === "like_recording") {
         const { recordingId, userId } = body;
 
-        await supabase.from("app_analytics").insert({
+        const { error: likeErr } = await supabase.from("app_analytics").insert({
           source: "guitar-recording-studio",
           event_type: "recording_liked",
           event_data: { recordingId, userId, likedAt: new Date().toISOString() },
         });
+
+        if (likeErr) {
+          return new Response(
+            JSON.stringify({ error: likeErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         return new Response(
           JSON.stringify({ success: true }),
@@ -429,10 +443,15 @@ function calculateStreak(sessions: Record<string, unknown>[]): number {
 
   let streak = 0;
   const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  // Allow streak to start from today or yesterday
+  const startOffset = dates[0] === today ? 0 : dates[0] === yesterday ? 1 : -1;
+  if (startOffset === -1) return 0;
 
   for (let i = 0; i < dates.length; i++) {
-    const expected = new Date(Date.now() - i * 86400000).toISOString().split("T")[0];
-    if (dates[i] === expected || (i === 0 && dates[i] === today)) {
+    const expected = new Date(Date.now() - (i + startOffset) * 86400000).toISOString().split("T")[0];
+    if (dates[i] === expected) {
       streak++;
     } else {
       break;

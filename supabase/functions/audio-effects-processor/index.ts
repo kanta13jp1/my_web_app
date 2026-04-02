@@ -336,7 +336,7 @@ serve(async (req: Request) => {
 
         const chainId = crypto.randomUUID();
 
-        await supabase.from("app_analytics").insert({
+        const { error: saveErr } = await supabase.from("app_analytics").insert({
           source: "audio-effects-processor",
           event_type: "custom_chain_saved",
           event_data: {
@@ -349,6 +349,13 @@ serve(async (req: Request) => {
           },
         });
 
+        if (saveErr) {
+          return new Response(
+            JSON.stringify({ error: saveErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         return new Response(
           JSON.stringify({ success: true, chainId }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -358,6 +365,13 @@ serve(async (req: Request) => {
       // Get user's custom chains
       if (postAction === "my_chains") {
         const { userId } = body;
+
+        if (!userId) {
+          return new Response(
+            JSON.stringify({ error: "userId is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         const { data: chains } = await supabase
           .from("app_analytics")
