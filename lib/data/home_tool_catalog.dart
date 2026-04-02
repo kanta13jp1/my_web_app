@@ -86,6 +86,8 @@ import '../pages/workflow_automation_page.dart';
 import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
 import '../pages/gantt_timeline_page.dart';
+import '../pages/guitar_recording_studio_page.dart';
+import '../pages/music_collaboration_page.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
 import '../pages/wiki_database_page.dart';
@@ -1172,6 +1174,31 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '録音', 'トランスクリプト', '変換',
       ],
       onOpen: (context) => _pushPage(context, const VoiceMemoTranscriberPage()),
+    ),
+    HomeToolEntry(
+      id: 'guitar-recording-studio',
+      sectionId: 'personal',
+      title: 'ギター録音スタジオ',
+      subtitle: 'スマホでギター演奏を録音・再生・保存。メトロノーム・コード辞典付き',
+      icon: Icons.music_note_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>[
+        'ギター', '録音', '演奏', 'レコーディング', 'music', 'guitar',
+        'メトロノーム', 'コード', 'チューニング', 'スタジオ',
+      ],
+      onOpen: (context) => _pushPage(context, const GuitarRecordingStudioPage()),
+    ),
+    HomeToolEntry(
+      id: 'music-collaboration',
+      sectionId: 'personal',
+      title: '音楽コラボレーション',
+      subtitle: '録音を公開・共有。コラボセッション・招待コード・SNSシェア',
+      icon: Icons.groups_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>[
+        '音楽', 'コラボ', '共有', 'セッション', 'SNS', 'シェア',
+      ],
+      onOpen: (context) => _pushPage(context, const MusicCollaborationPage()),
     ),
   ];
 }
