@@ -267,6 +267,12 @@ const FUNCTION_REGISTRY = [
   { name: "admin-notification-hub", description: "管理者通知ハブ (緊急/警告/情報/成功/カテゴリ別/既読管理)", has_ui: true, ui_path: "/admin/notifications", ui_navigation: "管理者 > 通知" },
   { name: "user-growth-analytics", description: "ユーザー成長分析 (登録ファネル/リテンション/コホート/k-factor)", has_ui: true, ui_path: "/admin/growth", ui_navigation: "管理者 > 成長分析" },
   { name: "social-proof-generator", description: "ソーシャルプルーフ生成 (登録数/機能数/競合比較/シェアカード/テスティモニアル)", has_ui: true, ui_path: "/growth/social-proof", ui_navigation: "グロース > ソーシャルプルーフ" },
+  // PS: viral-video-generator
+  { name: "viral-video-generator", description: "バイラル動画生成 (9:16縦動画/ダーク広告/比較広告/AIデモ動画)", has_ui: true, ui_path: "/viral-video-generator", ui_navigation: "バイラル動画生成" },
+  // Session 432y: Guitar Recording Studio (メイン機能)
+  { name: "guitar-recording-studio", description: "ギター録音スタジオ (スマホ録音/チューナー/メトロノーム/8ジャンルプリセット/コード辞典/マルチトラック/練習記録)", has_ui: true, ui_path: "/guitar-studio", ui_navigation: "🎸 ギタースタジオ" },
+  { name: "music-collaboration", description: "音楽コラボレーション (公開フィード/ジャムセッション/招待コード/トラック追加/SNS共有)", has_ui: true, ui_path: "/guitar-studio/collab", ui_navigation: "🎸 ギタースタジオ > コラボ" },
+  { name: "audio-effects-processor", description: "オーディオエフェクト (20種エフェクト/8チェーンプリセット/カスタムチェーン/Web Audio API対応)", has_ui: true, ui_path: "/guitar-studio/effects", ui_navigation: "🎸 ギタースタジオ > エフェクト" },
 ] as const;
 
 serve(async (req) => {

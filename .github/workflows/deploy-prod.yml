@@ -240,6 +240,7 @@ jobs:
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy user-growth-analytics --no-verify-jwt
           supabase functions deploy social-proof-generator --no-verify-jwt
+          supabase functions deploy guitar-recording-studio --no-verify-jwt
 
           # Total: 100 functions deployed (Supabase project limit)
           # ---

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 daily-development #2 (ガントチャート・タイムライン実装・EdgeFunctionSummaryCard UI更新・Notion機能カバー率向上)
+最終更新: 2026-04-02 session432y-web (238 Edge Functions体制: ギター録音スタジオ(メイン機能)+音楽コラボ+エフェクトプロセッサー追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1078,6 +1078,18 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - Notion Workers + Slack MCP が同時進行。「ユーザーがカスタムAIフローを作れる」機能の短期実装が差別化に直結
 - GitHub Actions の強化は当社 CI/CD にも有益 (プラス要素)
 - Supabase API 接続問題の恒久対策として GitHub Actions への API 呼び出し移管を検討
+
+### Session 432y (Web版) — 2026-04-02
+
+**Edge Functions 235→238本 (3本追加) — ギター録音スタジオ (メイン機能)**
+
+ユーザーから「スマホでギターの演奏を録音できる機能をメイン機能にしたい」との要望を受け、ギター録音スタジオの基盤となるEdge Functionsを構築:
+
+1. **guitar-recording-studio**: ギター録音スタジオのメインAPI — スマホ録音(Web Audio API)、チューナー(5チューニング: standard/drop_d/open_g/open_d/dadgad)、コード辞典(15コード: C/D/E/F/G/A/B/Am/Em/Dm他)、メトロノーム(30-300 BPM)、8ジャンル録音プリセット(acoustic_fingerpicking/rock_rhythm/blues_lead/jazz_clean/metal_heavy/classical/funk_rhythm/ambient)、マルチトラック重ね録り、練習記録(連続日数ストリーク/週次統計/お気に入りプリセット)、録音のいいね・公開
+2. **music-collaboration**: 音楽コラボレーション — 公開録音フィード(新着/人気/トレンド)、コラボセッション5種類(jam/remix/duet/band_practice/lesson)、招待コード生成、最大8人参加、トラック追加、X/LINE/Facebook共有リンク生成
+3. **audio-effects-processor**: エフェクトプロセッサー — 20種類のエフェクト(リバーブ6種/ディストーション3種/ディレイ2種/モジュレーション3種/フィルター1種/ダイナミクス4種/EQ1種)、8チェーンプリセット(clean_sparkle/blues_king/rock_classic/metal_wall/ambient_dream/funk_machine/jazz_warm/acoustic_natural)、カスタムチェーン保存
+
+**deploy-prod.yml更新**: guitar-recording-studioをTier 1Gに追加（100関数維持）
 
 ### Session 432x (Web版) — 2026-04-02
 
