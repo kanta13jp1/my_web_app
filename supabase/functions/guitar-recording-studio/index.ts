@@ -63,7 +63,7 @@ serve(async (req: Request) => {
     // ---- GET actions ----
 
     // Dashboard: recording studio overview
-    if (action === "dashboard" && req.method === "GET") {
+    if (action === "dashboard") {
       const userId = url.searchParams.get("userId");
 
       // Get user's recordings
@@ -301,8 +301,16 @@ serve(async (req: Request) => {
     // ---- POST actions ----
 
     if (req.method === "POST") {
-      const body = await req.json();
-      const postAction = body.action ?? action;
+      let body: Record<string, unknown> = {};
+      try {
+        body = await req.json();
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "Invalid or empty JSON body" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const postAction = (body.action as string) ?? action;
 
       // Save a recording
       if (postAction === "save_recording") {

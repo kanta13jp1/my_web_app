@@ -60,9 +60,12 @@ serve(async (req) => {
     const { data: { user } } = await userClient.auth.getUser();
     if (!user) return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      const view = url.searchParams.get("view");
+    const url = new URL(req.url);
+    const view = url.searchParams.get("view");
+
+    // Flutter の functions.invoke() はデフォルトで POST を送るが、
+    // query params 付きの場合は GET と同じ処理を行う
+    if (req.method === "GET" || (req.method === "POST" && view !== null)) {
 
       if (view === "gallery") return new Response(JSON.stringify({ success: true, templates: BUILTIN_TEMPLATES, categories: TEMPLATE_CATEGORIES, stepTypes: STEP_TYPES }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
@@ -92,8 +95,13 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (req.method === "POST") {
-      const body = await req.json();
+    if (req.method === "POST" && view === null) {
+      let body: Record<string, unknown> = {};
+      try {
+        body = await req.json();
+      } catch {
+        return new Response(JSON.stringify({ success: false, error: "Invalid or empty JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       const { action } = body;
 
       if (action === "create_template") {

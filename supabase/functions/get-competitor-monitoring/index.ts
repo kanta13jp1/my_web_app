@@ -30,8 +30,10 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "GET") {
-      return new Response(JSON.stringify({ error: "Method not allowed. Use GET." }), {
+    // Flutter の functions.invoke() はデフォルトで POST を送るため、
+    // GET と POST の両方を許可する
+    if (req.method !== "GET" && req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
         status: 405,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
