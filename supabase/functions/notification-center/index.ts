@@ -36,11 +36,16 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      const mode = url.searchParams.get("mode"); // 'user' | 'admin'
-      const filter = url.searchParams.get("filter"); // 'unread' | 'read' | 'all'
-      const limit = parseInt(url.searchParams.get("limit") ?? "30", 10);
+    // Flutter の functions.invoke() はデフォルトで POST を送るが、
+    // query params 付きの場合は GET と同じ処理を行う
+    const url = new URL(req.url);
+    const mode = url.searchParams.get("mode"); // 'user' | 'admin'
+    const filter = url.searchParams.get("filter"); // 'unread' | 'read' | 'all'
+    const limit = parseInt(url.searchParams.get("limit") ?? "30", 10);
+
+    const isQueryMode = mode !== null; // query params がある場合は一覧取得
+
+    if (req.method === "GET" || (req.method === "POST" && isQueryMode)) {
 
       if (mode === "admin") {
         // 管理者: 全通知 (service_role)
@@ -121,8 +126,16 @@ serve(async (req) => {
       );
     }
 
-    if (req.method === "POST") {
-      const body = await req.json();
+    if (req.method === "POST" && !isQueryMode) {
+      let body: Record<string, unknown> = {};
+      try {
+        body = await req.json();
+      } catch {
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid or empty JSON body" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       const { action } = body;
 
       if (action === "create") {
