@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 PS#11-PowerShell (238 Edge Functions体制: ギターレコーディングスタジオ完成 — MediaRecorder/メトロノーム/コード辞典/録音履歴 + ランディングページ導線バナー追加)
+最終更新: 2026-04-02 Web版#2 (notification-center 500エラー修正 + Flutter POST+queryParams問題を6 Edge Functionsで修正 — notification-center/referral-program/workflow-templates/analytics-export/guitar-recording-studio/get-competitor-monitoring)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2260,3 +2260,24 @@ CI/CDがemail-serviceデプロイ時にHTTP 402 "Max number of functions reached
 - **10,000人登録**: シードラウンド検討 (or 完全 bootstrapped 継続判断)
 - **100,000人登録**: Series A / 法人営業本格化 / グローバル展開開始
 - **1,000,000人登録**: Notion の 1/100 規模達成。次フェーズ戦略策定
+
+---
+
+### Session Web版#2 (2026-04-02): Flutter POST+queryParams 500エラー修正
+
+#### 問題
+Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送信する。
+`queryParameters` のみ（body なし）で呼び出すと、Edge Function 側の `req.json()` が
+空ボディでクラッシュし 500 エラーを返していた。
+
+#### 修正した Edge Functions (6件)
+1. **notification-center**: `mode=user` query付きPOSTをGETとして処理。ホームページ毎回呼ばれるため最優先修正
+2. **referral-program**: `view` パラメータ付きPOSTをGETとして処理
+3. **workflow-templates**: `view` パラメータ付きPOSTをGETとして処理
+4. **analytics-export**: `view` パラメータ付きPOSTをGETとして処理
+5. **guitar-recording-studio**: `dashboard` アクションのGET制限解除 + body parse保護
+6. **get-competitor-monitoring**: POSTメソッドも許可
+
+#### 修正パターン
+- query params がある場合はGETと同じ一覧取得として処理
+- POST body parsing を try-catch で保護、空body時は 400 を返す
