@@ -161,6 +161,10 @@ import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
+import 'package:my_web_app/pages/language_learning_page.dart';
+import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
+import 'package:my_web_app/pages/pet_care_manager_page.dart';
+import 'package:my_web_app/pages/photo_gallery_manager_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -934,6 +938,26 @@ class MyApp extends StatelessWidget {
           case '/changelog':
             return MaterialPageRoute(
               builder: (_) => const ChangelogManagerPage(),
+            );
+          case '/language-learning':
+            return MaterialPageRoute(
+              builder: (_) => const LanguageLearningPage(),
+            );
+          case '/recipe-meal-planner':
+            return MaterialPageRoute(
+              builder: (_) => const RecipeMealPlannerPage(),
+            );
+          case '/travel-planner':
+            return MaterialPageRoute(
+              builder: (_) => const TravelItineraryPlannerPage(),
+            );
+          case '/pet-care':
+            return MaterialPageRoute(
+              builder: (_) => const PetCareManagerPage(),
+            );
+          case '/photo-gallery':
+            return MaterialPageRoute(
+              builder: (_) => const PhotoGalleryManagerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

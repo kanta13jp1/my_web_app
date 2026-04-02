@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 PS#12 (Wiki/勤怠/音声メモUI + notification-center修正 + 6 Edge Functions POST修正 + 仮想AI組織・フィットネス・音楽プレイリスト UI 追加、flutter analyze 0エラー維持) & daily-development #4 (CRM営業パイプライン・競馬予想ページ実装 + flutter analyze 0エラー維持)
+最終更新: 2026-04-03 PS#13 (語学学習・レシピ・旅行・ペット・フォトギャラリー UI 5件追加、EdgeFunctionSummaryCard 7件更新、flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
