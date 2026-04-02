@@ -143,6 +143,9 @@ import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
 import '../pages/crm_sales_pipeline_page.dart';
 import '../pages/horse_racing_predictor_page.dart';
+import '../pages/travel_itinerary_page.dart';
+import '../pages/virtual_whiteboard_page.dart';
+import '../pages/recipe_meal_planner_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1761,6 +1764,45 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '馬', '騎手', 'G1', 'スコアリング',
       ],
       onOpen: (context) => _pushPage(context, const HorseRacingPredictorPage()),
+    ),
+    HomeToolEntry(
+      id: 'travel-itinerary',
+      sectionId: 'growth',
+      title: '旅行プランナー',
+      subtitle: 'Google Travel/TripAdvisor競合。旅程・予約・持ち物・予算を一元管理',
+      icon: Icons.flight_takeoff,
+      color: const Color(0xFF0EA5E9),
+      keywords: const <String>[
+        '旅行', '旅程', 'トリップ', '観光', 'ホテル', 'フライト',
+        '予約', 'パッキング', '持ち物', '予算', 'Google Travel', 'TripAdvisor',
+      ],
+      onOpen: (context) => _pushPage(context, const TravelItineraryPage()),
+    ),
+    HomeToolEntry(
+      id: 'virtual-whiteboard',
+      sectionId: 'knowledge',
+      title: 'バーチャルホワイトボード',
+      subtitle: 'Miro/Microsoft Whiteboard競合。付箋・図形・ブレインストーミングボード',
+      icon: Icons.dashboard_customize,
+      color: const Color(0xFF6366F1),
+      keywords: const <String>[
+        'ホワイトボード', 'ボード', '付箋', 'ブレインストーミング', 'Miro',
+        'カンバン', '振り返り', 'マインドマップ', 'Microsoft Whiteboard', 'FigJam',
+      ],
+      onOpen: (context) => _pushPage(context, const VirtualWhiteboardPage()),
+    ),
+    HomeToolEntry(
+      id: 'recipe-meal-planner',
+      sectionId: 'office',
+      title: 'レシピ・食事プランナー',
+      subtitle: 'Amazon Fresh/クックパッド競合。レシピ管理・献立計画・買い物リスト自動生成',
+      icon: Icons.restaurant_menu,
+      color: const Color(0xFFEF4444),
+      keywords: const <String>[
+        'レシピ', '料理', '食事', '献立', '買い物リスト', 'クックパッド',
+        '食材', '栄養', '朝食', '昼食', '夕食', 'Amazon Fresh', 'Liven',
+      ],
+      onOpen: (context) => _pushPage(context, const RecipeMealPlannerPage()),
     ),
   ];
 }

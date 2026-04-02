@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 PS#12 (Wiki/勤怠/音声メモUI + notification-center修正 + 6 Edge Functions POST修正 + 仮想AI組織・フィットネス・音楽プレイリスト UI 追加、flutter analyze 0エラー維持) & daily-development #4 (CRM営業パイプライン・競馬予想ページ実装 + flutter analyze 0エラー維持)
+最終更新: 2026-04-03 daily-development (旅行プランナー・バーチャルホワイトボード・レシピ食事プランナー UI 追加、flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,13 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-03 daily-development 実装済み (自動)
+
+- **旅行プランナー実装** (daily-development 2026-04-03): `travel_itinerary_page.dart` を新規作成。`travel-itinerary-planner` Edge Function と連携。旅行プラン一覧・日程管理(アクティビティ追加)・予約情報(ホテル/フライト等8種)・パッキングリスト・予算サマリー(総予算/支出/残高/LinearProgressIndicator)の4タブ構成。`/travel-itinerary` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに登録。Google Travel/TripAdvisor競合。flutter analyze 0件維持。
+- **バーチャルホワイトボード実装** (daily-development 2026-04-03): `virtual_whiteboard_page.dart` を新規作成。`virtual-whiteboard` Edge Function と連携。マイボード一覧・テンプレート選択(ブレインストーミング/カンバン/振り返り/マインドマップ)・付箋追加(6色)・図形要素リスト表示の2タブ構成。deprecated `RadioListTile` を `Icon + ListTile` パターンで代替(Flutter 3.32.0+ 対応)。`/virtual-whiteboard` ルートを `main.dart` に追加。業務メニューカタログ `knowledge` セクションに登録。Miro/Microsoft Whiteboard/FigJam競合。flutter analyze 0件維持。
+- **レシピ・食事プランナー実装** (daily-development 2026-04-03): `recipe_meal_planner_page.dart` を新規作成。`recipe-meal-planner` Edge Function と連携。カテゴリフィルタ付きレシピ一覧(GridView・調理時間/材料表示)・週間献立計画・買い物リスト自動生成の3タブ構成。`/recipe-meal-planner` ルートを `main.dart` に追加。業務メニューカタログ `office` セクションに登録。Amazon Fresh/クックパッド/Liven競合。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development 2026-04-03): `docs/blog-drafts/2026-04-03-travel-whiteboard-recipe.md` — Edge Function Firstパターンで3競合SaaSを同時実装・deprecated RadioListTile移行・const最適化の解説記事を作成。
 
 ### 2026-04-02 PS#12 (PowerShell) 実装済み
 
