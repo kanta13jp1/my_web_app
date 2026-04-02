@@ -834,9 +834,9 @@ class _GuitarRecordingStudioPageState
       child: Container(
         width: 48,
         height: 48,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFF0F3460),
+          color: Color(0xFF0F3460),
         ),
         child: const Icon(
           Icons.download_outlined,
@@ -956,7 +956,7 @@ class _GuitarRecordingStudioPageState
               Switch(
                 value: _isPublic,
                 onChanged: (v) => setState(() => _isPublic = v),
-                activeColor: const Color(0xFFE94560),
+                activeThumbColor: const Color(0xFFE94560),
               ),
               const Spacer(),
               Text(
@@ -1466,7 +1466,7 @@ class _GuitarRecordingStudioPageState
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text('#$t', style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                      )).toList(),
+                      ),).toList(),
                     ),
                   ],
                   const SizedBox(height: 4),
@@ -1562,9 +1562,9 @@ class _GuitarRecordingStudioPageState
               const SizedBox(width: 12),
               Expanded(child: _statCard(
                 '総練習時間',
-                hours > 0 ? '$hours時間${mins}分' : '$mins分',
+                hours > 0 ? '$hours時間$mins分' : '$mins分',
                 Icons.timer,
-              )),
+              ),),
             ],
           ),
           const SizedBox(height: 12),
@@ -1574,7 +1574,7 @@ class _GuitarRecordingStudioPageState
               const SizedBox(width: 12),
               Expanded(child: _statCard('平均録音時間', totalRecordings > 0
                   ? '${(totalMinutes / totalRecordings).round()}分'
-                  : '-', Icons.av_timer)),
+                  : '-', Icons.av_timer,),),
             ],
           ),
           const SizedBox(height: 24),

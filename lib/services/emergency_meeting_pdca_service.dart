@@ -6,7 +6,9 @@ class EmergencyMeetingPdcaMetrics {
   final int continuationCompletedCount;
   final int continuationTotalCount;
   final int continuationCompletionRatePercent;
+  final int continuationPriorityDeclaredCount;
   final int continuationQuickStartCount;
+  final int continuationFocusSprint25Count;
   final int continuationTimeBlockReservedCount;
   final int continuationProgressLogCount;
   final int abstinenceViolationCount;
@@ -23,7 +25,9 @@ class EmergencyMeetingPdcaMetrics {
   final bool reminderEnabled;
   final int deterrenceLockEnabledCount;
   final int deterrenceStrictModeBlockCount;
+  final int deterrenceDisableAttemptBlockedCount;
   final int deterrenceLockCoveragePercent;
+  final int abstinenceRecoveryReminderScheduledCount;
   final DateTime? abstinenceRecoveryDueAt;
   final List<String> activeDeterrenceLocks;
   final DateTime? lastReviewAt;
@@ -32,7 +36,9 @@ class EmergencyMeetingPdcaMetrics {
     required this.continuationCompletedCount,
     required this.continuationTotalCount,
     required this.continuationCompletionRatePercent,
+    this.continuationPriorityDeclaredCount = 0,
     this.continuationQuickStartCount = 0,
+    this.continuationFocusSprint25Count = 0,
     this.continuationTimeBlockReservedCount = 0,
     this.continuationProgressLogCount = 0,
     required this.abstinenceViolationCount,
@@ -49,7 +55,9 @@ class EmergencyMeetingPdcaMetrics {
     required this.reminderEnabled,
     this.deterrenceLockEnabledCount = 0,
     this.deterrenceStrictModeBlockCount = 0,
+    this.deterrenceDisableAttemptBlockedCount = 0,
     this.deterrenceLockCoveragePercent = 0,
+    this.abstinenceRecoveryReminderScheduledCount = 0,
     this.abstinenceRecoveryDueAt,
     required this.activeDeterrenceLocks,
     this.lastReviewAt,
@@ -60,7 +68,11 @@ class EmergencyMeetingPdcaMetrics {
       'continuation_completed_count': continuationCompletedCount,
       'continuation_total_count': continuationTotalCount,
       'continuation_completion_rate_percent': continuationCompletionRatePercent,
+      'continuation_priority_declared_count':
+          continuationPriorityDeclaredCount,
       'continuation_quick_start_count': continuationQuickStartCount,
+      'continuation_focus_sprint_25_count':
+          continuationFocusSprint25Count,
       'continuation_time_block_reserved_count':
           continuationTimeBlockReservedCount,
       'continuation_progress_log_count': continuationProgressLogCount,
@@ -81,11 +93,84 @@ class EmergencyMeetingPdcaMetrics {
       'reminder_enabled': reminderEnabled,
       'deterrence_lock_enabled_count': deterrenceLockEnabledCount,
       'deterrence_strict_mode_block_count': deterrenceStrictModeBlockCount,
+      'deterrence_disable_attempt_blocked_count':
+          deterrenceDisableAttemptBlockedCount,
       'deterrence_lock_coverage_percent': deterrenceLockCoveragePercent,
+      'abstinence_recovery_reminder_scheduled_count':
+          abstinenceRecoveryReminderScheduledCount,
       'abstinence_recovery_due_at': abstinenceRecoveryDueAt?.toIso8601String(),
       'active_deterrence_locks': activeDeterrenceLocks,
       'last_review_at': lastReviewAt?.toIso8601String(),
     };
+  }
+}
+
+class EmergencyMeetingPdcaGuardrails {
+  const EmergencyMeetingPdcaGuardrails();
+
+  int nextPendingContinuationIndex(List<bool> continuationChecks) {
+    for (var i = 0; i < continuationChecks.length; i++) {
+      if (!continuationChecks[i]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  int currentPriorityContinuationIndex({
+    required int selectedIndex,
+    required List<bool> continuationChecks,
+  }) {
+    if (selectedIndex >= 0 &&
+        selectedIndex < continuationChecks.length &&
+        !continuationChecks[selectedIndex]) {
+      return selectedIndex;
+    }
+    return nextPendingContinuationIndex(continuationChecks);
+  }
+
+  int deterrenceReadinessPercent({
+    required bool reminderEnabled,
+    required int activeLockCount,
+    required bool hasPendingRecoveryWindow,
+  }) {
+    final checklist = <bool>[
+      reminderEnabled,
+      activeLockCount > 0,
+      !hasPendingRecoveryWindow,
+    ];
+    final readyCount = checklist.where((item) => item).length;
+    return ((readyCount / checklist.length) * 100).round();
+  }
+
+  bool wouldLeaveDeterrenceEmpty({
+    required bool impulsePurchase,
+    required bool newProjects,
+    required bool subscriptionAdditions,
+    required bool reminderEnabled,
+  }) {
+    final activeLockCount = <bool>[
+      impulsePurchase,
+      newProjects,
+      subscriptionAdditions,
+    ].where((item) => item).length;
+    return activeLockCount == 0 && !reminderEnabled;
+  }
+
+  bool shouldBlockDeterrenceRelaxation({
+    required bool hasPendingRecoveryWindow,
+    required bool nextImpulsePurchase,
+    required bool nextNewProjects,
+    required bool nextSubscriptionAdditions,
+    required bool nextReminderEnabled,
+  }) {
+    return hasPendingRecoveryWindow ||
+        wouldLeaveDeterrenceEmpty(
+          impulsePurchase: nextImpulsePurchase,
+          newProjects: nextNewProjects,
+          subscriptionAdditions: nextSubscriptionAdditions,
+          reminderEnabled: nextReminderEnabled,
+        );
   }
 }
 
@@ -263,16 +348,22 @@ class EmergencyMeetingBiReportService {
     final metrics = context.metrics;
     final actions = <String>[];
 
-    switch (context.focusLabel) {
-      case '継続実行を最優先':
-        actions.add('次の48時間で最重要案件を1件だけ選び、開始時刻付きで着手する。');
-        break;
-      case '禁欲と回復を最優先':
-        actions.add('最も危険な誘惑トリガーを1つ遮断し、その直後に代替行動を予約する。');
-        break;
-      default:
-        actions.add('今日中に最重要タスクを1件だけ決め、25分で初手まで進める。');
-        break;
+    if (metrics.continuationPriorityDeclaredCount <= 0) {
+      actions.add('今日中に最重要タスクを1件だけ決め、25分で初手まで進める。');
+    } else if (metrics.continuationFocusSprint25Count <= 0) {
+      actions.add('固定した最重要タスクに25分だけ着手し、初手の証跡を残す。');
+    } else {
+      switch (context.focusLabel) {
+        case '継続実行を最優先':
+          actions.add('次の48時間で最重要案件を1件だけ選び、開始時刻付きで着手する。');
+          break;
+        case '禁欲と回復を最優先':
+          actions.add('最も危険な誘惑を止めた直後に、最重要タスクの初手へ戻る。');
+          break;
+        default:
+          actions.add('今日中に最重要タスクを1件だけ決め、25分で初手まで進める。');
+          break;
+      }
     }
 
     if (metrics.continuationTimeBlockReservedCount <= 0) {

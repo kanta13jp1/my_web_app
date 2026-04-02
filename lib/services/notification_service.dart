@@ -7,6 +7,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   static const int saturdayReminderId = 0;
   static const int abstinenceReminderId = 1001;
+  static const int abstinenceRecoveryReminderId = 1002;
 
   Future<void> init() async {
     // Initialize timezone
@@ -93,6 +94,50 @@ class NotificationService {
   }
 
   Future<void> cancelAbstinenceReminder({int id = abstinenceReminderId}) async {
+    await flutterLocalNotificationsPlugin.cancel(id: id);
+  }
+
+  Future<void> scheduleAbstinenceRecoveryReminder({
+    int id = abstinenceRecoveryReminderId,
+    DateTime? dueAt,
+  }) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'abstinence_recovery_reminder_channel',
+      'Abstinence Recovery Reminder',
+      channelDescription:
+          'Recovery reminder for immediate abstinence fallback actions.',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    final now = tz.TZDateTime.now(tz.local);
+    final scheduledDate = dueAt == null
+        ? now.add(const Duration(minutes: 9))
+        : tz.TZDateTime.from(
+            dueAt.subtract(const Duration(minutes: 1)),
+            tz.local,
+          );
+    final effectiveDate = scheduledDate.isAfter(now)
+        ? scheduledDate
+        : now.add(const Duration(seconds: 30));
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id: id,
+      title: '禁欲ガード 即時リカバリー',
+      body: '残り時間が少なくなっています。10分以内に回復行動とロック再設定を完了しましょう。',
+      scheduledDate: effectiveDate,
+      notificationDetails: platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    );
+  }
+
+  Future<void> cancelAbstinenceRecoveryReminder({
+    int id = abstinenceRecoveryReminderId,
+  }) async {
     await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 

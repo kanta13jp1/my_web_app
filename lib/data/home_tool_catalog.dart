@@ -141,6 +141,8 @@ import '../pages/viral_video_generator_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
+import '../pages/crm_sales_pipeline_page.dart';
+import '../pages/horse_racing_predictor_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1733,6 +1735,32 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFF37474F),
       keywords: const <String>['DNS', 'ドメイン', 'SSL', 'domain', 'ホスティング'],
       onOpen: (context) => _pushPage(context, const DnsDomainManagerPage()),
+    ),
+    HomeToolEntry(
+      id: 'crm-pipeline',
+      sectionId: 'growth',
+      title: 'CRM 営業パイプライン',
+      subtitle: 'Salesforce競合。リード管理・商談ステージ・AIスコアリング・売上統計',
+      icon: Icons.business_center_outlined,
+      color: const Color(0xFF0E7490),
+      keywords: const <String>[
+        'CRM', '営業', 'パイプライン', 'Salesforce', 'リード', '商談',
+        '受注', '失注', '売上予測', 'B2B',
+      ],
+      onOpen: (context) => _pushPage(context, const CrmSalesPipelinePage()),
+    ),
+    HomeToolEntry(
+      id: 'horse-racing',
+      sectionId: 'special',
+      title: '競馬予想・分析',
+      subtitle: 'netkeiba競合。レース管理・AI予想スコア・回収率シミュレーション',
+      icon: Icons.emoji_events_outlined,
+      color: const Color(0xFFB45309),
+      keywords: const <String>[
+        '競馬', '予想', 'netkeiba', 'レース', '的中率', '回収率',
+        '馬', '騎手', 'G1', 'スコアリング',
+      ],
+      onOpen: (context) => _pushPage(context, const HorseRacingPredictorPage()),
     ),
   ];
 }
