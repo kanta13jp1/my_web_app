@@ -5,7 +5,13 @@ class CfoService {
   final _client = Supabase.instance.client;
 
   Future<List<PaymentSource>> getPaymentSources() async {
-    final response = await _client.from('payment_sources').select();
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return [];
+    final response = await _client
+        .from('payment_sources')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
 
     final sources =
         (response as List).map((data) => PaymentSource.fromMap(data)).toList();
