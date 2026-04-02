@@ -99,8 +99,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('動画を生成',
-                              style: Theme.of(context).textTheme.titleMedium),
+                          Text(
+                            '動画を生成',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 12),
                           TextField(
                             controller: _promptController,
@@ -113,21 +115,28 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                           ),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
-                            value: _selectedStyle,
+                            initialValue: _selectedStyle,
                             decoration: const InputDecoration(
                               labelText: 'スタイル',
                               border: OutlineInputBorder(),
                             ),
                             items: const [
                               DropdownMenuItem(
-                                  value: 'short_reel', child: Text('ショートリール')),
+                                value: 'short_reel',
+                                child: Text('ショートリール'),
+                              ),
                               DropdownMenuItem(
-                                  value: 'story', child: Text('ストーリー')),
+                                value: 'story',
+                                child: Text('ストーリー'),
+                              ),
                               DropdownMenuItem(
-                                  value: 'tutorial', child: Text('チュートリアル')),
+                                value: 'tutorial',
+                                child: Text('チュートリアル'),
+                              ),
                               DropdownMenuItem(
-                                  value: 'announcement',
-                                  child: Text('アナウンスメント')),
+                                value: 'announcement',
+                                child: Text('アナウンスメント'),
+                              ),
                             ],
                             onChanged: (v) =>
                                 setState(() => _selectedStyle = v!),
@@ -150,7 +159,8 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                                       width: 16,
                                       height: 16,
                                       child: CircularProgressIndicator(
-                                          strokeWidth: 2),
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Icon(Icons.video_call),
                               label: Text(_loading ? '生成中...' : '生成する'),
@@ -169,20 +179,25 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('生成結果',
-                                style:
-                                    Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              '生成結果',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             const SizedBox(height: 8),
-                            Text(_result!['message']?.toString() ??
-                                '生成が完了しました'),
+                            Text(
+                              _result!['message']?.toString() ??
+                                  '生成が完了しました',
+                            ),
                           ],
                         ),
                       ),
                     ),
                   ],
                   const SizedBox(height: 16),
-                  Text('生成履歴',
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    '生成履歴',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   if (_videos.isEmpty)
                     const Text('まだ生成履歴がありません')
@@ -196,9 +211,11 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                         final v = _videos[index];
                         return ListTile(
                           leading: const Icon(Icons.video_library),
-                          title: Text(v['title']?.toString() ??
-                              v['prompt']?.toString() ??
-                              '動画 ${index + 1}'),
+                          title: Text(
+                            v['title']?.toString() ??
+                                v['prompt']?.toString() ??
+                                '動画 ${index + 1}',
+                          ),
                           subtitle: Text(
                             v['style']?.toString() ?? '',
                             style: const TextStyle(fontSize: 12),

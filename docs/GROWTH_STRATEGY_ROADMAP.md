@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 session432z-web (238 Edge Functions体制: ギター録音3機能の自己レビュー修正+deploy-prod.yml修正でmusic-collaboration/audio-effects-processorをデプロイ対象に追加)
+最終更新: 2026-04-02 PS#11-PowerShell (238 Edge Functions体制: ギターレコーディングスタジオ完成 — MediaRecorder/メトロノーム/コード辞典/録音履歴 + ランディングページ導線バナー追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -378,6 +378,11 @@
 - **未擁立・単騎CSVコピー機能** (daily-development 2026-03-31): 選挙スケジュールセクションに「未擁立・単騎をCSVコピー」ボタンを追加。`isAlertRed` または `isAlertYellow` のエントリを投票日順ソートし、投票日/都道府県/自治体/選挙名/候補者数の CSV をクリップボードへ出力。戦略立案用データエクスポートを実現。
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
+
+### 2026-04-02 PS#11 (PowerShell) 実装済み
+
+- **ギターレコーディングスタジオ完成 (PS#11)**: `GuitarRecordingStudioPage` を `package:web` + `dart:js_interop` を使用した本格録音機能に全面リライト。ブラウザ `MediaRecorder API` でマイク録音 (開始/一時停止/停止/再生/破棄)、Web Audio API メトロノーム (30-300BPM/拍子2-6/ビジュアルビート)、コード辞典 (15コード + ダイアグラム CustomPainter)、ジャンルプリセット8種、録音履歴タブ。`guitar-recording-studio` Edge Function と全アクション連携 (save_recording/recordings/chord/dashboard)。LP に黒背景ギタースタジオバナー追加でメイン機能として訴求。flutter analyze 0エラー維持。
+- **flutter analyze 既存エラー修正**: `viral_video_generator_page.dart` (trailing comma 5件・deprecated `value→initialValue`)、`music_collaboration_page.dart` (trailing comma 1件)、`abstinence_guard_store.dart` (merge conflict解消) を修正。全プロジェクト 0エラー達成。
 
 ### 2026-04-02 daily-development #2 実装済み (自動)
 
