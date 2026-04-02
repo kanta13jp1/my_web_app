@@ -93,6 +93,54 @@ import '../pages/ai_writing_assistant_page.dart';
 import '../pages/wiki_database_page.dart';
 import '../pages/time_tracker_page.dart';
 import '../pages/voice_memo_transcriber_page.dart';
+import '../pages/activity_feed_page.dart';
+import '../pages/address_book_page.dart';
+import '../pages/affiliate_marketing_page.dart';
+import '../pages/ai_image_generator_page.dart';
+import '../pages/analytics_export_page.dart';
+import '../pages/appointment_scheduler_page.dart';
+import '../pages/ar_navigation_page.dart';
+import '../pages/auction_marketplace_page.dart';
+import '../pages/audio_effects_processor_page.dart';
+import '../pages/budget_financial_planner_page.dart';
+import '../pages/calendar_events_page.dart';
+import '../pages/carbon_footprint_tracker_page.dart';
+import '../pages/customer_feedback_page.dart';
+import '../pages/digital_wallet_page.dart';
+import '../pages/dns_domain_manager_page.dart';
+import '../pages/donation_crowdfunding_page.dart';
+import '../pages/emergency_contacts_page.dart';
+import '../pages/enterprise_page.dart';
+import '../pages/event_ticketing_page.dart';
+import '../pages/expense_tracker_page.dart';
+import '../pages/family_sharing_manager_page.dart';
+import '../pages/feature_flags_page.dart';
+import '../pages/feature_requests_page.dart';
+import '../pages/fitness_health_tracker_page.dart';
+import '../pages/form_builder_page.dart';
+import '../pages/gift_registry_page.dart';
+import '../pages/growth_automation_controller_page.dart';
+import '../pages/knowledge_base_page.dart';
+import '../pages/landing_ab_test_page.dart';
+import '../pages/loyalty_points_page.dart';
+import '../pages/meeting_manager_page.dart';
+import '../pages/mindmap_diagram_page.dart';
+import '../pages/news_rss_aggregator_page.dart';
+import '../pages/parking_reservation_page.dart';
+import '../pages/qr_code_generator_page.dart';
+import '../pages/reading_list_page.dart';
+import '../pages/referral_program_page.dart';
+import '../pages/rewards_page.dart';
+import '../pages/semantic_search_page.dart';
+import '../pages/smart_inbox_triage_page.dart';
+import '../pages/social_feed_page.dart';
+import '../pages/subscription_billing_page.dart';
+import '../pages/video_ad_generator_page.dart';
+import '../pages/viral_ad_generator_page.dart';
+import '../pages/viral_video_generator_page.dart';
+import '../pages/virtual_pet_page.dart';
+import '../pages/work_menu_page.dart';
+import '../pages/workflow_templates_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1199,6 +1247,492 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '音楽', 'コラボ', '共有', 'セッション', 'SNS', 'シェア',
       ],
       onOpen: (context) => _pushPage(context, const MusicCollaborationPage()),
+    ),
+    // ── 以下: 未登録だったルートを一括追加 ──
+    // today セクション
+    HomeToolEntry(
+      id: 'work-menu',
+      sectionId: 'today',
+      title: '仕事メニュー',
+      subtitle: '業務タスクの一覧と実行管理',
+      icon: Icons.work_outlined,
+      color: Colors.blueGrey,
+      keywords: const <String>['仕事', 'タスク', '業務', 'work', 'メニュー'],
+      onOpen: (context) => _pushPage(context, const WorkMenuPage()),
+    ),
+    HomeToolEntry(
+      id: 'activity-feed',
+      sectionId: 'today',
+      title: 'アクティビティフィード',
+      subtitle: '最新の活動履歴・通知タイムライン',
+      icon: Icons.dynamic_feed_outlined,
+      color: Colors.cyan,
+      keywords: const <String>['アクティビティ', 'フィード', '履歴', '活動', 'タイムライン'],
+      onOpen: (context) => _pushPage(context, const ActivityFeedPage()),
+    ),
+    // personal セクション
+    HomeToolEntry(
+      id: 'calendar-events',
+      sectionId: 'personal',
+      title: 'カレンダー・予定',
+      subtitle: 'イベント・予定管理。Google Calendar競合',
+      icon: Icons.calendar_month_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>['カレンダー', '予定', 'イベント', 'スケジュール', 'calendar'],
+      onOpen: (context) => _pushPage(context, const CalendarEventsPage()),
+    ),
+    HomeToolEntry(
+      id: 'expense-tracker',
+      sectionId: 'personal',
+      title: '支出トラッカー',
+      subtitle: '支出記録・カテゴリ分析。MoneyForward競合',
+      icon: Icons.receipt_long_outlined,
+      color: const Color(0xFF2E7D32),
+      keywords: const <String>['支出', '家計簿', 'お金', '経費', 'expense', 'MoneyForward'],
+      onOpen: (context) => _pushPage(context, const ExpenseTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'budget-financial-planner',
+      sectionId: 'personal',
+      title: '予算・財務プランナー',
+      subtitle: '月次予算設定・資産計画・支出管理',
+      icon: Icons.savings_outlined,
+      color: const Color(0xFF00695C),
+      keywords: const <String>['予算', '財務', 'プランナー', '資産', '計画', 'budget'],
+      onOpen: (context) => _pushPage(context, const BudgetFinancialPlannerPage()),
+    ),
+    HomeToolEntry(
+      id: 'reading-list',
+      sectionId: 'personal',
+      title: '読書リスト',
+      subtitle: '読みたい本・読了記録・レビュー管理',
+      icon: Icons.menu_book_outlined,
+      color: const Color(0xFF6A1B9A),
+      keywords: const <String>['読書', '本', 'ブック', 'リーディング', 'reading', 'book'],
+      onOpen: (context) => _pushPage(context, const ReadingListPage()),
+    ),
+    HomeToolEntry(
+      id: 'address-book',
+      sectionId: 'personal',
+      title: 'アドレス帳',
+      subtitle: '連絡先管理・検索・グループ分け',
+      icon: Icons.contacts_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['アドレス', '連絡先', '住所', 'コンタクト', 'address'],
+      onOpen: (context) => _pushPage(context, const AddressBookPage()),
+    ),
+    HomeToolEntry(
+      id: 'emergency-contacts',
+      sectionId: 'personal',
+      title: '緊急連絡先',
+      subtitle: '緊急時の連絡先一覧・SOS機能',
+      icon: Icons.emergency_outlined,
+      color: Colors.red,
+      keywords: const <String>['緊急', '連絡先', 'SOS', '救急', 'emergency'],
+      onOpen: (context) => _pushPage(context, const EmergencyContactsPage()),
+    ),
+    HomeToolEntry(
+      id: 'family-sharing',
+      sectionId: 'personal',
+      title: 'ファミリー共有',
+      subtitle: '家族間のタスク・買い物リスト・予定共有',
+      icon: Icons.family_restroom_outlined,
+      color: const Color(0xFFAD1457),
+      keywords: const <String>['ファミリー', '家族', '共有', 'シェア', 'family'],
+      onOpen: (context) => _pushPage(context, const FamilySharingManagerPage()),
+    ),
+    HomeToolEntry(
+      id: 'gift-registry',
+      sectionId: 'personal',
+      title: 'ギフトレジストリ',
+      subtitle: 'プレゼント管理・ウィッシュリスト',
+      icon: Icons.card_giftcard_outlined,
+      color: const Color(0xFFE91E63),
+      keywords: const <String>['ギフト', 'プレゼント', 'ウィッシュリスト', 'gift', '贈り物'],
+      onOpen: (context) => _pushPage(context, const GiftRegistryPage()),
+    ),
+    HomeToolEntry(
+      id: 'virtual-pet',
+      sectionId: 'personal',
+      title: 'バーチャルペット',
+      subtitle: 'タスク完了でペットが成長。ゲーミフィケーション',
+      icon: Icons.pets_outlined,
+      color: const Color(0xFFFF6F00),
+      keywords: const <String>['ペット', 'ゲーム', '育成', 'virtual pet', 'ゲーミフィケーション'],
+      onOpen: (context) => _pushPage(context, const VirtualPetPage()),
+    ),
+    HomeToolEntry(
+      id: 'carbon-footprint',
+      sectionId: 'personal',
+      title: 'カーボンフットプリント',
+      subtitle: 'CO2排出量の追跡・エコ活動記録',
+      icon: Icons.eco_outlined,
+      color: const Color(0xFF2E7D32),
+      keywords: const <String>['カーボン', 'CO2', 'エコ', '環境', 'SDGs', 'carbon'],
+      onOpen: (context) => _pushPage(context, const CarbonFootprintTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'fitness-health-tracker',
+      sectionId: 'personal',
+      title: 'フィットネス・ヘルストラッカー',
+      subtitle: '運動記録・歩数・カロリー・体重管理',
+      icon: Icons.fitness_center_outlined,
+      color: const Color(0xFFD84315),
+      keywords: const <String>['フィットネス', '運動', '歩数', 'カロリー', '体重', 'fitness'],
+      onOpen: (context) => _pushPage(context, const FitnessHealthTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'parking-reservation',
+      sectionId: 'personal',
+      title: '駐車場予約',
+      subtitle: '駐車場の予約・空き状況確認',
+      icon: Icons.local_parking_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>['駐車場', 'パーキング', '予約', 'parking', '車'],
+      onOpen: (context) => _pushPage(context, const ParkingReservationPage()),
+    ),
+    HomeToolEntry(
+      id: 'ar-navigation',
+      sectionId: 'personal',
+      title: 'ARナビゲーション',
+      subtitle: 'AR地図・道案内・スポット検索',
+      icon: Icons.explore_outlined,
+      color: const Color(0xFF0277BD),
+      keywords: const <String>['AR', 'ナビ', '地図', '道案内', 'navigation', 'マップ'],
+      onOpen: (context) => _pushPage(context, const ArNavigationPage()),
+    ),
+    HomeToolEntry(
+      id: 'audio-effects-processor',
+      sectionId: 'personal',
+      title: 'オーディオエフェクト',
+      subtitle: 'ギター用エフェクター20種・カスタムチェーン保存',
+      icon: Icons.graphic_eq_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>['エフェクト', 'オーディオ', 'ギター', 'リバーブ', 'ディストーション'],
+      onOpen: (context) => _pushPage(context, const AudioEffectsProcessorPage()),
+    ),
+    // office セクション
+    HomeToolEntry(
+      id: 'subscription-billing',
+      sectionId: 'office',
+      title: 'サブスクリプション管理',
+      subtitle: '課金プラン・請求管理・決済設定',
+      icon: Icons.credit_card_outlined,
+      color: const Color(0xFF00695C),
+      keywords: const <String>['サブスク', '課金', '請求', '決済', 'billing', 'subscription'],
+      onOpen: (context) => _pushPage(context, const SubscriptionBillingPage()),
+    ),
+    HomeToolEntry(
+      id: 'digital-wallet',
+      sectionId: 'office',
+      title: 'デジタルウォレット',
+      subtitle: '電子マネー・ポイント・残高管理',
+      icon: Icons.account_balance_wallet_outlined,
+      color: const Color(0xFF4527A0),
+      keywords: const <String>['ウォレット', '電子マネー', 'PayPay', '残高', 'wallet'],
+      onOpen: (context) => _pushPage(context, const DigitalWalletPage()),
+    ),
+    HomeToolEntry(
+      id: 'loyalty-points',
+      sectionId: 'office',
+      title: 'ロイヤリティポイント',
+      subtitle: '各種ポイントカード・マイル・還元率管理',
+      icon: Icons.stars_outlined,
+      color: const Color(0xFFFF8F00),
+      keywords: const <String>['ポイント', 'マイル', '還元', 'ロイヤリティ', 'loyalty'],
+      onOpen: (context) => _pushPage(context, const LoyaltyPointsPage()),
+    ),
+    HomeToolEntry(
+      id: 'appointment-scheduler',
+      sectionId: 'office',
+      title: '予約スケジューラー',
+      subtitle: '予約管理・空き時間設定・リマインダー',
+      icon: Icons.event_available_outlined,
+      color: const Color(0xFF0277BD),
+      keywords: const <String>['予約', 'スケジュール', 'アポ', 'appointment', 'booking'],
+      onOpen: (context) => _pushPage(context, const AppointmentSchedulerPage()),
+    ),
+    HomeToolEntry(
+      id: 'meeting-manager',
+      sectionId: 'office',
+      title: '会議マネージャー',
+      subtitle: '会議一覧・議事録・アジェンダ管理',
+      icon: Icons.groups_outlined,
+      color: const Color(0xFF37474F),
+      keywords: const <String>['会議', 'ミーティング', '議事録', 'meeting', 'アジェンダ'],
+      onOpen: (context) => _pushPage(context, const MeetingManagerPage()),
+    ),
+    HomeToolEntry(
+      id: 'donation',
+      sectionId: 'office',
+      title: '寄付・クラウドファンディング',
+      subtitle: '寄付管理・支援プロジェクト追跡',
+      icon: Icons.volunteer_activism_outlined,
+      color: const Color(0xFFAD1457),
+      keywords: const <String>['寄付', 'クラウドファンディング', '支援', 'donation', '募金'],
+      onOpen: (context) => _pushPage(context, const DonationCrowdfundingPage()),
+    ),
+    // knowledge セクション
+    HomeToolEntry(
+      id: 'knowledge-base',
+      sectionId: 'knowledge',
+      title: 'ナレッジベース',
+      subtitle: '社内Wiki・ドキュメント検索・FAQ管理',
+      icon: Icons.library_books_outlined,
+      color: const Color(0xFF283593),
+      keywords: const <String>['ナレッジ', 'Wiki', '知識', 'FAQ', 'knowledge', 'ドキュメント'],
+      onOpen: (context) => _pushPage(context, const KnowledgeBasePage()),
+    ),
+    HomeToolEntry(
+      id: 'semantic-search',
+      sectionId: 'knowledge',
+      title: 'セマンティック検索',
+      subtitle: 'AI意味検索でノート・ドキュメントを横断検索',
+      icon: Icons.manage_search_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>['検索', 'セマンティック', 'AI検索', '意味検索', 'semantic'],
+      onOpen: (context) => _pushPage(context, const SemanticSearchPage()),
+    ),
+    HomeToolEntry(
+      id: 'mindmap',
+      sectionId: 'knowledge',
+      title: 'マインドマップ',
+      subtitle: 'アイデアの可視化・ブレインストーミング',
+      icon: Icons.hub_outlined,
+      color: const Color(0xFF6A1B9A),
+      keywords: const <String>['マインドマップ', 'アイデア', 'ブレスト', 'mindmap', '図'],
+      onOpen: (context) => _pushPage(context, const MindmapDiagramPage()),
+    ),
+    HomeToolEntry(
+      id: 'news-rss',
+      sectionId: 'knowledge',
+      title: 'ニュース・RSSリーダー',
+      subtitle: 'RSSフィード購読・ニュース自動収集',
+      icon: Icons.rss_feed_outlined,
+      color: const Color(0xFFEF6C00),
+      keywords: const <String>['ニュース', 'RSS', 'フィード', 'ブログ', 'news', '購読'],
+      onOpen: (context) => _pushPage(context, const NewsRssAggregatorPage()),
+    ),
+    HomeToolEntry(
+      id: 'smart-inbox',
+      sectionId: 'knowledge',
+      title: 'スマート受信トレイ',
+      subtitle: 'AI優先度判定で受信メール・通知をトリアージ',
+      icon: Icons.inbox_outlined,
+      color: const Color(0xFF00838F),
+      keywords: const <String>['受信', 'メール', 'トリアージ', 'inbox', '優先度'],
+      onOpen: (context) => _pushPage(context, const SmartInboxTriagePage()),
+    ),
+    HomeToolEntry(
+      id: 'form-builder',
+      sectionId: 'knowledge',
+      title: 'フォームビルダー',
+      subtitle: 'アンケート・フォーム作成。Google Forms競合',
+      icon: Icons.dynamic_form_outlined,
+      color: const Color(0xFF4527A0),
+      keywords: const <String>['フォーム', 'アンケート', '調査', 'form', 'survey', 'Google Forms'],
+      onOpen: (context) => _pushPage(context, const FormBuilderPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-image-generator',
+      sectionId: 'knowledge',
+      title: 'AI画像生成',
+      subtitle: 'テキストから画像を生成。広告素材・SNS用画像',
+      icon: Icons.auto_awesome_outlined,
+      color: const Color(0xFF6A1B9A),
+      keywords: const <String>['AI', '画像', '生成', 'image', 'イラスト', 'デザイン'],
+      onOpen: (context) => _pushPage(context, const AiImageGeneratorPage()),
+    ),
+    // growth セクション
+    HomeToolEntry(
+      id: 'social-feed',
+      sectionId: 'growth',
+      title: 'ソーシャルフィード',
+      subtitle: '公開メモ・いいね・コメントのSNSフィード',
+      icon: Icons.forum_outlined,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>['SNS', 'フィード', 'ソーシャル', 'タイムライン', 'social'],
+      onOpen: (context) => _pushPage(context, const SocialFeedPage()),
+    ),
+    HomeToolEntry(
+      id: 'referral-program',
+      sectionId: 'growth',
+      title: '紹介プログラム',
+      subtitle: '紹介コード・紹介追跡・報酬管理',
+      icon: Icons.share_outlined,
+      color: const Color(0xFF2E7D32),
+      keywords: const <String>['紹介', 'リファラル', '招待', 'referral', '報酬'],
+      onOpen: (context) => _pushPage(context, const ReferralProgramPage()),
+    ),
+    HomeToolEntry(
+      id: 'rewards',
+      sectionId: 'growth',
+      title: 'リワード',
+      subtitle: '実績報酬・バッジ・ランキング',
+      icon: Icons.emoji_events_outlined,
+      color: const Color(0xFFFF8F00),
+      keywords: const <String>['リワード', '報酬', 'バッジ', 'ランキング', 'rewards'],
+      onOpen: (context) => _pushPage(context, const RewardsPage()),
+    ),
+    HomeToolEntry(
+      id: 'feature-requests',
+      sectionId: 'growth',
+      title: '機能リクエスト',
+      subtitle: '欲しい機能の投票・提案・ステータス確認',
+      icon: Icons.lightbulb_outlined,
+      color: const Color(0xFFF57C00),
+      keywords: const <String>['機能', 'リクエスト', '要望', '提案', 'feature', '投票'],
+      onOpen: (context) => _pushPage(context, const FeatureRequestsPage()),
+    ),
+    HomeToolEntry(
+      id: 'customer-feedback',
+      sectionId: 'growth',
+      title: 'カスタマーフィードバック',
+      subtitle: '顧客の声・NPS・改善アイデア収集',
+      icon: Icons.rate_review_outlined,
+      color: const Color(0xFF00695C),
+      keywords: const <String>['フィードバック', 'NPS', '顧客', 'レビュー', 'feedback'],
+      onOpen: (context) => _pushPage(context, const CustomerFeedbackPage()),
+    ),
+    HomeToolEntry(
+      id: 'analytics-export',
+      sectionId: 'growth',
+      title: 'アナリティクスエクスポート',
+      subtitle: 'データ分析・レポートCSV/PDF出力',
+      icon: Icons.file_download_outlined,
+      color: const Color(0xFF37474F),
+      keywords: const <String>['アナリティクス', 'エクスポート', 'CSV', 'レポート', 'analytics'],
+      onOpen: (context) => _pushPage(context, const AnalyticsExportPage()),
+    ),
+    HomeToolEntry(
+      id: 'workflow-templates',
+      sectionId: 'growth',
+      title: 'ワークフローテンプレート',
+      subtitle: '業務テンプレートギャラリー・カスタムワークフロー',
+      icon: Icons.view_timeline_outlined,
+      color: const Color(0xFF4527A0),
+      keywords: const <String>['ワークフロー', 'テンプレート', '自動化', 'workflow', 'template'],
+      onOpen: (context) => _pushPage(context, const WorkflowTemplatesPage()),
+    ),
+    HomeToolEntry(
+      id: 'growth-automation',
+      sectionId: 'growth',
+      title: 'グロースオートメーション',
+      subtitle: '成長施策の自動実行・A/Bテスト・KPI追跡',
+      icon: Icons.auto_graph_outlined,
+      color: const Color(0xFF2E7D32),
+      keywords: const <String>['グロース', 'オートメーション', '自動化', 'growth', 'AB テスト'],
+      onOpen: (context) => _pushPage(context, const GrowthAutomationControllerPage()),
+    ),
+    HomeToolEntry(
+      id: 'landing-ab-test',
+      sectionId: 'growth',
+      title: 'ランディングABテスト',
+      subtitle: 'LP のABテスト設定・CVR分析',
+      icon: Icons.science_outlined,
+      color: const Color(0xFF283593),
+      keywords: const <String>['ABテスト', 'ランディング', 'LP', 'CVR', 'コンバージョン'],
+      onOpen: (context) => _pushPage(context, const LandingAbTestPage()),
+    ),
+    HomeToolEntry(
+      id: 'viral-ad-generator',
+      sectionId: 'growth',
+      title: 'バイラル広告ジェネレーター',
+      subtitle: 'AI生成の広告クリエイティブ・バイラル動画',
+      icon: Icons.movie_creation_outlined,
+      color: const Color(0xFFD84315),
+      keywords: const <String>['バイラル', '広告', 'クリエイティブ', '動画', 'viral', 'ad'],
+      onOpen: (context) => _pushPage(context, const ViralAdGeneratorPage()),
+    ),
+    HomeToolEntry(
+      id: 'video-ad-generator',
+      sectionId: 'growth',
+      title: '動画広告ジェネレーター',
+      subtitle: '動画広告の自動生成・テンプレート管理',
+      icon: Icons.videocam_outlined,
+      color: const Color(0xFFBF360C),
+      keywords: const <String>['動画', '広告', 'ビデオ', 'video ad', 'ジェネレーター'],
+      onOpen: (context) => _pushPage(context, const VideoAdGeneratorPage()),
+    ),
+    HomeToolEntry(
+      id: 'viral-video-generator',
+      sectionId: 'growth',
+      title: 'バイラル動画ジェネレーター',
+      subtitle: 'SNS拡散用ショート動画の自動生成',
+      icon: Icons.slow_motion_video_outlined,
+      color: const Color(0xFFE65100),
+      keywords: const <String>['バイラル', '動画', 'ショート', 'TikTok', 'Reels', 'viral video'],
+      onOpen: (context) => _pushPage(context, const ViralVideoGeneratorPage()),
+    ),
+    HomeToolEntry(
+      id: 'affiliate-marketing',
+      sectionId: 'growth',
+      title: 'アフィリエイトマーケティング',
+      subtitle: 'アフィリエイトリンク管理・収益追跡',
+      icon: Icons.monetization_on_outlined,
+      color: const Color(0xFF00695C),
+      keywords: const <String>['アフィリエイト', '収益', 'マーケティング', 'affiliate', 'リンク'],
+      onOpen: (context) => _pushPage(context, const AffiliateMarketingPage()),
+    ),
+    HomeToolEntry(
+      id: 'enterprise',
+      sectionId: 'growth',
+      title: 'エンタープライズ',
+      subtitle: '法人向けプラン・組織管理・SLA設定',
+      icon: Icons.business_outlined,
+      color: const Color(0xFF283593),
+      keywords: const <String>['法人', 'エンタープライズ', '組織', 'enterprise', 'ビジネス'],
+      onOpen: (context) => _pushPage(context, const EnterprisePage()),
+    ),
+    HomeToolEntry(
+      id: 'feature-flags',
+      sectionId: 'growth',
+      title: '機能フラグ管理',
+      subtitle: 'フィーチャーフラグのON/OFF・ロールアウト管理',
+      icon: Icons.toggle_on_outlined,
+      color: const Color(0xFF37474F),
+      keywords: const <String>['フラグ', 'フィーチャー', 'トグル', 'feature flag', 'ロールアウト'],
+      onOpen: (context) => _pushPage(context, const FeatureFlagsPage()),
+    ),
+    HomeToolEntry(
+      id: 'qr-code-generator',
+      sectionId: 'growth',
+      title: 'QRコードジェネレーター',
+      subtitle: 'QRコード生成・スキャン・リンク管理',
+      icon: Icons.qr_code_outlined,
+      color: const Color(0xFF212121),
+      keywords: const <String>['QR', 'コード', 'スキャン', 'qr code', 'リンク'],
+      onOpen: (context) => _pushPage(context, const QrCodeGeneratorPage()),
+    ),
+    HomeToolEntry(
+      id: 'auction-marketplace',
+      sectionId: 'growth',
+      title: 'オークション・マーケットプレイス',
+      subtitle: 'デジタルコンテンツの売買・オークション',
+      icon: Icons.gavel_outlined,
+      color: const Color(0xFFBF360C),
+      keywords: const <String>['オークション', 'マーケット', '売買', 'auction', 'marketplace'],
+      onOpen: (context) => _pushPage(context, const AuctionMarketplacePage()),
+    ),
+    HomeToolEntry(
+      id: 'event-ticketing',
+      sectionId: 'growth',
+      title: 'イベントチケット',
+      subtitle: 'イベント作成・チケット販売・参加者管理',
+      icon: Icons.confirmation_number_outlined,
+      color: const Color(0xFF6A1B9A),
+      keywords: const <String>['イベント', 'チケット', '参加', 'event', 'ticket'],
+      onOpen: (context) => _pushPage(context, const EventTicketingPage()),
+    ),
+    HomeToolEntry(
+      id: 'dns-domain-manager',
+      sectionId: 'growth',
+      title: 'DNS・ドメイン管理',
+      subtitle: 'ドメイン登録・DNS設定・SSL証明書管理',
+      icon: Icons.dns_outlined,
+      color: const Color(0xFF37474F),
+      keywords: const <String>['DNS', 'ドメイン', 'SSL', 'domain', 'ホスティング'],
+      onOpen: (context) => _pushPage(context, const DnsDomainManagerPage()),
     ),
   ];
 }
