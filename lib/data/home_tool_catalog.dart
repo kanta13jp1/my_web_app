@@ -1766,7 +1766,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const HorseRacingPredictorPage()),
     ),
     HomeToolEntry(
-      id: 'travel-itinerary',
+      id: 'travel-planner',
       sectionId: 'growth',
       title: '旅行プランナー',
       subtitle: 'Google Travel/TripAdvisor競合。旅程・予約・持ち物・予算を一元管理',

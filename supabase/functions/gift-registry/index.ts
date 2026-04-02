@@ -51,7 +51,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
       if (action === "create_list") {
         const { title, event_type, event_date, is_public } = body;

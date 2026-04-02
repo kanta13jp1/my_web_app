@@ -44,7 +44,8 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = req.method === "GET" ? (url.searchParams.get("action") ?? "list") : (await req.json()).action ?? "add";
+    const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
+    const action = req.method === "GET" ? (url.searchParams.get("action") ?? "list") : (body as Record<string, unknown>).action as string ?? "add";
 
     if (action === "list") {
       const tag = url.searchParams.get("tag");

@@ -37,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = (await req.json()) as GrowthCommandCenterRequest;
+    const body = (await req.json().catch(() => ({}))) as GrowthCommandCenterRequest;
     const totalRegisteredUsers = toNumber(body.totalRegisteredUsers);
     const todayRegistrations = toNumber(body.todayRegistrations);
     const todayShares = toNumber(body.todayShares);

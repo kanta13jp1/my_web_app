@@ -34,7 +34,7 @@ serve(async (req: Request) => {
 
     // POST: Log a schedule execution result
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { taskId, status, summary, durationMs, errorMessage, artifactsCreated } = body;
 
       if (!taskId || !status) {

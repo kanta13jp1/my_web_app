@@ -160,7 +160,7 @@ serve(async (req) => {
         const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
         if (userError || !user) throw new Error('Unauthorized')
 
-        const requestData: AIRequest = await req.json()
+        const requestData: AIRequest = await req.json().catch(() => ({}))
         const { action, model: targetModel } = requestData
 
         const requestContent = requestData.content ?? requestData.text;

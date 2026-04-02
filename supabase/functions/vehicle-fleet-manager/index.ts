@@ -65,7 +65,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
       if (action === "register_vehicle") {
         const { name, vehicle_type, make, model, year, plate_number, odometer_km } = body;

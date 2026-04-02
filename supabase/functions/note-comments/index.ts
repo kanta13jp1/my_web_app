@@ -104,7 +104,7 @@ serve(async (req) => {
     // deno-lint-ignore no-explicit-any
     let body: any;
     try {
-      body = await req.json();
+      body = await req.json().catch(() => ({}));
     } catch {
       return json({ error: "invalid json" }, 400);
     }
@@ -152,7 +152,7 @@ serve(async (req) => {
     // deno-lint-ignore no-explicit-any
     let body: any;
     try {
-      body = await req.json();
+      body = await req.json().catch(() => ({}));
     } catch {
       return json({ error: "invalid json" }, 400);
     }

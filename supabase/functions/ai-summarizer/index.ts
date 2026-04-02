@@ -86,7 +86,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action, text, length } = body;
 
       if (!text || typeof text !== "string" || text.trim().length === 0) {

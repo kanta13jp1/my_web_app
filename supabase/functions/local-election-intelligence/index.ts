@@ -529,7 +529,7 @@ async function parseRequest(req: Request): Promise<ParsedRequest> {
   let body: Record<string, unknown> = {};
   if (req.method === "POST") {
     try {
-      const parsed = await req.json();
+      const parsed = await req.json().catch(() => ({}));
       if (parsed && typeof parsed === "object") {
         body = parsed as Record<string, unknown>;
       }

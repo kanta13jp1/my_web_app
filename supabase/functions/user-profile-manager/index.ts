@@ -156,7 +156,7 @@ serve(async (req) => {
         );
       }
 
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const allowedFields = PROFILE_FIELDS.map((f) => f.key);
       const updates: Record<string, unknown> = {};
       for (const key of allowedFields) {

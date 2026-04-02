@@ -321,7 +321,7 @@ serve(async (req: Request) => {
 
     // POST: Save user's custom effect chain
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const postAction = body.action ?? action;
 
       if (postAction === "save_chain") {

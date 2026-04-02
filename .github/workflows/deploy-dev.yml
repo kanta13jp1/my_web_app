@@ -58,6 +58,11 @@ jobs:
         run: |
           echo "Running Supabase migrations for development..."
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID_DEV }}
+          # Repair any already-applied migrations to avoid duplicate key errors
+          for f in supabase/migrations/*.sql; do
+            version=$(basename "$f" | grep -oP '^\d+')
+            supabase migration repair --status applied "$version" 2>/dev/null || true
+          done
           supabase db push --include-all
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

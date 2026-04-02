@@ -46,7 +46,7 @@ serve(async (req: Request) => {
 
     // POST: Create a new notification
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const postAction = body.action ?? "create";
 
       if (postAction === "create") {

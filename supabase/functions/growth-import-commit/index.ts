@@ -52,7 +52,7 @@ serve(async (req) => {
       throw new Error("Unauthorized");
     }
 
-    const body = (await req.json()) as ImportCommitRequest;
+    const body = (await req.json().catch(() => ({}))) as ImportCommitRequest;
     const requestedUserId = body.userId?.trim();
     if (requestedUserId && requestedUserId !== user.id) {
       throw new Error("userId does not match the authenticated user.");

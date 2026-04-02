@@ -2305,6 +2305,28 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 - query params がある場合はGETと同じ一覧取得として処理
 - POST body parsing を try-catch で保護、空body時は 400 を返す
 
+### Session Web版#3 (2026-04-02): 全Edge Function系統的バグ修正
+
+#### 問題1: req.json() 空ボディクラッシュ (192件)
+Flutter の `functions.invoke()` が POST + queryParameters で呼ぶとき、
+body が空の POST リクエストになる。`await req.json()` がエラーを throw し、
+500エラーまたは不正なエラーメッセージを返していた。
+
+#### 修正
+全192件の Edge Function で `await req.json()` → `await req.json().catch(() => ({}))` に変更。
+空ボディ時は空オブジェクトとして安全にフォールバック。
+
+#### 問題2: GET-only 制限 (3件)
+`health-check`, `financial-report`, `edge-function-ui-checker` が
+`req.method !== "GET"` で POST を拒否していた。Flutter は常に POST を送るため
+これらの機能が使えなかった。
+
+#### 修正
+3件を `req.method !== "GET" && req.method !== "POST"` に変更し、POST を許可。
+
+#### 影響
+- 修正ファイル数: 196
+- ユーザーが遭遇する 500 エラーの大部分が解消される見込み
 
 ### 2026-04-02 daily-development #4 実装済み (自動)
 
@@ -2313,3 +2335,29 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 - **flutter analyze 0エラー維持 (emergency_meeting PDCA強化対応)** (daily-development #4 2026-04-02): `emergency_meeting_page.dart` の `use_build_context_synchronously` 2件 (`context.read<NotificationService>()` を `await` より前に移動)、テストファイルの `prefer_const_constructors` 2件・`require_trailing_commas` 2件・`unnecessary_const` 2件を修正。flutter analyze 0件達成。
 - **DropdownButtonFormField `value` → `initialValue` 移行** (daily-development #4 2026-04-02): Flutter 3.33.0+ で deprecated になった `DropdownButtonFormField.value` を全新規ページで `initialValue` に更新。flutter analyze の `deprecated_member_use` エラー 5件を解消。
 - **ブログ下書き作成** (daily-development #4 2026-04-02): `docs/blog-drafts/2026-04-02-crm-horse-racing.md` — Flutter WebでCRM営業パイプラインと競馬予想AIを同時実装した話・Salesforce/netkeiba競合・`use_build_context_synchronously` 修正パターン解説。
+
+### Session Web版#4 (2026-04-02): ギター録音スタジオ大幅改善
+
+#### 修正: 履歴・統計が更新されない問題
+- Edge Function の `recordings` / `practice_stats` アクションで、全レコードをJSフィルタしていたのを
+  `metadata->>userId` でDB側フィルタに変更。クエリ効率改善 + 確実にユーザーデータを取得。
+
+#### 新機能: WAV エクスポート (iPhone対応)
+- WebM/Opus は iOS Safari 非対応。MediaRecorder の mimeType を自動検出
+  (webm → mp4 → デフォルト) にフォールバック。
+- 録音後、Web Audio API `decodeAudioData` で PCM に変換し、
+  自前の WAV エンコーダ (44バイトヘッダ + 16bit PCM) で `.wav` ファイルを生成。
+- ダウンロードファイル名を `.wav` に変更。全デバイスで再生可能。
+
+#### 改善: 音質
+- エコーキャンセル・ノイズ抑制・自動ゲイン OFF は前回実装済み。
+- WAV (16bit/48kHz/ステレオ) への変換により非可逆圧縮のアーティファクトを排除。
+- MediaRecorder は 256kbps で収録し、WAV変換時にフルPCM品質を維持。
+
+#### 新機能: AIギターコーチ (6番目のタブ)
+- Edge Function に `ai_analyze` アクション追加。ユーザーの録音・練習データを分析し:
+  - 練習パターン分析 (平均録音時間・テンポ・ジャンル多様性)
+  - ストリーク・頻度分析
+  - パーソナライズされたアドバイス (insights + recommendations)
+  - 今日の練習メニュー自動生成 (ウォームアップ→スケール→コード→曲→クールダウン)
+- Flutter 側に AI タブ UI (グラデーションヘッダー・セクション分割・練習メニューカード)

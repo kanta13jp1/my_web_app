@@ -136,7 +136,7 @@ serve(async (req) => {
     // Parse optional filter
     let filterKeys: string[] | null = null;
     try {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       if (body.competitors && Array.isArray(body.competitors)) {
         filterKeys = body.competitors.map((c: string) => c.toLowerCase());
       }

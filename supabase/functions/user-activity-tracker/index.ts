@@ -166,7 +166,7 @@ serve(async (req) => {
     if (req.method === "POST") {
       // アクティビティ記録
       const authHeader = req.headers.get("Authorization");
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { source, metadata } = body;
 
       if (!source) {

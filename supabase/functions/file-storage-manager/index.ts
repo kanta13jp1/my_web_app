@@ -142,7 +142,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
 
       const authHeader = req.headers.get("Authorization");

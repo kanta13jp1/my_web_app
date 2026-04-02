@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -67,6 +68,10 @@ class _GuitarRecordingStudioPageState
 
   // 練習統計
   Map<String, dynamic>? _practiceStats;
+
+  // AI分析
+  Map<String, dynamic>? _aiAnalysis;
+  bool _isLoadingAI = false;
 
   @override
   void initState() {
@@ -189,6 +194,23 @@ class _GuitarRecordingStudioPageState
     } catch (_) {}
   }
 
+  Future<void> _fetchAIAnalysis() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    setState(() => _isLoadingAI = true);
+    try {
+      final res = await _supabase.functions.invoke(
+        'guitar-recording-studio',
+        body: {'action': 'ai_analyze', 'userId': user.id, 'analysisType': 'practice_menu'},
+      );
+      final data = _parseResponse(res.data);
+      if (data != null) {
+        setState(() => _aiAnalysis = data);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _isLoadingAI = false);
+  }
+
   Future<void> _deleteRecording(String recordingId) async {
     try {
       await _supabase.functions.invoke(
@@ -243,11 +265,21 @@ class _GuitarRecordingStudioPageState
       _mediaStream = stream;
       _audioChunks.clear();
 
-      // 高ビットレートで録音 (256kbps)
-      final options = web.MediaRecorderOptions(
-        mimeType: 'audio/webm;codecs=opus',
-        audioBitsPerSecond: 256000,
-      );
+      // MediaRecorder: まず audio/webm;codecs=opus を試し、
+      // 非対応 (iOS Safari等) なら audio/mp4 → デフォルトにフォールバック
+      String mimeType = 'audio/webm;codecs=opus';
+      if (!web.MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/mp4';
+        if (!web.MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = ''; // ブラウザデフォルト
+        }
+      }
+      final options = mimeType.isNotEmpty
+          ? web.MediaRecorderOptions(
+              mimeType: mimeType,
+              audioBitsPerSecond: 256000,
+            )
+          : web.MediaRecorderOptions(audioBitsPerSecond: 256000);
       _mediaRecorder = web.MediaRecorder(stream, options);
 
       _mediaRecorder!.addEventListener(
@@ -264,11 +296,7 @@ class _GuitarRecordingStudioPageState
       _mediaRecorder!.addEventListener(
         'stop',
         (web.Event _) {
-          final blobParts = _audioChunks.toJS;
-          final blobInit = web.BlobPropertyBag(type: 'audio/webm');
-          final blob = web.Blob(blobParts, blobInit);
-          final url = web.URL.createObjectURL(blob);
-          if (mounted) setState(() => _audioUrl = url);
+          _buildAudioBlob();
         }.toJS,
       );
 
@@ -295,6 +323,103 @@ class _GuitarRecordingStudioPageState
             'マイクへのアクセスに失敗しました。\n設定でマイクを許可してください。\n$e',
       );
     }
+  }
+
+  /// 録音チャンクからBlobを作成し、WAVに変換する
+  void _buildAudioBlob() {
+    final blobParts = _audioChunks.toJS;
+    final recorderMime = _mediaRecorder?.mimeType ?? 'audio/webm';
+    final blobInit = web.BlobPropertyBag(type: recorderMime);
+    final rawBlob = web.Blob(blobParts, blobInit);
+
+    // WebM/OGG → WAV に変換 (iPhone互換性のため)
+    _convertToWav(rawBlob);
+  }
+
+  /// Web Audio API を使って任意の音声BlobをWAVに変換
+  Future<void> _convertToWav(web.Blob sourceBlob) async {
+    try {
+      final arrayBuf = await sourceBlob.arrayBuffer().toDart;
+      final audioCtx = web.AudioContext();
+      final audioBuf = await audioCtx.decodeAudioData(arrayBuf).toDart;
+
+      // PCM データ取得
+      final numChannels = audioBuf.numberOfChannels;
+      final sampleRate = audioBuf.sampleRate.toInt();
+      final channels = <Float32List>[];
+      for (int ch = 0; ch < numChannels; ch++) {
+        channels.add(audioBuf.getChannelData(ch).toDart);
+      }
+
+      // WAV ヘッダ + データ構築
+      final wavBytes = _encodeWav(channels, sampleRate, numChannels);
+      final wavBlob = web.Blob(
+        [wavBytes.buffer.toJS].toJS,
+        web.BlobPropertyBag(type: 'audio/wav'),
+      );
+      final url = web.URL.createObjectURL(wavBlob);
+      if (mounted) setState(() => _audioUrl = url);
+      audioCtx.close();
+    } catch (_) {
+      // WAV変換に失敗した場合は元の形式でフォールバック
+      final url = web.URL.createObjectURL(sourceBlob);
+      if (mounted) setState(() => _audioUrl = url);
+    }
+  }
+
+  /// Float32 PCM → 16-bit WAV バイト列にエンコード
+  Uint8List _encodeWav(List<Float32List> channels, int sampleRate, int numChannels) {
+    final length = channels[0].length;
+    final byteRate = sampleRate * numChannels * 2; // 16-bit = 2 bytes
+    final dataSize = length * numChannels * 2;
+    final buffer = ByteData(44 + dataSize);
+
+    // RIFF header
+    buffer.setUint8(0, 0x52); // R
+    buffer.setUint8(1, 0x49); // I
+    buffer.setUint8(2, 0x46); // F
+    buffer.setUint8(3, 0x46); // F
+    buffer.setUint32(4, 36 + dataSize, Endian.little);
+    buffer.setUint8(8, 0x57); // W
+    buffer.setUint8(9, 0x41); // A
+    buffer.setUint8(10, 0x56); // V
+    buffer.setUint8(11, 0x45); // E
+
+    // fmt chunk
+    buffer.setUint8(12, 0x66); // f
+    buffer.setUint8(13, 0x6D); // m
+    buffer.setUint8(14, 0x74); // t
+    buffer.setUint8(15, 0x20); // (space)
+    buffer.setUint32(16, 16, Endian.little); // chunk size
+    buffer.setUint16(20, 1, Endian.little); // PCM format
+    buffer.setUint16(22, numChannels, Endian.little);
+    buffer.setUint32(24, sampleRate, Endian.little);
+    buffer.setUint32(28, byteRate, Endian.little);
+    buffer.setUint16(32, numChannels * 2, Endian.little); // block align
+    buffer.setUint16(34, 16, Endian.little); // bits per sample
+
+    // data chunk
+    buffer.setUint8(36, 0x64); // d
+    buffer.setUint8(37, 0x61); // a
+    buffer.setUint8(38, 0x74); // t
+    buffer.setUint8(39, 0x61); // a
+    buffer.setUint32(40, dataSize, Endian.little);
+
+    // Interleave PCM samples
+    int offset = 44;
+    for (int i = 0; i < length; i++) {
+      for (int ch = 0; ch < numChannels; ch++) {
+        double sample = channels[ch][i];
+        // Clamp to [-1.0, 1.0]
+        if (sample > 1.0) sample = 1.0;
+        if (sample < -1.0) sample = -1.0;
+        final intSample = (sample * 32767).round();
+        buffer.setInt16(offset, intSample, Endian.little);
+        offset += 2;
+      }
+    }
+
+    return buffer.buffer.asUint8List();
   }
 
   void _pauseRecording() {
@@ -337,7 +462,7 @@ class _GuitarRecordingStudioPageState
   void _downloadRecording() {
     if (_audioUrl == null) return;
     final title = _titleController.text.trim();
-    final fileName = title.isNotEmpty ? '$title.webm' : 'guitar-recording.webm';
+    final fileName = title.isNotEmpty ? '$title.wav' : 'guitar-recording.wav';
     final anchor = web.HTMLAnchorElement()
       ..href = _audioUrl!
       ..download = fileName
@@ -473,6 +598,7 @@ class _GuitarRecordingStudioPageState
               _tabButton('テンポ', 2),
               _tabButton('履歴', 3),
               _tabButton('統計', 4),
+              _tabButton('AI', 5),
             ],
           ),
         ),
@@ -526,6 +652,8 @@ class _GuitarRecordingStudioPageState
         return _buildHistoryTab();
       case 4:
         return _buildStatsTab();
+      case 5:
+        return _buildAITab();
       default:
         return _buildRecordingTab();
     }
@@ -716,7 +844,7 @@ class _GuitarRecordingStudioPageState
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    '48kHz / ステレオ / 256kbps (WebM Opus)',
+                    '48kHz / ステレオ / 16bit WAV (iPhone対応)',
                     style: TextStyle(color: Colors.white24, fontSize: 11),
                   ),
                 ],
@@ -1618,6 +1746,232 @@ class _GuitarRecordingStudioPageState
             style: const TextStyle(color: Colors.white54, fontSize: 12),
             textAlign: TextAlign.center,
           ),
+        ],
+      ),
+    );
+  }
+
+  // ── AIタブ ────────────────────────────────────────────────────
+
+  Widget _buildAITab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ヘッダー
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF7C3AED), Color(0xFFE94560)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                const Icon(Icons.auto_awesome, color: Colors.white, size: 36),
+                const SizedBox(height: 8),
+                const Text(
+                  'AIギターコーチ',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'あなたの練習データを分析し、上達のためのアドバイスを提供します',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _isLoadingAI ? null : _fetchAIAnalysis,
+                  icon: _isLoadingAI
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)))
+                      : const Icon(Icons.psychology),
+                  label: Text(_isLoadingAI ? '分析中...' : (_aiAnalysis != null ? '再分析する' : '練習を分析する')),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF7C3AED),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          if (_aiAnalysis != null) ...[
+            const SizedBox(height: 16),
+
+            // インサイト
+            _aiSection('分析結果', Icons.insights, _aiInsights()),
+
+            // レコメンデーション
+            if ((_aiAnalysis!['recommendations'] as List?)?.isNotEmpty == true) ...[
+              const SizedBox(height: 12),
+              _aiSection('おすすめ', Icons.lightbulb_outline, _aiRecommendations()),
+            ],
+
+            // 練習メニュー
+            if ((_aiAnalysis!['practiceMenu'] as List?)?.isNotEmpty == true) ...[
+              const SizedBox(height: 12),
+              _aiSection('今日の練習メニュー', Icons.assignment, _aiPracticeMenu()),
+            ],
+
+            // 分析データ
+            const SizedBox(height: 12),
+            _aiSection('詳細データ', Icons.bar_chart, _aiStats()),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _aiSection(String title, IconData icon, Widget content) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFF7C3AED), size: 20),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          content,
+        ],
+      ),
+    );
+  }
+
+  Widget _aiInsights() {
+    final insights = (_aiAnalysis!['insights'] as List?) ?? [];
+    if (insights.isEmpty) {
+      return const Text('データが不足しています。録音を増やしましょう！', style: TextStyle(color: Colors.white54));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: insights.map((i) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('• ', style: TextStyle(color: Color(0xFF7C3AED), fontSize: 16)),
+            Expanded(child: Text('$i', style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4))),
+          ],
+        ),
+      ),).toList(),
+    );
+  }
+
+  Widget _aiRecommendations() {
+    final recs = (_aiAnalysis!['recommendations'] as List?) ?? [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: recs.asMap().entries.map((entry) => Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F3460),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 24, height: 24,
+              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF7C3AED)),
+              child: Center(child: Text('${entry.key + 1}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text('${entry.value}', style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4))),
+          ],
+        ),
+      ),).toList(),
+    );
+  }
+
+  Widget _aiPracticeMenu() {
+    final menu = (_aiAnalysis!['practiceMenu'] as List?) ?? [];
+    return Column(
+      children: menu.asMap().entries.map((entry) {
+        final item = entry.value is Map<String, dynamic> ? entry.value as Map<String, dynamic> : Map<String, dynamic>.from(entry.value as Map);
+        final title = item['title'] as String? ?? '';
+        final duration = item['duration'] as String? ?? '';
+        final desc = item['description'] as String? ?? '';
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F3460),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE94560),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(desc, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _aiStats() {
+    final analysis = _aiAnalysis!['analysis'] as Map<String, dynamic>? ?? {};
+    final totalRec = analysis['totalRecordings'] as int? ?? 0;
+    final totalMin = analysis['totalMinutes'] as int? ?? 0;
+    final avgBpm = analysis['averageBpm'] as int? ?? 0;
+    final streak = analysis['streak'] as int? ?? 0;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _miniStat('録音数', '$totalRec'),
+        _miniStat('総時間', '$totalMin分'),
+        _miniStat('平均BPM', '$avgBpm'),
+        _miniStat('連続', '$streak日'),
+      ],
+    );
+  }
+
+  Widget _miniStat(String label, String value) {
+    return Container(
+      width: 80,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F3460),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(value, style: const TextStyle(color: Color(0xFF7C3AED), fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
         ],
       ),
     );

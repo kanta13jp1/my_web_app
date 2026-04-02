@@ -161,6 +161,9 @@ import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
+import 'package:my_web_app/pages/spreadsheet_database_page.dart';
+import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
+import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -925,6 +928,10 @@ class MyApp extends StatelessWidget {
             );
           case '/travel-itinerary':
             return MaterialPageRoute(
+              builder: (_) => const TravelItineraryPlannerPage(),
+            );
+          case '/travel-planner':
+            return MaterialPageRoute(
               builder: (_) => const TravelItineraryPage(),
             );
           case '/virtual-whiteboard':
@@ -934,6 +941,14 @@ class MyApp extends StatelessWidget {
           case '/recipe-meal-planner':
             return MaterialPageRoute(
               builder: (_) => const RecipeMealPlannerPage(),
+            );
+          case '/spreadsheet-database':
+            return MaterialPageRoute(
+              builder: (_) => const SpreadsheetDatabasePage(),
+            );
+          case '/changelog':
+            return MaterialPageRoute(
+              builder: (_) => const ChangelogManagerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
