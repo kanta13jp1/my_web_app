@@ -215,17 +215,15 @@ serve(async (req: Request) => {
         .select("*")
         .eq("source", "guitar-recording-studio")
         .eq("metadata->>event_type", "recording_saved")
+        .eq("metadata->>userId", userId)
         .order("created_at", { ascending: false })
         .limit(100);
 
       const userRecordings = (recordings ?? [])
-        .filter((r: Record<string, unknown>) => {
-          const ed = r.metadata as Record<string, unknown>;
-          return ed?.userId === userId;
-        })
         .map((r: Record<string, unknown>) => ({
           ...(r.metadata as Record<string, unknown>),
           createdAt: r.created_at,
+          dbId: r.id,
         }));
 
       return new Response(
@@ -247,18 +245,16 @@ serve(async (req: Request) => {
         );
       }
 
-      const { data: sessions } = await supabase
+      const { data: userSessionsRaw } = await supabase
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
+        .eq("metadata->>userId", userId)
         .in("metadata->>event_type", ["recording_saved", "practice_session"])
         .order("created_at", { ascending: false })
         .limit(500);
 
-      const userSessions = (sessions ?? []).filter((s: Record<string, unknown>) => {
-        const ed = s.metadata as Record<string, unknown>;
-        return ed?.userId === userId;
-      });
+      const userSessions = userSessionsRaw ?? [];
 
       const totalMinutes = userSessions.reduce((sum: number, s: Record<string, unknown>) => {
         const ed = s.metadata as Record<string, unknown>;
@@ -311,6 +307,192 @@ serve(async (req: Request) => {
         );
       }
       const postAction = (body.action as string) ?? action;
+
+      // AI analysis of practice/recording
+      if (postAction === "ai_analyze") {
+        const { userId, analysisType } = body;
+        if (!userId) {
+          return new Response(
+            JSON.stringify({ error: "userId is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Fetch user's recent recordings and practice sessions
+        const { data: recentData } = await supabase
+          .from("app_analytics")
+          .select("*")
+          .eq("source", "guitar-recording-studio")
+          .eq("metadata->>userId", userId as string)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        const sessions = recentData ?? [];
+        const recordings = sessions.filter((s: Record<string, unknown>) =>
+          (s.metadata as Record<string, unknown>)?.event_type === "recording_saved"
+        );
+        const practices = sessions.filter((s: Record<string, unknown>) =>
+          (s.metadata as Record<string, unknown>)?.event_type === "practice_session"
+        );
+
+        const totalMinutes = sessions.reduce((sum: number, s: Record<string, unknown>) => {
+          const md = s.metadata as Record<string, unknown>;
+          return sum + ((md?.durationSeconds as number) ?? 0) / 60;
+        }, 0);
+
+        const presetCounts: Record<string, number> = {};
+        const tuningCounts: Record<string, number> = {};
+        const tagCounts: Record<string, number> = {};
+        const bpmValues: number[] = [];
+        const durationValues: number[] = [];
+
+        for (const s of recordings) {
+          const md = s.metadata as Record<string, unknown>;
+          const preset = (md?.preset as string) ?? "unknown";
+          const tuning = (md?.tuning as string) ?? "unknown";
+          const bpm = (md?.bpm as number) ?? 0;
+          const dur = (md?.durationSeconds as number) ?? 0;
+          const tags = (md?.tags as string[]) ?? [];
+
+          presetCounts[preset] = (presetCounts[preset] ?? 0) + 1;
+          tuningCounts[tuning] = (tuningCounts[tuning] ?? 0) + 1;
+          if (bpm > 0) bpmValues.push(bpm);
+          if (dur > 0) durationValues.push(dur);
+          for (const tag of tags) {
+            tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+          }
+        }
+
+        const avgBpm = bpmValues.length > 0
+          ? Math.round(bpmValues.reduce((a, b) => a + b, 0) / bpmValues.length)
+          : 0;
+        const avgDuration = durationValues.length > 0
+          ? Math.round(durationValues.reduce((a, b) => a + b, 0) / durationValues.length)
+          : 0;
+
+        const topPresets = Object.entries(presetCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([k, v]) => ({ preset: k, count: v }));
+
+        const streak = calculateStreak(sessions);
+
+        // Generate AI insights based on analysisType
+        const insights: string[] = [];
+        const recommendations: string[] = [];
+        const practiceMenu: Array<{ title: string; duration: string; description: string }> = [];
+
+        if (recordings.length === 0) {
+          insights.push("まだ録音がありません。最初の録音を始めましょう！");
+          recommendations.push("まずは好きな曲のサビ部分を30秒録音してみましょう");
+          recommendations.push("アコースティックプリセットから始めるのがおすすめです");
+        } else {
+          // Practice pattern analysis
+          if (avgDuration < 60) {
+            insights.push(`平均録音時間は${avgDuration}秒です。短いセッションが多いですね。`);
+            recommendations.push("3〜5分の集中練習セッションを目標にしましょう。短すぎると上達が遅くなります。");
+          } else if (avgDuration > 300) {
+            insights.push(`平均録音時間は${Math.round(avgDuration / 60)}分です。長時間練習できていますね！`);
+            recommendations.push("適度な休憩を入れることで集中力が持続します。25分練習→5分休憩のポモドーロ式がおすすめ。");
+          } else {
+            insights.push(`平均録音時間は${Math.round(avgDuration / 60)}分。良いペースです！`);
+          }
+
+          // Genre diversity
+          if (topPresets.length === 1) {
+            insights.push(`${RECORDING_PRESETS[topPresets[0].preset]?.description ?? topPresets[0].preset}に集中しています。`);
+            recommendations.push("他のジャンルにも挑戦してみましょう。ブルースはギターの表現力を高めます。");
+          } else if (topPresets.length >= 3) {
+            insights.push("複数のジャンルに挑戦していて素晴らしいです！");
+          }
+
+          // BPM analysis
+          if (avgBpm > 0) {
+            if (avgBpm < 80) {
+              insights.push(`平均テンポは${avgBpm}BPM。ゆっくりした楽曲が中心です。`);
+              recommendations.push("速いフレーズの練習には、60BPMから始めて徐々に上げるのが効果的です。");
+            } else if (avgBpm > 140) {
+              insights.push(`平均テンポは${avgBpm}BPM。速いテンポに挑戦していますね！`);
+              recommendations.push("クリーンに弾けるテンポまで落として練習すると、正確さが向上します。");
+            }
+          }
+
+          // Streak
+          if (streak >= 7) {
+            insights.push(`${streak}日連続練習中！素晴らしい継続力です。`);
+          } else if (streak >= 3) {
+            insights.push(`${streak}日連続練習中。この調子で続けましょう！`);
+          } else if (streak === 0) {
+            recommendations.push("毎日5分でも良いので録音する習慣をつけましょう。継続が上達の鍵です。");
+          }
+
+          // Frequency
+          const daysSinceFirst = sessions.length > 0
+            ? Math.max(1, Math.round((Date.now() - new Date(sessions[sessions.length - 1].created_at as string).getTime()) / 86400000))
+            : 1;
+          const sessionsPerWeek = Math.round((sessions.length / daysSinceFirst) * 7 * 10) / 10;
+          insights.push(`週あたり約${sessionsPerWeek}回のペースで練習しています。`);
+        }
+
+        // Generate practice menu
+        if (analysisType === "practice_menu" || !analysisType) {
+          if (topPresets.length > 0) {
+            const mainGenre = topPresets[0].preset;
+            practiceMenu.push({
+              title: "ウォームアップ",
+              duration: "5分",
+              description: "クロマチックスケール練習 (60BPM → 80BPM)。各フレットを確実に押さえる。",
+            });
+            practiceMenu.push({
+              title: "スケール練習",
+              duration: "10分",
+              description: mainGenre === "blues_lead"
+                ? "マイナーペンタトニックスケールをAキーで上下。チョーキングとビブラートを意識。"
+                : mainGenre === "jazz_clean"
+                ? "メジャースケール + モード (ドリアン/ミクソリディアン) をCキーで。"
+                : "メジャーペンタトニックスケールを各ポジションで。",
+            });
+            practiceMenu.push({
+              title: "コード練習",
+              duration: "10分",
+              description: mainGenre === "rock_rhythm"
+                ? "パワーコード進行 (E5-A5-B5) をオルタネイトピッキングで。ミュートを意識。"
+                : "基本コードチェンジ練習 (G-C-D-Em)。各コード1小節、スムーズに切り替え。",
+            });
+            practiceMenu.push({
+              title: "曲の練習",
+              duration: "15分",
+              description: "練習中の曲のサビ部分を繰り返し録音。再生して聴き比べる。",
+            });
+            practiceMenu.push({
+              title: "クールダウン",
+              duration: "5分",
+              description: "好きなコード進行を自由に弾く。リラックスして音を楽しむ。",
+            });
+          }
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            analysis: {
+              totalRecordings: recordings.length,
+              totalPracticeSessions: practices.length,
+              totalMinutes: Math.round(totalMinutes),
+              averageDurationSeconds: avgDuration,
+              averageBpm: avgBpm,
+              streak,
+              topPresets,
+              topTags: Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5),
+              tuningDistribution: tuningCounts,
+            },
+            insights,
+            recommendations,
+            practiceMenu,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       // Save a recording
       if (postAction === "save_recording") {
