@@ -164,7 +164,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
 
       if (action === "register_fix_task") {

@@ -40,7 +40,7 @@ serve(async (req) => {
   try {
     const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-    if (req.method !== "GET") {
+    if (req.method !== "GET" && req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

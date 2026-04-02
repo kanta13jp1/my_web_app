@@ -2290,3 +2290,26 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 #### 修正パターン
 - query params がある場合はGETと同じ一覧取得として処理
 - POST body parsing を try-catch で保護、空body時は 400 を返す
+
+### Session Web版#3 (2026-04-02): 全Edge Function系統的バグ修正
+
+#### 問題1: req.json() 空ボディクラッシュ (192件)
+Flutter の `functions.invoke()` が POST + queryParameters で呼ぶとき、
+body が空の POST リクエストになる。`await req.json()` がエラーを throw し、
+500エラーまたは不正なエラーメッセージを返していた。
+
+#### 修正
+全192件の Edge Function で `await req.json()` → `await req.json().catch(() => ({}))` に変更。
+空ボディ時は空オブジェクトとして安全にフォールバック。
+
+#### 問題2: GET-only 制限 (3件)
+`health-check`, `financial-report`, `edge-function-ui-checker` が
+`req.method !== "GET"` で POST を拒否していた。Flutter は常に POST を送るため
+これらの機能が使えなかった。
+
+#### 修正
+3件を `req.method !== "GET" && req.method !== "POST"` に変更し、POST を許可。
+
+#### 影響
+- 修正ファイル数: 196
+- ユーザーが遭遇する 500 エラーの大部分が解消される見込み

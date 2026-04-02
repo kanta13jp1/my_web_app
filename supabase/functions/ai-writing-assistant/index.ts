@@ -51,7 +51,7 @@ serve(async (req) => {
       });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { action, text, tone, target_language } = body;
 
     if (!text || text.trim() === "") {

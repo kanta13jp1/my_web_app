@@ -102,7 +102,7 @@ serve(async (req) => {
   if (req.method === "POST") {
     let body: { memo_id?: unknown; reaction?: unknown };
     try {
-      body = await req.json();
+      body = await req.json().catch(() => ({}));
     } catch {
       return new Response(JSON.stringify({ error: "invalid json" }), {
         status: 400,

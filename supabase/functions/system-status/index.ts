@@ -167,7 +167,7 @@ serve(async (req) => {
         );
       }
 
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
 
       if (action === "report_incident") {

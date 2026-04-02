@@ -82,7 +82,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { title, draft_path, target_platforms, content_preview } = body;
 
       if (!title) {
@@ -114,7 +114,7 @@ serve(async (req) => {
     }
 
     if (req.method === "PATCH") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { id, status, url, posted_at } = body;
 
       if (!id || !status) {

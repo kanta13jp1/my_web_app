@@ -37,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = (await req.json()) as GrowthAcquisitionSignalRequest;
+    const body = (await req.json().catch(() => ({}))) as GrowthAcquisitionSignalRequest;
     const signalKey = body.signalKey?.trim();
     const dateKey = normalizeDateKey(body.dateKey);
 

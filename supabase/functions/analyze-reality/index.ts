@@ -20,7 +20,7 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text } = await req.json().catch(() => ({}));
     if (!text || typeof text !== "string") {
       return new Response(
         JSON.stringify({ success: false, error: "text is required" }),

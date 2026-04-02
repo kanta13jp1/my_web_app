@@ -27,7 +27,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = (await req.json()) as GrowthShareSignalRequest;
+    const body = (await req.json().catch(() => ({}))) as GrowthShareSignalRequest;
     const signalKey = body.signalKey?.trim();
     const memoId = toNumber(body.memoId);
     const dateKey = normalizeDateKey(body.dateKey);

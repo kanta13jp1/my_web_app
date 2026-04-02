@@ -161,7 +161,7 @@ serve(async (req) => {
 
     let parsedBody: SearchRequest;
     try {
-      parsedBody = await req.json();
+      parsedBody = await req.json().catch(() => ({}));
     } catch {
       return new Response(
         JSON.stringify({ success: false, error: "Invalid JSON body" }),

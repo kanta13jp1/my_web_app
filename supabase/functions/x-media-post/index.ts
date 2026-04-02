@@ -45,7 +45,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json() as {
+    const body = await req.json().catch(() => ({})) as {
       text?: string;
       mediaBase64?: string;
       mediaType?: string;

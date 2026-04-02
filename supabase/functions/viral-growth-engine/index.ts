@@ -77,7 +77,7 @@ serve(async (req) => {
       return jsonRes({ error: "GET or POST only" }, 405);
     }
 
-    const body = await req.json() as {
+    const body = await req.json().catch(() => ({})) as {
       action?: string;
       userId?: string;
       shareType?: string;

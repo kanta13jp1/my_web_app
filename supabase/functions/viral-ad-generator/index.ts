@@ -375,7 +375,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json() as {
+    const body = await req.json().catch(() => ({})) as {
       template?: AdTemplate;
       stats?: AdStats;
       format?: "svg" | "html";

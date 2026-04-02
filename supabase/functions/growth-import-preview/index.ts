@@ -34,7 +34,7 @@ serve(async (req) => {
   }
 
   try {
-    const body = (await req.json()) as ImportPreviewRequest;
+    const body = (await req.json().catch(() => ({}))) as ImportPreviewRequest;
     const sourceType = body.sourceType?.trim().toLowerCase();
     const fileName = body.fileName?.trim();
     const contentBase64 = body.contentBase64?.trim();

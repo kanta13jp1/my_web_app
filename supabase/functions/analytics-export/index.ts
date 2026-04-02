@@ -58,7 +58,7 @@ serve(async (req) => {
     if (req.method === "POST" && view === null) {
       let body: Record<string, unknown> = {};
       try {
-        body = await req.json();
+        body = await req.json().catch(() => ({}));
       } catch {
         return new Response(JSON.stringify({ success: false, error: "Invalid or empty JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }

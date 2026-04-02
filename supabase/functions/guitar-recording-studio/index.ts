@@ -303,7 +303,7 @@ serve(async (req: Request) => {
     if (req.method === "POST") {
       let body: Record<string, unknown> = {};
       try {
-        body = await req.json();
+        body = await req.json().catch(() => ({}));
       } catch {
         return new Response(
           JSON.stringify({ error: "Invalid or empty JSON body" }),

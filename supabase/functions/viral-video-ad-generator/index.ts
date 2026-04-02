@@ -152,7 +152,7 @@ serve(async (req) => {
       return jsonRes({ error: "Method not allowed" }, 405);
     }
 
-    const body = await req.json() as {
+    const body = await req.json().catch(() => ({})) as {
       type?: string;
       template?: string;
       lang?: string;

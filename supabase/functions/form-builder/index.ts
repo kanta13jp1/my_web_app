@@ -57,7 +57,7 @@ serve(async (req) => {
 
     // Public form submission (no auth required for public forms)
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       if (body.action === "submit_public") {
         const { form_id, responses, respondent_email } = body;
         if (!form_id || !responses) {
@@ -156,7 +156,7 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       const { action } = body;
 
       if (action === "create_form") {

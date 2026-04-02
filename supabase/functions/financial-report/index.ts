@@ -36,7 +36,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (req.method !== "GET") {
+    if (req.method !== "GET" && req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
