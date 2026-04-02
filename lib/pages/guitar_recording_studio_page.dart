@@ -48,8 +48,10 @@ class _GuitarRecordingStudioPageState
 
   // 保存フォーム
   final _titleController = TextEditingController();
+  final _tagsController = TextEditingController();
   bool _isSaving = false;
   bool _savedSuccessfully = false;
+  bool _isPublic = false;
 
   // 選択中のコード
   String? _selectedChord;
@@ -62,11 +64,15 @@ class _GuitarRecordingStudioPageState
   List<Map<String, dynamic>> _recordings = [];
   bool _isLoadingRecordings = false;
 
+  // 練習統計
+  Map<String, dynamic>? _practiceStats;
+
   @override
   void initState() {
     super.initState();
     _fetchStudioData();
     _fetchRecordings();
+    _fetchPracticeStats();
   }
 
   @override
@@ -76,6 +82,7 @@ class _GuitarRecordingStudioPageState
     _mediaRecorder?.stop();
     _mediaStream?.getTracks().toDart.forEach((t) => t.stop());
     _titleController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -148,6 +155,38 @@ class _GuitarRecordingStudioPageState
       // 無視
     } finally {
       if (mounted) setState(() => _isLoadingRecordings = false);
+    }
+  }
+
+  Future<void> _fetchPracticeStats() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      final res = await _supabase.functions.invoke(
+        'guitar-recording-studio',
+        queryParameters: {'action': 'practice_stats', 'userId': user.id},
+      );
+      final data = res.data;
+      if (data is Map<String, dynamic>) {
+        setState(() => _practiceStats = data);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _deleteRecording(String recordingId) async {
+    try {
+      await _supabase.functions.invoke(
+        'guitar-recording-studio',
+        body: {'action': 'delete_recording', 'recordingId': recordingId},
+      );
+      await _fetchRecordings();
+      await _fetchPracticeStats();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -295,13 +334,17 @@ class _GuitarRecordingStudioPageState
           'tuning': _selectedTuning,
           'bpm': _bpm,
           'tracks': 1,
-          'tags': <String>[],
-          'isPublic': false,
+          'tags': _tagsController.text.trim().isEmpty
+              ? <String>[]
+              : _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
+          'isPublic': _isPublic,
         },
       );
       setState(() => _savedSuccessfully = true);
       await _fetchRecordings();
+      await _fetchPracticeStats();
       _titleController.clear();
+      _tagsController.clear();
     } catch (e) {
       setState(() => _errorMessage = '保存に失敗しました: $e');
     } finally {
@@ -386,9 +429,10 @@ class _GuitarRecordingStudioPageState
           child: Row(
             children: [
               _tabButton('録音', 0),
-              _tabButton('コード辞典', 1),
-              _tabButton('メトロノーム', 2),
-              _tabButton('録音履歴', 3),
+              _tabButton('コード', 1),
+              _tabButton('テンポ', 2),
+              _tabButton('履歴', 3),
+              _tabButton('統計', 4),
             ],
           ),
         ),
@@ -440,6 +484,8 @@ class _GuitarRecordingStudioPageState
         return _buildMetronomeTab();
       case 3:
         return _buildHistoryTab();
+      case 4:
+        return _buildStatsTab();
       default:
         return _buildRecordingTab();
     }
@@ -454,7 +500,9 @@ class _GuitarRecordingStudioPageState
         children: [
           if (_errorMessage != null) _errorCard(_errorMessage!),
           _presetSelector(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          _inlineMetronomeToggle(),
+          const SizedBox(height: 12),
           _recorderWidget(),
           if (_audioUrl != null) ...[
             const SizedBox(height: 16),
@@ -811,6 +859,46 @@ class _GuitarRecordingStudioPageState
             ),
           ),
           const SizedBox(height: 12),
+          TextField(
+            controller: _tagsController,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'タグ (カンマ区切り: rock, practice, solo)',
+              hintStyle: TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: Color(0xFF0F3460),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white24),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFFE94560)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Text('公開する', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const SizedBox(width: 8),
+              Switch(
+                value: _isPublic,
+                onChanged: (v) => setState(() => _isPublic = v),
+                activeColor: const Color(0xFFE94560),
+              ),
+              const Spacer(),
+              Text(
+                _isPublic ? '他ユーザーに公開' : '自分だけ',
+                style: TextStyle(
+                  color: _isPublic ? const Color(0xFFE94560) : Colors.white38,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -831,6 +919,64 @@ class _GuitarRecordingStudioPageState
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _inlineMetronomeToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _toggleMetronome,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _isMetronomeActive
+                    ? const Color(0xFFE94560)
+                    : Colors.white12,
+              ),
+              child: Icon(
+                _isMetronomeActive ? Icons.music_off : Icons.music_note,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'メトロノーム $_bpm BPM',
+            style: TextStyle(
+              color: _isMetronomeActive ? const Color(0xFFE94560) : Colors.white54,
+              fontSize: 13,
+            ),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: 100,
+            child: Slider(
+              value: _bpm.toDouble(),
+              min: 40,
+              max: 240,
+              activeColor: const Color(0xFFE94560),
+              inactiveColor: Colors.white12,
+              onChanged: (v) {
+                setState(() => _bpm = v.round());
+                if (_isMetronomeActive) {
+                  _stopMetronome();
+                  _startMetronome();
+                }
+              },
             ),
           ),
         ],
@@ -1173,35 +1319,233 @@ class _GuitarRecordingStudioPageState
           final preset = r['preset'] as String? ?? '';
           final createdAt =
               r['createdAt'] as String? ?? r['created_at'] as String? ?? '';
+          final bpm = r['bpm'] as int? ?? 0;
+          final tuning = r['tuning'] as String? ?? '';
+          final isPublicRec = r['isPublic'] as bool? ?? false;
+          final likes = r['likes'] as int? ?? 0;
+          final tags = r['tags'] as List? ?? [];
+          final recordingId = r['recordingId'] as String? ?? '';
           return Card(
             color: const Color(0xFF16213E),
             margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFE94560),
-                child: Icon(
-                  Icons.music_note,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              title: Text(
-                title,
-                style: const TextStyle(color: Colors.white),
-              ),
-              subtitle: Text(
-                '${_formatDuration(Duration(seconds: duration))} • ${_presetLabel(preset)}',
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-              trailing: Text(
-                createdAt.length >= 10
-                    ? createdAt.substring(0, 10)
-                    : createdAt,
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const CircleAvatar(
+                        backgroundColor: Color(0xFFE94560),
+                        radius: 18,
+                        child: Icon(Icons.music_note, color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_formatDuration(Duration(seconds: duration))} • ${_presetLabel(preset)}'
+                              '${bpm > 0 ? ' • ${bpm}BPM' : ''}'
+                              '${tuning.isNotEmpty ? ' • $tuning' : ''}',
+                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isPublicRec)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 4),
+                          child: Icon(Icons.public, color: Colors.white38, size: 16),
+                        ),
+                      if (likes > 0)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.favorite, color: Color(0xFFE94560), size: 14),
+                            const SizedBox(width: 2),
+                            Text('$likes', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                          ],
+                        ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, color: Colors.white38, size: 20),
+                        color: const Color(0xFF16213E),
+                        onSelected: (value) {
+                          if (value == 'delete' && recordingId.isNotEmpty) {
+                            _deleteRecording(recordingId);
+                          }
+                        },
+                        itemBuilder: (_) => [
+                          const PopupMenuItem(value: 'delete', child: Text('削除', style: TextStyle(color: Colors.redAccent))),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (tags.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: tags.map((t) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white12,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text('#$t', style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                      )).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: Text(
+                      createdAt.length >= 10 ? createdAt.substring(0, 10) : createdAt,
+                      style: const TextStyle(color: Colors.white24, fontSize: 11),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  // ── 練習統計タブ ──────────────────────────────────────────────
+
+  Widget _buildStatsTab() {
+    if (_practiceStats == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFE94560)),
+      );
+    }
+    final totalRecordings = _practiceStats!['totalRecordings'] as int? ?? 0;
+    final totalMinutes = _practiceStats!['totalPracticeMinutes'] as int? ?? 0;
+    final streak = _practiceStats!['currentStreak'] as int? ?? 0;
+    final favoritePreset = _practiceStats!['favoritePreset'] as String? ?? '-';
+    final hours = totalMinutes ~/ 60;
+    final mins = totalMinutes % 60;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // ストリーク
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: streak > 0
+                    ? [const Color(0xFFE94560), const Color(0xFFBF360C)]
+                    : [const Color(0xFF16213E), const Color(0xFF16213E)],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  streak > 0 ? Icons.local_fire_department : Icons.music_off,
+                  color: streak > 0 ? Colors.amber : Colors.white24,
+                  size: 48,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$streak',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '日連続練習中',
+                  style: TextStyle(
+                    color: streak > 0 ? Colors.white70 : Colors.white38,
+                    fontSize: 14,
+                  ),
+                ),
+                if (streak == 0)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8),
+                    child: Text(
+                      '録音を保存してストリークを始めましょう！',
+                      style: TextStyle(color: Colors.white24, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 統計カード
+          Row(
+            children: [
+              Expanded(child: _statCard('総録音数', '$totalRecordings', Icons.mic)),
+              const SizedBox(width: 12),
+              Expanded(child: _statCard(
+                '総練習時間',
+                hours > 0 ? '$hours時間${mins}分' : '$mins分',
+                Icons.timer,
+              )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _statCard('よく使うジャンル', _presetLabel(favoritePreset), Icons.album)),
+              const SizedBox(width: 12),
+              Expanded(child: _statCard('平均録音時間', totalRecordings > 0
+                  ? '${(totalMinutes / totalRecordings).round()}分'
+                  : '-', Icons.av_timer)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: _fetchPracticeStats,
+            icon: const Icon(Icons.refresh),
+            label: const Text('統計を更新'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white70,
+              side: const BorderSide(color: Colors.white24),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statCard(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16213E),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: const Color(0xFFE94560), size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

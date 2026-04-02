@@ -420,6 +420,36 @@ serve(async (req: Request) => {
         );
       }
 
+      // Delete a recording
+      if (postAction === "delete_recording") {
+        const { recordingId } = body;
+        if (!recordingId) {
+          return new Response(
+            JSON.stringify({ error: "recordingId is required" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const { error: delErr } = await supabase
+          .from("app_analytics")
+          .delete()
+          .eq("source", "guitar-recording-studio")
+          .eq("metadata->>event_type", "recording_saved")
+          .eq("metadata->>recordingId", recordingId as string);
+
+        if (delErr) {
+          return new Response(
+            JSON.stringify({ error: delErr.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
         JSON.stringify({ error: "Unknown POST action" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
