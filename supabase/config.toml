@@ -161,7 +161,7 @@ entrypoint = "./functions/local-election-intelligence/index.ts"
 enabled = true
 verify_jwt = false
 
-functions.focus-timer]
+[functions.focus-timer]
 enabled = true
 verify_jwt = true
 
