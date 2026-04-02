@@ -268,9 +268,9 @@ class _GuitarRecordingStudioPageState
       // MediaRecorder: まず audio/webm;codecs=opus を試し、
       // 非対応 (iOS Safari等) なら audio/mp4 → デフォルトにフォールバック
       String mimeType = 'audio/webm;codecs=opus';
-      if (!web.MediaRecorder.isTypeSupported(mimeType.toJS).toDart) {
+      if (!web.MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'audio/mp4';
-        if (!web.MediaRecorder.isTypeSupported(mimeType.toJS).toDart) {
+        if (!web.MediaRecorder.isTypeSupported(mimeType)) {
           mimeType = ''; // ブラウザデフォルト
         }
       }
