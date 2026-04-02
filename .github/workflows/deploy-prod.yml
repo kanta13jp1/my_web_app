@@ -91,8 +91,9 @@ jobs:
       - name: Cleanup demoted Edge Functions (free slots for new Tier 1 functions)
         run: |
           # CRITICAL: Supabase has a ~100 function limit per project.
-          # Delete all 20 functions demoted from Tier 1 to Tier 2 to free deployment slots.
+          # Delete all functions demoted from Tier 1 to Tier 2 to free deployment slots.
           # Using || true so deleting a non-existent function never fails the CI.
+          # --- Original Tier 2 demotions ---
           supabase functions delete poll-survey || true
           supabase functions delete reading-list || true
           supabase functions delete password-generator || true
@@ -113,6 +114,9 @@ jobs:
           supabase functions delete invoice-generator || true
           supabase functions delete notification-preferences || true
           supabase functions delete revenue-forecaster || true
+          # --- Session 432z demotions (moved to Tier 2 to make room for guitar studio) ---
+          supabase functions delete ab-testing-manager || true
+          supabase functions delete search-analytics || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
