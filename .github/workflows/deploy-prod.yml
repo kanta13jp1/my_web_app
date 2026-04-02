@@ -88,6 +88,29 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
+      - name: Cleanup old Supabase Edge Functions (free slots for new functions)
+        run: |
+          # CRITICAL: Supabase has a ~100 function limit per project.
+          # The project already has 100 functions deployed (from the original deploy).
+          # New functions (video-ad-generator, viral-share-engine, etc.) need free slots.
+          # Delete 13 old functions that have been demoted to Tier 2 to make room.
+          # Using || true so deleting a non-existent function doesn't fail.
+          supabase functions delete poll-survey || true
+          supabase functions delete reading-list || true
+          supabase functions delete password-generator || true
+          supabase functions delete clipboard-history || true
+          supabase functions delete quick-note || true
+          supabase functions delete pomodoro-timer || true
+          supabase functions delete weather-widget || true
+          supabase functions delete currency-converter || true
+          supabase functions delete markdown-renderer || true
+          supabase functions delete local-election-intelligence || true
+          supabase functions delete gemini-election-analysis || true
+          supabase functions delete contact-manager || true
+          supabase functions delete goal-tracker || true
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
       - name: Deploy Supabase Edge Functions
         run: |
           # Supabase project has a max ~100 function limit.
