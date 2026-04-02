@@ -54,7 +54,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -136,8 +136,8 @@ serve(async (req: Request) => {
       // Log results to app_analytics
       await supabase.from("app_analytics").insert({
         source: "edge-function-test-runner",
-        event_type: "test_run",
-        event_data: {
+        metadata: {
+          event_type: "test_run",
           totalTested: results.length,
           passed,
           failed,
@@ -172,12 +172,12 @@ serve(async (req: Request) => {
       // Read from app_analytics for UI call records
       const { data: uiCalls } = await supabase
         .from("app_analytics")
-        .select("event_data")
+        .select("metadata")
         .eq("source", "edge-function-ui-checker")
         .order("created_at", { ascending: false })
         .limit(1);
 
-      const _lastCheck = uiCalls?.[0]?.event_data ?? null;
+      const _lastCheck = uiCalls?.[0]?.metadata ?? null;
 
       // Also check user-activity-tracker for actual function calls from UI
       const { data: activityLogs } = await supabase
@@ -220,14 +220,14 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "edge-function-test-runner")
-        .eq("event_type", "test_run")
+        .eq("metadata->>event_type", "test_run")
         .order("created_at", { ascending: false })
         .limit(20);
 
       return new Response(
         JSON.stringify({
           runs: (history ?? []).map((h: Record<string, unknown>) => ({
-            ...(h.event_data as Record<string, unknown>),
+            ...(h.metadata as Record<string, unknown>),
             createdAt: h.created_at,
           })),
         }),

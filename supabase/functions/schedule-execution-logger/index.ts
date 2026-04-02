@@ -26,7 +26,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -46,8 +46,8 @@ serve(async (req: Request) => {
 
       const logEntry = {
         source: "schedule-execution-logger",
-        event_type: `schedule_${status}`,
-        event_data: {
+        metadata: {
+          event_type: "schedule_execution",
           taskId,
           taskName: SCHEDULE_TASKS.find(t => t.id === taskId)?.name ?? taskId,
           status, // success, failure, partial, skipped
@@ -71,7 +71,7 @@ serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ success: true, logged: logEntry.event_data }),
+        JSON.stringify({ success: true, logged: logEntry.metadata }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -100,27 +100,27 @@ serve(async (req: Request) => {
       const taskSummaries = SCHEDULE_TASKS.map(task => {
         const taskLogs = (logs ?? []).filter(
           (l: Record<string, unknown>) => {
-            const ed = l.event_data as Record<string, unknown> | null;
+            const ed = l.metadata as Record<string, unknown> | null;
             return ed?.taskId === task.id;
           }
         );
         const successes = taskLogs.filter(
           (l: Record<string, unknown>) => {
-            const ed = l.event_data as Record<string, unknown> | null;
+            const ed = l.metadata as Record<string, unknown> | null;
             return ed?.status === "success";
           }
         ).length;
         const failures = taskLogs.filter(
           (l: Record<string, unknown>) => {
-            const ed = l.event_data as Record<string, unknown> | null;
+            const ed = l.metadata as Record<string, unknown> | null;
             return ed?.status === "failure";
           }
         ).length;
         const lastRun = taskLogs.length > 0
-          ? (taskLogs[0].event_data as Record<string, unknown>)?.executedAt ?? null
+          ? (taskLogs[0].metadata as Record<string, unknown>)?.executedAt ?? null
           : null;
         const lastStatus = taskLogs.length > 0
-          ? (taskLogs[0].event_data as Record<string, unknown>)?.status ?? "unknown"
+          ? (taskLogs[0].metadata as Record<string, unknown>)?.status ?? "unknown"
           : "never_run";
 
         return {
@@ -134,10 +134,10 @@ serve(async (req: Request) => {
           lastError: failures > 0
             ? (taskLogs.find(
                 (l: Record<string, unknown>) => {
-                  const ed = l.event_data as Record<string, unknown> | null;
+                  const ed = l.metadata as Record<string, unknown> | null;
                   return ed?.status === "failure";
                 }
-              )?.event_data as Record<string, unknown> | undefined)?.errorMessage ?? null
+              )?.metadata as Record<string, unknown> | undefined)?.errorMessage ?? null
             : null,
         };
       });
@@ -153,7 +153,7 @@ serve(async (req: Request) => {
           overallHealth,
           period: `${days} days`,
           tasks: taskSummaries,
-          recentLogs: (logs ?? []).slice(0, 20).map((l: Record<string, unknown>) => l.event_data),
+          recentLogs: (logs ?? []).slice(0, 20).map((l: Record<string, unknown>) => l.metadata),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -178,7 +178,7 @@ serve(async (req: Request) => {
 
       const taskLogs = (logs ?? []).filter(
         (l: Record<string, unknown>) => {
-          const ed = l.event_data as Record<string, unknown> | null;
+          const ed = l.metadata as Record<string, unknown> | null;
           return ed?.taskId === taskId;
         }
       );
@@ -189,7 +189,7 @@ serve(async (req: Request) => {
         JSON.stringify({
           task: taskDef ?? { id: taskId, name: taskId },
           totalRuns: taskLogs.length,
-          history: taskLogs.map((l: Record<string, unknown>) => l.event_data),
+          history: taskLogs.map((l: Record<string, unknown>) => l.metadata),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -207,7 +207,7 @@ serve(async (req: Request) => {
 
       const failedTasks = (recentLogs ?? []).filter(
         (l: Record<string, unknown>) => {
-          const ed = l.event_data as Record<string, unknown> | null;
+          const ed = l.metadata as Record<string, unknown> | null;
           return ed?.status === "failure";
         }
       );
@@ -220,7 +220,7 @@ serve(async (req: Request) => {
           health: failedTasks.length === 0 ? "healthy" : "needs_attention",
           failedTaskIds: [...new Set(failedTasks.map(
             (l: Record<string, unknown>) => {
-              const ed = l.event_data as Record<string, unknown> | null;
+              const ed = l.metadata as Record<string, unknown> | null;
               return ed?.taskId;
             }
           ))],

@@ -18,7 +18,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -34,17 +34,17 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
-        .eq("event_type", "recording_saved")
+        .eq("metadata->>event_type", "recording_saved")
         .order("created_at", { ascending: false })
         .limit(200);
 
       let publicRecordings = (recordings ?? [])
         .filter((r: Record<string, unknown>) => {
-          const ed = r.event_data as Record<string, unknown>;
+          const ed = r.metadata as Record<string, unknown>;
           return ed?.isPublic === true;
         })
         .map((r: Record<string, unknown>) => ({
-          ...(r.event_data as Record<string, unknown>),
+          ...(r.metadata as Record<string, unknown>),
           createdAt: r.created_at,
         }));
 
@@ -90,21 +90,21 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "music-collaboration")
-        .eq("event_type", "collab_session")
+        .eq("metadata->>event_type", "collab_session")
         .order("created_at", { ascending: false })
         .limit(50);
 
       const filtered = status === "all"
         ? sessions ?? []
         : (sessions ?? []).filter((s: Record<string, unknown>) => {
-            const ed = s.event_data as Record<string, unknown>;
+            const ed = s.metadata as Record<string, unknown>;
             return ed?.status === status;
           });
 
       return new Response(
         JSON.stringify({
           sessions: filtered.map((s: Record<string, unknown>) => ({
-            ...(s.event_data as Record<string, unknown>),
+            ...(s.metadata as Record<string, unknown>),
             createdAt: s.created_at,
           })),
           totalCount: filtered.length,
@@ -132,7 +132,7 @@ serve(async (req: Request) => {
         .limit(100);
 
       const userCollabs = (collabs ?? []).filter((c: Record<string, unknown>) => {
-        const ed = c.event_data as Record<string, unknown>;
+        const ed = c.metadata as Record<string, unknown>;
         const members = (ed?.collaborators as string[]) ?? [];
         return ed?.creatorId === userId || members.includes(userId);
       });
@@ -140,7 +140,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           collaborations: userCollabs.map((c: Record<string, unknown>) => ({
-            ...(c.event_data as Record<string, unknown>),
+            ...(c.metadata as Record<string, unknown>),
             createdAt: c.created_at,
           })),
         }),
@@ -169,8 +169,8 @@ serve(async (req: Request) => {
 
         const { error: createErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
-          event_type: "collab_session",
-          event_data: {
+          metadata: {
+            event_type: "collab_session",
             sessionId,
             creatorId,
             title,
@@ -213,8 +213,8 @@ serve(async (req: Request) => {
 
         const { error: joinErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
-          event_type: "collab_joined",
-          event_data: {
+          metadata: {
+            event_type: "collab_join",
             inviteCode,
             userId,
             joinedAt: new Date().toISOString(),
@@ -240,8 +240,8 @@ serve(async (req: Request) => {
 
         const { error: trackErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
-          event_type: "track_added",
-          event_data: {
+          metadata: {
+            event_type: "collab_track_added",
             sessionId,
             userId,
             trackName: trackName ?? "Track",
@@ -276,8 +276,7 @@ serve(async (req: Request) => {
 
         const { error: shareErr } = await supabase.from("app_analytics").insert({
           source: "music-collaboration",
-          event_type: "recording_shared",
-          event_data: { recordingId, platform, userId, sharedAt: new Date().toISOString() },
+          metadata: { event_type: "recording_shared", recordingId, platform, userId, sharedAt: new Date().toISOString() },
         });
 
         if (shareErr) {

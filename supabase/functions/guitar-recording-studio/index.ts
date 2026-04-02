@@ -54,7 +54,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -71,14 +71,14 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
-        .eq("event_type", "recording_saved")
+        .eq("metadata->>event_type", "recording_saved")
         .order("created_at", { ascending: false })
         .limit(50);
 
       // Get user-specific recordings if userId provided
       const userRecordings = userId
         ? (recordings ?? []).filter((r: Record<string, unknown>) => {
-            const ed = r.event_data as Record<string, unknown>;
+            const ed = r.metadata as Record<string, unknown>;
             return ed?.userId === userId;
           })
         : [];
@@ -86,7 +86,7 @@ serve(async (req: Request) => {
       // Get total recording stats
       const totalRecordings = (recordings ?? []).length;
       const totalDuration = (recordings ?? []).reduce((sum: number, r: Record<string, unknown>) => {
-        const ed = r.event_data as Record<string, unknown>;
+        const ed = r.metadata as Record<string, unknown>;
         return sum + ((ed?.durationSeconds as number) ?? 0);
       }, 0);
 
@@ -214,17 +214,17 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
-        .eq("event_type", "recording_saved")
+        .eq("metadata->>event_type", "recording_saved")
         .order("created_at", { ascending: false })
         .limit(100);
 
       const userRecordings = (recordings ?? [])
         .filter((r: Record<string, unknown>) => {
-          const ed = r.event_data as Record<string, unknown>;
+          const ed = r.metadata as Record<string, unknown>;
           return ed?.userId === userId;
         })
         .map((r: Record<string, unknown>) => ({
-          ...(r.event_data as Record<string, unknown>),
+          ...(r.metadata as Record<string, unknown>),
           createdAt: r.created_at,
         }));
 
@@ -251,17 +251,17 @@ serve(async (req: Request) => {
         .from("app_analytics")
         .select("*")
         .eq("source", "guitar-recording-studio")
-        .in("event_type", ["recording_saved", "practice_session"])
+        .in("metadata->>event_type", ["recording_saved", "practice_session"])
         .order("created_at", { ascending: false })
         .limit(500);
 
       const userSessions = (sessions ?? []).filter((s: Record<string, unknown>) => {
-        const ed = s.event_data as Record<string, unknown>;
+        const ed = s.metadata as Record<string, unknown>;
         return ed?.userId === userId;
       });
 
       const totalMinutes = userSessions.reduce((sum: number, s: Record<string, unknown>) => {
-        const ed = s.event_data as Record<string, unknown>;
+        const ed = s.metadata as Record<string, unknown>;
         return sum + ((ed?.durationSeconds as number) ?? 0) / 60;
       }, 0);
 
@@ -276,7 +276,7 @@ serve(async (req: Request) => {
           (s.created_at as string) < weekEnd.toISOString()
         );
         const minutes = weekSessions.reduce((sum: number, s: Record<string, unknown>) => {
-          const ed = s.event_data as Record<string, unknown>;
+          const ed = s.metadata as Record<string, unknown>;
           return sum + ((ed?.durationSeconds as number) ?? 0) / 60;
         }, 0);
         weeklyData.push({
@@ -318,8 +318,8 @@ serve(async (req: Request) => {
         const recordingId = crypto.randomUUID();
         const recording = {
           source: "guitar-recording-studio",
-          event_type: "recording_saved",
-          event_data: {
+          metadata: {
+            event_type: "recording_saved",
             recordingId,
             userId,
             title,
@@ -348,7 +348,7 @@ serve(async (req: Request) => {
         }
 
         return new Response(
-          JSON.stringify({ success: true, recordingId, recording: recording.event_data }),
+          JSON.stringify({ success: true, recordingId, recording: recording.metadata }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -366,8 +366,8 @@ serve(async (req: Request) => {
 
         const { error: practiceErr } = await supabase.from("app_analytics").insert({
           source: "guitar-recording-studio",
-          event_type: "practice_session",
-          event_data: {
+          metadata: {
+            event_type: "practice_session",
             userId,
             durationSeconds: durationSeconds ?? 0,
             preset: preset ?? null,
@@ -396,8 +396,7 @@ serve(async (req: Request) => {
 
         const { error: likeErr } = await supabase.from("app_analytics").insert({
           source: "guitar-recording-studio",
-          event_type: "recording_liked",
-          event_data: { recordingId, userId, likedAt: new Date().toISOString() },
+          metadata: { event_type: "recording_liked", recordingId, userId, likedAt: new Date().toISOString() },
         });
 
         if (likeErr) {
@@ -463,7 +462,7 @@ function calculateStreak(sessions: Record<string, unknown>[]): number {
 function findFavoritePreset(sessions: Record<string, unknown>[]): string {
   const counts: Record<string, number> = {};
   for (const s of sessions) {
-    const ed = s.event_data as Record<string, unknown>;
+    const ed = s.metadata as Record<string, unknown>;
     const preset = (ed?.preset as string) ?? "unknown";
     counts[preset] = (counts[preset] ?? 0) + 1;
   }

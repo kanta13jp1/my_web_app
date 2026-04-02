@@ -62,7 +62,7 @@ serve(async (req) => {
       if (view === "unpublished") {
         // Blog drafts not yet posted to all platforms
         const { data: drafts } = await adminClient.from("app_analytics").select("metadata, created_at")
-          .eq("user_id", user.id).eq("source", "blog_draft_track")
+          .eq("source", "blog_draft_track").eq("metadata->>userId", user.id)
           .order("created_at", { ascending: false });
         const unpublished = (drafts ?? []).filter((d) => {
           const meta = d.metadata as Record<string, unknown>;
@@ -79,7 +79,7 @@ serve(async (req) => {
 
       if (view === "stats") {
         const { data: posts } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "blog_publication");
+          .eq("source", "blog_publication").eq("metadata->>userId", user.id);
         const platformCounts: Record<string, number> = {};
         for (const p of posts ?? []) {
           const platform = ((p.metadata as Record<string, unknown>).platform as string) ?? "unknown";
@@ -94,7 +94,7 @@ serve(async (req) => {
       // Default: publication history
       const platform = url.searchParams.get("platform");
       let query = adminClient.from("app_analytics").select("metadata, created_at")
-        .eq("user_id", user.id).eq("source", "blog_publication")
+        .eq("source", "blog_publication").eq("metadata->>userId", user.id)
         .order("created_at", { ascending: false });
       if (platform) {
         query = query.eq("metadata->>platform", platform);
@@ -116,11 +116,13 @@ serve(async (req) => {
           return new Response(JSON.stringify({ success: false, error: "title required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         const draftId = crypto.randomUUID();
-        await adminClient.from("app_analytics").insert({
-          user_id: user.id, source: "blog_draft_track",
-          metadata: { draft_id: draftId, title, draft_path: draft_path ?? null, tags: tags ?? [], posted_to: [], status: "draft" },
-          created_at: new Date().toISOString(),
+        const { error: draftErr } = await adminClient.from("app_analytics").insert({
+          source: "blog_draft_track",
+          metadata: { draft_id: draftId, title, draft_path: draft_path ?? null, tags: tags ?? [], posted_to: [], status: "draft", userId: user.id },
         });
+        if (draftErr) {
+          return new Response(JSON.stringify({ success: false, error: draftErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
         return new Response(JSON.stringify({ success: true, draftId }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -135,22 +137,24 @@ serve(async (req) => {
         }
 
         const pubId = crypto.randomUUID();
-        await adminClient.from("app_analytics").insert({
-          user_id: user.id, source: "blog_publication",
-          metadata: { pub_id: pubId, draft_id: draft_id ?? null, platform, platform_name: valid.name, title, url: postUrl ?? null, published_at: new Date().toISOString() },
-          created_at: new Date().toISOString(),
+        const { error: pubErr } = await adminClient.from("app_analytics").insert({
+          source: "blog_publication",
+          metadata: { pub_id: pubId, draft_id: draft_id ?? null, platform, platform_name: valid.name, title, url: postUrl ?? null, published_at: new Date().toISOString(), userId: user.id },
         });
+        if (pubErr) {
+          return new Response(JSON.stringify({ success: false, error: pubErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
 
         // Update draft tracking if draft_id provided
         if (draft_id) {
           const { data: draft } = await adminClient.from("app_analytics").select("metadata")
-            .eq("user_id", user.id).eq("source", "blog_draft_track").eq("metadata->>draft_id", draft_id).maybeSingle();
+            .eq("source", "blog_draft_track").eq("metadata->>draft_id", draft_id).maybeSingle();
           if (draft) {
             const meta = draft.metadata as Record<string, unknown>;
             const posted = (meta.posted_to as string[]) ?? [];
             if (!posted.includes(platform)) posted.push(platform);
             await adminClient.from("app_analytics").update({ metadata: { ...meta, posted_to: posted } })
-              .eq("user_id", user.id).eq("source", "blog_draft_track").eq("metadata->>draft_id", draft_id);
+              .eq("source", "blog_draft_track").eq("metadata->>draft_id", draft_id);
           }
         }
 

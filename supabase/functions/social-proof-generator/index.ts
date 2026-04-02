@@ -55,7 +55,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -84,7 +84,7 @@ serve(async (req: Request) => {
       const { data: featureRequests } = await supabase
         .from("app_analytics")
         .select("id")
-        .eq("event_type", "feature_request")
+        .eq("metadata->>event_type", "feature_request")
         .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
         .limit(100);
       const weeklyRequests = featureRequests?.length ?? 0;

@@ -14,7 +14,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -64,14 +64,14 @@ serve(async (req: Request) => {
       // Registration source analysis from app_analytics
       const { data: signupEvents } = await supabase
         .from("app_analytics")
-        .select("event_data")
-        .eq("event_type", "user_signup")
+        .select("metadata")
+        .eq("metadata->>event_type", "user_signup")
         .gte("created_at", monthStart)
         .limit(500);
 
       const sourceBreakdown: Record<string, number> = {};
       for (const event of (signupEvents ?? [])) {
-        const ed = event.event_data as Record<string, unknown>;
+        const ed = event.metadata as Record<string, unknown>;
         const source = (ed?.source as string) ?? "direct";
         sourceBreakdown[source] = (sourceBreakdown[source] ?? 0) + 1;
       }
@@ -97,7 +97,7 @@ serve(async (req: Request) => {
       // Viral coefficient (k-factor) from referrals
       const { data: referralEvents } = await supabase
         .from("app_analytics")
-        .select("event_data")
+        .select("metadata")
         .eq("source", "growth-referral")
         .gte("created_at", monthStart)
         .limit(500);
@@ -137,7 +137,7 @@ serve(async (req: Request) => {
       const { data: funnelEvents } = await supabase
         .from("app_analytics")
         .select("event_type, source")
-        .in("event_type", [
+        .in("metadata->>event_type", [
           "page_view", "landing_view", "signup_started", "signup_completed",
           "onboarding_started", "onboarding_completed", "first_action",
         ])
@@ -189,8 +189,8 @@ serve(async (req: Request) => {
       // Get activity logs per user
       const { data: activities } = await supabase
         .from("app_analytics")
-        .select("event_data, created_at")
-        .eq("event_type", "user_activity")
+        .select("metadata, created_at")
+        .eq("metadata->>event_type", "user_activity")
         .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString())
         .limit(5000);
 
@@ -201,7 +201,7 @@ serve(async (req: Request) => {
       const dayAgo = new Date(now.getTime() - 86400000).toISOString();
 
       for (const activity of (activities ?? [])) {
-        const ed = activity.event_data as Record<string, unknown>;
+        const ed = activity.metadata as Record<string, unknown>;
         const userId = ed?.userId as string;
         if (!userId) continue;
         if (activity.created_at >= weekAgo) weeklyActiveUsers.add(userId);

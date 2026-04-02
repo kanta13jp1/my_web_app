@@ -107,8 +107,8 @@ serve(async (req) => {
           return new Response(JSON.stringify({ success: false, error: "task and status required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
         const resultId = crypto.randomUUID();
-        await adminClient.from("app_analytics").insert({
-          user_id: "00000000-0000-0000-0000-000000000000", source: "schedule_result",
+        const { error: insertErr } = await adminClient.from("app_analytics").insert({
+          source: "schedule_result",
           metadata: {
             result_id: resultId, task, status,
             duration_ms: duration_ms ?? 0,
@@ -116,8 +116,10 @@ serve(async (req) => {
             error_message: error_message ?? null,
             completed_at: new Date().toISOString(),
           },
-          created_at: new Date().toISOString(),
         });
+        if (insertErr) {
+          return new Response(JSON.stringify({ success: false, error: insertErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
         return new Response(JSON.stringify({ success: true, resultId }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 

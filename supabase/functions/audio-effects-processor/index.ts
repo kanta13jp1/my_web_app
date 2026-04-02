@@ -257,7 +257,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -338,8 +338,8 @@ serve(async (req: Request) => {
 
         const { error: saveErr } = await supabase.from("app_analytics").insert({
           source: "audio-effects-processor",
-          event_type: "custom_chain_saved",
-          event_data: {
+          metadata: {
+            event_type: "custom_chain_saved",
             chainId,
             userId,
             name,
@@ -377,16 +377,16 @@ serve(async (req: Request) => {
           .from("app_analytics")
           .select("*")
           .eq("source", "audio-effects-processor")
-          .eq("event_type", "custom_chain_saved")
+          .eq("metadata->>event_type", "custom_chain_saved")
           .order("created_at", { ascending: false })
           .limit(100);
 
         const userChains = (chains ?? [])
           .filter((c: Record<string, unknown>) => {
-            const ed = c.event_data as Record<string, unknown>;
+            const ed = c.metadata as Record<string, unknown>;
             return ed?.userId === userId;
           })
-          .map((c: Record<string, unknown>) => c.event_data);
+          .map((c: Record<string, unknown>) => c.metadata);
 
         return new Response(
           JSON.stringify({ chains: userChains }),

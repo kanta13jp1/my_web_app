@@ -38,7 +38,7 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const url = new URL(req.url);
@@ -68,8 +68,8 @@ serve(async (req: Request) => {
 
         const notification = {
           source: "admin-notification-hub",
-          event_type: `notification_${category}`,
-          event_data: {
+          metadata: {
+            event_type: "notification_created",
             id: crypto.randomUUID(),
             title,
             message: message ?? "",
@@ -97,7 +97,7 @@ serve(async (req: Request) => {
         }
 
         return new Response(
-          JSON.stringify({ success: true, notification: notification.event_data }),
+          JSON.stringify({ success: true, notification: notification.metadata }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -112,11 +112,10 @@ serve(async (req: Request) => {
           );
         }
 
-        // We can't update app_analytics event_data directly, so log a read event
+        // We can't update app_analytics metadata directly, so log a read event
         await supabase.from("app_analytics").insert({
           source: "admin-notification-hub",
-          event_type: "notification_read",
-          event_data: { notificationId, readAt: new Date().toISOString() },
+          metadata: { event_type: "notification_read", notificationId, readAt: new Date().toISOString() },
         });
 
         return new Response(
@@ -130,8 +129,7 @@ serve(async (req: Request) => {
         const { notificationId } = body;
         await supabase.from("app_analytics").insert({
           source: "admin-notification-hub",
-          event_type: "notification_dismissed",
-          event_data: { notificationId, dismissedAt: new Date().toISOString() },
+          metadata: { event_type: "notification_dismissed", notificationId, dismissedAt: new Date().toISOString() },
         });
 
         return new Response(
@@ -162,7 +160,7 @@ serve(async (req: Request) => {
         .limit(limit);
 
       if (severityFilter) {
-        query = query.eq("event_type", `notification_${categoryFilter}`);
+        query = query.eq("metadata->>event_type", `notification_${categoryFilter}`);
       }
 
       const { data: notifications, error } = await query;
@@ -177,32 +175,32 @@ serve(async (req: Request) => {
       // Get read/dismissed IDs
       const { data: readEvents } = await supabase
         .from("app_analytics")
-        .select("event_data")
+        .select("metadata")
         .eq("source", "admin-notification-hub")
-        .in("event_type", ["notification_read", "notification_dismissed"])
+        .in("metadata->>event_type", ["notification_read", "notification_dismissed"])
         .order("created_at", { ascending: false })
         .limit(500);
 
       const readIds = new Set(
         (readEvents ?? [])
           .filter((e: Record<string, unknown>) => {
-            const ed = e.event_data as Record<string, unknown> | null;
+            const ed = e.metadata as Record<string, unknown> | null;
             return ed?.notificationId;
           })
-          .map((e: Record<string, unknown>) => (e.event_data as Record<string, unknown>).notificationId)
+          .map((e: Record<string, unknown>) => (e.metadata as Record<string, unknown>).notificationId)
       );
       const dismissedIds = new Set(
         (readEvents ?? [])
           .filter((e: Record<string, unknown>) => {
-            const ed = e.event_data as Record<string, unknown> | null;
+            const ed = e.metadata as Record<string, unknown> | null;
             return ed?.dismissedAt;
           })
-          .map((e: Record<string, unknown>) => (e.event_data as Record<string, unknown>).notificationId)
+          .map((e: Record<string, unknown>) => (e.metadata as Record<string, unknown>).notificationId)
       );
 
       const enrichedNotifications = (notifications ?? [])
         .map((n: Record<string, unknown>) => {
-          const ed = n.event_data as Record<string, unknown>;
+          const ed = n.metadata as Record<string, unknown>;
           return {
             ...ed,
             isRead: readIds.has(ed.id),
@@ -241,7 +239,7 @@ serve(async (req: Request) => {
     if (action === "summary") {
       const { data: recent } = await supabase
         .from("app_analytics")
-        .select("event_data")
+        .select("metadata")
         .eq("source", "admin-notification-hub")
         .like("event_type", "notification_%")
         .not("event_type", "in", '("notification_read","notification_dismissed")')
@@ -251,7 +249,7 @@ serve(async (req: Request) => {
 
       const bySeverity: Record<string, number> = { critical: 0, warning: 0, info: 0, success: 0 };
       for (const r of (recent ?? [])) {
-        const ed = r.event_data as Record<string, unknown>;
+        const ed = r.metadata as Record<string, unknown>;
         const sev = ed.severity as string;
         if (sev in bySeverity) bySeverity[sev]++;
       }
