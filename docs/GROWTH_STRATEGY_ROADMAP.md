@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-02 PS#12 (Wiki/勤怠/音声メモUI + notification-center修正 + 6 Edge Functions POST修正 + 仮想AI組織・フィットネス・音楽プレイリスト UI 追加、flutter analyze 0エラー維持)
+最終更新: 2026-04-02 PS#12 (Wiki/勤怠/音声メモUI + notification-center修正 + 6 Edge Functions POST修正 + 仮想AI組織・フィットネス・音楽プレイリスト UI 追加、flutter analyze 0エラー維持) & daily-development #4 (CRM営業パイプライン・競馬予想ページ実装 + flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2297,3 +2297,12 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 #### 修正パターン
 - query params がある場合はGETと同じ一覧取得として処理
 - POST body parsing を try-catch で保護、空body時は 400 を返す
+
+
+### 2026-04-02 daily-development #4 実装済み (自動)
+
+- **CRM 営業パイプライン実装** (daily-development #4 2026-04-02): `crm_sales_pipeline_page.dart` を新規作成。`crm-sales-pipeline` Edge Function と連携。カンバン形式パイプラインビュー (lead→qualified→proposal→negotiation→closed_won/lost 6段階) ・AIリードスコアリング (email+会社+電話+紹介経由で自動スコア算出) ・活動ログ・売上内訳 LinearProgressIndicator を TabBarView 3タブで実装。`/crm-pipeline` ルートを `main.dart` に追加。業務メニューカタログの `growth` セクションに追加。`sitemap.xml` に追加。Salesforce/Chatwork 競合の中核 B2B 機能を自前実装。flutter analyze 0件維持。
+- **競馬予想・分析ページ実装** (daily-development #4 2026-04-02): `horse_racing_predictor_page.dart` を新規作成。`horse-racing-predictor` Edge Function と連携。レース登録 (グレード G1〜新馬カラー対応) ・AI予想スコア (recent_form×3+jockey_win_rate×2+trainer_win_rate+track_affinity) ・的中率・回収率・損益サマリーを TabBarView 3タブで実装。`/horse-racing` ルートを `main.dart` に追加。業務メニューカタログの `special` セクションに追加。`sitemap.xml` に追加。netkeiba (~1700万ユーザー) 競合の予想・分析機能を実装。flutter analyze 0件維持。
+- **flutter analyze 0エラー維持 (emergency_meeting PDCA強化対応)** (daily-development #4 2026-04-02): `emergency_meeting_page.dart` の `use_build_context_synchronously` 2件 (`context.read<NotificationService>()` を `await` より前に移動)、テストファイルの `prefer_const_constructors` 2件・`require_trailing_commas` 2件・`unnecessary_const` 2件を修正。flutter analyze 0件達成。
+- **DropdownButtonFormField `value` → `initialValue` 移行** (daily-development #4 2026-04-02): Flutter 3.33.0+ で deprecated になった `DropdownButtonFormField.value` を全新規ページで `initialValue` に更新。flutter analyze の `deprecated_member_use` エラー 5件を解消。
+- **ブログ下書き作成** (daily-development #4 2026-04-02): `docs/blog-drafts/2026-04-02-crm-horse-racing.md` — Flutter WebでCRM営業パイプラインと競馬予想AIを同時実装した話・Salesforce/netkeiba競合・`use_build_context_synchronously` 修正パターン解説。

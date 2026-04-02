@@ -156,6 +156,8 @@ import 'package:my_web_app/pages/voice_memo_transcriber_page.dart';
 import 'package:my_web_app/pages/form_builder_page.dart';
 import 'package:my_web_app/pages/music_playlist_manager_page.dart';
 import 'package:my_web_app/pages/virtual_organization_page.dart';
+import 'package:my_web_app/pages/crm_sales_pipeline_page.dart';
+import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -909,6 +911,14 @@ class MyApp extends StatelessWidget {
           case '/voice-memo':
             return MaterialPageRoute(
               builder: (_) => const VoiceMemoTranscriberPage(),
+            );
+          case '/crm-pipeline':
+            return MaterialPageRoute(
+              builder: (_) => const CrmSalesPipelinePage(),
+            );
+          case '/horse-racing':
+            return MaterialPageRoute(
+              builder: (_) => const HorseRacingPredictorPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

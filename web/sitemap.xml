@@ -258,4 +258,16 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/crm-pipeline</loc>
+    <lastmod>2026-04-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://my-web-app-b67f4.web.app/horse-racing</loc>
+    <lastmod>2026-04-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 </urlset>
