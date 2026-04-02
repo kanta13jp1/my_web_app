@@ -1676,11 +1676,127 @@ const COMPETITOR_DATA = [
       },
     ],
   },
+  // -------------------------------------------------------------------------
+  // Amazon
+  // -------------------------------------------------------------------------
+  {
+    id: "amazon",
+    name: "Amazon",
+    features: [
+      { category: "EC・マーケットプレイス", feature: "商品検索・購入", competitorDetail: "世界最大のECプラットフォーム", status: "planned", appDetail: "マーケットプレイス機能で対応予定" },
+      { category: "EC・マーケットプレイス", feature: "レコメンドエンジン", competitorDetail: "購買履歴ベースのAI推薦", status: "partial", appDetail: "AI秘書による提案機能で部分対応" },
+      { category: "クラウド", feature: "AWS (クラウドインフラ)", competitorDetail: "世界最大のクラウドサービス", status: "planned", appDetail: "Supabase+Firebase構成で対応" },
+      { category: "動画配信", feature: "Prime Video", competitorDetail: "動画ストリーミングサービス", status: "planned", appDetail: "動画管理機能で対応予定" },
+      { category: "音楽", feature: "Amazon Music", competitorDetail: "音楽ストリーミング", status: "partial", appDetail: "ギター録音スタジオ(メイン機能)で音楽領域対応" },
+      { category: "AI", feature: "Alexa / AI アシスタント", competitorDetail: "音声AIアシスタント", status: "partial", appDetail: "AI秘書機能で対応" },
+      { category: "決済", feature: "Amazon Pay", competitorDetail: "オンライン決済", status: "planned", appDetail: "サブスクリプション課金機能で対応予定" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Google
+  // -------------------------------------------------------------------------
+  {
+    id: "google",
+    name: "Google",
+    features: [
+      { category: "検索", feature: "Web検索", competitorDetail: "世界最大の検索エンジン", status: "partial", appDetail: "AI検索・スマート検索で部分対応" },
+      { category: "メール", feature: "Gmail", competitorDetail: "世界最大のメールサービス", status: "partial", appDetail: "メール通知・スマート受信トレイで対応" },
+      { category: "生産性", feature: "Google Docs/Sheets/Slides", competitorDetail: "オンラインオフィススイート", status: "partial", appDetail: "ノート編集・スプレッドシート機能で部分対応" },
+      { category: "ストレージ", feature: "Google Drive", competitorDetail: "クラウドストレージ15GB無料", status: "partial", appDetail: "ファイルストレージ管理機能で対応" },
+      { category: "カレンダー", feature: "Google Calendar", competitorDetail: "カレンダー・スケジュール管理", status: "done", appDetail: "カレンダーイベント機能実装済み" },
+      { category: "AI", feature: "Gemini", competitorDetail: "マルチモーダルAI", status: "partial", appDetail: "AI秘書・AIアシスタントで対応" },
+      { category: "動画", feature: "YouTube", competitorDetail: "世界最大の動画プラットフォーム", status: "planned", appDetail: "動画管理・ライブストリーミング機能で対応予定" },
+      { category: "地図", feature: "Google Maps", competitorDetail: "地図・ナビゲーション", status: "partial", appDetail: "AR ナビゲーション・ジオチェックイン機能で対応" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Microsoft
+  // -------------------------------------------------------------------------
+  {
+    id: "microsoft",
+    name: "Microsoft",
+    features: [
+      { category: "オフィス", feature: "Office 365 (Word/Excel/PowerPoint)", competitorDetail: "世界標準のオフィススイート", status: "partial", appDetail: "ノート編集・スプレッドシート・プレゼン機能で部分対応" },
+      { category: "コミュニケーション", feature: "Microsoft Teams", competitorDetail: "ビジネスチャット・会議", status: "partial", appDetail: "チャット・ビデオ会議機能で対応" },
+      { category: "クラウド", feature: "Azure", competitorDetail: "エンタープライズクラウド", status: "planned", appDetail: "Supabase+Firebase構成で対応" },
+      { category: "AI", feature: "Copilot", competitorDetail: "AI生産性アシスタント", status: "partial", appDetail: "AI秘書・AIワークフロー自動化で対応" },
+      { category: "開発", feature: "VS Code / GitHub", competitorDetail: "開発環境・コード管理", status: "partial", appDetail: "コードプレイグラウンド・CI/CD機能で対応" },
+      { category: "ストレージ", feature: "OneDrive", competitorDetail: "クラウドストレージ", status: "partial", appDetail: "ファイルストレージ管理機能で対応" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Discord
+  // -------------------------------------------------------------------------
+  {
+    id: "discord",
+    name: "Discord",
+    features: [
+      { category: "チャット", feature: "テキストチャンネル", competitorDetail: "サーバー/チャンネル構造のリアルタイムチャット", status: "partial", appDetail: "チャットメッセージング機能で対応" },
+      { category: "音声", feature: "ボイスチャット", competitorDetail: "低遅延ボイスチャンネル", status: "planned", appDetail: "ビデオ会議機能で対応予定" },
+      { category: "コミュニティ", feature: "サーバー管理・ロール", competitorDetail: "権限ベースのコミュニティ管理", status: "partial", appDetail: "アクセス制御・チーム管理機能で対応" },
+      { category: "Bot", feature: "Bot連携", competitorDetail: "カスタムBot・自動化", status: "partial", appDetail: "Webhook・自動化ワークフロー機能で対応" },
+      { category: "ストリーミング", feature: "画面共有・Go Live", competitorDetail: "画面共有・ストリーミング", status: "planned", appDetail: "ライブストリーミング機能で対応予定" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // LINE
+  // -------------------------------------------------------------------------
+  {
+    id: "line",
+    name: "LINE",
+    features: [
+      { category: "メッセージング", feature: "1対1/グループチャット", competitorDetail: "日本最大のメッセージングアプリ", status: "partial", appDetail: "チャットメッセージング機能で対応" },
+      { category: "通話", feature: "無料音声・ビデオ通話", competitorDetail: "LINE通話", status: "planned", appDetail: "ビデオ会議機能で対応予定" },
+      { category: "決済", feature: "LINE Pay", competitorDetail: "モバイル決済", status: "planned", appDetail: "デジタルウォレット機能で対応予定" },
+      { category: "ニュース", feature: "LINE NEWS", competitorDetail: "ニュースフィード", status: "partial", appDetail: "ニュース/RSSアグリゲーター機能で対応" },
+      { category: "スタンプ", feature: "スタンプ・絵文字", competitorDetail: "豊富なスタンプマーケット", status: "planned", appDetail: "リアクション機能の拡張で対応予定" },
+      { category: "AI", feature: "LINE AI アシスタント", competitorDetail: "AI搭載チャットボット", status: "partial", appDetail: "AI秘書機能で対応" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Facebook
+  // -------------------------------------------------------------------------
+  {
+    id: "facebook",
+    name: "Facebook",
+    features: [
+      { category: "SNS", feature: "ニュースフィード", competitorDetail: "世界最大のSNS (30億ユーザー)", status: "partial", appDetail: "ソーシャルフィード機能で対応" },
+      { category: "SNS", feature: "グループ・コミュニティ", competitorDetail: "興味ベースのコミュニティ", status: "partial", appDetail: "音楽コラボレーション・チーム機能で対応" },
+      { category: "メッセージ", feature: "Messenger", competitorDetail: "リアルタイムメッセージング", status: "partial", appDetail: "チャットメッセージング・暗号化メッセージで対応" },
+      { category: "マーケットプレイス", feature: "Facebook Marketplace", competitorDetail: "C2Cマーケットプレイス", status: "partial", appDetail: "マーケットプレイス機能で対応" },
+      { category: "広告", feature: "Facebook Ads", competitorDetail: "ターゲティング広告プラットフォーム", status: "planned", appDetail: "アフィリエイトマーケティング機能で対応予定" },
+      { category: "動画", feature: "Facebook Watch / Reels", competitorDetail: "短編動画プラットフォーム", status: "planned", appDetail: "バイラル動画生成機能で対応予定" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // Liven
+  // -------------------------------------------------------------------------
+  {
+    id: "liven",
+    name: "Liven",
+    features: [
+      { category: "フードテック", feature: "レストラン予約・注文", competitorDetail: "飲食店向け決済・予約プラットフォーム", status: "partial", appDetail: "レシピ・食事プランナー機能で部分対応" },
+      { category: "決済", feature: "モバイル決済", competitorDetail: "飲食特化決済システム", status: "planned", appDetail: "デジタルウォレット機能で対応予定" },
+      { category: "ロイヤルティ", feature: "ポイント・報酬システム", competitorDetail: "飲食店ポイントプログラム", status: "done", appDetail: "ロイヤルティポイント・ゲーミフィケーション機能実装済み" },
+      { category: "AI", feature: "AI推薦エンジン", competitorDetail: "食の好みベースのAI推薦", status: "partial", appDetail: "AI秘書による推薦機能で対応" },
+    ],
+  },
+  // -------------------------------------------------------------------------
+  // GitHub
+  // -------------------------------------------------------------------------
+  {
+    id: "github",
+    name: "GitHub",
+    features: [
+      { category: "コード管理", feature: "Git リポジトリ", competitorDetail: "世界最大のコードホスティング (1億+開発者)", status: "partial", appDetail: "CI/CDパイプライン・コードレビュー機能で対応" },
+      { category: "コラボレーション", feature: "Pull Request / Code Review", competitorDetail: "コードレビューワークフロー", status: "partial", appDetail: "コードレビュー・Issue自動修正機能で対応" },
+      { category: "CI/CD", feature: "GitHub Actions", competitorDetail: "CI/CDパイプライン自動化", status: "done", appDetail: "deploy-prod.yml で GitHub Actions 実装済み" },
+      { category: "プロジェクト管理", feature: "GitHub Projects / Issues", competitorDetail: "Issue・プロジェクトボード", status: "partial", appDetail: "カンバンボード・チームタスク管理機能で対応" },
+      { category: "AI", feature: "GitHub Copilot", competitorDetail: "AIコーディングアシスタント", status: "partial", appDetail: "AI秘書・コードプレイグラウンド機能で対応" },
+      { category: "Pages", feature: "GitHub Pages", competitorDetail: "静的サイトホスティング", status: "done", appDetail: "Firebase Hosting で本番サイト運用中" },
+    ],
+  },
 ];
-
-// ---------------------------------------------------------------------------
-// Handler
-// ---------------------------------------------------------------------------
 
 serve((req: Request) => {
   if (req.method === "OPTIONS") {

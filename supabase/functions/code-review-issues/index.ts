@@ -15,6 +15,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const GITHUB_PAT = Deno.env.get("GITHUB_PAT") ?? "";
+const GITHUB_REPO = "kanta13jp1/my_web_app";
 
 // レビュー観点
 const REVIEW_CATEGORIES = [
@@ -190,8 +192,45 @@ serve(async (req) => {
 
         if (error) throw error;
 
+        // GitHub Issue も作成 (GITHUB_PAT が設定されている場合)
+        let githubIssueUrl = null;
+        if (GITHUB_PAT) {
+          try {
+            const ghBody = [
+              description ?? "",
+              "",
+              `**カテゴリ**: ${category ?? "未分類"}`,
+              `**重要度**: ${severity ?? "low"}`,
+              file_path ? `**ファイル**: \`${file_path}\`` : "",
+              "",
+              "---",
+              `*自動生成: code-review-issues Edge Function*`,
+            ].filter(Boolean).join("\n");
+
+            const ghRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/issues`, {
+              method: "POST",
+              headers: {
+                Authorization: `token ${GITHUB_PAT}`,
+                Accept: "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title: `[コードレビュー] ${title}`,
+                body: ghBody,
+                labels: ["code-review", severity ?? "low"],
+              }),
+            });
+            if (ghRes.ok) {
+              const ghData = await ghRes.json();
+              githubIssueUrl = ghData.html_url;
+            }
+          } catch (_ghErr) {
+            // GitHub API failure should not block the response
+          }
+        }
+
         return new Response(
-          JSON.stringify({ success: true, issue: data }),
+          JSON.stringify({ success: true, issue: data, githubIssueUrl }),
           { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
