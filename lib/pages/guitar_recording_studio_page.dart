@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:js_interop';
 
 import 'package:flutter/material.dart';
@@ -86,6 +87,20 @@ class _GuitarRecordingStudioPageState
     super.dispose();
   }
 
+  /// Supabase SDK が String を返す場合もあるため安全にMapに変換
+  Map<String, dynamic>? _parseResponse(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    if (raw is String) {
+      try {
+        final parsed = jsonDecode(raw);
+        if (parsed is Map<String, dynamic>) return parsed;
+        if (parsed is Map) return Map<String, dynamic>.from(parsed);
+      } catch (_) {}
+    }
+    return null;
+  }
+
   Future<void> _fetchStudioData() async {
     setState(() => _isLoadingStudio = true);
     try {
@@ -93,8 +108,8 @@ class _GuitarRecordingStudioPageState
         'guitar-recording-studio',
         queryParameters: {'action': 'dashboard'},
       );
-      final data = res.data;
-      if (data is Map<String, dynamic>) {
+      final data = _parseResponse(res.data);
+      if (data != null) {
         final rawPresets = data['presets'];
         final rawChords = data['chordLibrary'];
         final rawTunings = data['tunings'];
@@ -141,13 +156,14 @@ class _GuitarRecordingStudioPageState
         'guitar-recording-studio',
         queryParameters: {'action': 'recordings', 'userId': user.id},
       );
-      final data = res.data;
-      if (data is Map<String, dynamic>) {
+      final data = _parseResponse(res.data);
+      if (data != null) {
         final list = data['recordings'];
         if (list is List) {
           setState(() {
-            _recordings =
-                list.map((r) => r as Map<String, dynamic>).toList();
+            _recordings = list
+                .map((r) => r is Map<String, dynamic> ? r : Map<String, dynamic>.from(r as Map))
+                .toList();
           });
         }
       }
@@ -166,8 +182,8 @@ class _GuitarRecordingStudioPageState
         'guitar-recording-studio',
         queryParameters: {'action': 'practice_stats', 'userId': user.id},
       );
-      final data = res.data;
-      if (data is Map<String, dynamic>) {
+      final data = _parseResponse(res.data);
+      if (data != null) {
         setState(() => _practiceStats = data);
       }
     } catch (_) {}
@@ -197,8 +213,8 @@ class _GuitarRecordingStudioPageState
         'guitar-recording-studio',
         queryParameters: {'action': 'chord', 'name': chordName},
       );
-      final data = res.data;
-      if (data is Map<String, dynamic>) {
+      final data = _parseResponse(res.data);
+      if (data != null) {
         setState(() => _chordDetail = data);
       }
     } catch (_) {}
@@ -211,15 +227,26 @@ class _GuitarRecordingStudioPageState
     try {
       final mediaDevices = web.window.navigator.mediaDevices;
 
+      // 高音質設定: エコーキャンセル・ノイズ抑制・自動ゲインをOFFにし、
+      // 楽器の生音をそのまま録音する
+      final audioConstraints = {
+        'echoCancellation': false,
+        'noiseSuppression': false,
+        'autoGainControl': false,
+        'sampleRate': 48000,
+        'channelCount': 2,
+      }.jsify();
       final constraints = web.MediaStreamConstraints(
-        audio: true.toJS,
+        audio: audioConstraints,
       );
       final stream = await mediaDevices.getUserMedia(constraints).toDart;
       _mediaStream = stream;
       _audioChunks.clear();
 
+      // 高ビットレートで録音 (256kbps)
       final options = web.MediaRecorderOptions(
         mimeType: 'audio/webm;codecs=opus',
+        audioBitsPerSecond: 256000,
       );
       _mediaRecorder = web.MediaRecorder(stream, options);
 
@@ -305,6 +332,19 @@ class _GuitarRecordingStudioPageState
       _recordingDuration = Duration.zero;
       _savedSuccessfully = false;
     });
+  }
+
+  void _downloadRecording() {
+    if (_audioUrl == null) return;
+    final title = _titleController.text.trim();
+    final fileName = title.isNotEmpty ? '$title.webm' : 'guitar-recording.webm';
+    final anchor = web.HTMLAnchorElement()
+      ..href = _audioUrl!
+      ..download = fileName
+      ..style.display = 'none';
+    web.document.body?.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
   }
 
   Future<void> _saveRecording() async {
@@ -647,7 +687,9 @@ class _GuitarRecordingStudioPageState
               ],
               if (!_isRecording && _audioUrl != null) ...[
                 _buildPlayButton(),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
+                _buildDownloadButton(),
+                const SizedBox(width: 12),
                 _buildDiscardButton(),
               ],
             ],
@@ -663,12 +705,21 @@ class _GuitarRecordingStudioPageState
           if (!_isRecording && _audioUrl != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                '録音完了: ${_formatDuration(_recordingDuration)}',
-                style: const TextStyle(
-                  color: Color(0xFF4CAF50),
-                  fontSize: 14,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    '録音完了: ${_formatDuration(_recordingDuration)}',
+                    style: const TextStyle(
+                      color: Color(0xFF4CAF50),
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '48kHz / ステレオ / 256kbps (WebM Opus)',
+                    style: TextStyle(color: Colors.white24, fontSize: 11),
+                  ),
+                ],
               ),
             ),
         ],
@@ -773,6 +824,25 @@ class _GuitarRecordingStudioPageState
           ],
         ),
         child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
+      ),
+    );
+  }
+
+  Widget _buildDownloadButton() {
+    return GestureDetector(
+      onTap: _downloadRecording,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFF0F3460),
+        ),
+        child: const Icon(
+          Icons.download_outlined,
+          color: Colors.white70,
+          size: 22,
+        ),
       ),
     );
   }
@@ -1424,9 +1494,12 @@ class _GuitarRecordingStudioPageState
         child: CircularProgressIndicator(color: Color(0xFFE94560)),
       );
     }
-    final totalRecordings = _practiceStats!['totalRecordings'] as int? ?? 0;
-    final totalMinutes = _practiceStats!['totalPracticeMinutes'] as int? ?? 0;
-    final streak = _practiceStats!['currentStreak'] as int? ?? 0;
+    final totalRecordings = _practiceStats!['totalSessions'] as int?
+        ?? _practiceStats!['totalRecordings'] as int? ?? 0;
+    final totalMinutes = _practiceStats!['totalMinutes'] as int?
+        ?? _practiceStats!['totalPracticeMinutes'] as int? ?? 0;
+    final streak = _practiceStats!['streakDays'] as int?
+        ?? _practiceStats!['currentStreak'] as int? ?? 0;
     final favoritePreset = _practiceStats!['favoritePreset'] as String? ?? '-';
     final hours = totalMinutes ~/ 60;
     final mins = totalMinutes % 60;
