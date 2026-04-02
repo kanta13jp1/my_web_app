@@ -147,6 +147,9 @@ import 'package:my_web_app/pages/viral_video_generator_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
+import 'package:my_web_app/pages/form_builder_page.dart';
+import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
+import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -864,6 +867,18 @@ class MyApp extends StatelessWidget {
           case '/music-collaboration':
             return MaterialPageRoute(
               builder: (_) => const MusicCollaborationPage(),
+            );
+          case '/form-builder':
+            return MaterialPageRoute(
+              builder: (_) => const FormBuilderPage(),
+            );
+          case '/fitness-health-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const FitnessHealthTrackerPage(),
+            );
+          case '/event-ticketing':
+            return MaterialPageRoute(
+              builder: (_) => const EventTicketingPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
