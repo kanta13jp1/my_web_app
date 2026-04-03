@@ -165,8 +165,6 @@ import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
-import 'package:my_web_app/pages/language_learning_page.dart';
-import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
 import 'package:my_web_app/pages/photo_gallery_manager_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -958,18 +956,6 @@ class MyApp extends StatelessWidget {
           case '/changelog':
             return MaterialPageRoute(
               builder: (_) => const ChangelogManagerPage(),
-            );
-          case '/language-learning':
-            return MaterialPageRoute(
-              builder: (_) => const LanguageLearningPage(),
-            );
-          case '/recipe-meal-planner':
-            return MaterialPageRoute(
-              builder: (_) => const RecipeMealPlannerPage(),
-            );
-          case '/travel-planner':
-            return MaterialPageRoute(
-              builder: (_) => const TravelItineraryPlannerPage(),
             );
           case '/pet-care':
             return MaterialPageRoute(
