@@ -269,6 +269,8 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ', true, '/guitar-recording-studio', 'ギターレコーディングスタジオページ'),
     _FnDef('music-collaboration', '音楽コラボレーション', true, '/music-collaboration', '音楽コラボレーションページ'),
     _FnDef('spreadsheet-database', 'スプレッドシート・データベース', true, '/spreadsheet-database', 'スプレッドシートデータベースページ'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('ai-status', 'AI モデルステータス・ベンチマーク', true, '/ai-status', 'ホーム > AI設定 > AIステータスページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
