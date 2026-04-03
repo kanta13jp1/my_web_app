@@ -162,11 +162,18 @@ import 'package:my_web_app/pages/travel_itinerary_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
 import 'package:my_web_app/pages/language_learning_page.dart';
+import 'package:my_web_app/pages/habit_gamification_page.dart';
+import 'package:my_web_app/pages/code_playground_page.dart';
+import 'package:my_web_app/pages/real_estate_tracker_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
 import 'package:my_web_app/pages/pet_care_manager_page.dart';
 import 'package:my_web_app/pages/photo_gallery_manager_page.dart';
+import 'package:my_web_app/pages/elearning_course_manager_page.dart';
+import 'package:my_web_app/pages/document_esignature_page.dart';
+import 'package:my_web_app/pages/vehicle_fleet_manager_page.dart';
+import 'package:my_web_app/pages/recruitment_job_board_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -964,6 +971,34 @@ class MyApp extends StatelessWidget {
           case '/photo-gallery':
             return MaterialPageRoute(
               builder: (_) => const PhotoGalleryManagerPage(),
+            );
+          case '/elearning':
+            return MaterialPageRoute(
+              builder: (_) => const ElearningCourseManagerPage(),
+            );
+          case '/document-esignature':
+            return MaterialPageRoute(
+              builder: (_) => const DocumentEsignaturePage(),
+            );
+          case '/vehicle-fleet':
+            return MaterialPageRoute(
+              builder: (_) => const VehicleFleetManagerPage(),
+            );
+          case '/recruitment':
+            return MaterialPageRoute(
+              builder: (_) => const RecruitmentJobBoardPage(),
+            );
+          case '/habit-gamification':
+            return MaterialPageRoute(
+              builder: (_) => const HabitGamificationPage(),
+            );
+          case '/code-playground':
+            return MaterialPageRoute(
+              builder: (_) => const CodePlaygroundPage(),
+            );
+          case '/real-estate':
+            return MaterialPageRoute(
+              builder: (_) => const RealEstateTrackerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
