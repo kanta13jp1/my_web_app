@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// 画面録画・スクリーンショット管理ページ
+/// 録画一覧・スクリーンショット一覧・ダウンロード。
+/// screen-recorder Edge Function と連携。
+class ScreenRecorderPage extends StatefulWidget {
+  const ScreenRecorderPage({super.key});
+
+  @override
+  State<ScreenRecorderPage> createState() => _ScreenRecorderPageState();
+}
+
+class _ScreenRecorderPageState extends State<ScreenRecorderPage>
+    with SingleTickerProviderStateMixin {
+  final _supabase = Supabase.instance.client;
+  late final TabController _tabController;
+
+  bool _isLoading = false;
+  String? _errorMessage;
+  List<Map<String, dynamic>> _recordings = [];
+  List<Map<String, dynamic>> _screenshots = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final recRes = await _supabase.functions.invoke(
+        'screen-recorder',
+        queryParameters: {'view': 'recordings'},
+      );
+      final ssRes = await _supabase.functions.invoke(
+        'screen-recorder',
+        queryParameters: {'view': 'screenshots'},
+      );
+      setState(() {
+        _recordings = _toList(recRes.data, 'recordings');
+        _screenshots = _toList(ssRes.data, 'screenshots');
+      });
+    } catch (e) {
+      setState(() => _errorMessage = '$e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  List<Map<String, dynamic>> _toList(dynamic data, String key) {
+    if (data is Map<String, dynamic>) {
+      final list = data[key];
+      if (list is List) {
+        return list.map((e) => e as Map<String, dynamic>).toList();
+      }
+    }
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('画面録画'),
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _fetchData),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(
+              icon: const Icon(Icons.videocam),
+              text: '録画 (${_recordings.length})',
+            ),
+            Tab(
+              icon: const Icon(Icons.screenshot),
+              text: 'スクリーンショット (${_screenshots.length})',
+            ),
+          ],
+        ),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [_buildRecordingsTab(), _buildScreenshotsTab()],
+                ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 12),
+          Text(_errorMessage!),
+          const SizedBox(height: 12),
+          ElevatedButton(onPressed: _fetchData, child: const Text('再試行')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecordingsTab() {
+    if (_recordings.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.videocam_off, size: 64, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('録画がありません', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _recordings.length,
+      itemBuilder: (ctx, i) {
+        final r = _recordings[i];
+        final title = r['title'] as String? ?? '録画 ${i + 1}';
+        final duration = r['duration'] as String? ?? '';
+        final size = r['fileSize'] as String? ?? '';
+        final date = r['createdAt'] as String? ?? '';
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.play_circle),
+            ),
+            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text(
+              [
+                if (duration.isNotEmpty) duration,
+                if (size.isNotEmpty) size,
+              ].join(' · '),
+            ),
+            trailing: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (date.length >= 10)
+                  Text(
+                    date.substring(0, 10),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.download, size: 20),
+                  onPressed: () {},
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScreenshotsTab() {
+    if (_screenshots.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.screenshot, size: 64, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('スクリーンショットがありません', style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
+    }
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemCount: _screenshots.length,
+      itemBuilder: (ctx, i) {
+        final ss = _screenshots[i];
+        final title = ss['title'] as String? ?? '${i + 1}';
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.image, size: 40, color: Colors.grey),
+              ),
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  color: Colors.black54,
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontSize: 10, color: Colors.white),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}

@@ -4,6 +4,7 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -54,6 +55,7 @@ class _GuitarRecordingStudioPageState
   bool _isSaving = false;
   bool _savedSuccessfully = false;
   bool _isPublic = false;
+  String? _savedRecordingId; // 保存後の共有用ID
 
   // 選択中のコード
   String? _selectedChord;
@@ -318,10 +320,26 @@ class _GuitarRecordingStudioPageState
         }
       });
     } catch (e) {
-      setState(
-        () => _errorMessage =
-            'マイクへのアクセスに失敗しました。\n設定でマイクを許可してください。\n$e',
-      );
+      final errStr = e.toString().toLowerCase();
+      String msg;
+      if (errStr.contains('notallowed') ||
+          errStr.contains('permission') ||
+          errStr.contains('denied')) {
+        msg = 'マイクへのアクセスが拒否されました。\n\n'
+            '📱 スマホ: 設定 → アプリ → ブラウザ → マイク → 許可\n'
+            '🖥 PC (Chrome): アドレスバー左の🔒→マイク→許可\n'
+            '🖥 PC (Firefox): アドレスバー左のカメラアイコン→許可\n\n'
+            'ページを再読み込み後、もう一度お試しください。';
+      } else if (errStr.contains('notfound') ||
+          errStr.contains('devicenotfound')) {
+        msg = 'マイクが見つかりません。\nマイクが接続されているか確認してください。';
+      } else if (errStr.contains('notsupported') ||
+          errStr.contains('insecure')) {
+        msg = 'このブラウザでは録音がサポートされていません。\nChrome または Safari をお使いください。\nまた https:// でアクセスしていることを確認してください。';
+      } else {
+        msg = 'マイクへのアクセスに失敗しました。\nブラウザの設定でマイクが許可されているか確認してください。';
+      }
+      setState(() => _errorMessage = msg);
     }
   }
 
@@ -488,7 +506,7 @@ class _GuitarRecordingStudioPageState
       _errorMessage = null;
     });
     try {
-      await _supabase.functions.invoke(
+      final res = await _supabase.functions.invoke(
         'guitar-recording-studio',
         body: {
           'action': 'save_recording',
@@ -501,11 +519,27 @@ class _GuitarRecordingStudioPageState
           'tracks': 1,
           'tags': _tagsController.text.trim().isEmpty
               ? <String>[]
-              : _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
+              : _tagsController.text
+                  .split(',')
+                  .map((t) => t.trim())
+                  .where((t) => t.isNotEmpty)
+                  .toList(),
           'isPublic': _isPublic,
         },
       );
-      setState(() => _savedSuccessfully = true);
+      // レスポンスから recording ID を取得 (共有URL生成用)
+      String? recId;
+      try {
+        final data = res.data;
+        if (data is Map) {
+          recId = data['recordingId']?.toString() ??
+              data['id']?.toString();
+        }
+      } catch (_) {}
+      setState(() {
+        _savedSuccessfully = true;
+        _savedRecordingId = recId;
+      });
       await _fetchRecordings();
       await _fetchPracticeStats();
       _titleController.clear();
@@ -1003,18 +1037,52 @@ class _GuitarRecordingStudioPageState
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFF4CAF50)),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: [
-            Icon(Icons.check_circle, color: Color(0xFF4CAF50)),
-            SizedBox(width: 8),
-            Text(
-              '保存しました！',
-              style: TextStyle(
-                color: Color(0xFF4CAF50),
-                fontWeight: FontWeight.bold,
-              ),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, color: Color(0xFF4CAF50)),
+                SizedBox(width: 8),
+                Text(
+                  '保存しました！',
+                  style: TextStyle(
+                    color: Color(0xFF4CAF50),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
+            if (_isPublic) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final id = _savedRecordingId ?? 'unknown';
+                        final url =
+                            'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$id';
+                        Clipboard.setData(ClipboardData(text: url));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('共有リンクをコピーしました！'),
+                            backgroundColor: Color(0xFF4CAF50),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.share, size: 16),
+                      label: const Text('共有リンクをコピー'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF4CAF50),
+                        side: const BorderSide(color: Color(0xFF4CAF50)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       );

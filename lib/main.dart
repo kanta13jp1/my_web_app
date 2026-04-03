@@ -178,6 +178,12 @@ import 'package:my_web_app/pages/home_iot_manager_page.dart';
 import 'package:my_web_app/pages/legal_compliance_manager_page.dart';
 import 'package:my_web_app/pages/email_template_builder_page.dart';
 import 'package:my_web_app/pages/two_factor_auth_page.dart';
+import 'package:my_web_app/pages/inventory_barcode_page.dart';
+import 'package:my_web_app/pages/password_vault_page.dart';
+import 'package:my_web_app/pages/podcast_manager_page.dart';
+import 'package:my_web_app/pages/screen_recorder_page.dart';
+import 'package:my_web_app/pages/sitemap_analytics_page.dart';
+import 'package:my_web_app/pages/access_control_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1019,6 +1025,30 @@ class MyApp extends StatelessWidget {
           case '/two-factor-auth':
             return MaterialPageRoute(
               builder: (_) => const TwoFactorAuthPage(),
+            );
+          case '/inventory-barcode':
+            return MaterialPageRoute(
+              builder: (_) => const InventoryBarcodePage(),
+            );
+          case '/password-vault':
+            return MaterialPageRoute(
+              builder: (_) => const PasswordVaultPage(),
+            );
+          case '/podcast-manager':
+            return MaterialPageRoute(
+              builder: (_) => const PodcastManagerPage(),
+            );
+          case '/screen-recorder':
+            return MaterialPageRoute(
+              builder: (_) => const ScreenRecorderPage(),
+            );
+          case '/sitemap-analytics':
+            return MaterialPageRoute(
+              builder: (_) => const SitemapAnalyticsPage(),
+            );
+          case '/access-control':
+            return MaterialPageRoute(
+              builder: (_) => const AccessControlPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
