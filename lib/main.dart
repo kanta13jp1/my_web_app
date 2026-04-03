@@ -174,6 +174,10 @@ import 'package:my_web_app/pages/elearning_course_manager_page.dart';
 import 'package:my_web_app/pages/document_esignature_page.dart';
 import 'package:my_web_app/pages/vehicle_fleet_manager_page.dart';
 import 'package:my_web_app/pages/recruitment_job_board_page.dart';
+import 'package:my_web_app/pages/home_iot_manager_page.dart';
+import 'package:my_web_app/pages/legal_compliance_manager_page.dart';
+import 'package:my_web_app/pages/email_template_builder_page.dart';
+import 'package:my_web_app/pages/two_factor_auth_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -999,6 +1003,22 @@ class MyApp extends StatelessWidget {
           case '/real-estate':
             return MaterialPageRoute(
               builder: (_) => const RealEstateTrackerPage(),
+            );
+          case '/home-iot':
+            return MaterialPageRoute(
+              builder: (_) => const HomeIotManagerPage(),
+            );
+          case '/legal-compliance':
+            return MaterialPageRoute(
+              builder: (_) => const LegalComplianceManagerPage(),
+            );
+          case '/email-templates':
+            return MaterialPageRoute(
+              builder: (_) => const EmailTemplateBuilderPage(),
+            );
+          case '/two-factor-auth':
+            return MaterialPageRoute(
+              builder: (_) => const TwoFactorAuthPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
