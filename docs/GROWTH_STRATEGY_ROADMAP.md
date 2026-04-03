@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-03 daily-development #2 (語学学習ページ実装・Edge Function Summary Card整合性修正、flutter analyze 0エラー維持)
+最終更新: 2026-04-03 daily-development #3 (習慣ゲーミフィケーション・コードプレイグラウンド・不動産管理実装、flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -385,6 +385,14 @@
 - **バーチャルホワイトボード実装** (daily-development 2026-04-03): `virtual_whiteboard_page.dart` を新規作成。`virtual-whiteboard` Edge Function と連携。マイボード一覧・テンプレート選択(ブレインストーミング/カンバン/振り返り/マインドマップ)・付箋追加(6色)・図形要素リスト表示の2タブ構成。deprecated `RadioListTile` を `Icon + ListTile` パターンで代替(Flutter 3.32.0+ 対応)。`/virtual-whiteboard` ルートを `main.dart` に追加。業務メニューカタログ `knowledge` セクションに登録。Miro/Microsoft Whiteboard/FigJam競合。flutter analyze 0件維持。
 - **レシピ・食事プランナー実装** (daily-development 2026-04-03): `recipe_meal_planner_page.dart` を新規作成。`recipe-meal-planner` Edge Function と連携。カテゴリフィルタ付きレシピ一覧(GridView・調理時間/材料表示)・週間献立計画・買い物リスト自動生成の3タブ構成。`/recipe-meal-planner` ルートを `main.dart` に追加。業務メニューカタログ `office` セクションに登録。Amazon Fresh/クックパッド/Liven競合。flutter analyze 0件維持。
 - **ブログ下書き作成** (daily-development 2026-04-03): `docs/blog-drafts/2026-04-03-travel-whiteboard-recipe.md` — Edge Function Firstパターンで3競合SaaSを同時実装・deprecated RadioListTile移行・const最適化の解説記事を作成。
+
+### 2026-04-03 daily-development #3 実装済み (自動)
+
+- **習慣ゲーミフィケーション実装** (daily-development #3 2026-04-03): `habit_gamification_page.dart` を新規作成。`habit-gamification` Edge Function と連携。デイリーチャレンジ (5種) 完了・XP獲得・レベルアップ・12種バッジ解除・ストリーク管理・ランキングの3タブ構成。Future.wait 並列フェッチで profile/badges/challenges/leaderboard を同時取得。LinearProgressIndicator でXPバー表示。`/habit-gamification` ルートを `main.dart` に追加。業務メニューカタログ `personal` セクションに登録。Duolingo/Forest/Habitica競合。flutter analyze 0件維持。
+- **コードプレイグラウンド実装** (daily-development #3 2026-04-03): `code_playground_page.dart` を新規作成。`code-playground` Edge Function と連携。20言語対応スニペット保存・言語別テンプレート・共有コード生成・コレクション管理・言語別統計 LinearProgressIndicator の3タブ構成。`DropdownButtonFormField.initialValue` (deprecated `value` 移行) ・`withValues(alpha:)` (deprecated `withOpacity` 移行) を適用。`/code-playground` ルートを `main.dart` に追加。業務メニューカタログ `knowledge` セクションに登録。GitHub Gist/CodePen/Codex競合。flutter analyze 0件維持。
+- **不動産管理実装** (daily-development #3 2026-04-03): `real_estate_tracker_page.dart` を新規作成。`real-estate-tracker` Edge Function と連携。物件登録 (7種別: アパート/一戸建て/区分マンション/土地/商業/駐車場/その他) ・収支記録 (8種別: 家賃収入/メンテナンス/税金/保険/ローン/光熱費/その他) ・ROI計算・億/万単位フォーマット表示の3タブ構成。`/real-estate` ルートを `main.dart` に追加。業務メニューカタログ `office` セクションに登録。MoneyForward/Suumo競合。flutter analyze 0件維持。
+- **EdgeFunctionSummaryCard 3件更新** (daily-development #3 2026-04-03): `habit-gamification`/`code-playground`/`real-estate-tracker` を「未実装→実装済み」に変更。
+- **ブログ下書き作成** (daily-development #3 2026-04-03): `docs/blog-drafts/2026-04-03-gamification-code-realestate.md` — Flutter WebでHabitica・GitHub Gist・不動産管理を同時実装・deprecated API移行解説記事を作成。
 
 ### 2026-04-03 daily-development #2 実装済み (自動)
 

@@ -147,6 +147,9 @@ import '../pages/travel_itinerary_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
 import '../pages/language_learning_page.dart';
+import '../pages/habit_gamification_page.dart';
+import '../pages/code_playground_page.dart';
+import '../pages/real_estate_tracker_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1817,6 +1820,45 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'Duolingo', 'Anki', '英単語', '外国語', 'ストリーク', '学習',
       ],
       onOpen: (context) => _pushPage(context, const LanguageLearningPage()),
+    ),
+    HomeToolEntry(
+      id: 'habit-gamification',
+      sectionId: 'personal',
+      title: '習慣ゲーミフィケーション',
+      subtitle: 'Duolingo/Forest/Habitica競合。デイリーチャレンジ・XP・バッジ・ストリーク',
+      icon: Icons.local_fire_department,
+      color: const Color(0xFFFF6F00),
+      keywords: const <String>[
+        'ゲーミフィケーション', '習慣', 'ストリーク', 'バッジ', 'XP',
+        'チャレンジ', 'ランキング', 'Duolingo', 'Forest', 'Habitica', 'レベル',
+      ],
+      onOpen: (context) => _pushPage(context, const HabitGamificationPage()),
+    ),
+    HomeToolEntry(
+      id: 'code-playground',
+      sectionId: 'knowledge',
+      title: 'コードプレイグラウンド',
+      subtitle: 'GitHub Gist/CodePen競合。スニペット保存・20言語・共有リンク・コレクション',
+      icon: Icons.code,
+      color: const Color(0xFF1565C0),
+      keywords: const <String>[
+        'コード', 'スニペット', 'プログラム', 'GitHub Gist', 'CodePen',
+        '20言語', '共有', 'フォーク', 'コレクション', 'sandbox',
+      ],
+      onOpen: (context) => _pushPage(context, const CodePlaygroundPage()),
+    ),
+    HomeToolEntry(
+      id: 'real-estate',
+      sectionId: 'office',
+      title: '不動産管理',
+      subtitle: 'MoneyForward/Suumo競合。物件登録・収支管理・ROI計算・テナント管理',
+      icon: Icons.home_work,
+      color: const Color(0xFF2E7D32),
+      keywords: const <String>[
+        '不動産', '物件', '賃貸', 'マンション', 'アパート',
+        '収支', 'ROI', 'テナント', '家賃', '投資', 'MoneyForward',
+      ],
+      onOpen: (context) => _pushPage(context, const RealEstateTrackerPage()),
     ),
   ];
 }
