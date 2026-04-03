@@ -2360,6 +2360,19 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **DropdownButtonFormField `value` → `initialValue` 移行** (daily-development #4 2026-04-02): Flutter 3.33.0+ で deprecated になった `DropdownButtonFormField.value` を全新規ページで `initialValue` に更新。flutter analyze の `deprecated_member_use` エラー 5件を解消。
 - **ブログ下書き作成** (daily-development #4 2026-04-02): `docs/blog-drafts/2026-04-02-crm-horse-racing.md` — Flutter WebでCRM営業パイプラインと競馬予想AIを同時実装した話・Salesforce/netkeiba競合・`use_build_context_synchronously` 修正パターン解説。
 
+### Session PS#14 (2026-04-03): PowerShell全体管理 — Schedule最適化・4インスタンス統合
+
+#### 実施内容
+- **4インスタンス同時実行の競合解消**: VSCode(lib/)/Web(supabase/functions/)/Windows(docs/)/PowerShell(全体管理) の4インスタンスが同時実行中。origin/mainとのマージ競合を解消してローカルを最新化。
+- **cs-check Scheduleタスク更新**: Step 9「ギター録音スタジオ Edge Function ヘルスチェック」を追加。メイン機能の毎時可用性監視を実現。Schedule自己修復フローを強化 (3回以上失敗でインシデントレポート自動生成)。
+- **既存Scheduleタスク状況確認**:
+  - cs-check: 毎時実行 — CS対応・Edge Function UI自動連携・コードレビュー・Issue自動修復・ギター録音ヘルスチェック
+  - daily-report: 毎日JST09:00 — 日次レポート・X投稿・競合モニタリング
+  - blog-draft: 毎日JST08:00 — ブログ下書き生成 (Zenn/Qiita/note等11プラットフォーム用)
+  - weekly-sns-draft: 毎週月曜JST09:00 — 週次SNSドラフト+脆弱性チェック
+- **flutter analyze 0エラー確認済み**
+- **ScheduleTaskMonitorCard**: 管理者ダッシュボード実装済み。14タスクの実行状況をリアルタイム表示。
+
 ### Session Web版#4 (2026-04-02): ギター録音スタジオ大幅改善
 
 #### 修正: 履歴・統計が更新されない問題
