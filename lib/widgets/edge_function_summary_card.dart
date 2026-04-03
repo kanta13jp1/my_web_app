@@ -165,12 +165,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('music-playlist-manager', '音楽プレイリスト管理', true, '/music-playlist-manager', 'MusicPlaylistManagerPage'),
     _FnDef('pet-care-manager', 'ペットケア管理', false, null, '未実装'),
     _FnDef('photo-gallery-manager', 'フォトギャラリー管理', false, null, '未実装'),
-    _FnDef('recipe-meal-planner', 'レシピ・食事プランナー', false, null, '未実装'),
+    _FnDef('recipe-meal-planner', 'レシピ・食事プランナー', true, '/recipe-meal-planner', 'レシピ・食事プランナーページ'),
     _FnDef('recruitment-job-board', '採用・求人ボード', false, null, '未実装'),
     _FnDef('schedule-result-tracker', 'Schedule 結果トラッカー', false, null, 'Schedule専用'),
     _FnDef('social-media-scheduler', 'SNS 投稿スケジューラー', true, '/social-scheduler', 'SNS 投稿スケジューラーページ'),
-    _FnDef('spreadsheet-database', 'スプレッドシート DB', false, null, '未実装'),
-    _FnDef('travel-itinerary-planner', '旅行プランナー', false, null, '未実装'),
     _FnDef('video-meeting-manager', 'ビデオ会議管理', true, '/video-meeting', 'ビデオ会議管理ページ'),
     _FnDef('virtual-organization', 'バーチャル組織', true, '/virtual-organization', 'VirtualOrganizationPage'),
     _FnDef('whiteboard-canvas', 'ホワイトボードキャンバス', false, null, '未実装'),
@@ -272,6 +270,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('spreadsheet-database', 'スプレッドシート・データベース', true, '/spreadsheet-database', 'スプレッドシートデータベースページ'),
     _FnDef('travel-itinerary-planner', '旅行・旅程プランナー', true, '/travel-itinerary', '旅行プランナーページ'),
     _FnDef('changelog-manager', '変更履歴管理 (Changelog)', true, '/changelog', 'Changelogページ'),
+    // 追加 (daily-development 2026-04-03)
+    _FnDef('horse-racing-predictor', '競馬予測 AI (netkeiba競合)', true, '/horse-racing', '競馬予測AIページ'),
+    _FnDef('language-learning', '語学学習 (Duolingo競合)', true, '/language-learning', '語学学習ページ'),
+    _FnDef('crm-sales-pipeline', 'CRM セールスパイプライン', true, '/crm-pipeline', 'CRM パイプラインページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

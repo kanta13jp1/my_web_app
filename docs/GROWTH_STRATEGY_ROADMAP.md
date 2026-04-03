@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-03 daily-development (旅行プランナー・バーチャルホワイトボード・レシピ食事プランナー UI 追加、flutter analyze 0エラー維持)
+最終更新: 2026-04-03 daily-development #2 (語学学習ページ実装・Edge Function Summary Card整合性修正、flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -385,6 +385,12 @@
 - **バーチャルホワイトボード実装** (daily-development 2026-04-03): `virtual_whiteboard_page.dart` を新規作成。`virtual-whiteboard` Edge Function と連携。マイボード一覧・テンプレート選択(ブレインストーミング/カンバン/振り返り/マインドマップ)・付箋追加(6色)・図形要素リスト表示の2タブ構成。deprecated `RadioListTile` を `Icon + ListTile` パターンで代替(Flutter 3.32.0+ 対応)。`/virtual-whiteboard` ルートを `main.dart` に追加。業務メニューカタログ `knowledge` セクションに登録。Miro/Microsoft Whiteboard/FigJam競合。flutter analyze 0件維持。
 - **レシピ・食事プランナー実装** (daily-development 2026-04-03): `recipe_meal_planner_page.dart` を新規作成。`recipe-meal-planner` Edge Function と連携。カテゴリフィルタ付きレシピ一覧(GridView・調理時間/材料表示)・週間献立計画・買い物リスト自動生成の3タブ構成。`/recipe-meal-planner` ルートを `main.dart` に追加。業務メニューカタログ `office` セクションに登録。Amazon Fresh/クックパッド/Liven競合。flutter analyze 0件維持。
 - **ブログ下書き作成** (daily-development 2026-04-03): `docs/blog-drafts/2026-04-03-travel-whiteboard-recipe.md` — Edge Function Firstパターンで3競合SaaSを同時実装・deprecated RadioListTile移行・const最適化の解説記事を作成。
+
+### 2026-04-03 daily-development #2 実装済み (自動)
+
+- **語学学習ページ実装** (daily-development #2 2026-04-03): `language_learning_page.dart` を新規作成。`language-learning` Edge Function と連携。単語帳管理・SM-2間隔反復フラッシュカードレビュー(覚えた/もう一度ボタン)・連続学習ストリーク表示(🔥 N日)・統計グリッド(単語帳数/総カード/総レビュー/正解率)の3タブ構成。12言語対応 (日英中韓仏独西葡伊露アラヒンディー)。`/language-learning` ルートを `main.dart` に追加。業務メニューカタログ `knowledge` セクションに登録。Duolingo/Anki競合。flutter analyze 0件維持。
+- **Edge Function Summary Card 整合性修正** (daily-development #2 2026-04-03): `recipe-meal-planner` の `false` → `true` 修正。`travel-itinerary-planner` / `spreadsheet-database` の重複エントリ (false+true) を解消。`horse-racing-predictor` / `language-learning` / `crm-sales-pipeline` の新規エントリ追加。UI実装カバレッジの正確性向上。
+- **ブログ下書き作成** (daily-development #2 2026-04-03): `docs/blog-drafts/2026-04-03-language-learning-horse-racing.md` — SM-2間隔反復アルゴリズム実装・語学学習UI・Edge Function Summary Card修正解説記事を作成。
 
 ### 2026-04-02 PS#12 (PowerShell) 実装済み
 

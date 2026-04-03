@@ -161,6 +161,7 @@ import 'package:my_web_app/pages/horse_racing_predictor_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_page.dart';
 import 'package:my_web_app/pages/virtual_whiteboard_page.dart';
 import 'package:my_web_app/pages/recipe_meal_planner_page.dart';
+import 'package:my_web_app/pages/language_learning_page.dart';
 import 'package:my_web_app/pages/spreadsheet_database_page.dart';
 import 'package:my_web_app/pages/travel_itinerary_planner_page.dart';
 import 'package:my_web_app/pages/changelog_manager_page.dart';
@@ -941,6 +942,10 @@ class MyApp extends StatelessWidget {
           case '/recipe-meal-planner':
             return MaterialPageRoute(
               builder: (_) => const RecipeMealPlannerPage(),
+            );
+          case '/language-learning':
+            return MaterialPageRoute(
+              builder: (_) => const LanguageLearningPage(),
             );
           case '/spreadsheet-database':
             return MaterialPageRoute(

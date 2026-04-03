@@ -146,6 +146,7 @@ import '../pages/horse_racing_predictor_page.dart';
 import '../pages/travel_itinerary_page.dart';
 import '../pages/virtual_whiteboard_page.dart';
 import '../pages/recipe_meal_planner_page.dart';
+import '../pages/language_learning_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1803,6 +1804,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '食材', '栄養', '朝食', '昼食', '夕食', 'Amazon Fresh', 'Liven',
       ],
       onOpen: (context) => _pushPage(context, const RecipeMealPlannerPage()),
+    ),
+    HomeToolEntry(
+      id: 'language-learning',
+      sectionId: 'knowledge',
+      title: '語学学習',
+      subtitle: 'Duolingo/Anki競合。単語帳・フラッシュカード・間隔反復学習・ストリーク管理',
+      icon: Icons.translate,
+      color: const Color(0xFFFF5722),
+      keywords: const <String>[
+        '語学', '英語', '単語', 'フラッシュカード', '暗記', '間隔反復',
+        'Duolingo', 'Anki', '英単語', '外国語', 'ストリーク', '学習',
+      ],
+      onOpen: (context) => _pushPage(context, const LanguageLearningPage()),
     ),
   ];
 }
