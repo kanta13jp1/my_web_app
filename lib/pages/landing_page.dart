@@ -675,6 +675,81 @@ $input
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // ★ メイン機能: ギター録音スタジオ (最上部に配置)
+        GestureDetector(
+          onTap: () =>
+              Navigator.of(context).pushNamed('/guitar-recording-studio'),
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFFE94560),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE94560).withAlpha(50),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE94560).withAlpha(30),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.music_note,
+                    color: Color(0xFFE94560),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'ギター録音スタジオ 🎸',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          _LandingMainBadge(),
+                        ],
+                      ),
+                      Text(
+                        'スマホで演奏を録音・WAV保存・メトロノーム・コード辞典・AI分析',
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  color: Color(0xFFE94560),
+                  size: 15,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         // アプリ名バッジ
         Center(
           child: Container(
@@ -794,56 +869,6 @@ $input
             _BenefitChip(icon: Icons.smart_toy, label: 'AI自動整理'),
             _BenefitChip(icon: Icons.public, label: 'メモ公開共有'),
           ],
-        ),
-        const SizedBox(height: 16),
-        // ギター録音スタジオ (メイン機能バナー)
-        GestureDetector(
-          onTap: () =>
-              Navigator.of(context).pushNamed('/guitar-recording-studio'),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
-              ),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE94560)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.music_note, color: Color(0xFFE94560), size: 28),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'ギター録音スタジオ 🎸',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Text(
-                        'スマホで演奏を録音・保存・メトロノーム・コード辞典',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: Color(0xFFE94560),
-                  size: 16,
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
@@ -2388,6 +2413,31 @@ class _FaqItemState extends State<_FaqItem> {
           ),
         const Divider(height: 1),
       ],
+    );
+  }
+}
+
+/// ランディングページ用 MAIN 機能バッジ
+class _LandingMainBadge extends StatelessWidget {
+  const _LandingMainBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE94560),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Text(
+        'MAIN',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }

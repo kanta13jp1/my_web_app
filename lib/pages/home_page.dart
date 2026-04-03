@@ -4114,7 +4114,10 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 最上部: 競合21社 vs 開発進捗バー
+                            // 最上部: ギター録音スタジオ (メイン機能)
+                            const _GuitarMainFeatureBanner(),
+                            const SizedBox(height: 10),
+                            // 競合21社 vs 開発進捗バー
                             const GrowthRoadmapProgressCard(),
                             const SizedBox(height: 12),
                             if (WelcomeNewUserCard.shouldShow()) ...[
@@ -6795,6 +6798,110 @@ class _PersonalityTypeBanner extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// ホーム画面最上部に表示するギター録音スタジオへの導線バナー (メイン機能)
+class _GuitarMainFeatureBanner extends StatelessWidget {
+  const _GuitarMainFeatureBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () =>
+          Navigator.of(context).pushNamed('/guitar-recording-studio'),
+      child: Container(
+        width: double.infinity,
+        padding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE94560), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE94560).withAlpha(60),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE94560).withAlpha(30),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.music_note,
+                color: Color(0xFFE94560),
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 14),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'ギター録音スタジオ 🎸',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      _MainFeatureBadge(),
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'スマホで演奏を録音・保存・メトロノーム・コード辞典・AI分析',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios,
+              color: Color(0xFFE94560),
+              size: 16,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MainFeatureBadge extends StatelessWidget {
+  const _MainFeatureBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE94560),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Text(
+        'MAIN',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
