@@ -150,6 +150,8 @@ import '../pages/language_learning_page.dart';
 import '../pages/habit_gamification_page.dart';
 import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
+import '../pages/goal_tracker_page.dart';
+import '../pages/bookmark_sync_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1859,6 +1861,32 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '収支', 'ROI', 'テナント', '家賃', '投資', 'MoneyForward',
       ],
       onOpen: (context) => _pushPage(context, const RealEstateTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'goal-tracker',
+      sectionId: 'personal',
+      title: '目標管理',
+      subtitle: 'Notion/Liven競合。短期/中期/長期目標・マイルストーン管理・進捗追跡・達成記録',
+      icon: Icons.flag,
+      color: const Color(0xFF7B1FA2),
+      keywords: const <String>[
+        '目標', 'ゴール', 'マイルストーン', '進捗', '達成', 'OKR',
+        '短期', '中期', '長期', 'Notion', 'Liven', 'KPI', '目標管理',
+      ],
+      onOpen: (context) => _pushPage(context, const GoalTrackerPage()),
+    ),
+    HomeToolEntry(
+      id: 'bookmark-sync',
+      sectionId: 'knowledge',
+      title: 'ブックマーク同期',
+      subtitle: 'Pocket/Instapaper競合。URL保存・タグ管理・既読管理・クロスデバイス同期',
+      icon: Icons.bookmark_add,
+      color: const Color(0xFF0288D1),
+      keywords: const <String>[
+        'ブックマーク', 'URL', 'リンク', '保存', 'Pocket', 'Instapaper',
+        '後で読む', 'タグ', '既読', 'クリップ', 'ウェブクリップ',
+      ],
+      onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
     ),
   ];
 }

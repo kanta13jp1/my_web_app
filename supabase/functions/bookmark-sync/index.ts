@@ -69,9 +69,7 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const body = await req.json().catch(() => ({}));
-
-    if (body.action === "add") {
+    if ((body as Record<string, unknown>).action === "add") {
       const { data, error } = await userClient.from("bookmarks").insert({
         user_id: user.id,
         url: body.url,

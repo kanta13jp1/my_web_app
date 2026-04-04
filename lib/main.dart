@@ -184,6 +184,8 @@ import 'package:my_web_app/pages/podcast_manager_page.dart';
 import 'package:my_web_app/pages/screen_recorder_page.dart';
 import 'package:my_web_app/pages/sitemap_analytics_page.dart';
 import 'package:my_web_app/pages/access_control_page.dart';
+import 'package:my_web_app/pages/goal_tracker_page.dart';
+import 'package:my_web_app/pages/bookmark_sync_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1049,6 +1051,14 @@ class MyApp extends StatelessWidget {
           case '/access-control':
             return MaterialPageRoute(
               builder: (_) => const AccessControlPage(),
+            );
+          case '/goal-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const GoalTrackerPage(),
+            );
+          case '/bookmark-sync':
+            return MaterialPageRoute(
+              builder: (_) => const BookmarkSyncPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

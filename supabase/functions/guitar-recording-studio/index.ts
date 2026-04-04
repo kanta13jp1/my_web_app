@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +7,47 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-// Guitar tuning frequencies (Hz)
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+
+const RECORDING_BUCKET = "guitar-recordings";
+const SHARE_BASE_URL =
+  "https://my-web-app-b67f4.web.app/#/guitar-recording-studio";
+
+type Json = Record<string, unknown>;
+
+type GuitarRecordingRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  duration_seconds: number;
+  preset: string;
+  tuning: string;
+  bpm: number;
+  track_count: number;
+  tags: string[] | null;
+  is_public: boolean;
+  likes: number;
+  plays: number;
+  file_url: string | null;
+  file_path: string | null;
+  file_mime_type: string | null;
+  file_size_bytes: number | null;
+  export_format: string;
+  duration_display: string | null;
+  ai_feedback: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type AuthContext = {
+  adminClient: SupabaseClient;
+  userClient: SupabaseClient | null;
+  user: User | null;
+};
+
 const TUNINGS: Record<string, Record<string, number>> = {
   standard: { E2: 82.41, A2: 110.0, D3: 146.83, G3: 196.0, B3: 246.94, E4: 329.63 },
   drop_d: { D2: 73.42, A2: 110.0, D3: 146.83, G3: 196.0, B3: 246.94, E4: 329.63 },
@@ -16,7 +56,6 @@ const TUNINGS: Record<string, Record<string, number>> = {
   dadgad: { D2: 73.42, A2: 110.0, D3: 146.83, G3: 196.0, A3: 220.0, D4: 293.66 },
 };
 
-// Chord library for reference
 const CHORD_LIBRARY: Record<string, { frets: number[]; fingers: string }> = {
   C: { frets: [0, 3, 2, 0, 1, 0], fingers: "x32010" },
   D: { frets: [-1, -1, 0, 2, 3, 2], fingers: "xx0232" },
@@ -28,23 +67,65 @@ const CHORD_LIBRARY: Record<string, { frets: number[]; fingers: string }> = {
   Am: { frets: [0, 0, 2, 2, 1, 0], fingers: "002210" },
   Em: { frets: [0, 2, 2, 0, 0, 0], fingers: "022000" },
   Dm: { frets: [-1, -1, 0, 2, 3, 1], fingers: "xx0231" },
-  "C7": { frets: [0, 3, 2, 3, 1, 0], fingers: "032310" },
-  "G7": { frets: [3, 2, 0, 0, 0, 1], fingers: "320001" },
-  "A7": { frets: [0, 0, 2, 0, 2, 0], fingers: "002020" },
-  "Cmaj7": { frets: [0, 3, 2, 0, 0, 0], fingers: "032000" },
-  "Fmaj7": { frets: [1, 3, 3, 2, 1, 0], fingers: "133210" },
+  C7: { frets: [0, 3, 2, 3, 1, 0], fingers: "032310" },
+  G7: { frets: [3, 2, 0, 0, 0, 1], fingers: "320001" },
+  A7: { frets: [0, 0, 2, 0, 2, 0], fingers: "002020" },
+  Cmaj7: { frets: [0, 3, 2, 0, 0, 0], fingers: "032000" },
+  Fmaj7: { frets: [1, 3, 3, 2, 1, 0], fingers: "133210" },
 };
 
-// Genre-specific recording presets
-const RECORDING_PRESETS: Record<string, { bpm: number; timeSignature: string; effects: string[]; description: string }> = {
-  acoustic_fingerpicking: { bpm: 80, timeSignature: "4/4", effects: ["reverb_hall", "compressor_light"], description: "繊細なフィンガーピッキング向け" },
-  rock_rhythm: { bpm: 120, timeSignature: "4/4", effects: ["distortion_medium", "reverb_room"], description: "ロックリズムギター向け" },
-  blues_lead: { bpm: 90, timeSignature: "12/8", effects: ["overdrive", "delay_slap", "reverb_spring"], description: "ブルースリードギター向け" },
-  jazz_clean: { bpm: 110, timeSignature: "4/4", effects: ["chorus", "reverb_plate", "compressor_medium"], description: "ジャズクリーントーン向け" },
-  metal_heavy: { bpm: 160, timeSignature: "4/4", effects: ["distortion_heavy", "noise_gate", "compressor_heavy"], description: "ヘビーメタル向け" },
-  classical: { bpm: 70, timeSignature: "3/4", effects: ["reverb_cathedral"], description: "クラシックギター向け" },
-  funk_rhythm: { bpm: 100, timeSignature: "4/4", effects: ["wah_auto", "compressor_heavy", "phaser"], description: "ファンクリズム向け" },
-  ambient: { bpm: 60, timeSignature: "4/4", effects: ["delay_long", "reverb_shimmer", "chorus", "tremolo"], description: "アンビエント・ポストロック向け" },
+const RECORDING_PRESETS: Record<
+  string,
+  { bpm: number; timeSignature: string; effects: string[]; description: string }
+> = {
+  acoustic_fingerpicking: {
+    bpm: 80,
+    timeSignature: "4/4",
+    effects: ["reverb_hall", "compressor_light"],
+    description: "アコースティックの粒立ちを活かすフィンガーピッキング向け",
+  },
+  rock_rhythm: {
+    bpm: 120,
+    timeSignature: "4/4",
+    effects: ["distortion_medium", "reverb_room"],
+    description: "ロックの刻みと厚みを作るリズムギター向け",
+  },
+  blues_lead: {
+    bpm: 90,
+    timeSignature: "12/8",
+    effects: ["overdrive", "delay_slap", "reverb_spring"],
+    description: "ブルースの粘りと歌い回しを出すリード向け",
+  },
+  jazz_clean: {
+    bpm: 110,
+    timeSignature: "4/4",
+    effects: ["chorus", "reverb_plate", "compressor_medium"],
+    description: "ジャズのクリーントーンでコード感を残す向け",
+  },
+  metal_heavy: {
+    bpm: 160,
+    timeSignature: "4/4",
+    effects: ["distortion_heavy", "noise_gate", "compressor_heavy"],
+    description: "ヘヴィな刻みと高密度のゲイン向け",
+  },
+  classical: {
+    bpm: 70,
+    timeSignature: "3/4",
+    effects: ["reverb_cathedral"],
+    description: "クラシックギターの空気感を残す向け",
+  },
+  funk_rhythm: {
+    bpm: 100,
+    timeSignature: "4/4",
+    effects: ["wah_auto", "compressor_heavy", "phaser"],
+    description: "カッティングの粒とグルーヴを作る向け",
+  },
+  ambient: {
+    bpm: 60,
+    timeSignature: "4/4",
+    effects: ["delay_long", "reverb_shimmer", "chorus", "tremolo"],
+    description: "空間系で広がりを作るアンビエント向け",
+  },
 };
 
 serve(async (req: Request) => {
@@ -53,639 +134,970 @@ serve(async (req: Request) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseKey = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
+    const auth = await getAuthContext(req);
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") ?? "dashboard";
+    const body = await readJsonBody(req);
+    const action =
+      normalizeString(body.action) ??
+      url.searchParams.get("action") ??
+      "dashboard";
 
-    // ---- GET actions ----
-
-    // Dashboard: recording studio overview
-    if (action === "dashboard") {
-      const userId = url.searchParams.get("userId");
-
-      // Get user's recordings
-      const { data: recordings } = await supabase
-        .from("app_analytics")
-        .select("*")
-        .eq("source", "guitar-recording-studio")
-        .eq("metadata->>event_type", "recording_saved")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      // Get user-specific recordings if userId provided
-      const userRecordings = userId
-        ? (recordings ?? []).filter((r: Record<string, unknown>) => {
-            const ed = r.metadata as Record<string, unknown>;
-            return ed?.userId === userId;
-          })
-        : [];
-
-      // Get total recording stats
-      const totalRecordings = (recordings ?? []).length;
-      const totalDuration = (recordings ?? []).reduce((sum: number, r: Record<string, unknown>) => {
-        const ed = r.metadata as Record<string, unknown>;
-        return sum + ((ed?.durationSeconds as number) ?? 0);
-      }, 0);
-
-      return new Response(
-        JSON.stringify({
-          studio: {
-            name: "自分スタジオ",
-            description: "スマホでギター演奏を録音・編集・共有",
-            version: "1.0.0",
-          },
-          stats: {
-            totalRecordings,
-            totalDurationMinutes: Math.round(totalDuration / 60),
-            userRecordingCount: userRecordings.length,
-          },
-          tunings: Object.keys(TUNINGS),
-          presets: Object.entries(RECORDING_PRESETS).map(([key, preset]) => ({
-            id: key,
+    switch (action) {
+      case "dashboard":
+        return jsonResponse(await buildDashboard(auth.adminClient, auth.user));
+      case "tuner":
+        return jsonResponse(buildTunerPayload(url));
+      case "chord":
+        return jsonResponse(buildChordPayload(url));
+      case "presets":
+        return jsonResponse({
+          presets: Object.entries(RECORDING_PRESETS).map(([id, preset]) => ({
+            id,
             ...preset,
           })),
-          chordLibrary: Object.keys(CHORD_LIBRARY),
-          features: [
-            "スマホ録音 (Web Audio API)",
-            "チューナー機能",
-            "メトロノーム",
-            "エフェクト (リバーブ/ディストーション/ディレイ等)",
-            "録音プリセット (8ジャンル)",
-            "コード辞典",
-            "マルチトラック重ね録り",
-            "録音の共有・コラボレーション",
-            "練習記録・統計",
-          ],
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Tuner data
-    if (action === "tuner") {
-      const tuning = url.searchParams.get("tuning") ?? "standard";
-      const tuningData = TUNINGS[tuning] ?? TUNINGS["standard"];
-
-      return new Response(
-        JSON.stringify({
-          tuning,
-          strings: Object.entries(tuningData).map(([note, freq]) => ({
-            note,
-            frequency: freq,
-            tolerance: 2, // Hz tolerance for "in tune"
-          })),
-          availableTunings: Object.keys(TUNINGS),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Chord lookup
-    if (action === "chord") {
-      const chordName = url.searchParams.get("name");
-      if (chordName && chordName in CHORD_LIBRARY) {
-        return new Response(
-          JSON.stringify({
-            name: chordName,
-            ...CHORD_LIBRARY[chordName],
-            stringNames: ["E2", "A2", "D3", "G3", "B3", "E4"],
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({
-          chords: Object.entries(CHORD_LIBRARY).map(([name, data]) => ({
-            name,
-            ...data,
-          })),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Recording presets
-    if (action === "presets") {
-      return new Response(
-        JSON.stringify({
-          presets: Object.entries(RECORDING_PRESETS).map(([key, preset]) => ({
-            id: key,
-            ...preset,
-          })),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Metronome config
-    if (action === "metronome") {
-      const bpm = parseInt(url.searchParams.get("bpm") ?? "120");
-      const timeSignature = url.searchParams.get("timeSignature") ?? "4/4";
-      const [beats, beatValue] = timeSignature.split("/").map(Number);
-
-      return new Response(
-        JSON.stringify({
-          bpm: Math.max(30, Math.min(300, bpm)),
-          timeSignature,
-          beats,
-          beatValue,
-          intervalMs: Math.round(60000 / bpm),
-          accentPattern: Array.from({ length: beats }, (_, i) => i === 0 ? "accent" : "normal"),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // User's recording history
-    if (action === "recordings") {
-      const userId = url.searchParams.get("userId");
-      if (!userId) {
-        return new Response(
-          JSON.stringify({ error: "userId is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { data: recordings } = await supabase
-        .from("app_analytics")
-        .select("*")
-        .eq("source", "guitar-recording-studio")
-        .eq("metadata->>event_type", "recording_saved")
-        .eq("metadata->>userId", userId)
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      const userRecordings = (recordings ?? [])
-        .map((r: Record<string, unknown>) => ({
-          ...(r.metadata as Record<string, unknown>),
-          createdAt: r.created_at,
-          dbId: r.id,
-        }));
-
-      return new Response(
-        JSON.stringify({
-          recordings: userRecordings,
-          totalCount: userRecordings.length,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Practice stats
-    if (action === "practice_stats") {
-      const userId = url.searchParams.get("userId");
-      if (!userId) {
-        return new Response(
-          JSON.stringify({ error: "userId is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const { data: userSessionsRaw } = await supabase
-        .from("app_analytics")
-        .select("*")
-        .eq("source", "guitar-recording-studio")
-        .eq("metadata->>userId", userId)
-        .in("metadata->>event_type", ["recording_saved", "practice_session"])
-        .order("created_at", { ascending: false })
-        .limit(500);
-
-      const userSessions = userSessionsRaw ?? [];
-
-      const totalMinutes = userSessions.reduce((sum: number, s: Record<string, unknown>) => {
-        const ed = s.metadata as Record<string, unknown>;
-        return sum + ((ed?.durationSeconds as number) ?? 0) / 60;
-      }, 0);
-
-      // Weekly breakdown
-      const now = new Date();
-      const weeklyData: Array<{ week: string; minutes: number; sessions: number }> = [];
-      for (let w = 3; w >= 0; w--) {
-        const weekStart = new Date(now.getTime() - (w + 1) * 7 * 86400000);
-        const weekEnd = new Date(now.getTime() - w * 7 * 86400000);
-        const weekSessions = userSessions.filter((s: Record<string, unknown>) =>
-          (s.created_at as string) >= weekStart.toISOString() &&
-          (s.created_at as string) < weekEnd.toISOString()
-        );
-        const minutes = weekSessions.reduce((sum: number, s: Record<string, unknown>) => {
-          const ed = s.metadata as Record<string, unknown>;
-          return sum + ((ed?.durationSeconds as number) ?? 0) / 60;
-        }, 0);
-        weeklyData.push({
-          week: weekStart.toISOString().split("T")[0],
-          minutes: Math.round(minutes),
-          sessions: weekSessions.length,
         });
-      }
-
-      return new Response(
-        JSON.stringify({
-          totalSessions: userSessions.length,
-          totalMinutes: Math.round(totalMinutes),
-          streakDays: calculateStreak(userSessions),
-          weeklyBreakdown: weeklyData,
-          favoritePreset: findFavoritePreset(userSessions),
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ---- POST actions ----
-
-    if (req.method === "POST") {
-      let body: Record<string, unknown> = {};
-      try {
-        body = await req.json().catch(() => ({}));
-      } catch {
-        return new Response(
-          JSON.stringify({ error: "Invalid or empty JSON body" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      case "metronome":
+        return jsonResponse(buildMetronomePayload(url));
+      case "recordings":
+        return jsonResponse({
+          recordings: await listUserRecordings(auth),
+        });
+      case "practice_stats":
+        return jsonResponse(await buildPracticeStats(auth));
+      case "public_recording":
+        return jsonResponse(
+          await getPublicRecording(auth.adminClient, url.searchParams.get("recordingId")),
         );
-      }
-      const postAction = (body.action as string) ?? action;
-
-      // AI analysis of practice/recording
-      if (postAction === "ai_analyze") {
-        const { userId, analysisType } = body;
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: "userId is required" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Fetch user's recent recordings and practice sessions
-        const { data: recentData } = await supabase
-          .from("app_analytics")
-          .select("*")
-          .eq("source", "guitar-recording-studio")
-          .eq("metadata->>userId", userId as string)
-          .order("created_at", { ascending: false })
-          .limit(50);
-
-        const sessions = recentData ?? [];
-        const recordings = sessions.filter((s: Record<string, unknown>) =>
-          (s.metadata as Record<string, unknown>)?.event_type === "recording_saved"
-        );
-        const practices = sessions.filter((s: Record<string, unknown>) =>
-          (s.metadata as Record<string, unknown>)?.event_type === "practice_session"
-        );
-
-        const totalMinutes = sessions.reduce((sum: number, s: Record<string, unknown>) => {
-          const md = s.metadata as Record<string, unknown>;
-          return sum + ((md?.durationSeconds as number) ?? 0) / 60;
-        }, 0);
-
-        const presetCounts: Record<string, number> = {};
-        const tuningCounts: Record<string, number> = {};
-        const tagCounts: Record<string, number> = {};
-        const bpmValues: number[] = [];
-        const durationValues: number[] = [];
-
-        for (const s of recordings) {
-          const md = s.metadata as Record<string, unknown>;
-          const preset = (md?.preset as string) ?? "unknown";
-          const tuning = (md?.tuning as string) ?? "unknown";
-          const bpm = (md?.bpm as number) ?? 0;
-          const dur = (md?.durationSeconds as number) ?? 0;
-          const tags = (md?.tags as string[]) ?? [];
-
-          presetCounts[preset] = (presetCounts[preset] ?? 0) + 1;
-          tuningCounts[tuning] = (tuningCounts[tuning] ?? 0) + 1;
-          if (bpm > 0) bpmValues.push(bpm);
-          if (dur > 0) durationValues.push(dur);
-          for (const tag of tags) {
-            tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-          }
-        }
-
-        const avgBpm = bpmValues.length > 0
-          ? Math.round(bpmValues.reduce((a, b) => a + b, 0) / bpmValues.length)
-          : 0;
-        const avgDuration = durationValues.length > 0
-          ? Math.round(durationValues.reduce((a, b) => a + b, 0) / durationValues.length)
-          : 0;
-
-        const topPresets = Object.entries(presetCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([k, v]) => ({ preset: k, count: v }));
-
-        const streak = calculateStreak(sessions);
-
-        // Generate AI insights based on analysisType
-        const insights: string[] = [];
-        const recommendations: string[] = [];
-        const practiceMenu: Array<{ title: string; duration: string; description: string }> = [];
-
-        if (recordings.length === 0) {
-          insights.push("まだ録音がありません。最初の録音を始めましょう！");
-          recommendations.push("まずは好きな曲のサビ部分を30秒録音してみましょう");
-          recommendations.push("アコースティックプリセットから始めるのがおすすめです");
-        } else {
-          // Practice pattern analysis
-          if (avgDuration < 60) {
-            insights.push(`平均録音時間は${avgDuration}秒です。短いセッションが多いですね。`);
-            recommendations.push("3〜5分の集中練習セッションを目標にしましょう。短すぎると上達が遅くなります。");
-          } else if (avgDuration > 300) {
-            insights.push(`平均録音時間は${Math.round(avgDuration / 60)}分です。長時間練習できていますね！`);
-            recommendations.push("適度な休憩を入れることで集中力が持続します。25分練習→5分休憩のポモドーロ式がおすすめ。");
-          } else {
-            insights.push(`平均録音時間は${Math.round(avgDuration / 60)}分。良いペースです！`);
-          }
-
-          // Genre diversity
-          if (topPresets.length === 1) {
-            insights.push(`${RECORDING_PRESETS[topPresets[0].preset]?.description ?? topPresets[0].preset}に集中しています。`);
-            recommendations.push("他のジャンルにも挑戦してみましょう。ブルースはギターの表現力を高めます。");
-          } else if (topPresets.length >= 3) {
-            insights.push("複数のジャンルに挑戦していて素晴らしいです！");
-          }
-
-          // BPM analysis
-          if (avgBpm > 0) {
-            if (avgBpm < 80) {
-              insights.push(`平均テンポは${avgBpm}BPM。ゆっくりした楽曲が中心です。`);
-              recommendations.push("速いフレーズの練習には、60BPMから始めて徐々に上げるのが効果的です。");
-            } else if (avgBpm > 140) {
-              insights.push(`平均テンポは${avgBpm}BPM。速いテンポに挑戦していますね！`);
-              recommendations.push("クリーンに弾けるテンポまで落として練習すると、正確さが向上します。");
-            }
-          }
-
-          // Streak
-          if (streak >= 7) {
-            insights.push(`${streak}日連続練習中！素晴らしい継続力です。`);
-          } else if (streak >= 3) {
-            insights.push(`${streak}日連続練習中。この調子で続けましょう！`);
-          } else if (streak === 0) {
-            recommendations.push("毎日5分でも良いので録音する習慣をつけましょう。継続が上達の鍵です。");
-          }
-
-          // Frequency
-          const daysSinceFirst = sessions.length > 0
-            ? Math.max(1, Math.round((Date.now() - new Date(sessions[sessions.length - 1].created_at as string).getTime()) / 86400000))
-            : 1;
-          const sessionsPerWeek = Math.round((sessions.length / daysSinceFirst) * 7 * 10) / 10;
-          insights.push(`週あたり約${sessionsPerWeek}回のペースで練習しています。`);
-        }
-
-        // Generate practice menu
-        if (analysisType === "practice_menu" || !analysisType) {
-          if (topPresets.length > 0) {
-            const mainGenre = topPresets[0].preset;
-            practiceMenu.push({
-              title: "ウォームアップ",
-              duration: "5分",
-              description: "クロマチックスケール練習 (60BPM → 80BPM)。各フレットを確実に押さえる。",
-            });
-            practiceMenu.push({
-              title: "スケール練習",
-              duration: "10分",
-              description: mainGenre === "blues_lead"
-                ? "マイナーペンタトニックスケールをAキーで上下。チョーキングとビブラートを意識。"
-                : mainGenre === "jazz_clean"
-                ? "メジャースケール + モード (ドリアン/ミクソリディアン) をCキーで。"
-                : "メジャーペンタトニックスケールを各ポジションで。",
-            });
-            practiceMenu.push({
-              title: "コード練習",
-              duration: "10分",
-              description: mainGenre === "rock_rhythm"
-                ? "パワーコード進行 (E5-A5-B5) をオルタネイトピッキングで。ミュートを意識。"
-                : "基本コードチェンジ練習 (G-C-D-Em)。各コード1小節、スムーズに切り替え。",
-            });
-            practiceMenu.push({
-              title: "曲の練習",
-              duration: "15分",
-              description: "練習中の曲のサビ部分を繰り返し録音。再生して聴き比べる。",
-            });
-            practiceMenu.push({
-              title: "クールダウン",
-              duration: "5分",
-              description: "好きなコード進行を自由に弾く。リラックスして音を楽しむ。",
-            });
-          }
-        }
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            analysis: {
-              totalRecordings: recordings.length,
-              totalPracticeSessions: practices.length,
-              totalMinutes: Math.round(totalMinutes),
-              averageDurationSeconds: avgDuration,
-              averageBpm: avgBpm,
-              streak,
-              topPresets,
-              topTags: Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 5),
-              tuningDistribution: tuningCounts,
-            },
-            insights,
-            recommendations,
-            practiceMenu,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Save a recording
-      if (postAction === "save_recording") {
-        const { userId, title, durationSeconds, preset, tuning, bpm, tracks, tags, isPublic } = body;
-
-        if (!userId || !title) {
-          return new Response(
-            JSON.stringify({ error: "userId and title are required" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        const recordingId = crypto.randomUUID();
-        const recording = {
-          source: "guitar-recording-studio",
-          metadata: {
-            event_type: "recording_saved",
-            recordingId,
-            userId,
-            title,
-            durationSeconds: durationSeconds ?? 0,
-            preset: preset ?? "acoustic_fingerpicking",
-            tuning: tuning ?? "standard",
-            bpm: bpm ?? 120,
-            trackCount: tracks ?? 1,
-            tags: tags ?? [],
-            isPublic: isPublic ?? false,
-            likes: 0,
-            plays: 0,
-            createdAt: new Date().toISOString(),
+      case "save_recording":
+        return jsonResponse(await saveRecording(auth, body));
+      case "delete_recording":
+        return jsonResponse(await deleteRecording(auth, body));
+      case "like_recording":
+        return jsonResponse(await likeRecording(auth, body));
+      case "increment_play":
+        return jsonResponse(await incrementPlay(auth.adminClient, body));
+      case "log_practice":
+        return jsonResponse(await logPracticeSession(auth, body));
+      case "ai_analyze":
+        return jsonResponse(await buildAiAnalysis(auth, body));
+      default:
+        return jsonResponse(
+          {
+            success: false,
+            error: "Unknown action",
+            validActions: [
+              "dashboard",
+              "tuner",
+              "chord",
+              "presets",
+              "metronome",
+              "recordings",
+              "practice_stats",
+              "public_recording",
+              "save_recording",
+              "delete_recording",
+              "like_recording",
+              "increment_play",
+              "log_practice",
+              "ai_analyze",
+            ],
           },
-        };
-
-        const { error: insertError } = await supabase
-          .from("app_analytics")
-          .insert(recording);
-
-        if (insertError) {
-          return new Response(
-            JSON.stringify({ error: insertError.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ success: true, recordingId, recording: recording.metadata }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          400,
         );
-      }
-
-      // Log a practice session
-      if (postAction === "log_practice") {
-        const { userId, durationSeconds, preset, exercises, notes } = body;
-
-        if (!userId) {
-          return new Response(
-            JSON.stringify({ error: "userId is required" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        const { error: practiceErr } = await supabase.from("app_analytics").insert({
-          source: "guitar-recording-studio",
-          metadata: {
-            event_type: "practice_session",
-            userId,
-            durationSeconds: durationSeconds ?? 0,
-            preset: preset ?? null,
-            exercises: exercises ?? [],
-            notes: notes ?? "",
-            practicedAt: new Date().toISOString(),
-          },
-        });
-
-        if (practiceErr) {
-          return new Response(
-            JSON.stringify({ error: practiceErr.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ success: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Like a recording
-      if (postAction === "like_recording") {
-        const { recordingId, userId } = body;
-
-        const { error: likeErr } = await supabase.from("app_analytics").insert({
-          source: "guitar-recording-studio",
-          metadata: { event_type: "recording_liked", recordingId, userId, likedAt: new Date().toISOString() },
-        });
-
-        if (likeErr) {
-          return new Response(
-            JSON.stringify({ error: likeErr.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ success: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Delete a recording
-      if (postAction === "delete_recording") {
-        const { recordingId } = body;
-        if (!recordingId) {
-          return new Response(
-            JSON.stringify({ error: "recordingId is required" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        const { error: delErr } = await supabase
-          .from("app_analytics")
-          .delete()
-          .eq("source", "guitar-recording-studio")
-          .eq("metadata->>event_type", "recording_saved")
-          .eq("metadata->>recordingId", recordingId as string);
-
-        if (delErr) {
-          return new Response(
-            JSON.stringify({ error: delErr.message }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        return new Response(
-          JSON.stringify({ success: true }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ error: "Unknown POST action" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
-
-    return new Response(
-      JSON.stringify({
-        error: "Unknown action",
-        validActions: ["dashboard", "tuner", "chord", "presets", "metronome", "recordings", "practice_stats"],
-        postActions: ["save_recording", "log_practice", "like_recording"],
-      }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: (err as Error).message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return jsonResponse({ success: false, error: message }, 500);
   }
 });
 
-function calculateStreak(sessions: Record<string, unknown>[]): number {
-  if (sessions.length === 0) return 0;
-  const dates = [...new Set(
-    sessions.map((s) => (s.created_at as string).split("T")[0])
-  )].sort().reverse();
+async function getAuthContext(req: Request): Promise<AuthContext> {
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { persistSession: false },
+  });
 
-  let streak = 0;
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader || !SUPABASE_ANON_KEY) {
+    return { adminClient, userClient: null, user: null };
+  }
 
-  // Allow streak to start from today or yesterday
-  const startOffset = dates[0] === today ? 0 : dates[0] === yesterday ? 1 : -1;
-  if (startOffset === -1) return 0;
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: authHeader } },
+  });
 
-  for (let i = 0; i < dates.length; i++) {
-    const expected = new Date(Date.now() - (i + startOffset) * 86400000).toISOString().split("T")[0];
-    if (dates[i] === expected) {
-      streak++;
-    } else {
-      break;
+  const {
+    data: { user },
+  } = await userClient.auth.getUser();
+
+  return { adminClient, userClient, user: user ?? null };
+}
+
+async function readJsonBody(req: Request): Promise<Json> {
+  if (req.method === "GET" || req.method === "HEAD") {
+    return {};
+  }
+
+  try {
+    const body = await req.clone().json();
+    return typeof body === "object" && body !== null ? body as Json : {};
+  } catch {
+    return {};
+  }
+}
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function requireUser(auth: AuthContext): User {
+  if (!auth.user) {
+    throw new Error("Authentication required");
+  }
+  return auth.user;
+}
+
+async function buildDashboard(adminClient: SupabaseClient, user: User | null) {
+  const { data: recordings } = await adminClient
+    .from("guitar_recordings")
+    .select("id, duration_seconds, user_id");
+
+  const rows = (recordings ?? []) as Array<Pick<GuitarRecordingRow, "id" | "duration_seconds" | "user_id">>;
+  const totalDurationSeconds = rows.reduce(
+    (sum, row) => sum + (row.duration_seconds ?? 0),
+    0,
+  );
+  const userRecordingCount = user
+    ? rows.filter((row) => row.user_id === user.id).length
+    : 0;
+
+  return {
+    success: true,
+    studio: {
+      name: "ギターレコーディングスタジオ",
+      description: "ブラウザだけで録音・保存・共有・AIコーチングまで行えるギター練習スタジオ",
+      version: "2.0.0",
+    },
+    stats: {
+      totalRecordings: rows.length,
+      totalDurationMinutes: Math.round(totalDurationSeconds / 60),
+      userRecordingCount,
+    },
+    tunings: Object.keys(TUNINGS),
+    presets: Object.entries(RECORDING_PRESETS).map(([id, preset]) => ({
+      id,
+      ...preset,
+    })),
+    chordLibrary: Object.keys(CHORD_LIBRARY),
+    features: [
+      "ブラウザ録音",
+      "iPhone 再生互換の保存形式",
+      "共有しやすいエクスポート",
+      "コード辞典",
+      "メトロノーム",
+      "練習履歴と統計",
+      "AI コーチング",
+    ],
+  };
+}
+
+function buildTunerPayload(url: URL) {
+  const tuning = url.searchParams.get("tuning") ?? "standard";
+  const tuningData = TUNINGS[tuning] ?? TUNINGS.standard;
+  return {
+    success: true,
+    tuning,
+    strings: Object.entries(tuningData).map(([note, frequency]) => ({
+      note,
+      frequency,
+      tolerance: 2,
+    })),
+    availableTunings: Object.keys(TUNINGS),
+  };
+}
+
+function buildChordPayload(url: URL) {
+  const chordName = url.searchParams.get("name");
+  if (chordName && CHORD_LIBRARY[chordName]) {
+    return {
+      success: true,
+      name: chordName,
+      ...CHORD_LIBRARY[chordName],
+      stringNames: ["E2", "A2", "D3", "G3", "B3", "E4"],
+    };
+  }
+
+  return {
+    success: true,
+    chords: Object.entries(CHORD_LIBRARY).map(([name, data]) => ({
+      name,
+      ...data,
+    })),
+  };
+}
+
+function buildMetronomePayload(url: URL) {
+  const bpm = clampNumber(parseInt(url.searchParams.get("bpm") ?? "120", 10), 30, 300);
+  const timeSignature = url.searchParams.get("timeSignature") ?? "4/4";
+  const [beats = 4, beatValue = 4] = timeSignature.split("/").map((value) => parseInt(value, 10));
+
+  return {
+    success: true,
+    bpm,
+    timeSignature,
+    beats,
+    beatValue,
+    intervalMs: Math.round(60000 / bpm),
+    accentPattern: Array.from({ length: beats }, (_, index) =>
+      index === 0 ? "accent" : "normal"
+    ),
+  };
+}
+
+async function listUserRecordings(auth: AuthContext) {
+  const user = requireUser(auth);
+  const { data, error } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as GuitarRecordingRow[]).map(mapRecordingRow);
+}
+
+async function buildPracticeStats(auth: AuthContext) {
+  const user = requireUser(auth);
+  const { data, error } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("id, preset, duration_seconds, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const sessions = (data ?? []) as Array<{
+    id: string;
+    preset: string;
+    duration_seconds: number;
+    created_at: string;
+  }>;
+
+  const totalMinutes = Math.round(
+    sessions.reduce((sum, row) => sum + ((row.duration_seconds ?? 0) / 60), 0),
+  );
+  const averageDurationSeconds = sessions.length > 0
+    ? Math.round(
+      sessions.reduce((sum, row) => sum + (row.duration_seconds ?? 0), 0) /
+        sessions.length,
+    )
+    : 0;
+
+  return {
+    success: true,
+    totalSessions: sessions.length,
+    totalMinutes,
+    averageDurationSeconds,
+    streakDays: calculateStreak(sessions.map((row) => row.created_at)),
+    weeklyBreakdown: buildWeeklyBreakdown(sessions),
+    favoritePreset: findFavoritePreset(sessions.map((row) => row.preset)),
+  };
+}
+
+async function getPublicRecording(
+  adminClient: SupabaseClient,
+  recordingId: string | null,
+) {
+  if (!recordingId) {
+    throw new Error("recordingId is required");
+  }
+
+  const { data, error } = await adminClient
+    .from("guitar_recordings")
+    .select("*")
+    .eq("id", recordingId)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+  if (!data) {
+    throw new Error("Public recording not found");
+  }
+
+  const row = data as GuitarRecordingRow;
+  const playbackUrl = row.file_path
+    ? await createSignedUrl(adminClient, row.file_path, 60 * 60)
+    : null;
+
+  return {
+    success: true,
+    recording: mapRecordingRow(row, { playbackUrl }),
+  };
+}
+
+async function saveRecording(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  const title = normalizeString(body.title);
+  const filePath = normalizeString(body.filePath);
+  const fileMimeType = normalizeString(body.fileMimeType);
+  const exportFormat =
+    normalizeString(body.exportFormat)?.toLowerCase() ?? "wav";
+
+  if (!title) {
+    throw new Error("title is required");
+  }
+  if (!filePath) {
+    throw new Error("filePath is required");
+  }
+
+  const recordingId = crypto.randomUUID();
+  const now = new Date().toISOString();
+
+  const row: Partial<GuitarRecordingRow> & { id: string; user_id: string; title: string } = {
+    id: recordingId,
+    user_id: user.id,
+    title,
+    duration_seconds: parseInteger(body.durationSeconds, 0),
+    preset: normalizeString(body.preset) ?? "acoustic_fingerpicking",
+    tuning: normalizeString(body.tuning) ?? "standard",
+    bpm: parseInteger(body.bpm, 120),
+    track_count: parseInteger(body.tracks ?? body.trackCount, 1),
+    tags: toStringArray(body.tags),
+    is_public: Boolean(body.isPublic),
+    likes: 0,
+    plays: 0,
+    file_path: filePath,
+    file_mime_type: fileMimeType,
+    file_size_bytes: parseInteger(body.fileSizeBytes, 0),
+    export_format: exportFormat,
+    duration_display: formatDuration(parseInteger(body.durationSeconds, 0)),
+    ai_feedback: null,
+  };
+
+  const { data, error } = await auth.adminClient
+    .from("guitar_recordings")
+    .insert(row)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await auth.adminClient.from("app_analytics").insert({
+    user_id: user.id,
+    source: "guitar-recording-studio",
+    metadata: {
+      event_type: "recording_saved",
+      recordingId,
+      userId: user.id,
+      title,
+      durationSeconds: row.duration_seconds,
+      preset: row.preset,
+      tuning: row.tuning,
+      bpm: row.bpm,
+      trackCount: row.track_count,
+      tags: row.tags,
+      isPublic: row.is_public,
+      likes: 0,
+      plays: 0,
+      filePath,
+      fileMimeType,
+      exportFormat,
+      durationDisplay: row.duration_display,
+      createdAt: now,
+    },
+  });
+
+  const savedRow = data as GuitarRecordingRow;
+  return {
+    success: true,
+    recordingId,
+    publicShareUrl: savedRow.is_public ? buildShareUrl(savedRow.id) : null,
+    recording: mapRecordingRow(savedRow),
+  };
+}
+
+async function deleteRecording(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  const recordingId = normalizeString(body.recordingId);
+  if (!recordingId) {
+    throw new Error("recordingId is required");
+  }
+
+  const { data: existing, error: existingError } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("*")
+    .eq("id", recordingId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+  if (!existing) {
+    throw new Error("Recording not found");
+  }
+
+  const row = existing as GuitarRecordingRow;
+  if (row.file_path) {
+    await auth.adminClient.storage.from(RECORDING_BUCKET).remove([row.file_path]);
+  }
+
+  const { error } = await auth.adminClient
+    .from("guitar_recordings")
+    .delete()
+    .eq("id", recordingId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw error;
+  }
+
+  await auth.adminClient
+    .from("app_analytics")
+    .delete()
+    .eq("source", "guitar-recording-studio")
+    .eq("metadata->>event_type", "recording_saved")
+    .eq("metadata->>recordingId", recordingId);
+
+  return { success: true };
+}
+
+async function likeRecording(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  const recordingId = normalizeString(body.recordingId);
+  if (!recordingId) {
+    throw new Error("recordingId is required");
+  }
+
+  const { data: existing, error: existingError } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("id, likes")
+    .eq("id", recordingId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+  if (!existing) {
+    throw new Error("Recording not found");
+  }
+
+  const nextLikes = ((existing as { likes?: number }).likes ?? 0) + 1;
+  const { error } = await auth.adminClient
+    .from("guitar_recordings")
+    .update({ likes: nextLikes })
+    .eq("id", recordingId);
+
+  if (error) {
+    throw error;
+  }
+
+  await auth.adminClient.from("app_analytics").insert({
+    user_id: user.id,
+    source: "guitar-recording-studio",
+    metadata: {
+      event_type: "recording_liked",
+      recordingId,
+      userId: user.id,
+      likedAt: new Date().toISOString(),
+    },
+  });
+
+  return {
+    success: true,
+    likes: nextLikes,
+  };
+}
+
+async function incrementPlay(adminClient: SupabaseClient, body: Json) {
+  const recordingId = normalizeString(body.recordingId);
+  if (!recordingId) {
+    throw new Error("recordingId is required");
+  }
+
+  const { data: existing, error: existingError } = await adminClient
+    .from("guitar_recordings")
+    .select("id, plays")
+    .eq("id", recordingId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+  if (!existing) {
+    throw new Error("Recording not found");
+  }
+
+  const nextPlays = ((existing as { plays?: number }).plays ?? 0) + 1;
+  const { error } = await adminClient
+    .from("guitar_recordings")
+    .update({ plays: nextPlays })
+    .eq("id", recordingId);
+
+  if (error) {
+    throw error;
+  }
+
+  return {
+    success: true,
+    plays: nextPlays,
+  };
+}
+
+async function logPracticeSession(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  await auth.adminClient.from("app_analytics").insert({
+    user_id: user.id,
+    source: "guitar-recording-studio",
+    metadata: {
+      event_type: "practice_session",
+      durationSeconds: parseInteger(body.durationSeconds, 0),
+      preset: normalizeString(body.preset),
+      exercises: toStringArray(body.exercises),
+      notes: normalizeString(body.notes),
+      practicedAt: new Date().toISOString(),
+    },
+  });
+
+  return { success: true };
+}
+
+async function buildAiAnalysis(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  const analysisType = normalizeString(body.analysisType) ?? "practice_menu";
+
+  const { data, error } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    throw error;
+  }
+
+  const recordings = (data ?? []) as GuitarRecordingRow[];
+  const metrics = summariseRecordings(recordings);
+
+  if (recordings.length === 0) {
+    return {
+      success: true,
+      analysis: {
+        totalRecordings: 0,
+        totalMinutes: 0,
+        averageDurationSeconds: 0,
+        averageBpm: 0,
+        streak: 0,
+        topPresets: [],
+        topTags: [],
+        tuningDistribution: {},
+      },
+      insights: ["まだ録音がありません。最初の 1 本を保存すると AI コーチングが有効になります。"],
+      recommendations: [
+        "30 秒でも良いので 1 本録音して保存する",
+        "よく弾くジャンルとテンポをタグで残す",
+        "同じフレーズを 2 回録って比較する",
+      ],
+      practiceMenu: defaultPracticeMenu("acoustic_fingerpicking"),
+    };
+  }
+
+  const fallback = buildFallbackAiPayload(metrics, analysisType);
+  const aiPayload = GEMINI_API_KEY
+    ? await generateGeminiCoaching(metrics, analysisType).catch(() => null)
+    : null;
+
+  return {
+    success: true,
+    ...fallback,
+    ...(aiPayload ?? {}),
+    analysis: {
+      ...fallback.analysis,
+      ...(aiPayload?.analysis ?? {}),
+    },
+  };
+}
+
+function summariseRecordings(recordings: GuitarRecordingRow[]) {
+  const totalMinutes = Math.round(
+    recordings.reduce((sum, row) => sum + (row.duration_seconds / 60), 0),
+  );
+  const averageDurationSeconds = recordings.length > 0
+    ? Math.round(
+      recordings.reduce((sum, row) => sum + row.duration_seconds, 0) /
+        recordings.length,
+    )
+    : 0;
+  const averageBpm = recordings.length > 0
+    ? Math.round(recordings.reduce((sum, row) => sum + row.bpm, 0) / recordings.length)
+    : 0;
+
+  const presetCounts: Record<string, number> = {};
+  const tagCounts: Record<string, number> = {};
+  const tuningDistribution: Record<string, number> = {};
+
+  for (const row of recordings) {
+    presetCounts[row.preset] = (presetCounts[row.preset] ?? 0) + 1;
+    tuningDistribution[row.tuning] = (tuningDistribution[row.tuning] ?? 0) + 1;
+    for (const tag of row.tags ?? []) {
+      tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
     }
   }
+
+  const topPresets = Object.entries(presetCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([preset, count]) => ({ preset, count }));
+
+  const topTags = Object.entries(tagCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([tag, count]) => ({ tag, count }));
+
+  return {
+    recordings,
+    totalMinutes,
+    averageDurationSeconds,
+    averageBpm,
+    streak: calculateStreak(recordings.map((row) => row.created_at)),
+    topPresets,
+    topTags,
+    tuningDistribution,
+  };
+}
+
+function buildFallbackAiPayload(
+  metrics: ReturnType<typeof summariseRecordings>,
+  analysisType: string,
+) {
+  const insights: string[] = [];
+  const recommendations: string[] = [];
+
+  if (metrics.averageDurationSeconds < 45) {
+    insights.push(`平均録音時間は ${metrics.averageDurationSeconds} 秒で短めです。比較録音向きですが、定着確認は少し不足しています。`);
+    recommendations.push("同じフレーズを 60〜90 秒に伸ばして録音し、後半の安定感も確認する");
+  } else if (metrics.averageDurationSeconds > 180) {
+    insights.push(`平均録音時間は ${Math.round(metrics.averageDurationSeconds / 60)} 分で長めです。集中して弾けています。`);
+    recommendations.push("長い録音の中に 30 秒だけの比較テイクも混ぜると改善点が見つけやすくなります。");
+  } else {
+    insights.push(`平均録音時間は ${metrics.averageDurationSeconds} 秒で、改善確認にちょうど良い長さです。`);
+  }
+
+  if (metrics.topPresets.length > 0) {
+    const mainPreset = metrics.topPresets[0].preset;
+    insights.push(`最も使っているジャンルは ${mainPreset} です。`);
+    if (metrics.topPresets.length === 1) {
+      recommendations.push("別ジャンルのプリセットを 1 本だけ混ぜて、右手とダイナミクスの引き出しを増やす");
+    }
+  }
+
+  if (metrics.averageBpm > 140) {
+    insights.push(`平均テンポは ${metrics.averageBpm} BPM と速めです。勢いはありますが走りやすさに注意です。`);
+    recommendations.push("1 段階遅いテンポでも同じフレーズを録音して、ピッキングの粒を比較する");
+  } else if (metrics.averageBpm > 0 && metrics.averageBpm < 80) {
+    insights.push(`平均テンポは ${metrics.averageBpm} BPM とゆったりめです。音価のコントロール練習に向いています。`);
+    recommendations.push("最後の 1 テイクだけ 10 BPM 上げて、フォームが崩れないか確認する");
+  }
+
+  if (metrics.streak >= 7) {
+    insights.push(`${metrics.streak} 日連続で録音できています。かなり良い習慣化です。`);
+  } else if (metrics.streak == 0) {
+    recommendations.push("明日も 1 テイクだけ録って、連続日数を作り始める");
+  }
+
+  const mainPreset = metrics.topPresets[0]?.preset ?? "acoustic_fingerpicking";
+
+  return {
+    analysis: {
+      totalRecordings: metrics.recordings.length,
+      totalMinutes: metrics.totalMinutes,
+      averageDurationSeconds: metrics.averageDurationSeconds,
+      averageBpm: metrics.averageBpm,
+      streak: metrics.streak,
+      topPresets: metrics.topPresets,
+      topTags: metrics.topTags,
+      tuningDistribution: metrics.tuningDistribution,
+    },
+    insights,
+    recommendations,
+    practiceMenu: analysisType == "practice_menu"
+      ? defaultPracticeMenu(mainPreset)
+      : [],
+  };
+}
+
+async function generateGeminiCoaching(
+  metrics: ReturnType<typeof summariseRecordings>,
+  analysisType: string,
+) {
+  const prompt = `
+あなたはギター練習コーチです。以下の録音メタデータを見て、日本語で短く実用的なコーチングを返してください。
+必ず JSON のみで返してください。
+
+{
+  "recordingCount": ${metrics.recordings.length},
+  "totalMinutes": ${metrics.totalMinutes},
+  "averageDurationSeconds": ${metrics.averageDurationSeconds},
+  "averageBpm": ${metrics.averageBpm},
+  "streak": ${metrics.streak},
+  "topPresets": ${JSON.stringify(metrics.topPresets)},
+  "topTags": ${JSON.stringify(metrics.topTags)},
+  "tuningDistribution": ${JSON.stringify(metrics.tuningDistribution)},
+  "analysisType": ${JSON.stringify(analysisType)}
+}
+
+返却形式:
+{
+  "insights": ["3件まで"],
+  "recommendations": ["3件まで"],
+  "practiceMenu": [
+    { "title": "短い項目名", "duration": "5分", "description": "具体的な練習内容" }
+  ]
+}
+`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 1024,
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Gemini request failed");
+  }
+
+  const payload = await response.json();
+  const raw = payload?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) {
+    throw new Error("Gemini response was not JSON");
+  }
+
+  return JSON.parse(match[0]);
+}
+
+function defaultPracticeMenu(mainPreset: string) {
+  const presetLabel = RECORDING_PRESETS[mainPreset]?.description ?? mainPreset;
+  return [
+    {
+      title: "ウォームアップ",
+      duration: "5分",
+      description: "クロマチックと開放弦で左右のフォームを整える",
+    },
+    {
+      title: "弱点フレーズ反復",
+      duration: "10分",
+      description: `${presetLabel} を意識しつつ、気になる 1 フレーズだけを反復録音する`,
+    },
+    {
+      title: "本番テイク",
+      duration: "10分",
+      description: "メトロノームあり 1 本、なし 1 本の 2 テイクを録って比較する",
+    },
+    {
+      title: "クールダウン",
+      duration: "5分",
+      description: "ゆっくりのテンポで同じフレーズを弾き、力みを抜いて終える",
+    },
+  ];
+}
+
+function mapRecordingRow(
+  row: GuitarRecordingRow,
+  overrides: { playbackUrl?: string | null } = {},
+) {
+  return {
+    id: row.id,
+    recordingId: row.id,
+    title: row.title,
+    durationSeconds: row.duration_seconds,
+    durationDisplay: row.duration_display ?? formatDuration(row.duration_seconds),
+    preset: row.preset,
+    tuning: row.tuning,
+    bpm: row.bpm,
+    trackCount: row.track_count,
+    tags: row.tags ?? [],
+    isPublic: row.is_public,
+    likes: row.likes,
+    plays: row.plays,
+    fileUrl: row.file_url,
+    filePath: row.file_path,
+    fileMimeType: row.file_mime_type,
+    fileSizeBytes: row.file_size_bytes,
+    exportFormat: row.export_format,
+    aiFeedback: row.ai_feedback,
+    shareUrl: row.is_public ? buildShareUrl(row.id) : null,
+    playbackUrl: overrides.playbackUrl ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function createSignedUrl(
+  adminClient: SupabaseClient,
+  filePath: string,
+  expiresInSeconds: number,
+) {
+  const { data, error } = await adminClient.storage
+    .from(RECORDING_BUCKET)
+    .createSignedUrl(filePath, expiresInSeconds);
+
+  if (error) {
+    return null;
+  }
+
+  return data?.signedUrl ?? null;
+}
+
+function calculateStreak(createdAtValues: string[]) {
+  if (createdAtValues.length === 0) {
+    return 0;
+  }
+
+  const uniqueDays = [
+    ...new Set(
+      createdAtValues.map((value) => new Date(value).toISOString().slice(0, 10)),
+    ),
+  ].sort().reverse();
+
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  let streak = 0;
+  for (let index = 0; index < uniqueDays.length; index++) {
+    const expected = new Date(today);
+    expected.setUTCDate(today.getUTCDate() - index);
+    const expectedKey = expected.toISOString().slice(0, 10);
+    if (uniqueDays[index] === expectedKey) {
+      streak += 1;
+      continue;
+    }
+    if (index === 0) {
+      const yesterday = new Date(today);
+      yesterday.setUTCDate(today.getUTCDate() - 1);
+      if (uniqueDays[index] === yesterday.toISOString().slice(0, 10)) {
+        streak = 1;
+        continue;
+      }
+    }
+    break;
+  }
+
   return streak;
 }
 
-function findFavoritePreset(sessions: Record<string, unknown>[]): string {
+function buildWeeklyBreakdown(
+  sessions: Array<{ created_at: string; duration_seconds: number }>,
+) {
+  const now = new Date();
+  const weeks: Array<{ week: string; minutes: number; sessions: number }> = [];
+
+  for (let offset = 3; offset >= 0; offset--) {
+    const weekStart = new Date(now);
+    weekStart.setUTCDate(now.getUTCDate() - ((offset + 1) * 7));
+    weekStart.setUTCHours(0, 0, 0, 0);
+
+    const weekEnd = new Date(now);
+    weekEnd.setUTCDate(now.getUTCDate() - (offset * 7));
+    weekEnd.setUTCHours(0, 0, 0, 0);
+
+    const subset = sessions.filter((session) => {
+      const createdAt = new Date(session.created_at).getTime();
+      return createdAt >= weekStart.getTime() && createdAt < weekEnd.getTime();
+    });
+
+    weeks.push({
+      week: weekStart.toISOString().slice(0, 10),
+      minutes: Math.round(
+        subset.reduce((sum, session) => sum + (session.duration_seconds / 60), 0),
+      ),
+      sessions: subset.length,
+    });
+  }
+
+  return weeks;
+}
+
+function findFavoritePreset(presets: string[]) {
+  if (presets.length === 0) {
+    return "none";
+  }
+
   const counts: Record<string, number> = {};
-  for (const s of sessions) {
-    const ed = s.metadata as Record<string, unknown>;
-    const preset = (ed?.preset as string) ?? "unknown";
+  for (const preset of presets) {
     counts[preset] = (counts[preset] ?? 0) + 1;
   }
-  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  return sorted.length > 0 ? sorted[0][0] : "none";
+
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function formatDuration(totalSeconds: number) {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function buildShareUrl(recordingId: string) {
+  return `${SHARE_BASE_URL}?share=${recordingId}`;
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((item) => normalizeString(item))
+    .filter((item): item is string => Boolean(item));
+}
+
+function normalizeString(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function parseInteger(value: unknown, fallback: number) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.round(value);
+  }
+  if (typeof value === "string") {
+    const parsed = parseInt(value, 10);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }

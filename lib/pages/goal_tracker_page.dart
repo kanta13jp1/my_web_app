@@ -107,20 +107,21 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
           'milestones': _milestones.map((m) => {'title': m}).toList(),
         },
       );
+      if (!mounted) return;
       navigator.pop();
       _titleCtrl.clear();
       _descCtrl.clear();
       _milestoneCtrl.clear();
-      if (mounted) {
-        setState(() {
-          _milestones.clear();
-          _selectedTimeframe = 'short';
-          _deadline = null;
-        });
-      }
+      setState(() {
+        _milestones.clear();
+        _selectedTimeframe = 'short';
+        _deadline = null;
+      });
       await _fetchGoals();
+      if (!mounted) return;
       messenger.showSnackBar(const SnackBar(content: Text('目標を作成しました')));
     } catch (e) {
+      if (!mounted) return;
       messenger.showSnackBar(SnackBar(content: Text('エラー: $e')));
     }
   }
