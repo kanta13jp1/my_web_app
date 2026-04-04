@@ -2430,3 +2430,29 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
   - パーソナライズされたアドバイス (insights + recommendations)
   - 今日の練習メニュー自動生成 (ウォームアップ→スケール→コード→曲→クールダウン)
 - Flutter 側に AI タブ UI (グラデーションヘッダー・セクション分割・練習メニューカード)
+
+### Session PS#15 (2026-04-03): PowerShell全体管理 — 未コミット変更取り込み
+
+- 習慣ゲーミフィケーション・コードプレイグラウンド・不動産管理 UI 3件を取り込みコミット
+
+### Session PS#16 (2026-04-03): ギター録音スタジオ導線強化 + ScheduleTaskMonitor UI改善
+
+- home_page.dart 最上部に `_GuitarMainFeatureBanner` 追加（MAINバッジ付き）
+- landing_page.dart ヒーローセクション冒頭にギターバナーを移動（旧末尾バナー削除）
+- ScheduleTaskMonitorCard 全面改修: タップで詳細展開・エラー全文表示・連続失敗バッジ・管理リンク
+
+### Session PS#17 (2026-04-03): ギター録音スタジオ完成度向上
+
+#### 自己レビューで発見した問題の修正
+- **マイク権限エラー改善**: `NotAllowedError`/`NotFoundError`/`NotSupportedError` を分類し、iOS/Android/Chrome/Firefox 別の具体的な解決手順を日本語で表示。生の JavaScript 例外メッセージを除去。
+- **共有リンク機能追加**: 録音保存成功後、公開設定時に「共有リンクをコピー」ボタンを表示。`https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=<id>` 形式の URL をクリップボードにコピー。
+- **guitar_recordings 専用テーブル作成**: `app_analytics` JSONB 依存から移行。`user_id` FK・RLS (本人全操作 + 公開録音は全員閲覧)・`updated_at` トリガー付き。
+- **未コミット新規ページ5件取り込み**: sitemap_analytics / access_control / inventory_barcode / password_vault / podcast_manager / screen_recorder
+- **flutter analyze 0エラー確認済み** (200ルート・175+ページ)
+
+#### 現在のアプリ状態 (2026-04-03)
+- 総ページ数: 175+
+- 総ルート数: 200
+- Edge Functions: 238件 (うち UI 接続済み: 220+件、Schedule専用: 19件)
+- Schedule タスク: 4件稼働中 (cs-check毎時/daily-report/blog-draft/weekly-sns-draft)
+- flutter analyze: 0エラー
