@@ -3,8 +3,15 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class _TaskItem {
   final String title;
-  final String dateStr;
-  _TaskItem({required this.title, required this.dateStr});
+  final String description;
+  final String dateStr; // "(YYYY-MM-DD HH:MM:SS 追加)"
+  final DateTime? completedAt;
+  _TaskItem({
+    required this.title,
+    required this.description,
+    required this.dateStr,
+    this.completedAt,
+  });
 }
 
 class DevelopmentAchievementsCard extends StatefulWidget {
@@ -44,10 +51,10 @@ class _DevelopmentAchievementsCardState
   }
 
   Future<void> _fetchTasks(String period) async {
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+    });
     try {
-      // フロントエンドでの複雑な期間計算とDB直接アクセスを廃止し、
-      // Edge Function に処理を委譲 (実データ本実装)
       final response = await Supabase.instance.client.functions.invoke(
         'development-achievements',
         body: {'action': 'get', 'period': period},
@@ -57,24 +64,40 @@ class _DevelopmentAchievementsCardState
       final achievements = (data['achievements'] as List<dynamic>?) ?? [];
 
       final list = achievements.map((e) {
-            final map = e as Map<String, dynamic>;
-            final title = map['title']?.toString() ?? '';
-            final completedAtStr = map['completed_at']?.toString();
-            String dateStr = '';
-            if (completedAtStr != null && completedAtStr.isNotEmpty) {
-              final completedAt = DateTime.tryParse(completedAtStr)?.toLocal();
-              if (completedAt != null) {
-                final y = completedAt.year;
-                final m = completedAt.month.toString().padLeft(2, '0');
-                final d = completedAt.day.toString().padLeft(2, '0');
-                dateStr = '($y-$m-$d 追加)';
-              }
-            }
-            return _TaskItem(
-              title: title,
-              dateStr: dateStr,
-            );
-          }).toList();
+        final map = e as Map<String, dynamic>;
+        final title = map['title']?.toString() ?? '';
+        final description = map['description']?.toString() ?? '';
+        final completedAtStr = map['completed_at']?.toString();
+        String dateStr = '';
+        DateTime? completedAt;
+        if (completedAtStr != null && completedAtStr.isNotEmpty) {
+          completedAt = DateTime.tryParse(completedAtStr)?.toLocal();
+          if (completedAt != null) {
+            final y = completedAt.year;
+            final mo = completedAt.month.toString().padLeft(2, '0');
+            final d = completedAt.day.toString().padLeft(2, '0');
+            final h = completedAt.hour.toString().padLeft(2, '0');
+            final mi = completedAt.minute.toString().padLeft(2, '0');
+            final s = completedAt.second.toString().padLeft(2, '0');
+            dateStr = '($y-$mo-$d $h:$mi:$s 追加)';
+          }
+        }
+        return _TaskItem(
+          title: title,
+          description: description,
+          dateStr: dateStr,
+          completedAt: completedAt,
+        );
+      }).toList();
+
+      // 時系列順 (新しい順)
+      list.sort((a, b) {
+        if (a.completedAt == null && b.completedAt == null) return 0;
+        if (a.completedAt == null) return 1;
+        if (b.completedAt == null) return -1;
+        return b.completedAt!.compareTo(a.completedAt!);
+      });
+
       if (mounted) {
         setState(() {
           _currentTasks = list;
@@ -96,7 +119,7 @@ class _DevelopmentAchievementsCardState
     final titleController = TextEditingController();
     bool isSubmitting = false;
 
-    await showDialog(
+    await showDialog<bool>(
       context: context,
       builder: (ctx) {
         return StatefulBuilder(
@@ -141,7 +164,8 @@ class _DevelopmentAchievementsCardState
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),)
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text('追加'),
                 ),
               ],
@@ -154,6 +178,86 @@ class _DevelopmentAchievementsCardState
         _fetchTasks(_selectedPeriod);
       }
     });
+  }
+
+  void _showDetailDialog(BuildContext context, _TaskItem task) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                task.title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (task.description.isNotEmpty) ...[
+              const Text(
+                '詳細',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                task.description,
+                style: const TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              children: [
+                const Icon(
+                  Icons.access_time,
+                  size: 14,
+                  color: Color(0xFF64748B),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  task.dateStr.isNotEmpty ? task.dateStr : '日時不明',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+            if (task.description.isEmpty) ...[
+              const SizedBox(height: 8),
+              const Text(
+                '詳細説明はまだ登録されていません。',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('閉じる'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -184,6 +288,7 @@ class _DevelopmentAchievementsCardState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ヘッダー
           Row(
             children: [
               const Icon(Icons.bar_chart, size: 18, color: Color(0xFF10B981)),
@@ -207,18 +312,25 @@ class _DevelopmentAchievementsCardState
                 onPressed: () => _showAddAchievementDialog(context),
               ),
               const SizedBox(width: 12),
+              // 期間セレクター
               Container(
                 height: 32,
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                  color: isDark
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: borderColor),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedPeriod,
-                    icon: Icon(Icons.arrow_drop_down, size: 16, color: subTextColor),
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      size: 16,
+                      color: subTextColor,
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -242,7 +354,16 @@ class _DevelopmentAchievementsCardState
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          // 件数バッジ
+          if (!_isLoading && _currentTasks.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              '${_currentTasks.length}件  ※タップで詳細表示',
+              style: TextStyle(fontSize: 11, color: subTextColor),
+            ),
+          ],
+          const SizedBox(height: 12),
+          // コンテンツ
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
@@ -253,33 +374,88 @@ class _DevelopmentAchievementsCardState
               ),
             )
           else if (_currentTasks.isEmpty)
-            Text('この期間の実績はまだありません', style: TextStyle(fontSize: 12, color: subTextColor))
+            Text(
+              'この期間の実績はまだありません',
+              style: TextStyle(fontSize: 12, color: subTextColor),
+            )
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: _currentTasks.map((task) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textColor.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w600,
+              children: _currentTasks.asMap().entries.map((entry) {
+                final index = entry.key;
+                final task = entry.value;
+                return InkWell(
+                  onTap: () => _showDetailDialog(context, task),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 4,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 順番バッジ
+                        Container(
+                          width: 20,
+                          height: 20,
+                          margin: const EdgeInsets.only(top: 1, right: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        task.dateStr,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: subTextColor,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                task.title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: textColor.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Text(
+                                    task.dateStr,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: subTextColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  if (task.description.isNotEmpty)
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 12,
+                                      color: subTextColor.withValues(alpha: 0.6),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: subTextColor.withValues(alpha: 0.5),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }).toList(),
