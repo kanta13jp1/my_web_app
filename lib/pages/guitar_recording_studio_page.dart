@@ -105,6 +105,7 @@ class _GuitarRecordingStudioPageState
     _fetchStudioData();
     _fetchRecordings();
     _fetchPracticeStats();
+    _fetchAIAnalysis();
   }
 
   @override
@@ -338,8 +339,35 @@ class _GuitarRecordingStudioPageState
         ? _titleController.text.trim()
         : 'guitar-recording';
     final fileName = _buildLocalFileName(title, _shareableAudioExtension);
+    final publicUrl =
+        _isPublic && _savedRecordingId != null
+            ? 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=${_savedRecordingId!}'
+            : null;
     setState(() => _isSharingFile = true);
     try {
+      final file = XFile.fromData(
+        _shareableAudioBytes!,
+        mimeType: _shareableAudioMimeType,
+        name: fileName,
+      );
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [file],
+          fileNameOverrides: [fileName],
+          subject: title,
+          text: publicUrl == null ? 'ギター録音を共有します' : 'ギター録音を共有します\n$publicUrl',
+          downloadFallbackEnabled: true,
+        ),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('共有シートを開きました'),
+          backgroundColor: Color(0xFF4CAF50),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
       final blob = web.Blob(
         [_shareableAudioBytes!.buffer.toJS].toJS,
         web.BlobPropertyBag(type: _shareableAudioMimeType!),
@@ -356,17 +384,8 @@ class _GuitarRecordingStudioPageState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$fileName をダウンロードしました'),
-          backgroundColor: const Color(0xFF4CAF50),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('共有に失敗しました: $e'),
-          backgroundColor: Colors.red,
+          content: Text('共有に失敗したためダウンロードに切り替えました: $e'),
+          backgroundColor: Colors.orange,
         ),
       );
     } finally {
@@ -514,17 +533,23 @@ class _GuitarRecordingStudioPageState
       );
       final data = _parseResponse(res.data);
       if (data != null) {
+        final error = data['error']?.toString();
+        if (error != null && error.isNotEmpty) {
+          debugPrint('fetchRecordings error from server: $error');
+        }
         final list = data['recordings'];
         if (list is List) {
-          setState(() {
-            _recordings = list
-                .map((r) => r is Map<String, dynamic> ? r : Map<String, dynamic>.from(r as Map))
-                .toList();
-          });
+          if (mounted) {
+            setState(() {
+              _recordings = list
+                  .map((r) => r is Map<String, dynamic> ? r : Map<String, dynamic>.from(r as Map))
+                  .toList();
+            });
+          }
         }
       }
-    } catch (_) {
-      // 無視
+    } catch (e) {
+      debugPrint('fetchRecordings exception: $e');
     } finally {
       if (mounted) setState(() => _isLoadingRecordings = false);
     }
@@ -569,25 +594,34 @@ class _GuitarRecordingStudioPageState
   Future<void> _postToX(String title, String recordingId) async {
     setState(() => _isPostingToX = true);
     try {
-      final url = 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
-      final text = '🎸 ギター演奏を録音しました！「$title」\n$url\n#自分株式会社 #ギター #buildinpublic';
-      await _supabase.functions.invoke(
-        'post-x-update',
-        body: {'text': text},
+      final shareUrl =
+          recordingId.isNotEmpty && recordingId != 'unknown'
+              ? 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId'
+              : null;
+      final message = [
+        '🎸 ギター演奏を録音しました',
+        '「$title」',
+        if (shareUrl != null) shareUrl,
+        '#ギター #録音 #buildinpublic',
+      ].join('\n');
+      final intentUrl =
+          'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(message)}';
+      web.window.open(intentUrl, '_blank');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('X の投稿画面を開きました'),
+          backgroundColor: Color(0xFF1DA1F2),
+          duration: Duration(seconds: 2),
+        ),
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('X に投稿しました！'),
-            backgroundColor: Color(0xFF1DA1F2),
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('X 投稿に失敗: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('X 投稿画面を開けませんでした: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -620,6 +654,7 @@ class _GuitarRecordingStudioPageState
       );
       await _fetchRecordings();
       await _fetchPracticeStats();
+      await _fetchAIAnalysis();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1032,6 +1067,7 @@ class _GuitarRecordingStudioPageState
       });
       await _fetchRecordings();
       await _fetchPracticeStats();
+      await _fetchAIAnalysis();
     } catch (e) {
       if (uploadedPath != null) {
         unawaited(
@@ -1236,7 +1272,12 @@ class _GuitarRecordingStudioPageState
     final isSelected = _tabIndex == index;
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() => _tabIndex = index),
+        onTap: () {
+          setState(() => _tabIndex = index);
+          if (index == 3) _fetchRecordings();
+          if (index == 4) _fetchPracticeStats();
+          if (index == 5 && _aiAnalysis == null) _fetchAIAnalysis();
+        },
         child: Container(
           height: 48,
           decoration: BoxDecoration(
@@ -2372,23 +2413,31 @@ class _GuitarRecordingStudioPageState
                         visualDensity: VisualDensity.compact,
                         tooltip: 'ダウンロード',
                       ),
-                      if (isPublicRec && recordingId.isNotEmpty)
+                      if (recordingId.isNotEmpty) ...[
                         IconButton(
-                          onPressed: () {
-                            final shareUrl =
-                                'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
-                            Clipboard.setData(ClipboardData(text: shareUrl));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('共有リンクをコピーしました'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.link, color: Color(0xFF1DA1F2)),
+                          onPressed: () => _postToX(title, recordingId),
+                          icon: const Icon(Icons.open_in_new, color: Color(0xFF1DA1F2)),
                           visualDensity: VisualDensity.compact,
-                          tooltip: '共有リンク',
+                          tooltip: 'Xに投稿',
                         ),
+                        if (isPublicRec)
+                          IconButton(
+                            onPressed: () {
+                              final shareUrl =
+                                  'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+                              Clipboard.setData(ClipboardData(text: shareUrl));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('共有リンクをコピーしました'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.link, color: Colors.white54),
+                            visualDensity: VisualDensity.compact,
+                            tooltip: '共有リンク',
+                          ),
+                      ],
                       const Spacer(),
                       if (plays > 0)
                         Padding(
@@ -2470,9 +2519,13 @@ class _GuitarRecordingStudioPageState
     final hours = totalMinutes ~/ 60;
     final mins = totalMinutes % 60;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: _fetchPracticeStats,
+      color: const Color(0xFFE94560),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
+        child: Column(
         children: [
           // ストリーク
           Container(
@@ -2554,6 +2607,7 @@ class _GuitarRecordingStudioPageState
             ),
           ),
         ],
+        ),
       ),
     );
   }

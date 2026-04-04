@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-04 VSCode#3 (在庫バーコード/パスワード管理/ポッドキャスト/画面録画/サイトマップ分析/アクセス制御 UI完成。全Edge Function UI未実装ゼロ達成)
+最終更新: 2026-04-04 ClaudeCode#18 (目標管理・ブックマーク同期ページ実装。ギタースタジオ品質修正。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2471,3 +2471,63 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `edge_function_summary_card.dart` の `未実装` エントリ: **0件**
 - 残 `false` エントリ: Schedule専用 or サーバーサイド専用のみ (UI不要)
 - flutter analyze: **0エラー**
+
+---
+
+### Session ClaudeCode#18 (2026-04-04): 目標管理・ブックマーク同期ページ実装
+
+#### 実装完了
+
+**目標管理ページ** (`GoalTrackerPage` / `/goal-tracker`)
+- `goal-tracker` Edge Function と連携
+- 2タブ構成: アクティブ目標 / 達成済み目標
+- 目標作成ダイアログ: タイトル・説明・期間(短期/中期/長期)・締切日・マイルストーン
+- マイルストーン完了チェック・目標完了/キャンセル操作
+- Notion/Liven競合機能
+
+**ブックマーク同期ページ** (`BookmarkSyncPage` / `/bookmark-sync`)
+- `bookmark-sync` Edge Function と連携
+- 統計ロー (総件数・未読数・タグ数)
+- タグフィルター + 未読フィルター
+- URL追加ダイアログ (タイトル・メモ・タグ)
+- 既読マーク・削除 (PopupMenuButton)
+- Pocket/Instapaper競合機能
+
+#### バグ修正
+
+- **ギタースタジオ** (`guitar_recording_studio_page.dart`):
+  - `dart:math.tanh` 未定義 → `exp` ベースの手動実装に置換
+  - `dart:math` / `share_plus` インポート欠落を復元
+  - 削除済みフィールド参照エラーを復元 (`_shareableAudioBytes` 等8フィールド)
+  - 不要メソッド削除 (`_uploadCurrentRecordingFile` 不正配置呼び出し削除)
+- **bookmark-sync Edge Function**: `const body` 重複宣言バグを修正
+- **Flutter 3.33 対応**: `use_build_context_synchronously` — async前にcontextの参照取得パターンに統一
+
+#### DBマイグレーション
+- `20260404090000_create_bookmarks_table.sql`: bookmarksテーブル + RLS
+- `20260404100000_seed_achievements_ps18_goal_bookmark.sql`: 開発実績シード
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+- `deno lint bookmark-sync`: **0エラー**
+
+---
+
+### Session PS#19 (2026-04-03)
+
+#### 開発実績カード改善 (`development_achievements_card.dart`)
+- 時系列ソート: 新しい順 (completedAt降順)
+- タップで詳細ダイアログ表示 (`_showDetailDialog`): タイトル・詳細説明・追加日時
+- HH:MM:SS タイムスタンプ表示 (`YYYY-MM-DD HH:MM:SS 追加`)
+- 番号バッジ・chevronアイコン追加
+- 件数バッジ「N件 ※タップで詳細表示」
+
+#### ギタースタジオ修正 (`guitar_recording_studio_page.dart`)
+- **タブ切替時リフレッシュ**: 履歴(tab3)・統計(tab4)・AI(tab5)タブに切り替えた際に自動データ更新
+- **エラー可視化**: `_fetchRecordings` のサイレントエラーを `debugPrint` で可視化
+- **Xに投稿ボタン**: 履歴リストの各アイテムに「Xに投稿」アイコンボタンを追加
+- **統計タブ**: `RefreshIndicator` でプルダウンリフレッシュ対応
+- **不要インポート削除**: `cross_file` / `share_plus` の未使用インポートを削除
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
