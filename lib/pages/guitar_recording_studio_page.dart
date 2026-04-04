@@ -345,47 +345,35 @@ class _GuitarRecordingStudioPageState
             : null;
     setState(() => _isSharingFile = true);
     try {
-      final file = XFile.fromData(
-        _shareableAudioBytes!,
-        mimeType: _shareableAudioMimeType,
-        name: fileName,
-      );
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [file],
-          fileNameOverrides: [fileName],
-          subject: title,
-          text: publicUrl == null ? 'ギター録音を共有します' : 'ギター録音を共有します\n$publicUrl',
-          downloadFallbackEnabled: true,
-        ),
-      );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('共有シートを開きました'),
-          backgroundColor: Color(0xFF4CAF50),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
       final blob = web.Blob(
         [_shareableAudioBytes!.buffer.toJS].toJS,
         web.BlobPropertyBag(type: _shareableAudioMimeType!),
       );
-      final url = web.URL.createObjectURL(blob);
+      final blobUrl = web.URL.createObjectURL(blob);
       final anchor = web.HTMLAnchorElement()
-        ..href = url
+        ..href = blobUrl
         ..download = fileName
         ..style.display = 'none';
       web.document.body?.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      web.URL.revokeObjectURL(url);
+      web.URL.revokeObjectURL(blobUrl);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('共有に失敗したためダウンロードに切り替えました: $e'),
-          backgroundColor: Colors.orange,
+          content: Text(
+            '$fileName をダウンロードしました${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ダウンロードに失敗しました: $e'),
+          backgroundColor: Colors.red,
         ),
       );
     } finally {
