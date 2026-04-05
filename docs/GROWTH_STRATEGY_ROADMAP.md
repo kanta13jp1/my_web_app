@@ -609,13 +609,13 @@
 
 ---
 
-## 6. 2026-03-24 時点の最優先事項
+## 6. 2026-04-06 時点の最優先事項
 
-1. import から登録までの転換率をさらに上げる
-2. 共有、公開メモ、referral の assisted conversion proxy を週次で可視化する
-3. flutter test --coverage の残件を解消する
-4. route 単位の流入 KPI を週次レポートへ載せる
-5. referral の reward / anti-abuse / sales handoff を本運用に耐える形にする
+1. **登録者数の増加** — 現在4人。シェア・バイラル施策 (share_plus native共有, X投稿, 公開録音URL) を強化して新規流入を作る
+2. **ギタースタジオを軸にしたバイラル** — メイン機能の録音→X投稿パイプラインを完成させ、毎日の投稿を自動化
+3. **技術ブログの自動投稿開始** — blog-draft Schedule trigger が下書きを毎日生成中。実際にZenn/Qiitaへ投稿するアクションが必要
+4. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信
+5. **Supabase quota 維持** — 現在93/94 deployed。新規Edge Function追加時は必ず先に1件削除
 
 ---
 
