@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 PS#23 (ギタースタジオ analyze 14エラー→0修正。TableCalendar月次カレンダービュー統合。flutter analyze 0エラー維持)
+最終更新: 2026-04-06 PS#24 (ギタースタジオ share_plus native共有フロー実装。マージ競合解消。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2654,6 +2654,28 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
+
+### Session PS#24 (2026-04-06): ギタースタジオ share_plus native共有フロー実装 (PowerShell全体管理)
+
+**ギタースタジオ native 共有フロー** (`lib/pages/guitar_recording_studio_page.dart`)
+- `_shareCurrentRecording` を download-only から share_plus native 共有フローに全面改善:
+  1. `_tryShareAudioFile` (share_plus ネイティブ共有シート) → 失敗時
+  2. `_tryShareText` (URL テキスト共有) → 失敗時
+  3. `_downloadBytesAsFile` (ブラウザダウンロード) のフォールバック順
+- `_shareSavedRecording`: 履歴リストの個別録音も同じ3段階共有フローで対応
+- 復元ヘルパー: `_buildShareUrl`, `_buildShareMessage`, `_mimeTypeForExtension`,
+  `_upsertRecordingList`, `_downloadBytesAsFile`, `_tryShareAudioFile`, `_tryShareText`
+- `use_build_context_synchronously` 修正: `Clipboard.setData` 後に `!mounted` ガード追加
+- `cross_file` 直接import削除 (`share_plus` 経由で `XFile` を提供するため)
+
+**マージ競合解消**
+- `.claude/settings.local.json` と `admin_analytics_page.dart` の stash pop 競合を解消
+- `settings.local.json` に `ls -t pages/*.dart` 権限追加
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+
+---
 
 ### Session PS#23 (2026-04-06): ギタースタジオ analyze修正・TableCalendar統合 (PowerShell全体管理)
 
