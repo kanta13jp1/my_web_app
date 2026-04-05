@@ -78,6 +78,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Map<String, dynamic>? _automationDigest;
   String? _automationError;
 
+  // admin user search
+  String _userSearchQuery = '';
+
   // growth-achievement-summary
   Map<String, dynamic>? _growthSummary;
   bool _growthSummaryLoading = false;
@@ -3129,6 +3132,29 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               _buildProfileCompletionSummary(),
             ],
             const SizedBox(height: 8),
+            TextField(
+              decoration: InputDecoration(
+                hintText: 'メール・表示名で検索...',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                suffixIcon: _userSearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 16),
+                        onPressed: () => setState(() => _userSearchQuery = ''),
+                      )
+                    : null,
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
+              ),
+              style: const TextStyle(fontSize: 13),
+              onChanged: (v) => setState(() => _userSearchQuery = v),
+            ),
+            const SizedBox(height: 8),
             if (_adminUsersLoading)
               const Center(
                 child: Padding(
@@ -3145,13 +3171,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               )
             else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _adminUsers.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final user = _adminUsers[index];
+              Builder(
+                builder: (bCtx) {
+                  final filteredUsers = _userSearchQuery.isEmpty
+                      ? _adminUsers
+                      : _adminUsers.where((u) {
+                          final q = _userSearchQuery.toLowerCase();
+                          final em =
+                              u['email']?.toString().toLowerCase() ?? '';
+                          final nm =
+                              u['displayName']?.toString().toLowerCase() ?? '';
+                          return em.contains(q) || nm.contains(q);
+                        }).toList();
+                  if (filteredUsers.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        '該当するユーザーが見つかりません',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredUsers.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final user = filteredUsers[index];
                   final email = user['email']?.toString() ?? '';
                   final displayName = user['displayName']?.toString();
                   final bio = user['bio']?.toString();
@@ -3352,6 +3399,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                       ],
                     ),
+                  );
+                    },
                   );
                 },
               ),
