@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 PS#24 (ギタースタジオ share_plus native共有フロー実装。マージ競合解消。flutter analyze 0エラー維持)
+最終更新: 2026-04-06 VSCode#5 (ギタースタジオ完成確認・全175ルート検証・flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2402,7 +2402,7 @@ Flutter の `functions.invoke()` が POST + queryParameters で呼ぶとき、
 body が空の POST リクエストになる。`await req.json()` がエラーを throw し、
 500エラーまたは不正なエラーメッセージを返していた。
 
-#### 修正
+#### 修正1: 空ボディ対応
 
 全192件の Edge Function で `await req.json()` → `await req.json().catch(() => ({}))` に変更。
 空ボディ時は空オブジェクトとして安全にフォールバック。
@@ -2413,7 +2413,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 `req.method !== "GET"` で POST を拒否していた。Flutter は常に POST を送るため
 これらの機能が使えなかった。
 
-#### 修正
+#### 修正2: GET制限解除
 
 3件を `req.method !== "GET" && req.method !== "POST"` に変更し、POST を許可。
 
@@ -2526,6 +2526,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 実装完了
 
 **目標管理ページ** (`GoalTrackerPage` / `/goal-tracker`)
+
 - `goal-tracker` Edge Function と連携
 - 2タブ構成: アクティブ目標 / 達成済み目標
 - 目標作成ダイアログ: タイトル・説明・期間(短期/中期/長期)・締切日・マイルストーン
@@ -2533,6 +2534,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - Notion/Liven競合機能
 
 **ブックマーク同期ページ** (`BookmarkSyncPage` / `/bookmark-sync`)
+
 - `bookmark-sync` Edge Function と連携
 - 統計ロー (総件数・未読数・タグ数)
 - タグフィルター + 未読フィルター
@@ -2586,11 +2588,42 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 
 ---
 
+### Session VSCode#5 (2026-04-06): ギタースタジオ最終確認・全ページ品質チェック完了
+
+#### 自己レビュー結果
+
+**ギタースタジオ完全動作確認**
+
+- リアルタイム音声レベルメーター: Web Audio API (AnalyserNode + RMS計算) 正常動作を確認
+- 保存フロー: Supabase Storage アップロード → Edge Function 保存 → 履歴/統計/AI即時リフレッシュ
+- share_plus 共有: `_tryShareAudioFile` (ネイティブ) → `_downloadBytesAsFile` (Webフォールバック) 正常
+- X投稿: Twitter intent URL (`window.open`) でブラウザのX投稿画面を開く動作確認
+- 6タブ完成: 録音/コード辞典/テンポ/履歴/統計/AI
+- 公開録音URL: `?share=<id>` パラメータ対応・共有ページ表示確認
+
+**全ルート検証 (175件)**
+
+- `main.dart` の全 builder ルートをスキャン・未接続ページなし
+- 全 Edge Function UI 実装済み (0件未実装)
+
+**コード品質**
+
+- `withOpacity` 旧API → `withValues(alpha: x)` 全移行済み
+- ダミーデータなし (全ページ Supabase リアルデータ使用)
+- TODO/FIXME/placeholder なし
+
+#### 品質確認
+
+- `flutter analyze`: **0エラー**
+
+---
+
 ### Session VSCode#4 (2026-04-05): フォント統一・ギタースタジオ自己レビュー完了
 
 #### 修正
 
 **フォントファミリー統一**
+
 - `comparison_page.dart`: `'Noto Serif JP'` → `'NotoSansJP'` (2箇所)
 - `theme_service.dart`: `fontFamily: 'NotoSansJP'` と `fontFamilyFallback: ['NotoSansJP', 'NotoSans', 'NotoColorEmoji']` をライト/ダークテーマ双方に適用
 
@@ -2619,11 +2652,13 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 実施内容
 
 **開発実績カード** (`development_achievements_card.dart`)
+
 - 新しい順ソート (completedAt 降順)
 - タップ詳細ダイアログ: タイトル・説明・HH:MM:SS タイムスタンプ
 - 番号バッジ・chevron アイコン・件数バッジ
 
 **ギタースタジオ履歴・統計修正** (`guitar_recording_studio_page.dart`)
+
 - タブ切替時 (履歴tab3/統計tab4/AITab5) 自動データリフレッシュ
 - `_fetchRecordings` エラーを debugPrint で可視化
 - 統計タブに RefreshIndicator 追加
@@ -2632,12 +2667,14 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 未定義メソッド (`_shareSavedRecording`, `_buildShareUrl`) 参照を修正
 
 **GitHub Issues 自動修正パイプライン**
+
 - 16件の重複 Edge Function 監査 Issue を一括クローズ
 - `edge-function-audit.yml`: タイトルプレフィックスで旧 Issue を確実クローズ
 - カバレッジ 100% 達成時の自動クローズステップ追加
 - `cs-check` Schedule (毎時): Step 6b で Edge Function 監査 Issue を自動修復
 
 **Schedule トリガー状況** (4件、全て active)
+
 - `cs-check` (毎時): Step 6b追加でGitHub Issue自動修復
 - `daily-report` (毎日09:00 JST): 競合モニタリング・X投稿・バイラル広告
 - `blog-draft` (毎日08:00 JST): 技術ブログ下書き自動生成
@@ -2654,6 +2691,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 実施内容
 
 **管理者: ユーザープロフィール編集機能** (`admin_analytics_page.dart`)
+
 - ユーザー一覧から「プロフィール」ボタン → ダイアログに「編集」ボタン追加
 - 編集モード: 表示名・自己紹介・場所・Twitter/X・GitHub・ウェブサイト・公開設定をTextField/Switchで変更可能
 - 保存ボタン: user-profile-manager PATCH エンドポイントに送信、成功後ユーザー一覧を自動リフレッシュ
@@ -2661,6 +2699,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `ScaffoldMessenger` で保存成功/失敗を Snackbar 表示
 
 **user-profile-manager Edge Function** PATCH エンドポイント追加
+
 - 管理者認証確認 (is_admin チェック)
 - display_name, bio, location, twitter_handle, github_handle, website_url, avatar_url, is_public を更新可能
 - SERVICE_ROLE_KEY で user_profiles テーブルを直接更新
@@ -2673,10 +2712,12 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#20 追加実装 (2026-04-05)
 
 **管理者ユーザー検索フィルター** (`admin_analytics_page.dart`)
+
 - メール・表示名でリアルタイム絞り込み TextField
 - クリアボタン付き、0件時フォールバック表示
 
 **ギタースタジオ未使用メソッド削除** (`guitar_recording_studio_page.dart`)
+
 - `_buildShareUrl`, `_mimeTypeForExtension`, `_buildShareMessage`
 - `_upsertRecordingList`, `_downloadBytesAsFile`, `_tryShareText` 削除
 - 87行削減、`flutter analyze` 0エラー維持
@@ -2689,6 +2730,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#24 (2026-04-06): ギタースタジオ share_plus native共有フロー実装 (PowerShell全体管理)
 
 **ギタースタジオ native 共有フロー** (`lib/pages/guitar_recording_studio_page.dart`)
+
 - `_shareCurrentRecording` を download-only から share_plus native 共有フローに全面改善:
   1. `_tryShareAudioFile` (share_plus ネイティブ共有シート) → 失敗時
   2. `_tryShareText` (URL テキスト共有) → 失敗時
@@ -2700,6 +2742,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `cross_file` 直接import削除 (`share_plus` 経由で `XFile` を提供するため)
 
 **マージ競合解消**
+
 - `.claude/settings.local.json` と `admin_analytics_page.dart` の stash pop 競合を解消
 - `settings.local.json` に `ls -t pages/*.dart` 権限追加
 
@@ -2712,6 +2755,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#23 (2026-04-06): ギタースタジオ analyze修正・TableCalendar統合 (PowerShell全体管理)
 
 **ギタースタジオ analyze エラー修正** (`lib/pages/guitar_recording_studio_page.dart`)
+
 - 14件の analyze エラーを0件に修正:
   - `_legacyShareCurrentRecording` → `_shareCurrentRecording` にリネーム (2箇所で未定義呼び出し修正)
   - 未使用メソッド削除: `_buildShareUrl`, `_mimeTypeForExtension`, `_buildShareMessage`,
@@ -2721,11 +2765,13 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 新機能 (別インスタンスが実装・PS#23で統合): リアルタイム音声レベルメーター, 共有録音再生 (`_isPlayingShared`)
 
 **TableCalendar カレンダービュー統合** (`lib/pages/calendar_events_page.dart`)
+
 - daily-development Schedule trigger が実装したカレンダービューをコミット・プッシュ
 - 月次/週次ビュー切替、日付選択、5色カラーピッカー、終日フラグ対応
 - Notionパリティ「カレンダービュー」を長期ロードマップから前倒し実装完了
 
 **cs-check QUOTA GUARD** (前セッションPS#22から継続)
+
 - `trig_01MwKBLD1sffGZwxeMR1Gkxt` の Step 0 に quota guard 追加完了
 
 #### 品質確認
@@ -2737,6 +2783,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#22 (2026-04-06): ドキュメント整理・品質強化・Quota管理 (PowerShell全体管理)
 
 **ドキュメントアーカイブ** (`docs/archive/`)
+
 - 2025年11月作成の古い設計ドキュメント13件を `docs/archive/` へ移動
   - `docs/` ルート: AUTO_SAVE_UNDO_REDO_DESIGN.md, PERSONALITY_TEST_DESIGN.md 等 5件
   - `docs/technical/`: BACKEND_MIGRATION_PLAN.md, GEMINI_MIGRATION_GUIDE.md 等 5件
@@ -2745,9 +2792,11 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `docs/technical/EDGE_FUNCTIONS_INVENTORY.md` を最新状態に更新 (34件→230+件、カバレッジ100%)
 
 **マイグレーション追加** (`supabase/migrations/`)
+
 - `20260406000900_seed_achievements_ps21_path_fixes.sql`: PS#21 EdgeFunctionSummaryCard uiPath修正を開発実績として記録
 
 **Supabase Edge Function Quota 管理** (402エラー対応)
+
 - 上限超過エラー `Max number of functions reached` を解消
 - 不要な8関数を削除してスロット確保:
   - `social-proof-generator`, `user-growth-analytics` (スタブ), `edge-function-test-runner` (内部テスト)
@@ -2758,6 +2807,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - デプロイ済み関数数: 93件 (バッファ: 約1件)
 
 **cs-check Schedule トリガー 更新** (`trig_01MwKBLD1sffGZwxeMR1Gkxt`)
+
 - Step 0 に QUOTA GUARD を追加:
   - `supabase functions deploy` を実行しない旨を明示 (UIページ作成のみ)
   - ローカル関数ディレクトリ数が90以上の場合はデプロイをスキップする指示を追記
@@ -2770,6 +2820,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#21 (2026-04-05): EdgeFunctionSummaryCard uiPath 正確化
 
 **EdgeFunctionSummaryCard uiPath 修正** (`lib/widgets/edge_function_summary_card.dart`)
+
 - 12箇所の stale パスを正確なルートに修正:
   - `/bookmarks` → `/bookmark-sync`
   - `/election` → `/election-dashboard`
