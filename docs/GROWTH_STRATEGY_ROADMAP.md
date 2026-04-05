@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-05 PS#21 (EdgeFunctionSummaryCard uiPath 12箇所修正。flutter analyze 0エラー維持)
+最終更新: 2026-04-06 PS#22 (古い設計ドキュメント13件をarchive/へ移動。EDGE_FUNCTIONS_INVENTORY更新。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2649,6 +2649,23 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
+
+### Session PS#22 (2026-04-06): ドキュメント整理・品質強化 (PowerShell全体管理)
+
+**ドキュメントアーカイブ** (`docs/archive/`)
+- 2025年11月作成の古い設計ドキュメント13件を `docs/archive/` へ移動
+  - `docs/` ルート: AUTO_SAVE_UNDO_REDO_DESIGN.md, PERSONALITY_TEST_DESIGN.md 等 5件
+  - `docs/technical/`: BACKEND_MIGRATION_PLAN.md, GEMINI_MIGRATION_GUIDE.md 等 5件
+  - `docs/roadmaps/`: COMPETITOR_ANALYSIS_2025.md, BUSINESS_OPERATIONS_PLAN.md 2件
+  - `docs/user-docs/`: GROWTH_FEATURES.md 1件
+- `docs/technical/EDGE_FUNCTIONS_INVENTORY.md` を最新状態に更新 (34件→230+件、カバレッジ100%)
+
+**マイグレーション追加** (`supabase/migrations/`)
+- `20260406000900_seed_achievements_ps21_path_fixes.sql`: PS#21 EdgeFunctionSummaryCard uiPath修正を開発実績として記録
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+- `deno lint`: **0エラー** (243ファイル)
 
 ### Session PS#21 (2026-04-05): EdgeFunctionSummaryCard uiPath 正確化
 
