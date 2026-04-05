@@ -136,21 +136,29 @@ jobs:
           ---
           *自動生成: edge-function-audit.yml*"
 
-          # 既存のIssueを閉じる
-          EXISTING=$(gh issue list --label "edge-function-audit" --state open --json number --jq '.[0].number' 2>/dev/null || true)
-          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
-            gh issue close "$EXISTING" --comment "新しい監査結果で更新" 2>/dev/null || true
-          fi
+          # 既存の同種Issueを全て閉じる (タイトルプレフィックスで検索)
+          gh issue list --state open --json number,title \
+            --jq '.[] | select(.title | startswith("[自動] Edge Function UI導線チェック")) | .number' \
+            2>/dev/null | while read NUM; do
+            gh issue close "$NUM" --comment "新しい監査結果で更新" 2>/dev/null || true
+          done
 
           # 新しいIssueを作成
           gh issue create \
             --title "$TITLE" \
-            --body "$BODY" \
-            --label "edge-function-audit,automated" 2>/dev/null || \
-          gh issue create \
-            --title "$TITLE" \
             --body "$BODY" 2>/dev/null || \
           echo "⚠️ Issue作成失敗"
+
+      - name: Close issue when fully covered
+        if: steps.audit.outputs.has_missing == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue list --state open --json number,title \
+            --jq '.[] | select(.title | startswith("[自動] Edge Function UI導線チェック")) | .number' \
+            2>/dev/null | while read NUM; do
+            gh issue close "$NUM" --comment "✅ カバレッジ100%達成。未接続のEdge Functionはありません。" 2>/dev/null || true
+          done
 
       - name: Summary
         run: |

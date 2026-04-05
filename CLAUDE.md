@@ -263,6 +263,46 @@ GET https://my-web-app-b67f4.web.app/
 
 ---
 
+### Task: github-issue-fix (毎日 10:00 JST に実行)
+
+GitHub Issues を自動チェックし、修正可能なものを自動対応する。
+
+#### Step 1: オープンIssueを取得
+
+```bash
+gh issue list --state open --json number,title,body,labels --limit 30
+```
+
+#### Step 2: 各Issueを判断・対応
+
+**ケース A: Edge Function UI導線チェック (`[自動] Edge Function UI導線チェック`)**
+- Issue body から未接続の Edge Function 名リストを抽出
+- `lib/widgets/edge_function_summary_card.dart` を読んで、既に追加済みかを確認
+- 未追加の場合: `edge_function_summary_card.dart` の関数リストに追加
+- `flutter analyze` で0エラーを確認後、コミット
+- Issue に対して解決コメントを投稿: `gh issue comment <number> --body "✅ UI接続を追加しました。コミット: <hash>"`
+- Issue をクローズ: `gh issue close <number>`
+
+**ケース B: flutter analyze エラー (`[自動] flutter analyze`)**
+- エラー内容を読んで、修正可能なら修正
+- `flutter analyze` で0エラーを確認後、コミット・クローズ
+
+**ケース C: 判断困難または手動対応が必要**
+- `docs/cs-notes/YYYY-MM-DD-github-issues.md` にメモを残す
+- Issue はそのまま維持
+
+#### Step 3: コミット・プッシュ
+
+```bash
+git add -A
+git commit -m "fix: GitHub Issue 自動対応 YYYY-MM-DD"
+git push origin main
+```
+
+変更がない場合はコミット不要。
+
+---
+
 ### Task: weekly-sns-draft (毎週月曜 09:00 JST に実行)
 
 #### Step 1: 先週の実績サマリーを生成
