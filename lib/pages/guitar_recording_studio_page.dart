@@ -4,7 +4,6 @@ import 'dart:js_interop';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
@@ -676,6 +675,7 @@ class _GuitarRecordingStudioPageState
       if (!shared && downloadedBytes == null && publicUrl != null) {
         await Clipboard.setData(ClipboardData(text: publicUrl));
       }
+      if (!mounted) return;
       final message = shared
           ? '共有シートを開きました'
           : downloadedBytes != null
