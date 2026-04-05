@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-05 VSCode#4 (フォントファミリー NotoSansJP 全体統一。ギタースタジオ自己レビュー完了。flutter analyze 0エラー維持)
+最終更新: 2026-04-05 PS#21 (EdgeFunctionSummaryCard uiPath 12箇所修正。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2649,3 +2649,20 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
+
+### Session PS#21 (2026-04-05): EdgeFunctionSummaryCard uiPath 正確化
+
+**EdgeFunctionSummaryCard uiPath 修正** (`lib/widgets/edge_function_summary_card.dart`)
+- 12箇所の stale パスを正確なルートに修正:
+  - `/bookmarks` → `/bookmark-sync`
+  - `/election` → `/election-dashboard`
+  - `/focus-mode` → `/focus-timer`
+  - `/note-list` → `/note-editor`
+  - `/onboarding` → `null` (自動表示のため直接ルートなし)
+  - `/profile` → `/profile-settings`
+  - `/team` → `/team-workspace`
+- EdgeFunctionStatusPage の「実装へ」ボタンが正しいルートへ遷移するよう修正
+- `flutter analyze` 0エラー維持
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
