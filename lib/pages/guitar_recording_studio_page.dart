@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -632,6 +633,26 @@ class _GuitarRecordingStudioPageState
     } finally {
       if (mounted) setState(() => _isSharingFile = false);
     }
+  }
+
+  Future<void> _shareCurrentRecording() async {
+    if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
+      return;
+    }
+    final title = _titleController.text.trim().isNotEmpty
+        ? _titleController.text.trim()
+        : 'guitar-recording';
+    final fileName = _buildLocalFileName(title, _shareableAudioExtension);
+    final text = _isPublic && _savedRecordingId != null
+        ? '🎸 $title\nhttps://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$_savedRecordingId'
+        : '🎸 $title';
+    final shared = await _tryShareAudioFile(
+      bytes: _shareableAudioBytes!,
+      mimeType: _shareableAudioMimeType!,
+      fileName: fileName,
+      text: text,
+    );
+    if (!shared) await _legacyShareCurrentRecording();
   }
 
   String? _extractSharedRecordingId() {
