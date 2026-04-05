@@ -2634,3 +2634,18 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
+
+### Session PS#20 追加実装 (2026-04-05)
+
+**管理者ユーザー検索フィルター** (`admin_analytics_page.dart`)
+- メール・表示名でリアルタイム絞り込み TextField
+- クリアボタン付き、0件時フォールバック表示
+
+**ギタースタジオ未使用メソッド削除** (`guitar_recording_studio_page.dart`)
+- `_buildShareUrl`, `_mimeTypeForExtension`, `_buildShareMessage`
+- `_upsertRecordingList`, `_downloadBytesAsFile`, `_tryShareText` 削除
+- 87行削減、`flutter analyze` 0エラー維持
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+- `deno lint`: **0エラー**
