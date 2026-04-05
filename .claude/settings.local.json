@@ -68,7 +68,11 @@
       "Bash(GIT_EDITOR=true git rebase --continue)",
       "Bash(git checkout:*)",
       "Bash(dart analyze:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(sort -u comm -23 /tmp/fn_paths.txt /tmp/routes.txt)",
+      "Bash(read f:*)",
+      "Bash([ ! -f \"/c/Users/kanta/GitHub/my_web_app/lib/pages/$f\" ])",
+      "Bash(read r:*)"
     ]
   }
 }
