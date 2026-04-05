@@ -2650,7 +2650,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
 
-### Session PS#22 (2026-04-06): ドキュメント整理・品質強化 (PowerShell全体管理)
+### Session PS#22 (2026-04-06): ドキュメント整理・品質強化・Quota管理 (PowerShell全体管理)
 
 **ドキュメントアーカイブ** (`docs/archive/`)
 - 2025年11月作成の古い設計ドキュメント13件を `docs/archive/` へ移動
@@ -2662,6 +2662,21 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 
 **マイグレーション追加** (`supabase/migrations/`)
 - `20260406000900_seed_achievements_ps21_path_fixes.sql`: PS#21 EdgeFunctionSummaryCard uiPath修正を開発実績として記録
+
+**Supabase Edge Function Quota 管理** (402エラー対応)
+- 上限超過エラー `Max number of functions reached` を解消
+- 不要な8関数を削除してスロット確保:
+  - `social-proof-generator`, `user-growth-analytics` (スタブ), `edge-function-test-runner` (内部テスト)
+  - `schedule-result-tracker`, `schedule-execution-logger` (Schedule専用ログ)
+  - `code-review-issues` (gh CLI で代替済), `generate-quote-image`, `share-quote` (Flutter未呼び出し)
+- `local-election-intelligence` を正常デプロイ完了 (ACTIVE v1)
+- `edge_function_summary_card.dart`: 未デプロイ6関数を `hasUi: false` に更新 (Quota節約旨を説明追記)
+- デプロイ済み関数数: 93件 (バッファ: 約1件)
+
+**cs-check Schedule トリガー 更新** (`trig_01MwKBLD1sffGZwxeMR1Gkxt`)
+- Step 0 に QUOTA GUARD を追加:
+  - `supabase functions deploy` を実行しない旨を明示 (UIページ作成のみ)
+  - ローカル関数ディレクトリ数が90以上の場合はデプロイをスキップする指示を追記
 
 #### 品質確認
 - `flutter analyze`: **0エラー**
