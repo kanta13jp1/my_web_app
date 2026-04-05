@@ -2381,6 +2381,7 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 空ボディでクラッシュし 500 エラーを返していた。
 
 #### 修正した Edge Functions (6件)
+
 1. **notification-center**: `mode=user` query付きPOSTをGETとして処理。ホームページ毎回呼ばれるため最優先修正
 2. **referral-program**: `view` パラメータ付きPOSTをGETとして処理
 3. **workflow-templates**: `view` パラメータ付きPOSTをGETとして処理
@@ -2389,29 +2390,35 @@ Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送�
 6. **get-competitor-monitoring**: POSTメソッドも許可
 
 #### 修正パターン
+
 - query params がある場合はGETと同じ一覧取得として処理
 - POST body parsing を try-catch で保護、空body時は 400 を返す
 
 ### Session Web版#3 (2026-04-02): 全Edge Function系統的バグ修正
 
 #### 問題1: req.json() 空ボディクラッシュ (192件)
+
 Flutter の `functions.invoke()` が POST + queryParameters で呼ぶとき、
 body が空の POST リクエストになる。`await req.json()` がエラーを throw し、
 500エラーまたは不正なエラーメッセージを返していた。
 
 #### 修正
+
 全192件の Edge Function で `await req.json()` → `await req.json().catch(() => ({}))` に変更。
 空ボディ時は空オブジェクトとして安全にフォールバック。
 
 #### 問題2: GET-only 制限 (3件)
+
 `health-check`, `financial-report`, `edge-function-ui-checker` が
 `req.method !== "GET"` で POST を拒否していた。Flutter は常に POST を送るため
 これらの機能が使えなかった。
 
 #### 修正
+
 3件を `req.method !== "GET" && req.method !== "POST"` に変更し、POST を許可。
 
 #### 影響
+
 - 修正ファイル数: 196
 - ユーザーが遭遇する 500 エラーの大部分が解消される見込み
 
@@ -2426,6 +2433,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#14 (2026-04-03): PowerShell全体管理 — Schedule最適化・4インスタンス統合
 
 #### 実施内容
+
 - **4インスタンス同時実行の競合解消**: VSCode(lib/)/Web(supabase/functions/)/Windows(docs/)/PowerShell(全体管理) の4インスタンスが同時実行中。origin/mainとのマージ競合を解消してローカルを最新化。
 - **cs-check Scheduleタスク更新**: Step 9「ギター録音スタジオ Edge Function ヘルスチェック」を追加。メイン機能の毎時可用性監視を実現。Schedule自己修復フローを強化 (3回以上失敗でインシデントレポート自動生成)。
 - **既存Scheduleタスク状況確認**:
@@ -2439,10 +2447,12 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session Web版#4 (2026-04-02): ギター録音スタジオ大幅改善
 
 #### 修正: 履歴・統計が更新されない問題
+
 - Edge Function の `recordings` / `practice_stats` アクションで、全レコードをJSフィルタしていたのを
   `metadata->>userId` でDB側フィルタに変更。クエリ効率改善 + 確実にユーザーデータを取得。
 
 #### 新機能: WAV エクスポート (iPhone対応)
+
 - WebM/Opus は iOS Safari 非対応。MediaRecorder の mimeType を自動検出
   (webm → mp4 → デフォルト) にフォールバック。
 - 録音後、Web Audio API `decodeAudioData` で PCM に変換し、
@@ -2450,11 +2460,13 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - ダウンロードファイル名を `.wav` に変更。全デバイスで再生可能。
 
 #### 改善: 音質
+
 - エコーキャンセル・ノイズ抑制・自動ゲイン OFF は前回実装済み。
 - WAV (16bit/48kHz/ステレオ) への変換により非可逆圧縮のアーティファクトを排除。
 - MediaRecorder は 256kbps で収録し、WAV変換時にフルPCM品質を維持。
 
 #### 新機能: AIギターコーチ (6番目のタブ)
+
 - Edge Function に `ai_analyze` アクション追加。ユーザーの録音・練習データを分析し:
   - 練習パターン分析 (平均録音時間・テンポ・ジャンル多様性)
   - ストリーク・頻度分析
@@ -2475,6 +2487,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#17 (2026-04-03): ギター録音スタジオ完成度向上
 
 #### 自己レビューで発見した問題の修正
+
 - **マイク権限エラー改善**: `NotAllowedError`/`NotFoundError`/`NotSupportedError` を分類し、iOS/Android/Chrome/Firefox 別の具体的な解決手順を日本語で表示。生の JavaScript 例外メッセージを除去。
 - **共有リンク機能追加**: 録音保存成功後、公開設定時に「共有リンクをコピー」ボタンを表示。`https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=<id>` 形式の URL をクリップボードにコピー。
 - **guitar_recordings 専用テーブル作成**: `app_analytics` JSONB 依存から移行。`user_id` FK・RLS (本人全操作 + 公開録音は全員閲覧)・`updated_at` トリガー付き。
@@ -2482,6 +2495,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **flutter analyze 0エラー確認済み** (200ルート・175+ページ)
 
 #### 現在のアプリ状態 (2026-04-03)
+
 - 総ページ数: 175+
 - 総ルート数: 200
 - Edge Functions: 238件 (うち UI 接続済み: 220+件、Schedule専用: 19件)
@@ -2491,6 +2505,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session VSCode#3 (2026-04-04): 全Edge Function UI未実装ゼロ達成
 
 #### 実装完了ページ (6件)
+
 - **在庫バーコード管理** (`/inventory-barcode`): 在庫一覧(低在庫赤ハイライト・在庫不足ラベル)・入出庫履歴タブ
 - **パスワード管理** (`/password-vault`): 強度アイコン・表示/非表示トグル・クリップボードコピー・追加ダイアログ
 - **ポッドキャスト管理** (`/podcast-manager`): エピソード再生状態(再生/一時停止トグル)・チャンネル購読状態・既読バッジ
@@ -2499,6 +2514,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **アクセス制御** (`/access-control`): ロール展開ExpansionTile(権限Chip)・アクセスログ(allow/deny色分け)
 
 #### 達成状態
+
 - `edge_function_summary_card.dart` の `未実装` エントリ: **0件**
 - 残 `false` エントリ: Schedule専用 or サーバーサイド専用のみ (UI不要)
 - flutter analyze: **0エラー**
@@ -2535,10 +2551,12 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **Flutter 3.33 対応**: `use_build_context_synchronously` — async前にcontextの参照取得パターンに統一
 
 #### DBマイグレーション
+
 - `20260404090000_create_bookmarks_table.sql`: bookmarksテーブル + RLS
 - `20260404100000_seed_achievements_ps18_goal_bookmark.sql`: 開発実績シード
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 - `deno lint bookmark-sync`: **0エラー**
 
@@ -2547,6 +2565,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### Session PS#19 (2026-04-03)
 
 #### 開発実績カード改善 (`development_achievements_card.dart`)
+
 - 時系列ソート: 新しい順 (completedAt降順)
 - タップで詳細ダイアログ表示 (`_showDetailDialog`): タイトル・詳細説明・追加日時
 - HH:MM:SS タイムスタンプ表示 (`YYYY-MM-DD HH:MM:SS 追加`)
@@ -2554,6 +2573,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 件数バッジ「N件 ※タップで詳細表示」
 
 #### ギタースタジオ修正 (`guitar_recording_studio_page.dart`)
+
 - **タブ切替時リフレッシュ**: 履歴(tab3)・統計(tab4)・AI(tab5)タブに切り替えた際に自動データ更新
 - **エラー可視化**: `_fetchRecordings` のサイレントエラーを `debugPrint` で可視化
 - **Xに投稿ボタン**: 履歴リストの各アイテムに「Xに投稿」アイコンボタンを追加
@@ -2561,6 +2581,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **不要インポート削除**: `cross_file` / `share_plus` の未使用インポートを削除
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 
 ---
@@ -2588,6 +2609,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 公開録音: `?share=<id>` URL パラメータ対応・公開ページ表示
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 
 ---
@@ -2622,6 +2644,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `weekly-sns-draft` (毎週月09:00 JST): SNS投稿ドラフト・脆弱性チェック
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 
 ---
@@ -2643,6 +2666,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - SERVICE_ROLE_KEY で user_profiles テーブルを直接更新
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
 
@@ -2658,6 +2682,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 87行削減、`flutter analyze` 0エラー維持
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
 
@@ -2679,6 +2704,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `settings.local.json` に `ls -t pages/*.dart` 権限追加
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 
 ---
@@ -2703,6 +2729,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `trig_01MwKBLD1sffGZwxeMR1Gkxt` の Step 0 に quota guard 追加完了
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 
 ---
@@ -2736,6 +2763,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
   - ローカル関数ディレクトリ数が90以上の場合はデプロイをスキップする指示を追記
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー** (243ファイル)
 
@@ -2754,4 +2782,5 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `flutter analyze` 0エラー維持
 
 #### 品質確認
+
 - `flutter analyze`: **0エラー**
