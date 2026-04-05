@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 PS#22 (古い設計ドキュメント13件をarchive/へ移動。EDGE_FUNCTIONS_INVENTORY更新。flutter analyze 0エラー維持)
+最終更新: 2026-04-06 daily-development (カレンダービュー TableCalendar 実装完了。Notionパリティ「カレンダービュー」長期ロードマップから前倒し)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -379,6 +379,11 @@
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
 
+### 2026-04-06 daily-development 実装済み (自動)
+
+- **カレンダービュー (TableCalendar) 全面刷新** (daily-development 2026-04-06): `calendar_events_page.dart` を `table_calendar` パッケージで月次カレンダーUIに全面刷新。月次ビュー切替・日付選択・日付別イベントリスト・イベント作成ダイアログ（タイトル/説明/日付ピッカー/5色カラーピッカー/終日フラグ）・削除確認ダイアログを実装。`calendar-events` Edge Function の GET `view=month` エンドポイントと連携。Notionパリティ「カレンダービュー」を長期ロードマップから前倒し実装完了。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development 2026-04-06): `docs/blog-drafts/2026-04-05-calendar-view-guitar-studio.md` — TableCalendarカレンダービュー実装・mounted チェックパターン解説記事を作成。
+
 ### 2026-04-03 daily-development 実装済み (自動)
 
 - **旅行プランナー実装** (daily-development 2026-04-03): `travel_itinerary_page.dart` を新規作成。`travel-itinerary-planner` Edge Function と連携。旅行プラン一覧・日程管理(アクティビティ追加)・予約情報(ホテル/フライト等8種)・パッキングリスト・予算サマリー(総予算/支出/残高/LinearProgressIndicator)の4タブ構成。`/travel-itinerary` ルートを `main.dart` に追加。業務メニューカタログ `growth` セクションに登録。Google Travel/TripAdvisor競合。flutter analyze 0件維持。
@@ -736,7 +741,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **リレーション/ロールアップ**: 本格 DB 機能
 - **オフライン対応**: PWA + IndexedDB
 - ~~**ガントチャートビュー**~~ ✅ 2026-04-02 GanttTimelinePage実装完了 (プロジェクト・タスク・マイルストーン・クリティカルパス分析)
-- **カレンダービュー**: DBエントリの日付プロパティをカレンダー形式で表示
+- ~~**カレンダービュー**~~: ✅ 2026-04-06 TableCalendar月次ビュー実装完了 (calendar-events Edge Function連携・イベント作成/削除/5色カラー選択)
 - **Web クリッパー**: ブラウザ拡張
 
 ### 自分株式会社 独自優位点 (Notion にない機能)
