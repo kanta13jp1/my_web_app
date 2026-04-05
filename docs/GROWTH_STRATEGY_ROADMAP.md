@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 daily-development (カレンダービュー TableCalendar 実装完了。Notionパリティ「カレンダービュー」長期ロードマップから前倒し)
+最終更新: 2026-04-06 PS#23 (ギタースタジオ analyze 14エラー→0修正。TableCalendar月次カレンダービュー統合。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2654,6 +2654,30 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
+
+### Session PS#23 (2026-04-06): ギタースタジオ analyze修正・TableCalendar統合 (PowerShell全体管理)
+
+**ギタースタジオ analyze エラー修正** (`lib/pages/guitar_recording_studio_page.dart`)
+- 14件の analyze エラーを0件に修正:
+  - `_legacyShareCurrentRecording` → `_shareCurrentRecording` にリネーム (2箇所で未定義呼び出し修正)
+  - 未使用メソッド削除: `_buildShareUrl`, `_mimeTypeForExtension`, `_buildShareMessage`,
+    `_upsertRecordingList`, `_downloadBytesAsFile`, `_tryShareAudioFile`, `_tryShareText`, `_downloadSharedRecording`
+  - `share_plus` import 削除 (未使用)
+  - `BoxShadow` リスト末尾のトレイリングカンマ追加
+- 新機能 (別インスタンスが実装・PS#23で統合): リアルタイム音声レベルメーター, 共有録音再生 (`_isPlayingShared`)
+
+**TableCalendar カレンダービュー統合** (`lib/pages/calendar_events_page.dart`)
+- daily-development Schedule trigger が実装したカレンダービューをコミット・プッシュ
+- 月次/週次ビュー切替、日付選択、5色カラーピッカー、終日フラグ対応
+- Notionパリティ「カレンダービュー」を長期ロードマップから前倒し実装完了
+
+**cs-check QUOTA GUARD** (前セッションPS#22から継続)
+- `trig_01MwKBLD1sffGZwxeMR1Gkxt` の Step 0 に quota guard 追加完了
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+
+---
 
 ### Session PS#22 (2026-04-06): ドキュメント整理・品質強化・Quota管理 (PowerShell全体管理)
 
