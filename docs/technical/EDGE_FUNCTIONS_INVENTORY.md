@@ -1,62 +1,42 @@
-# Supabase Edge Functions 一覧 (2026-03-28 時点)
+# Supabase Edge Functions 一覧
 
-## UI から呼び出し済み ✅
+**最終更新**: 2026-04-06  
+**ステータス**: ✅ 全 Edge Functions に UI 実装済み (2026-04-05 VSCode#3 にてゼロ達成)
 
-| Function | 呼び出し元 | 用途 |
-|----------|-----------|------|
-| `ai-assistant` | `ai_assistant_menu.dart`, `ai_service.dart` | AIアシスタント (メモ編集時) |
-| `ai-search` | `ai_status_page.dart` | AI検索 |
-| `ai-suggest-tags` | `ai_status_page.dart` | AIタグ提案 |
-| `daily-judgment` | `ai_secretary_page.dart` | デイリー判定 |
-| `development-achievements` | `development_achievements_card.dart` | 開発実績 GET/ADD |
-| `get-admin-users` | `admin_analytics_page.dart` | 管理者ユーザー一覧 |
-| `get-competitor-features` | `growth_roadmap_progress_card.dart` | 競合21社機能比較 |
-| `get-growth-roadmap-progress` | `growth_roadmap_progress_card.dart` | 進捗バーデータ |
-| `get-home-dashboard` | `admin_analytics_page.dart` | ホーム統合データ |
-| `get-support-tickets` | `admin_analytics_page.dart` | CSチケット一覧 |
-| `growth-acquisition-report` | `growth_mission_service.dart` | 獲得チャネルレポート |
-| `growth-acquisition-signal` | `growth_acquisition_service.dart` | 獲得シグナル記録 |
-| `growth-command-center` | `growth_mission_service.dart` | 成長コマンドセンター |
-| `growth-import-commit` | `import_service.dart` | インポート実行 |
-| `growth-import-preview` | `import_service.dart` | インポートプレビュー |
-| `growth-referral` | `growth_mission_service.dart` | リファラル |
-| `growth-share-signal` | `growth_mission_service.dart` | シェアシグナル記録 |
-| `growth-weekly-digest` | `growth_mission_service.dart` | 週次ダイジェスト |
-| `notify-feature-request` | `admin_analytics_page.dart` | 機能リクエスト通知 |
-| `post-x-update` | `admin_analytics_page.dart` | X投稿 |
-| `reply-support-request` | `admin_analytics_page.dart` | CSチケット返信 |
-| `schedule-daily-digest` | `admin_analytics_page.dart` | 日次ダイジェスト |
-| `trigger-analysis` | `election_strategy_page.dart` | 分析トリガー |
-| `local-election-intelligence` | `election_victory_page.dart` | 選挙知能分析 |
-| `get-public-memo-preview` | `public_memo_service.dart` | 公開メモプレビュー |
-| `get-ogp` | `landing_page_adapter.dart` | OGP取得 |
-| `growth-achievement-summary` | `cmo_page.dart` | 実績サマリー |
+> ⚠️ **注意**: このドキュメントは 2026-03-28 に作成したスナップショットを 2026-04-06 に更新したものです。  
+> 関数数が 34 件 → 230+ 件に増加したため、常に最新の状態はアプリ内で確認してください。
 
-## Schedule タスクから呼び出し (UI 不要) 🤖
+---
 
-| Function | Schedule タスク | 用途 |
-|----------|---------------|------|
-| `health-check` | `infra-health-check` | インフラ監視 |
-| `check-competitor-updates` | `competitor-monitoring` | 競合可用性チェック |
-| `schedule-daily-digest` | `daily-report` | 日次メトリクス |
-| `get-support-tickets` | `cs-check` | CS自動化 |
-| `reply-support-request` | `cs-check` | CS返信自動化 |
-| `post-x-update` | `daily-report` | X自動投稿 |
+## ソース・オブ・トゥルース
 
-## UI からの導線なし ⚠️ (要対応)
+Edge Functions の一覧・UI 接続状況・操作手順は以下で確認:
 
-| Function | 状況 | 推奨アクション |
-|----------|------|--------------|
-| `agent-runtime-cycle` | `agent_org_service.dart` で RPC 経由だが、直接 invoke なし | lib/ で呼び出し追加 (VSCode版担当) |
-| `generate-daily-challenges` | `daily_challenge_service.dart` で RPC 使用 | RPC経由で動作中、追加不要 |
-| `generate-quote-image` | 直接呼び出しなし | lib/ で名言画像生成UI追加 (VSCode版担当) |
-| `share-quote` | 直接呼び出しなし | lib/ でシェア機能から呼び出し追加 (VSCode版担当) |
-| `send-waitlist-notification` | 直接呼び出しなし (バックエンドトリガー) | Supabase DB Webhook から呼び出し、UI不要 |
+| 参照先 | 場所 | 説明 |
+|--------|------|------|
+| **ホーム画面カード** | `/home` → 「Edge Functions 実装状況」カード | 全関数の UI 有無・操作手順 |
+| **詳細ステータスページ** | `/edge-functions` | 全関数のテスト・カバレッジ確認 |
+| **ウィジェット実装** | `lib/widgets/edge_function_summary_card.dart` | 関数定義リスト (静的) |
+| **ステータスページ実装** | `lib/pages/edge_function_status_page.dart` | 詳細 UI (動的テスト機能付き) |
 
-## まとめ
+---
 
-- **合計**: 34 Edge Functions
-- **UI から呼び出し済み**: 27 (79%)
-- **Schedule から呼び出し**: 6 (一部UIと重複)
-- **UI 導線なし・要対応**: 3 (`generate-quote-image`, `share-quote`, `agent-runtime-cycle`)
-- **バックエンドのみ・UI不要**: 2 (`send-waitlist-notification`, `generate-daily-challenges`)
+## 概要統計 (2026-04-06 時点)
+
+- **合計関数数**: 230+ 件
+- **UI 実装済み**: 215+ 件 (~93%)
+- **Schedule 専用 / サーバーサイド専用**: 15 件 (UI 不要)
+- **UI カバレッジ**: **100%** (UI 実装が必要なものはすべて対応済み)
+
+---
+
+## 自動チェック
+
+`cs-check` Schedule タスク (毎時実行) の Step 0 が:
+
+1. `supabase/functions/` の全関数をスキャン
+2. `lib/` の invoke 呼び出しとの照合
+3. UI 未連携の関数を自動検出
+4. 最大3件まで自動実装してコミット・プッシュ
+
+手動確認は `/edge-functions` ページから実施可能。
