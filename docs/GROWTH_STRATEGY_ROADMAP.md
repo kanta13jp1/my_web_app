@@ -2612,3 +2612,25 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 
 #### 品質確認
 - `flutter analyze`: **0エラー**
+
+---
+
+### Session PS#20 完了 (2026-04-05)
+
+#### 実施内容
+
+**管理者: ユーザープロフィール編集機能** (`admin_analytics_page.dart`)
+- ユーザー一覧から「プロフィール」ボタン → ダイアログに「編集」ボタン追加
+- 編集モード: 表示名・自己紹介・場所・Twitter/X・GitHub・ウェブサイト・公開設定をTextField/Switchで変更可能
+- 保存ボタン: user-profile-manager PATCH エンドポイントに送信、成功後ユーザー一覧を自動リフレッシュ
+- `StatefulBuilder` ベースのインダイアログ編集: 別ページ遷移不要
+- `ScaffoldMessenger` で保存成功/失敗を Snackbar 表示
+
+**user-profile-manager Edge Function** PATCH エンドポイント追加
+- 管理者認証確認 (is_admin チェック)
+- display_name, bio, location, twitter_handle, github_handle, website_url, avatar_url, is_public を更新可能
+- SERVICE_ROLE_KEY で user_profiles テーブルを直接更新
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+- `deno lint`: **0エラー**

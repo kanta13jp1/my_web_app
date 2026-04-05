@@ -3361,6 +3361,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     );
   }
 
+  Future<void> _adminUpdateUserProfile(
+    String userId,
+    Map<String, dynamic> updates,
+  ) async {
+    final body = <String, dynamic>{'userId': userId, ...updates};
+    await _supabase.functions.invoke(
+      'user-profile-manager',
+      method: HttpMethod.patch,
+      body: body,
+    );
+  }
+
   void _showUserProfileDialog(Map<String, dynamic> user) {
     final email = user['email']?.toString() ?? '';
     final displayName = user['displayName']?.toString() ?? '';
@@ -3410,219 +3422,389 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (githubHandle.isEmpty) missingFields.add('GitHub');
     if (websiteUrl.isEmpty) missingFields.add('ウェブサイト');
 
+    final userId = user['id']?.toString() ?? '';
+    final nameCtrl = TextEditingController(text: displayName);
+    final bioCtrl = TextEditingController(text: bio);
+    final locationCtrl = TextEditingController(text: location);
+    final twitterCtrl = TextEditingController(text: twitterHandle);
+    final githubCtrl = TextEditingController(text: githubHandle);
+    final websiteCtrl = TextEditingController(text: websiteUrl);
+
+    bool editMode = false;
+    bool saving = false;
+    bool editIsPublic = isPublic;
+
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            if (avatarUrl.isNotEmpty)
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: NetworkImage(avatarUrl),
-                onBackgroundImageError: (_, __) {},
-              )
-            else
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: isGoogle
-                    ? const Color(0xFFE8F5E9)
-                    : const Color(0xFFE8EAF6),
-                child: Text(
-                  email.isNotEmpty ? email[0].toUpperCase() : '?',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isGoogle
-                        ? const Color(0xFF388E3C)
-                        : const Color(0xFF3949AB),
-                  ),
-                ),
-              ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName.isNotEmpty ? displayName : email,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (displayName.isNotEmpty)
-                    Text(
-                      email,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setInner) {
+          Future<void> saveProfile() async {
+            setInner(() => saving = true);
+            try {
+              await _adminUpdateUserProfile(userId, {
+                'display_name': nameCtrl.text.trim(),
+                'bio': bioCtrl.text.trim(),
+                'location': locationCtrl.text.trim(),
+                'twitter_handle': twitterCtrl.text.trim(),
+                'github_handle': githubCtrl.text.trim(),
+                'website_url': websiteCtrl.text.trim(),
+                'is_public': editIsPublic,
+              });
+              if (ctx2.mounted) {
+                setInner(() {
+                  editMode = false;
+                  saving = false;
+                });
+                _loadAdminUsers();
+                ScaffoldMessenger.of(ctx2).showSnackBar(
+                  const SnackBar(content: Text('プロフィールを更新しました')),
+                );
+              }
+            } catch (e) {
+              if (ctx2.mounted) {
+                setInner(() => saving = false);
+                ScaffoldMessenger.of(ctx2).showSnackBar(
+                  SnackBar(content: Text('更新失敗: $e')),
+                );
+              }
+            }
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                if (avatarUrl.isNotEmpty)
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(avatarUrl),
+                    onBackgroundImageError: (_, __) {},
+                  )
+                else
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: isGoogle
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFE8EAF6),
+                    child: Text(
+                      email.isNotEmpty ? email[0].toUpperCase() : '?',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isGoogle
+                            ? const Color(0xFF388E3C)
+                            : const Color(0xFF3949AB),
                       ),
                     ),
-                  Row(
+                  ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        isPublic ? Icons.public : Icons.lock_outlined,
-                        size: 12,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 3),
                       Text(
-                        isPublic ? '公開プロフィール' : '非公開プロフィール',
+                        displayName.isNotEmpty ? displayName : email,
                         style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
+                      if (displayName.isNotEmpty)
+                        Text(
+                          email,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            isPublic ? Icons.public : Icons.lock_outlined,
+                            size: 12,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            isPublic ? '公開プロフィール' : '非公開プロフィール',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                if (editMode)
+                  const Chip(
+                    label: Text('編集中', style: TextStyle(fontSize: 10)),
+                    backgroundColor: Color(0xFFE3F2FD),
+                    visualDensity: VisualDensity.compact,
+                  ),
+              ],
             ),
-          ],
-        ),
-        content: SizedBox(
-          width: 400,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            content: SizedBox(
+              width: 400,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: completionPct / 100,
-                          minHeight: 6,
-                          backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            profileColor,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: completionPct / 100,
+                              minHeight: 6,
+                              backgroundColor: Colors.grey[200],
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                profileColor,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'プロフィール $completionPct%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: profileColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 12),
-                // Show all profile fields (filled or missing)
-                _profileDetailRow(
-                  Icons.person_outlined,
-                  '表示名',
-                  displayName,
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(Icons.notes_outlined, '自己紹介', bio),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  Icons.image_outlined,
-                  'アバター画像',
-                  avatarUrl,
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  Icons.location_on_outlined,
-                  '場所',
-                  location,
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  Icons.alternate_email,
-                  'Twitter/X',
-                  twitterHandle.isNotEmpty ? '@$twitterHandle' : '',
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  Icons.code,
-                  'GitHub',
-                  githubHandle.isNotEmpty ? '@$githubHandle' : '',
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  Icons.link_outlined,
-                  'ウェブサイト',
-                  websiteUrl,
-                ),
-                const SizedBox(height: 8),
-                _profileDetailRow(
-                  isPublic ? Icons.public : Icons.lock_outlined,
-                  '公開設定',
-                  isPublic ? '公開' : '非公開',
-                ),
-                if (!hasProfile || missingFields.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.amber[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber[200]!),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.warning_amber_outlined,
-                          size: 16,
-                          color: Colors.amber[700],
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            !hasProfile
-                                ? 'プロフィールが未作成です。'
-                                : '未設定の項目: ${missingFields.join('、')}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.amber[800],
-                            ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'プロフィール $completionPct%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: profileColor,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
-                _profileFieldRow(
-                  Icons.calendar_today_outlined,
-                  '登録日',
-                  createdStr,
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    if (!editMode) ...[
+                      _profileDetailRow(
+                        Icons.person_outlined,
+                        '表示名',
+                        displayName,
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(Icons.notes_outlined, '自己紹介', bio),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        Icons.image_outlined,
+                        'アバター画像',
+                        avatarUrl,
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        Icons.location_on_outlined,
+                        '場所',
+                        location,
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        Icons.alternate_email,
+                        'Twitter/X',
+                        twitterHandle.isNotEmpty ? '@$twitterHandle' : '',
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        Icons.code,
+                        'GitHub',
+                        githubHandle.isNotEmpty ? '@$githubHandle' : '',
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        Icons.link_outlined,
+                        'ウェブサイト',
+                        websiteUrl,
+                      ),
+                      const SizedBox(height: 8),
+                      _profileDetailRow(
+                        isPublic ? Icons.public : Icons.lock_outlined,
+                        '公開設定',
+                        isPublic ? '公開' : '非公開',
+                      ),
+                      if (!hasProfile || missingFields.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber[50],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber[200]!),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.warning_amber_outlined,
+                                size: 16,
+                                color: Colors.amber[700],
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  !hasProfile
+                                      ? 'プロフィールが未作成です。'
+                                      : '未設定の項目: ${missingFields.join('、')}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.amber[800],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ] else ...[
+                      TextField(
+                        controller: nameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: '表示名',
+                          prefixIcon: Icon(Icons.person_outlined, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: bioCtrl,
+                        decoration: const InputDecoration(
+                          labelText: '自己紹介',
+                          prefixIcon: Icon(Icons.notes_outlined, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 2,
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: locationCtrl,
+                        decoration: const InputDecoration(
+                          labelText: '場所',
+                          prefixIcon: Icon(
+                            Icons.location_on_outlined,
+                            size: 18,
+                          ),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: twitterCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Twitter/X (@なし)',
+                          prefixIcon: Icon(Icons.alternate_email, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: githubCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'GitHub (@なし)',
+                          prefixIcon: Icon(Icons.code, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: websiteCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'ウェブサイト URL',
+                          prefixIcon: Icon(Icons.link_outlined, size: 18),
+                          isDense: true,
+                          border: OutlineInputBorder(),
+                        ),
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(Icons.public, size: 16, color: Colors.grey),
+                          const SizedBox(width: 6),
+                          const Text(
+                            '公開プロフィール',
+                            style: TextStyle(fontSize: 13),
+                          ),
+                          const Spacer(),
+                          Switch(
+                            value: editIsPublic,
+                            onChanged: (v) => setInner(() => editIsPublic = v),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 8),
+                    _profileFieldRow(
+                      Icons.calendar_today_outlined,
+                      '登録日',
+                      createdStr,
+                    ),
+                    const SizedBox(height: 4),
+                    _profileFieldRow(
+                      Icons.login_outlined,
+                      '最終ログイン',
+                      lastSignInStr,
+                    ),
+                    const SizedBox(height: 4),
+                    _profileFieldRow(
+                      isGoogle ? Icons.g_mobiledata : Icons.email_outlined,
+                      '認証方法',
+                      isGoogle ? 'Google OAuth' : 'メール/パスワード',
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                _profileFieldRow(
-                  Icons.login_outlined,
-                  '最終ログイン',
-                  lastSignInStr,
-                ),
-                const SizedBox(height: 4),
-                _profileFieldRow(
-                  isGoogle ? Icons.g_mobiledata : Icons.email_outlined,
-                  '認証方法',
-                  isGoogle ? 'Google OAuth' : 'メール/パスワード',
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('閉じる'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () {
+                  if (editMode) {
+                    setInner(() => editMode = false);
+                  } else {
+                    Navigator.pop(ctx2);
+                  }
+                },
+                child: Text(editMode ? 'キャンセル' : '閉じる'),
+              ),
+              if (!editMode)
+                TextButton.icon(
+                  onPressed: () => setInner(() => editMode = true),
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('編集'),
+                )
+              else
+                FilledButton.icon(
+                  onPressed: saving ? null : saveProfile,
+                  icon: saving
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined, size: 16),
+                  label: Text(saving ? '保存中...' : '保存'),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

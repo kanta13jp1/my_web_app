@@ -183,6 +183,76 @@ serve(async (req) => {
       );
     }
 
+    if (req.method === "PATCH") {
+      // 管理者によるユーザープロフィール編集
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Authorization required" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // 管理者権限チェック
+      const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+        auth: { persistSession: false },
+      });
+      const { data: callerProfile } = await adminClient
+        .from("user_profiles")
+        .select("is_admin")
+        .eq("user_id", user.id)
+        .single();
+      if (!callerProfile?.is_admin) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Admin access required" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const body = await req.json().catch(() => ({}));
+      const targetUserId = body.userId as string;
+      if (!targetUserId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "userId is required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const editableFields = [
+        "display_name", "bio", "location", "twitter_handle",
+        "github_handle", "website_url", "avatar_url", "is_public",
+      ];
+      const updates: Record<string, unknown> = {};
+      for (const key of editableFields) {
+        if (key in body) updates[key] = body[key];
+      }
+      updates.updated_at = new Date().toISOString();
+
+      const { data, error } = await adminClient
+        .from("user_profiles")
+        .update(updates)
+        .eq("user_id", targetUserId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, profile: data }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Method not allowed" }),
       { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } },
