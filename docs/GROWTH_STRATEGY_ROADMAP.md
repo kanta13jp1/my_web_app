@@ -1124,6 +1124,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
   - 自社は「全Edge Function UI実装完了」という技術マイルストーン達成で差別化強化
 
 **戦略上の重要変化**:
+
 - 全Edge Function UI実装ゼロ達成により「21競合統合・フル実装」を前面に打ち出せるフェーズに突入。LP更新とX/Zenn発信による#buildinpublic戦略を加速推奨。
 - CS自動化の Supabase API 接続ブロック問題が継続中。GitHub Actions 経由での API 呼び出し移行を中期対応として検討推奨。
 
@@ -1147,6 +1148,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **Schedule健全性**: CS チェック毎時 (24件/24h)・ブログ下書き自動生成 正常稼働確認
 
 **戦略上の重要変化**:
+
 - Slack 30 AI機能の正式発表で「チャット × CRM × 会議録音 × AIエージェント」統合が加速。Chatwork/Slack 競合対応として会議録音・要約 UI の追加検討が浮上。
 - GitHub Copilot SDK の公開で「コードプレイグラウンド」への AI 支援機能統合の参入障壁が低下。VSCode#1〜2 で追加した eラーニング・採用ボード UI との連携検討を推奨。
 - PS#14〜17・VSCode#1〜2 の大量 UI 追加により21競合統合の網羅性が大幅向上。landing_page.dart の比較表更新でコンバージョン率向上が期待できる。
@@ -1166,6 +1168,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **Schedule健全性**: CS チェック毎時・ブログ下書き自動生成 正常稼働確認
 
 **戦略上の重要変化**:
+
 - Notion Custom Agents の自律動作機能がライフマネジメントアプリの中核と直接競合。「マイAIエージェント」機能の早期 MVP 化が最優先。
 - PS#13で21競合統合メッセージが一段と強力になった。landing_page.dart 比較表の更新でコンバージョン率向上が期待できる。
 
@@ -1184,6 +1187,7 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **スケジュール健全性**: Claude Schedule 24時間内 5件コミット確認。正常稼働中
 
 **戦略上の重要変化**:
+
 - Notion Workers + Slack MCP が同時進行。「ユーザーがカスタムAIフローを作れる」機能の短期実装が差別化に直結
 - GitHub Actions の強化は当社 CI/CD にも有益 (プラス要素)
 - Supabase API 接続問題の恒久対策として GitHub Actions への API 呼び出し移管を検討
@@ -1512,6 +1516,7 @@ CI/CDがemail-serviceデプロイ時にHTTP 402 "Max number of functions reached
    - Supabase schedule_task_runs: ⚠️ プロキシブロックにより書き込み不可
 
 **競合動向ログ (2026-03-31):**
+
 - Notion カスタムエージェント無料トライアル (〜5/3): 当社 AI タスク自動化 UX の強化を今月中に着手推奨
 - Slack パーソナル AI Slackbot: 「個人ライフ管理の深さ」で差別化継続
 - GitHub Copilot PR 自動修正: 当社 Claude Schedule cs-check と同方向 — 継続強化
@@ -2370,6 +2375,7 @@ CI/CDがemail-serviceデプロイ時にHTTP 402 "Max number of functions reached
 ### Session Web版#2 (2026-04-02): Flutter POST+queryParams 500エラー修正
 
 #### 問題
+
 Flutter の `functions.invoke()` はデフォルトでPOSTリクエストを送信する。
 `queryParameters` のみ（body なし）で呼び出すと、Edge Function 側の `req.json()` が
 空ボディでクラッシュし 500 エラーを返していた。
