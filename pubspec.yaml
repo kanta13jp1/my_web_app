@@ -32,6 +32,7 @@ dependencies:
 
   # 画像保存・共有などの周辺機能
   screenshot: ^3.0.0               # Widgetを画像化
+  cross_file: ^0.3.4+2             # 共有ファイルラッパー
   share_plus: ^12.0.1              # 共有（SNS/共有シート）
   path_provider: ^2.1.5            # 保存先パス取得
   image_gallery_saver: ^2.0.3      # ギャラリーへ保存

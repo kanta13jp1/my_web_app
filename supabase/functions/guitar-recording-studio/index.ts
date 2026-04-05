@@ -488,6 +488,39 @@ async function saveRecording(auth: AuthContext, body: Json) {
     ai_feedback: null,
   };
 
+  const aiFeedback = GEMINI_API_KEY
+    ? await generateRecordingFeedback({
+      title,
+      duration_seconds: row.duration_seconds ?? 0,
+      preset: row.preset ?? "acoustic_fingerpicking",
+      tuning: row.tuning ?? "standard",
+      bpm: row.bpm ?? 120,
+      tags: row.tags ?? [],
+      is_public: row.is_public ?? false,
+      export_format: row.export_format ?? exportFormat,
+    }).catch(() => buildFallbackRecordingFeedback({
+      title,
+      duration_seconds: row.duration_seconds ?? 0,
+      preset: row.preset ?? "acoustic_fingerpicking",
+      tuning: row.tuning ?? "standard",
+      bpm: row.bpm ?? 120,
+      tags: row.tags ?? [],
+      is_public: row.is_public ?? false,
+      export_format: row.export_format ?? exportFormat,
+    }))
+    : buildFallbackRecordingFeedback({
+      title,
+      duration_seconds: row.duration_seconds ?? 0,
+      preset: row.preset ?? "acoustic_fingerpicking",
+      tuning: row.tuning ?? "standard",
+      bpm: row.bpm ?? 120,
+      tags: row.tags ?? [],
+      is_public: row.is_public ?? false,
+      export_format: row.export_format ?? exportFormat,
+    });
+
+  row.ai_feedback = aiFeedback;
+
   const { data, error } = await auth.adminClient
     .from("guitar_recordings")
     .insert(row)
@@ -519,6 +552,7 @@ async function saveRecording(auth: AuthContext, body: Json) {
       fileMimeType,
       exportFormat,
       durationDisplay: row.duration_display,
+      aiFeedback,
       createdAt: now,
     },
   });
@@ -841,6 +875,94 @@ function buildFallbackAiPayload(
       ? defaultPracticeMenu(mainPreset)
       : [],
   };
+}
+
+function buildFallbackRecordingFeedback(
+  recording: {
+    title: string;
+    duration_seconds: number;
+    preset: string;
+    tuning: string;
+    bpm: number;
+    tags: string[];
+    is_public: boolean;
+    export_format: string;
+  },
+) {
+  const presetLabel = RECORDING_PRESETS[recording.preset]?.description ?? recording.preset;
+  const durationSeconds = recording.duration_seconds ?? 0;
+  const lead =
+    durationSeconds < 45
+      ? "フレーズの芯はつかめています。"
+      : durationSeconds > 180
+      ? "しっかり弾き切れていて、練習の密度も見えます。"
+      : "まとまりのある録音になっています。";
+
+  const tempo =
+    recording.bpm >= 140
+      ? "テンポが速めなので、ピッキングの粒立ちを少し意識するとさらに安定しそうです。"
+      : recording.bpm > 0 && recording.bpm < 80
+      ? "ゆっくり目なので、音の伸びとリズムの置き方を丁寧に確認するのに向いています。"
+      : `BPM ${recording.bpm} 前後で、フォーム確認とグルーブ作りのバランスが取りやすい設定です。`;
+
+  const tagLine = recording.tags.length > 0
+    ? `今回のテーマは ${recording.tags.slice(0, 3).map((tag) => `#${tag}`).join(" ")} ですね。`
+    : `${presetLabel} と ${recording.tuning} チューニングの相性を次回も比較すると改善点が見えやすくなります。`;
+
+  const shareLine = recording.is_public
+    ? `公開設定なので、${recording.export_format.toUpperCase()} のまま共有して反応を見てもよさそうです。`
+    : "良いテイクが録れたら公開して、反応の良かったパターンを残していきましょう。";
+
+  return [lead, tempo, tagLine, shareLine].join(" ");
+}
+
+async function generateRecordingFeedback(
+  recording: {
+    title: string;
+    duration_seconds: number;
+    preset: string;
+    tuning: string;
+    bpm: number;
+    tags: string[];
+    is_public: boolean;
+    export_format: string;
+  },
+) {
+  const prompt = `
+あなたはギター練習コーチです。以下の録音メタデータをもとに、
+日本語で 2-4 文の短いフィードバックを書いてください。
+励ましつつ、次に意識するとよい改善ポイントを 1 つ含めてください。
+Markdown や箇条書きは使わず、プレーンテキストだけを返してください。
+
+${JSON.stringify(recording, null, 2)}
+`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.5,
+          maxOutputTokens: 220,
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Gemini recording feedback request failed");
+  }
+
+  const payload = await response.json();
+  const raw = payload?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+  if (!raw) {
+    throw new Error("Gemini recording feedback was empty");
+  }
+
+  return raw.replace(/\s+/g, " ").trim();
 }
 
 async function generateGeminiCoaching(

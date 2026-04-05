@@ -4,8 +4,10 @@ import 'dart:js_interop';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -271,6 +273,102 @@ class _GuitarRecordingStudioPageState
         .toList();
   }
 
+  List<Map<String, dynamic>> _upsertRecordingList(
+    List<Map<String, dynamic>> recordings,
+    Map<String, dynamic> recording,
+  ) {
+    final recordingId = _recordingIdOf(recording);
+    if (recordingId.isEmpty) {
+      return List<Map<String, dynamic>>.from(recordings);
+    }
+    final next = List<Map<String, dynamic>>.from(recordings);
+    final index = next.indexWhere((item) => _recordingIdOf(item) == recordingId);
+    if (index >= 0) {
+      next[index] = recording;
+    } else {
+      next.insert(0, recording);
+    }
+    next.sort(
+      (left, right) =>
+          _recordingCreatedAtOf(right).compareTo(_recordingCreatedAtOf(left)),
+    );
+    return next;
+  }
+
+  String _buildShareUrl(String recordingId) {
+    return 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+  }
+
+  String _mimeTypeForExtension(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'm4a':
+      case 'mp4':
+        return 'audio/mp4';
+      case 'ogg':
+        return 'audio/ogg';
+      case 'webm':
+        return 'audio/webm';
+      default:
+        return 'audio/wav';
+    }
+  }
+
+  String _buildShareMessage(String title, {String? publicUrl}) {
+    final normalizedTitle = title.trim().isEmpty ? 'guitar-recording' : title.trim();
+    return <String>[
+      'ギター録音をシェアします',
+      normalizedTitle,
+      if (publicUrl != null && publicUrl.isNotEmpty) publicUrl,
+      '#ギター #録音 #buildinpublic',
+    ].join('\n');
+  }
+
+  void _downloadBytesAsFile(Uint8List bytes, String mimeType, String fileName) {
+    final blob = web.Blob(
+      [bytes.buffer.toJS].toJS,
+      web.BlobPropertyBag(type: mimeType),
+    );
+    final blobUrl = web.URL.createObjectURL(blob);
+    final anchor = web.HTMLAnchorElement()
+      ..href = blobUrl
+      ..download = fileName
+      ..style.display = 'none';
+    web.document.body?.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    web.URL.revokeObjectURL(blobUrl);
+  }
+
+  Future<bool> _tryShareAudioFile({
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileName,
+    required String text,
+  }) async {
+    try {
+      final file = XFile.fromData(bytes, mimeType: mimeType, name: fileName);
+      await SharePlus.instance.share(
+        ShareParams(files: [file], fileNameOverrides: [fileName], text: text, subject: fileName),
+      );
+      return true;
+    } catch (e) {
+      debugPrint('share audio failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _tryShareText(String text, {String? subject}) async {
+    try {
+      await SharePlus.instance.share(ShareParams(text: text, subject: subject));
+      return true;
+    } catch (e) {
+      debugPrint('share text failed: $e');
+      return false;
+    }
+  }
+
   String _preferredRecorderMimeType() {
     const candidates = <String>[
       'audio/mp4;codecs=mp4a.40.2',
@@ -477,7 +575,9 @@ class _GuitarRecordingStudioPageState
   }
 
   Future<void> _shareCurrentRecording() async {
-    if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
+    final bytes = _shareableAudioBytes;
+    final mimeType = _shareableAudioMimeType;
+    if (bytes == null || mimeType == null) {
       return;
     }
     final title = _titleController.text.trim().isNotEmpty
@@ -486,28 +586,29 @@ class _GuitarRecordingStudioPageState
     final fileName = _buildLocalFileName(title, _shareableAudioExtension);
     final publicUrl =
         _isPublic && _savedRecordingId != null
-            ? 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=${_savedRecordingId!}'
+            ? _buildShareUrl(_savedRecordingId!)
             : null;
+    final shareText = _buildShareMessage(title, publicUrl: publicUrl);
     setState(() => _isSharingFile = true);
     try {
-      final blob = web.Blob(
-        [_shareableAudioBytes!.buffer.toJS].toJS,
-        web.BlobPropertyBag(type: _shareableAudioMimeType!),
+      var shared = await _tryShareAudioFile(
+        bytes: bytes,
+        mimeType: mimeType,
+        fileName: fileName,
+        text: shareText,
       );
-      final blobUrl = web.URL.createObjectURL(blob);
-      final anchor = web.HTMLAnchorElement()
-        ..href = blobUrl
-        ..download = fileName
-        ..style.display = 'none';
-      web.document.body?.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      web.URL.revokeObjectURL(blobUrl);
+      if (!shared && publicUrl != null) {
+        shared = await _tryShareText(shareText, subject: fileName);
+      }
+      if (!shared) {
+        _downloadBytesAsFile(bytes, mimeType, fileName);
+      }
       if (!mounted) return;
+      final message = shared ? '共有シートを開きました' : '$fileName をダウンロードしました';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '$fileName をダウンロードしました${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
+            '$message${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
           ),
           backgroundColor: const Color(0xFF4CAF50),
           duration: const Duration(seconds: 3),
@@ -517,7 +618,86 @@ class _GuitarRecordingStudioPageState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('ダウンロードに失敗しました: $e'),
+          content: Text('共有に失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isSharingFile = false);
+    }
+  }
+
+  Future<void> _shareSavedRecording(Map<String, dynamic> recording) async {
+    final title = recording['title']?.toString().trim().isNotEmpty == true
+        ? recording['title'].toString().trim()
+        : 'guitar-recording';
+    final extension =
+        recording['exportFormat']?.toString().trim().isNotEmpty == true
+            ? recording['exportFormat'].toString().trim()
+            : 'wav';
+    final mimeType =
+        recording['fileMimeType']?.toString().trim().isNotEmpty == true
+            ? recording['fileMimeType'].toString().trim()
+            : _mimeTypeForExtension(extension);
+    final fileName = _buildLocalFileName(title, extension);
+    final recordingId = _recordingIdOf(recording);
+    final publicUrl = recording['isPublic'] == true && recordingId.isNotEmpty
+        ? _buildShareUrl(recordingId)
+        : null;
+    final shareText = _buildShareMessage(title, publicUrl: publicUrl);
+    final filePath = recording['filePath']?.toString() ?? '';
+
+    setState(() => _isSharingFile = true);
+    try {
+      var shared = false;
+      Uint8List? downloadedBytes;
+
+      if (filePath.isNotEmpty) {
+        downloadedBytes = await _supabase.storage
+            .from(_recordingsBucket)
+            .download(filePath);
+        shared = await _tryShareAudioFile(
+          bytes: downloadedBytes,
+          mimeType: mimeType,
+          fileName: fileName,
+          text: shareText,
+        );
+      }
+
+      if (!shared && publicUrl != null) {
+        shared = await _tryShareText(shareText, subject: fileName);
+      }
+
+      if (!shared && downloadedBytes != null) {
+        _downloadBytesAsFile(downloadedBytes, mimeType, fileName);
+      }
+
+      if (!mounted) return;
+      if (!shared && downloadedBytes == null && publicUrl != null) {
+        await Clipboard.setData(ClipboardData(text: publicUrl));
+      }
+      final message = shared
+          ? '共有シートを開きました'
+          : downloadedBytes != null
+              ? '$fileName をダウンロードしました'
+              : publicUrl != null
+                  ? '共有URLをコピーしました'
+                  : '共有できる録音が見つかりませんでした';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '$message${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
+          ),
+          backgroundColor:
+              shared ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('共有に失敗しました: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -729,16 +909,11 @@ class _GuitarRecordingStudioPageState
     try {
       final shareUrl =
           recordingId.isNotEmpty && recordingId != 'unknown'
-              ? 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId'
+              ? _buildShareUrl(recordingId)
               : null;
-      final message = [
-        '🎸 ギター演奏を録音しました',
-        '「$title」',
-        if (shareUrl != null) shareUrl,
-        '#ギター #録音 #buildinpublic',
-      ].join('\n');
+      final shareMessage = _buildShareMessage('「$title」', publicUrl: shareUrl);
       final intentUrl =
-          'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(message)}';
+          'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(shareMessage)}';
       web.window.open(intentUrl, '_blank');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1235,17 +1410,23 @@ class _GuitarRecordingStudioPageState
         },
       );
       // レスポンスから recording ID を取得 (共有URL生成用)
-      String? recId;
-      try {
-        final data = res.data;
-        if (data is Map) {
-          recId = data['recordingId']?.toString() ??
-              data['id']?.toString();
+      final data = _parseResponse(res.data);
+      final savedRecording = _normalizeRecordingMap(data?['recording']);
+      String? recId = data?['recordingId']?.toString() ?? data?['id']?.toString();
+      if ((recId == null || recId.isEmpty) && savedRecording != null) {
+        final normalizedId = _recordingIdOf(savedRecording);
+        if (normalizedId.isNotEmpty) {
+          recId = normalizedId;
         }
-      } catch (_) {}
+      }
       setState(() {
         _savedSuccessfully = true;
         _savedRecordingId = recId;
+        if (savedRecording != null) {
+          final next = _upsertRecordingList(_recordings, savedRecording);
+          _recordings = next;
+          _practiceStats = _buildLocalPracticeStats(next);
+        }
       });
       await _fetchRecordings();
       await _fetchPracticeStats();
@@ -1527,7 +1708,7 @@ class _GuitarRecordingStudioPageState
           setState(() => _tabIndex = index);
           if (index == 3) _fetchRecordings();
           if (index == 4) _fetchPracticeStats();
-          if (index == 5 && _aiAnalysis == null) _fetchAIAnalysis();
+          if (index == 5) _fetchAIAnalysis();
         },
         child: Container(
           height: 48,
@@ -2040,8 +2221,7 @@ class _GuitarRecordingStudioPageState
                     child: OutlinedButton.icon(
                       onPressed: () {
                         final id = _savedRecordingId ?? 'unknown';
-                        final url =
-                            'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$id';
+                        final url = _buildShareUrl(id);
                         Clipboard.setData(ClipboardData(text: url));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -2642,6 +2822,7 @@ class _GuitarRecordingStudioPageState
           final tags = r['tags'] as List? ?? [];
           final recordingId = r['recordingId'] as String? ?? '';
           final exportFormat = r['exportFormat'] as String? ?? 'wav';
+          final aiFeedback = _recordingAiFeedbackOf(r);
           return Card(
             color: const Color(0xFF16213E),
             margin: const EdgeInsets.only(bottom: 8),
@@ -2716,6 +2897,42 @@ class _GuitarRecordingStudioPageState
                       ),).toList(),
                     ),
                   ],
+                  if (aiFeedback != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F3460),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(top: 1),
+                            child: Icon(
+                              Icons.auto_awesome,
+                              size: 14,
+                              color: Color(0xFF7C3AED),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              aiFeedback,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -2731,6 +2948,12 @@ class _GuitarRecordingStudioPageState
                         visualDensity: VisualDensity.compact,
                         tooltip: 'ダウンロード',
                       ),
+                      IconButton(
+                        onPressed: _isSharingFile ? null : () => _shareSavedRecording(r),
+                        icon: const Icon(Icons.ios_share, color: Colors.white70),
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'ファイル共有',
+                      ),
                       if (recordingId.isNotEmpty) ...[
                         IconButton(
                           onPressed: () => _postToX(title, recordingId),
@@ -2741,7 +2964,7 @@ class _GuitarRecordingStudioPageState
                         if (isPublicRec)
                           IconButton(
                             onPressed: () {
-                              final shareUrl = 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+                              final shareUrl = _buildShareUrl(recordingId);
                               Clipboard.setData(ClipboardData(text: shareUrl));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(

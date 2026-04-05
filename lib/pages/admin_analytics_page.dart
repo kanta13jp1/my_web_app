@@ -3172,16 +3172,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               )
             else
               Builder(
-                builder: (bCtx) {
+                builder: (context) {
                   final filteredUsers = _userSearchQuery.isEmpty
                       ? _adminUsers
                       : _adminUsers.where((u) {
                           final q = _userSearchQuery.toLowerCase();
-                          final em =
+                          final email =
                               u['email']?.toString().toLowerCase() ?? '';
-                          final nm =
+                          final name =
                               u['displayName']?.toString().toLowerCase() ?? '';
-                          return em.contains(q) || nm.contains(q);
+                          return email.contains(q) || name.contains(q);
                         }).toList();
                   if (filteredUsers.isEmpty) {
                     return const Padding(
