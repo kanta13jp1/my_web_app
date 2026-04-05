@@ -87,6 +87,7 @@ import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
 import '../pages/gantt_timeline_page.dart';
 import '../pages/guitar_recording_studio_page.dart';
+import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
 import '../pages/focus_timer_page.dart';
 import '../pages/ai_writing_assistant_page.dart';
@@ -1246,6 +1247,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'メトロノーム', 'コード', 'チューニング', 'スタジオ',
       ],
       onOpen: (context) => _pushPage(context, const GuitarRecordingStudioPage()),
+    ),
+    HomeToolEntry(
+      id: 'public-guitar-gallery',
+      sectionId: 'personal',
+      title: '公開ギターギャラリー',
+      subtitle: '全ユーザーの公開録音を聴く。いいね・再生数でランキング',
+      icon: Icons.library_music_outlined,
+      color: const Color(0xFFFF6B35),
+      keywords: const <String>[
+        'ギター', '公開', 'ギャラリー', '録音', '再生', 'コミュニティ', 'ランキング',
+      ],
+      onOpen: (context) =>
+          _pushPage(context, const PublicGuitarGalleryPage()),
     ),
     HomeToolEntry(
       id: 'music-collaboration',

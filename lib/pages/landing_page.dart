@@ -749,6 +749,42 @@ $input
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        // ギャラリーリンク
+        GestureDetector(
+          onTap: () =>
+              Navigator.of(context).pushNamed('/public-guitar-gallery'),
+          child: Container(
+            width: double.infinity,
+            padding:
+                const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B35).withAlpha(20),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFFFF6B35).withAlpha(80),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(
+                  Icons.library_music_outlined,
+                  color: Color(0xFFFF6B35),
+                  size: 18,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  '公開ギャラリーで録音を聴く →',
+                  style: TextStyle(
+                    color: Color(0xFFFF6B35),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 16),
         // アプリ名バッジ
         Center(

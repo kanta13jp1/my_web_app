@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 VSCode#5 (ギタースタジオ完成確認・全175ルート検証・flutter analyze 0エラー維持)
+最終更新: 2026-04-06 daily-development セッション2 (公開ギターギャラリー実装・Edge Function public_gallery アクション追加・LP 導線追加・sitemap 更新・flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -382,7 +382,9 @@
 ### 2026-04-06 daily-development 実装済み (自動)
 
 - **カレンダービュー (TableCalendar) 全面刷新** (daily-development 2026-04-06): `calendar_events_page.dart` を `table_calendar` パッケージで月次カレンダーUIに全面刷新。月次ビュー切替・日付選択・日付別イベントリスト・イベント作成ダイアログ（タイトル/説明/日付ピッカー/5色カラーピッカー/終日フラグ）・削除確認ダイアログを実装。`calendar-events` Edge Function の GET `view=month` エンドポイントと連携。Notionパリティ「カレンダービュー」を長期ロードマップから前倒し実装完了。flutter analyze 0件維持。
-- **ブログ下書き作成** (daily-development 2026-04-06): `docs/blog-drafts/2026-04-05-calendar-view-guitar-studio.md` — TableCalendarカレンダービュー実装・mounted チェックパターン解説記事を作成。
+- **ブログ下書き作成** (daily-development 2026-04-06 セッション1): `docs/blog-drafts/2026-04-05-calendar-view-guitar-studio.md` — TableCalendarカレンダービュー実装・mounted チェックパターン解説記事を作成。
+- **公開ギターレコーディングギャラリー実装** (daily-development 2026-04-06 セッション2): `public_guitar_gallery_page.dart` を新規作成。`guitar-recording-studio` Edge Function に `public_gallery` アクションを追加（既存 Function へのアクション拡張のため quota 消費なし・93/94 維持）。全ユーザーの `is_public=true` 録音を一覧表示。新着/いいね/再生数 3ソート・ページネーション・いいねボタン付き。LP にギャラリー導線追加。`/public-guitar-gallery` ルート追加。sitemap.xml に追加 (priority 0.8・changefreq daily)。業務メニューカタログ `personal` セクションに登録。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development 2026-04-06 セッション2): `docs/blog-drafts/2026-04-06-public-guitar-gallery.md` — Edge Function アクション拡張パターン・バイラル設計・quota 制約下での機能追加解説記事。
 
 ### 2026-04-03 daily-development 実装済み (自動)
 

@@ -168,6 +168,10 @@ serve(async (req: Request) => {
         return jsonResponse(
           await getPublicRecording(auth.adminClient, url.searchParams.get("recordingId")),
         );
+      case "public_gallery":
+        return jsonResponse(
+          await listPublicRecordings(auth.adminClient, url),
+        );
       case "save_recording":
         return jsonResponse(await saveRecording(auth, body));
       case "delete_recording":
@@ -194,6 +198,7 @@ serve(async (req: Request) => {
               "recordings",
               "practice_stats",
               "public_recording",
+              "public_gallery",
               "save_recording",
               "delete_recording",
               "like_recording",
@@ -413,6 +418,36 @@ async function buildPracticeStats(auth: AuthContext) {
     streakDays: calculateStreak(sessions.map((row) => row.created_at)),
     weeklyBreakdown: buildWeeklyBreakdown(sessions),
     favoritePreset: findFavoritePreset(sessions.map((row) => row.preset)),
+  };
+}
+
+async function listPublicRecordings(
+  adminClient: SupabaseClient,
+  url: URL,
+) {
+  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10), 50);
+  const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
+  const sortBy = url.searchParams.get("sortBy") ?? "created_at"; // created_at | likes | plays
+  const validSorts = ["created_at", "likes", "plays"];
+  const orderColumn = validSorts.includes(sortBy) ? sortBy : "created_at";
+
+  const { data, error, count } = await adminClient
+    .from("guitar_recordings")
+    .select("*", { count: "exact" })
+    .eq("is_public", true)
+    .order(orderColumn, { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) throw error;
+
+  const recordings = ((data ?? []) as GuitarRecordingRow[]).map(mapRecordingRow);
+
+  return {
+    success: true,
+    recordings,
+    total: count ?? 0,
+    offset,
+    limit,
   };
 }
 

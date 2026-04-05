@@ -147,6 +147,7 @@ import 'package:my_web_app/pages/viral_video_generator_page.dart';
 import 'package:my_web_app/pages/audio_effects_processor_page.dart';
 import 'package:my_web_app/pages/fitness_health_tracker_page.dart';
 import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
+import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
@@ -899,6 +900,10 @@ class MyApp extends StatelessWidget {
           case '/guitar-recording-studio':
             return MaterialPageRoute(
               builder: (_) => const GuitarRecordingStudioPage(),
+            );
+          case '/public-guitar-gallery':
+            return MaterialPageRoute(
+              builder: (_) => const PublicGuitarGalleryPage(),
             );
           case '/music-collaboration':
             return MaterialPageRoute(

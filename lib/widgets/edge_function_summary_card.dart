@@ -260,7 +260,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('viral-video-generator', 'バイラル動画ジェネレーター', true, '/viral-video-generator', 'バイラル動画ジェネレーターページ'),
     // 追加 (cs-check 自動連携)
     _FnDef('audio-effects-processor', 'オーディオエフェクトプロセッサー', true, '/audio-effects-processor', 'オーディオエフェクトページ'),
-    _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ', true, '/guitar-recording-studio', 'ギターレコーディングスタジオページ'),
+    _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ + 公開ギャラリー', true, '/guitar-recording-studio', 'スタジオ (/guitar-recording-studio) / 公開ギャラリー (/public-guitar-gallery)'),
     _FnDef('music-collaboration', '音楽コラボレーション', true, '/music-collaboration', '音楽コラボレーションページ'),
     _FnDef('spreadsheet-database', 'スプレッドシート・データベース', true, '/spreadsheet-database', 'スプレッドシートデータベースページ'),
     // 追加 (cs-check 自動連携)
