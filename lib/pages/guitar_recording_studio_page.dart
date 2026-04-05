@@ -179,9 +179,6 @@ class _GuitarRecordingStudioPageState
     return text;
   }
 
-  String _buildShareUrl(String recordingId) {
-    return 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
-  }
 
   int _calculateLocalStreakDays(List<Map<String, dynamic>> recordings) {
     final uniqueDays = recordings
@@ -255,59 +252,8 @@ class _GuitarRecordingStudioPageState
     };
   }
 
-  String _mimeTypeForExtension(String extension) {
-    switch (extension.toLowerCase()) {
-      case 'mp3':
-        return 'audio/mpeg';
-      case 'm4a':
-      case 'mp4':
-        return 'audio/mp4';
-      case 'ogg':
-        return 'audio/ogg';
-      case 'webm':
-        return 'audio/webm';
-      default:
-        return 'audio/wav';
-    }
-  }
 
-  String _buildShareMessage(String title, {String? publicUrl}) {
-    final normalizedTitle =
-        title.trim().isEmpty ? 'guitar-recording' : title.trim();
-    return <String>[
-      'ギター録音をシェアします',
-      normalizedTitle,
-      if (publicUrl != null && publicUrl.isNotEmpty) publicUrl,
-      '#ギター #録音 #buildinpublic',
-    ].join('\n');
-  }
 
-  List<Map<String, dynamic>> _upsertRecordingList(
-    List<Map<String, dynamic>> recordings,
-    Map<String, dynamic> recording,
-  ) {
-    final recordingId = _recordingIdOf(recording);
-    if (recordingId.isEmpty) {
-      return List<Map<String, dynamic>>.from(recordings);
-    }
-
-    final next = List<Map<String, dynamic>>.from(recordings);
-    final index = next.indexWhere(
-      (item) => _recordingIdOf(item) == recordingId,
-    );
-
-    if (index >= 0) {
-      next[index] = recording;
-    } else {
-      next.insert(0, recording);
-    }
-
-    next.sort(
-      (left, right) =>
-          _recordingCreatedAtOf(right).compareTo(_recordingCreatedAtOf(left)),
-    );
-    return next;
-  }
 
   List<Map<String, dynamic>> _removeRecordingFromList(
     List<Map<String, dynamic>> recordings,
@@ -523,25 +469,6 @@ class _GuitarRecordingStudioPageState
     return path;
   }
 
-  void _downloadBytesAsFile(
-    Uint8List bytes,
-    String mimeType,
-    String fileName,
-  ) {
-    final blob = web.Blob(
-      [bytes.buffer.toJS].toJS,
-      web.BlobPropertyBag(type: mimeType),
-    );
-    final blobUrl = web.URL.createObjectURL(blob);
-    final anchor = web.HTMLAnchorElement()
-      ..href = blobUrl
-      ..download = fileName
-      ..style.display = 'none';
-    web.document.body?.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    web.URL.revokeObjectURL(blobUrl);
-  }
 
   Future<bool> _tryShareAudioFile({
     required Uint8List bytes,
@@ -570,20 +497,6 @@ class _GuitarRecordingStudioPageState
     }
   }
 
-  Future<bool> _tryShareText(String text, {String? subject}) async {
-    try {
-      await SharePlus.instance.share(
-        ShareParams(
-          text: text,
-          subject: subject,
-        ),
-      );
-      return true;
-    } catch (e) {
-      debugPrint('share text failed: $e');
-      return false;
-    }
-  }
 
   Future<void> _legacyShareCurrentRecording() async {
     if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
