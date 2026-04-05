@@ -558,7 +558,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               Text(
                 '${_info.name} の代わりに\n自分株式会社を使う',
                 style: const TextStyle(
-                  fontFamily: 'Noto Serif JP',
+                  fontFamily: 'NotoSansJP',
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
                   height: 1.25,
@@ -777,7 +777,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               const Text(
                 '今すぐ無料で始める',
                 style: TextStyle(
-                  fontFamily: 'Noto Serif JP',
+                  fontFamily: 'NotoSansJP',
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,

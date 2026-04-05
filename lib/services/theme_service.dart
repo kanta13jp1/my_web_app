@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeService extends ChangeNotifier {
+  static const String _appFontFamily = 'NotoSansJP';
+  static const List<String> _appFontFallback = <String>[
+    'NotoSansJP',
+    'NotoSans',
+    'NotoColorEmoji',
+  ];
+
   ThemeMode _themeMode = ThemeMode.system;
   Color _primaryColor = const Color(0xFF0F172A); // Default Navy
 
@@ -58,6 +65,8 @@ class ThemeService extends ChangeNotifier {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: _appFontFamily,
+      fontFamilyFallback: _appFontFallback,
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primaryColor,
         brightness: Brightness.light,
@@ -73,6 +82,8 @@ class ThemeService extends ChangeNotifier {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: _appFontFamily,
+      fontFamilyFallback: _appFontFallback,
       colorScheme: ColorScheme.fromSeed(
         seedColor: _primaryColor,
         brightness: Brightness.dark,
