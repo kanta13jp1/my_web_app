@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-04 ClaudeCode#18 (目標管理・ブックマーク同期ページ実装。ギタースタジオ品質修正。flutter analyze 0エラー維持)
+最終更新: 2026-04-05 VSCode#4 (フォントファミリー NotoSansJP 全体統一。ギタースタジオ自己レビュー完了。flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2548,6 +2548,33 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **Xに投稿ボタン**: 履歴リストの各アイテムに「Xに投稿」アイコンボタンを追加
 - **統計タブ**: `RefreshIndicator` でプルダウンリフレッシュ対応
 - **不要インポート削除**: `cross_file` / `share_plus` の未使用インポートを削除
+
+#### 品質確認
+- `flutter analyze`: **0エラー**
+
+---
+
+### Session VSCode#4 (2026-04-05): フォント統一・ギタースタジオ自己レビュー完了
+
+#### 修正
+
+**フォントファミリー統一**
+- `comparison_page.dart`: `'Noto Serif JP'` → `'NotoSansJP'` (2箇所)
+- `theme_service.dart`: `fontFamily: 'NotoSansJP'` と `fontFamilyFallback: ['NotoSansJP', 'NotoSans', 'NotoColorEmoji']` をライト/ダークテーマ双方に適用
+
+#### ギタースタジオ自己レビュー結果
+
+全機能レビュー完了 — 以下すべて実装済み・動作確認:
+
+- 録音タブ: マイク取得 (エコーキャンセル/ノイズ抑制OFF)・MediaRecorder (MP4/WebM フォールバック)・WAV変換・マスタリング
+- コード辞典タブ: chord-library Edge Function 連携・SVGコードダイアグラム
+- メトロノームタブ: Web Audio API ビープ音・拍子設定・BPMスライダー
+- 履歴タブ: RefreshIndicator・再生/ダウンロード/X投稿/共有リンクコピー・削除
+- 統計タブ: isLoadingStats/statsError 二状態管理・RefreshIndicator・ストリーク/練習時間カード
+- AIタブ: ai_analyze Edge Function 連携・AIギターコーチ表示
+- 共有機能: Blob download (share_plus 非使用・Web互換)・公開URL・Clipboard コピー
+- X投稿: Twitter intent URL (window.open) → ブラウザのX投稿画面を開く
+- 公開録音: `?share=<id>` URL パラメータ対応・公開ページ表示
 
 #### 品質確認
 - `flutter analyze`: **0エラー**
