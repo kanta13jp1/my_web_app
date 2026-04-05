@@ -6,7 +6,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -82,6 +81,12 @@ class _GuitarRecordingStudioPageState
   // X投稿
   bool _isPostingToX = false;
 
+  // オーディオレベルメーター (録音中のリアルタイム可視化)
+  web.AudioContext? _levelAudioCtx;
+  web.AnalyserNode? _analyserNode;
+  double _audioLevel = 0.0;
+  Timer? _levelTimer;
+
   // 録音ファイル (共有・保存用)
   static const String _recordingsBucket = 'guitar-recordings';
   Uint8List? _shareableAudioBytes;
@@ -95,6 +100,8 @@ class _GuitarRecordingStudioPageState
   Map<String, dynamic>? _sharedRecording;
   bool _isLoadingSharedRecording = false;
   String? _sharedRecordingError;
+  bool _isPlayingShared = false;
+  web.HTMLAudioElement? _sharedAudioElement;
 
   /// 最新録音のAIフィードバック (履歴リストの先頭から取得)
   String? get _latestRecordingAiFeedback =>
@@ -117,8 +124,12 @@ class _GuitarRecordingStudioPageState
 
   @override
   void dispose() {
+    _sharedAudioElement?.pause();
+    _sharedAudioElement = null;
     _stopMetronome();
     _recordingTimer?.cancel();
+    _levelTimer?.cancel();
+    _levelAudioCtx?.close();
     _mediaRecorder?.stop();
     _mediaStream?.getTracks().toDart.forEach((t) => t.stop());
     if (_audioUrl != null) {
@@ -178,7 +189,6 @@ class _GuitarRecordingStudioPageState
     if (text == null || text.isEmpty) return null;
     return text;
   }
-
 
   int _calculateLocalStreakDays(List<Map<String, dynamic>> recordings) {
     final uniqueDays = recordings
@@ -251,9 +261,6 @@ class _GuitarRecordingStudioPageState
       'favoritePreset': favoritePreset,
     };
   }
-
-
-
 
   List<Map<String, dynamic>> _removeRecordingFromList(
     List<Map<String, dynamic>> recordings,
@@ -469,36 +476,7 @@ class _GuitarRecordingStudioPageState
     return path;
   }
 
-
-  Future<bool> _tryShareAudioFile({
-    required Uint8List bytes,
-    required String mimeType,
-    required String fileName,
-    required String text,
-  }) async {
-    try {
-      final file = XFile.fromData(
-        bytes,
-        mimeType: mimeType,
-        name: fileName,
-      );
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [file],
-          fileNameOverrides: [fileName],
-          text: text,
-          subject: fileName,
-        ),
-      );
-      return true;
-    } catch (e) {
-      debugPrint('share audio failed: $e');
-      return false;
-    }
-  }
-
-
-  Future<void> _legacyShareCurrentRecording() async {
+  Future<void> _shareCurrentRecording() async {
     if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
       return;
     }
@@ -546,26 +524,6 @@ class _GuitarRecordingStudioPageState
     } finally {
       if (mounted) setState(() => _isSharingFile = false);
     }
-  }
-
-  Future<void> _shareCurrentRecording() async {
-    if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
-      return;
-    }
-    final title = _titleController.text.trim().isNotEmpty
-        ? _titleController.text.trim()
-        : 'guitar-recording';
-    final fileName = _buildLocalFileName(title, _shareableAudioExtension);
-    final text = _isPublic && _savedRecordingId != null
-        ? '🎸 $title\nhttps://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$_savedRecordingId'
-        : '🎸 $title';
-    final shared = await _tryShareAudioFile(
-      bytes: _shareableAudioBytes!,
-      mimeType: _shareableAudioMimeType!,
-      fileName: fileName,
-      text: text,
-    );
-    if (!shared) await _legacyShareCurrentRecording();
   }
 
   String? _extractSharedRecordingId() {
@@ -617,10 +575,25 @@ class _GuitarRecordingStudioPageState
   }
 
   Future<void> _playSharedRecording() async {
+    if (_isPlayingShared && _sharedAudioElement != null) {
+      _sharedAudioElement!.pause();
+      setState(() => _isPlayingShared = false);
+      return;
+    }
+
     final url = _sharedRecording?['playbackUrl']?.toString() ?? '';
     if (url.isEmpty) return;
-    final audio = web.HTMLAudioElement()..src = url;
-    audio.play();
+    
+    if (_sharedAudioElement == null) {
+      _sharedAudioElement = web.HTMLAudioElement()..src = url;
+      _sharedAudioElement!.onended = ((web.Event _) {
+        if (mounted) setState(() => _isPlayingShared = false);
+      }).toJS;
+    }
+
+    setState(() => _isPlayingShared = true);
+    _sharedAudioElement!.play();
+
     final recordingId = _sharedRecording?['recordingId']?.toString() ?? '';
     if (recordingId.isNotEmpty) {
       unawaited(
@@ -630,25 +603,6 @@ class _GuitarRecordingStudioPageState
         ),
       );
     }
-  }
-
-  void _downloadSharedRecording() {
-    final url = _sharedRecording?['playbackUrl']?.toString() ?? '';
-    if (url.isEmpty) return;
-    final title = _sharedRecording?['title']?.toString().trim().isNotEmpty == true
-        ? _sharedRecording!['title'].toString().trim()
-        : 'guitar-recording';
-    final extension =
-        _sharedRecording?['exportFormat']?.toString().trim().isNotEmpty == true
-            ? _sharedRecording!['exportFormat'].toString().trim()
-            : 'wav';
-    final anchor = web.HTMLAnchorElement()
-      ..href = url
-      ..download = _buildLocalFileName(title, extension)
-      ..style.display = 'none';
-    web.document.body?.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
   }
 
   Future<void> _fetchStudioData() async {
@@ -940,6 +894,33 @@ class _GuitarRecordingStudioPageState
 
       _mediaRecorder!.start(250);
 
+      // リアルタイムオーディオレベルメーター
+      try {
+        final levelCtx = web.AudioContext();
+        final source = levelCtx.createMediaStreamSource(stream);
+        final analyser = levelCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        _levelAudioCtx = levelCtx;
+        _analyserNode = analyser;
+        final bufferLength = analyser.frequencyBinCount;
+        _levelTimer = Timer.periodic(const Duration(milliseconds: 80), (_) {
+          if (!_isRecording || _isPaused || _analyserNode == null) {
+            if (mounted) setState(() => _audioLevel = 0.0);
+            return;
+          }
+          final data = Uint8List(bufferLength);
+          _analyserNode!.getByteTimeDomainData(data.toJS);
+          double sum = 0;
+          for (final b in data) {
+            final normalized = (b - 128) / 128.0;
+            sum += normalized * normalized;
+          }
+          final rms = math.sqrt(sum / bufferLength);
+          if (mounted) setState(() => _audioLevel = rms.clamp(0.0, 1.0));
+        });
+      } catch (_) {}
+
       setState(() {
         _isRecording = true;
         _isPaused = false;
@@ -1121,11 +1102,17 @@ class _GuitarRecordingStudioPageState
 
   void _stopRecording() {
     _recordingTimer?.cancel();
+    _levelTimer?.cancel();
+    _levelTimer = null;
+    _levelAudioCtx?.close();
+    _levelAudioCtx = null;
+    _analyserNode = null;
     _mediaRecorder?.stop();
     _mediaStream?.getTracks().toDart.forEach((t) => t.stop());
     setState(() {
       _isRecording = false;
       _isPaused = false;
+      _audioLevel = 0.0;
     });
   }
 
@@ -1136,6 +1123,11 @@ class _GuitarRecordingStudioPageState
   }
 
   void _discardRecording() {
+    _levelTimer?.cancel();
+    _levelTimer = null;
+    _levelAudioCtx?.close();
+    _levelAudioCtx = null;
+    _analyserNode = null;
     if (_audioUrl != null) web.URL.revokeObjectURL(_audioUrl!);
     setState(() {
       _audioUrl = null;
@@ -1148,6 +1140,7 @@ class _GuitarRecordingStudioPageState
       _recordingDuration = Duration.zero;
       _savedSuccessfully = false;
       _savedRecordingId = null;
+      _audioLevel = 0.0;
     });
   }
 
@@ -1365,15 +1358,17 @@ class _GuitarRecordingStudioPageState
   Widget _buildSharedRecordingScaffold() {
     final recording = _sharedRecording;
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF16213E),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         foregroundColor: Colors.white,
-        title: const Text('公開ギター録音'),
+        title: const Text('🎸 ギター練習レポート', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
       ),
       body: _isLoadingSharedRecording
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFE94560)),
+              child: CircularProgressIndicator(color: Color(0xFF818CF8)),
             )
           : recording == null
               ? Center(
@@ -1390,70 +1385,137 @@ class _GuitarRecordingStudioPageState
                     ],
                   ),
                 )
-              : Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        recording['title']?.toString() ?? 'guitar-recording',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
+              : _buildSharedRecordingContent(recording),
+    );
+  }
+
+  Widget _buildSharedRecordingContent(Map<String, dynamic> recording) {
+    final title = recording['title']?.toString() ?? '無題の録音';
+    final preset = recording['preset']?.toString() ?? '-';
+    final duration = recording['durationSeconds'] as int? ?? 0;
+    
+    // Edge Function側で保存された分析データがあれば取得
+    final analysisData = recording['analysis_data'] as Map<String, dynamic>? ?? {};
+    final bpm = analysisData['bpm']?.toString() ?? recording['bpm']?.toString() ?? '-';
+    final advice = analysisData['advice']?.toString() ?? _recordingAiFeedbackOf(recording) ?? 'AIが分析を行い、的確なアドバイスとパーソナライズされた練習メニューを提案します。';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          
+          // メタデータバッジ
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildShareBadge(Icons.timer, _formatDuration(Duration(seconds: duration))),
+              _buildShareBadge(Icons.album, _presetLabel(preset)),
+              _buildShareBadge(Icons.speed, '$bpm BPM'),
+            ],
+          ),
+          const SizedBox(height: 40),
+
+          // 再生プレイヤー
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isPlayingShared ? const Color(0xFF818CF8).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              boxShadow: _isPlayingShared
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF818CF8).withValues(alpha: 0.3),
+                        blurRadius: 30,
+                        spreadRadius: 10,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${recording['durationDisplay'] ?? recording['durationSeconds'] ?? '-'} / ${recording['preset'] ?? '-'} / ${recording['exportFormat'] ?? 'wav'}',
-                        style: const TextStyle(color: Colors.white54),
-                      ),
-                      const SizedBox(height: 24),
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF16213E),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white12),
-                        ),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.graphic_eq,
-                              color: Color(0xFFE94560),
-                              size: 56,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: _playSharedRecording,
-                                  icon: const Icon(Icons.play_arrow),
-                                  label: const Text('再生'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF4CAF50),
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                OutlinedButton.icon(
-                                  onPressed: _downloadSharedRecording,
-                                  icon: const Icon(Icons.download_outlined),
-                                  label: const Text('保存'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white70,
-                                    side: const BorderSide(color: Colors.white24),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ]
+                  : null,
+            ),
+            child: IconButton(
+              iconSize: 64,
+              icon: Icon(_isPlayingShared ? Icons.pause : Icons.play_arrow),
+              color: _isPlayingShared ? const Color(0xFF818CF8) : Colors.white,
+              onPressed: _playSharedRecording,
+            ),
+          ),
+          const SizedBox(height: 40),
+
+          // AIアドバイス
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Color(0xFF818CF8)),
+                    SizedBox(width: 8),
+                    Text('AIコーチからのアドバイス', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  ],
                 ),
+                const SizedBox(height: 16),
+                Text(
+                  advice,
+                  style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.6),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 48),
+          
+          // CTA（Call To Action）
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 24),
+          const Text('あなたの演奏もAIに分析してもらいませんか？', style: TextStyle(color: Colors.white70)),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false);
+            },
+            icon: const Icon(Icons.rocket_launch),
+            label: const Text('自分株式会社を無料で始める'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF818CF8),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+          ),
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareBadge(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white70),
+          const SizedBox(width: 6),
+          Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
     );
   }
 
@@ -1713,26 +1775,51 @@ class _GuitarRecordingStudioPageState
   }
 
   Widget _buildWaveformIndicator() {
-    return SizedBox(
-      height: 24,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(
-          12,
-          (i) => AnimatedContainer(
-            duration: Duration(milliseconds: 100 + i * 30),
-            width: 4,
-            height: _isRecording && !_isPaused
-                ? (4.0 + (i % 5) * 4.0)
-                : 4.0,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE94560),
-              borderRadius: BorderRadius.circular(2),
+    final active = _isRecording && !_isPaused;
+    final level = _audioLevel;
+    return Column(
+      children: [
+        SizedBox(
+          height: 32,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(16, (i) {
+              final phase = (i / 15.0) * math.pi;
+              final h = active
+                  ? (4.0 + math.sin(phase + level * math.pi * 2) * level * 20)
+                      .clamp(4.0, 28.0)
+                  : 4.0;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 80),
+                width: 4,
+                height: h,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: Color.lerp(
+                    const Color(0xFFE94560),
+                    const Color(0xFFFF9800),
+                    level.clamp(0.0, 1.0),
+                  ),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          width: 160,
+          height: 4,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: active ? level.clamp(0.0, 1.0) : 0.0,
+              backgroundColor: Colors.white12,
+              color: level > 0.7 ? Colors.orange : const Color(0xFFE94560),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 
