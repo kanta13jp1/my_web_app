@@ -95,6 +95,12 @@ class _GuitarRecordingStudioPageState
   bool _isLoadingSharedRecording = false;
   String? _sharedRecordingError;
 
+  /// 最新録音のAIフィードバック (履歴リストの先頭から取得)
+  String? get _latestRecordingAiFeedback =>
+      _recordings.isNotEmpty
+          ? _recordingAiFeedbackOf(_recordings.first)
+          : null;
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +140,181 @@ class _GuitarRecordingStudioPageState
       } catch (_) {}
     }
     return null;
+  }
+
+  Map<String, dynamic>? _normalizeRecordingMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return Map<String, dynamic>.from(raw);
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    return null;
+  }
+
+  String _recordingIdOf(Map<String, dynamic> recording) {
+    return recording['recordingId']?.toString() ??
+        recording['id']?.toString() ??
+        '';
+  }
+
+  int _recordingDurationOf(Map<String, dynamic> recording) {
+    final raw = recording['durationSeconds'] ?? recording['duration_seconds'];
+    if (raw is int) return raw;
+    if (raw is num) return raw.round();
+    return int.tryParse(raw?.toString() ?? '') ?? 0;
+  }
+
+  String _recordingCreatedAtOf(Map<String, dynamic> recording) {
+    return recording['createdAt']?.toString() ??
+        recording['created_at']?.toString() ??
+        '';
+  }
+
+  String _recordingPresetOf(Map<String, dynamic> recording) {
+    return recording['preset']?.toString() ?? '';
+  }
+
+  String? _recordingAiFeedbackOf(Map<String, dynamic> recording) {
+    final text =
+        (recording['aiFeedback'] ?? recording['ai_feedback'])?.toString().trim();
+    if (text == null || text.isEmpty) return null;
+    return text;
+  }
+
+  String _buildShareUrl(String recordingId) {
+    return 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+  }
+
+  int _calculateLocalStreakDays(List<Map<String, dynamic>> recordings) {
+    final uniqueDays = recordings
+        .map(_recordingCreatedAtOf)
+        .where((value) => value.isNotEmpty)
+        .map(DateTime.tryParse)
+        .whereType<DateTime>()
+        .map((value) => DateTime.utc(value.year, value.month, value.day))
+        .map((value) => value.toIso8601String().substring(0, 10))
+        .toSet()
+        .toList()
+      ..sort((left, right) => right.compareTo(left));
+
+    if (uniqueDays.isEmpty) return 0;
+
+    final now = DateTime.now().toUtc();
+    final today = DateTime.utc(now.year, now.month, now.day);
+    int streak = 0;
+
+    for (int index = 0; index < uniqueDays.length; index++) {
+      final expected = today.subtract(Duration(days: index));
+      final expectedKey = expected.toIso8601String().substring(0, 10);
+      if (uniqueDays[index] == expectedKey) {
+        streak += 1;
+        continue;
+      }
+      if (index == 0) {
+        final yesterday = today.subtract(const Duration(days: 1));
+        final yesterdayKey = yesterday.toIso8601String().substring(0, 10);
+        if (uniqueDays[index] == yesterdayKey) {
+          streak = 1;
+        }
+      }
+      break;
+    }
+
+    return streak;
+  }
+
+  Map<String, dynamic> _buildLocalPracticeStats(
+    List<Map<String, dynamic>> recordings,
+  ) {
+    final totalSeconds = recordings.fold<int>(
+      0,
+      (sum, recording) => sum + _recordingDurationOf(recording),
+    );
+    final presetCounts = <String, int>{};
+    for (final recording in recordings) {
+      final preset = _recordingPresetOf(recording);
+      if (preset.isEmpty) continue;
+      presetCounts[preset] = (presetCounts[preset] ?? 0) + 1;
+    }
+
+    var favoritePreset = '-';
+    var favoriteCount = -1;
+    presetCounts.forEach((preset, count) {
+      if (count > favoriteCount) {
+        favoritePreset = preset;
+        favoriteCount = count;
+      }
+    });
+
+    return <String, dynamic>{
+      'success': true,
+      'totalSessions': recordings.length,
+      'totalMinutes': (totalSeconds / 60).round(),
+      'averageDurationSeconds':
+          recordings.isEmpty ? 0 : (totalSeconds / recordings.length).round(),
+      'streakDays': _calculateLocalStreakDays(recordings),
+      'favoritePreset': favoritePreset,
+    };
+  }
+
+  String _mimeTypeForExtension(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'm4a':
+      case 'mp4':
+        return 'audio/mp4';
+      case 'ogg':
+        return 'audio/ogg';
+      case 'webm':
+        return 'audio/webm';
+      default:
+        return 'audio/wav';
+    }
+  }
+
+  String _buildShareMessage(String title, {String? publicUrl}) {
+    final normalizedTitle =
+        title.trim().isEmpty ? 'guitar-recording' : title.trim();
+    return <String>[
+      'ギター録音をシェアします',
+      normalizedTitle,
+      if (publicUrl != null && publicUrl.isNotEmpty) publicUrl,
+      '#ギター #録音 #buildinpublic',
+    ].join('\n');
+  }
+
+  List<Map<String, dynamic>> _upsertRecordingList(
+    List<Map<String, dynamic>> recordings,
+    Map<String, dynamic> recording,
+  ) {
+    final recordingId = _recordingIdOf(recording);
+    if (recordingId.isEmpty) {
+      return List<Map<String, dynamic>>.from(recordings);
+    }
+
+    final next = List<Map<String, dynamic>>.from(recordings);
+    final index = next.indexWhere(
+      (item) => _recordingIdOf(item) == recordingId,
+    );
+
+    if (index >= 0) {
+      next[index] = recording;
+    } else {
+      next.insert(0, recording);
+    }
+
+    next.sort(
+      (left, right) =>
+          _recordingCreatedAtOf(right).compareTo(_recordingCreatedAtOf(left)),
+    );
+    return next;
+  }
+
+  List<Map<String, dynamic>> _removeRecordingFromList(
+    List<Map<String, dynamic>> recordings,
+    String recordingId,
+  ) {
+    return recordings
+        .where((item) => _recordingIdOf(item) != recordingId)
+        .toList();
   }
 
   String _preferredRecorderMimeType() {
@@ -224,28 +405,38 @@ class _GuitarRecordingStudioPageState
   List<Float32List> _masterChannels(List<Float32List> channels) {
     double peak = 0.0;
     for (final channel in channels) {
+      double dcSum = 0.0;
       for (final sample in channel) {
-        final absValue = sample.abs();
+        dcSum += sample;
+      }
+      final dcOffset = channel.isEmpty ? 0.0 : dcSum / channel.length;
+      for (final sample in channel) {
+        final absValue = (sample - dcOffset).abs();
         if (absValue > peak) {
           peak = absValue;
         }
       }
     }
 
-    final gain = peak > 0 ? math.min(2.4, 0.98 / peak) : 1.0;
+    final gain = peak > 0 ? math.min(1.6, 0.92 / peak) : 1.0;
     return channels.map((channel) {
       final mastered = Float32List(channel.length);
-      double previousInput = 0.0;
-      double previousOutput = 0.0;
+      double dcSum = 0.0;
+      for (final sample in channel) {
+        dcSum += sample;
+      }
+      final dcOffset = channel.isEmpty ? 0.0 : dcSum / channel.length;
       for (int index = 0; index < channel.length; index++) {
-        final input = channel[index];
-        final highPassed = input - previousInput + (0.995 * previousOutput);
-        previousInput = input;
-        previousOutput = highPassed;
-        final arg = highPassed * gain * 1.08;
-        final e2 = math.exp(2 * arg);
-        final limited = (e2 - 1) / (e2 + 1);
-        mastered[index] = limited.clamp(-1.0, 1.0).toDouble();
+        final normalized = (channel[index] - dcOffset) * gain;
+        final absValue = normalized.abs();
+        if (absValue <= 0.96) {
+          mastered[index] = normalized.clamp(-1.0, 1.0).toDouble();
+          continue;
+        }
+        final sign = normalized.isNegative ? -1.0 : 1.0;
+        final excess = absValue - 0.96;
+        final compressed = 0.96 + (1 - math.exp(-excess * 8)) * 0.04;
+        mastered[index] = (sign * compressed).clamp(-1.0, 1.0).toDouble();
       }
       return mastered;
     }).toList();
@@ -331,7 +522,69 @@ class _GuitarRecordingStudioPageState
     return path;
   }
 
-  Future<void> _shareCurrentRecording() async {
+  void _downloadBytesAsFile(
+    Uint8List bytes,
+    String mimeType,
+    String fileName,
+  ) {
+    final blob = web.Blob(
+      [bytes.buffer.toJS].toJS,
+      web.BlobPropertyBag(type: mimeType),
+    );
+    final blobUrl = web.URL.createObjectURL(blob);
+    final anchor = web.HTMLAnchorElement()
+      ..href = blobUrl
+      ..download = fileName
+      ..style.display = 'none';
+    web.document.body?.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    web.URL.revokeObjectURL(blobUrl);
+  }
+
+  Future<bool> _tryShareAudioFile({
+    required Uint8List bytes,
+    required String mimeType,
+    required String fileName,
+    required String text,
+  }) async {
+    try {
+      final file = XFile.fromData(
+        bytes,
+        mimeType: mimeType,
+        name: fileName,
+      );
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [file],
+          fileNameOverrides: [fileName],
+          text: text,
+          subject: fileName,
+        ),
+      );
+      return true;
+    } catch (e) {
+      debugPrint('share audio failed: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _tryShareText(String text, {String? subject}) async {
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: text,
+          subject: subject,
+        ),
+      );
+      return true;
+    } catch (e) {
+      debugPrint('share text failed: $e');
+      return false;
+    }
+  }
+
+  Future<void> _legacyShareCurrentRecording() async {
     if (_shareableAudioBytes == null || _shareableAudioMimeType == null) {
       return;
     }
@@ -517,7 +770,7 @@ class _GuitarRecordingStudioPageState
     try {
       final res = await _supabase.functions.invoke(
         'guitar-recording-studio',
-        queryParameters: {'action': 'recordings', 'userId': user.id},
+        body: {'action': 'recordings', 'userId': user.id},
       );
       final data = _parseResponse(res.data);
       if (data != null) {
@@ -527,11 +780,14 @@ class _GuitarRecordingStudioPageState
         }
         final list = data['recordings'];
         if (list is List) {
+          final normalized = list
+              .map(_normalizeRecordingMap)
+              .whereType<Map<String, dynamic>>()
+              .toList();
           if (mounted) {
             setState(() {
-              _recordings = list
-                  .map((r) => r is Map<String, dynamic> ? r : Map<String, dynamic>.from(r as Map))
-                  .toList();
+              _recordings = normalized;
+              _practiceStats = _buildLocalPracticeStats(normalized);
             });
           }
         }
@@ -556,22 +812,23 @@ class _GuitarRecordingStudioPageState
       _isLoadingStats = true;
       _statsError = null;
     });
+    final fallbackStats = _buildLocalPracticeStats(_recordings);
     try {
       final res = await _supabase.functions.invoke(
         'guitar-recording-studio',
-        queryParameters: {'action': 'practice_stats', 'userId': user.id},
+        body: {'action': 'practice_stats', 'userId': user.id},
       );
       final data = _parseResponse(res.data);
       if (mounted) {
         setState(() {
-          _practiceStats = data ?? {};
+          _practiceStats = data ?? fallbackStats;
           _isLoadingStats = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _practiceStats = {};
+          _practiceStats = fallbackStats;
           _isLoadingStats = false;
           _statsError = '$e';
         });
@@ -640,6 +897,16 @@ class _GuitarRecordingStudioPageState
         'guitar-recording-studio',
         body: {'action': 'delete_recording', 'recordingId': recordingId},
       );
+      if (mounted) {
+        setState(() {
+          final next = _removeRecordingFromList(_recordings, recordingId);
+          _recordings = next;
+          _practiceStats = _buildLocalPracticeStats(next);
+          if (_savedRecordingId == recordingId) {
+            _savedRecordingId = null;
+          }
+        });
+      }
       await _fetchRecordings();
       await _fetchPracticeStats();
       await _fetchAIAnalysis();
@@ -1802,6 +2069,48 @@ class _GuitarRecordingStudioPageState
                 ],
               ),
             ],
+            if ((_latestRecordingAiFeedback ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16213E),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF7C3AED),
+                          size: 16,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'AI feedback',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _latestRecordingAiFeedback!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -2411,8 +2720,7 @@ class _GuitarRecordingStudioPageState
                         if (isPublicRec)
                           IconButton(
                             onPressed: () {
-                              final shareUrl =
-                                  'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+                              final shareUrl = 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
                               Clipboard.setData(ClipboardData(text: shareUrl));
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -2679,6 +2987,21 @@ class _GuitarRecordingStudioPageState
               ],
             ),
           ),
+
+          if ((_latestRecordingAiFeedback ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _aiSection(
+              '最新録音フィードバック',
+              Icons.graphic_eq,
+              Text(
+                _latestRecordingAiFeedback!,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
 
           if (_aiAnalysis != null) ...[
             const SizedBox(height: 16),
