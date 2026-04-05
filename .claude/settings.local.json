@@ -74,7 +74,8 @@
       "Bash([ ! -f \"/c/Users/kanta/GitHub/my_web_app/lib/pages/$f\" ])",
       "Bash(read r:*)",
       "Bash(/c/app/flutter/bin/dart analyze:*)",
-      "Bash(echo \"EXIT_CODE:$?\")"
+      "Bash(echo \"EXIT_CODE:$?\")",
+      "Bash(ls -t c:/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)"
     ]
   }
 }
