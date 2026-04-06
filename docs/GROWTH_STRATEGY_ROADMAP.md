@@ -2759,6 +2759,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 
 - `public_guitar_gallery_page.dart` コード品質確認: いいね・再生数インクリメント・3ソート・ページネーション・ダークUI — flutter analyze 0エラー確認済み
 - `guitar-recording-studio` Edge Function アクション拡張 (`public_gallery`, `like_recording`, `increment_play`) 確認
+- **バグ発見・修正**: `listPublicRecordings` が URL searchParams のみ参照していたため Flutter `functions.invoke()` の POSTボディ送信パラメータ (`sortBy`/`offset`/`limit`) が無視されていた → body 優先で読み取るよう修正。ページネーション・ソートが正常動作するようになった
 
 **パッケージ更新** (`pubspec.lock`)
 
