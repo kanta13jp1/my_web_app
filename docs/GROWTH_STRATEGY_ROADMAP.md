@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 Windows#1 (2026-04-06 クロスファンクショナルボード追加・AI技術動向追記・設計戦略更新・ユーザーマニュアル更新計画・競合分析強化)
+最終更新: 2026-04-06 VSCode#6 (ReferralShareCard X共有ボタン追加・競合モニタリング手動実行ボタン追加・flutter analyze 0エラー維持)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2609,6 +2609,29 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **Xに投稿ボタン**: 履歴リストの各アイテムに「Xに投稿」アイコンボタンを追加
 - **統計タブ**: `RefreshIndicator` でプルダウンリフレッシュ対応
 - **不要インポート削除**: `cross_file` / `share_plus` の未使用インポートを削除
+
+#### 品質確認
+
+- `flutter analyze`: **0エラー**
+
+---
+
+### Session VSCode#6 (2026-04-06): バイラル共有強化・競合モニタリング手動実行追加
+
+#### 実装
+
+**ReferralShareCard 強化** (`lib/widgets/referral_share_card.dart`)
+
+- URL表示コンテナ追加 (招待リンクを可視化)
+- 「Xでシェア」ボタン追加: Twitter intent URL で `window.open` → X 投稿画面へ直接遷移
+- ボタンレイアウト変更: コピー + Xシェア の2列構成に
+- `#buildinpublic #FlutterWeb #自分株式会社` タグ付きシェア文自動生成
+
+**競合モニタリングカード 強化** (`lib/widgets/competitor_monitoring_card.dart`)
+
+- データ空き状態で「今すぐチェック」ボタンを表示
+- `check-competitor-updates` Edge Function を管理者ダッシュボードから手動実行可能に
+- 実行完了後、`get-competitor-monitoring` で自動リフレッシュ
 
 #### 品質確認
 
