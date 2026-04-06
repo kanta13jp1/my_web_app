@@ -13,6 +13,7 @@ class CompetitorMonitoringCard extends StatefulWidget {
 
 class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   bool _loading = false;
+  bool _checking = false;
   String? _error;
   List<Map<String, dynamic>> _competitors = [];
   Map<String, dynamic>? _summary;
@@ -21,6 +22,17 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  Future<void> _runCheck() async {
+    setState(() => _checking = true);
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'check-competitor-updates',
+      );
+    } catch (_) {}
+    if (mounted) setState(() => _checking = false);
+    await _load();
   }
 
   Future<void> _load() async {
@@ -120,9 +132,39 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
             else if (_loading && _competitors.isEmpty)
               const SizedBox(height: 40)
             else if (_competitors.isEmpty)
-              const Text(
-                'データがありません。check-competitor-updates を実行してください。',
-                style: TextStyle(color: Colors.grey),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'データがありません。',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton.icon(
+                    onPressed: _checking ? null : _runCheck,
+                    icon: _checking
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.play_arrow, size: 16),
+                    label: Text(
+                      _checking ? 'チェック中...' : '今すぐチェック',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                ],
               )
             else
               ..._competitors.map(_buildRow),
