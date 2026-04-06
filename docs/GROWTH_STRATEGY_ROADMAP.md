@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 daily-development セッション2 (公開ギターギャラリー実装・Edge Function public_gallery アクション追加・LP 導線追加・sitemap 更新・flutter analyze 0エラー維持)
+最終更新: 2026-04-06 Windows#1 (2026-04-06 クロスファンクショナルボード追加・AI技術動向追記・設計戦略更新・ユーザーマニュアル更新計画・競合分析強化)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -613,11 +613,13 @@
 
 ## 6. 2026-04-06 時点の最優先事項
 
-1. **登録者数の増加** — 現在4人。シェア・バイラル施策 (share_plus native共有, X投稿, 公開録音URL) を強化して新規流入を作る
-2. **ギタースタジオを軸にしたバイラル** — メイン機能の録音→X投稿パイプラインを完成させ、毎日の投稿を自動化
-3. **技術ブログの自動投稿開始** — blog-draft Schedule trigger が下書きを毎日生成中。実際にZenn/Qiitaへ投稿するアクションが必要
-4. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信
+1. **登録者数の増加** — 現在4人。公開ギターギャラリー (/public-guitar-gallery) 実装によるバイラル起点を設置済み。次は録音→X自動投稿パイプライン完成
+2. **ギタースタジオを軸にしたバイラル** — public_gallery アクション追加完了。毎日の録音→X投稿を自動化してバイラル係数 > 1 を目指す
+3. **技術ブログの自動投稿開始** — blog-draft Schedule trigger が下書きを毎日生成中。Zenn/Qiitaへの実際の投稿アクションが必要
+4. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信 (280 URL 超)
 5. **Supabase quota 維持** — 現在93/94 deployed。新規Edge Function追加時は必ず先に1件削除
+6. **デザインシステム統一** — Awesome Design MD の知見を活用し、全ページのデザイントークン (カラー・タイポグラフィ・スペーシング) を `docs/DESIGN.md` に定義して AI へ参照させる
+7. **Bonsai-8B 対応** — オンデバイスAI (1.15GB・5分の1電力) の台頭を見越し、Edge Functions のロジックをオフライン対応可能な軽量設計に段階移行を検討
 
 ---
 
@@ -632,7 +634,7 @@
 - 公開メモの SEO と OGP を強化する
 - フロントエンドで実装している複雑な処理を優先的に Supabase Edge Function に移行する
 - ユーザーマニュアルを実装済み機能に合わせて随時更新する
-- 競合13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
+- 競合21製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン, Amazon, Google, Microsoft, Discord, LINE, Facebook, Liven, GitHub）の機能比較データをフロントエンドのハードコードから Edge Function (`get-competitor-features`) へ完全移行し、クライアントアプリのコードベースを約800行削減して大幅に軽量化 (2026-03-25)
 - ホーム画面のKPIデータ集約用 Edge Function (`get-home-dashboard`) を本実装し、フロントエンドの複数リクエストを単一化 (2026-03-25)
 - 常に Linter エラー 0 を維持し、CIパイプラインで厳格にブロックすることで、技術的負債ゼロのクリーンなコードベースと高速開発を実現する
 
@@ -640,15 +642,15 @@
 
 - Notion から移行、Evernote から移行の専用導線を定義する
 - referral landing で約束する価値を `登録 -> import -> first memo` の 3 ステップに固定する
-- Notion の柔軟性、Evernote の蓄積性、MoneyForward の資産管理、X の拡散性、Animaworks の習慣化、Claude code/Codex の AI 支援、netkeiba の熱狂的コミュニティ、OpenClaw/Claude Cowork の自律型エージェント、Chatwork/Slack のビジネス連携、ジョブカンのバックオフィス効率化。これら13の優位性をすべて包含し凌駕する「自分株式会社」としての統合体験を企画する
+- Notion の柔軟性、Evernote の蓄積性、MoneyForward の資産管理、X の拡散性、Animaworks の習慣化、Claude code/Codex の AI 支援、netkeiba の熱狂的コミュニティ、OpenClaw/Claude Cowork の自律型エージェント、Chatwork/Slack のビジネス連携、ジョブカンのバックオフィス効率化、Amazon のマーケットプレイス、Google の検索・生産性、Microsoft の企業向け、Discord のコミュニティ、LINE の国内SNS、Facebook/Liven/GitHub の各特長。これら21の優位性をすべて包含し凌駕する「自分株式会社」としての統合体験を企画する
 - ジョブカンに代表される「管理のための管理ツール」を廃し、「働く人を直接支援するAIアシスタント」としての自律型バックオフィス機能のコンセプトを策定する
-- ユーザーマニュアルを単なるヘルプではなく、13競合からの移行時の学習コストを劇的に下げるための「教育コンテンツ」として企画する
+- ユーザーマニュアルを単なるヘルプではなく、21競合からの移行時の学習コストを劇的に下げるための「教育コンテンツ」として企画する
 
 ### 広告
 
 - X、Meta、Google で少額テストを開始する
 - import 訴求広告と AI 訴求広告の勝ち筋を比較する
-- 13製品の既存ユーザー層に対して、「複数ツールをバラバラに使うコストと手間」を解決する統合プラットフォームとしての比較広告クリエイティブをA/Bテストし、「情報・資産・フローの一元化」を訴求する
+- 21製品の既存ユーザー層に対して、「複数ツールをバラバラに使うコストと手間」を解決する統合プラットフォームとしての比較広告クリエイティブをA/Bテストし、「情報・資産・フローの一元化」を訴求する
 
 ### 宣伝
 
@@ -656,14 +658,14 @@
 - ship log と改善ログを週次発信する
 - Notion 比較、Evernote 比較の記事を継続公開する
 - note と Substack で founder update を定期配信する
-- Zenn, Qiita, はてなブログ, note, Medium, dev.to, Hashnode, Substack, GitHubPages, NOTION, X Article などの各プラットフォーム特性に合わせた技術ブログ・開発日記を配信し、「13製品に挑む個人の挑戦」としてビルド・イン・パブリックのストーリーを拡散する
+- Zenn, Qiita, はてなブログ, note, Medium, dev.to, Hashnode, Substack, GitHubPages, NOTION, X Article などの各プラットフォーム特性に合わせた技術ブログ・開発日記を配信し、「21製品に挑む個人の挑戦」としてビルド・イン・パブリックのストーリーを拡散する
 - TechBlogTrackerPage で毎日の投稿状況を管理・連続投稿ストリークを可視化し、毎日欠かさず発信する文化をシステムで支援する
 
 ### 技術ブログ・コンテンツ発信
 
 - **Zenn / Qiita / dev.to / Hashnode**: Flutter と Supabase Edge Function による複雑なフロントエンド処理のバックエンド移行や、Linter エラー 0 維持の CI/CD ノウハウなど、技術詳細を発信する
 - **はてなブログ / note / Medium**: 週次での開発実績グラフ（GrowthRoadmapProgressCard）や、ダミーデータ排除の本実装など、泥臭い成長の軌跡をエッセイとして綴る
-- **Substack / NOTION / GitHubPages**: 公式ドキュメント、リリースノート、13競合との比較状況をパブリックに公開し、SEO流入の受け皿とする
+- **Substack / NOTION / GitHubPages**: 公式ドキュメント、リリースノート、21競合との比較状況をパブリックに公開し、SEO流入の受け皿とする
 - 発信テンプレート: 1機能リリース → Zenn (実装) → Qiita (実用) → dev.to (英語) → note (エッセイ) の多媒体水平展開をルーティン化する
 
 ### 営業
@@ -672,13 +674,13 @@
 - 移行代行付き PoC を試す
 - Notion、Evernote、Slack、Chatwork、ジョブカン、MoneyForwardなど、複数 SaaS の連携疲れと高額なライセンス料に苦しむ企業に対し、一元化プラットフォーム「自分株式会社 (エンタープライズ版)」をコスト削減案として提案する
 - 業務効率化にとどまらず、従業員個人の資産形成・自己実現までサポートできる唯一無二のウェルビーイングSaaSとしての価値を法人向けに訴求する
-- 営業資料（Pitch Deck）に現在の「本物の開発実績データ」と全13製品を上回る明確なマイルストーンを組み込む
+- 営業資料（Pitch Deck）に現在の「本物の開発実績データ」と全21製品を上回る明確なマイルストーンを組み込む
 
 ### マーケティング
 
 - SEO 着地面を比較記事、公開メモ、テンプレートで拡大する
 - referral 施策の導線と報酬設計を固める
-- 13製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン）すべての検索キーワードに対し、比較記事とSEOコンテンツを大量投下する
+- 21製品（Notion, EverNote, MoneyForward, X, Animaworks, Claude code, codex, netkeiba, OpenClaw, Claude Cowork, Chatwork, Slack, ジョブカン, Amazon, Google, Microsoft, Discord, LINE, Facebook, Liven, GitHub）すべての検索キーワードに対し、比較記事とSEOコンテンツを大量投下する
 - ダミーデータを完全排除した開発実績（DevelopmentAchievementsCard）や、進捗バー（GrowthRoadmapProgressCard）を「ビルド・イン・パブリック」の証として対外的にアピールし、透明性でファンを獲得する
 - ユーザー向け操作マニュアルをSEOコンテンツ（「〇〇から自分株式会社へ移行する方法」等）としても拡充させ、検索流入と利用開始時の離脱率防止（オンボーディング完了率向上）に直結させる
 
@@ -2753,6 +2755,32 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - `flutter analyze`: **0エラー**
 - `deno lint`: **0エラー**
 
+### Session PS#26 (2026-04-06): cs-check自己修復強化・ロードマップ21競合統一 (PowerShell全体管理)
+
+**Scheduleトリガー制限確認と対策**
+
+- プラン上限: 毎時1個・日次3個・週次1個 = 計5トリガーが上限で使用中
+- 新規 `schedule-health-monitor` トリガー追加は制限により不可
+- 対策: `cs-check` トリガー (trig_01MwKBLD1sffGZwxeMR1Gkxt) の Step 7 を強化して自己修復機能を組み込み
+
+**cs-check Step 7 強化内容** (自己修復機能)
+
+- **7b**: 日次タスク実行確認 — daily-report/blog-draft のコミット数チェック、未実行なら GitHub Issue 自動作成
+- **7c**: cs-notes パターン分析 — ネットワーク以外のエラーパターンを検出し「要対応」セクションを追記
+- **7d**: schedule_task_runs テーブルの連続エラー検出 (3件以上同一task_id) → incident-report 記録
+
+**ロードマップ品質改善**
+
+- 戦略セクション(短期計画・企画・広告・宣伝・技術ブログ・営業・マーケティング)の「13競合」「13製品」記述を**すべて「21競合」「21製品」に修正** (7箇所)
+- 歴史的記録 (session12-18の実装ログ) は当時の正確な記録として維持
+- 追加した8社: Amazon, Google, Microsoft, Discord, LINE, Facebook, Liven, GitHub を戦略に明記
+
+#### 品質確認
+
+- `flutter analyze`: **0エラー**
+
+---
+
 ### Session PS#25 (2026-04-06): 公開ギャラリーレビュー・パッケージ更新・Schedule確認 (PowerShell全体管理)
 
 **自動実装レビュー** (daily-development 2026-04-06 セッション2 を検証)
@@ -2886,3 +2914,180 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 #### 品質確認
 
 - `flutter analyze`: **0エラー**
+
+---
+
+## 12C. 2026-04-06 クロスファンクショナル実行ボード
+
+> **Windows インスタンス担当** — docs/ ドキュメント・マイグレーション領域
+
+### 開発 — 2026-04-06
+
+- **公開ギターギャラリー実装完了** (daily-development セッション2): `guitar-recording-studio` Edge Function に `public_gallery` アクションを追加。quota 消費なし (93/94 維持)。`/public-guitar-gallery` ルート・ページ・LP導線・sitemap 追加
+- **4インスタンス並列体制**: VSCode (lib/) / Web (supabase/functions/) / Windows (docs/) / PowerShell (全体管理) の役割分離を徹底。git pull --rebase による競合防止を継続
+- **flutter analyze 0件・deno lint 0件** を全インスタンスで維持
+- **次の開発アクション**:
+  - VSCode: 公開ギャラリーページの UI 品質向上
+  - Web: `guitar-recording-studio` の AI フィードバック機能強化
+  - PowerShell: 全体 Schedule タスクの健全性確認
+
+### 企画 — 2026-04-06
+
+- **公開ギャラリーのコンテンツ戦略**: 公開録音数が増えたら「今週の人気録音ランキング」をX投稿する自動化を検討
+- **バイラル係数設計**: 録音公開 → ギャラリー掲載 → SNSシェア → 新規ユーザー登録 のループを KPI で追う
+- **デザインシステム統一**: Spotify の DESIGN.md を参考に `docs/DESIGN.md` を作成。黒背景・オレンジアクセント (#FF6B35) を全ページで統一
+- **Bonsai-8B 対応企画**: 2026年後半以降にオンデバイスAI (1.15GB、スマホで動作) が普及した場合のオフライン機能ロードマップを立案
+- **X Bookmarks CLI 連携**: fieldtheory (npm) を使いユーザーのXブックマークをインポートする機能を将来的に検討
+
+### 広告 — 2026-04-06
+
+- **公開ギャラリー起点の広告戦略**: ギャラリーページのトラフィックを計測し、登録CVRが高ければ「録音を聴きに来て登録した」層へリターゲティング広告
+- **ギタースタジオ動画広告**: 実際の録音→保存→Xシェアのフローを画面録画してショート動画広告として活用
+- **競合比較ページへの流入強化**: `/vs-notion` `/vs-github` 等の比較ページへの Google 広告を小額でテスト
+
+### 宣伝 — 2026-04-06
+
+- **Zenn 技術ブログ**: 「Edge Function アクション拡張パターン — quota 94上限で新機能を追加する方法」の下書き完成 (`docs/blog-drafts/2026-04-06-public-guitar-gallery.md`)
+- **X での Build in Public**: 公開ギャラリーリリースを `#buildinpublic #FlutterWeb` でツイート予定
+- **ギター演奏者コミュニティへのアプローチ**: #guitar #guitarcover X コミュニティへのリーチ開始
+- **毎日投稿目標**: blog-draft Schedule タスクが生成した下書きを翌日中に各プラットフォームへ投稿
+
+### 営業 — 2026-04-06
+
+- **ギタリスト向けフリーミアム訴求**: 録音→公開→X投稿の無料フローを「SoundCloud や Bandcamp より手軽」として訴求
+- **音楽スクール向けB2B**: 生徒の練習録音を管理・共有できる機能として音楽スクールへのアプローチを検討
+- **登録者4人→100人ロードマップ**: X・ギタリストコミュニティ・技術ブログの3チャネルで月10人増を目標
+
+### マーケティング — 2026-04-06
+
+- **SEO**: `/public-guitar-gallery` を sitemap.xml に追加 (priority 0.8・daily 更新)。公開録音データが増えると自然にロングテールSEO効果
+- **コンテンツマーケティング**: ギャラリーページの「今週の人気録音」をブログ記事化する半自動パイプラインを構築
+- **成長指標の可視化**: ホーム画面の GrowthRoadmapProgressCard に「ギャラリー閲覧数・いいね総数」を追加してリテンションを向上
+
+### 人事 — 2026-04-06
+
+- 現状: 1人 (創業者) + AI エージェント 12部署 20人体制
+- **AI エージェント組織の活用**: VirtualOrganizationPage (`/virtual-organization`) を積極的に活用し、AI部署ごとのタスク割り振りをシステム化
+- **次の採用トリガー**: 月間アクティブユーザー 100人突破時にコンテンツマーケター 1名を採用
+
+### 経理 — 2026-04-06
+
+- Supabase Free Plan: 現在コスト $0。93/94 Edge Function 上限に注意
+- Firebase Hosting: 無料枠内で運用中
+- **収益化タイムライン**: 登録者 1,000人達成後に Pro プラン ($9.9/月) を導入。ギタリスト向けの「録音時間無制限・高音質エクスポート・AI分析強化」を価値提案
+
+### 調達 — 2026-04-06
+
+- **Resend API**: メール送信で活用中。月間1,000通無料枠内
+- **Gemini API**: 選挙分析・AI分析で活用中。無料枠内
+- **検討中**: Cloudflare R2 (音声ファイルストレージの代替。Supabase Storage より安価)
+
+### 事業計画 — 2026-04-06
+
+- **フェーズ1 (〜100人)**: ギタリストコミュニティへのバイラル特化。録音機能を磨いてNPSを高める
+- **フェーズ2 (〜1,000人)**: 技術ブログ・SEO・比較ページで有機流入を確立。Pro プランで最初の収益
+- **フェーズ3 (〜10,000人)**: B2B (音楽スクール・チーム導入)・モバイルアプリリリース・海外展開
+- **長期**: 21競合 (Notion/EverNote/MoneyForward/X/Animaworks 等) を「機能統合×AI×音楽創造」の3軸で上回る
+
+---
+
+## 13. AI 技術動向と自分株式会社への影響 (2026-04-06 追記)
+
+### Bonsai-8B — オンデバイスAI 革命
+
+カリフォルニア工科大学の PrismML チームが発表した Bonsai-8B は、82億パラメータのLLMを 1.15GB に圧縮 (従来比 14分の1、電力 5分の1)。最新スマホ (iPhone 17 Pro Max等) で秒速44単語を生成可能。
+
+**自分株式会社への影響:**
+1. **短期** (0-6ヶ月): 影響なし。サーバーサイドAI (Gemini API, OpenAI) を継続
+2. **中期** (6-18ヶ月): Flutter アプリでオンデバイスAI推論を試験導入。AI秘書・ノート要約をオフラインで動作させる
+3. **長期** (18ヶ月+): プレミアム機能としての「完全オフラインモード」— データが外部に出ないプライバシー保証を売りにする
+4. **差別化機会**: クラウドAI依存の競合より先に「プライバシーAI」を実現できれば、企業・医療・法律分野でのB2B展開に有利
+
+### Awesome Design MD — デザインシステムの民主化
+
+55社以上の有名サービス (Apple / Spotify / Airbnb / Linear / SpaceX 等) のデザイントークンを1ファイルに凝縮。AIエージェントが参照することでピクセルパーフェクトなUIを生成。
+
+**自分株式会社での対応計画 (Windows インスタンス担当):**
+- `docs/DESIGN.md` を今セッションで作成
+- カラーパレット: メインブラック (#0A0A0A) / ダークサーフェス (#1A1A1A, #1E1E1E, #2A2A2A) / オレンジ (#FF6B35) / インディゴ (#3D5AFE) / グリーン (#4CAF50)
+- タイポグラフィ: Noto Sans JP / Inter。見出し bold、本文 14px、サブテキスト 12px
+- コンポーネントトークン: カード角丸 12px / ボーダー透明度 0.2 / ホバーアニメーション 150ms
+
+### ギタースタジオ × バイラル成長の数学
+
+現在の成長方程式:
+```
+新規登録 = (ギャラリー閲覧者 × 登録CVR) + (X投稿閲覧者 × 登録CVR) + SEO流入 + 紹介
+```
+
+目標バイラル係数 K:
+- K > 1 → ウイルス的成長
+- 現在の推定 K ≈ 0.1 (4人登録、外部流入ほぼゼロ)
+- 目標: K ≈ 0.3 (100人達成時) → K ≈ 0.8 (1,000人達成時)
+
+施策:
+1. 公開ギャラリーで「聴いた人が登録したくなる」体験 (K の分子を増やす)
+2. 録音→X投稿の摩擦ゼロ化 (K の分母を減らす)
+3. 技術ブログで「作った人を応援したい」共感を得る (SEO 流入の質向上)
+
+### Claude Code マルチエージェント体制の最適化
+
+Claude Code 開発者 Boris Cherny が公開した活用法より:
+- /loop コマンド: 5分ごとにPRを処理・30分ごとにフィードバックを処理
+- worktree + 並列エージェント: 複数エージェントが同時に異なる機能を実装
+
+自分株式会社での実装状況:
+- 完了: 4インスタンス並列体制 (VSCode/Web/Windows/PowerShell)
+- 完了: Schedule タスク (cs-check毎時・daily-report毎日・blog-draft毎日)
+- 未実施: worktree 活用による独立機能開発の試験導入
+
+---
+
+## 14. ドキュメント管理方針 (Windows インスタンス担当)
+
+### 管理対象 docs/
+
+| ディレクトリ | 内容 | 更新頻度 |
+|---|---|---|
+| docs/GROWTH_STRATEGY_ROADMAP.md | 本ファイル。全戦略の中核 | 毎セッション |
+| docs/DESIGN.md | デザイントークン定義 (新規作成予定) | 月次 |
+| docs/blog-drafts/ | 技術ブログ下書き | 毎日 (Schedule) |
+| docs/daily-reports/ | 日次 KPI レポート | 毎日 (Schedule) |
+| docs/cs-notes/ | CS チェックログ | 毎時 (Schedule) |
+| docs/competitor-reports/ | 競合モニタリング | 毎日 (Schedule) |
+| docs/weekly-drafts/ | 週次 SNS ドラフト | 毎週月曜 (Schedule) |
+| docs/security-audit/ | 脆弱性チェックレポート | 毎週月曜 (Schedule) |
+
+### 削除・アーカイブ方針
+
+- 6ヶ月以上更新のないドキュメントは docs/archive/ へ移動
+- 重複内容は統合して1ファイルにまとめる
+- CLAUDE.md と矛盾するドキュメントは CLAUDE.md を優先し修正
+
+### Windows インスタンスの作業ルール
+
+1. git pull --rebase origin main を必ず最初に実行
+2. docs/ と supabase/migrations/ のみを変更
+3. lib/ や supabase/functions/ は変更しない (他インスタンスのドメイン)
+4. コミットメッセージは `docs: Windows#N セッション内容` の形式
+
+---
+
+## Session Windows#1 (2026-04-06): ドキュメント大幅更新
+
+### 実施内容
+
+1. **GROWTH_STRATEGY_ROADMAP.md 更新**
+   - セクション6「最優先事項」に Bonsai-8B・デザインシステム・公開ギャラリーを追記
+   - 12C 2026-04-06 クロスファンクショナルボードを追加
+   - 13 AI技術動向セクションを新規追加
+   - 14 ドキュメント管理方針セクションを新規追加
+
+2. **docs/DESIGN.md 作成** (今セッションで実施)
+
+3. **マイグレーションファイル作成**: 20260406001400_seed_achievements_windows1.sql
+
+### 品質確認
+
+- flutter analyze: 変更対象外 (docs/ のみ変更)
+- deno lint: 変更対象外 (docs/ のみ変更)
