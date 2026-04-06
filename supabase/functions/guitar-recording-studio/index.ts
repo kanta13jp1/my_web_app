@@ -170,7 +170,7 @@ serve(async (req: Request) => {
         );
       case "public_gallery":
         return jsonResponse(
-          await listPublicRecordings(auth.adminClient, url),
+          await listPublicRecordings(auth.adminClient, url, body),
         );
       case "save_recording":
         return jsonResponse(await saveRecording(auth, body));
@@ -424,10 +424,15 @@ async function buildPracticeStats(auth: AuthContext) {
 async function listPublicRecordings(
   adminClient: SupabaseClient,
   url: URL,
+  body: Json = {},
 ) {
-  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10), 50);
-  const offset = parseInt(url.searchParams.get("offset") ?? "0", 10);
-  const sortBy = url.searchParams.get("sortBy") ?? "created_at"; // created_at | likes | plays
+  // Body params (Flutter invoke) take priority over URL query params
+  const limitRaw = body.limit ?? url.searchParams.get("limit") ?? "20";
+  const offsetRaw = body.offset ?? url.searchParams.get("offset") ?? "0";
+  const sortByRaw = (body.sortBy ?? url.searchParams.get("sortBy") ?? "created_at") as string;
+  const limit = Math.min(parseInt(String(limitRaw), 10), 50);
+  const offset = parseInt(String(offsetRaw), 10);
+  const sortBy = sortByRaw; // created_at | likes | plays
   const validSorts = ["created_at", "likes", "plays"];
   const orderColumn = validSorts.includes(sortBy) ? sortBy : "created_at";
 
