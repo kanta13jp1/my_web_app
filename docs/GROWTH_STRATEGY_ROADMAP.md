@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 daily-development #2 (AI議事録生成・Xスレッド自動生成・ブログ記事アウトライン生成)
+最終更新: 2026-04-08 daily-development (Xコンポーザーウィンドウ連動・スケジュールフィルター改善・テスト修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3378,3 +3378,30 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 ### 品質確認
 
 - flutter analyze: 0 errors ✅
+
+---
+
+## Session daily-development (2026-04-08): Xコンポーザーウィンドウ連動・テスト修正
+
+### 実施内容
+
+1. **ElectionXPostComposerDialog initialWindowIndex 追加** (`lib/widgets/election_x_post_composer_dialog.dart`)
+   - `initialWindowIndex` パラメータを追加。スケジュールフィルター選択（今週末/2週後/…）を X コンポーザーダイアログに直接引き継ぐ
+   - `initState` で `initialWindowIndex` が指定されていればそれを優先、未指定は従来の「選挙が存在する最初のウィンドウ」自動選択ロジックを維持（後方互換）
+
+2. **`_filterToWindowIndex()` ヘルパー + スケジュールショートカットボタン** (`lib/pages/election_victory_page.dart`)
+   - `_filterToWindowIndex(String filter)`: フィルター文字列 → `availableWindows` インデックス変換
+   - スケジュールセクションに「`$filter`の選挙をX投稿」`TextButton.icon` を追加。選挙が存在する特定週末選択時のみ表示。クリックで X コンポーザーが当該週末にプリセット済みで開く
+
+3. **election_charts_test.dart テスト修正** (`test/widgets/election_charts_test.dart`)
+   - `ElectionRegionalKpiChart` を `SingleChildScrollView` でラップしてレイアウトオーバーフロー解消
+   - `find.text('新人擁立目標')` → `find.textContaining('新人擁立目標')` に修正（実際の凡例テキストは `'新人擁立目標 (未達)'` / `'新人擁立目標 (達成)'`）
+   - 全テスト passed ✅
+
+4. **技術ブログ下書き作成** (`docs/blog-drafts/2026-04-08-election-x-composer-window-preselect.md`)
+
+### 品質確認
+
+- dart analyze: 0 errors ✅ (変更ファイル全件)
+- flutter test: 0 failures ✅
+
