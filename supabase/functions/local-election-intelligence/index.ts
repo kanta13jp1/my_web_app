@@ -935,12 +935,19 @@ async function fetchScheduleOverviewEntries(
     years.add(year);
   }
 
+  // Fetch both the base URL (guaranteed to work) and year-specific URLs.
+  // mergeScheduleOverviewEntries handles deduplication downstream.
+  const urls = [
+    ELECTION_SCHEDULE_URL,
+    ...[...years].map(scheduleUrlForYear),
+  ];
+
   const pages = await Promise.all(
-    [...years].map(async (year) => {
+    urls.map(async (url) => {
       try {
-        return await fetchText(scheduleUrlForYear(year));
+        return await fetchText(url);
       } catch (error) {
-        console.error(`Failed to fetch schedule page for ${year}:`, error);
+        console.error(`Failed to fetch schedule page ${url}:`, error);
         return "";
       }
     }),
