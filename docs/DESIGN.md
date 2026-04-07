@@ -1,7 +1,7 @@
 # 自分株式会社 — DESIGN.md
 # デザインシステム定義 (AI エージェント参照用)
 
-> このファイルは Awesome Design MD フォーマットに準拠しています。
+> このファイルは [Awesome Design MD JP](https://github.com/kzhrknt/awesome-design-md-jp) フォーマットに準拠しています。
 > Flutter/Dart コードを生成する際は、このファイルのデザイントークンを参照してください。
 > 更新日: 2026-04-06
 
@@ -94,30 +94,99 @@ static const LinearGradient aiGradient = LinearGradient(
 
 ## タイポグラフィ
 
-### フォント
+> 日本語タイポグラフィ仕様は [awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) テンプレートに従っています。
 
-```dart
-// 日本語: Noto Sans JP (Google Fonts)
-// 英数字: Inter (Google Fonts) — 日本語フォントにフォールバック
-fontFamily: 'NotoSansJP',
+### 1. 和文フォント (Japanese Font Stack)
+
+**ゴシック体** (アプリ全体のデフォルト):
+- Noto Sans JP (Google Fonts — Flutter Web メインフォント)
+- ヒラギノ角ゴ ProN (macOS フォールバック)
+- メイリオ (Windows フォールバック)
+
+**等幅** (コードブロック・数値表示):
+- SFMono-Regular, Consolas, Menlo, monospace
+
+**明朝体**: 使用しない (ダークテーマで可読性が低いため)
+
+### 2. font-family 指定 (Flutter Web — `web/index.html`)
+
+```css
+/* 本文・UI テキスト */
+font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN",
+  "Hiragino Sans", Meiryo, Arial, sans-serif;
+
+/* 等幅 (コード表示) */
+font-family: SFMono-Regular, Consolas, Menlo, Courier, monospace;
 ```
+
+**フォールバックの考え方**:
+- Noto Sans JP を先頭 (Flutter Web でロード済み)
+- macOS → Windows の順でシステムフォントを列挙
+- 欧文は Noto Sans JP 内の欧文グリフを利用 (Inter は別指定不要)
+
+### 3. 行間・字間 (Japanese-optimized)
+
+| Role | Font Size | line-height (height) | letter-spacing | palt | 備考 |
+|------|-----------|----------------------|---------------|------|------|
+| Heading 1 | 24px | 1.4 | 0.04em 相当 | 推奨 | ページタイトル |
+| Heading 2 | 18px | 1.4 | 0.04em 相当 | 推奨 | セクション見出し |
+| Heading 3 | 15px | 1.4 | normal | なし | カードタイトル |
+| Body | 14px | **1.7** | normal | なし | 日本語本文 (1.5以上必須) |
+| Body Small | 12px | 1.6 | normal | なし | サブテキスト |
+| Label | 11px | 1.5 | 0.5px | なし | チップ・バッジ |
+| Caption | 10px | 1.5 | normal | なし | 日付・メタ |
+
+**重要ルール** (awesome-design-md-jp 準拠):
+- `letter-spacing: 0.04em` と `palt` は**見出し (h1/h2) にのみ**適用する
+- 日本語本文の `line-height` (Flutter: `height`) は **1.5 以上** (推奨 1.7〜2.0)
+- 本文に `letter-spacing` を指定しない (`normal` のまま)
+
+### 4. フォントレンダリング (Flutter Web)
+
+```css
+/* web/index.html の <style> に追加推奨 */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  word-wrap: break-word;     /* 長いURLや英単語の折り返し */
+}
+```
+
+### 5. 禁則処理 (Kinsoku Shori)
+
+Flutter の `Text` ウィジェットはデフォルトで禁則処理を行う。
+Web 向けには `SelectableText` + CSS `line-break: strict` を追加推奨:
+
+```css
+/* 厳格な禁則処理 */
+line-break: strict;
+overflow-wrap: break-word;
+```
+
+**行頭禁止**: `）」』】〕〉》、。，．・：；？！`
+**行末禁止**: `（「『【〔〈《`
 
 ### テキストスタイル
 
 ```dart
 // 見出し (H1) — ページタイトル
+// letter-spacing: 0.04em ≈ 24px × 0.04 = 0.96px (日本語見出し推奨)
 static const TextStyle heading1 = TextStyle(
   fontSize: 24,
   fontWeight: FontWeight.bold,
   color: Colors.white,
-  letterSpacing: -0.5,
+  letterSpacing: 0.96,  // 0.04em × 24px — 見出しのみ適用
+  height: 1.4,
 );
 
 // 見出し (H2) — セクションタイトル
+// letter-spacing: 0.04em ≈ 18px × 0.04 = 0.72px (日本語見出し推奨)
 static const TextStyle heading2 = TextStyle(
   fontSize: 18,
   fontWeight: FontWeight.bold,
   color: Colors.white,
+  letterSpacing: 0.72,  // 0.04em × 18px — 見出しのみ適用
+  height: 1.4,
 );
 
 // 見出し (H3) — カードタイトル
@@ -128,16 +197,19 @@ static const TextStyle heading3 = TextStyle(
 );
 
 // 本文 (Body) — 標準テキスト
+// height (line-height) は日本語本文の最低基準 1.5 以上。推奨 1.7
 static const TextStyle body = TextStyle(
   fontSize: 14,
   color: Colors.white,
-  height: 1.5,
+  height: 1.7,  // 日本語本文推奨 (1.5以上、1.7〜2.0が最適)
+  // letterSpacing: 指定しない (日本語本文は normal が推奨)
 );
 
 // 本文 (Body Small) — サブテキスト
 static const TextStyle bodySmall = TextStyle(
   fontSize: 12,
   color: Color(0xFFB0B0B0),
+  height: 1.6,  // 日本語本文規則に準じる
 );
 
 // ラベル — チップ・バッジ
@@ -574,4 +646,66 @@ Text(
 3. 白背景 (#FFFFFF) の使用 → surface1〜4 を使用
 4. オレンジ以外のメインアクセントカラーの追加 (ブランド一貫性のため)
 5. 日本語本文への `letterSpacing` 設定 (見出しのみ 0.5px まで許容)
-5. 10px 未満のフォントサイズ (アクセシビリティのため)
+6. 10px 未満のフォントサイズ (アクセシビリティのため)
+7. `line-height` (Flutter: `height`) を 1.4 未満にする (日本語可読性が著しく低下)
+
+---
+
+## Agent Prompt Guide
+
+> AI エージェントが素早くデザイントークンを参照できるクイックリファレンス。
+> Source: [awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) テンプレート準拠
+
+### クイックリファレンス
+
+```
+■ カラー
+Background:     #0A0A0A  (最暗・メイン背景)
+Surface Card:   #1E1E1E  (カード背景)
+Surface Input:  #2A2A2A  (入力欄・チップ)
+Accent Orange:  #FF6B35  (CTA・メインアクション)
+Accent Indigo:  #3D5AFE  (AI機能・プレミアム)
+Accent Green:   #4CAF50  (成功・完了・KPI)
+Accent Red:     #E53935  (エラー・削除)
+Text Primary:   #FFFFFF  (メインテキスト)
+Text Secondary: #B0B0B0  (サブテキスト)
+Text Tertiary:  #707070  (プレースホルダー)
+Border Glow:    #FF6B35 @ alpha 0.2-0.3
+
+■ タイポグラフィ (日本語最適化)
+Font:           Noto Sans JP → Hiragino → Meiryo → sans-serif
+Heading 1:      24px / bold / height: 1.4 / letterSpacing: 0.96px
+Heading 2:      18px / bold / height: 1.4 / letterSpacing: 0.72px
+Heading 3:      15px / bold / height: 1.4
+Body:           14px / regular / height: 1.7  ← 日本語: 1.5以上必須
+Body Small:     12px / regular / height: 1.6
+Label (chip):   11px / regular / letterSpacing: 0.5px
+Caption:        10px / regular / height: 1.5
+※ 本文 (Body) に letterSpacing を設定しない (日本語規則)
+※ palt (プロポーショナル字詰め) は見出しのみ推奨
+
+■ スペーシング (4px ベース)
+XS: 4px  S: 8px  M: 12px  L: 16px  XL: 24px  XXL: 32px
+pagePadding: 16px  sectionPadding: 24px vertical / 16px horizontal
+
+■ 角丸
+Small: 8px (チップ)  Medium: 12px (カード)  Large: 16px (モーダル)  XL: 24px
+
+■ API エンドポイント
+Project URL: https://my-web-app-b67f4.web.app/
+Supabase:    https://smmkxxavexumewbfaqpy.supabase.co/
+```
+
+### Flutter コードプロンプト例
+
+```
+自分株式会社のデザインシステムに従って Flutter Widget を作成してください。
+- 背景: Color(0xFF0A0A0A)
+- カード: Color(0xFF1E1E1E) + BorderRadius.circular(12)
+- CTAボタン: Color(0xFFFF6B35) → orangeGradient + borderRadius 12
+- 日本語フォント: NotoSansJP / height: 1.7 (本文) / 1.4 (見出し)
+- 見出し letterSpacing: 0.96px (H1) / 0.72px (H2) / 0 (本文)
+- deprecated withOpacity() を使わず withValues(alpha: x) を使用
+- ライトテーマ不可 (常にダークテーマ)
+- Edge Function 呼び出し: Supabase Edge Function ファースト
+```
