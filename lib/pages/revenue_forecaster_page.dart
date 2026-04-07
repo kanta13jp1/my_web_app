@@ -167,12 +167,13 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                                           bottom: 8),
                                       child: ListTile(
                                         leading: const Icon(
-                                            Icons.lightbulb,
-                                            color: Colors.amber),
-                                        title: Text(
-                                            insight.toString()),
+                                          Icons.lightbulb,
+                                          color: Colors.amber,
+                                        ),
+                                        title: Text(insight.toString()),
                                       ),
-                                    )),
+                                    ),
+                                  ),
                           ],
                         ],
                       ),

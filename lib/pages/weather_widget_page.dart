@@ -86,12 +86,15 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchWeather,
-                          child: const Text('再試行')),
+                        onPressed: _fetchWeather,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -146,19 +149,20 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                                       MainAxisAlignment.spaceAround,
                                   children: [
                                     _buildWeatherDetail(
-                                        Icons.water_drop,
-                                        '湿度',
-                                        '${_weather!['humidity'] ?? '-'}%'),
+                                      Icons.water_drop,
+                                      '湿度',
+                                      '${_weather!['humidity'] ?? '-'}%',
+                                    ),
                                     _buildWeatherDetail(
-                                        Icons.air,
-                                        '風速',
-                                        '${_weather!['wind_speed'] ?? '-'}m/s'),
+                                      Icons.air,
+                                      '風速',
+                                      '${_weather!['wind_speed'] ?? '-'}m/s',
+                                    ),
                                     _buildWeatherDetail(
-                                        Icons.location_on,
-                                        '地点',
-                                        _weather!['location']
-                                                ?.toString() ??
-                                            '-'),
+                                      Icons.location_on,
+                                      '地点',
+                                      _weather!['location']?.toString() ?? '-',
+                                    ),
                                   ],
                                 ),
                               ],
@@ -177,8 +181,11 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                           ),
                           child: const Column(
                             children: [
-                              Icon(Icons.wb_cloudy,
-                                  size: 64, color: Colors.blue),
+                              Icon(
+                                Icons.wb_cloudy,
+                                size: 64,
+                                color: Colors.blue,
+                              ),
                               SizedBox(height: 8),
                               Text('天気データがありません'),
                             ],
@@ -187,9 +194,10 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                       ],
                       if (_forecast.isNotEmpty) ...[
                         const SizedBox(height: 16),
-                        Text('週間予報',
-                            style:
-                                Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          '週間予報',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 8),
                         ListView.builder(
                           shrinkWrap: true,
@@ -199,17 +207,13 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                             final day = _forecast[index];
                             return ListTile(
                               leading: Icon(
-                                _weatherIcon(
-                                    day['condition']?.toString()),
+                                _weatherIcon(day['condition']?.toString()),
                                 color: Colors.blue,
                               ),
-                              title: Text(
-                                  day['date']?.toString() ?? '-'),
+                              title: Text(day['date']?.toString() ?? '-'),
                               trailing: Text(
                                 '${day['high'] ?? '-'}° / ${day['low'] ?? '-'}°',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             );
                           },
@@ -226,10 +230,14 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
       children: [
         Icon(icon, size: 20, color: Colors.grey),
         const SizedBox(height: 4),
-        Text(label,
-            style: const TextStyle(fontSize: 11, color: Colors.grey)),
-        Text(value,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.grey),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
