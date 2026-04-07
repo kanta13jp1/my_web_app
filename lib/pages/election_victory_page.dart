@@ -4088,6 +4088,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (message.contains('Supabase client is not available')) {
       return 'Supabaseクライアントが初期化されていないため、最新データを取得できません。';
     }
+    if (message.contains('CORS') ||
+        message.contains('cors') ||
+        message.contains('XMLHttpRequest') ||
+        message.contains('Failed to fetch') ||
+        message.contains('NetworkError')) {
+      return 'Edge Function への接続がブロックされました (CORS)。しばらくしてから再試行してください。';
+    }
     return '最新データの取得に失敗しました。通信状態と Edge Function の設定を確認してください。';
   }
 

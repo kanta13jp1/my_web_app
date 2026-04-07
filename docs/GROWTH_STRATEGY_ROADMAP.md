@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 VSCode#9 (UIデザイン改善ステータス全面リニューアル・MCP適用追跡・ホーム導線追加)
+最終更新: 2026-04-07 VSCode#10 (local-election-intelligence CORS修正・エラーメッセージ改善)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3165,6 +3165,25 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 2. docs/ と supabase/migrations/ のみを変更
 3. lib/ や supabase/functions/ は変更しない (他インスタンスのドメイン)
 4. コミットメッセージは `docs: Windows#N セッション内容` の形式
+
+---
+
+## Session VSCode#10 (2026-04-07): local-election-intelligence CORS修正
+
+### 実施内容
+
+1. **Edge Function CORS ヘッダー修正**
+   - `supabase/functions/local-election-intelligence/index.ts`: `corsHeaders` に `"Access-Control-Allow-Methods": "GET, POST, OPTIONS"` を追加
+   - ブラウザによっては `Access-Control-Allow-Methods` が OPTIONS レスポンスに必須であるため追加
+
+2. **Dart エラーメッセージ改善**
+   - `lib/pages/election_victory_page.dart`: `_describeRealityError()` に CORS/ネットワークエラーパターンを追加
+   - CORS 遮断時に「Edge Function への接続がブロックされました (CORS)」を表示するように改善
+
+### 品質確認
+
+- deno lint: 0 errors ✅
+- flutter analyze: 0 errors ✅
 
 ---
 
