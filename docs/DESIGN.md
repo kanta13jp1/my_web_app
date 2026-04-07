@@ -479,13 +479,91 @@ Column(
 
 ---
 
+## 日本語タイポグラフィ詳細ガイド
+
+> Source: [awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) — note / freee / SmartHR デザインシステムより抽出
+
+### フォントフォールバックチェーン (Flutter Web)
+
+```dart
+// Flutter Web の場合、Google Fonts を使用
+// pubspec.yaml に追記済み: google_fonts: ^6.x
+// 必ず NotoSansJP を第一候補にすること
+fontFamily: GoogleFonts.notoSansJp().fontFamily,
+
+// CSS での宣言参考 (index.html / web向け)
+// font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+```
+
+### 日本語固有の行間・文字間隔ルール
+
+```dart
+// 本文テキスト — 日本語は Western より広い行間が必要
+// 参考: note.com = 2.0, freee = 1.5, SmartHR = 1.5
+// 自分株式会社は読みやすさ重視で 1.7 を基準に
+static const double lineHeightBody    = 1.7;  // 本文 (note基準: 2.0, 短文UI: 1.5)
+static const double lineHeightHeading = 1.25; // 見出し (SmartHR基準)
+static const double lineHeightCaption = 1.5;  // キャプション・チップ
+
+// 文字間隔 — 日本語本文には設定しない (0)
+// 見出しのみ 0.02em〜0.04em で少し開ける (note基準: 0.04em)
+// Flutter では letterSpacing (px単位) を使用:
+//   fontSize 16px × 0.04em = 0.64px ≒ 0.5
+static const double letterSpacingHeading = 0.5;  // H1〜H3
+static const double letterSpacingBody    = 0.0;  // 本文・ボタン (設定しない)
+```
+
+### 禁則処理と改行ルール
+
+```dart
+// Flutterでは自動で日本語禁則処理が適用される。
+// ただし長い英単語やURLが含まれる場合は softWrap: true を明示
+Text(
+  content,
+  softWrap: true,
+  overflow: TextOverflow.ellipsis, // 1行制限の場合のみ
+  maxLines: null,                  // 多行テキストは制限しない
+)
+
+// カード本文の最大行数: 3〜4行 (UI密度に合わせて)
+// 長文表示エリア (ノート・ブログ) の最大幅: 660px (note基準: 620px)
+```
+
+### 日本語UIで避けるべきパターン
+
+```
+❌ letter-spacing を全テキストに適用 (本文が読みにくくなる)
+❌ font-weight: 700 を多用 (日本語フォントは 500 でも十分太い)
+❌ 純粋な白 (#FFFFFF) のテキスト on ダーク (目が疲れる → textPrimary 参照)
+❌ 英語UIの行間 (1.4) をそのまま日本語に適用
+✅ 見出し: 700〜800, 本文: 400〜500
+✅ 行間: 本文 1.6〜1.8, 短文UI 1.4〜1.5
+✅ 文字間隔: 見出し 0.02〜0.04em のみ, 本文 0
+```
+
+### 参考サービスのキーカラー (競合分析用)
+
+| サービス | ブランドカラー | 本文色 | 用途参考 |
+|---------|-------------|-------|---------|
+| note.com | `#41C9B0` (teal) | `#08131a` | コンテンツ投稿・ライト |
+| freee | `#2864F0` (blue) | `#595959` | 会計・HR・企業向け |
+| SmartHR | `#0077C7` (blue) | warm gray | HR・給与管理 |
+
+---
+
 ## 参考デザイン
 
 自分株式会社のデザインは以下を参考にしています:
 
+### 海外サービス (awesome-design-md より)
 - **Spotify** — 漆黒の背景、鮮やかなアクセント、アートワーク主役のレイアウト
 - **Linear** — 極限まで削ぎ落としたミニマル、精密な余白、アクセントカラー
 - **GitHub** — 機能的で情報密度が高い、ダークモード完全対応
+
+### 国内サービス ([awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) より)
+- **note.com** — 日本語コンテンツ投稿、行間 2.0、本文 18px の読みやすさ基準
+- **freee** — 日本のビジネス向けUI、4px ベーススペーシング、セマンティックカラー体系
+- **SmartHR** — 日本語 HR プラットフォーム、Yu Gothic 対応、8px ベーススペーシング
 
 ---
 
@@ -495,4 +573,5 @@ Column(
 2. `withOpacity()` の使用 → 代わりに `withValues(alpha: x)` を使用
 3. 白背景 (#FFFFFF) の使用 → surface1〜4 を使用
 4. オレンジ以外のメインアクセントカラーの追加 (ブランド一貫性のため)
+5. 日本語本文への `letterSpacing` 設定 (見出しのみ 0.5px まで許容)
 5. 10px 未満のフォントサイズ (アクセシビリティのため)
