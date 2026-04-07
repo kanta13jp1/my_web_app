@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-08 daily-development (Xコンポーザーウィンドウ連動・スケジュールフィルター改善・テスト修正)
+最終更新: 2026-04-08 Windows#2 (ロードマップ更新・4インスタンス並列開発体制強化・最優先事項2026-04-08版)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -611,15 +611,18 @@
 
 ---
 
-## 6. 2026-04-06 時点の最優先事項
+## 6. 2026-04-08 時点の最優先事項
 
 1. **登録者数の増加** — 現在4人。公開ギターギャラリー (/public-guitar-gallery) 実装によるバイラル起点を設置済み。次は録音→X自動投稿パイプライン完成
 2. **ギタースタジオを軸にしたバイラル** — public_gallery アクション追加完了。毎日の録音→X投稿を自動化してバイラル係数 > 1 を目指す
 3. **技術ブログの自動投稿開始** — blog-draft Schedule trigger が下書きを毎日生成中。Zenn/Qiitaへの実際の投稿アクションが必要
 4. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信 (280 URL 超)
 5. **Supabase quota 維持** — 現在93/94 deployed。新規Edge Function追加時は必ず先に1件削除
-6. **デザインシステム統一** — Awesome Design MD の知見を活用し、全ページのデザイントークン (カラー・タイポグラフィ・スペーシング) を `docs/DESIGN.md` に定義して AI へ参照させる
+6. **デザインシステム統一** — Awesome Design MD の知見を活用し、全ページのデザイントークン (カラー・タイポグラフィ・スペーシング) を `docs/DESIGN.md` に定義して AI へ参照させる。awesome-design-md-jp の note/freee/SmartHR/Apple/WIRED デザインシステム参照を強化
 7. **Bonsai-8B 対応** — オンデバイスAI (1.15GB・5分の1電力) の台頭を見越し、Edge Functions のロジックをオフライン対応可能な軽量設計に段階移行を検討
+8. **4インスタンス並列開発・競合防止** — VSCode(lib/)・Web(supabase/functions/)・Windows(docs/)・PowerShell(全体管理) の4並列体制。各インスタンスが作業開始前に `git pull --rebase origin main` を実行し、プッシュ失敗・マージ競合を防止
+9. **Schedule タスク強化** — Edge Function UI 導線チェック（毎時）・PR 自動レビュー（3時間ごと）・GitHub Issue 自動修正（毎日 10:00 JST）を安定稼働させ、CLAUDE.md の自動化ループを継続強化
+10. **地方選挙 X 投稿 UX 完成** — スケジュールフィルター→Xコンポーザーの週末連動実装完了（2026-04-08）。次は地方選挙結果の自動ツイートパイプライン構築を検討
 
 ---
 
@@ -3404,4 +3407,63 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 
 - dart analyze: 0 errors ✅ (変更ファイル全件)
 - flutter test: 0 failures ✅
+
+---
+
+## Session Windows#2 (2026-04-08): ロードマップ更新・4インスタンス並列開発体制強化
+
+### 実施内容
+
+1. **GROWTH_STRATEGY_ROADMAP.md 更新**
+   - セクション6「最優先事項」を 2026-04-08 付に更新
+   - 4インスタンス並列開発・競合防止方針を最優先事項に追加 (Priority 8)
+   - Schedule タスク強化計画を追加 (Priority 9)
+   - 地方選挙 X 投稿 UX 完成状況を追加 (Priority 10)
+   - awesome-design-md-jp 活用強化の note を追記 (Priority 6)
+
+2. **並列開発体制ガイドライン整備**
+   - 各インスタンスの役割分担: VSCode(lib/)・Web(supabase/functions/)・Windows(docs/)・PowerShell(全体管理)
+   - git pull --rebase 先行実行による競合防止ルールを GROWTH_STRATEGY_ROADMAP.md に明示
+   - インスタンス間タスク競合防止: 各インスタンスが担当外ディレクトリを変更しないルール
+
+3. **次期実装計画整理 (CLAUDE.md Schedule タスク参照)**
+   - `pr-auto-review` タスク: 3時間ごと / オープンPRの自動セキュリティ・パフォーマンスレビュー
+   - `github-issue-fix` タスク: 毎日10:00 JST / Edge Function UI導線・flutter analyze エラーを自動修正
+   - `cs-check Step 4` が既に PR レビューを実施済み — 重複なく機能
+
+4. **マイグレーションファイル作成**: `20260408020000_seed_achievements_windows2.sql`
+
+### 品質確認
+
+- flutter analyze: 変更対象外 (docs/ のみ変更)
+- deno lint: 変更対象外 (docs/ のみ変更)
+- git push: origin main ✅
+
+---
+
+## Session PowerShell#6 (2026-04-08): マージ競合解消・整合性確認
+
+### 実施内容
+
+1. **git stash pop コンフリクト解消**
+   - 並列4インスタンス実行中、PS インスタンスの stash pop が以下3ファイルでコンフリクト
+   - `.claude/settings.local.json` / `CLAUDE.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`
+   - upstream (HEAD) 優先で解消し `git restore --staged && git restore` で整合
+
+2. **HEAD確認 (a796e9e5)**
+   - ギター録音保存後の履歴タブ自動切り替え修正 ✅
+   - ホーム AppBar プロフィール設定ボタン追加 ✅
+   - ElectionXPostComposerDialog: initialWindowIndex でフィルター連動 ✅
+   - スケジュールフィルターと X コンポーザーウィンドウ連動 ✅
+
+3. **Schedule タスク確認**
+   - cs-check / daily-report / blog-draft / weekly-sns-draft: 全4件 ✅ 有効稼働中
+   - active cs-notes: 0件 (2026-04-07分は archive/2026-04-07/ に移動済み)
+
+4. **マイグレーションファイル作成**: `20260408000901_seed_achievements_ps6_conflict_resolution.sql`
+
+### 品質確認
+
+- flutter analyze: 変更対象外 (docs/ + migration のみ)
+- git push: ✅
 
