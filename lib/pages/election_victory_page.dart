@@ -128,6 +128,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   DateTime _scheduleFocusedDay = DateTime.now();
   DateTime? _selectedScheduleDay;
   bool _showPastSchedules = false;
+  String _selectedScheduleFilter = 'すべて';
+  static const List<String> _scheduleFilters = [
+    'すべて',
+    '今週末',
+    '2週後',
+    '3週後',
+    '4週後',
+    '5週後',
+  ];
 
   bool get _isPublicView => widget.publicView;
 
@@ -2404,6 +2413,41 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  bool _matchesScheduleFilter(DateTime? voteDate, String filter) {
+    if (voteDate == null) return true;
+    if (filter == 'すべて') return true;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // 今週の日曜日の日付（1:月曜 〜 7:日曜）
+    final daysToSunday = 7 - today.weekday;
+    final thisSunday = today.add(Duration(days: daysToSunday));
+    
+    final targetDate = DateTime(voteDate.year, voteDate.month, voteDate.day);
+
+    if (filter == '今週末') {
+      return !targetDate.isBefore(today) && !targetDate.isAfter(thisSunday);
+    } else if (filter == '2週後') {
+      final start = thisSunday.add(const Duration(days: 1));
+      final end = thisSunday.add(const Duration(days: 7));
+      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
+    } else if (filter == '3週後') {
+      final start = thisSunday.add(const Duration(days: 8));
+      final end = thisSunday.add(const Duration(days: 14));
+      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
+    } else if (filter == '4週後') {
+      final start = thisSunday.add(const Duration(days: 15));
+      final end = thisSunday.add(const Duration(days: 21));
+      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
+    } else if (filter == '5週後') {
+      final start = thisSunday.add(const Duration(days: 22));
+      final end = thisSunday.add(const Duration(days: 28));
+      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
+    }
+    
+    return true;
+  }
+
   Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
     final allSchedules = _sortedScheduleEntries(snapshot);
     final pastSchedules = _sortedScheduleEntries(
@@ -2412,6 +2456,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     ).where((s) => s.isPast).toList();
     final upcomingSchedules =
         allSchedules.where((s) => !s.isPast).toList();
+    final filteredUpcomingSchedules = upcomingSchedules.where((s) {
+      return _matchesScheduleFilter(s.parsedVoteDate, _selectedScheduleFilter);
+    }).toList();
     final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
 
     return Column(
@@ -2533,14 +2580,36 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
         ),
         const SizedBox(height: 8),
-        if (upcomingSchedules.isEmpty)
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final filter in _scheduleFilters)
+              ChoiceChip(
+                showCheckmark: false,
+                label: Text(filter),
+                selected: _selectedScheduleFilter == filter,
+                onSelected: (selected) {
+                  if (selected) {
+                    setState(() {
+                      _selectedScheduleFilter = filter;
+                    });
+                  }
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (filteredUpcomingSchedules.isEmpty)
           _buildInlineNotice(
-            '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。',
+            _selectedScheduleFilter == 'すべて'
+                ? '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。'
+                : '$_selectedScheduleFilterに該当する地方選挙はありません。',
             color: Colors.blueGrey,
             icon: Icons.event_busy,
           )
         else
-          ..._buildScheduleGroups(upcomingSchedules),
+          ..._buildScheduleGroups(filteredUpcomingSchedules),
         const SizedBox(height: 16),
         // ── 過去1年の結果 ───────────────────────────────────────
         GestureDetector(
