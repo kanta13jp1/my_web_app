@@ -36,12 +36,12 @@ class ReferralGrowthSnapshot {
   });
 
   const ReferralGrowthSnapshot.empty()
-      : myReferralCode = null,
-        totalReferrals = 0,
-        successfulReferrals = 0,
-        billingConvertedReferrals = 0,
-        billingChannels = const <ReferralBillingChannelSnapshot>[],
-        pendingReferralCode = null;
+    : myReferralCode = null,
+      totalReferrals = 0,
+      successfulReferrals = 0,
+      billingConvertedReferrals = 0,
+      billingChannels = const <ReferralBillingChannelSnapshot>[],
+      pendingReferralCode = null;
 
   String? get referralCode => myReferralCode?.referralCode;
 
@@ -242,9 +242,11 @@ class GrowthAcquisitionSnapshot {
     );
     return GrowthAcquisitionSnapshot(
       windowDays: windowDays <= 0 ? 30 : windowDays,
-      startDate: DateTime.tryParse(json['startDate']?.toString() ?? '') ??
+      startDate:
+          DateTime.tryParse(json['startDate']?.toString() ?? '') ??
           DateTime.now(),
-      endDate: DateTime.tryParse(json['endDate']?.toString() ?? '') ??
+      endDate:
+          DateTime.tryParse(json['endDate']?.toString() ?? '') ??
           DateTime.now(),
       touchpoints: (json['touchpoints'] as List<dynamic>? ?? const <dynamic>[])
           .whereType<Map>()
@@ -413,7 +415,8 @@ class GrowthCommandCenterBrief {
             ),
           )
           .toList(),
-      generatedAt: DateTime.tryParse(json['generatedAt']?.toString() ?? '') ??
+      generatedAt:
+          DateTime.tryParse(json['generatedAt']?.toString() ?? '') ??
           DateTime.now(),
     );
   }
@@ -481,16 +484,16 @@ class WeeklyDigestSnapshot {
   });
 
   const WeeklyDigestSnapshot.empty()
-      : currentWeekStart = '',
-        currentWeekEnd = '',
-        channels = const [],
-        signupSubmitTotal = 0,
-        signupSubmitDelta = 0,
-        referralsCompleted = 0,
-        referralsDelta = 0,
-        importCtaClicks = 0,
-        publicMemoCtaClicks = 0,
-        brief = '';
+    : currentWeekStart = '',
+      currentWeekEnd = '',
+      channels = const [],
+      signupSubmitTotal = 0,
+      signupSubmitDelta = 0,
+      referralsCompleted = 0,
+      referralsDelta = 0,
+      importCtaClicks = 0,
+      publicMemoCtaClicks = 0,
+      brief = '';
 
   factory WeeklyDigestSnapshot.fromJson(Map<String, dynamic> json) {
     final currentWeek = json['currentWeek'];
@@ -507,10 +510,10 @@ class WeeklyDigestSnapshot {
     return WeeklyDigestSnapshot(
       currentWeekStart:
           (currentWeek is Map ? currentWeek['startDate'] : null)?.toString() ??
-              '',
+          '',
       currentWeekEnd:
           (currentWeek is Map ? currentWeek['endDate'] : null)?.toString() ??
-              '',
+          '',
       channels: channels,
       signupSubmitTotal: (json['signupSubmitTotal'] as num?)?.toInt() ?? 0,
       signupSubmitDelta: (json['signupSubmitDelta'] as num?)?.toInt() ?? 0,
@@ -538,7 +541,7 @@ class GrowthMissionService {
   final SupabaseClient? _clientOverride;
 
   const GrowthMissionService({SupabaseClient? clientOverride})
-      : _clientOverride = clientOverride;
+    : _clientOverride = clientOverride;
 
   SupabaseClient? get _client {
     if (_clientOverride != null) {
@@ -646,16 +649,13 @@ $inviteUrl
 
     try {
       if (user != null) {
-        await client.from('user_presence').upsert(
-          <String, dynamic>{
-            'user_id': user.id,
-            'session_id': sessionId,
-            'is_online': true,
-            'last_seen': nowIso,
-            'page_path': pagePath,
-          },
-          onConflict: 'user_id,session_id',
-        );
+        await client.from('user_presence').upsert(<String, dynamic>{
+          'user_id': user.id,
+          'session_id': sessionId,
+          'is_online': true,
+          'last_seen': nowIso,
+          'page_path': pagePath,
+        }, onConflict: 'user_id,session_id');
 
         if (_lastGuestCleanupSession != sessionId) {
           await client
@@ -666,14 +666,11 @@ $inviteUrl
           _lastGuestCleanupSession = sessionId;
         }
       } else {
-        await client.from('guest_presence').upsert(
-          <String, dynamic>{
-            'session_id': sessionId,
-            'last_seen': nowIso,
-            'page_path': pagePath,
-          },
-          onConflict: 'session_id',
-        );
+        await client.from('guest_presence').upsert(<String, dynamic>{
+          'session_id': sessionId,
+          'last_seen': nowIso,
+          'page_path': pagePath,
+        }, onConflict: 'session_id');
       }
     } catch (error) {
       debugPrint('Growth presence sync failed: $error');
@@ -1031,10 +1028,14 @@ $inviteUrl
     final now = DateTime.now();
     final todayKey =
         '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final activeUserCutoff =
-        now.subtract(const Duration(minutes: 5)).toUtc().toIso8601String();
-    final guestCutoff =
-        now.subtract(const Duration(minutes: 30)).toUtc().toIso8601String();
+    final activeUserCutoff = now
+        .subtract(const Duration(minutes: 5))
+        .toUtc()
+        .toIso8601String();
+    final guestCutoff = now
+        .subtract(const Duration(minutes: 30))
+        .toUtc()
+        .toIso8601String();
 
     try {
       final results = await Future.wait<dynamic>([
@@ -1066,12 +1067,15 @@ $inviteUrl
       final statRow = results[0] is Map
           ? Map<String, dynamic>.from(results[0] as Map)
           : null;
-      final latestStat =
-          statRow == null ? null : SiteStatistics.fromJson(statRow);
-      final activeUserRows =
-          results[1] is List ? results[1] as List<dynamic> : const <dynamic>[];
-      final guestRows =
-          results[2] is List ? results[2] as List<dynamic> : const <dynamic>[];
+      final latestStat = statRow == null
+          ? null
+          : SiteStatistics.fromJson(statRow);
+      final activeUserRows = results[1] is List
+          ? results[1] as List<dynamic>
+          : const <dynamic>[];
+      final guestRows = results[2] is List
+          ? results[2] as List<dynamic>
+          : const <dynamic>[];
       final lpStats = results[3] is Map
           ? Map<String, dynamic>.from(results[3] as Map)
           : <String, dynamic>{};
@@ -1266,7 +1270,7 @@ $inviteUrl
               sourceCounts[GrowthAcquisitionService.touchPublicMemo] ?? 0,
           signupSubmitCount:
               sourceCounts[GrowthAcquisitionService.signupSubmitPublicMemo] ??
-                  0,
+              0,
         ),
         GrowthAcquisitionTouchpointSnapshot(
           id: 'referral',
@@ -1317,13 +1321,13 @@ $inviteUrl
     final stageLabel = totalUsers < 100
         ? 'Pre-PMF'
         : totalUsers < 1000
-            ? 'Early traction'
-            : 'Scale-up';
+        ? 'Early traction'
+        : 'Scale-up';
     final stageReason = totalUsers < 100
         ? 'The product still needs user acquisition loops and tighter activation.'
         : totalUsers < 1000
-            ? 'The product is showing traction and needs repeatable channels.'
-            : 'The product needs process, hiring, and channel scaling discipline.';
+        ? 'The product is showing traction and needs repeatable channels.'
+        : 'The product needs process, hiring, and channel scaling discipline.';
 
     return GrowthCommandCenterBrief(
       stageLabel: stageLabel,
@@ -1493,8 +1497,8 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
     GrowthMissionService service = const GrowthMissionService(),
     GrowthAcquisitionService acquisitionService =
         const GrowthAcquisitionService(),
-  })  : _service = service,
-        _acquisitionService = acquisitionService {
+  }) : _service = service,
+       _acquisitionService = acquisitionService {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -1538,10 +1542,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver
       );
     });
     _metricsTimer ??= Timer.periodic(const Duration(minutes: 5), (_) {
-      _runSafely(
-        _service.refreshAggregateMetrics(),
-        'refreshAggregateMetrics',
-      );
+      _runSafely(_service.refreshAggregateMetrics(), 'refreshAggregateMetrics');
     });
   }
 

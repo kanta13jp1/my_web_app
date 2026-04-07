@@ -34,10 +34,7 @@ import '../widgets/public_tracker_cta_card.dart';
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
 
-  const ElectionVictoryPage({
-    super.key,
-    this.publicView = false,
-  });
+  const ElectionVictoryPage({super.key, this.publicView = false});
 
   @override
   State<ElectionVictoryPage> createState() => _ElectionVictoryPageState();
@@ -108,23 +105,25 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       const LocalElectionRealityService();
   late final OfficialEndorsementViewModel _officialEndorsementViewModel =
       OfficialEndorsementViewModel(
-    repository: const OfficialEndorsementRepository(),
-  );
+        repository: const OfficialEndorsementRepository(),
+      );
   final PrefectureElectionNewsService _newsService =
       const PrefectureElectionNewsService();
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _historySectionKey = GlobalKey(debugLabel: 'realityHistory');
-  final GlobalKey _scheduleSectionKey =
-      GlobalKey(debugLabel: 'scheduleCalendar');
+  final GlobalKey _scheduleSectionKey = GlobalKey(
+    debugLabel: 'scheduleCalendar',
+  );
   final GlobalKey _rosterSectionKey = GlobalKey(debugLabel: 'memberRoster');
-  late final PublicMemoService _publicMemoService =
-      PublicMemoService(Supabase.instance.client);
+  late final PublicMemoService _publicMemoService = PublicMemoService(
+    Supabase.instance.client,
+  );
   late final LocalElectionShareService _shareService =
       LocalElectionShareService(
-    Supabase.instance.client,
-    publishMemo: _publicMemoService.upsertMemo,
-    loadMemo: _publicMemoService.getUserPublicMemoByNoteId,
-  );
+        Supabase.instance.client,
+        publishMemo: _publicMemoService.upsertMemo,
+        loadMemo: _publicMemoService.getUserPublicMemoByNoteId,
+      );
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
   final NumberFormat _numberFormat = NumberFormat('#,##0', 'ja_JP');
@@ -196,9 +195,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String get dpjLocalElectionOfficialListAsOf =>
       _officialEndorsements.sourceAsOf;
   String get dpjLocalElectionOfficialListUrl => _officialEndorsements.sourceUrl;
-  OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(
-    String prefecture,
-  ) =>
+  OfficialEndorsementPrefecture? dpjOfficialEndorsementFor(String prefecture) =>
       _officialEndorsementViewModel.forPrefecture(prefecture);
   List<LocalElectionScheduleEntry>? _sortedSchedulesDescCache;
   Map<DateTime, List<LocalElectionScheduleEntry>>? _scheduleEventMapCache;
@@ -292,7 +289,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _realitySnapshot = cachedSnapshot;
       _selectedElectionMode =
           cachedSnapshot?.electionIntelligence.selectedMode ??
-              ElectionModeId.local;
+          ElectionModeId.local;
       _realityHistory = cachedHistory;
       _publishedSnapshotMemo = null;
       _publishedKpiMemo = null;
@@ -383,9 +380,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     final prefectureLabels = <String>{
       _allLabel,
-      ...snapshot.members.map((item) => item.prefecture).where(
-            (item) => item.trim().isNotEmpty,
-          ),
+      ...snapshot.members
+          .map((item) => item.prefecture)
+          .where((item) => item.trim().isNotEmpty),
     };
     if (!prefectureLabels.contains(_selectedMemberPrefecture)) {
       _selectedMemberPrefecture = _allLabel;
@@ -449,12 +446,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   List<String> _memberPrefectureOptions(LocalElectionRealitySnapshot snapshot) {
-    final labels = snapshot.members
-        .map((item) => item.prefecture)
-        .where((item) => item.trim().isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final labels =
+        snapshot.members
+            .map((item) => item.prefecture)
+            .where((item) => item.trim().isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
     return <String>[_allLabel, ...labels];
   }
 
@@ -505,7 +503,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (prefectureCompare != 0) {
         return prefectureCompare;
       }
-      final categoryCompare = categoryRank(left.assemblyCategory) -
+      final categoryCompare =
+          categoryRank(left.assemblyCategory) -
           categoryRank(right.assemblyCategory);
       if (categoryCompare != 0) {
         return categoryCompare;
@@ -565,11 +564,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _memberProfileErrors[detailUrl] =
             '議員プロフィールの取得に失敗しました。しばらくしてから再試行してください。';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('議員プロフィールの取得に失敗しました'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('議員プロフィールの取得に失敗しました')));
     } finally {
       if (mounted) {
         setState(() {
@@ -658,7 +655,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       // EF 再取得のたびに必ず変化して同じIDを取り直してしまう
       // (初回ロードで public_memos が 4 フェッチになる原因)。
       final previousSnapshot = _realitySnapshot;
-      final snapshotNoteChanged = previousSnapshot == null ||
+      final snapshotNoteChanged =
+          previousSnapshot == null ||
           _shareService.buildSyntheticNoteId(previousSnapshot) !=
               _shareService.buildSyntheticNoteId(snapshot);
       _officialEndorsementViewModel.updateFromIntelligence(
@@ -711,12 +709,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         _realityError = message;
         _selectedElectionMode =
             _realitySnapshot?.electionIntelligence.selectedMode ??
-                ElectionModeId.local;
+            ElectionModeId.local;
       });
       if (showSnackBar) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) {
@@ -745,9 +743,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Future<void> _runGeminiAnalysis() async {
     if (Supabase.instance.client.auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gemini AI 分析にはログインが必要です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gemini AI 分析にはログインが必要です')));
       return;
     }
     if (_isGeminiLoading) return;
@@ -774,11 +772,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     .toList();
           });
         }
-        final total = ((raw['monthlyKpi']
-                as Map<String, dynamic>?)?['currentTotal'] as num?)
-            ?.toInt();
+        final total =
+            ((raw['monthlyKpi'] as Map<String, dynamic>?)?['currentTotal']
+                    as num?)
+                ?.toInt();
         final targetMembers = _plan?.targetLocalMembers ?? 700;
-        result = 'Gemini AI 分析完了\n'
+        result =
+            'Gemini AI 分析完了\n'
             '取得議員数: $politicians 人'
             '${total != null ? ' / 目標$targetMembers 残り${targetMembers - total}人' : ''}';
       } else {
@@ -786,9 +786,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
       if (!mounted) return;
       setState(() => _geminiAnalysisResult = result);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gemini AI 分析が完了しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Gemini AI 分析が完了しました')));
     } catch (e) {
       if (!mounted) return;
       setState(() => _geminiAnalysisResult = 'エラー: $e');
@@ -806,9 +806,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('管理サマリーをクリップボードにコピーしました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('管理サマリーをクリップボードにコピーしました')));
   }
 
   /// R24: 外部へ配る公開ダッシュボードURL。実測でサイト流入の 94% を占める
@@ -816,32 +816,29 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   /// UTM を付ける (ページ内表示用の素の URL はそのまま)。
   /// `utm_source=x` + `utm_campaign=first_user_growth` は
   /// GrowthAcquisitionService.isFirstUserGrowthUri の判定条件に合わせる。
-  static String get _shareablePublicDashboardUrl => Uri.parse(
-        _publicLocalElectionDashboardUrl,
-      ).replace(
-        queryParameters: const <String, String>{
-          'utm_source': 'x',
-          'utm_medium': 'data_report',
-          'utm_campaign': 'first_user_growth',
-          'utm_content': 'local_election_700',
-        },
-      ).toString();
+  static String get _shareablePublicDashboardUrl =>
+      Uri.parse(_publicLocalElectionDashboardUrl)
+          .replace(
+            queryParameters: const <String, String>{
+              'utm_source': 'x',
+              'utm_medium': 'data_report',
+              'utm_campaign': 'first_user_growth',
+              'utm_content': 'local_election_700',
+            },
+          )
+          .toString();
 
   Future<void> _copyPublicDashboardLink() async {
-    await Clipboard.setData(
-      ClipboardData(text: _shareablePublicDashboardUrl),
-    );
+    await Clipboard.setData(ClipboardData(text: _shareablePublicDashboardUrl));
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('公開ダッシュボードURLをコピーしました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('公開ダッシュボードURLをコピーしました')));
   }
 
-  Future<PublicMemo?> _publishKpiMemo({
-    bool openAfterPublish = false,
-  }) async {
+  Future<PublicMemo?> _publishKpiMemo({bool openAfterPublish = false}) async {
     final plan = _plan;
     if (plan == null) {
       return null;
@@ -866,8 +863,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
 
     try {
-      final snapshot =
-          _realitySnapshot?.hasData == true ? _realitySnapshot : null;
+      final snapshot = _realitySnapshot?.hasData == true
+          ? _realitySnapshot
+          : null;
       final memo = await _shareService.publishPlanDashboard(
         plan: plan,
         snapshot: snapshot,
@@ -877,17 +875,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return memo;
       }
       if (memo == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('全県連KPI共有ノートの作成に失敗しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('全県連KPI共有ノートの作成に失敗しました')));
         return null;
       }
       setState(() {
         _publishedKpiMemo = memo;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('全県連KPI共有ノートを更新しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('全県連KPI共有ノートを更新しました')));
       if (openAfterPublish) {
         await Navigator.of(context).pushNamed('/public-memo?id=${memo.id}');
       }
@@ -913,11 +911,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('地方議員集計のノート化にはログインが必要です'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('地方議員集計のノート化にはログインが必要です')));
       return null;
     }
     if (_isPublishingSnapshotMemo) {
@@ -938,17 +934,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return memo;
       }
       if (memo == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('地方議員集計ノートの作成に失敗しました')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('地方議員集計ノートの作成に失敗しました')));
         return null;
       }
       setState(() {
         _publishedSnapshotMemo = memo;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('地方議員集計ノートを更新しました')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('地方議員集計ノートを更新しました')));
       if (openAfterPublish) {
         await Navigator.of(context).pushNamed('/public-memo?id=${memo.id}');
       }
@@ -972,9 +968,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('全県連KPI共有ノートのリンクをコピーしました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('全県連KPI共有ノートのリンクをコピーしました')));
   }
 
   Future<void> _copySnapshotMemoLink() async {
@@ -987,9 +983,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('地方議員集計ノートのリンクをコピーしました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('地方議員集計ノートのリンクをコピーしました')));
   }
 
   Future<void> _shareKpiMemoOnX() async {
@@ -1009,10 +1005,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       plan: plan,
       publicUrl: publicUrl,
     );
-    final launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched) {
       final text = _shareService.buildPlanDashboardXShareText(
         plan: plan,
@@ -1023,18 +1016,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('X投稿画面を開けなかったため、投稿文をコピーしました'),
-        ),
+        const SnackBar(content: Text('X投稿画面を開けなかったため、投稿文をコピーしました')),
       );
       return;
     }
     if (!mounted) {
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Xの投稿画面を開きました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Xの投稿画面を開きました')));
   }
 
   /// R24: 地方議員集計(ポストA型=累積8Kベンチマークのデータレポート)を growth-hub
@@ -1043,22 +1034,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   /// 必ず確認ダイアログを挟む。
   Future<void> _postSnapshotToXViaApi() async {
     if (!_canPostToXApi) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('X API投稿は管理者のみ実行できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('X API投稿は管理者のみ実行できます')));
       return;
     }
     final snapshot = _realitySnapshot;
     if (snapshot == null || !snapshot.hasData) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('最新の実データ取得後にX API投稿できます')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('最新の実データ取得後にX API投稿できます')));
       return;
     }
     if (Supabase.instance.client.auth.currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('X API投稿にはログインが必要です')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('X API投稿にはログインが必要です')));
       return;
     }
     if (_isPostingSnapshotToX) {
@@ -1147,36 +1138,33 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       }
       if (data['success'] == true && data['posted'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('地方議員集計をXへ投稿しました（投稿ログ記録済み・実測待ち）'),
-          ),
+          const SnackBar(content: Text('地方議員集計をXへ投稿しました（投稿ログ記録済み・実測待ち）')),
         );
       } else if (data['code'] == 'duplicate_content') {
         // このルートは集計データからの決定的テンプレなので「文面を変えて再生成」
         // は実行不能。数値が動くまで再投稿を見送るのが正しい対処と案内する。
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              '直近の投稿と内容がほぼ同じため見送りました。集計数値が動いてから再投稿してください。',
-            ),
+            content: Text('直近の投稿と内容がほぼ同じため見送りました。集計数値が動いてから再投稿してください。'),
           ),
         );
       } else {
-        final guidance = data['actionRequired']?.toString() ??
+        final guidance =
+            data['actionRequired']?.toString() ??
             data['warning']?.toString() ??
             data['error']?.toString() ??
             '投稿に失敗しました';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('X投稿できませんでした: $guidance')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('X投稿できませんでした: $guidance')));
       }
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('X投稿エラー: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('X投稿エラー: $error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -1192,11 +1180,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('最新の実データ取得後に地方選ポストを作成できます'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('最新の実データ取得後に地方選ポストを作成できます')));
       return;
     }
 
@@ -1240,9 +1226,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             onPressed: _isRealityLoading
                 ? null
                 : () => _refreshRealityData(
-                      showSnackBar: true,
-                      forceRefresh: true,
-                    ),
+                    showSnackBar: true,
+                    forceRefresh: true,
+                  ),
             tooltip: '最新の実データを取得',
             icon: _isRealityLoading
                 ? const SizedBox(
@@ -1259,15 +1245,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           // 読み込み中や取得失敗でスピナーだけを出すと、訪問者は「何のサイトか」
           // を 1 文字も読めないまま離脱する。データを待たずに導線だけは見せる。
           ? (_isPublicView
-              ? ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _buildPublicTrackerCtaCard(),
-                    const SizedBox(height: 24),
-                    const Center(child: CircularProgressIndicator()),
-                  ],
-                )
-              : const Center(child: CircularProgressIndicator()))
+                ? ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      _buildPublicTrackerCtaCard(),
+                      const SizedBox(height: 24),
+                      const Center(child: CircularProgressIndicator()),
+                    ],
+                  )
+                : const Center(child: CircularProgressIndicator()))
           : RefreshIndicator(
               onRefresh: _refreshAll,
               child: ListView(
@@ -1393,10 +1379,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ],
             ),
             const SizedBox(height: 10),
-            Text(
-              selectedOption.description,
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(selectedOption.description, style: theme.textTheme.bodySmall),
             if (intelligence.goals.isNotEmpty ||
                 intelligence.achievements.isNotEmpty) ...[
               const Divider(height: 24),
@@ -1460,8 +1443,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         : '-';
     final daysToElection = _shareService.daysUntilNextUnifiedLocalElection();
     final monthsToElection = (daysToElection / 30).ceil().clamp(1, 24);
-    final requiredMonthlyPace =
-        gapToTarget <= 0 ? 0 : (gapToTarget / monthsToElection).ceil();
+    final requiredMonthlyPace = gapToTarget <= 0
+        ? 0
+        : (gapToTarget / monthsToElection).ceil();
 
     return Card(
       elevation: 2,
@@ -1480,13 +1464,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             Text(
               hasSnapshot
                   ? '公式議員ページの最新集計は ${_formatInt(officialCount)}人。'
-                      '${_formatInt(plan.targetLocalMembers)}人まで残り '
-                      '${_formatInt(gapToTarget)}人を、'
-                      '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}'
+                        '${_formatInt(plan.targetLocalMembers)}人まで残り '
+                        '${_formatInt(gapToTarget)}人を、'
+                        '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}'
                   : '現在 ${_formatInt(plan.currentLocalMembers)}人から '
-                      '${_formatInt(plan.targetLocalMembers)}人へ。'
-                      '必要純増 ${_formatInt(plan.requiredNetIncrease)}人を、'
-                      '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}',
+                        '${_formatInt(plan.targetLocalMembers)}人へ。'
+                        '必要純増 ${_formatInt(plan.requiredNetIncrease)}人を、'
+                        '${_isPublicView ? '県連別配分と月次KPIの公開ビューで確認できます。' : '県連別配分と月次KPIで管理します。'}',
               style: theme.textTheme.bodyMedium,
             ),
             if (hasSnapshot) ...[
@@ -1589,7 +1573,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Widget _buildPublicTrackerCtaCard() {
     return PublicTrackerCtaCard(
       headline: 'この集計は「自分株式会社」が毎日自動更新しています',
-      description: '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
+      description:
+          '公式ページを定期取得して、現職数・目標との差分・残り日数を自動で計算しています。'
           '同じ仕組みを、家計や資産、仕事ログ、AIツールの定点観測にも使えるように作っている個人向けのダッシュボードです。',
       onActionPressed: _openLandingPageFromPublicTracker,
     );
@@ -1603,8 +1588,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       const GrowthAcquisitionService()
           .recordPublicTrackerSignUpCta()
           .catchError((Object error) {
-        debugPrint('public tracker CTA signal failed: $error');
-      }),
+            debugPrint('public tracker CTA signal failed: $error');
+          }),
     );
     if (!mounted) {
       return;
@@ -1633,9 +1618,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         children: [
           Text(
             '公開URLで閲覧できる固定ページです',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1653,9 +1638,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               SelectableText(
                 _publicLocalElectionDashboardUrl,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF1D4ED8),
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: const Color(0xFF1D4ED8),
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: _copyPublicDashboardLink,
@@ -1675,8 +1660,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final hasSnapshot = realitySnapshot != null;
     final activePrefectures = hasSnapshot
         ? realitySnapshot.prefectures
-            .where((item) => item.currentMembers > 0)
-            .length
+              .where((item) => item.currentMembers > 0)
+              .length
         : 0;
     return Card(
       child: Padding(
@@ -1698,22 +1683,22 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     Text(
                       '最新の実データ',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       hasSnapshot
                           ? '公式議員ページと2023年の公式選挙結果ページを取得して、'
-                              'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
+                                'AIで各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新します。'
                           : _isRealityLoading
-                              // 自動取得の実行中は「再取得を促す」文言だと
-                              // 矛盾するため、取得中である旨を出す。
-                              ? '公式ソースから最新の地方議員数を取得しています。'
-                                  '初回は20秒ほどかかることがあります。'
-                              : 'まだ最新データを取得できていません。'
-                                  'ネット経由で公式ソースを再取得すると、'
-                                  '計画値とのズレを把握できます。',
+                          // 自動取得の実行中は「再取得を促す」文言だと
+                          // 矛盾するため、取得中である旨を出す。
+                          ? '公式ソースから最新の地方議員数を取得しています。'
+                                '初回は20秒ほどかかることがあります。'
+                          : 'まだ最新データを取得できていません。'
+                                'ネット経由で公式ソースを再取得すると、'
+                                '計画値とのズレを把握できます。',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -1734,16 +1719,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       FilledButton.tonalIcon(
                         onPressed:
                             _isPublishingSnapshotMemo || realitySnapshot == null
-                                ? null
-                                : () => _publishSnapshotMemo(
-                                      openAfterPublish: true,
-                                    ),
+                            ? null
+                            : () =>
+                                  _publishSnapshotMemo(openAfterPublish: true),
                         icon: _isPublishingSnapshotMemo
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.summarize_outlined),
                         label: Text(
@@ -1758,8 +1743,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.public),
                         label: Text(
@@ -1769,14 +1755,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       FilledButton.tonalIcon(
                         onPressed:
                             _isPublishingSnapshotMemo || realitySnapshot == null
-                                ? null
-                                : _copySnapshotMemoLink,
+                            ? null
+                            : _copySnapshotMemoLink,
                         icon: const Icon(Icons.copy_all),
                         label: const Text('集計ノートリンクコピー'),
                       ),
                       FilledButton.tonalIcon(
-                        onPressed:
-                            _isPublishingKpiMemo ? null : _copyKpiMemoLink,
+                        onPressed: _isPublishingKpiMemo
+                            ? null
+                            : _copyKpiMemoLink,
                         icon: const Icon(Icons.copy_all),
                         label: const Text('KPIノートリンクコピー'),
                       ),
@@ -1795,7 +1782,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     ),
                     if (_canPostToXApi)
                       FilledButton.icon(
-                        onPressed: _isPostingSnapshotToX ||
+                        onPressed:
+                            _isPostingSnapshotToX ||
                                 _isPublishingSnapshotMemo ||
                                 realitySnapshot == null
                             ? null
@@ -1804,8 +1792,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Icon(Icons.send),
                         label: Text(
@@ -1816,9 +1805,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       onPressed: _isRealityLoading
                           ? null
                           : () => _refreshRealityData(
-                                showSnackBar: true,
-                                forceRefresh: true,
-                              ),
+                              showSnackBar: true,
+                              forceRefresh: true,
+                            ),
                       icon: _isRealityLoading
                           ? const SizedBox(
                               width: 16,
@@ -1920,8 +1909,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 children: [
                   _buildSummaryCard(
                     title: '公式地方議員数',
-                    value:
-                        _formatInt(realitySnapshot.officialCurrentLocalMembers),
+                    value: _formatInt(
+                      realitySnapshot.officialCurrentLocalMembers,
+                    ),
                     subtitle: '議員ページ集計',
                     color: const Color(0xFF0891B2),
                   ),
@@ -1935,8 +1925,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ),
                   _buildSummaryCard(
                     title: '実数基準の残り',
-                    value:
-                        _formatInt(realitySnapshot.actualNetIncreaseRequired),
+                    value: _formatInt(
+                      realitySnapshot.actualNetIncreaseRequired,
+                    ),
                     subtitle: '700人まで',
                     color: const Color(0xFFB91C1C),
                   ),
@@ -2043,8 +2034,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF607D8B).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: const Color(0xFF607D8B).withValues(alpha: 0.16)),
+        border: Border.all(
+          color: const Color(0xFF607D8B).withValues(alpha: 0.16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2084,9 +2076,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         children: [
           Text(
             '公開ビューの見どころ',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
@@ -2177,13 +2169,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final maxCount = history.isEmpty
         ? snapshot.officialCurrentLocalMembers
         : history
-            .map((item) => item.officialCurrentLocalMembers)
-            .reduce((left, right) => left > right ? left : right);
+              .map((item) => item.officialCurrentLocalMembers)
+              .reduce((left, right) => left > right ? left : right);
     final minCount = history.isEmpty
         ? snapshot.officialCurrentLocalMembers
         : history
-            .map((item) => item.officialCurrentLocalMembers)
-            .reduce((left, right) => left < right ? left : right);
+              .map((item) => item.officialCurrentLocalMembers)
+              .reduce((left, right) => left < right ? left : right);
 
     return Column(
       key: _historySectionKey,
@@ -2191,9 +2183,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '地方議員数推移',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(
@@ -2267,12 +2259,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Widget _buildRealityHistoryChart(
     List<LocalElectionRealityHistoryPoint> history,
   ) {
-    final spots = history.asMap().entries.map((entry) {
-      return FlSpot(
-        entry.key.toDouble(),
-        entry.value.officialCurrentLocalMembers.toDouble(),
-      );
-    }).toList(growable: false);
+    final spots = history
+        .asMap()
+        .entries
+        .map((entry) {
+          return FlSpot(
+            entry.key.toDouble(),
+            entry.value.officialCurrentLocalMembers.toDouble(),
+          );
+        })
+        .toList(growable: false);
     final minCount = history
         .map((item) => item.officialCurrentLocalMembers)
         .reduce((left, right) => left < right ? left : right);
@@ -2427,8 +2423,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   child: Text(
                     _geminiAnalysisResult!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF1565C0),
-                        ),
+                      color: const Color(0xFF1565C0),
+                    ),
                   ),
                 ),
               ],
@@ -2437,9 +2433,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ],
         Text(
           'AI整理メモ',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         Container(
@@ -2465,9 +2461,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 const SizedBox(height: 14),
                 Text(
                   '注視ポイント',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 for (final item in _displayAiAlerts(snapshot))
@@ -2477,9 +2473,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 const SizedBox(height: 14),
                 Text(
                   '運用メモ',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
                 for (final item in snapshot.aiStrategicNotes)
@@ -2500,9 +2496,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '公式集計の全都道府県',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(
@@ -2516,8 +2512,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHigh,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHigh,
               borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
             const _PrefectureLegendChip(
@@ -2580,11 +2577,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                         decoration: BoxDecoration(
                                           color:
                                               _prefectureBadgeBackgroundColor(
-                                            context,
-                                            item,
+                                                context,
+                                                item,
+                                              ),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
                                           ),
-                                          borderRadius:
-                                              BorderRadius.circular(999),
                                         ),
                                         child: Text(
                                           label,
@@ -2593,9 +2591,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                             fontWeight: FontWeight.w700,
                                             color:
                                                 _prefectureBadgeForegroundColor(
-                                              context,
-                                              item,
-                                            ),
+                                                  context,
+                                                  item,
+                                                ),
                                             height: 1.5,
                                           ),
                                         ),
@@ -2746,9 +2744,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final pastResults = _displayPastElectionResults(snapshot);
 
     if (alertSchedules.isEmpty && pastResults.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('エクスポート対象の選挙情報がありません')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('エクスポート対象の選挙情報がありません')));
       return;
     }
 
@@ -2770,8 +2768,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         row(['投票日', '都道府県', '自治体', '選挙名', '候補者数', '候補者一覧', 'Xハンドル']),
       );
       for (final s in alertSchedules) {
-        final handles =
-            _candidateHandles(s).map((handle) => '@$handle').join(' / ');
+        final handles = _candidateHandles(
+          s,
+        ).map((handle) => '@$handle').join(' / ');
         buffer.writeln(
           row([
             s.voteDate,
@@ -2944,9 +2943,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 child: Text(
                   '統一地方選挙 2027 カウントダウン (仮日程)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1D4ED8),
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1D4ED8),
+                  ),
                 ),
               ),
             ],
@@ -2955,15 +2954,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           Text(
             '※ 官報告示前の推定日程です。確定次第更新します。',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           Text(
             '第一次 (都道府県・政令市)',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Row(
@@ -2976,9 +2975,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 12),
           Text(
             '第二次 (市区町村)',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 6),
           Row(
@@ -2994,8 +2993,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   int? _filterToWindowIndex(String filter) {
-    final idx = LocalElectionShareService.availableWindows
-        .indexWhere((w) => w.label == filter);
+    final idx = LocalElectionShareService.availableWindows.indexWhere(
+      (w) => w.label == filter,
+    );
     return idx >= 0 ? idx : null;
   }
 
@@ -3042,8 +3042,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }).toList();
 
     if (filtered.isNotEmpty && filtered.first.parsedVoteDate != null) {
-      final targetDate =
-          _normalizeDate(filtered.first.parsedVoteDate!.toLocal());
+      final targetDate = _normalizeDate(
+        filtered.first.parsedVoteDate!.toLocal(),
+      );
       _selectedScheduleDay = targetDate;
       _scheduleFocusedDay = targetDate;
       return;
@@ -3057,10 +3058,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     final targetDate = _shareService
-        .scheduleWindowRange(
-          weekendWindow,
-          now: today,
-        )
+        .scheduleWindowRange(weekendWindow, now: today)
         .start;
     _selectedScheduleDay = targetDate;
     _scheduleFocusedDay = targetDate;
@@ -3087,9 +3085,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             Expanded(
               child: Text(
                 '地方選挙スケジュール',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             TextButton.icon(
@@ -3171,8 +3169,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHigh,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHigh,
               borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
             const _PrefectureLegendChip(
@@ -3193,9 +3192,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         // ── 今後の選挙 ─────────────────────────────────────────
         Text(
           '今後の日程',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -3216,8 +3215,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     filter == 'すべて' ? filter : '$filter ($count)',
                     style: TextStyle(
                       color: isSelected ? const Color(0xFFE5E7EB) : null,
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.normal,
                       fontSize: 13,
                       height: 1.5,
                     ),
@@ -3260,9 +3260,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 child: Text(
                   '直近に終了した選挙 (${_formatInt(pastSchedules.length)} 件)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
               Icon(
@@ -3289,7 +3289,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Widget _buildScheduleCalendar(LocalElectionRealitySnapshot snapshot) {
     final calendarEvents = _scheduleEventMap(snapshot);
-    final selectedDay = _selectedScheduleDay ??
+    final selectedDay =
+        _selectedScheduleDay ??
         _bestScheduleSelection(snapshot) ??
         _normalizeDate(DateTime.now());
     final selectedEvents = _scheduleEventsForDay(snapshot, selectedDay);
@@ -3302,8 +3303,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final focusedDay = _scheduleFocusedDay.isBefore(firstDay)
         ? firstDay
         : (_scheduleFocusedDay.isAfter(lastDay)
-            ? lastDay
-            : _scheduleFocusedDay);
+              ? lastDay
+              : _scheduleFocusedDay);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3383,8 +3384,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     1 => const Color(0xFFFF8F00),
                     _ => const Color(0xFF0F766E),
                   };
-                  final countLabel =
-                      events.length > 9 ? '9+' : '${events.length}';
+                  final countLabel = events.length > 9
+                      ? '9+'
+                      : '${events.length}';
                   return Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
@@ -3416,9 +3418,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         const SizedBox(height: 12),
         Text(
           '選択日 ${_dateOnlyFormat.format(selectedDay)}',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         if (selectedEvents.isEmpty)
@@ -3432,17 +3434,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         const SizedBox(height: 12),
         Text(
           '日程一覧',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     );
   }
 
-  void _invalidateDerivedCachesIfNeeded(
-    LocalElectionRealitySnapshot snapshot,
-  ) {
+  void _invalidateDerivedCachesIfNeeded(LocalElectionRealitySnapshot snapshot) {
     if (identical(_derivedCacheSnapshot, snapshot)) {
       return;
     }
@@ -3547,9 +3547,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ),
             child: Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor: Colors.transparent,
-              ),
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 initiallyExpanded: i == 0,
                 tilePadding: const EdgeInsets.symmetric(
@@ -3559,15 +3559,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
                 title: Text(
                   _formatScheduleDate(date),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
                   '${items.length}件の選挙',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 children: items.map(_buildScheduleCard).toList(),
               ),
@@ -3584,8 +3584,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     bool reverseForPast = false,
   }) {
     _invalidateDerivedCachesIfNeeded(snapshot);
-    final cached =
-        reverseForPast ? _sortedSchedulesDescCache : _sortedSchedulesAscCache;
+    final cached = reverseForPast
+        ? _sortedSchedulesDescCache
+        : _sortedSchedulesAscCache;
     if (cached != null) {
       return cached;
     }
@@ -3603,9 +3604,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           return dateCompare;
         }
       }
-      final severityCompare = _scheduleSeverity(left).compareTo(
-        _scheduleSeverity(right),
-      );
+      final severityCompare = _scheduleSeverity(
+        left,
+      ).compareTo(_scheduleSeverity(right));
       if (severityCompare != 0) {
         return severityCompare;
       }
@@ -3661,9 +3662,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHigh,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHigh,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Text(
@@ -3671,9 +3672,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   height: 1.5,
                                 ),
                               ),
@@ -3687,9 +3688,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
                                 color: item.isPast
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant
                                     : null,
                                 height: 1.5,
                               ),
@@ -3711,8 +3712,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color:
-                                  _scheduleBadgeBackgroundColor(context, item),
+                              color: _scheduleBadgeBackgroundColor(
+                                context,
+                                item,
+                              ),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
@@ -3821,22 +3824,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.kokuminCandidateNames.isEmpty) {
       return '党公式候補予定者ページで該当候補を確認できていません。';
     }
-    return item.kokuminCandidateNames.asMap().entries.map((entry) {
-      final status = entry.key < item.kokuminCandidateStatuses.length
-          ? item.kokuminCandidateStatuses[entry.key].trim()
-          : '';
-      final handle = entry.key < item.kokuminCandidateXHandles.length
-          ? _normalizeXHandle(item.kokuminCandidateXHandles[entry.key])
-          : '';
-      final suffixes = <String>[
-        if (status.isNotEmpty) status,
-        if (handle.isNotEmpty) '@$handle',
-      ];
-      if (suffixes.isEmpty) {
-        return entry.value;
-      }
-      return '${entry.value}（${suffixes.join(' / ')}）';
-    }).join(' / ');
+    return item.kokuminCandidateNames
+        .asMap()
+        .entries
+        .map((entry) {
+          final status = entry.key < item.kokuminCandidateStatuses.length
+              ? item.kokuminCandidateStatuses[entry.key].trim()
+              : '';
+          final handle = entry.key < item.kokuminCandidateXHandles.length
+              ? _normalizeXHandle(item.kokuminCandidateXHandles[entry.key])
+              : '';
+          final suffixes = <String>[
+            if (status.isNotEmpty) status,
+            if (handle.isNotEmpty) '@$handle',
+          ];
+          if (suffixes.isEmpty) {
+            return entry.value;
+          }
+          return '${entry.value}（${suffixes.join(' / ')}）';
+        })
+        .join(' / ');
   }
 
   List<String> _candidateHandles(LocalElectionScheduleEntry item) {
@@ -3946,7 +3953,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (normalized.isEmpty) {
       return '-';
     }
-    final parsed = DateTime.tryParse(normalized) ??
+    final parsed =
+        DateTime.tryParse(normalized) ??
         DateTime.tryParse(normalized.replaceAll('/', '-'));
     if (parsed == null) {
       return normalized;
@@ -4017,8 +4025,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final dateKey = parsedDate == null
         ? result.date.trim()
         : '${parsedDate.year.toString().padLeft(4, '0')}-'
-            '${parsedDate.month.toString().padLeft(2, '0')}-'
-            '${parsedDate.day.toString().padLeft(2, '0')}';
+              '${parsedDate.month.toString().padLeft(2, '0')}-'
+              '${parsedDate.day.toString().padLeft(2, '0')}';
     return '$dateKey|${result.location.trim()}|${result.electionName.trim()}';
   }
 
@@ -4059,12 +4067,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (!wins && !candidate.isLoss) {
           continue;
         }
-        entries.add(
-          (
-            date: result.parsedDate,
-            text: _formatPastElectionOutcomeLine(result, candidate),
-          ),
-        );
+        entries.add((
+          date: result.parsedDate,
+          text: _formatPastElectionOutcomeLine(result, candidate),
+        ));
       }
     }
 
@@ -4102,10 +4108,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     int year,
     List<PastElectionResult> results,
   ) {
-    final winCount =
-        results.fold<int>(0, (sum, result) => sum + result.winCount);
-    final lossCount =
-        results.fold<int>(0, (sum, result) => sum + result.lossCount);
+    final winCount = results.fold<int>(
+      0,
+      (sum, result) => sum + result.winCount,
+    );
+    final lossCount = results.fold<int>(
+      0,
+      (sum, result) => sum + result.lossCount,
+    );
     final battleCount = _pastElectionBattleCount(results);
     final winLines = _pastElectionOutcomeLines(results, wins: true);
     final lossLines = _pastElectionOutcomeLines(results, wins: false);
@@ -4116,18 +4126,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '$year年',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -4136,20 +4144,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             children: [
               _buildPastElectionRecordChip(
                 label: '${_formatInt(battleCount)}戦',
-                backgroundColor:
-                    const Color(0xFF0F172A).withValues(alpha: 0.08),
+                backgroundColor: const Color(
+                  0xFF0F172A,
+                ).withValues(alpha: 0.08),
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(winCount)}勝',
-                backgroundColor:
-                    const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                backgroundColor: const Color(
+                  0xFF4CAF50,
+                ).withValues(alpha: 0.12),
                 foregroundColor: const Color(0xFF2E7D32),
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(lossCount)}敗',
-                backgroundColor:
-                    const Color(0xFFE53935).withValues(alpha: 0.10),
+                backgroundColor: const Color(
+                  0xFFE53935,
+                ).withValues(alpha: 0.10),
                 foregroundColor: const Color(0xFFC62828),
               ),
             ],
@@ -4208,9 +4219,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       decoration: BoxDecoration(
         color: accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.18),
-        ),
+        border: Border.all(color: accentColor.withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4226,9 +4235,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             )
           else if (lines.length > _pastElectionOutcomeAccordionThreshold)
             Theme(
-              data: Theme.of(context).copyWith(
-                dividerColor: Colors.transparent,
-              ),
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 tilePadding: EdgeInsets.zero,
                 childrenPadding: EdgeInsets.zero,
@@ -4247,8 +4256,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 subtitle: Text(
                   '${lines.length}件のため折りたたみ表示',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 children: [
                   const SizedBox(height: 8),
@@ -4271,8 +4280,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             Text(
               emptyLabel,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             )
           else if (lines.length <= _pastElectionOutcomeAccordionThreshold)
             ...lines.map(_buildBulletLine),
@@ -4288,9 +4297,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         children: [
           Text(
             '選挙別の内訳',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 10),
           ...results.map((result) => _buildPastElectionCard(result)),
@@ -4302,15 +4311,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: EdgeInsets.zero,
           childrenPadding: EdgeInsets.zero,
@@ -4318,15 +4323,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           collapsedShape: const Border(),
           title: Text(
             '選挙別の内訳',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Text(
             '${results.length}件のため折りたたみ表示',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           children: [
             const SizedBox(height: 8),
@@ -4373,9 +4378,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     return Theme(
-      data: Theme.of(context).copyWith(
-        dividerColor: Colors.transparent,
-      ),
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: EdgeInsets.zero,
@@ -4383,20 +4386,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         collapsedShape: const Border(),
         title: Text(
           '候補者内訳',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           '${candidates.length}件のため折りたたみ表示',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
-        children: [
-          const SizedBox(height: 8),
-          chips,
-        ],
+        children: [const SizedBox(height: 8), chips],
       ),
     );
   }
@@ -4411,16 +4411,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '過去の選挙結果',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(
           '国民民主党候補の当落情報を年別戦績つきで表示します。',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         if (yearlyResults.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -4515,10 +4515,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final prefectureOptions = _memberPrefectureOptions(snapshot);
     final filteredMembers = _filteredRosterMembers(snapshot);
     final visibleMembers = filteredMembers.take(_visibleMemberCount).toList();
-    final ageVisibleCount =
-        filteredMembers.where((item) => item.age != null).length;
-    final profileVisibleCount =
-        filteredMembers.where((item) => item.profile.trim().isNotEmpty).length;
+    final ageVisibleCount = filteredMembers
+        .where((item) => item.age != null)
+        .length;
+    final profileVisibleCount = filteredMembers
+        .where((item) => item.profile.trim().isNotEmpty)
+        .length;
 
     return Column(
       key: _rosterSectionKey,
@@ -4526,9 +4528,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '現職地方議員の個票一覧',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(
@@ -4556,10 +4558,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ),
                 items: [
                   for (final label in prefectureOptions)
-                    DropdownMenuItem<String>(
-                      value: label,
-                      child: Text(label),
-                    ),
+                    DropdownMenuItem<String>(value: label, child: Text(label)),
                 ],
                 onChanged: (value) {
                   if (value == null) {
@@ -4674,7 +4673,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _buildMemberRosterGroup(
             prefecture: entries[index].key,
             members: entries[index].value,
-            prefectureTotal: totalByPrefecture[entries[index].key] ??
+            prefectureTotal:
+                totalByPrefecture[entries[index].key] ??
                 entries[index].value.length,
             initiallyExpanded: entries.length <= 2 || index == 0,
           ),
@@ -4697,10 +4697,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     required int prefectureTotal,
     required bool initiallyExpanded,
   }) {
-    final prefecturalCount =
-        members.where((item) => item.assemblyCategory == 'prefectural').length;
-    final municipalCount =
-        members.where((item) => item.assemblyCategory == 'municipal').length;
+    final prefecturalCount = members
+        .where((item) => item.assemblyCategory == 'prefectural')
+        .length;
+    final municipalCount = members
+        .where((item) => item.assemblyCategory == 'municipal')
+        .length;
     // 可視分がこの県の総数より少ない (ページ境界で途中まで) 場合は
     // 「表示中/総数」を明示し、ヘッダー数が過少に見えないようにする。
     final headerCount = members.length < prefectureTotal
@@ -4713,21 +4715,24 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             initiallyExpanded: initiallyExpanded,
-            tilePadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 2,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
             title: Text(
               '$prefecture $headerCount',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -4759,14 +4764,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final detailUrl = member.detailUrl.trim();
     final isLoading =
         detailUrl.isNotEmpty && _memberProfileLoadingUrls.contains(detailUrl);
-    final detailError =
-        detailUrl.isEmpty ? null : _memberProfileErrors[detailUrl];
+    final detailError = detailUrl.isEmpty
+        ? null
+        : _memberProfileErrors[detailUrl];
     final hasDetailedProfile = member.hasDetailedProfile;
     final detailSummary = member.profile.trim().isNotEmpty
         ? member.profile
         : hasDetailedProfile
-            ? '生年月日など、公式詳細ページで確認できた項目を反映済みです。'
-            : '詳細プロフィールは未取得です。必要な議員だけ個別取得できます。';
+        ? '生年月日など、公式詳細ページで確認できた項目を反映済みです。'
+        : '詳細プロフィールは未取得です。必要な議員だけ個別取得できます。';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -4856,10 +4862,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
             ],
             const SizedBox(height: 10),
-            Text(
-              detailSummary,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text(detailSummary, style: Theme.of(context).textTheme.bodyMedium),
             if (detailError != null) ...[
               const SizedBox(height: 10),
               _buildInlineNotice(
@@ -4878,9 +4881,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     onPressed: isLoading
                         ? null
                         : () => _loadMemberProfile(
-                              member,
-                              forceRefresh: hasDetailedProfile,
-                            ),
+                            member,
+                            forceRefresh: hasDetailedProfile,
+                          ),
                     icon: isLoading
                         ? const SizedBox(
                             width: 16,
@@ -4896,8 +4899,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       isLoading
                           ? '取得中'
                           : hasDetailedProfile
-                              ? '詳細を更新'
-                              : '詳細を取得',
+                          ? '詳細を更新'
+                          : '詳細を取得',
                     ),
                   ),
                   OutlinedButton.icon(
@@ -4929,15 +4932,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
           title: Text(
             '公式ソース',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Text(
             '${_formatInt(snapshot.sources.length)}件の取得元',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           children: [
             for (final source in snapshot.sources)
@@ -5106,9 +5109,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 child: Text(
                   '公認予定候補の掲載状況',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: accent,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: accent,
+                  ),
                 ),
               ),
             ],
@@ -5203,8 +5206,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     OfficialEndorsementPrefecture endorsement,
   ) {
     const color = Color(0xFF1D4ED8);
-    final breakdown =
-        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    final breakdown = endorsement.hasBreakdown
+        ? ' (${endorsement.breakdownLabel})'
+        : '';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
@@ -5303,8 +5307,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     OfficialEndorsementPrefecture endorsement,
   ) {
     const badgeColor = Color(0xFF1D4ED8);
-    final breakdown =
-        endorsement.hasBreakdown ? ' (${endorsement.breakdownLabel})' : '';
+    final breakdown = endorsement.hasBreakdown
+        ? ' (${endorsement.breakdownLabel})'
+        : '';
     final hasSource = dpjLocalElectionOfficialListUrl.isNotEmpty;
     final label = '公認掲載 ${_formatInt(endorsement.totalCount)}件$breakdown';
     // 出典を開く操作なので、タップ領域を Material 最小 48px 以上に広げ、
@@ -5389,9 +5394,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           leading: const Icon(Icons.insights_outlined),
           title: Text(
             '立憲地方議員ベンチマーク',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -5431,9 +5436,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [
-                  for (final item in allGaps) _buildCdpGapPill(item),
-                ],
+                children: [for (final item in allGaps) _buildCdpGapPill(item)],
               ),
             ),
           ],
@@ -5447,13 +5450,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final color = gap > 0
         ? const Color(0xFFDC2626)
         : gap == 0
-            ? const Color(0xFF64748B)
-            : const Color(0xFF0F766E);
+        ? const Color(0xFF64748B)
+        : const Color(0xFF0F766E);
     final label = gap > 0
         ? '立憲+${_formatInt(gap)}'
         : gap == 0
-            ? '同数'
-            : '国民+${_formatInt(-gap)}';
+        ? '同数'
+        : '国民+${_formatInt(-gap)}';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 148),
@@ -5523,9 +5526,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           leading: const Icon(Icons.account_balance_outlined),
           title: Text(
             '自民地方議員ベンチマーク',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -5574,9 +5577,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [
-                  for (final item in allGaps) _buildLdpGapPill(item),
-                ],
+                children: [for (final item in allGaps) _buildLdpGapPill(item)],
               ),
             ),
           ],
@@ -5593,13 +5594,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final color = gap > 0
         ? const Color(0xFFDC2626)
         : gap == 0
-            ? const Color(0xFF64748B)
-            : const Color(0xFF0F766E);
+        ? const Color(0xFF64748B)
+        : const Color(0xFF0F766E);
     final label = gap > 0
         ? '自民+${_formatInt(gap)}'
         : gap == 0
-            ? '同数'
-            : '国民+${_formatInt(-gap)}';
+        ? '同数'
+        : '国民+${_formatInt(-gap)}';
 
     return Container(
       constraints: const BoxConstraints(minWidth: 148),
@@ -5658,8 +5659,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final color = overdue > 0
         ? const Color(0xFFE53935)
         : gap > 0
-            ? const Color(0xFFFF6B35)
-            : const Color(0xFF4CAF50);
+        ? const Color(0xFFFF6B35)
+        : const Color(0xFF4CAF50);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -5677,13 +5678,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             child: Text(
               gap <= 0 && overdue == 0
                   ? '県連配分は必要純増 ${_formatInt(plan.requiredNetIncrease)}人を満たしています'
-                      '${gap < 0 ? ' (${gap.abs()}人の上積み配分あり)' : ''}。'
-                      ' $realityLabel。'
-                      '次は公認内定の前倒しと月次レビューの固定化です。'
+                        '${gap < 0 ? ' (${gap.abs()}人の上積み配分あり)' : ''}。'
+                        ' $realityLabel。'
+                        '次は公認内定の前倒しと月次レビューの固定化です。'
                   : '$gapLabel、期限超過県連 $overdue、'
-                      '60日以内に期限到来 $dueSoon。'
-                      ' $realityLabel。'
-                      '「700」の看板ではなく、月次レビューで詰める運用が必要です。',
+                        '60日以内に期限到来 $dueSoon。'
+                        ' $realityLabel。'
+                        '「700」の看板ではなく、月次レビューで詰める運用が必要です。',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -5852,9 +5853,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '重点県連',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         Wrap(
@@ -5897,9 +5898,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 '重点自治体 ${_formatInt(item.focusMunicipalityCount)} / '
                 '支援 ${_formatInt(item.closeRaceSupportRounds)}回',
               ),
-              Text(
-                '公認内定期限 ${formatMonthKey(item.endorsementDeadlineMonth)}',
-              ),
+              Text('公認内定期限 ${formatMonthKey(item.endorsementDeadlineMonth)}'),
               if (reality != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -5924,9 +5923,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '月次KPI',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Text(
@@ -5952,10 +5951,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 DataRow(
                   color: month.monthKey == currentMonthKey
                       ? WidgetStatePropertyAll(
-                          Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withValues(alpha: 0.08),
+                          Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.08),
                         )
                       : null,
                   cells: [
@@ -5981,9 +5979,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       Text(_formatInt(month.cumulativeNewCandidateTarget)),
                     ),
                     DataCell(
-                      Text(
-                        '${_formatInt(month.endorsementsDueThisMonth)}県連',
-                      ),
+                      Text('${_formatInt(month.endorsementsDueThisMonth)}県連'),
                     ),
                     DataCell(
                       Text('${_formatInt(month.cumulativeEndorsementsDue)}県連'),
@@ -6006,9 +6002,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       children: [
         Text(
           '県連別配分',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -6089,8 +6085,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       (sum, item) => sum + item.scheduledElectionCount,
     );
     final now = DateTime.now();
-    final overdueCount =
-        prefectures.where((item) => item.isEndorsementOverdue(now)).length;
+    final overdueCount = prefectures
+        .where((item) => item.isEndorsementOverdue(now))
+        .length;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -6098,21 +6095,24 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
-          border:
-              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
             initiallyExpanded: initiallyExpanded,
-            tilePadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 4,
+            ),
             childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
             title: Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             subtitle: Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -6171,10 +6171,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final accent = overdue
         ? const Color(0xFFE53935)
         : dueSoon
-            ? const Color(0xFFFF6B35)
-            : plan.endorsementConfirmed
-                ? const Color(0xFF4CAF50)
-                : const Color(0xFF607D8B);
+        ? const Color(0xFFFF6B35)
+        : plan.endorsementConfirmed
+        ? const Color(0xFF4CAF50)
+        : const Color(0xFF607D8B);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -6219,14 +6219,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '重点自治体',
                   _formatInt(plan.focusMunicipalityCount),
                 ),
-                _buildMetricChip(
-                  '新人擁立',
-                  _formatInt(plan.newCandidateTarget),
-                ),
-                _buildMetricChip(
-                  '現状当選率',
-                  plan.currentCandidateWinRateLabel,
-                ),
+                _buildMetricChip('新人擁立', _formatInt(plan.newCandidateTarget)),
+                _buildMetricChip('現状当選率', plan.currentCandidateWinRateLabel),
                 _buildMetricChip(
                   '公認内定期限',
                   formatMonthKey(plan.endorsementDeadlineMonth),
@@ -6241,10 +6235,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   plan.endorsementConfirmed
                       ? '完了'
                       : overdue
-                          ? '期限超過'
-                          : dueSoon
-                              ? '期限接近'
-                              : '進行中',
+                      ? '期限超過'
+                      : dueSoon
+                      ? '期限接近'
+                      : '進行中',
                   color: accent,
                 ),
                 if (reality != null)
@@ -6271,8 +6265,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             const SizedBox(height: 12),
             ElectionNewsBadge(
-              newsItems: _newsByPrefecture[
-                      PrefectureElectionNewsService.normalizePrefectureKey(
+              newsItems:
+                  _newsByPrefecture[PrefectureElectionNewsService.normalizePrefectureKey(
                     plan.prefecture,
                   )] ??
                   const <Map<String, dynamic>>[],
@@ -6290,10 +6284,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
             if (plan.notes.trim().isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(
-                plan.notes,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(plan.notes, style: Theme.of(context).textTheme.bodySmall),
             ],
           ],
         ),
@@ -6327,9 +6318,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               Text(
                 '県連役員',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: accent,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: accent,
+                ),
               ),
             ],
           ),
@@ -6372,10 +6363,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           leading: const Icon(Icons.flag_outlined, color: accent),
           title: Text(
             'KGI ${_formatInt(plan.kgiTargetLocalMembers)}人 / 残り${_formatInt(plan.kgiGapMembers)}人',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              height: 1.4,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.4),
           ),
           subtitle: Text(
             plan.kgiStatement,
@@ -6560,10 +6548,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Text('• '),
-          ),
+          const Padding(padding: EdgeInsets.only(top: 2), child: Text('• ')),
           Expanded(child: Text(text)),
         ],
       ),
@@ -6662,10 +6647,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (uri == null) {
       return;
     }
-    final launched = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched || !mounted) {
       return;
     }
@@ -6720,8 +6702,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String _csvCell(String value) {
     final guarded =
         value.isNotEmpty && _csvFormulaPrefixes.contains(value.substring(0, 1))
-            ? "'$value"
-            : value;
+        ? "'$value"
+        : value;
     if (guarded.contains(',') ||
         guarded.contains('"') ||
         guarded.contains('\n') ||
@@ -6763,9 +6745,9 @@ class _PrefectureLegendChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }
