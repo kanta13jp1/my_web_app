@@ -2448,6 +2448,46 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return true;
   }
 
+  void _updateCalendarForFilter(
+    String filter,
+    List<LocalElectionScheduleEntry> upcomingSchedules,
+  ) {
+    if (filter == 'すべて') {
+      _syncScheduleSelection(_realitySnapshot);
+      return;
+    }
+
+    final filtered = upcomingSchedules.where((s) {
+      return _matchesScheduleFilter(s.parsedVoteDate, filter);
+    }).toList();
+
+    if (filtered.isNotEmpty && filtered.first.parsedVoteDate != null) {
+      final targetDate = _normalizeDate(filtered.first.parsedVoteDate!.toLocal());
+      _selectedScheduleDay = targetDate;
+      _scheduleFocusedDay = targetDate;
+      return;
+    }
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final daysToSunday = 7 - today.weekday;
+    final thisSunday = today.add(Duration(days: daysToSunday));
+
+    DateTime targetDate = today;
+    if (filter == '2週後') {
+      targetDate = thisSunday.add(const Duration(days: 1));
+    } else if (filter == '3週後') {
+      targetDate = thisSunday.add(const Duration(days: 8));
+    } else if (filter == '4週後') {
+      targetDate = thisSunday.add(const Duration(days: 15));
+    } else if (filter == '5週後') {
+      targetDate = thisSunday.add(const Duration(days: 22));
+    }
+
+    _selectedScheduleDay = targetDate;
+    _scheduleFocusedDay = targetDate;
+  }
+
   Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
     final allSchedules = _sortedScheduleEntries(snapshot);
     final pastSchedules = _sortedScheduleEntries(
@@ -2606,6 +2646,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     if (selected) {
                       setState(() {
                         _selectedScheduleFilter = filter;
+                        _updateCalendarForFilter(filter, upcomingSchedules);
                       });
                     }
                   },
@@ -2687,8 +2728,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
-          child: RepaintBoundary(
-            child: TableCalendar<LocalElectionScheduleEntry>(
+          child: TableCalendar<LocalElectionScheduleEntry>(
             locale: 'ja_JP',
             firstDay: firstDay,
             lastDay: lastDay,
@@ -2748,13 +2788,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 final severity = events
                     .map(_scheduleSeverity)
                     .reduce((left, right) => left < right ? left : right);
-                final color = switch (severity) {
+                Color color = switch (severity) {
                   0 => Theme.of(context).colorScheme.error,
                   1 => Colors.amber.shade800,
                   _ => const Color(0xFF0F766E),
                 };
                 final countLabel =
                     events.length > 9 ? '9+' : '${events.length}';
+
+                final hasFilteredEvent = _selectedScheduleFilter == 'すべて' ||
+                    events.any(
+                      (e) => _matchesScheduleFilter(
+                        e.parsedVoteDate,
+                        _selectedScheduleFilter,
+                      ),
+                    );
+
+                if (!hasFilteredEvent) {
+                  color = color.withValues(alpha: 0.3);
+                }
+
                 return Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
@@ -2766,11 +2819,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     decoration: BoxDecoration(
                       color: color,
                       borderRadius: BorderRadius.circular(999),
+                      border: hasFilteredEvent && _selectedScheduleFilter != 'すべて'
+                          ? Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 1.5,
+                            )
+                          : null,
                     ),
                     child: Text(
                       countLabel,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: hasFilteredEvent
+                            ? Colors.white
+                            : Colors.white.withValues(alpha: 0.5),
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -2779,7 +2840,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 );
               },
             ),
-          ),
           ),
         ),
         const SizedBox(height: 12),
