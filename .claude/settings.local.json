@@ -91,7 +91,40 @@
       "Bash(python3 -c \"import sys,base64; print\\(base64.b64decode\\(sys.stdin.read\\(\\).replace\\(''''\\\\n'''',''''''''\\)\\).decode\\(\\)\\)\")",
       "Bash(del C:/Users/kanta/GitHub/my_web_app/.git/index.lock)",
       "Bash(GIT_AUTHOR_NAME=\"kanta\" GIT_COMMITTER_NAME=\"kanta\" git commit -m \"docs: DESIGN.md を awesome-design-md-jp テンプレートに完全準拠:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls C:/Users/kanta/GitHub/my_web_app/lib/pages/*inbox*)",
+      "Bash(ls C:/Users/kanta/GitHub/my_web_app/lib/pages/*smart*)",
+      "Bash(ls C:/Users/kanta/GitHub/my_web_app/lib/pages/*triage*)",
+      "Bash(mkdir -p /c/Users/kanta/GitHub/my_web_app/.claude/agents)",
+      "Bash(mkdir -p /c/Users/kanta/GitHub/my_web_app/.claude/commands)",
+      "Bash(ls C:/Users/kanta/GitHub/my_web_app/lib/pages/*workflow*)",
+      "Bash(ls C:/Users/kanta/GitHub/my_web_app/lib/pages/*automation*)",
+      "WebFetch(domain:github.com)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app commit -m \"自動: ギター録音→X自動投稿パイプライン + UI連携 2026-04-07\")",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app push origin main)",
+      "WebFetch(domain:www.aidesigner.ai)",
+      "WebFetch(domain:marieclairedean.substack.com)",
+      "WebFetch(domain:help.figma.com)",
+      "WebFetch(domain:developers.figma.com)",
+      "Bash(mkdir -p \"C:/Users/kanta/GitHub/my_web_app/.claude/skills/ui-design\" \"C:/Users/kanta/GitHub/my_web_app/.claude/commands\")",
+      "Bash(mkdir -p \"C:/Users/kanta/.claude/skills/ui-design\")",
+      "Bash(node -e ':*)",
+      "Bash(where python:*)",
+      "Bash(/c/Users/kanta/AppData/Local/Microsoft/WindowsApps/python --version)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app diff --name-only HEAD)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app status --short)",
+      "Bash(dart fix:*)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app add .aidesigner/design-spec.md .claude/agents/design-skills.md lib/data/design_compliance_data.dart lib/pages/ui_design_status_page.dart lib/main.dart lib/data/home_tool_catalog.dart .gitignore)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app add lib/pages/landing_page.dart lib/pages/home_page.dart lib/services/theme_service.dart lib/data/ui_improvement_rollout_data.dart lib/pages/guitar_recording_studio_page.dart supabase/migrations/20260407020000_seed_achievements_ps27_ui_improvement.sql .claude/commands/design-check.md docs/DESIGN.md CLAUDE.md)",
+      "Bash(git -C /c/Users/kanta/GitHub/my_web_app add .claude/skills/)",
+      "Bash(git -C:*)",
+      "Bash(dart format:*)",
+      "WebFetch(domain:smmkxxavexumewbfaqpy.supabase.co)",
+      "Bash(/c/app/flutter/bin/flutter analyze:*)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "figma",
+    "aidesigner"
+  ]
 }

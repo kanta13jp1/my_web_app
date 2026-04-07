@@ -108,8 +108,8 @@ jobs:
           supabase functions delete weather-widget || true
           supabase functions delete currency-converter || true
           supabase functions delete markdown-renderer || true
-          supabase functions delete local-election-intelligence || true
           supabase functions delete gemini-election-analysis || true
+          supabase functions delete social-proof-generator || true
           supabase functions delete contact-manager || true
           supabase functions delete goal-tracker || true
           supabase functions delete template-library || true
@@ -249,12 +249,12 @@ jobs:
           supabase functions deploy edge-function-test-runner --no-verify-jwt
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy user-growth-analytics --no-verify-jwt
-          supabase functions deploy social-proof-generator --no-verify-jwt
+          supabase functions deploy local-election-intelligence --no-verify-jwt
 
           # Total: 100 functions deployed (Supabase project limit)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
-          # ab-testing-manager, search-analytics,
+          # ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
           # currency-converter, markdown-renderer, social-feed, document-collaboration,
