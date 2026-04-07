@@ -9,6 +9,39 @@ class ThemeService extends ChangeNotifier {
     'NotoColorEmoji',
   ];
 
+  // 日本語タイポグラフィ最適化 (awesome-design-md-jp 準拠)
+  // 本文: height 1.7 (line-height ≥ 1.5 は日本語テキストの必須要件)
+  // 見出し: height 1.4 (日本語見出しは欧文より少し大きめ)
+  // letterSpacing: 本文 null (normalのまま)、見出しのみ 0.04em 相当
+  static TextTheme _buildJaTextTheme(TextTheme base) {
+    return base.copyWith(
+      // Display / Headline (ページ大タイトル相当)
+      displayLarge: base.displayLarge?.copyWith(height: 1.3),
+      displayMedium: base.displayMedium?.copyWith(height: 1.3),
+      displaySmall: base.displaySmall?.copyWith(height: 1.35),
+      headlineLarge: base.headlineLarge?.copyWith(
+        height: 1.4,
+        letterSpacing: 0.96, // 0.04em × 24px (H1相当)
+      ),
+      headlineMedium: base.headlineMedium?.copyWith(
+        height: 1.4,
+        letterSpacing: 0.72, // 0.04em × 18px (H2相当)
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(height: 1.4),
+      titleLarge: base.titleLarge?.copyWith(height: 1.4),
+      titleMedium: base.titleMedium?.copyWith(height: 1.4),
+      titleSmall: base.titleSmall?.copyWith(height: 1.4),
+      // Body — 日本語本文は height 1.7 が最適
+      bodyLarge: base.bodyLarge?.copyWith(height: 1.7),
+      bodyMedium: base.bodyMedium?.copyWith(height: 1.7),
+      bodySmall: base.bodySmall?.copyWith(height: 1.6),
+      // Label (チップ・ボタンラベル)
+      labelLarge: base.labelLarge?.copyWith(height: 1.5),
+      labelMedium: base.labelMedium?.copyWith(height: 1.5, letterSpacing: 0.5),
+      labelSmall: base.labelSmall?.copyWith(height: 1.5),
+    );
+  }
+
   ThemeMode _themeMode = ThemeMode.system;
   Color _primaryColor = const Color(0xFF0F172A); // Default Navy
 
@@ -62,7 +95,7 @@ class ThemeService extends ChangeNotifier {
   }
 
   ThemeData getLightTheme() {
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       fontFamily: _appFontFamily,
@@ -76,10 +109,14 @@ class ThemeService extends ChangeNotifier {
         foregroundColor: Colors.white,
       ),
     );
+    return base.copyWith(
+      textTheme: _buildJaTextTheme(base.textTheme),
+      primaryTextTheme: _buildJaTextTheme(base.primaryTextTheme),
+    );
   }
 
   ThemeData getDarkTheme() {
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       fontFamily: _appFontFamily,
@@ -92,6 +129,10 @@ class ThemeService extends ChangeNotifier {
         backgroundColor: Color(0xFF020617), // Very Dark Navy
         foregroundColor: Colors.white,
       ),
+    );
+    return base.copyWith(
+      textTheme: _buildJaTextTheme(base.textTheme),
+      primaryTextTheme: _buildJaTextTheme(base.primaryTextTheme),
     );
   }
 }
