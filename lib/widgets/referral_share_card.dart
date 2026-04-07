@@ -60,17 +60,18 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
   }
 
   void _shareToX() {
-    final text =
-        '自分株式会社 — Notion・Slack・MoneyForward など21競合を超えるAI統合ライフ管理アプリを無料で試してみて！\n$_shareUrl\n#buildinpublic #FlutterWeb #自分株式会社';
+    final text = 'スマホでギター録音できる！🎸\n'
+        '自分株式会社 — Notion・Slack・MoneyForwardなど21競合の機能を1アプリに統合。完全無料👇\n'
+        '$_shareUrl\n'
+        '#ギター録音 #buildinpublic #FlutterWeb #自分株式会社';
     final intentUrl =
-        'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}';
+        'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
     web.window.open(intentUrl, '_blank');
   }
 
   void _nativeShare() {
     try {
-      const text =
-          '自分株式会社を試してみよう！Notion・Slack・MoneyForward など21競合を超えるAIアプリです。';
+      const text = 'スマホでギター録音＋21SaaS統合の自分株式会社を試してみよう！完全無料。';
       web.window.navigator.share(
         web.ShareData(title: '自分株式会社', text: text, url: _shareUrl),
       );
