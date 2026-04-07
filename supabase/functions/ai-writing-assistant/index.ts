@@ -5,8 +5,11 @@
 // - 続き文章の生成
 // - タイトル・見出し提案
 // - 多言語翻訳
+// - 議事録生成 (meeting minutes)
+// - X/Twitterスレッド生成 (twitter thread)
+// - 技術ブログ記事アウトライン生成 (blog outline)
 //
-// POST → improve / summarize / continue / translate / tone / titles
+// POST → improve / summarize / continue / translate / tone / titles / minutes / thread / blog
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -79,6 +82,15 @@ serve(async (req) => {
         break;
       case "titles":
         prompt = `以下の文章のタイトル候補を5つ提案してください。各タイトルは20字以内で、魅力的で検索されやすいものにしてください。番号付きリストで回答してください。\n\n${text}`;
+        break;
+      case "minutes":
+        prompt = `以下のメモ・会話内容を整理して、ビジネス会議の議事録フォーマットに変換してください。\n\n【出力フォーマット】\n## 議事録\n\n**日時**: [記載があれば抽出、なければ「未記載」]\n**参加者**: [記載があれば抽出]\n\n### 議事内容\n（箇条書きで整理）\n\n### 決定事項\n（明確に決まったことを箇条書き）\n\n### アクションアイテム\n| 担当者 | タスク | 期限 |\n|--------|--------|------|\n\n### 次回予定\n[記載があれば抽出]\n\n---\n入力テキスト:\n${text}`;
+        break;
+      case "thread":
+        prompt = `以下の内容をX (Twitter) のスレッド形式に変換してください。\n\n【ルール】\n- 各ツイートは140字以内\n- スレッドは5〜8ツイートで構成\n- 1ツイート目は注目を集めるフックで始める\n- 各ツイートの冒頭に番号 (1/ 2/ ...) を付ける\n- 最後のツイートに #buildinpublic #自分株式会社 のハッシュタグを付ける\n- 日本語で書く\n\n入力テキスト:\n${text}`;
+        break;
+      case "blog":
+        prompt = `以下の内容を元に、Zenn/Qiita向けの技術記事アウトラインを生成してください。\n\n【出力フォーマット】\n## 記事タイトル案（3案）\n1. ...\n2. ...\n3. ...\n\n## タグ候補\n#Flutter #Supabase #個人開発 など\n\n## 記事構成\n### はじめに\n（何を作ったか・なぜ作ったかの導入文案）\n\n### 技術スタック\n（使用技術と選定理由）\n\n### 実装のポイント\n（コア部分の説明ポイント3〜5個）\n\n### つまずいたポイントと解決策\n（ハマりどころ）\n\n### まとめ\n（成果と今後の展望）\n\n---\n入力テキスト:\n${text}`;
         break;
       default:
         return new Response(JSON.stringify({ success: false, error: "Unknown action" }), {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// AI文章作成支援ページ (Grammarly/Notion AI競合)
 /// ai-writing-assistant Edge Function と連携
@@ -29,6 +30,9 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
     'translate': ('翻訳', Icons.translate, Color(0xFFF59E0B)),
     'tone': ('トーン変換', Icons.tune, Color(0xFFEC4899)),
     'titles': ('タイトル提案', Icons.title, Color(0xFF8B5CF6)),
+    'minutes': ('議事録生成', Icons.assignment, Color(0xFF0EA5E9)),
+    'thread': ('Xスレッド', Icons.dynamic_feed, Color(0xFF1DA1F2)),
+    'blog': ('ブログ記事', Icons.article, Color(0xFFF97316)),
   };
 
   static const _tones = ['formal', 'casual', 'sns', 'academic', 'sales'];
@@ -370,6 +374,23 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                   ),
                 ),
                 const Spacer(),
+                if (_selectedAction == 'thread')
+                  IconButton(
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    tooltip: 'Xに投稿',
+                    color: const Color(0xFF1DA1F2),
+                    onPressed: () async {
+                      final encoded = Uri.encodeComponent(
+                        _resultController.text.length > 280
+                            ? '${_resultController.text.substring(0, 277)}...'
+                            : _resultController.text,
+                      );
+                      final uri = Uri.parse(
+                        'https://twitter.com/intent/tweet?text=$encoded',
+                      );
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    },
+                  ),
                 IconButton(
                   icon: const Icon(Icons.copy, size: 18),
                   tooltip: 'コピー',
