@@ -263,11 +263,6 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ + 公開ギャラリー', true, '/guitar-recording-studio', 'スタジオ (/guitar-recording-studio) / 公開ギャラリー (/public-guitar-gallery)'),
     _FnDef('music-collaboration', '音楽コラボレーション', true, '/music-collaboration', '音楽コラボレーションページ'),
     _FnDef('spreadsheet-database', 'スプレッドシート・データベース', true, '/spreadsheet-database', 'スプレッドシートデータベースページ'),
-    // 追加 (cs-check 自動連携)
-    _FnDef('ai-status', 'AI モデルステータス・ベンチマーク', true, '/ai-status', 'ホーム > AI設定 > AIステータスページ'),
-    _FnDef('ai-summarizer', 'AI コンテンツ要約', true, '/ai-summarizer', 'AI サマリーページ'),
-    _FnDef('revenue-forecaster', '収益予測・財務分析', true, '/revenue-forecaster', '収益予測ページ'),
-    _FnDef('weather-widget', '天気ウィジェット', true, '/weather-widget', '天気ウィジェットページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
