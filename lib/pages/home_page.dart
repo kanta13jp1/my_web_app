@@ -44,6 +44,7 @@ import '../widgets/edge_function_summary_card.dart';
 import '../widgets/referral_share_card.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
+import 'profile_settings_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -4015,6 +4016,14 @@ abstinence_slip_details: $slipDetailsText
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => themeService.toggleTheme(),
             tooltip: 'テーマ切替',
+          ),
+          IconButton(
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileSettingsPage()),
+            ),
+            tooltip: 'プロフィール設定',
           ),
           IconButton(
             icon: const Icon(Icons.settings),
