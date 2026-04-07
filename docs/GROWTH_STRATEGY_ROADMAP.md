@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-08 Windows#2 (ロードマップ更新・4インスタンス並列開発体制強化・最優先事項2026-04-08版)
+最終更新: 2026-04-08 daily-development (X自動投稿通知UI・カタログ拡張・競合解消)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1134,6 +1134,13 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **ギター録音→X自動投稿パイプライン実装** (daily-development 2026-04-07): `guitar-recording-studio` Edge Function に `postPublicRecordingToX` ヘルパーを追加。録音を `is_public=true` で保存した瞬間にバックエンドが自動的に `@kanta13jp1` アカウントへX投稿する fire-and-forget パイプラインを構築。`APP_URL` 定数を追加し、ツイートテキストに共有URL+アプリURL+ハッシュタグを含めて280字を自動チェック。`share_to_x` アクションも追加し手動再投稿にも対応。`xPosted: bool` をレスポンスに含めフロント通知可能に。deno lint 0件維持。
 - **blog-auto-publisher / ai-workflow-automation を UI 実装済みに登録** (daily-development 2026-04-07): `edge_function_summary_card.dart` で「Schedule専用 / 未実装」だった2件を既存ページ (`/tech-blog-tracker` / `/workflow-automation`) と連携済みとして登録。UI未実装件数を2件削減。flutter analyze 0件維持。
 - **技術ブログ下書き作成** (daily-development 2026-04-07): `docs/blog-drafts/2026-04-07.md` — ギター録音→X自動投稿パイプライン実装解説記事・fire-and-forget パターン・Edge Function間呼び出しのコード例付き。
+
+### daily-development 2026-04-08 実装済み (自動)
+
+- **ギター録音X自動投稿 成功通知UI追加** (daily-development 2026-04-08): `guitar_recording_studio_page.dart` の保存フロー (`_saveRecording`) に `xPosted` フラグチェックを追加。バックエンドが X に自動投稿した場合、青色スナックバー「🎸 録音を保存し、Xに自動投稿しました！」を4秒表示。録音→X投稿パイプラインのフロント通知を完成。
+- **ホームカタログ 3ページ追加** (daily-development 2026-04-08): `home_tool_catalog.dart` に AI要約 (`/ai-summarizer`)・収益予測 (`/revenue-forecaster`)・天気ウィジェット (`/weather-widget`) を追加。`edge_function_summary_card.dart` のルート参照も合わせて更新。業務メニューの検索・ナビゲーションカバレッジ向上。
+- **マージ競合一括解消** (daily-development 2026-04-08): `CLAUDE.md`・`.claude/settings.local.json`・`GROWTH_STRATEGY_ROADMAP.md` の3ファイルで Updated upstream / Stashed changes の競合を解消。デザインツール参照行・MCP設定・最優先事項2026-04-08版を正しく統合。
+- **技術ブログ下書き作成** (daily-development 2026-04-08): `docs/blog-drafts/2026-04-08-x-viral-pipeline-catalog-expansion.md` — ギター録音X自動投稿パイプライン完成・fire-and-forgetパターン・xPostedフラグのフロント利用方法を解説。
 
 ### VSCode 2026-04-08 (地方選挙X投稿コンポーザー完成・lint修正)
 

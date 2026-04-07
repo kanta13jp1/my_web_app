@@ -1415,6 +1415,7 @@ class _GuitarRecordingStudioPageState
       // レスポンスから recording ID を取得 (共有URL生成用)
       final data = _parseResponse(res.data);
       final savedRecording = _normalizeRecordingMap(data?['recording']);
+      final xPosted = data?['xPosted'] == true;
       String? recId = data?['recordingId']?.toString() ?? data?['id']?.toString();
       if ((recId == null || recId.isEmpty) && savedRecording != null) {
         final normalizedId = _recordingIdOf(savedRecording);
@@ -1433,6 +1434,15 @@ class _GuitarRecordingStudioPageState
         // 保存後に自動で履歴タブへ切り替え
         _tabIndex = 3;
       });
+      if (mounted && xPosted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🎸 録音を保存し、Xに自動投稿しました！'),
+            backgroundColor: Color(0xFF1DA1F2),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
       await _fetchRecordings();
       await _fetchPracticeStats();
       await _fetchAIAnalysis();

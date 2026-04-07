@@ -154,6 +154,9 @@ import '../pages/real_estate_tracker_page.dart';
 import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
 import '../pages/ui_design_status_page.dart';
+import '../pages/ai_summarizer_page.dart';
+import '../pages/revenue_forecaster_page.dart';
+import '../pages/weather_widget_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1940,6 +1943,45 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '後で読む', 'タグ', '既読', 'クリップ', 'ウェブクリップ',
       ],
       onOpen: (context) => _pushPage(context, const BookmarkSyncPage()),
+    ),
+    HomeToolEntry(
+      id: 'ai-summarizer',
+      sectionId: 'knowledge',
+      title: 'AI要約',
+      subtitle: 'AIが長文テキストを自動要約。議事録・記事・メモを素早く整理',
+      icon: Icons.auto_awesome,
+      color: const Color(0xFF6D28D9),
+      keywords: const <String>[
+        'AI', '要約', 'サマリー', '議事録', '要点', '短縮', 'まとめ',
+        'テキスト', '記事', 'ノート', '自動',
+      ],
+      onOpen: (context) => _pushPage(context, const AiSummarizerPage()),
+    ),
+    HomeToolEntry(
+      id: 'revenue-forecaster',
+      sectionId: 'office',
+      title: '収益予測',
+      subtitle: 'AIが売上・収益をトレンド分析。事業計画・KPI達成シミュレーション',
+      icon: Icons.trending_up,
+      color: const Color(0xFF059669),
+      keywords: const <String>[
+        '収益', '売上', '予測', 'フォーキャスト', 'KPI', '事業計画',
+        '財務', '分析', 'シミュレーション', 'MoneyForward',
+      ],
+      onOpen: (context) => _pushPage(context, const RevenueForecasterPage()),
+    ),
+    HomeToolEntry(
+      id: 'weather-widget',
+      sectionId: 'today',
+      title: '天気情報',
+      subtitle: '今日・今週の天気・気温・降水確率をダッシュボードで確認',
+      icon: Icons.wb_sunny,
+      color: const Color(0xFFF59E0B),
+      keywords: const <String>[
+        '天気', '気象', '気温', '降水', '予報', '晴れ', '雨',
+        '週間天気', 'ウェザー', '今日の天気',
+      ],
+      onOpen: (context) => _pushPage(context, const WeatherWidgetPage()),
     ),
   ];
 }
