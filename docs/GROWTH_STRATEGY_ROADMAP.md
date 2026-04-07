@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 VSCode#7 (awesome-design-md-jp note DESIGN.md 適用・ThemeService 日本語タイポグラフィ強化)
+最終更新: 2026-04-07 PS#27 (awesome-design-md-jp 5サービスDESIGN.md保存・CLAUDE.mdデザインシステム参照追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1110,6 +1110,21 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 ---
 
 ## セッション記録
+
+### PS#27 — 2026-04-07 (PowerShell/Management)
+
+**awesome-design-md-jp 日本語デザインシステム統合**
+
+- **docs/design-systems/ 新規作成**: 5サービスのDESIGN.md保存 + テンプレート
+  - `docs/design-systems/note/DESIGN.md` — teal #5ac8b8, line-height 2.0, 620px, palt見出しのみ
+  - `docs/design-systems/freee/DESIGN.md` — blue #2864f0, 4pxグリッド, システムフォント(プロダクトUI)
+  - `docs/design-systems/smarthr/DESIGN.md` — blue #0077c7, Yu Gothic Medium→400マッピング, 8pxグリッド
+  - `docs/design-systems/apple/DESIGN.md` — SF Pro JP優先, ピルボタン(980px), #1d1d1f
+  - `docs/design-systems/wired/DESIGN.md` — 純黒×黄, body全体palt, 角張り(border-radius:0)
+  - `docs/design-systems/template/DESIGN.md` — 新規追加用9セクションテンプレート
+- **CLAUDE.md 更新**: UIコンポーネント生成時に design-systems を参照する指示を追加
+  - 日本語タイポグラフィ4ルール明記: letter-spacing禁止/line-height最低1.5/Yu Gothicマッピング/palt見出しのみ
+- **Schedule triggerリスト確認**: 全4件アクティブ (cs-check毎時/daily-report毎日/blog-draft毎日/weekly-sns-draft毎週)
 
 ### daily-report Schedule — 2026-04-07
 

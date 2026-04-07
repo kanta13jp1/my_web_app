@@ -22,6 +22,27 @@ google, microsoft, discord, line, facebook, liven, github
 
 ---
 
+## デザインシステム参照 (UI生成時に必ず参照)
+
+UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
+
+- **自分株式会社デザイントークン**: `docs/DESIGN.md`
+- **日本語UIリファレンス (awesome-design-md-jp)**:
+  - `docs/design-systems/note/DESIGN.md` — note.com (teal #5ac8b8, line-height 2.0, 620px幅)
+  - `docs/design-systems/freee/DESIGN.md` — freee (blue #2864f0, 4pxグリッド, システムフォント)
+  - `docs/design-systems/smarthr/DESIGN.md` — SmartHR (blue #0077c7, Yu Gothicマッピング, 8pxグリッド)
+  - `docs/design-systems/apple/DESIGN.md` — Apple JP (SF Pro JP, ピルボタン, #1d1d1f)
+  - `docs/design-systems/wired/DESIGN.md` — WIRED.jp (黒×黄, body全体にpalt, 角張りデザイン)
+  - `docs/design-systems/template/DESIGN.md` — 新サービス追加用テンプレート
+
+**重要ルール**:
+- 日本語本文の `letter-spacing` は原則 0（見出しのみ使用可）
+- 本文の `line-height` は最低 1.5（推奨 1.7〜2.0）
+- Yu Gothic を使う場合は `@font-face` で Medium→400 マッピングを使う
+- `font-feature-settings: "palt" 1` は見出し・ナビのみ適用（本文には非適用が原則）
+
+---
+
 ## 開発ルール (常に適用)
 
 1. **`flutter analyze` を常に0エラー維持** — コード変更後は必ずチェック

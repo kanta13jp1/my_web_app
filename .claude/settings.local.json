@@ -76,7 +76,22 @@
       "Bash(/c/app/flutter/bin/dart analyze:*)",
       "Bash(echo \"EXIT_CODE:$?\")",
       "Bash(ls -t c:/Users/kanta/GitHub/my_web_app/lib/pages/*.dart)",
-      "Bash(ls c:/Users/kanta/GitHub/my_web_app/docs/*.ts)"
+      "Bash(ls c:/Users/kanta/GitHub/my_web_app/docs/*.ts)",
+      "Bash(wc -l lib/pages/*.dart)",
+      "Bash(ls -t lib/pages/*.dart)",
+      "Bash(find /c/Users/kanta/GitHub/my_web_app/lib -name *catalog* -o -name *tool_menu* -o -name *work_menu*)",
+      "WebFetch(domain:my-web-app-b67f4.web.app)",
+      "Bash(flutter pub:*)",
+      "Bash(gh issue:*)",
+      "Bash(/c/Users/kanta/GitHub/my_web_app/docs/GROWTH_STRATEGY_ROADMAP.md:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(gh api:*)",
+      "Bash(python3 -c \"import sys,json,base64; d=json.load\\(sys.stdin\\); print\\(base64.b64decode\\(d[''''content'''']\\).decode\\(\\)\\)\")",
+      "Bash(python3 -c \"import sys,base64; print\\(base64.b64decode\\(sys.stdin.read\\(\\).replace\\(''''\\\\n'''',''''''''\\)\\).decode\\(\\)\\)\")",
+      "Bash(del C:/Users/kanta/GitHub/my_web_app/.git/index.lock)",
+      "Bash(GIT_AUTHOR_NAME=\"kanta\" GIT_COMMITTER_NAME=\"kanta\" git commit -m \"docs: DESIGN.md を awesome-design-md-jp テンプレートに完全準拠:*)",
+      "Bash(curl:*)"
     ]
   }
 }
