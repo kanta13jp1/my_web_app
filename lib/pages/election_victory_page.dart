@@ -19,6 +19,7 @@ import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
+import '../widgets/election_x_post_composer_dialog.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -1316,6 +1317,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 ? _shareRealityOnX
                                 : null,
                         child: const Text('X共有'),
+                      ),
+                    if (realitySnapshot != null &&
+                        realitySnapshot.hasScheduleData)
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF1DA1F2),
+                        ),
+                        onPressed: realitySnapshot.hasData
+                            ? () => ElectionXPostComposerDialog.show(
+                                  context,
+                                  snapshot: realitySnapshot,
+                                  shareService: _shareService,
+                                  publishedMemo: _publishedRealityMemo,
+                                )
+                            : null,
+                        icon: const Icon(Icons.schedule_send, size: 16),
+                        label: const Text('週末選挙投稿'),
                       ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading

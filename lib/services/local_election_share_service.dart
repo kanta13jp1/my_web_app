@@ -159,6 +159,112 @@ class LocalElectionShareService {
     );
   }
 
+  /// Builds a Twitter/X thread for upcoming local elections with 0 Kokumin candidates.
+  /// Returns a list of tweet texts forming a thread.
+  /// Tweet 1: intro sentence + all prefecture blocks (no char truncation — user edits in dialog).
+  /// Tweet 2: current member stats + top prefectures + public memo link.
+  /// [daysAhead] defaults to 7 (this week's elections).
+  List<String> buildUpcomingElectionsThread({
+    required LocalElectionRealitySnapshot snapshot,
+    String publicUrl = '',
+    int daysAhead = 7,
+  }) {
+    final upcoming = snapshot
+        .schedulesWithinDays(daysAhead)
+        .where((e) => !e.isPast)
+        .toList()
+      ..sort((a, b) {
+        final aDate = a.parsedVoteDate ?? DateTime(9999);
+        final bDate = b.parsedVoteDate ?? DateTime(9999);
+        if (aDate != bDate) return aDate.compareTo(bDate);
+        return a.prefecture.compareTo(b.prefecture);
+      });
+
+    final noCandidate =
+        upcoming.where((e) => e.kokuminCandidateCount == 0).toList();
+    final total = upcoming.length;
+    final noCount = noCandidate.length;
+
+    final tweets = <String>[];
+
+    // --- Tweet 1: intro + ALL election entries grouped by prefecture ---
+    final byPref = <String, List<LocalElectionScheduleEntry>>{};
+    for (final e in noCandidate) {
+      byPref.putIfAbsent(e.prefecture, () => []).add(e);
+    }
+
+    final String introText;
+    if (noCount > 0) {
+      // When all elections lack candidates → "1人も"; otherwise count remaining
+      final candidatePhrase = noCount == total ? '1人も' : '$noCount件';
+      introText = '今週末投開票日の地方選挙が${total}ありますが、'
+          '国民民主党は独自公認候補を${candidatePhrase}擁立できていません。'
+          '痛恨の極みです。こんな状況では統一地方選までに地方議員700人など絶対に達成できません。';
+    } else {
+      introText = '今週末投開票日の地方選挙が${total}あります。'
+          '国民民主党は全選挙に候補者を擁立しています！';
+    }
+
+    final prefOrder = _allPrefectures;
+    final sortedPrefs = byPref.keys.toList()
+      ..sort((a, b) {
+        final ai = prefOrder.indexOf(a);
+        final bi = prefOrder.indexOf(b);
+        if (ai == -1 && bi == -1) return a.compareTo(b);
+        if (ai == -1) return 1;
+        if (bi == -1) return -1;
+        return ai.compareTo(bi);
+      });
+
+    // Build tweet 1 — include ALL prefecture blocks (no 280-char truncation).
+    // The dialog's char counter alerts the user if manual splitting is needed.
+    final tweet1Buffer = StringBuffer(introText);
+    for (final pref in sortedPrefs) {
+      final elections = byPref[pref]!;
+      tweet1Buffer.write('\n\n$pref');
+      for (final e in elections) {
+        tweet1Buffer.write('\n${e.electionName}');
+      }
+    }
+    tweets.add(tweet1Buffer.toString().trim());
+
+    // --- Tweet 2: statistics + top prefectures + link ---
+    final prefectures = _prefecturesForDisplay(snapshot);
+    final missingCount =
+        prefectures.where((item) => item.currentMembers == 0).length;
+    final lowCount = prefectures
+        .where(
+          (item) =>
+              item.currentMembers > 0 &&
+              item.currentMembers <= lowPresenceThreshold,
+        )
+        .length;
+    final topPrefs = snapshot.topPrefectures(limit: 3);
+    final dateStr = _dateOnlyFormat.format(snapshot.fetchedAt.toLocal());
+
+    final stats = <String>[
+      '国民民主党の地方議員数 $dateStr',
+      '${snapshot.officialCurrentLocalMembers}人',
+      '700まで残り${snapshot.actualNetIncreaseRequired}人',
+      '',
+      '🔴議員不在 $missingCount県',
+      '🟡要強化($lowPresenceThreshold人以下) $lowCount県',
+      '',
+    ];
+    for (final p in topPrefs) {
+      stats.add('${p.prefecture} ${p.currentMembers}人');
+    }
+    if (publicUrl.isNotEmpty) {
+      stats
+        ..add('')
+        ..add('全47都道府県の内訳と現職名簿を公開ノートに整理しました。')
+        ..add(publicUrl);
+    }
+    tweets.add(stats.join('\n').trim());
+
+    return tweets;
+  }
+
   int buildSyntheticNoteId(LocalElectionRealitySnapshot snapshot) {
     final dateKey = int.parse(
       _dateOnlyFormat.format(snapshot.fetchedAt.toLocal()).replaceAll('/', ''),
