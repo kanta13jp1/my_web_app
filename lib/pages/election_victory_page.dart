@@ -2413,6 +2413,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  /// Returns the [LocalElectionShareService.availableWindows] index that
+  /// corresponds to [filter], or null for 'すべて'.
+  int? _filterToWindowIndex(String filter) {
+    // availableWindows = ['今週末', '2週後', '3週後', '4週後', '5週後']
+    // _scheduleFilters  = ['すべて', '今週末', '2週後', '3週後', '4週後', '5週後']
+    final idx = LocalElectionShareService.availableWindows
+        .indexWhere((w) => w.label == filter);
+    return idx >= 0 ? idx : null;
+  }
+
   bool _matchesScheduleFilter(DateTime? voteDate, String filter) {
     if (voteDate == null) return true;
     if (filter == 'すべて') return true;
@@ -2655,7 +2665,34 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
+        // "この週末の選挙を X に投稿" shortcut — only shown for specific windows
+        if (_selectedScheduleFilter != 'すべて' &&
+            filteredUpcomingSchedules.isNotEmpty)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF1DA1F2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              ),
+              onPressed: () => ElectionXPostComposerDialog.show(
+                context,
+                snapshot: snapshot,
+                shareService: _shareService,
+                publishedMemo: _publishedRealityMemo,
+                initialWindowIndex:
+                    _filterToWindowIndex(_selectedScheduleFilter),
+              ),
+              icon: const Icon(Icons.schedule_send, size: 16),
+              label: Text(
+                '$_selectedScheduleFilterの選挙をX投稿',
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
+        const SizedBox(height: 4),
         if (filteredUpcomingSchedules.isEmpty)
           _buildInlineNotice(
             _selectedScheduleFilter == 'すべて'

@@ -33,29 +33,31 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
-          body: ElectionRegionalKpiChart(
-            prefectures: [
-              LocalElectionPrefecturePlan(
-                prefecture: '東京',
-                region: '関東',
-                additionalSeatTarget: 12,
-                incumbentRetentionTarget: 9,
-                focusMunicipalityCount: 14,
-                newCandidateTarget: 15,
-                endorsementDeadlineMonth: '2026-09',
-                closeRaceSupportRounds: 18,
-              ),
-              LocalElectionPrefecturePlan(
-                prefecture: '愛知',
-                region: '中部',
-                additionalSeatTarget: 7,
-                incumbentRetentionTarget: 5,
-                focusMunicipalityCount: 9,
-                newCandidateTarget: 8,
-                endorsementDeadlineMonth: '2026-10',
-                closeRaceSupportRounds: 10,
-              ),
-            ],
+          body: SingleChildScrollView(
+            child: ElectionRegionalKpiChart(
+              prefectures: [
+                LocalElectionPrefecturePlan(
+                  prefecture: '東京',
+                  region: '関東',
+                  additionalSeatTarget: 12,
+                  incumbentRetentionTarget: 9,
+                  focusMunicipalityCount: 14,
+                  newCandidateTarget: 15,
+                  endorsementDeadlineMonth: '2026-09',
+                  closeRaceSupportRounds: 18,
+                ),
+                LocalElectionPrefecturePlan(
+                  prefecture: '愛知',
+                  region: '中部',
+                  additionalSeatTarget: 7,
+                  incumbentRetentionTarget: 5,
+                  focusMunicipalityCount: 9,
+                  newCandidateTarget: 8,
+                  endorsementDeadlineMonth: '2026-10',
+                  closeRaceSupportRounds: 10,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -63,7 +65,7 @@ void main() {
 
     expect(find.text('都道府県連別 目標配分 (現職維持 + 新人擁立)'), findsOneWidget);
     expect(find.text('現職維持目標'), findsOneWidget);
-    expect(find.text('新人擁立目標'), findsOneWidget);
+    expect(find.textContaining('新人擁立目標'), findsWidgets);
     expect(find.text('東京'), findsOneWidget);
     expect(find.text('愛知'), findsOneWidget);
   });

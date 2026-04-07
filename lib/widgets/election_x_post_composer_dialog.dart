@@ -17,11 +17,16 @@ class ElectionXPostComposerDialog extends StatefulWidget {
   final PublicMemo? publishedMemo;
   final LocalElectionShareService shareService;
 
+  /// Optional window index to pre-select (0 = 今週末, 1 = 2週後 …).
+  /// When null the dialog auto-selects the first window that has elections.
+  final int? initialWindowIndex;
+
   const ElectionXPostComposerDialog({
     super.key,
     required this.snapshot,
     required this.shareService,
     this.publishedMemo,
+    this.initialWindowIndex,
   });
 
   static Future<void> show(
@@ -29,6 +34,7 @@ class ElectionXPostComposerDialog extends StatefulWidget {
     required LocalElectionRealitySnapshot snapshot,
     required LocalElectionShareService shareService,
     PublicMemo? publishedMemo,
+    int? initialWindowIndex,
   }) {
     return showDialog<void>(
       context: context,
@@ -36,6 +42,7 @@ class ElectionXPostComposerDialog extends StatefulWidget {
         snapshot: snapshot,
         shareService: shareService,
         publishedMemo: publishedMemo,
+        initialWindowIndex: initialWindowIndex,
       ),
     );
   }
@@ -67,9 +74,12 @@ class _ElectionXPostComposerDialogState
               .length,
         )
         .toList();
-    // Auto-select first weekend that has elections
-    _selectedIndex =
-        _electionCounts.indexWhere((c) => c > 0).clamp(0, windows.length - 1);
+    // Use caller-supplied index when provided; otherwise auto-select first
+    // weekend that has elections.
+    final requestedIndex = widget.initialWindowIndex;
+    _selectedIndex = requestedIndex != null
+        ? requestedIndex.clamp(0, windows.length - 1)
+        : _electionCounts.indexWhere((c) => c > 0).clamp(0, windows.length - 1);
     _buildControllers();
   }
 

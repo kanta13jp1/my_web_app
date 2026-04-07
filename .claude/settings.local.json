@@ -137,7 +137,8 @@
       "Bash(kill %1)",
       "Bash(timeout 90 bash -c \"flutter analyze 2>&1\")",
       "Bash(echo \"EXIT CODE: $?\")",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(python3 -c \"import sys,json; runs=json.load\\(sys.stdin\\); [print\\(f\\\\\"{r['conclusion'] or r['status']:12} {r['name'][:40]:40} {r['createdAt'][:16]}\\\\\"\\) for r in runs]\")"
     ]
   },
   "enabledMcpjsonServers": [
