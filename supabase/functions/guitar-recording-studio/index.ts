@@ -215,7 +215,10 @@ serve(async (req: Request) => {
         );
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error
+      ? error.message
+      : (error as { message?: string }).message ?? JSON.stringify(error);
+    console.error("[guitar-recording-studio] unhandled error:", JSON.stringify(error));
     return jsonResponse({ success: false, error: message }, 500);
   }
 });
@@ -382,7 +385,7 @@ async function listUserRecordings(auth: AuthContext) {
     throw error;
   }
 
-  return ((data ?? []) as GuitarRecordingRow[]).map(mapRecordingRow);
+  return ((data ?? []) as GuitarRecordingRow[]).map((row) => mapRecordingRow(row));
 }
 
 async function buildPracticeStats(auth: AuthContext) {
@@ -449,7 +452,7 @@ async function listPublicRecordings(
 
   if (error) throw error;
 
-  const recordings = ((data ?? []) as GuitarRecordingRow[]).map(mapRecordingRow);
+  const recordings = ((data ?? []) as GuitarRecordingRow[]).map((row) => mapRecordingRow(row));
 
   return {
     success: true,
