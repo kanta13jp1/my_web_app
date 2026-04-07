@@ -703,6 +703,53 @@ class LocalElectionRealitySnapshot {
     return upcomingSchedules.where((item) => item.isWithinDays(days)).toList();
   }
 
+  /// Returns elections whose voteDate falls within the weekend window
+  /// [weekendSaturday] .. [weekendSaturday + 1 day] (Sat/Sun).
+  List<LocalElectionScheduleEntry> schedulesOnWeekend(
+    DateTime weekendSaturday,
+  ) {
+    final start = DateTime(
+      weekendSaturday.year,
+      weekendSaturday.month,
+      weekendSaturday.day,
+    );
+    // Include Saturday through Sunday.
+    final end = start.add(const Duration(days: 1));
+    return upcomingSchedules.where((item) {
+      final date = item.parsedVoteDate;
+      if (date == null || item.isPast) return false;
+      final d = DateTime(date.year, date.month, date.day);
+      return !d.isBefore(start) && !d.isAfter(end);
+    }).toList();
+  }
+
+  /// Returns the next [count] weekend Saturdays, including the current weekend.
+  static List<DateTime> nextWeekends({int count = 5, DateTime? now}) {
+    if (count <= 0) {
+      return const <DateTime>[];
+    }
+
+    final current = now ?? DateTime.now();
+    final today = DateTime(current.year, current.month, current.day);
+    late DateTime nextSat;
+    if (today.weekday == DateTime.saturday) {
+      nextSat = today;
+    } else if (today.weekday == DateTime.sunday) {
+      nextSat = today.subtract(const Duration(days: 1));
+    } else {
+      nextSat = today.add(
+        Duration(days: DateTime.saturday - today.weekday),
+      );
+    }
+
+    final result = <DateTime>[];
+    for (var i = 0; i < count; i++) {
+      result.add(nextSat);
+      nextSat = nextSat.add(const Duration(days: 7));
+    }
+    return result;
+  }
+
   List<LocalElectionScheduleEntry> topScheduleAlerts({int limit = 8}) {
     final sorted = List<LocalElectionScheduleEntry>.from(upcomingSchedules)
       ..sort((left, right) {

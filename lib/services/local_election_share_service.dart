@@ -21,11 +21,39 @@ class LocalElectionShareDraft {
   });
 }
 
+class LocalElectionShareWindow {
+  final String label;
+  final int weekendOffset;
+
+  const LocalElectionShareWindow({
+    required this.label,
+    required this.weekendOffset,
+  });
+}
+
+class LocalElectionShareWindowRange {
+  final DateTime start;
+  final DateTime end;
+
+  const LocalElectionShareWindowRange({
+    required this.start,
+    required this.end,
+  });
+}
+
 class LocalElectionShareService {
   static const String publicCategory = '選挙ダッシュボード';
   static const String metadataType = 'local_election_snapshot';
   static const int lowPresenceThreshold = 4;
   static const int _syntheticNoteIdBase = 90000000000000;
+  static const List<LocalElectionShareWindow> availableWindows =
+      <LocalElectionShareWindow>[
+    LocalElectionShareWindow(label: '今週末', weekendOffset: 0),
+    LocalElectionShareWindow(label: '2週後', weekendOffset: 1),
+    LocalElectionShareWindow(label: '3週後', weekendOffset: 2),
+    LocalElectionShareWindow(label: '4週後', weekendOffset: 3),
+    LocalElectionShareWindow(label: '5週後', weekendOffset: 4),
+  ];
 
   final SupabaseClient _supabase;
   final PublicMemoService _publicMemoService;
@@ -159,26 +187,96 @@ class LocalElectionShareService {
     );
   }
 
+  LocalElectionShareWindowRange scheduleWindowRange(
+    LocalElectionShareWindow window, {
+    DateTime? now,
+  }) {
+    final today = _normalizeDate(now ?? DateTime.now());
+    final daysUntilSunday = (DateTime.sunday - today.weekday) % 7;
+    final baseSunday = today.add(Duration(days: daysUntilSunday));
+    final baseSaturday = baseSunday.subtract(const Duration(days: 1));
+    final offset = Duration(days: window.weekendOffset * 7);
+
+    return LocalElectionShareWindowRange(
+      start: baseSaturday.add(offset),
+      end: baseSunday.add(offset),
+    );
+  }
+
+  String buildWindowDateRangeLabel(
+    LocalElectionShareWindow window, {
+    DateTime? now,
+  }) {
+    final range = scheduleWindowRange(window, now: now);
+    return '${_dateOnlyFormat.format(range.start)}〜${_dateOnlyFormat.format(range.end)}';
+  }
+
+  List<LocalElectionScheduleEntry> schedulesForWindow({
+    required LocalElectionRealitySnapshot snapshot,
+    required LocalElectionShareWindow window,
+    DateTime? now,
+  }) {
+    final range = scheduleWindowRange(window, now: now);
+    final schedules = snapshot.upcomingSchedules.where((entry) {
+      if (entry.isPast) {
+        return false;
+      }
+      final voteDate = entry.parsedVoteDate;
+      if (voteDate == null) {
+        return false;
+      }
+      final localDate = _normalizeDate(voteDate.toLocal());
+      return !localDate.isBefore(range.start) && !localDate.isAfter(range.end);
+    }).toList()
+      ..sort((a, b) {
+        final aDate = a.parsedVoteDate ?? DateTime(9999);
+        final bDate = b.parsedVoteDate ?? DateTime(9999);
+        if (aDate != bDate) {
+          return aDate.compareTo(bDate);
+        }
+        final prefectureCompare = a.prefecture.compareTo(b.prefecture);
+        if (prefectureCompare != 0) {
+          return prefectureCompare;
+        }
+        return a.electionName.compareTo(b.electionName);
+      });
+    return schedules;
+  }
+
   /// Builds a Twitter/X thread for upcoming local elections with 0 Kokumin candidates.
   /// Returns a list of tweet texts forming a thread.
   /// Tweet 1: intro sentence + all prefecture blocks (no char truncation — user edits in dialog).
   /// Tweet 2: current member stats + top prefectures + public memo link.
-  /// [daysAhead] defaults to 7 (this week's elections).
+  ///
+  /// Specify either [weekendSaturday] (weekend-based) or [daysAhead] (legacy).
+  /// [weekendSaturday] takes precedence when provided.
   List<String> buildUpcomingElectionsThread({
     required LocalElectionRealitySnapshot snapshot,
     String publicUrl = '',
+    DateTime? weekendSaturday,
     int daysAhead = 7,
   }) {
-    final upcoming = snapshot
-        .schedulesWithinDays(daysAhead)
-        .where((e) => !e.isPast)
-        .toList()
-      ..sort((a, b) {
-        final aDate = a.parsedVoteDate ?? DateTime(9999);
-        final bDate = b.parsedVoteDate ?? DateTime(9999);
-        if (aDate != bDate) return aDate.compareTo(bDate);
-        return a.prefecture.compareTo(b.prefecture);
-      });
+    final List<LocalElectionScheduleEntry> upcoming;
+    if (weekendSaturday != null) {
+      upcoming = snapshot.schedulesOnWeekend(weekendSaturday)
+        ..sort((a, b) {
+          final aDate = a.parsedVoteDate ?? DateTime(9999);
+          final bDate = b.parsedVoteDate ?? DateTime(9999);
+          if (aDate != bDate) return aDate.compareTo(bDate);
+          return a.prefecture.compareTo(b.prefecture);
+        });
+    } else {
+      upcoming = snapshot
+          .schedulesWithinDays(daysAhead)
+          .where((e) => !e.isPast)
+          .toList()
+        ..sort((a, b) {
+          final aDate = a.parsedVoteDate ?? DateTime(9999);
+          final bDate = b.parsedVoteDate ?? DateTime(9999);
+          if (aDate != bDate) return aDate.compareTo(bDate);
+          return a.prefecture.compareTo(b.prefecture);
+        });
+    }
 
     final noCandidate =
         upcoming.where((e) => e.kokuminCandidateCount == 0).toList();
@@ -193,19 +291,30 @@ class LocalElectionShareService {
       byPref.putIfAbsent(e.prefecture, () => []).add(e);
     }
 
+    // Build human-readable date label for the weekend
+    final String weekendLabel;
+    if (weekendSaturday != null) {
+      weekendLabel =
+          '${weekendSaturday.month}/${weekendSaturday.day}(土)〜${weekendSaturday.add(const Duration(days: 1)).month}/${weekendSaturday.add(const Duration(days: 1)).day}(日)';
+    } else {
+      weekendLabel = '今週末';
+    }
+
     final String introText;
+    if (upcoming.isEmpty) {
+      return ['$weekendLabel投開票日の地方選挙はありません。'];
+    }
     if (noCount > 0) {
-      // When all elections lack candidates → "1人も"; otherwise count remaining
       final candidatePhrase = noCount == total ? '1人も' : '$noCount件';
-      introText = '今週末投開票日の地方選挙が${total}ありますが、'
-          '国民民主党は独自公認候補を${candidatePhrase}擁立できていません。'
+      introText = '$weekendLabel投開票日の地方選挙が$total件ありますが、'
+          '国民民主党は独自公認候補を$candidatePhrase擁立できていません。'
           '痛恨の極みです。こんな状況では統一地方選までに地方議員700人など絶対に達成できません。';
     } else {
-      introText = '今週末投開票日の地方選挙が${total}あります。'
+      introText = '$weekendLabel投開票日の地方選挙が$total件あります。'
           '国民民主党は全選挙に候補者を擁立しています！';
     }
 
-    final prefOrder = _allPrefectures;
+    const prefOrder = _allPrefectures;
     final sortedPrefs = byPref.keys.toList()
       ..sort((a, b) {
         final ai = prefOrder.indexOf(a);
@@ -506,6 +615,9 @@ class LocalElectionShareService {
     }
     return '';
   }
+
+  DateTime _normalizeDate(DateTime dt) =>
+      DateTime(dt.year, dt.month, dt.day);
 
   String _normalizePrefectureKey(String value) {
     final trimmed = value.trim();
