@@ -4416,6 +4416,8 @@ abstinence_slip_details: $slipDetailsText
                             const DevelopmentAchievementsCard(),
                             const SizedBox(height: 16),
                             const EdgeFunctionSummaryCard(),
+                            const SizedBox(height: 16),
+                            _buildUiStatusButton(context),
                             const SizedBox(height: 40),
                           ],
                         ),
@@ -4433,6 +4435,21 @@ abstinence_slip_details: $slipDetailsText
 
   void _nav(BuildContext context, Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+  }
+
+  Widget _buildUiStatusButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => Navigator.of(context).pushNamed('/ui-design-status'),
+      icon: const Icon(Icons.palette_outlined, size: 16),
+      label: const Text('UI デザインステータス'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFFFF6B35),
+        side: BorderSide(color: const Color(0xFFFF6B35).withValues(alpha: 0.4)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        minimumSize: const Size(double.infinity, 44),
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.4),
+      ),
+    );
   }
 
   Widget _buildSectionHeader(

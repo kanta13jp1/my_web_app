@@ -153,6 +153,7 @@ import '../pages/code_playground_page.dart';
 import '../pages/real_estate_tracker_page.dart';
 import '../pages/goal_tracker_page.dart';
 import '../pages/bookmark_sync_page.dart';
+import '../pages/ui_design_status_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1569,6 +1570,46 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const AiImageGeneratorPage()),
     ),
     // growth セクション
+    HomeToolEntry(
+      id: 'ui-design-status',
+      sectionId: 'growth',
+      /*
+      title: 'UIデザイン改善ステータス',
+      subtitle:
+          '全画面一覧と Figma MCP / AIDesigner / Design Skills / DESIGN.md の適用状況を確認',
+      */
+      title: 'UI Design Rollout Status',
+      subtitle:
+          'Review every screen and see whether Figma MCP, AIDesigner, Design Skills, and DESIGN.md are applied.',
+      icon: Icons.design_services_outlined,
+      color: const Color(0xFFFF6B35),
+      /*
+      keywords: const <String>[
+        'UI',
+        'デザイン',
+        '改善',
+        'Figma',
+        'AIDesigner',
+        'Design Skills',
+        'DESIGN.md',
+        '監査',
+        '画面一覧',
+      ],
+      */
+      keywords: const <String>[
+        'UI',
+        'design',
+        'rollout',
+        'status',
+        'Figma',
+        'AIDesigner',
+        'Design Skills',
+        'DESIGN.md',
+        'screens',
+        'audit',
+      ],
+      onOpen: (context) => _pushPage(context, const UiDesignStatusPage()),
+    ),
     HomeToolEntry(
       id: 'social-feed',
       sectionId: 'growth',

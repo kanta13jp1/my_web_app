@@ -104,6 +104,9 @@ class _GuitarRecordingStudioPageState
   bool _isPlayingShared = false;
   web.HTMLAudioElement? _sharedAudioElement;
 
+  // カンバンボード追加中のローディング状態
+  bool _isAddingToKanban = false;
+
   /// 最新録音のAIフィードバック (履歴リストの先頭から取得)
   String? get _latestRecordingAiFeedback =>
       _recordings.isNotEmpty
@@ -1623,6 +1626,7 @@ class _GuitarRecordingStudioPageState
             ),
             child: IconButton(
               iconSize: 64,
+              tooltip: _isPlayingShared ? '一時停止' : '再生',
               icon: Icon(_isPlayingShared ? Icons.pause : Icons.play_arrow),
               color: _isPlayingShared ? const Color(0xFF818CF8) : Colors.white,
               onPressed: _playSharedRecording,
@@ -3349,43 +3353,99 @@ class _GuitarRecordingStudioPageState
   Widget _aiPracticeMenu() {
     final menu = (_aiAnalysis!['practiceMenu'] as List?) ?? [];
     return Column(
-      children: menu.asMap().entries.map((entry) {
-        final item = entry.value is Map<String, dynamic> ? entry.value as Map<String, dynamic> : Map<String, dynamic>.from(entry.value as Map);
-        final title = item['title'] as String? ?? '';
-        final duration = item['duration'] as String? ?? '';
-        final desc = item['description'] as String? ?? '';
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F3460),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE94560),
-                      borderRadius: BorderRadius.circular(4),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ...menu.asMap().entries.map((entry) {
+          final item = entry.value is Map<String, dynamic> ? entry.value as Map<String, dynamic> : Map<String, dynamic>.from(entry.value as Map);
+          final title = item['title'] as String? ?? '';
+          final duration = item['duration'] as String? ?? '';
+          final desc = item['description'] as String? ?? '';
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F3460),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE94560),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
-                    child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(desc, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
-            ],
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(desc, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
+              ],
+            ),
+          );
+        }),
+        if (menu.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _isAddingToKanban ? null : () => _addPracticeMenuToKanban(menu),
+            icon: _isAddingToKanban
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE94560)))
+                : const Icon(Icons.playlist_add, size: 18),
+            label: Text(_isAddingToKanban ? '追加中...' : 'カンバンボード（To Do）にすべて追加'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFE94560),
+              side: const BorderSide(color: Color(0xFFE94560)),
+            ),
           ),
-        );
-      }).toList(),
+        ],
+      ],
     );
+  }
+
+  Future<void> _addPracticeMenuToKanban(List<dynamic> menu) async {
+    setState(() => _isAddingToKanban = true);
+    
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('ログインが必要です');
+
+      // カンバンに登録するためのタスクリストを生成
+      final tasks = menu.map((item) {
+        final data = item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map);
+        final title = data['title'] as String? ?? '練習タスク';
+        final duration = data['duration'] as String? ?? '';
+        final desc = data['description'] as String? ?? '';
+        
+        return {
+          'user_id': userId,
+          'title': '🎸 $title ($duration)', // アイコンをつけて識別しやすくする
+          'description': desc,
+          'status': 'todo', // カンバンの「To Do」列に配置
+        };
+      }).toList();
+
+      // 一括インサート (※ 'tasks' テーブル名は実際のカンバン用テーブルに合わせて変更してください)
+      await _supabase.from('tasks').insert(tasks);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('カンバンボードに練習メニューを追加しました！🎸'), backgroundColor: Color(0xFF4CAF50)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('タスクの追加に失敗しました: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isAddingToKanban = false);
+    }
   }
 
   Widget _aiStats() {

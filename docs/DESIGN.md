@@ -7,6 +7,26 @@
 
 ---
 
+## デザインツール運用
+
+このプロジェクトの UI 制作は、次の 4 点セットを前提にします。
+
+1. `Figma MCP`
+2. `AIDesigner MCP`
+3. `.claude/agents/design-skills.md`
+4. `docs/DESIGN_TOOLING_SETUP.md`
+
+役割は分けて使います。
+
+- Figma MCP: 既存デザインの正解を読む
+- AIDesigner MCP: 新規案と改善案の初速を出す
+- Design Skills: Claude Code にこのリポジトリの判断基準を渡す
+- この `docs/DESIGN.md`: 最終的な採用基準にする
+
+新規 UI や大きめの UI 改修では、モデル単体の生成だけで完結させず、必ず上の流れを通してください。
+
+---
+
 ## ブランドアイデンティティ
 
 **コンセプト**: 「プロフェッショナルなダーク × 生命力のあるオレンジ」

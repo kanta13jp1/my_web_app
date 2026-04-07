@@ -675,27 +675,28 @@ $input
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        // ★ メイン機能: ギター録音スタジオ (最上部に配置)
+        // ★ メイン機能: ギター録音スタジオ
         GestureDetector(
           onTap: () =>
               Navigator.of(context).pushNamed('/guitar-recording-studio'),
           child: Container(
             width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+                colors: [Color(0xFF0F0F1A), Color(0xFF1A1A2E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: const Color(0xFFE94560),
-                width: 1.5,
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE94560).withAlpha(50),
-                  blurRadius: 12,
+                  color: const Color(0xFFE94560).withAlpha(40),
+                  blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -703,18 +704,19 @@ $input
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE94560).withAlpha(30),
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFE94560).withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.music_note,
                     color: Color(0xFFE94560),
-                    size: 26,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 const Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,17 +727,23 @@ $input
                             'ギター録音スタジオ 🎸',
                             style: TextStyle(
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               fontSize: 15,
+                              height: 1.4,
                             ),
                           ),
                           SizedBox(width: 6),
                           _LandingMainBadge(),
                         ],
                       ),
+                      SizedBox(height: 2),
                       Text(
-                        'スマホで演奏を録音・WAV保存・メトロノーム・コード辞典・AI分析',
-                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                        '録音・WAV保存・メトロノーム・コード辞典・AI分析',
+                        style: TextStyle(
+                          color: Color(0xFFBBBBCC),
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -743,7 +751,7 @@ $input
                 const Icon(
                   Icons.arrow_forward_ios,
                   color: Color(0xFFE94560),
-                  size: 15,
+                  size: 14,
                 ),
               ],
             ),
@@ -756,13 +764,12 @@ $input
               Navigator.of(context).pushNamed('/public-guitar-gallery'),
           child: Container(
             width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6B35).withAlpha(20),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFFF6B35).withAlpha(15),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0xFFFF6B35).withAlpha(80),
+                color: const Color(0xFFFF6B35).withAlpha(70),
               ),
             ),
             child: const Row(
@@ -770,22 +777,29 @@ $input
                 Icon(
                   Icons.library_music_outlined,
                   color: Color(0xFFFF6B35),
-                  size: 18,
+                  size: 16,
                 ),
                 SizedBox(width: 8),
                 Text(
-                  '公開ギャラリーで録音を聴く →',
+                  '公開ギャラリーで録音を聴く',
                   style: TextStyle(
                     color: Color(0xFFFF6B35),
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
+                ),
+                Spacer(),
+                Icon(
+                  Icons.arrow_forward,
+                  color: Color(0xFFFF6B35),
+                  size: 14,
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         // アプリ名バッジ
         Center(
           child: Container(
@@ -802,31 +816,30 @@ $input
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
-                letterSpacing: 0.5,
               ),
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         // メインヘッドライン
         const Text(
           'Notion・Slack・LINE・GitHub\n21サービスを1つに。完全無料。',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 32,
             fontWeight: FontWeight.w800,
-            height: 1.2,
-            color: Color(0xFF1E293B),
+            height: 1.25,
+            color: Color(0xFF0F172A),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         const Text(
           '21のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 16,
             color: Color(0xFF475569),
-            height: 1.6,
+            height: 1.7,
           ),
         ),
         const SizedBox(height: 14),
@@ -860,7 +873,7 @@ $input
           ),
         // プライマリ CTA
         SizedBox(
-          height: 54,
+          height: 56,
           child: FilledButton.icon(
             key: const Key('landing_register_button'),
             onPressed: _scrollToAuthSection,
@@ -870,30 +883,37 @@ $input
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF3949AB),
+              backgroundColor: const Color(0xFF4F46E5),
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(16),
               ),
+              elevation: 0,
             ),
           ),
         ),
         const SizedBox(height: 10),
         // セカンダリ CTA
-        OutlinedButton.icon(
-          key: const Key('landing_trial_scroll_button'),
-          onPressed: _scrollToTrialSection,
-          icon: const Icon(Icons.play_arrow, size: 16),
-          label: const Text('登録なしで1件試す'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF3949AB),
-            side: const BorderSide(color: Color(0xFFBFD0F0)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            key: const Key('landing_trial_scroll_button'),
+            onPressed: _scrollToTrialSection,
+            icon: const Icon(Icons.play_circle_outline, size: 18),
+            label: const Text(
+              '登録なしで1件試す',
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF4F46E5),
+              side: const BorderSide(color: Color(0xFFC7D2FE)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         // 信頼バッジ行
         const Wrap(
           alignment: WrapAlignment.center,
@@ -919,7 +939,7 @@ $input
     return Card(
       key: const Key('landing_referral_invite_section'),
       elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -971,94 +991,120 @@ $input
     final stats = [
       (
         icon: Icons.people_alt_outlined,
-        color: const Color(0xFF3949AB),
+        color: const Color(0xFF4F46E5),
+        bgColor: const Color(0xFFEEF2FF),
         value: _totalUsers > 0 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
         icon: Icons.article_outlined,
-        color: const Color(0xFF0288D1),
+        color: const Color(0xFF0284C7),
+        bgColor: const Color(0xFFE0F2FE),
         value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
         label: '公開メモ数',
       ),
       (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF388E3C),
+        color: const Color(0xFF16A34A),
+        bgColor: const Color(0xFFDCFCE7),
         value: _achievementCount > 0 ? '$_achievementCount' : '–',
         label: '実装済み機能数',
       ),
     ];
 
-    return Card(
+    return Container(
       key: const Key('landing_social_proof_stats'),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.bar_chart, color: Color(0xFF3949AB), size: 20),
-                const SizedBox(width: 8),
-                const Text(
-                  'リアルタイム実績',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bar_chart, color: Color(0xFF4F46E5), size: 18),
+              const SizedBox(width: 8),
+              const Text(
+                'リアルタイム実績',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                  height: 1.4,
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F5E9),
-                    borderRadius: BorderRadius.circular(99),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'LIVE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF15803D),
+                    letterSpacing: 0.5,
                   ),
-                  child: const Text(
-                    'LIVE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF388E3C),
-                      letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: stats
+                .map(
+                  (s) => Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: s.bgColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(s.icon, color: s.color, size: 20),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          s.value,
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: s.color,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s.label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: stats
-                  .map(
-                    (s) => Expanded(
-                      child: Column(
-                        children: [
-                          Icon(s.icon, color: s.color, size: 28),
-                          const SizedBox(height: 6),
-                          Text(
-                            s.value,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: s.color,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            s.label,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.black54,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ],
-        ),
+                )
+                .toList(),
+          ),
+        ],
       ),
     );
   }
@@ -1090,7 +1136,7 @@ $input
     return Card(
       key: const Key('landing_migration_guide'),
       elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1109,7 +1155,7 @@ $input
             const SizedBox(height: 4),
             const Text(
               'データを失わずに、5分で完了します。',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 16),
             ...steps.map((guide) {
@@ -1212,7 +1258,7 @@ $input
     return Card(
       key: const Key('landing_comparison_links'),
       elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1225,7 +1271,7 @@ $input
                   height: 40,
                   decoration: BoxDecoration(
                     color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.compare_arrows,
@@ -1261,7 +1307,7 @@ $input
               children: competitors.map((c) {
                 return InkWell(
                   onTap: () => Navigator.of(context).pushNamed('/vs-${c.key}'),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -1269,7 +1315,7 @@ $input
                     ),
                     decoration: BoxDecoration(
                       color: c.color.withAlpha(15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: c.color.withAlpha(60)),
                     ),
                     child: Row(
@@ -1440,7 +1486,7 @@ $input
           end: Alignment.bottomRight,
           colors: [Color(0xFFF8FAFF), Color(0xFFF0F4FF)],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Column(
@@ -1473,7 +1519,7 @@ $input
                     height: 36,
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(icon, size: 18, color: color),
                   ),
@@ -1596,7 +1642,7 @@ $input
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFDE68A)),
       ),
       child: Column(
@@ -1701,7 +1747,7 @@ $input
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
@@ -1787,7 +1833,7 @@ $input
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF3949AB),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
             ),
@@ -1803,7 +1849,7 @@ $input
       child: Card(
         key: _trialSectionKey,
         elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -1816,7 +1862,7 @@ $input
               const SizedBox(height: 6),
               const Text(
                 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: Color(0xFF64748B)),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -1912,7 +1958,7 @@ $input
                         const SizedBox(height: 6),
                         Text(
                           _trialReason!,
-                          style: const TextStyle(color: Colors.black54),
+                          style: const TextStyle(color: Color(0xFF64748B)),
                         ),
                       ],
                       const SizedBox(height: 10),
@@ -1982,7 +2028,7 @@ $input
 
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -1995,7 +2041,7 @@ $input
             const SizedBox(height: 4),
             const Text(
               '気になることがあればお気軽にどうぞ。',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 12),
             for (final faq in faqs) ...[
@@ -2013,7 +2059,7 @@ $input
       child: Card(
         key: _authSectionKey,
         elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -2024,7 +2070,7 @@ $input
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF4E5),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border:
                         Border.all(color: Colors.orange.withValues(alpha: 0.3)),
                   ),
@@ -2044,7 +2090,7 @@ $input
                 _isSignUp
                     ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
                     : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
-                style: const TextStyle(color: Colors.black54),
+                style: const TextStyle(color: Color(0xFF64748B)),
               ),
               const SizedBox(height: 12),
               const Wrap(
@@ -2073,7 +2119,7 @@ $input
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black54,
+                  color: Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 10),
@@ -2106,7 +2152,7 @@ $input
               const SizedBox(height: 8),
               const Text(
                 '新規登録もログインも、この1通で完了します。',
-                style: TextStyle(fontSize: 12, color: Colors.black45),
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
               ),
               if (_showInboxShortcut) ...[
                 const SizedBox(height: 10),
@@ -2114,7 +2160,7 @@ $input
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F7FF),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border:
                         Border.all(color: Colors.blue.withValues(alpha: 0.2)),
                   ),
@@ -2133,7 +2179,7 @@ $input
                         '届かない場合は迷惑メールも確認してください。',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: Color(0xFF64748B),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -2182,12 +2228,12 @@ $input
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7F9FC),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.black12),
                   ),
                   child: const Text(
                     'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -2199,7 +2245,7 @@ $input
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'パスワードで続ける',
-                      style: TextStyle(color: Colors.black45),
+                      style: TextStyle(color: Color(0xFF94A3B8)),
                     ),
                   ),
                   Expanded(child: Divider()),
@@ -2360,22 +2406,23 @@ class _BenefitChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FB),
+        color: const Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: const Color(0xFFC7D2FE)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.blueGrey),
+          Icon(icon, size: 14, color: const Color(0xFF4F46E5)),
           const SizedBox(width: 6),
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
+              color: Color(0xFF4338CA),
             ),
           ),
         ],
@@ -2411,7 +2458,7 @@ class _FaqItemState extends State<_FaqItem> {
     return Column(
       children: [
         InkWell(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
           onTap: () => setState(() => _expanded = !_expanded),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
@@ -2429,7 +2476,7 @@ class _FaqItemState extends State<_FaqItem> {
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
                   size: 20,
-                  color: Colors.black54,
+                  color: const Color(0xFF64748B),
                 ),
               ],
             ),
@@ -2442,7 +2489,7 @@ class _FaqItemState extends State<_FaqItem> {
               widget.answer,
               style: const TextStyle(
                 fontSize: 13,
-                color: Colors.black54,
+                color: Color(0xFF64748B),
                 height: 1.6,
               ),
             ),

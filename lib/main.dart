@@ -187,6 +187,7 @@ import 'package:my_web_app/pages/sitemap_analytics_page.dart';
 import 'package:my_web_app/pages/access_control_page.dart';
 import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
+import 'package:my_web_app/pages/ui_design_status_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1064,6 +1065,11 @@ class MyApp extends StatelessWidget {
           case '/bookmark-sync':
             return MaterialPageRoute(
               builder: (_) => const BookmarkSyncPage(),
+            );
+          case '/ui-design-status':
+            return MaterialPageRoute(
+              builder: (_) => const UiDesignStatusPage(),
+              settings: const RouteSettings(name: '/ui-design-status'),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
