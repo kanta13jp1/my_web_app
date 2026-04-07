@@ -15,6 +15,7 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const RECORDING_BUCKET = "guitar-recordings";
 const SHARE_BASE_URL =
   "https://my-web-app-b67f4.web.app/#/guitar-recording-studio";
+const APP_URL = "https://my-web-app-b67f4.web.app/";
 
 type Json = Record<string, unknown>;
 
@@ -184,6 +185,8 @@ serve(async (req: Request) => {
         return jsonResponse(await logPracticeSession(auth, body));
       case "ai_analyze":
         return jsonResponse(await buildAiAnalysis(auth, body));
+      case "share_to_x":
+        return jsonResponse(await shareRecordingToX(auth, body));
       default:
         return jsonResponse(
           {
@@ -205,6 +208,7 @@ serve(async (req: Request) => {
               "increment_play",
               "log_practice",
               "ai_analyze",
+              "share_to_x",
             ],
           },
           400,
@@ -598,11 +602,18 @@ async function saveRecording(auth: AuthContext, body: Json) {
   });
 
   const savedRow = data as GuitarRecordingRow;
+
+  // Auto-post to X when recording is made public
+  if (savedRow.is_public) {
+    postPublicRecordingToX(savedRow); // fire-and-forget
+  }
+
   return {
     success: true,
     recordingId,
     publicShareUrl: savedRow.is_public ? buildShareUrl(savedRow.id) : null,
     recording: mapRecordingRow(savedRow),
+    xPosted: savedRow.is_public,
   };
 }
 
@@ -750,6 +761,27 @@ async function logPracticeSession(auth: AuthContext, body: Json) {
   });
 
   return { success: true };
+}
+
+async function shareRecordingToX(auth: AuthContext, body: Json) {
+  const user = requireUser(auth);
+  const recordingId = normalizeString(body.recordingId);
+  if (!recordingId) throw new Error("recordingId is required");
+
+  const { data: row, error } = await auth.adminClient
+    .from("guitar_recordings")
+    .select("*")
+    .eq("id", recordingId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (error || !row) throw new Error("Recording not found");
+
+  const recording = row as GuitarRecordingRow;
+  if (!recording.is_public) throw new Error("Recording must be public to share");
+
+  await postPublicRecordingToX(recording);
+  return { success: true, shareUrl: buildShareUrl(recording.id) };
 }
 
 async function buildAiAnalysis(auth: AuthContext, body: Json) {
@@ -1228,6 +1260,57 @@ function formatDuration(totalSeconds: number) {
 
 function buildShareUrl(recordingId: string) {
   return `${SHARE_BASE_URL}?share=${recordingId}`;
+}
+
+// Fire-and-forget: post a public recording announcement to X (@kanta13jp1).
+// Failure is logged but never throws so it never blocks the main flow.
+async function postPublicRecordingToX(recording: GuitarRecordingRow): Promise<void> {
+  if (!SERVICE_ROLE_KEY || !SUPABASE_URL) return;
+
+  const durationStr = recording.duration_display ?? formatDuration(recording.duration_seconds);
+  const preset = (recording.preset ?? "").replace(/_/g, " ");
+  const shareUrl = buildShareUrl(recording.id);
+  const appUrl = APP_URL;
+
+  // Build tweet text ≤280 chars
+  const lines = [
+    `🎸 新しい録音を公開しました！`,
+    `「${recording.title}」`,
+    `${durationStr} / ${preset}`.trim(),
+    ``,
+    shareUrl,
+    appUrl,
+    `#buildinpublic #FlutterWeb #guitar`,
+  ];
+  let text = lines.join("\n");
+  if (text.length > 280) {
+    // Trim title if needed
+    const shortTitle = recording.title.length > 20
+      ? recording.title.slice(0, 20) + "…"
+      : recording.title;
+    text = [
+      `🎸 「${shortTitle}」を公開しました！`,
+      shareUrl,
+      `#buildinpublic #guitar`,
+    ].join("\n");
+  }
+
+  try {
+    const xPostUrl = `${SUPABASE_URL}/functions/v1/post-x-update`;
+    const resp = await fetch(xPostUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({ text }),
+    });
+    if (!resp.ok) {
+      console.warn(`[guitar-recording-studio] X post failed: ${resp.status}`);
+    }
+  } catch (e) {
+    console.warn(`[guitar-recording-studio] X post error: ${e}`);
+  }
 }
 
 function toStringArray(value: unknown): string[] {

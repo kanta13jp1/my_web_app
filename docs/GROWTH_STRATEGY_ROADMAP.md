@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 PS#27 (awesome-design-md-jp 5サービスDESIGN.md保存・CLAUDE.mdデザインシステム参照追加)
+最終更新: 2026-04-07 VSCode#8 (Figma MCP・AIDesigner MCP・Design Skills エージェント導入)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -1125,6 +1125,12 @@ Notion 機能カバー率 = **実装済み+部分実装+開発中 / Notion相当
 - **CLAUDE.md 更新**: UIコンポーネント生成時に design-systems を参照する指示を追加
   - 日本語タイポグラフィ4ルール明記: letter-spacing禁止/line-height最低1.5/Yu Gothicマッピング/palt見出しのみ
 - **Schedule triggerリスト確認**: 全4件アクティブ (cs-check毎時/daily-report毎日/blog-draft毎日/weekly-sns-draft毎週)
+
+### daily-development 2026-04-07 実装済み (自動)
+
+- **ギター録音→X自動投稿パイプライン実装** (daily-development 2026-04-07): `guitar-recording-studio` Edge Function に `postPublicRecordingToX` ヘルパーを追加。録音を `is_public=true` で保存した瞬間にバックエンドが自動的に `@kanta13jp1` アカウントへX投稿する fire-and-forget パイプラインを構築。`APP_URL` 定数を追加し、ツイートテキストに共有URL+アプリURL+ハッシュタグを含めて280字を自動チェック。`share_to_x` アクションも追加し手動再投稿にも対応。`xPosted: bool` をレスポンスに含めフロント通知可能に。deno lint 0件維持。
+- **blog-auto-publisher / ai-workflow-automation を UI 実装済みに登録** (daily-development 2026-04-07): `edge_function_summary_card.dart` で「Schedule専用 / 未実装」だった2件を既存ページ (`/tech-blog-tracker` / `/workflow-automation`) と連携済みとして登録。UI未実装件数を2件削減。flutter analyze 0件維持。
+- **技術ブログ下書き作成** (daily-development 2026-04-07): `docs/blog-drafts/2026-04-07.md` — ギター録音→X自動投稿パイプライン実装解説記事・fire-and-forget パターン・Edge Function間呼び出しのコード例付き。
 
 ### daily-report Schedule — 2026-04-07
 
