@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-06 VSCode#6 (ReferralShareCard X共有ボタン追加・競合モニタリング手動実行ボタン追加・flutter analyze 0エラー維持)
+最終更新: 2026-04-07 VSCode#7 (awesome-design-md-jp note DESIGN.md 適用・ThemeService 日本語タイポグラフィ強化)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2609,6 +2609,39 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - **Xに投稿ボタン**: 履歴リストの各アイテムに「Xに投稿」アイコンボタンを追加
 - **統計タブ**: `RefreshIndicator` でプルダウンリフレッシュ対応
 - **不要インポート削除**: `cross_file` / `share_plus` の未使用インポートを削除
+
+#### 品質確認
+
+- `flutter analyze`: **0エラー**
+
+---
+
+### Session VSCode#7 (2026-04-07): awesome-design-md-jp note DESIGN.md 適用
+
+#### 実装
+
+**note DESIGN.md 配置** (`DESIGN.md` — プロジェクトルート)
+
+- [awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) から note のデザイン仕様を取得
+- プロジェクトルートに `DESIGN.md` として配置 (AI エージェント参照用)
+- note の CSS Custom Properties 実測値 (2026-04-06 取得) をそのまま収録
+
+**このプロジェクトへの適用方針** (`DESIGN.md` セクション9)
+
+| note 仕様 | 自分株式会社への適用 |
+|---|---|
+| テキスト色 `#08131a` (ほぼ黒) | Light テーマのテキストカラー参考値 |
+| body line-height 2.0 (記事) / 1.5 (UI) | `ThemeService._buildJaTextTheme()` で body 1.7 適用済み |
+| 見出し letterSpacing 0.04em | ThemeService で H1: 0.96px / H2: 0.72px 適用済み |
+| カードシャドウ elevation-1 | `BoxShadow` に変換して使用 |
+| 記事コンテンツ幅 620px | 長文コンテンツは `maxWidth: 620` を目安に設定 |
+| `palt` は見出しのみ | Flutter Web では CSS 非対応のため Flutter TextStyle で代替 |
+
+**ThemeService 日本語タイポグラフィ強化** (`lib/services/theme_service.dart`)
+
+- `_buildJaTextTheme()` メソッド追加 (awesome-design-md-jp テンプレート準拠)
+- 本文 height 1.7 / bodySmall height 1.6 / 見出し height 1.4 + letterSpacing
+- getLightTheme / getDarkTheme 両方に適用
 
 #### 品質確認
 
