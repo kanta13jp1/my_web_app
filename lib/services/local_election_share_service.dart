@@ -21,11 +21,39 @@ class LocalElectionShareDraft {
   });
 }
 
+class LocalElectionShareWindow {
+  final String label;
+  final int weekendOffset;
+
+  const LocalElectionShareWindow({
+    required this.label,
+    required this.weekendOffset,
+  });
+}
+
+class LocalElectionShareWindowRange {
+  final DateTime start;
+  final DateTime end;
+
+  const LocalElectionShareWindowRange({
+    required this.start,
+    required this.end,
+  });
+}
+
 class LocalElectionShareService {
   static const String publicCategory = '選挙ダッシュボード';
   static const String metadataType = 'local_election_snapshot';
   static const int lowPresenceThreshold = 4;
   static const int _syntheticNoteIdBase = 90000000000000;
+  static const List<LocalElectionShareWindow> availableWindows =
+      <LocalElectionShareWindow>[
+    LocalElectionShareWindow(label: '今週末', weekendOffset: 0),
+    LocalElectionShareWindow(label: '2週後', weekendOffset: 1),
+    LocalElectionShareWindow(label: '3週後', weekendOffset: 2),
+    LocalElectionShareWindow(label: '4週後', weekendOffset: 3),
+    LocalElectionShareWindow(label: '5週後', weekendOffset: 4),
+  ];
 
   final SupabaseClient _supabase;
   final PublicMemoService _publicMemoService;
@@ -159,6 +187,62 @@ class LocalElectionShareService {
     );
   }
 
+  LocalElectionShareWindowRange scheduleWindowRange(
+    LocalElectionShareWindow window, {
+    DateTime? now,
+  }) {
+    final today = _normalizeDate(now ?? DateTime.now());
+    final daysUntilSunday = (DateTime.sunday - today.weekday) % 7;
+    final baseSunday = today.add(Duration(days: daysUntilSunday));
+    final baseSaturday = baseSunday.subtract(const Duration(days: 1));
+    final offset = Duration(days: window.weekendOffset * 7);
+
+    return LocalElectionShareWindowRange(
+      start: baseSaturday.add(offset),
+      end: baseSunday.add(offset),
+    );
+  }
+
+  List<LocalElectionScheduleEntry> schedulesForWindow({
+    required LocalElectionRealitySnapshot snapshot,
+    required LocalElectionShareWindow window,
+    DateTime? now,
+  }) {
+    final range = scheduleWindowRange(window, now: now);
+    final schedules = snapshot.upcomingSchedules.where((entry) {
+      if (entry.isPast) {
+        return false;
+      }
+      final voteDate = entry.parsedVoteDate;
+      if (voteDate == null) {
+        return false;
+      }
+      final localDate = _normalizeDate(voteDate.toLocal());
+      return !localDate.isBefore(range.start) && !localDate.isAfter(range.end);
+    }).toList()
+      ..sort((a, b) {
+        final aDate = a.parsedVoteDate ?? DateTime(9999);
+        final bDate = b.parsedVoteDate ?? DateTime(9999);
+        if (aDate != bDate) {
+          return aDate.compareTo(bDate);
+        }
+        final prefectureCompare = a.prefecture.compareTo(b.prefecture);
+        if (prefectureCompare != 0) {
+          return prefectureCompare;
+        }
+        return a.electionName.compareTo(b.electionName);
+      });
+    return schedules;
+  }
+
+  String buildWindowDateRangeLabel(LocalElectionShareWindow window,
+      {DateTime? now}) {
+    final range = scheduleWindowRange(window, now: now);
+    final s = range.start;
+    final e = range.end;
+    return '${s.month}/${s.day}〜${e.month}/${e.day}';
+  }
+
   /// Builds a Twitter/X thread for upcoming local elections with 0 Kokumin candidates.
   /// Returns a list of tweet texts forming a thread.
   /// Tweet 1: intro sentence + all prefecture blocks (no char truncation — user edits in dialog).
@@ -203,7 +287,7 @@ class LocalElectionShareService {
 
     // --- Tweet 1: intro + ALL election entries grouped by prefecture ---
     final byPref = <String, List<LocalElectionScheduleEntry>>{};
-    for (final e in noCandidate) {
+    for (final e in upcoming) {
       byPref.putIfAbsent(e.prefecture, () => []).add(e);
     }
 
@@ -248,7 +332,11 @@ class LocalElectionShareService {
       final elections = byPref[pref]!;
       tweet1Buffer.write('\n\n$pref');
       for (final e in elections) {
+        final candidateLine = _buildScheduleCandidateLine(e);
         tweet1Buffer.write('\n${e.electionName}');
+        if (candidateLine.isNotEmpty) {
+          tweet1Buffer.write('：$candidateLine');
+        }
       }
     }
     tweets.add(tweet1Buffer.toString().trim());
@@ -520,6 +608,19 @@ class LocalElectionShareService {
       segments.add(_truncate(profile, 120));
     }
     return '- ${segments.join(' / ')}';
+  }
+
+  String _buildScheduleCandidateLine(LocalElectionScheduleEntry entry) {
+    if (entry.kokuminCandidateNames.isEmpty) {
+      return '';
+    }
+
+    return entry.kokuminCandidateNames.asMap().entries.map((candidate) {
+      final status = candidate.key < entry.kokuminCandidateStatuses.length
+          ? entry.kokuminCandidateStatuses[candidate.key].trim()
+          : '';
+      return status.isEmpty ? candidate.value : '${candidate.value}（$status）';
+    }).join('、');
   }
 
   String _prefectureMarker(LocalElectionPrefectureReality item) {

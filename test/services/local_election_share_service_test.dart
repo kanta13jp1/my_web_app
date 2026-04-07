@@ -216,6 +216,20 @@ void main() {
     expect(tweets.first, isNot(contains('Third Weekend Safe Race')));
   });
 
+  test('buildUpcomingElectionsThread includes staffed races with candidate names',
+      () {
+    final snapshot = buildWeekendSnapshot();
+
+    final tweets = service.buildUpcomingElectionsThread(
+      snapshot: snapshot,
+      weekendSaturday: DateTime(2026, 4, 25),
+    );
+
+    expect(tweets, isNotEmpty);
+    expect(tweets.first, contains('Third Weekend Safe Race'));
+    expect(tweets.first, contains('Sample Candidate'));
+  });
+
   test('nextWeekends includes the current weekend on Sunday', () {
     final weekends = LocalElectionRealitySnapshot.nextWeekends(
       count: 3,

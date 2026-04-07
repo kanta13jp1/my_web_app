@@ -1690,7 +1690,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               children: [
                 SizedBox(
                   height: 240,
-                  child: _buildRealityHistoryChart(history),
+                  child: RepaintBoundary(
+                    child: _buildRealityHistoryChart(history),
+                  ),
                 ),
                 if (history.length < 2) ...[
                   const SizedBox(height: 12),
@@ -2597,6 +2599,34 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   }
                 },
               ),
+            for (final filter in _scheduleFilters) ...[
+              () {
+                final count = upcomingSchedules
+                    .where((s) => _matchesScheduleFilter(s.parsedVoteDate, filter))
+                    .length;
+                final isSelected = _selectedScheduleFilter == filter;
+                return ChoiceChip(
+                  showCheckmark: false,
+                  label: Text(
+                    filter == 'すべて' ? filter : '$filter ($count)',
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : null,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                      fontSize: 13,
+                    ),
+                  ),
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    if (selected) {
+                      setState(() {
+                        _selectedScheduleFilter = filter;
+                      });
+                    }
+                  },
+                );
+              }(),
+            ],
           ],
         ),
         const SizedBox(height: 12),
@@ -3755,9 +3785,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (stacked) {
           return Column(
             children: [
-              progressChart,
+              RepaintBoundary(child: progressChart),
               const SizedBox(height: 16),
-              regionalChart,
+              RepaintBoundary(child: regionalChart),
             ],
           );
         }
@@ -3765,9 +3795,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: progressChart),
+            Expanded(child: RepaintBoundary(child: progressChart)),
             const SizedBox(width: 16),
-            Expanded(child: regionalChart),
+            Expanded(child: RepaintBoundary(child: regionalChart)),
           ],
         );
       },
