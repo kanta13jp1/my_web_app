@@ -188,6 +188,9 @@ import 'package:my_web_app/pages/access_control_page.dart';
 import 'package:my_web_app/pages/goal_tracker_page.dart';
 import 'package:my_web_app/pages/bookmark_sync_page.dart';
 import 'package:my_web_app/pages/ui_design_status_page.dart';
+import 'package:my_web_app/pages/ai_summarizer_page.dart';
+import 'package:my_web_app/pages/revenue_forecaster_page.dart';
+import 'package:my_web_app/pages/weather_widget_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1070,6 +1073,21 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const UiDesignStatusPage(),
               settings: const RouteSettings(name: '/ui-design-status'),
+            );
+          case '/ai-summarizer':
+            return MaterialPageRoute(
+              builder: (_) => const AiSummarizerPage(),
+              settings: const RouteSettings(name: '/ai-summarizer'),
+            );
+          case '/revenue-forecaster':
+            return MaterialPageRoute(
+              builder: (_) => const RevenueForecasterPage(),
+              settings: const RouteSettings(name: '/revenue-forecaster'),
+            );
+          case '/weather-widget':
+            return MaterialPageRoute(
+              builder: (_) => const WeatherWidgetPage(),
+              settings: const RouteSettings(name: '/weather-widget'),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
