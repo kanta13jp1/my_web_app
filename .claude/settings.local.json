@@ -138,7 +138,12 @@
       "Bash(timeout 90 bash -c \"flutter analyze 2>&1\")",
       "Bash(echo \"EXIT CODE: $?\")",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(python3 -c \"import sys,json; runs=json.load\\(sys.stdin\\); [print\\(f\\\\\"{r['conclusion'] or r['status']:12} {r['name'][:40]:40} {r['createdAt'][:16]}\\\\\"\\) for r in runs]\")"
+      "Bash(python3 -c \"import sys,json; runs=json.load\\(sys.stdin\\); [print\\(f\\\\\"{r['conclusion'] or r['status']:12} {r['name'][:40]:40} {r['createdAt'][:16]}\\\\\"\\) for r in runs]\")",
+      "Bash(where flutter:*)",
+      "Bash(/c/Users/kanta/AppData/Local/Microsoft/WindowsApps/python3:*)",
+      "Bash(py --version)",
+      "Bash(mv .claude/settings.local.json.tmp .claude/settings.local.json)",
+      "Bash(echo \"exit $?\")"
     ]
   },
   "enabledMcpjsonServers": [
