@@ -930,6 +930,79 @@ $input
     );
   }
 
+  Future<void> _shareOnX() async {
+    const siteUrl = 'https://my-web-app-b67f4.web.app/';
+    final userCount = _totalUsers > 0 ? '登録者$_totalUsers人突破！' : '';
+    final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
+        '自分株式会社 $userCount\n'
+        '完全無料で使えます👇\n'
+        '$siteUrl\n'
+        '#FlutterWeb #buildinpublic #自分株式会社 #ギター録音';
+    final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Widget _buildViralShareSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF000000),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2F3336)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1DA1F2).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Text('𝕏', style: TextStyle(color: Color(0xFF1DA1F2), fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'X でシェアして広める',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'フォロワーに紹介すると登録者が増えてサービスが成長します',
+                  style: TextStyle(color: Color(0xFF71767B), fontSize: 11, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          FilledButton(
+            onPressed: _shareOnX,
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1DA1F2),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('シェア', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildReferralInviteSection() {
     final pendingReferralCode = _pendingReferralCode;
     if (pendingReferralCode == null || pendingReferralCode.isEmpty) {
@@ -2340,7 +2413,10 @@ $input
                   const SizedBox(height: 20),
                   // 2. 実績数字で信頼感を作る
                   _buildSocialProofStatsSection(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  // 2b. X バイラルシェア
+                  _buildViralShareSection(),
+                  const SizedBox(height: 12),
                   // 3. ライブ成長メーター (登録者数・競合差分をリアルタイム表示)
                   LiveGrowthBanner(
                     growthService: widget.growthService,
