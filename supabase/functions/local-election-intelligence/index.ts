@@ -17,8 +17,9 @@ const OFFICIAL_2023_SECOND_HALF_URL =
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
-const SCHEDULE_WINDOW_DAYS = 120;
-const SCHEDULE_MAX_ENTRIES = 60;
+const SCHEDULE_PAST_DAYS = 365;
+const SCHEDULE_WINDOW_DAYS = 365;
+const SCHEDULE_MAX_ENTRIES = 300;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -151,6 +152,7 @@ interface LocalElectionScheduleEntry {
   kokuminCandidateNames: string[];
   kokuminCandidateStatuses: string[];
   kokuminCandidateXHandles: string[];
+  isPast: boolean;
 }
 
 interface ScheduleOverviewEntry {
@@ -863,11 +865,13 @@ async function fetchUpcomingLocalElectionSchedules(
     buildManualOverviewEntries(manualSupplements),
   );
   const today = startOfDay(new Date());
+  const earliestDate = addDays(today, -SCHEDULE_PAST_DAYS);
   const latestDate = addDays(today, SCHEDULE_WINDOW_DAYS);
   const upcomingEntries = overviewEntries
     .filter((entry) => {
       const voteDate = parseIsoDate(entry.voteDate);
-      return voteDate != null && voteDate.getTime() >= today.getTime() &&
+      return voteDate != null &&
+        voteDate.getTime() >= earliestDate.getTime() &&
         voteDate.getTime() <= latestDate.getTime();
     })
     .slice(0, SCHEDULE_MAX_ENTRIES);
@@ -1074,6 +1078,9 @@ async function enrichScheduleEntry(
       );
     }
   }
+  const voteDateParsed = parseIsoDate(entry.voteDate);
+  const isPast = voteDateParsed != null &&
+    voteDateParsed.getTime() < startOfDay(new Date()).getTime();
   return {
     electionName: entry.electionName,
     prefecture: entry.prefecture,
@@ -1093,6 +1100,7 @@ async function enrichScheduleEntry(
     kokuminCandidateNames: matchedCandidates.map((item) => item.name),
     kokuminCandidateStatuses: matchedCandidates.map((item) => item.statusLabel),
     kokuminCandidateXHandles: matchedCandidates.map((item) => item.xHandle),
+    isPast,
   };
 }
 
@@ -1158,6 +1166,7 @@ function applyManualScheduleSupplement(
     kokuminCandidateNames: mergedCandidates.map((item) => item.name),
     kokuminCandidateStatuses: mergedCandidates.map((item) => item.statusLabel),
     kokuminCandidateXHandles: mergedCandidates.map((item) => item.xHandle),
+    isPast: entry.isPast,
   };
 }
 

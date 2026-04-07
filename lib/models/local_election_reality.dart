@@ -271,6 +271,7 @@ class LocalElectionScheduleEntry {
   final List<String> kokuminCandidateNames;
   final List<String> kokuminCandidateStatuses;
   final List<String> kokuminCandidateXHandles;
+  final bool isPast;
 
   const LocalElectionScheduleEntry({
     required this.electionName,
@@ -287,6 +288,7 @@ class LocalElectionScheduleEntry {
     required this.kokuminCandidateNames,
     required this.kokuminCandidateStatuses,
     required this.kokuminCandidateXHandles,
+    this.isPast = false,
   });
 
   factory LocalElectionScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -308,6 +310,7 @@ class LocalElectionScheduleEntry {
           _readStringList(json['kokuminCandidateStatuses']),
       kokuminCandidateXHandles:
           _readStringList(json['kokuminCandidateXHandles']),
+      isPast: (json['isPast'] as bool?) ?? false,
     );
   }
 
@@ -327,6 +330,7 @@ class LocalElectionScheduleEntry {
       'kokuminCandidateNames': kokuminCandidateNames,
       'kokuminCandidateStatuses': kokuminCandidateStatuses,
       'kokuminCandidateXHandles': kokuminCandidateXHandles,
+      'isPast': isPast,
     };
   }
 
@@ -337,6 +341,7 @@ class LocalElectionScheduleEntry {
   DateTime? get parsedVoteDate => _parseDate(voteDate);
 
   bool isWithinDays(int days) {
+    if (isPast) return false;
     final date = parsedVoteDate;
     if (date == null) {
       return false;
@@ -657,11 +662,13 @@ class LocalElectionRealitySnapshot {
 
   bool get hasScheduleData => upcomingSchedules.isNotEmpty;
 
-  int get redAlertScheduleCount =>
-      upcomingSchedules.where((item) => item.isAlertRed).length;
+  int get redAlertScheduleCount => upcomingSchedules
+      .where((item) => !item.isPast && item.isAlertRed)
+      .length;
 
-  int get yellowAlertScheduleCount =>
-      upcomingSchedules.where((item) => item.isAlertYellow).length;
+  int get yellowAlertScheduleCount => upcomingSchedules
+      .where((item) => !item.isPast && item.isAlertYellow)
+      .length;
 
   bool get isStale {
     if (!hasData) {

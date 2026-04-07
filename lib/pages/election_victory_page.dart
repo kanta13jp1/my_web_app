@@ -126,6 +126,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   CalendarFormat _scheduleCalendarFormat = CalendarFormat.month;
   DateTime _scheduleFocusedDay = DateTime.now();
   DateTime? _selectedScheduleDay;
+  bool _showPastSchedules = false;
 
   bool get _isPublicView => widget.publicView;
 
@@ -2242,8 +2243,157 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildUnifiedElectionCountdown() {
+    // 統一地方選挙 2027 暫定日程 (官報告示前の推定値)
+    const firstVoteDate = '2027-04-11';
+    const firstAnnouncementDate = '2027-03-25';
+    const secondVoteDate = '2027-04-25';
+    const secondAnnouncementDate = '2027-04-13';
+
+    final today = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+    );
+
+    int daysUntil(String iso) {
+      final d = DateTime.tryParse(iso);
+      if (d == null) return 0;
+      return d.difference(today).inDays;
+    }
+
+    Widget countdownCell(String label, String iso) {
+      final days = daysUntil(iso);
+      final dateStr = iso.replaceAll('-', '/');
+      final passed = days < 0;
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            color: passed
+                ? Colors.grey.shade100
+                : const Color(0xFF1D4ED8).withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: passed
+                  ? Colors.grey.shade300
+                  : const Color(0xFF1D4ED8).withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: passed ? Colors.grey : const Color(0xFF1D4ED8),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                passed ? '終了' : '残 $days 日',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: passed ? Colors.grey : const Color(0xFF1D4ED8),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                dateStr,
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1D4ED8).withValues(alpha: 0.08),
+            const Color(0xFF7C3AED).withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF1D4ED8).withValues(alpha: 0.15),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.how_to_vote, size: 18, color: Color(0xFF1D4ED8)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '統一地方選挙 2027 カウントダウン (仮日程)',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1D4ED8),
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '※ 官報告示前の推定日程です。確定次第更新します。',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey.shade600,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '第一次 (都道府県・政令市)',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              countdownCell('公示日', firstAnnouncementDate),
+              const SizedBox(width: 8),
+              countdownCell('投開票日', firstVoteDate),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '第二次 (市区町村)',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              countdownCell('公示日', secondAnnouncementDate),
+              const SizedBox(width: 8),
+              countdownCell('投開票日', secondVoteDate),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildScheduleSection(LocalElectionRealitySnapshot snapshot) {
-    final schedules = _sortedScheduleEntries(snapshot);
+    final allSchedules = _sortedScheduleEntries(snapshot);
+    final pastSchedules = _sortedScheduleEntries(
+      snapshot,
+      reverseForPast: true,
+    ).where((s) => s.isPast).toList();
+    final upcomingSchedules =
+        allSchedules.where((s) => !s.isPast).toList();
     final upcomingSoonCount = snapshot.schedulesWithinDays(14).length;
 
     return Column(
@@ -2263,7 +2413,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             TextButton.icon(
               onPressed: () => _downloadElectionDataCsv(snapshot),
               icon: const Icon(Icons.download, size: 16),
-              label: const Text('選挙データCSVダウンロード'),
+              label: const Text('CSVダウンロード'),
             ),
           ],
         ),
@@ -2273,13 +2423,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ' 国民民主党の候補予定者が 0 人の選挙は赤、1 人の選挙は黄色で表示します。',
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
+        _buildUnifiedElectionCountdown(),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             _buildStatusChip(
-              '監視 ${_formatInt(schedules.length)} 件',
+              '今後 ${_formatInt(upcomingSchedules.length)} 件',
               color: Colors.blueGrey,
             ),
             _buildStatusChip(
@@ -2293,6 +2445,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             _buildStatusChip(
               '単騎 ${_formatInt(snapshot.yellowAlertScheduleCount)} 件',
               color: Colors.amber.shade800,
+            ),
+            _buildStatusChip(
+              '過去1年 ${_formatInt(pastSchedules.length)} 件',
+              color: Colors.grey.shade600,
             ),
           ],
         ),
@@ -2351,14 +2507,59 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         const SizedBox(height: 12),
         _buildScheduleCalendar(snapshot),
         const SizedBox(height: 16),
-        if (schedules.isEmpty)
+        // ── 今後の選挙 ─────────────────────────────────────────
+        Text(
+          '今後の日程',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        if (upcomingSchedules.isEmpty)
           _buildInlineNotice(
             '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。',
             color: Colors.blueGrey,
             icon: Icons.event_busy,
           )
         else
-          ..._buildScheduleGroups(schedules),
+          ..._buildScheduleGroups(upcomingSchedules),
+        const SizedBox(height: 16),
+        // ── 過去1年の結果 ───────────────────────────────────────
+        GestureDetector(
+          onTap: () => setState(() {
+            _showPastSchedules = !_showPastSchedules;
+          }),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '過去1年の結果 (${_formatInt(pastSchedules.length)} 件)',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade700,
+                      ),
+                ),
+              ),
+              Icon(
+                _showPastSchedules
+                    ? Icons.expand_less
+                    : Icons.expand_more,
+                color: Colors.grey.shade600,
+              ),
+            ],
+          ),
+        ),
+        if (_showPastSchedules) ...[
+          const SizedBox(height: 8),
+          if (pastSchedules.isEmpty)
+            _buildInlineNotice(
+              '過去1年分の結果データがありません。',
+              color: Colors.grey,
+              icon: Icons.history,
+            )
+          else
+            ..._buildScheduleGroups(pastSchedules),
+        ],
       ],
     );
   }
@@ -2592,8 +2793,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   List<LocalElectionScheduleEntry> _sortedScheduleEntries(
-    LocalElectionRealitySnapshot snapshot,
-  ) {
+    LocalElectionRealitySnapshot snapshot, {
+    bool reverseForPast = false,
+  }) {
     final schedules = List<LocalElectionScheduleEntry>.from(
       snapshot.upcomingSchedules,
     );
@@ -2601,7 +2803,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       final leftDate = left.parsedVoteDate;
       final rightDate = right.parsedVoteDate;
       if (leftDate != null && rightDate != null) {
-        final dateCompare = leftDate.compareTo(rightDate);
+        final dateCompare = reverseForPast
+            ? rightDate.compareTo(leftDate)
+            : leftDate.compareTo(rightDate);
         if (dateCompare != 0) {
           return dateCompare;
         }
@@ -2626,12 +2830,16 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final candidateHandles = _candidateHandles(item);
 
     return Card(
-      color: _scheduleCardBackgroundColor(context, item),
+      color: item.isPast
+          ? Colors.grey.shade50
+          : _scheduleCardBackgroundColor(context, item),
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: _scheduleCardBorderColor(context, item),
+          color: item.isPast
+              ? Colors.grey.shade300
+              : _scheduleCardBorderColor(context, item),
         ),
       ),
       child: Padding(
@@ -2646,41 +2854,72 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.electionName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 17,
-                        ),
+                      Row(
+                        children: [
+                          if (item.isPast) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text(
+                                '結果',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Expanded(
+                            child: Text(
+                              item.electionName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 17,
+                                color: item.isPast ? Colors.grey.shade600 : null,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${item.prefecture} / ${item.electionCategory}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      if (_scheduleStatusLabel(item) case final label?) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _scheduleBadgeBackgroundColor(context, item),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: _scheduleBadgeForegroundColor(
-                                context,
-                                item,
+                      if (!item.isPast) ...[
+                        if (_scheduleStatusLabel(item) case final label?) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  _scheduleBadgeBackgroundColor(context, item),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: _scheduleBadgeForegroundColor(
+                                  context,
+                                  item,
+                                ),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
                               ),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ],
                   ),

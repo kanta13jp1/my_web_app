@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 VSCode#10 (local-election-intelligence CORS修正・エラーメッセージ改善)
+最終更新: 2026-04-07 VSCode#11 (地方選挙±1年スケジュール・統一地方選カウントダウン)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3165,6 +3165,35 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 2. docs/ と supabase/migrations/ のみを変更
 3. lib/ や supabase/functions/ は変更しない (他インスタンスのドメイン)
 4. コミットメッセージは `docs: Windows#N セッション内容` の形式
+
+---
+
+## Session VSCode#11 (2026-04-07): 地方選挙±1年スケジュール・統一地方選カウントダウン
+
+### 実施内容
+
+1. **Edge Function 拡張** (`local-election-intelligence/index.ts`)
+   - `SCHEDULE_PAST_DAYS = 365` 追加・`SCHEDULE_WINDOW_DAYS` を 120→365・`SCHEDULE_MAX_ENTRIES` を 60→300
+   - フィルタ条件を `today - 1年 ≤ voteDate ≤ today + 1年` に変更 (従来は今日以降のみ)
+   - `LocalElectionScheduleEntry` に `isPast: boolean` フィールド追加
+   - `enrichScheduleEntry` / `applyManualScheduleSupplement` で `isPast` を伝播
+
+2. **Dart モデル拡張** (`lib/models/local_election_reality.dart`)
+   - `LocalElectionScheduleEntry` に `isPast` フィールド追加 (デフォルト `false`)
+   - `fromJson` / `toJson` を更新
+   - `isWithinDays` で `isPast == true` の場合は即 `false` を返すよう修正
+   - `redAlertScheduleCount` / `yellowAlertScheduleCount` を過去エントリ除外に更新
+
+3. **Page 機能追加** (`lib/pages/election_victory_page.dart`)
+   - `_buildUnifiedElectionCountdown()`: 統一地方選挙 2027 仮日程の残日数カード (公示日/投開票日 × 第一次/第二次)
+   - `_buildScheduleSection()`: 統一地方選カウントダウン挿入、今後/過去 分割表示
+   - 過去エントリは「過去1年の結果」として折りたたみ表示 (デフォルト非表示)
+   - 過去エントリカードは「結果」バッジ付き・グレー表示
+
+### 品質確認
+
+- deno lint: 0 errors ✅
+- flutter analyze: 0 errors ✅
 
 ---
 
