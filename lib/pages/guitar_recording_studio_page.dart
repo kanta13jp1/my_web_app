@@ -1430,6 +1430,8 @@ class _GuitarRecordingStudioPageState
           _recordings = next;
           _practiceStats = _buildLocalPracticeStats(next);
         }
+        // 保存後に自動で履歴タブへ切り替え
+        _tabIndex = 3;
       });
       await _fetchRecordings();
       await _fetchPracticeStats();
