@@ -120,7 +120,24 @@
       "Bash(git -C:*)",
       "Bash(dart format:*)",
       "WebFetch(domain:smmkxxavexumewbfaqpy.supabase.co)",
-      "Bash(/c/app/flutter/bin/flutter analyze:*)"
+      "Bash(/c/app/flutter/bin/flutter analyze:*)",
+      "Bash(ls docs/cs-notes/2026-03*.md)",
+      "Bash(ls docs/cs-notes/2026-04-0[1-6]*.md)",
+      "Bash(ls -la docs/*.md)",
+      "Bash(wc -l docs/*.md)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(ls:*)",
+      "Bash(dir \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.git\\\\*.lock\")",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.git'' -Filter ''*.lock'' | Format-List Name,FullName\")",
+      "Bash(powershell -Command \"Test-Path ''C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\.git\\\\index.lock''\")",
+      "Bash(powershell -Command \"Get-Process | Where-Object {$_ProcessName -like ''*git*'' -or $_ProcessName -like ''*flutter*''} | Select-Object ProcessName,Id\")",
+      "Bash(tasklist /FI \"IMAGENAME eq git.exe\")",
+      "Bash(tasklist)",
+      "Bash(python3 -c \"import sys,json; issues=json.load\\(sys.stdin\\); [print\\(f'#{i[\\\\\"number\\\\\"]} [{l[\\\\\"name\\\\\"] if i[\\\\\"labels\\\\\"] else \\\\\"no-label\\\\\"}] {i[\\\\\"title\\\\\"]}'\\) for i in issues for l in \\(i['labels'] or [{'name':''}]\\)]\")",
+      "Bash(kill %1)",
+      "Bash(timeout 90 bash -c \"flutter analyze 2>&1\")",
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(echo \"EXIT: $?\")"
     ]
   },
   "enabledMcpjsonServers": [
