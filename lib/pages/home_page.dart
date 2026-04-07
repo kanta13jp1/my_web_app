@@ -58,6 +58,7 @@ import '../widgets/kgi_csf_kpi_panel.dart';
 import '../widgets/life_waste_elimination_panel.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
+import '../widgets/ui_rollout_summary_card.dart';
 import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
@@ -101,7 +102,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
   late Future<FeatureStrategyReport> _featureStrategyReportFuture;
   late Future<FeatureStrategyAiReview> _featureStrategyAiReviewFuture;
   late Future<FeatureStrategyMonitoringSummary>
-      _featureStrategyMonitoringFuture;
+  _featureStrategyMonitoringFuture;
   late Future<int> _timeWasteSlipCountFuture;
   Future<LifeWasteAiReview>? _lifeWasteAiReviewFuture;
   String? _lifeWasteAiReviewKey;
@@ -109,19 +110,20 @@ class _HomePageState extends State<HomePage> with RouteAware {
   String? _lifeWasteMonitoringKey;
   final LifeWasteEliminationService _lifeWasteEliminationService =
       const LifeWasteEliminationService(
-    snapshotRepository: SupabaseLifeWasteSnapshotRepository(),
-    alertNotificationRepository: SupabaseLifeWasteAlertNotificationRepository(),
-  );
+        snapshotRepository: SupabaseLifeWasteSnapshotRepository(),
+        alertNotificationRepository:
+            SupabaseLifeWasteAlertNotificationRepository(),
+      );
   final LifeWasteAiReviewService _lifeWasteAiReviewService =
       LifeWasteAiReviewService();
   final FeatureStrategyFocusActionService _featureStrategyFocusActionService =
       const FeatureStrategyFocusActionService(
-    actionRepository: SupabaseFeatureStrategyFocusActionRepository(),
-  );
+        actionRepository: SupabaseFeatureStrategyFocusActionRepository(),
+      );
   final FeatureStrategyReportSnapshotService _featureStrategySnapshotService =
       const FeatureStrategyReportSnapshotService(
-    snapshotRepository: SupabaseFeatureStrategyReportSnapshotRepository(),
-  );
+        snapshotRepository: SupabaseFeatureStrategyReportSnapshotRepository(),
+      );
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
 
   // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
@@ -220,13 +222,15 @@ class _HomePageState extends State<HomePage> with RouteAware {
     _opsSnapshotFuture = _loadOpsSnapshot();
     _kpiOverviewFuture = _loadHomeKpiOverview();
     _marketingKpiFuture = _loadHomeMarketingKpiSummary();
-    _aiNudgeFuture = _opsSnapshotFuture.then((snapshot) {
-      final command = _resolveNextAction(snapshot);
-      return _loadAiNudgeIfNeeded(command, snapshot);
-    }).catchError((Object error) {
-      debugPrint('AI nudge chain failed: $error');
-      return null;
-    });
+    _aiNudgeFuture = _opsSnapshotFuture
+        .then((snapshot) {
+          final command = _resolveNextAction(snapshot);
+          return _loadAiNudgeIfNeeded(command, snapshot);
+        })
+        .catchError((Object error) {
+          debugPrint('AI nudge chain failed: $error');
+          return null;
+        });
     _billingStatusFuture = _loadBillingStatus();
     _timeWasteSlipCountFuture = TimeWasteGuardWidget.loadSlipCountFor(_now());
     _reloadRecentToolSignals();
@@ -305,9 +309,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
   }
 
   String _featureRequestAttachmentMimeType(PlatformFile file) {
-    final extension = (file.extension ??
-            (file.name.contains('.') ? file.name.split('.').last : ''))
-        .toLowerCase();
+    final extension =
+        (file.extension ??
+                (file.name.contains('.') ? file.name.split('.').last : ''))
+            .toLowerCase();
     switch (extension) {
       case 'jpg':
       case 'jpeg':
@@ -410,10 +415,10 @@ class _HomePageState extends State<HomePage> with RouteAware {
           'mime_type': _featureRequestAttachmentMimeType(file),
           'image_base64': base64Encode(bytes),
           'current_title': _featureRequestTitleController.text.trim(),
-          'current_description':
-              _featureRequestDescriptionController.text.trim(),
-          'current_expected_outcome':
-              _featureRequestOutcomeController.text.trim(),
+          'current_description': _featureRequestDescriptionController.text
+              .trim(),
+          'current_expected_outcome': _featureRequestOutcomeController.text
+              .trim(),
           'category': _featureRequestCategory,
           'priority': _featureRequestPriority,
         },
@@ -436,8 +441,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
       }
 
       final memo = _buildFeatureRequestAnalysisMemo(analysis);
-      final currentDescription =
-          _featureRequestDescriptionController.text.trim();
+      final currentDescription = _featureRequestDescriptionController.text
+          .trim();
       if (currentDescription.isEmpty) {
         _featureRequestDescriptionController.text = memo;
       } else if (!currentDescription.contains('[画像AI診断]')) {
@@ -763,17 +768,17 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
         result[dateKey] = switch (actionType) {
           'conquer' => current.copyWith(
-              incomeTotal: current.incomeTotal + amount,
-              incomeCount: current.incomeCount + 1,
-            ),
+            incomeTotal: current.incomeTotal + amount,
+            incomeCount: current.incomeCount + 1,
+          ),
           'expense' => current.copyWith(
-              expenseTotal: current.expenseTotal + amount,
-              expenseCount: current.expenseCount + 1,
-            ),
+            expenseTotal: current.expenseTotal + amount,
+            expenseCount: current.expenseCount + 1,
+          ),
           'transfer' => current.copyWith(
-              transferTotal: current.transferTotal + amount,
-              transferCount: current.transferCount + 1,
-            ),
+            transferTotal: current.transferTotal + amount,
+            transferCount: current.transferCount + 1,
+          ),
           _ => current,
         };
       }
@@ -903,8 +908,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
           .lte('task_date', endKey)
           .order('task_date', ascending: true)
           .order('hour_slot', ascending: true);
-      final mindlessRows =
-          mindlessRowsRaw is List ? mindlessRowsRaw : const <dynamic>[];
+      final mindlessRows = mindlessRowsRaw is List
+          ? mindlessRowsRaw
+          : const <dynamic>[];
 
       for (final row in mindlessRows.whereType<Map<String, dynamic>>()) {
         final dateKey = row['task_date']?.toString();
@@ -991,8 +997,9 @@ class _HomePageState extends State<HomePage> with RouteAware {
             .order('occurred_at', ascending: true),
       ]);
       final rows = results[0] is List ? results[0] as List<dynamic> : const [];
-      final wasteRows =
-          results[1] is List ? results[1] as List<dynamic> : const [];
+      final wasteRows = results[1] is List
+          ? results[1] as List<dynamic>
+          : const [];
       if (rows.isEmpty) {
         return const _HomeKpiOverview();
       }
@@ -1061,8 +1068,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
       final sortedDateKeys = <String>{
         ...rawByDate.keys,
         ...wasteByDate.keys,
-      }.toList()
-        ..sort();
+      }.toList()..sort();
       final running = <String, double>{};
       final trendPoints = <_KpiTrendPoint>[];
       var latestBreakdown = <String, double>{};
@@ -1254,7 +1260,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
       DateFormat('yyyy-MM-dd').format(_startOfDay(date));
 
   Future<Map<String, _HomeDailyStatusRecord>?>
-      _fetchHomeDailyStatusMapFromSupabase({
+  _fetchHomeDailyStatusMapFromSupabase({
     required DateTime startDate,
     required DateTime endDate,
   }) async {
@@ -1308,9 +1314,11 @@ class _HomePageState extends State<HomePage> with RouteAware {
       if (supabaseMap != null) ...supabaseMap,
     };
 
-    for (DateTime day = normalizedStart;
-        !day.isAfter(normalizedEnd);
-        day = day.add(const Duration(days: 1))) {
+    for (
+      DateTime day = normalizedStart;
+      !day.isAfter(normalizedEnd);
+      day = day.add(const Duration(days: 1))
+    ) {
       final dateKey = _statusDateKey(day);
       map.putIfAbsent(
         dateKey,
@@ -1336,13 +1344,14 @@ class _HomePageState extends State<HomePage> with RouteAware {
       final abstinenceStart = today.isBefore(calendarRange.startDay)
           ? today
           : calendarRange.startDay;
-      final abstinenceEnd =
-          today.isAfter(calendarRange.endDay) ? today : calendarRange.endDay;
+      final abstinenceEnd = today.isAfter(calendarRange.endDay)
+          ? today
+          : calendarRange.endDay;
       final abstinenceSnapshotsByDate =
           await AbstinenceGuardStore.loadSnapshotsByDate(
-        startDate: abstinenceStart,
-        endDate: abstinenceEnd,
-      );
+            startDate: abstinenceStart,
+            endDate: abstinenceEnd,
+          );
       final monthlyCashflowSummary = await _loadMonthlyCashflowSummary(
         prefs: prefs,
         month: today,
@@ -1358,7 +1367,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
           homeDailyMap[_statusDateKey(today)] ?? const _HomeDailyStatusRecord();
       final abstinenceSnapshot =
           abstinenceSnapshotsByDate[_statusDateKey(today)] ??
-              _emptyAbstinenceSnapshot();
+          _emptyAbstinenceSnapshot();
       final completionGoalSnapshot = await _loadDailyCompletionGoalSnapshot(
         now: today,
       );
@@ -1459,16 +1468,19 @@ class _HomePageState extends State<HomePage> with RouteAware {
       startDate: startDay,
       endDate: endDay,
     );
-    final abstinenceByDate = abstinenceSnapshotsByDate ??
+    final abstinenceByDate =
+        abstinenceSnapshotsByDate ??
         await AbstinenceGuardStore.loadSnapshotsByDate(
           startDate: startDay,
           endDate: endDay,
         );
 
     final days = <_HomeCalendarDay>[];
-    for (DateTime day = startDay;
-        !day.isAfter(endDay);
-        day = day.add(const Duration(days: 1))) {
+    for (
+      DateTime day = startDay;
+      !day.isAfter(endDay);
+      day = day.add(const Duration(days: 1))
+    ) {
       final dateKey = _statusDateKey(day);
       final abstinence =
           abstinenceByDate[dateKey] ?? _emptyAbstinenceSnapshot();
@@ -1618,7 +1630,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
     if (userId == null) return;
 
     try {
-      final current = await _fetchHomeDailyStatusFromSupabase(targetDate) ??
+      final current =
+          await _fetchHomeDailyStatusFromSupabase(targetDate) ??
           _HomeDailyStatusRecord(
             morningBriefingDone:
                 prefs.getBool(_morningBriefingDoneKeyFor(targetDate)) ?? false,
@@ -1630,16 +1643,13 @@ class _HomePageState extends State<HomePage> with RouteAware {
         balanceCheckDone: balanceCheckDone ?? current.balanceCheckDone,
       );
 
-      await Supabase.instance.client.from('home_daily_status').upsert(
-        {
-          'user_id': userId,
-          'status_date': _statusDateKey(targetDate),
-          'morning_briefing_done': next.morningBriefingDone,
-          'balance_check_done': next.balanceCheckDone,
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-        onConflict: 'user_id,status_date',
-      );
+      await Supabase.instance.client.from('home_daily_status').upsert({
+        'user_id': userId,
+        'status_date': _statusDateKey(targetDate),
+        'morning_briefing_done': next.morningBriefingDone,
+        'balance_check_done': next.balanceCheckDone,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id,status_date');
     } catch (e) {
       debugPrint('Error upserting home daily status: $e');
     }
@@ -1731,7 +1741,8 @@ class _HomePageState extends State<HomePage> with RouteAware {
       final slipDetailsText = snapshot.abstinenceSlipDetails.isEmpty
           ? 'none'
           : snapshot.abstinenceSlipDetails.join(' / ');
-      final prompt = '''
+      final prompt =
+          '''
 あなたはホーム画面の運用アシスタントです。
 次アクションに対して、実行を後押しする短い補足を日本語で1文だけ返してください。
 出力は1文のみ（句点あり、絵文字なし）。
@@ -2271,14 +2282,16 @@ abstinence_slip_details: $slipDetailsText
     final accentColor = summary.netTotal >= 0
         ? const Color(0xFF4CAF50)
         : const Color(0xFFEF9A9A);
-    final cardColor =
-        isDark ? const Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
+    final cardColor = isDark
+        ? const Color(0xFF1E1E1E)
+        : Colors.white.withValues(alpha: 0.92);
     final borderColor = isHighlighted
         ? accentColor.withValues(alpha: 0.7)
         : accentColor.withValues(alpha: 0.22);
     final monthLabel = summary.monthLabel;
-    final recordLabel =
-        summary.recordCount == 0 ? '未記録' : '${summary.recordCount}件記録';
+    final recordLabel = summary.recordCount == 0
+        ? '未記録'
+        : '${summary.recordCount}件記録';
 
     return Container(
       key: const Key('home_monthly_cashflow_card'),
@@ -2387,11 +2400,13 @@ abstinence_slip_details: $slipDetailsText
             runSpacing: 8,
             children: [
               _buildMonthlyCashflowChip(
-                icon:
-                    summary.reviewDone ? Icons.visibility : Icons.priority_high,
+                icon: summary.reviewDone
+                    ? Icons.visibility
+                    : Icons.priority_high,
                 label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
-                color:
-                    summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
+                color: summary.reviewDone
+                    ? const Color(0xFFB0B0B0)
+                    : accentColor,
               ),
               _buildMonthlyCashflowChip(
                 icon: Icons.edit_note,
@@ -2509,7 +2524,8 @@ abstinence_slip_details: $slipDetailsText
 
     if (snapshot.pendingCriticalTaskCount > 0) {
       title = 'まず嫌な必須タスクを片付ける';
-      detail = '未完了の必須タスクが${snapshot.pendingCriticalTaskCount}件あります。'
+      detail =
+          '未完了の必須タスクが${snapshot.pendingCriticalTaskCount}件あります。'
           ' 他メニューより先に思考停止ログを消化してください。';
       buttonLabel = '必須タスクへ';
       color = const Color(0xFFE53935);
@@ -2537,7 +2553,8 @@ abstinence_slip_details: $slipDetailsText
       };
     } else if (snapshot.abstinenceSlipCount > 0) {
       title = '逸脱復旧を先にやる';
-      detail = '今日は${snapshot.abstinenceSlipCount}回の逸脱があります。'
+      detail =
+          '今日は${snapshot.abstinenceSlipCount}回の逸脱があります。'
           ' 先に禁欲ガードを再設定してください。';
       buttonLabel = '禁欲ガードへ';
       color = const Color(0xFFFF6B35);
@@ -2755,8 +2772,9 @@ abstinence_slip_details: $slipDetailsText
             value: goal.progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
-            backgroundColor:
-                isDark ? Colors.white.withValues(alpha: 0.24) : Colors.white,
+            backgroundColor: isDark
+                ? Colors.white.withValues(alpha: 0.24)
+                : Colors.white,
             color: accent,
           ),
           const SizedBox(height: 8),
@@ -2878,7 +2896,7 @@ abstinence_slip_details: $slipDetailsText
             activeLabels.isEmpty
                 ? 'まだ今日の禁止対象が固定されていません。酒・スマホ・動画などから先に封鎖してください。'
                 : '今日の禁止対象: ${activeLabels.join(' / ')}'
-                    '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほか' : ''}',
+                      '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほか' : ''}',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: isDark
@@ -3024,8 +3042,9 @@ abstinence_slip_details: $slipDetailsText
         monthAnchor.year == now.year && monthAnchor.month == now.month;
     final currentMonthLabel = DateFormat('yyyy年M月').format(now);
     const weekLabels = ['日', '月', '火', '水', '木', '金', '土'];
-    final displayedMonthDays =
-        snapshot.calendarDays.where((day) => day.isCurrentMonth).toList();
+    final displayedMonthDays = snapshot.calendarDays
+        .where((day) => day.isCurrentMonth)
+        .toList();
     final recentDays = isViewingCurrentMonth
         ? displayedMonthDays.where((day) => !day.date.isAfter(now)).toList()
         : displayedMonthDays;
@@ -3034,12 +3053,15 @@ abstinence_slip_details: $slipDetailsText
     final cleanDaysCount = recentDays
         .where((day) => day.hasAbstinenceProtection && !day.hasAbstinenceSlip)
         .length;
-    final cashflowRecordedDaysCount =
-        recentDays.where((day) => day.hasCashflow).length;
-    final slipDaysCount =
-        recentDays.where((day) => day.hasAbstinenceSlip).length;
-    final unsetDaysCount =
-        recentDays.where((day) => !day.hasAbstinenceProtection).length;
+    final cashflowRecordedDaysCount = recentDays
+        .where((day) => day.hasCashflow)
+        .length;
+    final slipDaysCount = recentDays
+        .where((day) => day.hasAbstinenceSlip)
+        .length;
+    final unsetDaysCount = recentDays
+        .where((day) => !day.hasAbstinenceProtection)
+        .length;
     final filterLabel = switch (_calendarHighlightFilter) {
       _CalendarHighlightFilter.all => null,
       _CalendarHighlightFilter.slip => '表示中: 逸脱日数のみハイライト',
@@ -3226,20 +3248,21 @@ abstinence_slip_details: $slipDetailsText
               final day = snapshot.calendarDays[index];
               final status = _resolveCalendarDayStatus(day);
               final matchesFilter = _matchesCalendarHighlightFilter(day);
-              final accentColor =
-                  day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
+              final accentColor = day.isCurrentMonth
+                  ? status.color
+                  : const Color(0xFFB0B0B0);
               final backgroundColor = day.isCurrentMonth
                   ? matchesFilter
-                      ? accentColor.withValues(
-                          alpha: day.hasAbstinenceSlip
-                              ? 0.18
-                              : status.label == '無傷'
-                                  ? 0.14
-                                  : status.label == '未設定'
-                                      ? 0.08
-                                      : 0.1,
-                        )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
+                        ? accentColor.withValues(
+                            alpha: day.hasAbstinenceSlip
+                                ? 0.18
+                                : status.label == '無傷'
+                                ? 0.14
+                                : status.label == '未設定'
+                                ? 0.08
+                                : 0.1,
+                          )
+                        : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
                   : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
@@ -3263,12 +3286,12 @@ abstinence_slip_details: $slipDetailsText
                         color: day.isToday
                             ? const Color(0xFF6366F1)
                             : day.isCurrentMonth
-                                ? matchesFilter
-                                    ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(
-                                        0xFFB0B0B0,
-                                      ).withValues(alpha: 0.08)
-                                : Colors.transparent,
+                            ? matchesFilter
+                                  ? accentColor.withValues(alpha: 0.22)
+                                  : const Color(
+                                      0xFFB0B0B0,
+                                    ).withValues(alpha: 0.08)
+                            : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
                       ),
                     ),
@@ -3283,16 +3306,16 @@ abstinence_slip_details: $slipDetailsText
                               fontWeight: FontWeight.w800,
                               color: day.isCurrentMonth
                                   ? matchesFilter
-                                      ? (status.label == '未設定'
-                                          ? (isDark
-                                              ? Colors.white.withValues(
-                                                  alpha: 0.7,
-                                                )
-                                              : const Color(0xDE000000))
-                                          : accentColor)
-                                      : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
+                                        ? (status.label == '未設定'
+                                              ? (isDark
+                                                    ? Colors.white.withValues(
+                                                        alpha: 0.7,
+                                                      )
+                                                    : const Color(0xDE000000))
+                                              : accentColor)
+                                        : isDark
+                                        ? const Color(0xFF666666)
+                                        : const Color(0xFFB0B0B0)
                                   : const Color(0xFFB0B0B0),
                               height: 1.5,
                             ),
@@ -3415,14 +3438,15 @@ abstinence_slip_details: $slipDetailsText
     final normalizedMonth = DateTime(month.year, month.month, 1);
     final currentSelected = _selectedCalendarDate;
     final now = _startOfDay(_now());
-    final nextSelected = currentSelected != null &&
+    final nextSelected =
+        currentSelected != null &&
             currentSelected.year == normalizedMonth.year &&
             currentSelected.month == normalizedMonth.month
         ? _startOfDay(currentSelected)
         : (now.year == normalizedMonth.year &&
-                now.month == normalizedMonth.month
-            ? now
-            : normalizedMonth);
+                  now.month == normalizedMonth.month
+              ? now
+              : normalizedMonth);
 
     setState(() {
       _calendarMonthAnchor = normalizedMonth;
@@ -3468,8 +3492,9 @@ abstinence_slip_details: $slipDetailsText
     final completedCount = day.completedTaskCount;
     final remainingCount = day.totalTaskCount - completedCount;
     final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
-    final hiddenTaskCount =
-        filteredTasks.length > 6 ? filteredTasks.length - 6 : 0;
+    final hiddenTaskCount = filteredTasks.length > 6
+        ? filteredTasks.length - 6
+        : 0;
     final title = DateFormat('yyyy/MM/dd').format(day.date);
 
     return Container(
@@ -3662,8 +3687,9 @@ abstinence_slip_details: $slipDetailsText
     final completedCount = day.completedTaskCount;
     final remainingCount = day.totalTaskCount - completedCount;
     final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
-    final hiddenTaskCount =
-        filteredTasks.length > 6 ? filteredTasks.length - 6 : 0;
+    final hiddenTaskCount = filteredTasks.length > 6
+        ? filteredTasks.length - 6
+        : 0;
     final title = DateFormat('yyyy/MM/dd').format(day.date);
 
     return Container(
@@ -3913,8 +3939,9 @@ abstinence_slip_details: $slipDetailsText
   String _formatCalendarTaskForDetail(_HomeCalendarTask task) {
     final sourceLabel = _calendarTaskSourceLabel(task);
     final stateLabel = task.isCompleted ? '完了' : '未完了';
-    final secondary =
-        task.secondaryLabel == null ? '' : ' ${task.secondaryLabel}';
+    final secondary = task.secondaryLabel == null
+        ? ''
+        : ' ${task.secondaryLabel}';
     final important = task.isImportant ? ' [重要]' : '';
     return '[$sourceLabel/$stateLabel]$secondary$important ${task.title}';
   }
@@ -3987,8 +4014,9 @@ abstinence_slip_details: $slipDetailsText
           borderRadius: BorderRadius.circular(999),
           onTap: () {
             setState(() {
-              _calendarHighlightFilter =
-                  isSelected ? _CalendarHighlightFilter.all : filter;
+              _calendarHighlightFilter = isSelected
+                  ? _CalendarHighlightFilter.all
+                  : filter;
             });
           },
           child: Container(
@@ -4290,8 +4318,9 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarDetailSection(
                     title: '未達成項目',
                     accent: const Color(0xFFE53935),
-                    emptyLabel:
-                        day.isFuture ? 'まだ未達成判定はありません。' : '未達成項目はありません。',
+                    emptyLabel: day.isFuture
+                        ? 'まだ未達成判定はありません。'
+                        : '未達成項目はありません。',
                     items: day.missingItems,
                   ),
                   const SizedBox(height: 12),
@@ -4558,10 +4587,12 @@ abstinence_slip_details: $slipDetailsText
       1.0,
       goal.todayCompletedCount / targetCount,
     );
-    final shellColor =
-        isDark ? const Color(0xFFF4EFE2) : const Color(0xFFFFFBF1);
-    final boardColor =
-        isDark ? const Color(0xFFFBF3E6) : const Color(0xFFFFFCF2);
+    final shellColor = isDark
+        ? const Color(0xFFF4EFE2)
+        : const Color(0xFFFFFBF1);
+    final boardColor = isDark
+        ? const Color(0xFFFBF3E6)
+        : const Color(0xFFFFFCF2);
     final navy = isDark ? const Color(0xFF0B1D2E) : const Color(0xFF102B43);
     const ink = Color(0xFF17212D);
     const mutedInk = Color(0xFF52606E);
@@ -5184,8 +5215,9 @@ abstinence_slip_details: $slipDetailsText
                 height: 5,
                 margin: const EdgeInsets.only(right: 6),
                 decoration: BoxDecoration(
-                  color:
-                      i <= completed % 5 ? navy : navy.withValues(alpha: 0.22),
+                  color: i <= completed % 5
+                      ? navy
+                      : navy.withValues(alpha: 0.22),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -5244,8 +5276,9 @@ abstinence_slip_details: $slipDetailsText
 
     return Scaffold(
       key: const Key('home_page_scaffold'),
-      backgroundColor:
-          isDark ? const Color(0xFF08111F) : const Color(0xFFE8F2F5),
+      backgroundColor: isDark
+          ? const Color(0xFF08111F)
+          : const Color(0xFFE8F2F5),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
@@ -5382,13 +5415,14 @@ abstinence_slip_details: $slipDetailsText
                   nextAction.type == _HomeActionType.abstinenceGuard;
               final shouldLockExploratoryMenus =
                   opsSnapshot.pendingCriticalTaskCount > 0 ||
-                      !opsSnapshot.morningBriefingDone ||
-                      opsSnapshot.abstinenceSlipCount > 0;
+                  !opsSnapshot.morningBriefingDone ||
+                  opsSnapshot.abstinenceSlipCount > 0;
               return FutureBuilder<String?>(
                 future: _aiNudgeFuture,
                 builder: (context, aiNudgeSnapshot) {
                   final aiNudge = aiNudgeSnapshot.data;
-                  final isAiLoading = aiNudgeSnapshot.connectionState ==
+                  final isAiLoading =
+                      aiNudgeSnapshot.connectionState ==
                       ConnectionState.waiting;
                   final highlightedToolIds = _buildHighlightedToolIds(
                     highlightMorning: highlightMorning,
@@ -5427,7 +5461,8 @@ abstinence_slip_details: $slipDetailsText
                               builder: (context, billingSnapshot) {
                                 return HomeBillingNudge(
                                   status: billingSnapshot.data,
-                                  isLoading: billingSnapshot.connectionState ==
+                                  isLoading:
+                                      billingSnapshot.connectionState ==
                                       ConnectionState.waiting,
                                   onOpenBilling: () => Navigator.of(
                                     context,
@@ -5723,7 +5758,8 @@ abstinence_slip_details: $slipDetailsText
                                     width: 40,
                                     height: 40,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).brightness ==
+                                      color:
+                                          Theme.of(context).brightness ==
                                               Brightness.dark
                                           ? const Color(0xFF2D2040)
                                           : const Color(0xFFEDE7F6),
@@ -5999,6 +6035,15 @@ abstinence_slip_details: $slipDetailsText
                                 iconColor: Color(0xFF10B981),
                                 initiallyExpanded: false,
                                 child: DevelopmentAchievementsCard(),
+                              ),
+                              const SizedBox(height: 12),
+                              const CollapsibleHomeSection(
+                                storageKey: 'home_section_ui_rollout',
+                                title: 'UI改善適用状況',
+                                icon: Icons.palette_outlined,
+                                iconColor: Color(0xFFFF6B35),
+                                initiallyExpanded: false,
+                                child: UiRolloutSummaryCard(),
                               ),
                               const SizedBox(height: 12),
                               // Edge Functions 実装状況 (アコーディオン / 初期折りたたみ)
@@ -6365,8 +6410,9 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
-    final accent =
-        isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
+    final accent = isHighlighted
+        ? const Color(0xFFFFA000)
+        : const Color(0xFFFFC107);
 
     return Container(
       decoration: BoxDecoration(
@@ -6640,10 +6686,12 @@ abstinence_slip_details: $slipDetailsText
     Widget attachmentAnalyzer() {
       final file = _featureRequestAttachment;
       final analysis = _featureRequestAttachmentAnalysis;
-      final observation =
-          analysis == null ? '' : _analysisText(analysis, 'observation');
-      final proposal =
-          analysis == null ? '' : _analysisText(analysis, 'proposal');
+      final observation = analysis == null
+          ? ''
+          : _analysisText(analysis, 'observation');
+      final proposal = analysis == null
+          ? ''
+          : _analysisText(analysis, 'proposal');
 
       return Container(
         padding: const EdgeInsets.all(12),
@@ -6699,7 +6747,8 @@ abstinence_slip_details: $slipDetailsText
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  onPressed: _isSubmittingFeatureRequest ||
+                  onPressed:
+                      _isSubmittingFeatureRequest ||
                           _isAnalyzingFeatureRequestAttachment
                       ? null
                       : _pickFeatureRequestAttachment,
@@ -6707,7 +6756,8 @@ abstinence_slip_details: $slipDetailsText
                   label: Text(file == null ? '画像を選択' : '画像を変更'),
                 ),
                 FilledButton.tonalIcon(
-                  onPressed: file == null ||
+                  onPressed:
+                      file == null ||
                           _isSubmittingFeatureRequest ||
                           _isAnalyzingFeatureRequestAttachment
                       ? null
@@ -6725,7 +6775,8 @@ abstinence_slip_details: $slipDetailsText
                 ),
                 if (file != null)
                   TextButton.icon(
-                    onPressed: _isSubmittingFeatureRequest ||
+                    onPressed:
+                        _isSubmittingFeatureRequest ||
                             _isAnalyzingFeatureRequestAttachment
                         ? null
                         : _clearFeatureRequestAttachment,
@@ -7023,8 +7074,9 @@ abstinence_slip_details: $slipDetailsText
   Widget _buildSiteGuideAiCard(bool isDark, bool isCompact) {
     final theme = Theme.of(context);
     final cardColor = isDark ? const Color(0xFF111827) : Colors.white;
-    final outlineColor =
-        isDark ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFDDE8E4);
+    final outlineColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : const Color(0xFFDDE8E4);
     const quickQuestions = <String>['まず何から使えばいい？', '資産管理はどこ？', 'AI大学の始め方は？'];
 
     return Card(
@@ -7082,8 +7134,9 @@ abstinence_slip_details: $slipDetailsText
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                color: isDark
+                    ? const Color(0xFF0F172A)
+                    : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -7171,8 +7224,9 @@ abstinence_slip_details: $slipDetailsText
         final featureReport = data != null && data.length > 1
             ? data[1] as FeatureStrategyReport
             : FeatureStrategyReport.empty(_now());
-        final timeSlipCount =
-            data != null && data.length > 2 ? data[2] as int : 0;
+        final timeSlipCount = data != null && data.length > 2
+            ? data[2] as int
+            : 0;
         final coreRitualDoneCount = [
           opsSnapshot.monthlyCashflowSummary.reviewDone,
           opsSnapshot.morningBriefingDone,
@@ -7208,15 +7262,15 @@ abstinence_slip_details: $slipDetailsText
                 : null;
             final monitoringSummary =
                 reviewData != null && reviewData.length > 1
-                    ? reviewData[1] as LifeWasteMonitoringSummary
-                    : null;
+                ? reviewData[1] as LifeWasteMonitoringSummary
+                : null;
             return LifeWasteEliminationPanel(
               report: report,
               aiReview: review,
               monitoringSummary: monitoringSummary,
               isAiReviewLoading:
                   reviewSnapshot.connectionState == ConnectionState.waiting &&
-                      !reviewSnapshot.hasData,
+                  !reviewSnapshot.hasData,
               isDark: isDark,
               isCompact: isCompact,
             );
@@ -7250,11 +7304,11 @@ abstinence_slip_details: $slipDetailsText
       _lifeWasteMonitoringFuture = _lifeWasteEliminationService
           .recordDailySnapshot(report)
           .then((summary) {
-        if (summary.notificationQueued) {
-          unawaited(_fetchNotifUnreadCount());
-        }
-        return summary;
-      });
+            if (summary.notificationQueued) {
+              unawaited(_fetchNotifUnreadCount());
+            }
+            return summary;
+          });
     }
     return _lifeWasteMonitoringFuture!;
   }
@@ -7277,12 +7331,15 @@ abstinence_slip_details: $slipDetailsText
     final financeValue = cashflow.recordCount == 0
         ? '未記録'
         : _formatSignedYen(cashflow.netTotal.toDouble());
-    final borderColor =
-        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final backgroundColor =
-        isDark ? const Color(0xFF0F172A) : const Color(0xFFFFFFFF);
-    final subtitleColor =
-        isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+    final borderColor = isDark
+        ? const Color(0xFF334155)
+        : const Color(0xFFE2E8F0);
+    final backgroundColor = isDark
+        ? const Color(0xFF0F172A)
+        : const Color(0xFFFFFFFF);
+    final subtitleColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : const Color(0xFF475569);
 
     return Container(
       key: const Key('home_integrated_briefing_card'),
@@ -7387,7 +7444,8 @@ abstinence_slip_details: $slipDetailsText
                       color: const Color(0xFFDC2626),
                       title: '健康',
                       value: healthValue,
-                      detail: snapshot.abstinencePrimaryAction ??
+                      detail:
+                          snapshot.abstinencePrimaryAction ??
                           '体調を崩す前に、朝の状態確認と防衛行動を先に置きます。',
                       onTap: () => _runTrackedAction(
                         'abstinence-guard',
@@ -7496,14 +7554,14 @@ abstinence_slip_details: $slipDetailsText
       builder: (context, officeSnapshot) {
         final overview =
             officeSnapshot.data != null && officeSnapshot.data!.isNotEmpty
-                ? officeSnapshot.data![0] as _HomeKpiOverview? ??
-                    const _HomeKpiOverview()
-                : const _HomeKpiOverview();
+            ? officeSnapshot.data![0] as _HomeKpiOverview? ??
+                  const _HomeKpiOverview()
+            : const _HomeKpiOverview();
         final marketing =
             officeSnapshot.data != null && officeSnapshot.data!.length > 1
-                ? officeSnapshot.data![1] as _HomeMarketingKpiSummary? ??
-                    const _HomeMarketingKpiSummary()
-                : const _HomeMarketingKpiSummary();
+            ? officeSnapshot.data![1] as _HomeMarketingKpiSummary? ??
+                  const _HomeMarketingKpiSummary()
+            : const _HomeMarketingKpiSummary();
         final nextAction = _resolveNextAction(snapshot);
         final goal = snapshot.completionGoalSnapshot;
         final coreFlowDone = [
@@ -7519,8 +7577,8 @@ abstinence_slip_details: $slipDetailsText
             final columns = isCompact || width < 720
                 ? 1
                 : width < 1180
-                    ? 2
-                    : 3;
+                ? 2
+                : 3;
             const spacing = 12.0;
             final cardWidth = columns == 1
                 ? width
@@ -7590,8 +7648,9 @@ abstinence_slip_details: $slipDetailsText
                   isDark: isDark,
                   officeLabel: 'CFO',
                   title: '財務',
-                  headline:
-                      hasAssetData ? _formatYen(overview.latestTotal) : '--',
+                  headline: hasAssetData
+                      ? _formatYen(overview.latestTotal)
+                      : '--',
                   subtitle: '総資産',
                   icon: Icons.account_balance_wallet,
                   accentColor: const Color(0xFF4CAF50),
@@ -7620,8 +7679,9 @@ abstinence_slip_details: $slipDetailsText
                       snapshot.monthlyCashflowSummary.netTotal.toDouble(),
                     ),
                     targetLabel: '黒字 / レビュー済み',
-                    progress:
-                        snapshot.monthlyCashflowSummary.reviewDone ? 1 : 0.5,
+                    progress: snapshot.monthlyCashflowSummary.reviewDone
+                        ? 1
+                        : 0.5,
                     metrics: <KgiCsfKpiMetric>[
                       KgiCsfKpiMetric.number(
                         csf: '取引記録',
@@ -7633,8 +7693,9 @@ abstinence_slip_details: $slipDetailsText
                       KgiCsfKpiMetric.number(
                         csf: '決算レビュー',
                         kpi: 'レビュー完了',
-                        actual:
-                            snapshot.monthlyCashflowSummary.reviewDone ? 1 : 0,
+                        actual: snapshot.monthlyCashflowSummary.reviewDone
+                            ? 1
+                            : 0,
                         target: 1,
                         unit: '回',
                       ),
@@ -8052,8 +8113,9 @@ abstinence_slip_details: $slipDetailsText
     for (var i = 0; i < series.length; i++) {
       spots.add(FlSpot(i.toDouble(), series[i].count.toDouble()));
     }
-    final lineColor =
-        isDark ? const Color(0xFFFF6B35) : const Color(0xFFFF6B35);
+    final lineColor = isDark
+        ? const Color(0xFFFF6B35)
+        : const Color(0xFFFF6B35);
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.6);
@@ -8273,11 +8335,11 @@ abstinence_slip_details: $slipDetailsText
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isDark
-                                  ? Colors.white.withValues(alpha: 0.16)
-                                  : Colors.white)
+                                    ? Colors.white.withValues(alpha: 0.16)
+                                    : Colors.white)
                               : (isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : Colors.white.withValues(alpha: 0.74)),
+                                    ? Colors.white.withValues(alpha: 0.06)
+                                    : Colors.white.withValues(alpha: 0.74)),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: isSelected
@@ -8293,8 +8355,9 @@ abstinence_slip_details: $slipDetailsText
                           _kpiTrendRangeLabel(range),
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight:
-                                isSelected ? FontWeight.w800 : FontWeight.w600,
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
                             height: 1.5,
                           ),
                         ),
@@ -8378,8 +8441,9 @@ abstinence_slip_details: $slipDetailsText
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.16)
         : const Color(0xFFB0B0B0).withValues(alpha: 0.24);
-    final titleColor =
-        isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
+    final titleColor = isDark
+        ? Colors.white
+        : Colors.black.withValues(alpha: 0.86);
 
     return Container(
       constraints: const BoxConstraints(minWidth: 330),
@@ -8539,8 +8603,9 @@ abstinence_slip_details: $slipDetailsText
                   sideTitles: SideTitles(
                     showTitles: hasWasteSeries,
                     reservedSize: 62,
-                    interval:
-                        hasWasteSeries ? (chartMaxY - chartMinY) / 4 : null,
+                    interval: hasWasteSeries
+                        ? (chartMaxY - chartMinY) / 4
+                        : null,
                     getTitlesWidget: (value, meta) {
                       if (!hasWasteSeries || wasteMax <= 0) {
                         return const SizedBox.shrink();
@@ -8650,8 +8715,9 @@ abstinence_slip_details: $slipDetailsText
                             ? '浪費 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.waste)}'
                             : '資産 ${DateFormat('yyyy/MM/dd').format(point.date)}\n${_formatYen(point.total)}',
                         TextStyle(
-                          color:
-                              isDark ? Colors.white : const Color(0xDE000000),
+                          color: isDark
+                              ? Colors.white
+                              : const Color(0xDE000000),
                           fontWeight: FontWeight.w700,
                           height: 1.5,
                         ),
@@ -8736,10 +8802,11 @@ abstinence_slip_details: $slipDetailsText
     required bool isDark,
     required _HomeKpiOverview overview,
   }) {
-    final breakdownEntries = overview.wasteBreakdown.entries
-        .where((entry) => entry.value > 0)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final breakdownEntries =
+        overview.wasteBreakdown.entries
+            .where((entry) => entry.value > 0)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
     if (breakdownEntries.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -9040,8 +9107,8 @@ abstinence_slip_details: $slipDetailsText
     final sign = percent > 0
         ? '+'
         : percent < 0
-            ? '-'
-            : '';
+        ? '-'
+        : '';
     return '$sign$absText%';
   }
 
@@ -9112,8 +9179,8 @@ abstinence_slip_details: $slipDetailsText
         final displayValue = snapshot.hasError
             ? 'Error'
             : (snapshot.data == null || snapshot.data!.isEmpty)
-                ? '¥0'
-                : snapshot.data!;
+            ? '¥0'
+            : snapshot.data!;
 
         return _buildKpiCard(context, isDark, title, displayValue, icon, color);
       },
