@@ -4447,7 +4447,11 @@ abstinence_slip_details: $slipDetailsText
         side: BorderSide(color: const Color(0xFFFF6B35).withValues(alpha: 0.4)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         minimumSize: const Size(double.infinity, 44),
-        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, height: 1.4),
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.4,
+        ),
       ),
     );
   }
@@ -6826,12 +6830,10 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () =>
-          Navigator.of(context).pushNamed('/guitar-recording-studio'),
+      onTap: () => Navigator.of(context).pushNamed('/guitar-recording-studio'),
       child: Container(
         width: double.infinity,
-        padding:
-            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],

@@ -65,8 +65,8 @@ class _UiDesignStatusPageState extends State<UiDesignStatusPage> {
     filtered.sort((PageComplianceRecord a, PageComplianceRecord b) {
       final UiImprovementRollout rolloutA = resolveUiImprovementRollout(a);
       final UiImprovementRollout rolloutB = resolveUiImprovementRollout(b);
-      final int stageCompare =
-          _stagePriority(rolloutA.stage).compareTo(_stagePriority(rolloutB.stage));
+      final int stageCompare = _stagePriority(rolloutA.stage)
+          .compareTo(_stagePriority(rolloutB.stage));
       if (stageCompare != 0) {
         return stageCompare;
       }
@@ -94,21 +94,27 @@ class _UiDesignStatusPageState extends State<UiDesignStatusPage> {
   }
 
   int get _appliedCount => kDesignComplianceData
-      .where((PageComplianceRecord record) =>
-          resolveUiImprovementRollout(record).stage ==
-          UiImprovementStage.applied,)
+      .where(
+        (PageComplianceRecord record) =>
+            resolveUiImprovementRollout(record).stage ==
+            UiImprovementStage.applied,
+      )
       .length;
 
   int get _inProgressCount => kDesignComplianceData
-      .where((PageComplianceRecord record) =>
-          resolveUiImprovementRollout(record).stage ==
-          UiImprovementStage.inProgress,)
+      .where(
+        (PageComplianceRecord record) =>
+            resolveUiImprovementRollout(record).stage ==
+            UiImprovementStage.inProgress,
+      )
       .length;
 
   int get _plannedCount => kDesignComplianceData
-      .where((PageComplianceRecord record) =>
-          resolveUiImprovementRollout(record).stage ==
-          UiImprovementStage.planned,)
+      .where(
+        (PageComplianceRecord record) =>
+            resolveUiImprovementRollout(record).stage ==
+            UiImprovementStage.planned,
+      )
       .length;
 
   int get _auditedCount => kDesignComplianceData
@@ -116,8 +122,10 @@ class _UiDesignStatusPageState extends State<UiDesignStatusPage> {
       .length;
 
   int get _strongComplianceCount => kDesignComplianceData
-      .where((PageComplianceRecord record) =>
-          record.isAudited && record.score >= 0.8,)
+      .where(
+        (PageComplianceRecord record) =>
+            record.isAudited && record.score >= 0.8,
+      )
       .length;
 
   @override
@@ -612,46 +620,46 @@ class _ScreenStatusCard extends StatelessWidget {
                 ),
               ],
             ),
-            if ((record.notes?.isNotEmpty ?? false) || rollout.nextStep.isNotEmpty)
-              ...<Widget>[
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      if (record.notes?.isNotEmpty ?? false) ...<Widget>[
-                        Text(
-                          'Audit note',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(record.notes!, style: theme.textTheme.bodyMedium),
-                        const SizedBox(height: 10),
-                      ],
+            if ((record.notes?.isNotEmpty ?? false) ||
+                rollout.nextStep.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 14),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.42),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (record.notes?.isNotEmpty ?? false) ...<Widget>[
                       Text(
-                        'Next action',
+                        'Audit note',
                         style: theme.textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        rollout.nextStep,
-                        style: theme.textTheme.bodyMedium,
-                      ),
+                      Text(record.notes!, style: theme.textTheme.bodyMedium),
+                      const SizedBox(height: 10),
                     ],
-                  ),
+                    Text(
+                      'Next action',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      rollout.nextStep,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
             const SizedBox(height: 14),
             Align(
               alignment: Alignment.centerRight,
@@ -731,8 +739,7 @@ class _ScreenStatusCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color:
-                      (passed ? _success : _danger).withValues(alpha: 0.10),
+                  color: (passed ? _success : _danger).withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color:
@@ -805,8 +812,6 @@ class _StageBadge extends StatelessWidget {
     );
   }
 }
-
-
 
 class _WorkflowToolStatusChip extends StatelessWidget {
   const _WorkflowToolStatusChip({
