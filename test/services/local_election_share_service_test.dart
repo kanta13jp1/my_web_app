@@ -91,6 +91,64 @@ void main() {
     });
   }
 
+  LocalElectionRealitySnapshot buildWeekendSnapshot() {
+    return LocalElectionRealitySnapshot.fromJson(<String, dynamic>{
+      'fetchedAt': '2026-04-08T09:00:00.000Z',
+      'officialCurrentLocalMembers': 333,
+      'actualNetIncreaseRequired': 367,
+      'upcomingSchedules': <Map<String, dynamic>>[
+        <String, dynamic>{
+          'electionName': 'This Weekend Mayor Race',
+          'prefecture': 'Tokyo',
+          'municipality': 'Chiyoda',
+          'electionCategory': 'chief',
+          'voteDate': '2026-04-12',
+          'announcementDate': '2026-04-05',
+          'detailUrl': 'https://example.com/this-weekend',
+          'officialCandidateSourceUrl': 'https://example.com/source',
+          'seatCount': 1,
+          'totalCandidateCount': 2,
+          'kokuminCandidateCount': 0,
+          'kokuminCandidateNames': <String>[],
+          'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[],
+        },
+        <String, dynamic>{
+          'electionName': 'Second Weekend Assembly Race',
+          'prefecture': 'Osaka',
+          'municipality': 'Sakai',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-19',
+          'announcementDate': '2026-04-12',
+          'detailUrl': 'https://example.com/second-weekend',
+          'officialCandidateSourceUrl': 'https://example.com/source',
+          'seatCount': 20,
+          'totalCandidateCount': 24,
+          'kokuminCandidateCount': 0,
+          'kokuminCandidateNames': <String>[],
+          'kokuminCandidateStatuses': <String>[],
+          'kokuminCandidateXHandles': <String>[],
+        },
+        <String, dynamic>{
+          'electionName': 'Third Weekend Safe Race',
+          'prefecture': 'Kyoto',
+          'municipality': 'Uji',
+          'electionCategory': 'assembly',
+          'voteDate': '2026-04-26',
+          'announcementDate': '2026-04-19',
+          'detailUrl': 'https://example.com/third-weekend',
+          'officialCandidateSourceUrl': 'https://example.com/source',
+          'seatCount': 18,
+          'totalCandidateCount': 18,
+          'kokuminCandidateCount': 1,
+          'kokuminCandidateNames': <String>['Sample Candidate'],
+          'kokuminCandidateStatuses': <String>['公認'],
+          'kokuminCandidateXHandles': <String>['sample_candidate'],
+        },
+      ],
+    });
+  }
+
   test('buildDraft creates full election public memo payload', () {
     final snapshot = buildSnapshot();
     final draft = service.buildDraft(
@@ -140,5 +198,33 @@ void main() {
       uri.queryParameters['text'],
       contains('国民民主党の地方議員数'),
     );
+  });
+
+  test('buildUpcomingElectionsThread scopes results to the selected weekend',
+      () {
+    final snapshot = buildWeekendSnapshot();
+
+    final tweets = service.buildUpcomingElectionsThread(
+      snapshot: snapshot,
+      weekendSaturday: DateTime(2026, 4, 18),
+    );
+
+    expect(tweets, isNotEmpty);
+    expect(tweets.first, contains('4/18(土)〜4/19(日)'));
+    expect(tweets.first, contains('Second Weekend Assembly Race'));
+    expect(tweets.first, isNot(contains('This Weekend Mayor Race')));
+    expect(tweets.first, isNot(contains('Third Weekend Safe Race')));
+  });
+
+  test('nextWeekends includes the current weekend on Sunday', () {
+    final weekends = LocalElectionRealitySnapshot.nextWeekends(
+      count: 3,
+      now: DateTime(2026, 4, 12),
+    );
+
+    expect(weekends, hasLength(3));
+    expect(weekends[0], DateTime(2026, 4, 11));
+    expect(weekends[1], DateTime(2026, 4, 18));
+    expect(weekends[2], DateTime(2026, 4, 25));
   });
 }

@@ -59,7 +59,7 @@ class _ElectionXPostComposerDialogState
   @override
   void initState() {
     super.initState();
-    final windows = LocalElectionShareService.availableWindows;
+    const windows = LocalElectionShareService.availableWindows;
     _electionCounts = windows
         .map(
           (w) => widget.shareService
@@ -161,7 +161,7 @@ class _ElectionXPostComposerDialogState
   }
 
   Widget _buildWeekendSelector() {
-    final windows = LocalElectionShareService.availableWindows;
+    const windows = LocalElectionShareService.availableWindows;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(

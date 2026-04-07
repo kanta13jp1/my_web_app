@@ -19,7 +19,8 @@ const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 365;
 const SCHEDULE_WINDOW_DAYS = 365;
-const SCHEDULE_MAX_ENTRIES = 300;
+const SCHEDULE_DETAIL_WINDOW_DAYS = 90;
+const SCHEDULE_MAX_ENTRIES = 5000;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -859,14 +860,14 @@ async function fetchUpcomingLocalElectionSchedules(
   officialCandidates: OfficialScheduledCandidate[],
   manualSupplements: ManualScheduleSupplement[],
 ): Promise<LocalElectionScheduleEntry[]> {
-  const scheduleHtml = await fetchText(ELECTION_SCHEDULE_URL);
-  const overviewEntries = mergeScheduleOverviewEntries(
-    parseScheduleOverviewEntries(scheduleHtml),
-    buildManualOverviewEntries(manualSupplements),
-  );
   const today = startOfDay(new Date());
   const earliestDate = addDays(today, -SCHEDULE_PAST_DAYS);
   const latestDate = addDays(today, SCHEDULE_WINDOW_DAYS);
+  const detailCutoffDate = addDays(today, SCHEDULE_DETAIL_WINDOW_DAYS);
+  const overviewEntries = mergeScheduleOverviewEntries(
+    await fetchScheduleOverviewEntries(earliestDate, latestDate),
+    buildManualOverviewEntries(manualSupplements),
+  );
   const upcomingEntries = overviewEntries
     .filter((entry) => {
       const voteDate = parseIsoDate(entry.voteDate);
@@ -874,12 +875,30 @@ async function fetchUpcomingLocalElectionSchedules(
         voteDate.getTime() >= earliestDate.getTime() &&
         voteDate.getTime() <= latestDate.getTime();
     })
+    .sort((left, right) => {
+      const leftDate = parseIsoDate(left.voteDate);
+      const rightDate = parseIsoDate(right.voteDate);
+      if (leftDate != null && rightDate != null) {
+        const dateCompare = leftDate.getTime() - rightDate.getTime();
+        if (dateCompare !== 0) {
+          return dateCompare;
+        }
+      }
+      return left.electionName.localeCompare(right.electionName, "ja");
+    })
     .slice(0, SCHEDULE_MAX_ENTRIES);
   const detailed = await mapWithConcurrency(
     upcomingEntries,
     8,
     async (entry) => {
-      const baseEntry = await enrichScheduleEntry(entry, officialCandidates);
+      const voteDate = parseIsoDate(entry.voteDate);
+      const shouldFetchDetail = voteDate != null &&
+        voteDate.getTime() <= detailCutoffDate.getTime();
+      const baseEntry = await enrichScheduleEntry(
+        entry,
+        officialCandidates,
+        shouldFetchDetail,
+      );
       return applyManualScheduleSupplement(
         baseEntry,
         findManualScheduleSupplement(entry, manualSupplements),
@@ -901,6 +920,39 @@ async function fetchUpcomingLocalElectionSchedules(
     }
     return left.electionName.localeCompare(right.electionName, "ja");
   });
+}
+
+async function fetchScheduleOverviewEntries(
+  earliestDate: Date,
+  latestDate: Date,
+): Promise<ScheduleOverviewEntry[]> {
+  const years = new Set<number>();
+  for (
+    let year = earliestDate.getFullYear();
+    year <= latestDate.getFullYear();
+    year += 1
+  ) {
+    years.add(year);
+  }
+
+  const pages = await Promise.all(
+    [...years].map(async (year) => {
+      try {
+        return await fetchText(scheduleUrlForYear(year));
+      } catch (error) {
+        console.error(`Failed to fetch schedule page for ${year}:`, error);
+        return "";
+      }
+    }),
+  );
+
+  return pages.flatMap((html) =>
+    html === "" ? [] : parseScheduleOverviewEntries(html)
+  );
+}
+
+function scheduleUrlForYear(year: number): string {
+  return `${ELECTION_SCHEDULE_URL}/${year}`;
 }
 
 function buildManualScheduledCandidates(
@@ -1054,6 +1106,7 @@ function parseScheduleOverviewEntries(html: string): ScheduleOverviewEntry[] {
 async function enrichScheduleEntry(
   entry: ScheduleOverviewEntry,
   officialCandidates: OfficialScheduledCandidate[],
+  includeDetail = true,
 ): Promise<LocalElectionScheduleEntry> {
   const matchedCandidates = matchOfficialCandidatesForSchedule(
     entry.prefecture,
@@ -1064,7 +1117,7 @@ async function enrichScheduleEntry(
   let announcementDate = "";
   let seatCount = 0;
   let totalCandidateCount = 0;
-  if (entry.detailUrl !== "") {
+  if (includeDetail && entry.detailUrl !== "") {
     try {
       const html = await fetchText(entry.detailUrl);
       const detail = parseScheduleDetail(html);
