@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 VSCode#8 (Figma MCP・AIDesigner MCP・Design Skills エージェント導入)
+最終更新: 2026-04-07 VSCode#9 (UIデザイン改善ステータス全面リニューアル・MCP適用追跡・ホーム導線追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3165,6 +3165,32 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 2. docs/ と supabase/migrations/ のみを変更
 3. lib/ や supabase/functions/ は変更しない (他インスタンスのドメイン)
 4. コミットメッセージは `docs: Windows#N セッション内容` の形式
+
+---
+
+## Session VSCode#9 (2026-04-07): UIデザイン改善ステータス全面リニューアル
+
+### 実施内容
+
+1. **UIデザイン改善ステータスページ刷新**
+   - `ui_improvement_rollout_data.dart` 新規作成: Figma MCP / AIDesigner MCP / Design Skills / DESIGN.md の適用状況を画面単位で追跡
+   - `ui_design_status_page.dart` 全面リニューアル: 4ツールセット適用バッジ、改善ステージ (applied/inProgress/planned)、サマリーグリッド、ヒーローバナーを実装
+   - ホーム画面に「UIデザインステータス」ナビボタンを追加 (`_buildUiStatusButton`)
+
+2. **デザインツール導入 (VSCode#8 で実施)**
+   - `.mcp.json`: Figma MCP (`mcp.figma.com`) + AIDesigner MCP (`api.aidesigner.ai`) remote HTTP 接続
+   - `.claude/agents/design-skills.md`: Flutter UI設計専門 sub-agent
+   - `.claude/commands/design-review.md` / `design-component.md` / `design-workflow.md`: スラッシュコマンド
+   - `docs/DESIGN_TOOLING_SETUP.md`: 4ツールセット運用ガイド
+
+3. **`/DESIGN.md` 配置 (VSCode#7 で実施)**
+   - awesome-design-md-jp より note デザインシステムを取得・配置
+   - Flutter Web 適用方針を Section 9 に記載
+
+### 品質確認
+
+- flutter analyze: 0 errors ✅
+- git push: 96c09393 ✅
 
 ---
 
