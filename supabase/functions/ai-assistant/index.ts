@@ -483,6 +483,15 @@ ${entryData}`;
             );
         }
         
+        // --- 3.5. generate (raw proxy — no prompt prefix, supports imageBase64) ---
+        if (action === 'generate') {
+            const image = requestData.imageBase64
+                ? { base64: requestData.imageBase64, mime: requestData.mimeType ?? 'image/jpeg' }
+                : undefined;
+            const result = await runFallbackChain(requestContent ?? '', image);
+            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+        }
+
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title', 'custom_prompt'].includes(action)) {
              const normalizedStyleInstruction = requestData.styleInstruction?.trim();

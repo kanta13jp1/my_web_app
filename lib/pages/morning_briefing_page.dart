@@ -9,7 +9,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -1539,14 +1538,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     setState(() => _isLoading = true);
 
     try {
-      final model =
-          GenerativeModel(model: _selectedModel, apiKey: _geminiApiKey!);
       final prompt = buildDailyReportPrompt(historyTodos);
-      final content = [Content.text(prompt)];
-      final response = await model.generateContent(content);
+      final res = await Supabase.instance.client.functions.invoke(
+        'ai-assistant',
+        body: {
+          'action': 'generate',
+          'model': _selectedModel,
+          'content': prompt,
+          'useMagi': false,
+        },
+      );
+      final data = res.data;
+      final responseText = (data is Map<String, dynamic> && data['success'] == true)
+          ? data['result'] as String?
+          : null;
 
-      if (mounted && response.text != null) {
-        showReportDialog(response.text!, historyTodos);
+      if (mounted && responseText != null) {
+        showReportDialog(responseText, historyTodos);
       }
     } catch (e) {
       debugPrint('Gemini Error: $e');

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/app_logger.dart';
@@ -364,16 +363,18 @@ class AIService {
     required String model,
     required String prompt,
   }) async {
-    final apiKey = _googleAIApiKey;
-    if (apiKey == null) {
-      throw AIServiceException('Google AI API key is not configured.');
-    }
+    // Gemini calls are proxied through the ai-assistant Edge Function to avoid
+    // exposing the API key client-side and to prevent 429 rate-limit errors.
     try {
-      final genModel = GenerativeModel(model: model, apiKey: apiKey);
-      final content = [Content.text(prompt)];
-      final response = await genModel.generateContent(content);
-      return response.text;
+      final data = await _invokeFunction('ai-assistant', {
+        'action': 'generate',
+        'model': model,
+        'content': prompt,
+        'useMagi': false,
+      });
+      return data['result'] as String?;
     } catch (e) {
+      if (e is AIServiceException) rethrow;
       throw _mapAiModelError(e);
     }
   }

@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ElectionStrategyPage extends StatefulWidget {
@@ -17,7 +15,6 @@ class ElectionStrategyPage extends StatefulWidget {
 class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     with SingleTickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
-  String? _apiKey;
   final TextEditingController _strategyController = TextEditingController();
   late TabController _tabController;
   bool _isBusy = false;
@@ -47,7 +44,6 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       if (!_tabController.indexIsChanging) setState(() {});
     });
 
-    _loadApiKey();
     _fetchUserProfile();
     _fetchCandidates();
     _fetchBatchLog(); // 初期化時にログも取得
@@ -71,11 +67,28 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     }
   }
 
-  Future<void> _loadApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _apiKey = prefs.getString('gemini_api_key');
-    });
+  // Gemini calls are proxied through ai-assistant Edge Function (server-side key)
+  Future<String> _callGeminiViaEdge(
+    String prompt, {
+    String model = 'gemini-2.0-flash',
+    String? imageBase64,
+    String? mimeType,
+  }) async {
+    final body = <String, dynamic>{
+      'action': 'generate',
+      'model': model,
+      'content': prompt,
+      'useMagi': false,
+    };
+    if (imageBase64 != null) body['imageBase64'] = imageBase64;
+    if (mimeType != null) body['mimeType'] = mimeType;
+    final response = await _supabase.functions.invoke('ai-assistant', body: body);
+    final data = response.data;
+    if (data is Map<String, dynamic> && data['success'] == true) {
+      return (data['result'] as String?) ?? '';
+    }
+    final errMsg = (data is Map ? data['error'] : null) ?? 'AI処理に失敗しました';
+    throw Exception(errMsg);
   }
 
   // --- Profile Logic ---
@@ -190,23 +203,15 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   }
 
   Future<void> _analyzeLogistics(String district) async {
-    if (_apiKey == null) return;
     setState(() => _isBusy = true);
     try {
-      final model = GenerativeModel(
-        model: 'models/gemini-2.0-flash', // 最新モデル推奨
-        apiKey: _apiKey!,
-        generationConfig:
-            GenerationConfig(responseMimeType: 'application/json'),
-      );
       final prompt = '''
       あなたは選挙参謀です。「$district」に含まれる主要な鉄道駅を最大10個リストアップし、
       1日あたりの推定乗降客数（概算）と共にJSONで出力してください。
       乗降客数が多い順にソートしてください。
       出力形式: [{"name": "駅名", "passengers": 数値, "importance": "S/A/B"}]
       ''';
-      final response = await model.generateContent([Content.text(prompt)]);
-      final jsonText = response.text ?? '[]';
+      final jsonText = await _callGeminiViaEdge(prompt);
       final List<dynamic> rawList = jsonDecode(jsonText);
       final List<Map<String, dynamic>> stations =
           rawList.map((e) => Map<String, dynamic>.from(e)).toList();
@@ -243,20 +248,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   }
 
   Future<void> _analyzeDistrict(String district) async {
-    if (_apiKey == null) return;
     setState(() => _isBusy = true);
     try {
-      final model = GenerativeModel(
-        model: 'models/gemini-2.0-flash',
-        apiKey: _apiKey!,
-        generationConfig:
-            GenerationConfig(responseMimeType: 'application/json'),
-      );
       final prompt =
           'あなたは選挙アナリストです。「$district」の国民民主党の情勢(候補者、勝利条件)を分析しJSON({candidate, condition})で出力してください。';
-      final response = await model.generateContent([Content.text(prompt)]);
       final Map<String, dynamic> json =
-          jsonDecode(response.text ?? '{}') as Map<String, dynamic>;
+          jsonDecode(await _callGeminiViaEdge(prompt)) as Map<String, dynamic>;
       setState(() {
         _candidateInfo = (json['candidate'] as String?)?.isNotEmpty == true
             ? json['candidate'] as String
@@ -280,20 +277,12 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
 
   // --- Trends Logic ---
   Future<void> _fetchLatestTrends() async {
-    if (_apiKey == null) return;
     setState(() => _isBusy = true);
     try {
-      final model = GenerativeModel(
-        model: 'models/gemini-2.0-flash',
-        apiKey: _apiKey!,
-        generationConfig:
-            GenerationConfig(responseMimeType: 'application/json'),
-      );
       const prompt =
           '2026年1月現在の最新世論調査に基づき、国民民主党の支持率(support_rate)、若年投票率(youth_turnout)、無党派獲得率(swing_potential)を推計しJSONで出力せよ。';
-      final response = await model.generateContent([Content.text(prompt)]);
       final Map<String, dynamic> data =
-          jsonDecode(response.text ?? '{}') as Map<String, dynamic>;
+          jsonDecode(await _callGeminiViaEdge(prompt)) as Map<String, dynamic>;
       setState(() {
         _supportRate = ((data['support_rate'] as num?) ?? 0).toDouble();
         _youthTurnout = ((data['youth_turnout'] as num?) ?? 0).toDouble();
@@ -315,19 +304,16 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
 
   // --- Strategy Logic ---
   Future<void> _submitStrategy() async {
-    if (_apiKey == null || _strategyController.text.isEmpty) return;
+    if (_strategyController.text.isEmpty) return;
     setState(() => _isBusy = true);
     try {
-      final model =
-          GenerativeModel(model: 'models/gemini-2.0-flash', apiKey: _apiKey!);
       final prompt = '''
       選挙コンサルとして以下の戦略を評価し、より有権者に響くキャッチコピーにリライトしてください。
       戦略: ${_strategyController.text}
       選挙区: $_myDistrict
       出力形式: Score: [0-100] Feedback: [評価] Rewrite: [改善案]
       ''';
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text ?? '';
+      final text = await _callGeminiViaEdge(prompt);
       int score = 50;
       String feedback = text;
       final scoreMatch = RegExp(r'Score:\s*(\d+)').firstMatch(text);
@@ -359,7 +345,6 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
 
   // --- Vision Logic ---
   Future<void> _pickAndAnalyzeImage() async {
-    if (_apiKey == null) return;
     final picker = ImagePicker();
     final XFile? image =
         await picker.pickImage(source: ImageSource.gallery, maxWidth: 800);
@@ -367,18 +352,18 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     setState(() => _isBusy = true);
     try {
       final bytes = await image.readAsBytes();
-      final model =
-          GenerativeModel(model: 'models/gemini-2.0-flash', apiKey: _apiKey!);
-      final prompt = TextPart('''
+      const prompt = '''
       選挙ポスター診断:
       1. インパクトと視認性
       2. 「手取りを増やす」のメッセージ性
       3. 印象評価
       出力: Score: [0-100] Advice: [詳細]
-      ''');
-      final content = Content.multi([prompt, DataPart('image/jpeg', bytes)]);
-      final response = await model.generateContent([content]);
-      final text = response.text ?? '';
+      ''';
+      final text = await _callGeminiViaEdge(
+        prompt,
+        imageBase64: base64Encode(bytes),
+        mimeType: 'image/jpeg',
+      );
       int score = 50;
       String advice = text;
       final scoreMatch = RegExp(r'Score:\s*(\d+)').firstMatch(text);
