@@ -75,42 +75,53 @@ serve(async (req) => {
       const q = query.toLowerCase();
       const results: Array<{ type: string; title: string; snippet: string; id: string; score: number; date: string }> = [];
 
-      // Search notes
-      if (!type || type === "notes" || type === "all") {
-        let notesQuery = adminClient.from("notes").select("id, title, content, tags, created_at").eq("user_id", user.id);
+      const searchNotes = !type || type === "notes" || type === "all";
+      const searchTasks = !type || type === "tasks" || type === "all";
+
+      // Build notes query
+      const buildNotesQuery = () => {
+        let notesQuery = adminClient
+          .from("notes")
+          .select("id, title, content, tags, created_at")
+          .eq("user_id", user.id);
         if (since) notesQuery = notesQuery.gte("created_at", since);
-        const { data: notes } = await notesQuery.limit(100);
+        return notesQuery.limit(100);
+      };
 
-        for (const note of notes ?? []) {
-          const title = (note.title ?? "").toLowerCase();
-          const content = (note.content ?? "").toLowerCase();
-          let score = 0;
-          if (title.includes(q)) score += 10;
-          if (content.includes(q)) score += 5;
-          const tags = (note.tags as string[]) ?? [];
-          if (tags.some((t) => t.toLowerCase().includes(q))) score += 3;
+      // Run all applicable searches in parallel
+      const [notesResult, tasksResult] = await Promise.all([
+        searchNotes ? buildNotesQuery() : Promise.resolve({ data: null }),
+        searchTasks
+          ? adminClient.from("agent_tasks").select("id, title, description, created_at").limit(100)
+          : Promise.resolve({ data: null }),
+      ]);
 
-          if (score > 0) {
-            const idx = content.indexOf(q);
-            const snippetStart = Math.max(0, idx - 30);
-            const snippet = content.substring(snippetStart, snippetStart + 100) + "...";
-            results.push({ type: "note", title: note.title ?? "無題", snippet, id: note.id, score, date: note.created_at });
-          }
+      // Process notes results
+      for (const note of notesResult.data ?? []) {
+        const title = ((note as Record<string, unknown>).title as string ?? "").toLowerCase();
+        const content = ((note as Record<string, unknown>).content as string ?? "").toLowerCase();
+        let score = 0;
+        if (title.includes(q)) score += 10;
+        if (content.includes(q)) score += 5;
+        const tags = ((note as Record<string, unknown>).tags as string[]) ?? [];
+        if (tags.some((t) => t.toLowerCase().includes(q))) score += 3;
+        if (score > 0) {
+          const idx = content.indexOf(q);
+          const snippetStart = Math.max(0, idx - 30);
+          const snippet = content.substring(snippetStart, snippetStart + 100) + "...";
+          results.push({ type: "note", title: (note as Record<string, unknown>).title as string ?? "無題", snippet, id: (note as Record<string, unknown>).id as string, score, date: (note as Record<string, unknown>).created_at as string });
         }
       }
 
-      // Search analytics-based items (tasks, events, etc.)
-      if (!type || type === "tasks" || type === "all") {
-        const { data: tasks } = await adminClient.from("agent_tasks").select("id, title, description, created_at").limit(100);
-        for (const task of tasks ?? []) {
-          const title = (task.title ?? "").toLowerCase();
-          const desc = (task.description ?? "").toLowerCase();
-          let score = 0;
-          if (title.includes(q)) score += 8;
-          if (desc.includes(q)) score += 4;
-          if (score > 0) {
-            results.push({ type: "task", title: task.title ?? "無題タスク", snippet: (task.description ?? "").substring(0, 100), id: task.id, score, date: task.created_at });
-          }
+      // Process tasks results
+      for (const task of tasksResult.data ?? []) {
+        const title = ((task as Record<string, unknown>).title as string ?? "").toLowerCase();
+        const desc = ((task as Record<string, unknown>).description as string ?? "").toLowerCase();
+        let score = 0;
+        if (title.includes(q)) score += 8;
+        if (desc.includes(q)) score += 4;
+        if (score > 0) {
+          results.push({ type: "task", title: (task as Record<string, unknown>).title as string ?? "無題タスク", snippet: ((task as Record<string, unknown>).description as string ?? "").substring(0, 100), id: (task as Record<string, unknown>).id as string, score, date: (task as Record<string, unknown>).created_at as string });
         }
       }
 
