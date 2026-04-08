@@ -53,29 +53,31 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // ---- 並列取得: 登録ユーザー数 + 計画データ + 開発実績件数 ----
+    // ---- 並列取得: 登録ユーザー数(正確) + 計画データ + 開発実績件数 ----
+    // auth.admin.listUsers を使用して user_profiles 未作成ユーザーも含む正確な数を取得
     const [
-      { count: userCount, error: countError },
+      authListResult,
       { data: plansData, error: plansError },
       { count: achievementsCount },
     ] = await Promise.all([
-      admin.from("user_profiles").select("user_id", { count: "exact", head: true }),
+      admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
       admin
         .from("growth_plans")
-        .select("label, deadline, target, features_done, features_total")
+        .select("label, deadline, target, features_done, features_total, sort_order")
+        .order("sort_order", { ascending: true })
         .order("target", { ascending: true }),
       admin
         .from("development_achievements")
         .select("id", { count: "exact", head: true }),
     ]);
 
-    if (countError) throw new Error(countError.message);
-
+    // auth.admin.listUsers returns total in data.total
+    const totalUsers: number = (authListResult.data?.total as number | undefined) ?? 0;
     const totalAchievements = achievementsCount ?? 0;
 
     if (plansError) {
       return jsonResponse({
-        userCount: userCount ?? 0,
+        userCount: totalUsers,
         achievementsCount: totalAchievements,
         plans: _withAchievements(DEFAULT_PLANS, totalAchievements),
       });
@@ -87,6 +89,7 @@ serve(async (req) => {
       target: number;
       features_done: number;
       features_total: number;
+      sort_order?: number;
     }>;
 
     if (plans.length === 0) {
@@ -100,7 +103,7 @@ serve(async (req) => {
     }
 
     return jsonResponse({
-      userCount: userCount ?? 0,
+      userCount: totalUsers,
       achievementsCount: totalAchievements,
       plans: _withAchievements(plans, totalAchievements),
     });

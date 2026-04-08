@@ -1470,7 +1470,7 @@ const COMPETITOR_DATA = [
   // Claude Cowork
   // -------------------------------------------------------------------------
   {
-    id: "claude-works",
+    id: "claude-cowork",
     name: "Claude Cowork",
     features: [
       // ---- 法人・チーム AI ----

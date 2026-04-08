@@ -57,15 +57,17 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "POST") {
-      throw new Error("Method not allowed.");
+    if (req.method !== "POST" && req.method !== "GET") {
+      throw new Error("Method not allowed. Use GET or POST.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    const body =
-      (await req.json().catch(() => ({}))) as WeeklyDigestRequest;
+    const url = new URL(req.url);
+    const body = req.method === "GET"
+      ? ({ endDate: url.searchParams.get("endDate") ?? undefined } as WeeklyDigestRequest)
+      : (await req.json().catch(() => ({}))) as WeeklyDigestRequest;
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -89,27 +91,39 @@ serve(async (req) => {
     const channelDefs = [
       {
         id: "landing",
-        label: "Landing page",
+        label: "ランディングページ",
         touch: "touch_landing",
         signup: "signup_submit_landing",
       },
       {
         id: "import",
-        label: "Import",
+        label: "インポート",
         touch: "touch_import",
         signup: "signup_submit_import",
       },
       {
         id: "public_memo",
-        label: "Public memo",
+        label: "公開メモ",
         touch: "touch_public_memo",
         signup: "signup_submit_public_memo",
       },
       {
         id: "referral",
-        label: "Referral",
+        label: "紹介",
         touch: "touch_referral",
         signup: "signup_submit_referral",
+      },
+      {
+        id: "comparison",
+        label: "競合比較ページ",
+        touch: "touch_comparison",
+        signup: "signup_submit_comparison",
+      },
+      {
+        id: "guitar",
+        label: "ギタースタジオ",
+        touch: "touch_guitar_gallery",
+        signup: "signup_submit_guitar",
       },
     ];
 
