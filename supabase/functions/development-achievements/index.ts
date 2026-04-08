@@ -123,7 +123,7 @@ serve(async (req) => {
         .from("development_achievements")
         .insert({ title, description, completed_at: completedAt });
       if (error) throw new Error(error.message);
-      return jsonResponse({ success: true });
+      return jsonResponse({ success: true, title, description, completed_at: completedAt });
     }
 
     // ---- GET ----

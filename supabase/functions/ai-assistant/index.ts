@@ -31,7 +31,7 @@ const MODEL_CATALOG = [
         score: 980,
     },
     {
-        name: 'gpt-5.4',
+        name: 'gpt-4o',
         provider: 'OpenAI',
         description: '品質重視の推奨モデル',
         score: 970,
