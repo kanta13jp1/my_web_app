@@ -13,6 +13,10 @@ on:
       - develop
   workflow_call:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint-and-test:
     name: Lint, Format, and Test
