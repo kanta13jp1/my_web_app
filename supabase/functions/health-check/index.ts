@@ -58,12 +58,15 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
+    const FIREBASE_URL = "https://my-web-app-b67f4.web.app/";
+
     // --- Run all checks in parallel for minimal response latency ---
     const dbStart = Date.now();
     const [
       dbResult,
       tableCheckResults,
       achievementsResult,
+      firebaseResult,
     ] = await Promise.all([
       // Check 1: DB connectivity (user_profiles count + latency)
       supabase
@@ -82,6 +85,19 @@ serve(async (req) => {
       supabase
         .from("development_achievements")
         .select("*", { count: "exact", head: true }),
+      // Check 4: Firebase Hosting availability
+      (async () => {
+        const start = Date.now();
+        try {
+          const res = await fetch(FIREBASE_URL, {
+            method: "HEAD",
+            signal: AbortSignal.timeout(10_000),
+          });
+          return { ok: res.ok, status: res.status, latencyMs: Date.now() - start };
+        } catch (e) {
+          return { ok: false, status: 0, latencyMs: Date.now() - start, error: String(e) };
+        }
+      })(),
     ]);
     const dbLatency = Date.now() - dbStart;
 
@@ -110,7 +126,7 @@ serve(async (req) => {
     let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
     if (dbResult.error) {
       overallStatus = "unhealthy";
-    } else if (inaccessibleTables.length > 0) {
+    } else if (inaccessibleTables.length > 0 || !firebaseResult.ok) {
       overallStatus = "degraded";
     }
 
@@ -123,7 +139,14 @@ serve(async (req) => {
         tables: tablesCheck,
         userCount: (dbResult.count as number | null) ?? 0,
         achievementsCount: (achievementsResult.count as number | null) ?? 0,
-        edgeFunctions: { status: "ok" },
+        hosting: firebaseResult.ok
+          ? { status: "ok" as const, latencyMs: firebaseResult.latencyMs }
+          : {
+            status: "error" as const,
+            httpStatus: firebaseResult.status,
+            latencyMs: firebaseResult.latencyMs,
+            error: (firebaseResult as { error?: string }).error,
+          },
       },
     };
 

@@ -152,6 +152,7 @@ serve(async (req) => {
       todayViews,
       todayShares: toNumber(analyticsRow["share_count"]),
       topShareChannelKey,
+      topShareChannelCount,
       lpSeries,
       recentAchievements,
     });
