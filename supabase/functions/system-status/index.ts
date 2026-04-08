@@ -160,7 +160,7 @@ serve(async (req) => {
     if (req.method === "POST") {
       // Only admin can report incidents
       const authHeader = req.headers.get("Authorization");
-      if (!authHeader || !authHeader.includes(SERVICE_ROLE_KEY)) {
+      if (!authHeader || authHeader !== `Bearer ${SERVICE_ROLE_KEY}`) {
         return new Response(
           JSON.stringify({ success: false, error: "Admin access required" }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
