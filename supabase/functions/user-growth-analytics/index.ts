@@ -22,27 +22,42 @@ serve(async (req: Request) => {
 
     // GET: User growth overview
     if (action === "overview") {
-      // Get total user count from auth.users via get-admin-users pattern
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers({
-        perPage: 1000,
-      });
-
-      if (usersError) {
-        return new Response(
-          JSON.stringify({ error: usersError.message }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const totalUsers = users?.length ?? 0;
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const weekStart = new Date(now.getTime() - 7 * 86400000).toISOString();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
 
-      const usersToday = users?.filter(u => u.created_at >= todayStart).length ?? 0;
-      const usersThisWeek = users?.filter(u => u.created_at >= weekStart).length ?? 0;
-      const usersThisMonth = users?.filter(u => u.created_at >= monthStart).length ?? 0;
+      // Run all three fetches in parallel (time boundaries don't depend on users list)
+      const [usersResult, signupEventsResult, referralEventsResult] = await Promise.all([
+        supabase.auth.admin.listUsers({ perPage: 1000 }),
+        supabase
+          .from("app_analytics")
+          .select("metadata")
+          .eq("metadata->>event_type", "user_signup")
+          .gte("created_at", monthStart)
+          .limit(500),
+        supabase
+          .from("app_analytics")
+          .select("metadata")
+          .eq("source", "growth-referral")
+          .gte("created_at", monthStart)
+          .limit(500),
+      ]);
+
+      if (usersResult.error) {
+        return new Response(
+          JSON.stringify({ error: usersResult.error.message }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const users = usersResult.data?.users ?? [];
+      const totalUsers = users.length;
+
+      const usersToday = users.filter((u) => u.created_at >= todayStart).length;
+      const usersThisWeek = users.filter((u) => u.created_at >= weekStart).length;
+      const usersThisMonth = users.filter((u) => u.created_at >= monthStart).length;
 
       // Daily registration trend (last 30 days)
       const dailyTrend: Array<{ date: string; registrations: number; cumulative: number }> = [];
@@ -50,39 +65,28 @@ serve(async (req: Request) => {
         const dayStart = new Date(now.getTime() - i * 86400000);
         const dayStr = dayStart.toISOString().split("T")[0];
         const dayEnd = new Date(dayStart.getTime() + 86400000);
-        const count = users?.filter(u =>
+        const count = users.filter((u) =>
           u.created_at >= dayStart.toISOString() && u.created_at < dayEnd.toISOString()
-        ).length ?? 0;
-
-        const cumulative = users?.filter(u =>
+        ).length;
+        const cumulative = users.filter((u) =>
           u.created_at < dayEnd.toISOString()
-        ).length ?? 0;
-
+        ).length;
         dailyTrend.push({ date: dayStr, registrations: count, cumulative });
       }
 
-      // Registration source analysis from app_analytics
-      const { data: signupEvents } = await supabase
-        .from("app_analytics")
-        .select("metadata")
-        .eq("metadata->>event_type", "user_signup")
-        .gte("created_at", monthStart)
-        .limit(500);
-
+      // Registration source analysis
       const sourceBreakdown: Record<string, number> = {};
-      for (const event of (signupEvents ?? [])) {
+      for (const event of (signupEventsResult.data ?? [])) {
         const ed = event.metadata as Record<string, unknown>;
         const source = (ed?.source as string) ?? "direct";
         sourceBreakdown[source] = (sourceBreakdown[source] ?? 0) + 1;
       }
 
       // Growth rate calculation
-      const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
       const prevMonthEnd = monthStart;
-      const usersPrevMonth = users?.filter(u =>
+      const usersPrevMonth = users.filter((u) =>
         u.created_at >= prevMonthStart && u.created_at < prevMonthEnd
-      ).length ?? 0;
-
+      ).length;
       const monthlyGrowthRate = usersPrevMonth > 0
         ? Math.round(((usersThisMonth - usersPrevMonth) / usersPrevMonth) * 100)
         : usersThisMonth > 0 ? 100 : 0;
@@ -95,14 +99,7 @@ serve(async (req: Request) => {
         : 0;
 
       // Viral coefficient (k-factor) from referrals
-      const { data: referralEvents } = await supabase
-        .from("app_analytics")
-        .select("metadata")
-        .eq("source", "growth-referral")
-        .gte("created_at", monthStart)
-        .limit(500);
-
-      const totalReferrals = referralEvents?.length ?? 0;
+      const totalReferrals = referralEventsResult.data?.length ?? 0;
       const kFactor = totalUsers > 0 ? Math.round((totalReferrals / totalUsers) * 100) / 100 : 0;
 
       return new Response(
