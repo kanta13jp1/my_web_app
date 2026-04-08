@@ -26,7 +26,7 @@
 | `concurrency` 制御 (並列実行防止) | ✅ 全10本 |
 | `timeout-minutes` (ハング防止) | ✅ 全10本 |
 | `schedule_task_runs` DB記録 | ✅ スケジュール7本 |
-| `$GITHUB_STEP_SUMMARY` | ✅ CI + スケジュール5本 |
+| `$GITHUB_STEP_SUMMARY` | ✅ 全10本 |
 | `dependabot` 自動更新 | ✅ Actions + pub (毎週月曜) |
 
 ## ワークフロー詳細

@@ -56,6 +56,21 @@ jobs:
                   "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
                   --max-time 10 || true
 
+            - name: Job Summary
+              if: always()
+              run: |
+                STATUS="${{ job.status }}"
+                ICON=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+                {
+                  echo "## Python Analysis Batch $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+                  echo ""
+                  echo "| 項目 | 状態 |"
+                  echo "|-----|------|"
+                  echo "| batch_analysis.py | $ICON $STATUS |"
+                  echo ""
+                  echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
+                } >> $GITHUB_STEP_SUMMARY
+
             - name: Notify Slack on Failure
               if: failure()
               run: |

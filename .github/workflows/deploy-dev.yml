@@ -139,6 +139,22 @@ jobs:
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
 
+      - name: Job Summary
+        if: always()
+        run: |
+          BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "❌")
+          {
+            echo "## Deploy to Development — \`${GITHUB_SHA:0:7}\`"
+            echo ""
+            echo "| 項目 | 状態 |"
+            echo "|-----|------|"
+            echo "| Flutter build web | $BUILD_OK |"
+            echo "| Firebase channel | dev |"
+            echo "| URL | https://my-web-app-b67f4--dev.web.app |"
+            echo ""
+            echo "**Actor**: ${{ github.actor }} | **Branch**: \`${{ github.ref_name }}\`"
+          } >> $GITHUB_STEP_SUMMARY
+
   notify:
     name: Notify Deployment Status
     runs-on: ubuntu-latest
