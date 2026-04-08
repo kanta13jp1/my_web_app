@@ -51,6 +51,7 @@ serve(async (req) => {
       authUsersResult,
       analyticsResult,
       lpStatsResult,
+      recentAchievementsResult,
     ] = await Promise.all([
       admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
       admin
@@ -59,6 +60,11 @@ serve(async (req) => {
         .eq("date", todayKey)
         .maybeSingle(),
       admin.rpc("get_lp_view_stats"),
+      admin
+        .from("development_achievements")
+        .select("title, description, completed_at")
+        .order("completed_at", { ascending: false })
+        .limit(5),
     ]);
 
     // ---- Total users (from auth.users) --------------------------------
@@ -133,6 +139,12 @@ serve(async (req) => {
       }
     }
 
+    const recentAchievements = (recentAchievementsResult.data ?? []) as Array<{
+      title: string;
+      description: string | null;
+      completed_at: string;
+    }>;
+
     return jsonResponse({
       success: true,
       totalUsers,
@@ -141,6 +153,7 @@ serve(async (req) => {
       todayShares: toNumber(analyticsRow["share_count"]),
       topShareChannelKey,
       lpSeries,
+      recentAchievements,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

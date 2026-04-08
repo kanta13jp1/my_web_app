@@ -93,36 +93,50 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const body = (await req.json().catch(() => ({}))) as {
-      action?: string;
-      period?: string;
-      title?: string;
-    };
+    // Support both GET query params and POST JSON body
+    const url = new URL(req.url);
+    const isGet = req.method === "GET";
+    const body = isGet
+      ? ({} as Record<string, unknown>)
+      : (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
-    const action = body.action ?? "get";
+    const getParam = (key: string): string | undefined =>
+      isGet ? (url.searchParams.get(key) ?? undefined) : undefined;
+
+    const action = (body.action as string | undefined) ?? getParam("action") ?? "get";
+    const periodParam = (body.period as string | undefined) ?? getParam("period");
+    const limitParam = Number((body.limit as number | undefined) ?? getParam("limit") ?? 200);
+    const offsetParam = Number((body.offset as number | undefined) ?? getParam("offset") ?? 0);
 
     // ---- ADD ----
     if (action === "add") {
-      const title = (body.title ?? "").trim();
+      const title = String(body.title ?? "").trim();
       if (!title) {
         return jsonResponse({ error: "title is required" }, 400);
       }
+      // Allow caller to specify a custom completed_at date (e.g. seed scripts)
+      const completedAt = body.completed_at
+        ? new Date(body.completed_at as string).toISOString()
+        : new Date().toISOString();
+      const description = String(body.description ?? "").trim() || null;
       const { error } = await admin
         .from("development_achievements")
-        .insert({ title, completed_at: new Date().toISOString() });
+        .insert({ title, description, completed_at: completedAt });
       if (error) throw new Error(error.message);
       return jsonResponse({ success: true });
     }
 
     // ---- GET ----
-    const period = body.period ?? "すべての実績";
+    const period = periodParam ?? "すべての実績";
     const since = calcSince(period);
+    const limitVal = Math.min(limitParam, 500);
+    const offsetVal = offsetParam;
 
     let query = admin
       .from("development_achievements")
-      .select("title, completed_at")
+      .select("title, description, completed_at")
       .order("completed_at", { ascending: false })
-      .limit(200);
+      .range(offsetVal, offsetVal + limitVal - 1);
 
     if (since !== null) {
       query = query.gte("completed_at", since);
@@ -131,7 +145,7 @@ serve(async (req) => {
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
-    return jsonResponse({ achievements: data ?? [] });
+    return jsonResponse({ achievements: data ?? [], period, offset: offsetVal, limit: limitVal });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     return jsonResponse({ error: message, achievements: [] }, 500);
