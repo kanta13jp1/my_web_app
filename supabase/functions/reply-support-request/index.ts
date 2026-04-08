@@ -89,55 +89,57 @@ serve(async (req) => {
 
     if (updateErr) throw updateErr;
 
-    // Send email if address available and not escalating
+    // Send user reply email and admin notification in parallel
     const email: string | null = ticket.email ?? null;
-    let emailSent = false;
+    const title: string = ticket.title ?? "(無題)";
 
-    if (email && email.trim() !== "" && !escalate && RESEND_API_KEY !== "") {
-      const title: string = ticket.title ?? "(無題)";
-      const subject = `【自分株式会社】「${title}」へのご返信`;
-      const bodyHtml = buildEmailHtml(title, reply ?? "");
+    const shouldSendUserEmail =
+      email !== null && email.trim() !== "" && !escalate && RESEND_API_KEY !== "";
+    const shouldSendAdminEmail = RESEND_API_KEY !== "" && ADMIN_EMAIL !== "";
 
-      const resendResp = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: FROM_EMAIL,
-          to: [email],
-          subject,
-          html: bodyHtml,
-        }),
-      });
+    const adminSubject = escalate
+      ? `[要対応] エスカレーション: 「${title}」`
+      : `[CS自動対応] 返信済み: 「${title}」`;
+    const adminBodyHtml = escalate
+      ? `<p>Claude が判断できなかったためエスカレーションされました。</p><p><b>チケット:</b> ${title}</p><p><a href="${APP_URL}">管理画面を確認</a></p>`
+      : `<p>Claude が以下のチケットに自動返信しました。</p><p><b>チケット:</b> ${title}</p><p><b>返信内容:</b> ${(reply ?? "").replace(/\n/g, "<br>")}</p><p><a href="${APP_URL}">管理画面を確認</a></p>`;
 
-      emailSent = resendResp.ok;
-    }
+    const [userEmailResp] = await Promise.all([
+      // User reply email
+      shouldSendUserEmail
+        ? fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: FROM_EMAIL,
+            to: [email as string],
+            subject: `【自分株式会社】「${title}」へのご返信`,
+            html: buildEmailHtml(title, reply ?? ""),
+          }),
+        })
+        : Promise.resolve(null),
+      // Admin notification (fire-and-forget — ignore failures)
+      shouldSendAdminEmail
+        ? fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: FROM_EMAIL,
+            to: [ADMIN_EMAIL],
+            subject: adminSubject,
+            html: adminBodyHtml,
+          }),
+        }).catch(() => null)
+        : Promise.resolve(null),
+    ]);
 
-    // Notify admin on escalation or when auto-reply is sent
-    if (RESEND_API_KEY !== "" && ADMIN_EMAIL !== "") {
-      const title: string = ticket.title ?? "(無題)";
-      const adminSubject = escalate
-        ? `[要対応] エスカレーション: 「${title}」`
-        : `[CS自動対応] 返信済み: 「${title}」`;
-      const adminBody = escalate
-        ? `<p>Claude が判断できなかったためエスカレーションされました。</p><p><b>チケット:</b> ${title}</p><p><a href="${APP_URL}">管理画面を確認</a></p>`
-        : `<p>Claude が以下のチケットに自動返信しました。</p><p><b>チケット:</b> ${title}</p><p><b>返信内容:</b> ${(reply ?? "").replace(/\n/g, "<br>")}</p><p><a href="${APP_URL}">管理画面を確認</a></p>`;
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: FROM_EMAIL,
-          to: [ADMIN_EMAIL],
-          subject: adminSubject,
-          html: adminBody,
-        }),
-      }).catch(() => {/* ignore admin notify failures */});
-    }
+    const emailSent = userEmailResp?.ok ?? false;
 
     return new Response(
       JSON.stringify({

@@ -18,6 +18,7 @@ type AdminClient = any;
 //
 // Returns a health status JSON for the application.
 // Checks database connectivity, key table accessibility, and counts.
+// All checks run in parallel via Promise.all for minimal latency.
 //
 // Auth: Bearer token with the SERVICE_ROLE_KEY.
 // -----------------------------------------------------------------------
@@ -57,55 +58,61 @@ serve(async (req) => {
       auth: { persistSession: false },
     });
 
-    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
-
-    // --- Check 1: Database connectivity (user_profiles count) ---
+    // --- Run all checks in parallel for minimal response latency ---
     const dbStart = Date.now();
-    const { count: userCount, error: dbError } = await supabase
-      .from("user_profiles")
-      .select("*", { count: "exact", head: true });
+    const [
+      dbResult,
+      tableCheckResults,
+      achievementsResult,
+    ] = await Promise.all([
+      // Check 1: DB connectivity (user_profiles count + latency)
+      supabase
+        .from("user_profiles")
+        .select("*", { count: "exact", head: true }),
+      // Check 2: All required tables accessibility in parallel
+      Promise.all(
+        (REQUIRED_TABLES as readonly string[]).map(async (table: string) => {
+          const { error } = await supabase
+            .from(table)
+            .select("*", { count: "exact", head: true });
+          return { table, ok: !error };
+        }),
+      ),
+      // Check 3: Achievements count
+      supabase
+        .from("development_achievements")
+        .select("*", { count: "exact", head: true }),
+    ]);
     const dbLatency = Date.now() - dbStart;
 
-    const dbCheck = dbError
-      ? { status: "error" as const, error: dbError.message, latencyMs: dbLatency }
+    // --- Aggregate DB check ---
+    const dbCheck = dbResult.error
+      ? { status: "error" as const, error: String(dbResult.error.message), latencyMs: dbLatency }
       : { status: "ok" as const, latencyMs: dbLatency };
 
-    if (dbError) {
-      overallStatus = "unhealthy";
-    }
-
-    // --- Check 2: Key tables accessibility ---
-    const accessibleTables: string[] = [];
-    const inaccessibleTables: string[] = [];
-
-    for (const table of REQUIRED_TABLES) {
-      const { error: tableError } = await supabase
-        .from(table)
-        .select("*", { count: "exact", head: true });
-
-      if (tableError) {
-        inaccessibleTables.push(table);
-      } else {
-        accessibleTables.push(table);
-      }
-    }
+    // --- Aggregate table checks ---
+    const accessibleTables: string[] = tableCheckResults
+      .filter((r: { table: string; ok: boolean }) => r.ok)
+      .map((r: { table: string; ok: boolean }) => r.table);
+    const inaccessibleTables: string[] = tableCheckResults
+      .filter((r: { table: string; ok: boolean }) => !r.ok)
+      .map((r: { table: string; ok: boolean }) => r.table);
 
     const tablesCheck = inaccessibleTables.length === 0
       ? { status: "ok" as const, accessible: accessibleTables }
       : {
-          status: "degraded" as const,
-          accessible: accessibleTables,
-          inaccessible: inaccessibleTables,
-        };
+        status: "degraded" as const,
+        accessible: accessibleTables,
+        inaccessible: inaccessibleTables,
+      };
 
-    if (inaccessibleTables.length > 0 && overallStatus === "healthy") {
+    // --- Overall status ---
+    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
+    if (dbResult.error) {
+      overallStatus = "unhealthy";
+    } else if (inaccessibleTables.length > 0) {
       overallStatus = "degraded";
     }
-
-    // --- Check 3: Counts ---
-    const { count: achievementsCount } = await supabase
-      .from("development_achievements")
-      .select("*", { count: "exact", head: true });
 
     // --- Build response ---
     const result = {
@@ -114,8 +121,8 @@ serve(async (req) => {
       checks: {
         database: dbCheck,
         tables: tablesCheck,
-        userCount: userCount ?? 0,
-        achievementsCount: achievementsCount ?? 0,
+        userCount: (dbResult.count as number | null) ?? 0,
+        achievementsCount: (achievementsResult.count as number | null) ?? 0,
         edgeFunctions: { status: "ok" },
       },
     };

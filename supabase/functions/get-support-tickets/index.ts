@@ -51,7 +51,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "競合アプリとの違いを教えてほしい",
-    a: "Notion・Evernote・MoneyForward・Slack・Amazon など14の競合SaaSの機能を1つに統合したAI統合プラットフォームです。https://my-web-app-b67f4.web.app/vs-notion などの比較ページもご覧ください。",
+    a: "Notion・Evernote・MoneyForward・Slack・Amazon・Google・Microsoft・Discord・LINE・Facebook など21の競合SaaSの機能を1つに統合したAI統合プラットフォームです。https://my-web-app-b67f4.web.app/vs-notion などの比較ページもご覧ください。",
   },
 ];
 
