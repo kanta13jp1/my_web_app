@@ -40,8 +40,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
       final response = await _supabase.functions.invoke('ai-summarizer');
       final data = response.data;
       if (data is Map<String, dynamic> && data['summaries'] is List) {
-        setState(() => _summaries =
-            (data['summaries'] as List).cast<Map<String, dynamic>>());
+        setState(
+          () => _summaries =
+              (data['summaries'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _summaries = []);
       }
@@ -126,8 +128,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 8),
-              Text(_errorMessage!,
-                  style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
             ],
             if (_summary != null) ...[
               const SizedBox(height: 12),
@@ -144,11 +148,13 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('要約結果',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(color: Colors.indigo)),
+                    Text(
+                      '要約結果',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(color: Colors.indigo),
+                    ),
                     const SizedBox(height: 4),
                     Text(_summary!),
                   ],

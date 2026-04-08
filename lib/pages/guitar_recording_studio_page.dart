@@ -907,9 +907,40 @@ class _GuitarRecordingStudioPageState
     }
   }
 
-  Future<void> _postToX(String title, String recordingId) async {
+  Future<void> _postToX(
+    String title,
+    String recordingId, {
+    bool isPublic = false,
+  }) async {
     setState(() => _isPostingToX = true);
     try {
+      final user = _supabase.auth.currentUser;
+      // Auto-post via Edge Function when recording is public and user is logged in
+      if (isPublic &&
+          recordingId.isNotEmpty &&
+          recordingId != 'unknown' &&
+          user != null) {
+        final res = await _supabase.functions.invoke(
+          'guitar-recording-studio',
+          body: {'action': 'share_to_x', 'recordingId': recordingId},
+        );
+        final data = res.data as Map<String, dynamic>?;
+        final success = data?['success'] as bool? ?? false;
+        if (!mounted) return;
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ X に自動投稿しました (@kanta13jp1)'),
+              backgroundColor: Color(0xFF1DA1F2),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return;
+        }
+        // Edge Function failed — fall through to intent
+      }
+
+      // Fallback: open Twitter intent (manual post)
       final shareUrl =
           recordingId.isNotEmpty && recordingId != 'unknown'
               ? _buildShareUrl(recordingId)
@@ -930,7 +961,7 @@ class _GuitarRecordingStudioPageState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('X 投稿画面を開けませんでした: $e'),
+            content: Text('X 投稿できませんでした: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -2307,7 +2338,11 @@ class _GuitarRecordingStudioPageState
                               final title = _titleController.text.trim().isNotEmpty
                                   ? _titleController.text.trim()
                                   : '新しい録音';
-                              _postToX(title, _savedRecordingId ?? 'unknown');
+                              _postToX(
+                                title,
+                                _savedRecordingId ?? 'unknown',
+                                isPublic: _isPublic,
+                              );
                             },
                       icon: _isPostingToX
                           ? const SizedBox(
@@ -3015,7 +3050,8 @@ class _GuitarRecordingStudioPageState
                       ),
                       if (recordingId.isNotEmpty) ...[
                         IconButton(
-                          onPressed: () => _postToX(title, recordingId),
+                          onPressed: () =>
+                              _postToX(title, recordingId, isPublic: isPublicRec),
                           icon: const Icon(Icons.open_in_new, color: Color(0xFF1DA1F2)),
                           visualDensity: VisualDensity.compact,
                           tooltip: 'Xに投稿',

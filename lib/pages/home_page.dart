@@ -65,6 +65,10 @@ class _HomePageState extends State<HomePage> {
   late Future<String?> _aiNudgeFuture;
   late Future<List<String>> _recentToolIdsFuture;
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+
+  // Gemini 429 対策: グローバル排他ロック + 最小呼び出し間隔 (60秒)
+  static bool _nudgeCallInProgress = false;
+  static DateTime? _lastNudgeCallTime;
   _CalendarHighlightFilter _calendarHighlightFilter =
       _CalendarHighlightFilter.all;
   _KpiTrendRange _kpiTrendRange = _KpiTrendRange.oneMonth;
@@ -1218,12 +1222,27 @@ class _HomePageState extends State<HomePage> {
       return cached.trim();
     }
 
+    // 並列インスタンスによる 429 ストームを防ぐ:
+    // 別のインスタンスがすでに呼び出し中なら即座に null を返す
+    if (_nudgeCallInProgress) {
+      return null;
+    }
+    // 前回呼び出しから 60 秒未満ならスキップ
+    final now = DateTime.now();
+    if (_lastNudgeCallTime != null &&
+        now.difference(_lastNudgeCallTime!) <
+            const Duration(seconds: 60)) {
+      return null;
+    }
+
     try {
       final apiKey = await _loadHomeApiKey(prefs);
       if (apiKey == null) {
         return null;
       }
 
+      _nudgeCallInProgress = true;
+      _lastNudgeCallTime = DateTime.now();
       final model = _resolveHomeModel(prefs);
       final aiService = AIService(null, apiKey);
       final slipDetailsText = snapshot.abstinenceSlipDetails.isEmpty
@@ -1256,6 +1275,8 @@ abstinence_slip_details: $slipDetailsText
     } catch (e) {
       debugPrint('Home AI nudge generation failed: $e');
       return null;
+    } finally {
+      _nudgeCallInProgress = false;
     }
   }
 

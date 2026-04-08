@@ -41,8 +41,12 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
     }
   }
 
-  Widget _buildMetricCard(String label, String value, IconData icon,
-      Color color) {
+  Widget _buildMetricCard(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -53,17 +57,24 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
               children: [
                 Icon(icon, color: color, size: 20),
                 const SizedBox(width: 8),
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.grey)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
@@ -90,12 +101,15 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchForecast,
-                          child: const Text('再試行')),
+                        onPressed: _fetchForecast,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -106,10 +120,12 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('収益サマリー',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium),
+                          Text(
+                            '収益サマリー',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium,
+                          ),
                           const SizedBox(height: 12),
                           GridView.count(
                             crossAxisCount: 2,
@@ -156,15 +172,18 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                           ),
                           const SizedBox(height: 16),
                           if (_forecast!['insights'] is List) ...[
-                            Text('AI インサイト',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium),
+                            Text(
+                              'AI インサイト',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium,
+                            ),
                             const SizedBox(height: 8),
                             ...(_forecast!['insights'] as List)
                                 .map((insight) => Card(
                                       margin: const EdgeInsets.only(
-                                          bottom: 8),
+                                        bottom: 8,
+                                      ),
                                       child: ListTile(
                                         leading: const Icon(
                                           Icons.lightbulb,

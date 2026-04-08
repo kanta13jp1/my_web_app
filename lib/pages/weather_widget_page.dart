@@ -115,8 +115,9 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                                   children: [
                                     Icon(
                                       _weatherIcon(
-                                          _weather!['condition']
-                                              ?.toString()),
+                                        _weather!['condition']
+                                            ?.toString(),
+                                      ),
                                       size: 64,
                                       color: Colors.orange,
                                     ),
