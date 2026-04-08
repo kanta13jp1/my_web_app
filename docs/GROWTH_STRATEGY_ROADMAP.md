@@ -3606,3 +3606,24 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 - flutter analyze: 0 errors ✅
 - git push: ✅
 
+---
+
+## Session PowerShell#9 (2026-04-08): CI/CD deno lint強制ゲート追加
+
+### 実施内容
+
+1. **`.github/workflows/ci.yml` に deno lint ゲート追加**
+   - `Setup Deno v2.x` (`denoland/setup-deno@v2`) ステップを追加
+   - `deno lint --config supabase/functions/deno.json supabase/functions/` を lint-and-test ジョブへ追加
+   - `continue-on-error` なし — deno lint エラーは CI 失敗扱い
+   - プロジェクトルール「deno lint 常に0エラー」を CI/CD で強制化
+
+2. **GROWTH_STRATEGY_ROADMAP.md 更新** — 本セッション記録追記
+
+3. **Migration seed 追加**: `20260408000930_seed_achievements_ps9_deno_lint_ci.sql`
+
+### 品質確認
+
+- flutter analyze: 0 errors ✅
+- git push: ✅ (eda6de05)
+
