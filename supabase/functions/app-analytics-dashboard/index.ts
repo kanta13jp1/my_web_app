@@ -82,8 +82,12 @@ serve(async (req) => {
         );
       }
 
-      // デフォルト: KPI overview
-      const [usersRes, notesRes, achievementsRes, requestsRes, ticketsRes, blogsRes, notificationsRes] = await Promise.all([
+      // デフォルト: KPI overview — 9クエリを全て並列実行
+      const [
+        usersRes, notesRes, achievementsRes, requestsRes,
+        ticketsRes, blogsRes, notificationsRes,
+        recentUsersRes, funcStatusRes,
+      ] = await Promise.all([
         supabase.from("user_profiles").select("*", { count: "exact", head: true }),
         supabase.from("notes").select("*", { count: "exact", head: true }),
         supabase.from("development_achievements").select("*", { count: "exact", head: true }),
@@ -91,23 +95,22 @@ serve(async (req) => {
         supabase.from("support_tickets").select("*", { count: "exact", head: true }),
         supabase.from("blog_posts").select("*", { count: "exact", head: true }),
         supabase.from("app_notifications").select("*", { count: "exact", head: true }),
+        // 直近の登録ユーザー数変動
+        supabase
+          .from("user_profiles")
+          .select("created_at")
+          .gte("created_at", since)
+          .order("created_at", { ascending: true }),
+        // Edge Function 追跡数
+        supabase
+          .from("edge_function_ui_status")
+          .select("*", { count: "exact", head: true }),
       ]);
 
-      // 直近の登録ユーザー数変動
-      const { data: recentUsers } = await supabase
-        .from("user_profiles")
-        .select("created_at")
-        .gte("created_at", since)
-        .order("created_at", { ascending: true });
-
-      const userGrowth = (recentUsers ?? []).map((u) => ({
-        date: (u.created_at as string)?.slice(0, 10),
-      }));
-
-      // Edge Function 数
-      const { data: funcStatus } = await supabase
-        .from("edge_function_ui_status")
-        .select("*", { count: "exact", head: true });
+      const userGrowth = ((recentUsersRes.data ?? []) as Array<Record<string, unknown>>).map(
+        (u) => ({ date: (u.created_at as string)?.slice(0, 10) }),
+      );
+      const funcStatus = funcStatusRes;
 
       return new Response(
         JSON.stringify({
