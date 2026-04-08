@@ -53,6 +53,8 @@ serve(async (req) => {
       openFRResult,
       achievementsResult,
       growthPlansResult,
+      blogStatsResult,
+      streakStatsResult,
     ] = await Promise.all([
       // Total + new users today
       admin.auth.admin.listUsers({ perPage: 1 }),
@@ -82,6 +84,19 @@ serve(async (req) => {
         .select("name, current_value, target_value, plan_type")
         .eq("plan_type", "users")
         .order("sort_order", { ascending: true })
+        .limit(5),
+      // Blog posts published today
+      admin
+        .from("blog_posts")
+        .select("title, status, target_platforms, created_at", { count: "exact" })
+        .gte("created_at", `${today}T00:00:00.000Z`)
+        .lte("created_at", `${today}T23:59:59.999Z`),
+      // User streak summary (top streaks)
+      admin
+        .from("user_stats")
+        .select("user_id, current_streak, last_output_at")
+        .gt("current_streak", 0)
+        .order("current_streak", { ascending: false })
         .limit(5),
     ]);
 
@@ -131,6 +146,22 @@ serve(async (req) => {
       }),
     );
 
+    const blogPostsToday: number = blogStatsResult.count ?? 0;
+    const blogPostsTodayList: Array<{ title: string; status: string }> = (
+      blogStatsResult.data ?? []
+    ).map((r: Record<string, unknown>) => ({
+      title: String(r["title"] ?? ""),
+      status: String(r["status"] ?? ""),
+    }));
+
+    const topStreaks: Array<{ user_id: string; streak: number; lastOutputAt: string | null }> = (
+      streakStatsResult.data ?? []
+    ).map((r: Record<string, unknown>) => ({
+      user_id: String(r["user_id"] ?? ""),
+      streak: Number(r["current_streak"] ?? 0),
+      lastOutputAt: r["last_output_at"] ? String(r["last_output_at"]) : null,
+    }));
+
     const digest = {
       generatedAt: new Date().toISOString(),
       date: today,
@@ -145,6 +176,13 @@ serve(async (req) => {
       },
       recentAchievements,
       userGrowthPlans,
+      blog: {
+        postsToday: blogPostsToday,
+        postsTodayList: blogPostsTodayList,
+      },
+      streaks: {
+        topStreaks,
+      },
     };
 
     return new Response(JSON.stringify({ success: true, digest }), {

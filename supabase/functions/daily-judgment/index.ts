@@ -42,14 +42,81 @@ serve(async (req) => {
         const supabaseAdmin = createClient(
             SUPABASE_URL,
             SERVICE_ROLE_KEY,
-            {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false,
-                },
-            }
+            { auth: { autoRefreshToken: false, persistSession: false } }
         )
 
+        const url = new URL(req.url)
+        const body = req.method === 'POST'
+            ? (await req.json().catch(() => ({}))) as Record<string, unknown>
+            : {} as Record<string, unknown>
+        const action = (body.action as string | undefined) ?? url.searchParams.get('action') ?? 'judge'
+
+        // ── GET action=status: 全ユーザーの判定サマリー (管理者向け) ──
+        if (action === 'status') {
+            const [statsResult, penaltyResult] = await Promise.all([
+                supabaseAdmin.from('user_stats')
+                    .select('user_id, current_streak, last_output_at')
+                    .order('current_streak', { ascending: false })
+                    .limit(50),
+                supabaseAdmin.from('penalty_logs')
+                    .select('user_id, penalty_type, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(20),
+            ])
+            const stats = statsResult.data ?? []
+            const now = new Date()
+            const threshold = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+            const atRiskCount = stats.filter(u => {
+                if (!u.last_output_at) return u.current_streak > 0
+                return new Date(u.last_output_at) < threshold && u.current_streak > 0
+            }).length
+            return json200({
+                success: true,
+                totalTracked: stats.length,
+                atRiskCount,
+                topStreaks: stats.slice(0, 5).map(u => ({
+                    user_id: u.user_id,
+                    current_streak: u.current_streak,
+                    last_output_at: u.last_output_at,
+                })),
+                recentPenalties: penaltyResult.data ?? [],
+            })
+        }
+
+        // ── GET action=my_status: ログインユーザー自身のステータス ──
+        if (action === 'my_status') {
+            const authHeader = req.headers.get('Authorization')
+            if (!authHeader) return json200({ success: false, error: 'Unauthorized' }, 401)
+            const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+            const userClient = createClient(SUPABASE_URL, ANON_KEY, {
+                global: { headers: { Authorization: authHeader } },
+            })
+            const { data: { user } } = await userClient.auth.getUser()
+            if (!user) return json200({ success: false, error: 'Unauthorized' }, 401)
+            const { data: statsRow } = await supabaseAdmin.from('user_stats')
+                .select('current_streak, last_output_at, updated_at')
+                .eq('user_id', user.id)
+                .maybeSingle()
+            const { data: penalties } = await supabaseAdmin.from('penalty_logs')
+                .select('penalty_type, reason, amount_lost, created_at')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(5)
+            const now = new Date()
+            const threshold = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+            const isAtRisk = statsRow
+                ? (statsRow.current_streak > 0 && (!statsRow.last_output_at || new Date(statsRow.last_output_at) < threshold))
+                : false
+            return json200({
+                success: true,
+                streak: statsRow?.current_streak ?? 0,
+                lastOutputAt: statsRow?.last_output_at ?? null,
+                isAtRisk,
+                recentPenalties: penalties ?? [],
+            })
+        }
+
+        // ── Default action=judge: 24時間以上アウトプットがないユーザーを判定 ──
         // 1. 24時間以上アウトプットがないユーザーを抽出
         // ユーザー名を取得するために user_profiles を結合（外部キー設定が必要）
         // 設定がない場合はループ内で個別取得も可能ですが、ここでは効率のため結合を試みます
@@ -161,30 +228,25 @@ serve(async (req) => {
             })
         }
 
-        return new Response(
-            JSON.stringify({
-                success: true,
-                punished_count: results.length,
-                details: results
-            }),
-            {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
-            }
-        )
+        return json200({
+            success: true,
+            punished_count: results.length,
+            details: results,
+        })
 
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : String(error)
         console.error('Judgment error:', error)
-        return new Response(
-            JSON.stringify({ success: false, error: errorMessage }),
-            {
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 500,
-            }
-        )
+        return json200({ success: false, error: errorMessage }, 500)
     }
 })
+
+function json200(payload: unknown, status = 200): Response {
+    return new Response(JSON.stringify(payload), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status,
+    })
+}
 
 // ヘルパー関数: 通報メール送信 (Resend API使用例)
 async function sendAlertEmail({ apiKey, to, supporterName, userName, newTrustScore }: SendAlertEmailParams) {
