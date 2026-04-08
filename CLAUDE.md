@@ -27,9 +27,6 @@ google, microsoft, discord, line, facebook, liven, github
 UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
 
 - **自分株式会社デザイントークン**: `docs/DESIGN.md`
-- **デザインツール運用ガイド**: `docs/DESIGN_TOOLING_SETUP.md`
-- **MCP**: `.mcp.json` の `figma` / `aidesigner`
-- **Claude Design Skills**: `.claude/agents/design-skills.md`
 - **日本語UIリファレンス (awesome-design-md-jp)**:
   - `docs/design-systems/note/DESIGN.md` — note.com (teal #5ac8b8, line-height 2.0, 620px幅)
   - `docs/design-systems/freee/DESIGN.md` — freee (blue #2864f0, 4pxグリッド, システムフォント)

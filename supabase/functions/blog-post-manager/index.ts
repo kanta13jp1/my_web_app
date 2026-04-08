@@ -37,44 +37,50 @@ serve(async (req) => {
       const status = url.searchParams.get("status"); // draft | posted | skipped
       const platform = url.searchParams.get("platform");
       const limit = parseInt(url.searchParams.get("limit") ?? "30", 10);
+      const today = new Date().toISOString().slice(0, 10);
 
-      let query = supabase
+      // Build main posts query
+      let postsQuery = supabase
         .from("blog_posts")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(limit);
+      if (status) postsQuery = postsQuery.eq("status", status);
+      if (platform) postsQuery = postsQuery.contains("target_platforms", [platform]);
 
-      if (status) query = query.eq("status", status);
-      if (platform) query = query.contains("target_platforms", [platform]);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      // 各プラットフォーム別の投稿数
-      const platformStats: Record<string, number> = {};
-      for (const p of PLATFORMS) {
-        const { count } = await supabase
+      // Run main query, all platform counts, and today count in parallel
+      const [postsResult, platformCountResults, todayResult] = await Promise.all([
+        postsQuery,
+        Promise.all(
+          (PLATFORMS as readonly string[]).map((p) =>
+            supabase
+              .from("blog_posts")
+              .select("*", { count: "exact", head: true })
+              .eq("status", "posted")
+              .contains("target_platforms", [p])
+          ),
+        ),
+        supabase
           .from("blog_posts")
           .select("*", { count: "exact", head: true })
           .eq("status", "posted")
-          .contains("target_platforms", [p]);
-        platformStats[p] = count ?? 0;
-      }
+          .gte("posted_at", `${today}T00:00:00`),
+      ]);
 
-      // 今日の投稿数
-      const today = new Date().toISOString().slice(0, 10);
-      const { count: todayCount } = await supabase
-        .from("blog_posts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "posted")
-        .gte("posted_at", `${today}T00:00:00`);
+      if (postsResult.error) throw postsResult.error;
+
+      // Aggregate platform counts
+      const platformStats: Record<string, number> = {};
+      (PLATFORMS as readonly string[]).forEach((p, i) => {
+        platformStats[p] = (platformCountResults[i]?.count as number | null) ?? 0;
+      });
 
       return new Response(
         JSON.stringify({
           success: true,
-          posts: data ?? [],
+          posts: postsResult.data ?? [],
           platformStats,
-          todayPostedCount: todayCount ?? 0,
+          todayPostedCount: (todayResult.count as number | null) ?? 0,
           availablePlatforms: PLATFORMS,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
