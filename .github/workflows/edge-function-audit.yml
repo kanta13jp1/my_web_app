@@ -6,6 +6,10 @@ on:
     - cron: "47 * * * *"
   workflow_dispatch:
 
+concurrency:
+  group: edge-function-audit
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write
