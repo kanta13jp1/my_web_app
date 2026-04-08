@@ -6,16 +6,28 @@
 
 | ワークフロー | ファイル | トリガー | 用途 |
 |------------|---------|---------|------|
-| **CI** | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **0エラー強制** + deno lint **0エラー強制** + ビルド検証 |
-| **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御付き) |
-| **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御付き) |
-| **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御付き) |
-| **Daily Report** | `daily-report.yml` | 毎日 08:58 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 |
-| **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 |
-| **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 |
-| **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 |
+| **CI** | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **0エラー強制** + deno lint **0エラー強制** + ビルド検証 + Job Summary |
+| **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
+| **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
+| **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング (concurrency制御・timeout付き) |
+| **Daily Report** | `daily-report.yml` | 毎日 08:58 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング + schedule_task_runs記録 + Job Summary |
+| **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 + Job Summary |
+| **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 + Job Summary |
+| **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 + Job Summary |
 | **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) + schedule_task_runs記録 |
-| **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 |
+| **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
+
+## 品質保証指標 (全10ワークフロー)
+
+| 指標 | 状態 |
+|------|------|
+| `flutter analyze` 0エラー強制ゲート | ✅ ci.yml |
+| `deno lint` 0エラー強制ゲート | ✅ ci.yml |
+| `concurrency` 制御 (並列実行防止) | ✅ 全10本 |
+| `timeout-minutes` (ハング防止) | ✅ 全10本 |
+| `schedule_task_runs` DB記録 | ✅ スケジュール7本 |
+| `$GITHUB_STEP_SUMMARY` | ✅ CI + スケジュール5本 |
+| `dependabot` 自動更新 | ✅ Actions + pub (毎週月曜) |
 
 ## ワークフロー詳細
 
