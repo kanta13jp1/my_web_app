@@ -9,6 +9,7 @@ jobs:
     run-batch:
         name: Run Python Analysis Batch
         runs-on: ubuntu-latest
+        timeout-minutes: 20
         environment: production
 
         steps:
