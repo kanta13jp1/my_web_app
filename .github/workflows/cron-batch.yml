@@ -9,6 +9,9 @@ concurrency:
     group: cron-batch
     cancel-in-progress: false
 
+permissions:
+    contents: read
+
 jobs:
     run-batch:
         name: Run Python Analysis Batch
