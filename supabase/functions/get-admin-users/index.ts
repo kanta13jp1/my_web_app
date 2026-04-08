@@ -38,9 +38,17 @@ serve(async (req) => {
     // Require authenticated user (admin check)
     await requireAuthUser(admin, req);
 
+    const url = new URL(req.url);
     const body = req.method === "POST"
       ? (await req.json().catch(() => ({}))) as AdminUsersRequest
-      : {} as AdminUsersRequest;
+      : {
+        page: url.searchParams.get("page")
+          ? Number(url.searchParams.get("page"))
+          : undefined,
+        perPage: url.searchParams.get("perPage")
+          ? Number(url.searchParams.get("perPage"))
+          : undefined,
+      } as AdminUsersRequest;
     const page = Math.max(1, body.page ?? 1);
     const perPage = Math.min(100, Math.max(1, body.perPage ?? 50));
 
