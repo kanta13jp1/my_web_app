@@ -7,6 +7,10 @@ on:
       - staging
   workflow_dispatch:
 
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
 # 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
 permissions:
   contents: read # 全体で必要 (子ワークフローを含む)

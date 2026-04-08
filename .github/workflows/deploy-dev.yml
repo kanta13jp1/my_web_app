@@ -6,6 +6,10 @@ on:
       - develop
   workflow_dispatch:
 
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: true
+
 env:
   ENVIRONMENT: development
   FLUTTER_VERSION: '3.38.x'
