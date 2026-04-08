@@ -20,6 +20,7 @@ import '../services/public_memo_service.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
+import '../widgets/youtube_channel_analytics_card.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -1050,6 +1051,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ...plan
                       .prefecturesForRegion(_selectedRegion)
                       .map(_buildPrefectureCard),
+                  const SizedBox(height: 24),
+                  const YoutubeChannelAnalyticsCard(
+                    channelHandle: '@DPFP_sub',
+                    channelName: '国民民主党サブチャンネル',
+                    channelUrl: 'https://www.youtube.com/@DPFP_sub',
+                  ),
                   const SizedBox(height: 24),
                   Text(
                     '注記: 実データは公式議員ページと2023年の公式選挙結果ページを '
