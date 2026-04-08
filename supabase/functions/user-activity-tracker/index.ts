@@ -38,15 +38,16 @@ serve(async (req) => {
       const since = new Date(Date.now() - days * 86400000).toISOString();
 
       if (view === "retention") {
-        // リテンション分析: ユーザーの直近アクティビティ
-        const { data: profiles } = await adminClient
-          .from("user_profiles")
-          .select("user_id, display_name, created_at, updated_at");
-
-        const { data: analytics } = await adminClient
-          .from("app_analytics")
-          .select("user_id, created_at")
-          .gte("created_at", since);
+        // リテンション分析: ユーザーの直近アクティビティ (2クエリ並列)
+        const [{ data: profiles }, { data: analytics }] = await Promise.all([
+          adminClient
+            .from("user_profiles")
+            .select("user_id, display_name, created_at, updated_at"),
+          adminClient
+            .from("app_analytics")
+            .select("user_id, created_at")
+            .gte("created_at", since),
+        ]);
 
         // ユーザー別の最終活動日を計算
         const userActivity = new Map<string, { lastSeen: string; eventCount: number }>();

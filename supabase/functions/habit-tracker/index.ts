@@ -54,22 +54,22 @@ serve(async (req) => {
       const url = new URL(req.url);
       const view = url.searchParams.get("view"); // 'list' | 'stats' | 'today'
 
-      // Get all habits
-      const { data: habits } = await adminClient
-        .from("app_analytics")
-        .select("metadata, created_at")
-        .eq("user_id", user.id)
-        .eq("source", "habit_definition")
-        .order("created_at", { ascending: true });
-
-      // Get recent checkins (last 30 days)
+      // Get all habits + recent checkins (last 30 days) in parallel
       const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString();
-      const { data: checkins } = await adminClient
-        .from("app_analytics")
-        .select("metadata, created_at")
-        .eq("user_id", user.id)
-        .eq("source", "habit_checkin")
-        .gte("created_at", thirtyDaysAgo);
+      const [{ data: habits }, { data: checkins }] = await Promise.all([
+        adminClient
+          .from("app_analytics")
+          .select("metadata, created_at")
+          .eq("user_id", user.id)
+          .eq("source", "habit_definition")
+          .order("created_at", { ascending: true }),
+        adminClient
+          .from("app_analytics")
+          .select("metadata, created_at")
+          .eq("user_id", user.id)
+          .eq("source", "habit_checkin")
+          .gte("created_at", thirtyDaysAgo),
+      ]);
 
       const today = new Date().toISOString().slice(0, 10);
 

@@ -33,12 +33,20 @@ serve(async (req) => {
         auth: { persistSession: false },
       });
 
-      // データ収集
-      const [usersRes, requestsRes, achievementsRes, ticketsRes] = await Promise.all([
+      // データ収集 — 7クエリを Promise.all で並列実行
+      const today = new Date().toISOString().slice(0, 10);
+      const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
+      const [
+        usersRes, requestsRes, achievementsRes, ticketsRes,
+        agentTasksRes, scheduleRunsRes, blogRes,
+      ] = await Promise.all([
         adminClient.from("user_profiles").select("*", { count: "exact", head: true }),
         adminClient.from("feature_requests").select("id, title, votes, status").eq("status", "open").order("votes", { ascending: false }).limit(5),
         adminClient.from("development_achievements").select("id, title, completed_at").order("completed_at", { ascending: false }).limit(5),
         adminClient.from("support_tickets").select("id, title, status").eq("status", "new").limit(5),
+        adminClient.from("agent_tasks").select("department, status").in("status", ["pending", "in_progress"]),
+        adminClient.from("schedule_task_runs").select("task_name, status").gte("started_at", oneDayAgo),
+        adminClient.from("blog_posts").select("*", { count: "exact", head: true }).eq("status", "posted").gte("posted_at", `${today}T00:00:00`),
       ]);
 
       const totalUsers = usersRes.count ?? 0;
@@ -46,26 +54,14 @@ serve(async (req) => {
       const recentAchievements = achievementsRes.data ?? [];
       const openTickets = ticketsRes.data ?? [];
 
-      // 部署別タスク状況
-      const { data: agentTasks } = await adminClient
-        .from("agent_tasks")
-        .select("department, status")
-        .in("status", ["pending", "in_progress"]);
-
       const deptTaskCounts: Record<string, number> = {};
-      for (const t of agentTasks ?? []) {
+      for (const t of agentTasksRes.data ?? []) {
         const dept = (t.department as string) ?? "未所属";
         deptTaskCounts[dept] = (deptTaskCounts[dept] ?? 0) + 1;
       }
 
-      // Schedule ヘルス
-      const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
-      const { data: scheduleRuns } = await adminClient
-        .from("schedule_task_runs")
-        .select("task_name, status")
-        .gte("started_at", oneDayAgo);
-
-      const failedSchedules = (scheduleRuns ?? []).filter((r) => r.status === "failure");
+      const failedSchedules = (scheduleRunsRes.data ?? []).filter((r) => r.status === "failure");
+      const blogCount = blogRes.count ?? 0;
 
       // AI 秘書の提案を生成 (ルールベース — 12部署対応)
       const suggestions: Array<{ priority: string; category: string; title: string; description: string; action: string; department?: string }> = [];
@@ -105,14 +101,7 @@ serve(async (req) => {
       }
 
       // ブログ投稿チェック
-      const today = new Date().toISOString().slice(0, 10);
-      const { count: blogCount } = await adminClient
-        .from("blog_posts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "posted")
-        .gte("posted_at", `${today}T00:00:00`);
-
-      if ((blogCount ?? 0) === 0) {
+      if (blogCount === 0) {
         suggestions.push({
           priority: "medium",
           category: "marketing",

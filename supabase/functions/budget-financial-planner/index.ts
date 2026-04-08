@@ -88,14 +88,17 @@ serve(async (req) => {
 
       if (view === "analysis") {
         const targetMonth = month ?? new Date().toISOString().slice(0, 7);
-        const { data: budgets } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "budget_plan").eq("metadata->>month", targetMonth);
-        const { data: expenses } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "budget_expense")
-          .gte("created_at", `${targetMonth}-01`).lt("created_at", `${targetMonth}-32`);
-        const { data: incomes } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "budget_income")
-          .gte("created_at", `${targetMonth}-01`).lt("created_at", `${targetMonth}-32`);
+        // 予算・支出・収入を並列取得
+        const [{ data: budgets }, { data: expenses }, { data: incomes }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "budget_plan").eq("metadata->>month", targetMonth),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "budget_expense")
+            .gte("created_at", `${targetMonth}-01`).lt("created_at", `${targetMonth}-32`),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "budget_income")
+            .gte("created_at", `${targetMonth}-01`).lt("created_at", `${targetMonth}-32`),
+        ]);
 
         // Category breakdown
         const categorySpending: Record<string, number> = {};

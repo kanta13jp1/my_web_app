@@ -106,15 +106,16 @@ serve(async (req) => {
       if (filter === "unread") query = query.eq("is_read", false);
       if (filter === "read") query = query.eq("is_read", true);
 
-      const { data, error } = await query;
+      // 通知一覧と未読数を並列取得
+      const [{ data, error }, { count: unreadCount }] = await Promise.all([
+        query,
+        adminClient
+          .from("app_notifications")
+          .select("*", { count: "exact", head: true })
+          .or(`user_id.eq.${user.id},user_id.is.null`)
+          .eq("is_read", false),
+      ]);
       if (error) throw error;
-
-      // 未読数
-      const { count: unreadCount } = await adminClient
-        .from("app_notifications")
-        .select("*", { count: "exact", head: true })
-        .or(`user_id.eq.${user.id},user_id.is.null`)
-        .eq("is_read", false);
 
       return new Response(
         JSON.stringify({

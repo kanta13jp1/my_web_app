@@ -113,26 +113,29 @@ serve(async (req) => {
       }
 
       if (view === "budget") {
-        const { data: budgetRow } = await adminClient
-          .from("app_analytics")
-          .select("metadata")
-          .eq("user_id", user.id)
-          .eq("source", "expense_budget")
-          .eq("metadata->>month", `${year}-${String(month).padStart(2, "0")}`)
-          .maybeSingle();
+        const since = new Date(year, month - 1, 1).toISOString();
+        const until = new Date(year, month, 1).toISOString();
+
+        // 予算行と支出エントリを並列取得
+        const [{ data: budgetRow }, { data: entries }] = await Promise.all([
+          adminClient
+            .from("app_analytics")
+            .select("metadata")
+            .eq("user_id", user.id)
+            .eq("source", "expense_budget")
+            .eq("metadata->>month", `${year}-${String(month).padStart(2, "0")}`)
+            .maybeSingle(),
+          adminClient
+            .from("app_analytics")
+            .select("metadata")
+            .eq("user_id", user.id)
+            .eq("source", "expense_entry")
+            .gte("created_at", since)
+            .lt("created_at", until),
+        ]);
 
         const budget = (budgetRow?.metadata as Record<string, unknown>) ?? {};
         const monthlyLimit = (budget?.monthly_limit as number) ?? 0;
-
-        const since = new Date(year, month - 1, 1).toISOString();
-        const until = new Date(year, month, 1).toISOString();
-        const { data: entries } = await adminClient
-          .from("app_analytics")
-          .select("metadata")
-          .eq("user_id", user.id)
-          .eq("source", "expense_entry")
-          .gte("created_at", since)
-          .lt("created_at", until);
 
         let totalExpense = 0;
         for (const e of entries ?? []) {

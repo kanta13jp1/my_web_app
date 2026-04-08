@@ -63,22 +63,23 @@ serve(async (req) => {
       const boardId = url.searchParams.get("board_id");
 
       if (boardId) {
-        // ボード詳細 + カード一覧
-        const { data: board } = await adminClient
-          .from("app_analytics")
-          .select("metadata, created_at")
-          .eq("user_id", user.id)
-          .eq("source", "kanban_board")
-          .eq("metadata->>board_id", boardId)
-          .maybeSingle();
-
-        const { data: cards } = await adminClient
-          .from("app_analytics")
-          .select("metadata, created_at")
-          .eq("user_id", user.id)
-          .eq("source", "kanban_card")
-          .eq("metadata->>board_id", boardId)
-          .order("created_at", { ascending: true });
+        // ボード詳細 + カード一覧 (並列取得)
+        const [{ data: board }, { data: cards }] = await Promise.all([
+          adminClient
+            .from("app_analytics")
+            .select("metadata, created_at")
+            .eq("user_id", user.id)
+            .eq("source", "kanban_board")
+            .eq("metadata->>board_id", boardId)
+            .maybeSingle(),
+          adminClient
+            .from("app_analytics")
+            .select("metadata, created_at")
+            .eq("user_id", user.id)
+            .eq("source", "kanban_card")
+            .eq("metadata->>board_id", boardId)
+            .order("created_at", { ascending: true }),
+        ]);
 
         const columns = ((board?.metadata as Record<string, unknown>)?.columns as typeof DEFAULT_COLUMNS) ?? DEFAULT_COLUMNS;
 
