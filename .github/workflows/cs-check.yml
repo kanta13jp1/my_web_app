@@ -237,3 +237,21 @@ jobs:
             -d "{\"task_id\":\"cs-check\",\"status\":\"$STATUS\",\"summary\":\"$SUMMARY\"}" \
             "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
             --max-time 10 || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          TICKETS="${{ steps.tickets.outputs.ticket_count }}"
+          HTTP="${{ steps.tickets.outputs.http_code }}"
+          PR_COUNT="${{ steps.pr_review.outputs.pr_count }}"
+          HEALTHY="${{ steps.health.outputs.healthy }}"
+          HEALTH_ICON=$([ "$HEALTHY" = "true" ] && echo "✅" || echo "⚠️")
+          {
+            echo "## CS Check $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 結果 |"
+            echo "|-----|------|"
+            echo "| サポートチケット | ${TICKETS}件 (HTTP ${HTTP}) |"
+            echo "| オープンPR | ${PR_COUNT}件 |"
+            echo "| インフラ | ${HEALTH_ICON} healthy=${HEALTHY} |"
+          } >> $GITHUB_STEP_SUMMARY

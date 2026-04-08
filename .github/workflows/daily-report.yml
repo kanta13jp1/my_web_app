@@ -287,3 +287,25 @@ jobs:
               echo "✅ マージ完了" || \
               echo "⚠️ 手動マージが必要: $PR_URL"
           fi
+
+      - name: Job Summary
+        if: always()
+        run: |
+          USERS="${{ steps.digest.outputs.total_users }}"
+          NEW_TODAY="${{ steps.digest.outputs.new_today }}"
+          COMMITS="${{ steps.gitlog.outputs.count }}"
+          API_OK="${{ steps.digest.outputs.api_ok }}"
+          X_POSTED="${{ steps.xpost.outputs.x_posted }}"
+          API_ICON=$([ "$API_OK" = "true" ] && echo "✅" || echo "⚠️")
+          X_ICON=$([ "$X_POSTED" = "true" ] && echo "✅" || echo "—")
+          {
+            echo "## 日次レポート $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 指標 | 値 |"
+            echo "|-----|---|"
+            echo "| Supabase API | $API_ICON HTTP ${{ steps.digest.outputs.http_code }} |"
+            echo "| 総ユーザー | ${USERS}人 |"
+            echo "| 新規リクエスト | ${NEW_TODAY}件 |"
+            echo "| 24h コミット | ${COMMITS}件 |"
+            echo "| X投稿 | $X_ICON |"
+          } >> $GITHUB_STEP_SUMMARY

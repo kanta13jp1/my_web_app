@@ -99,8 +99,28 @@ jobs:
             --max-time 10 || true
 
       - name: Summary
+        if: always()
         run: |
+          OUTDATED="${{ steps.flutter_outdated.outputs.outdated_count }}"
+          UNPINNED="${{ steps.deno_imports.outputs.unpinned }}"
+          FLUTTER_ICON=$([ "$OUTDATED" = "0" ] && echo "✅" || echo "⚠️ ${OUTDATED}件")
+          DENO_ICON=$([ "$UNPINNED" = "0" ] && echo "✅" || echo "⚠️ ${UNPINNED}件")
+          {
+            echo "## Dependency Audit $(TZ=Asia/Tokyo date +'%Y-%m-%d')"
+            echo ""
+            echo "| パッケージ | 状態 |"
+            echo "|-----------|------|"
+            echo "| Flutter pub outdated | $FLUTTER_ICON |"
+            echo "| Deno import (unpinned) | $DENO_ICON |"
+            echo ""
+            echo "<details><summary>詳細レポート</summary>"
+            echo ""
+            echo "\`\`\`"
+            cat /tmp/audit_report.txt 2>/dev/null || echo "(レポートなし)"
+            echo "\`\`\`"
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
           echo "✅ 依存パッケージ監査完了"
-          echo "  Flutter outdated: ${{ steps.flutter_outdated.outputs.outdated_count }}件"
-          echo "  Deno unpinned: ${{ steps.deno_imports.outputs.unpinned }}件"
-          cat /tmp/audit_report.txt
+          echo "  Flutter outdated: ${OUTDATED}件"
+          echo "  Deno unpinned: ${UNPINNED}件"
+          cat /tmp/audit_report.txt 2>/dev/null || true
