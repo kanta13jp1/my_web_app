@@ -184,7 +184,27 @@ jobs:
             --max-time 10 || true
 
       - name: Summary
+        if: always()
         run: |
+          COVERED="${{ steps.audit.outputs.covered }}"
+          TOTAL="${{ steps.audit.outputs.total }}"
+          MISSING="${{ steps.audit.outputs.missing_count }}"
+          COVERAGE_ICON=$([ "$MISSING" = "0" ] && echo "✅" || echo "⚠️")
+          {
+            echo "## Edge Function UI導線チェック $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 指標 | 値 |"
+            echo "|-----|---|"
+            echo "| カバレッジ | $COVERAGE_ICON ${COVERED}/${TOTAL} |"
+            echo "| 未接続 | ${MISSING}件 |"
+            if [ -n "${{ steps.audit.outputs.missing }}" ] && [ "$MISSING" != "0" ]; then
+              echo ""
+              echo "### 未接続 Edge Functions"
+              echo "\`\`\`"
+              echo "${{ steps.audit.outputs.missing }}"
+              echo "\`\`\`"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
           echo "✅ Edge Function UI導線チェック完了"
-          echo "  カバレッジ: ${{ steps.audit.outputs.covered }}/${{ steps.audit.outputs.total }}"
-          echo "  未接続: ${{ steps.audit.outputs.missing_count }}件"
+          echo "  カバレッジ: ${COVERED}/${TOTAL}"
+          echo "  未接続: ${MISSING}件"

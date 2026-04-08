@@ -87,6 +87,26 @@ jobs:
             "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
             --max-time 10 || true
 
+      - name: Job Summary
+        if: always()
+        run: |
+          FIREBASE_CODE="${{ steps.firebase.outputs.code }}"
+          ALL_OK="${{ steps.supabase.outputs.all_ok }}"
+          FB_ICON=$([ "$FIREBASE_CODE" = "200" ] && echo "✅" || echo "❌")
+          EF_ICON=$([ "$ALL_OK" = "true" ] && echo "✅" || echo "❌")
+          {
+            echo "## Infra Health Check $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| サービス | ステータス |"
+            echo "|---------|----------|"
+            echo "| Firebase Hosting | $FB_ICON HTTP $FIREBASE_CODE |"
+            echo "| Supabase Edge Functions | $EF_ICON all_ok=$ALL_OK |"
+            echo ""
+            echo "\`\`\`"
+            echo "${{ steps.supabase.outputs.results }}"
+            echo "\`\`\`"
+          } >> $GITHUB_STEP_SUMMARY
+
       - name: Report status
         if: steps.firebase.outputs.code != '200' || steps.supabase.outputs.all_ok != 'true'
         run: |
