@@ -25,7 +25,7 @@ jobs:
     environment:
       name: development
       # 修正: environment.urlも後続ステップのsuffixで構築するため、一時的に固定値を設定
-      url: https://dev.my-web-app-b67f4.web.app
+      url: https://my-web-app-b67f4--dev.web.app
     
     outputs:
       # 🚨 修正: URL全体ではなく、サフィックス（ランダムな部分）のみを出力する

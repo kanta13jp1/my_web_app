@@ -33,7 +33,7 @@ jobs:
     environment:
       name: staging
       # 修正: environment.url は固定URLで問題ありません
-      url: https://staging.your-app-domain.web.app
+      url: https://my-web-app-b67f4--staging.web.app
     
     outputs:
       deploy_suffix: ${{ steps.firebase_cli_deploy.outputs.suffix }}
