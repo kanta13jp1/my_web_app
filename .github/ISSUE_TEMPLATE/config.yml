@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 本番アプリ
+    url: https://my-web-app-b67f4.web.app/
+    about: 自分株式会社アプリを使ってみる
+  - name: インフラ状態確認
+    url: https://github.com/kanta13jp1/my_web_app/actions/workflows/infra-health-check.yml
+    about: Firebase + Supabase のヘルスチェック結果を確認
+  - name: CI/CD ステータス
+    url: https://github.com/kanta13jp1/my_web_app/actions
+    about: GitHub Actions の実行状態を確認
