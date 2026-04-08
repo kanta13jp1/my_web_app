@@ -613,16 +613,26 @@
 
 ## 6. 2026-04-08 時点の最優先事項
 
-1. **登録者数の増加** — 現在4人。公開ギターギャラリー (/public-guitar-gallery) 実装によるバイラル起点を設置済み。次は録音→X自動投稿パイプライン完成
-2. **ギタースタジオを軸にしたバイラル** — public_gallery アクション追加完了。毎日の録音→X投稿を自動化してバイラル係数 > 1 を目指す
-3. **技術ブログの自動投稿開始** — blog-draft Schedule trigger が下書きを毎日生成中。Zenn/Qiitaへの実際の投稿アクションが必要
-4. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信 (280 URL 超)
-5. **Supabase quota 維持** — 現在93/94 deployed。新規Edge Function追加時は必ず先に1件削除
-6. **デザインシステム統一** — Awesome Design MD の知見を活用し、全ページのデザイントークン (カラー・タイポグラフィ・スペーシング) を `docs/DESIGN.md` に定義して AI へ参照させる。awesome-design-md-jp の note/freee/SmartHR/Apple/WIRED デザインシステム参照を強化
-7. **Bonsai-8B 対応** — オンデバイスAI (1.15GB・5分の1電力) の台頭を見越し、Edge Functions のロジックをオフライン対応可能な軽量設計に段階移行を検討
-8. **4インスタンス並列開発・競合防止** — VSCode(lib/)・Web(supabase/functions/)・Windows(docs/)・PowerShell(全体管理) の4並列体制。各インスタンスが作業開始前に `git pull --rebase origin main` を実行し、プッシュ失敗・マージ競合を防止
-9. **Schedule タスク強化** — Edge Function UI 導線チェック（毎時）・PR 自動レビュー（3時間ごと）・GitHub Issue 自動修正（毎日 10:00 JST）を安定稼働させ、CLAUDE.md の自動化ループを継続強化
-10. **地方選挙 X 投稿 UX 完成** — スケジュールフィルター→Xコンポーザーの週末連動実装完了（2026-04-08）。次は地方選挙結果の自動ツイートパイプライン構築を検討
+### ✅ 完了済み (前回セッション)
+- **ギター録音→X自動投稿パイプライン完成** (2026-04-08 #2) — 録音→H.264動画変換→X投稿→成功通知UIのフルパイプライン稼働
+- **lint 0件維持** — schedule_task_monitor_card の未使用import/field除去完了 (PowerShell#7)
+- **Scheduleタスク全4件正常稼働確認** (cs-check/daily-report/blog-draft/weekly-sns-draft)
+
+### 🔴 最優先 (今すぐ着手)
+1. **登録者数の増加** — 現在4人。ギター録音を実際にXにシェアしてバイラル係数を測定する。毎日の投稿をルーティン化し #buildinpublic タグで拡散
+2. **技術ブログの実際の投稿** — blog-draft Schedule が毎日下書きを生成中 (docs/blog-drafts/)。Zenn/Qiitaへの実際の投稿APIを実装して自動公開まで完成させる
+3. **Google Search Console サイトマップ送信** — `https://my-web-app-b67f4.web.app/sitemap.xml` を手動送信 (280 URL 超)。SEO流入を開始する最速手段
+
+### 🟡 重要 (今週中)
+4. **Supabase quota 管理** — ローカル238ディレクトリ / deployed ~93件。新規Edge Functionデプロイ前に必ず `ls supabase/functions/ | wc -l` で確認し94件未満を維持
+5. **デザインシステム統一** — docs/DESIGN.md (note系 + indigo/orangeトークン) を全ページへ適用。Awesome Design MD (note/freee/SmartHR) の参照を CLAUDE.md に明記済み
+6. **ユーザーオンボーディング改善** — 登録後にプロフィール設定・ギター録音・X投稿の3ステップオンボーディングフローを実装
+
+### 🟢 中期 (今月中)
+7. **Bonsai-8B対応設計** — オンデバイスAI(1.15GB)時代に向け、Edge Functions を軽量・オフライン対応可能な設計に段階移行
+8. **地方選挙→X自動ツイートパイプライン** — スケジュールフィルター連動完了。次は選挙結果の自動ツイート実装
+9. **4インスタンス並列開発継続** — VSCode(lib/)・Web(supabase/functions/)・Windows(docs/)・PowerShell(全体管理)。作業前 `git pull --rebase origin main` 徹底
+10. **バイラル拡散ループ確立** — ギター録音→X投稿→リファラル登録→ギター録音の循環を測定・改善
 
 ---
 
@@ -3562,6 +3572,34 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 5. **Migration seed 追加**: `20260408000910_seed_achievements_ps7_lint_fix.sql`
 
 6. **古い cs-notes アーカイブ** — 2026-04-07 分 6件を docs/cs-notes/archive/ へ移動
+
+### 品質確認
+
+- flutter analyze: 0 errors ✅
+- git push: ✅
+
+---
+
+## Session PowerShell#8 (2026-04-08): ロードマップ品質レビュー・最優先事項更新
+
+### 実施内容
+
+1. **git pull --rebase origin main** — cs-check 11:00 反映確認
+
+2. **Schedule タスク稼働状況確認** (cs-notes/2026-04-08-11.md より)
+   - cs-check: 毎時正常稼働 ✅ (03:00〜11:00 継続)
+   - daily-report: 2026-04-08.md 生成済み ✅
+   - blog-draft: 直近24h 1件確認 ✅
+   - Edge Function UI 連携: 238件全登録済み・差分0 ✅
+
+3. **flutter analyze 確認** — No issues found ✅
+
+4. **GROWTH_STRATEGY_ROADMAP.md 品質レビュー・最優先事項更新**
+   - 「ギター録音→X自動投稿パイプライン完成」を ✅完了済みとして記録
+   - 最優先事項を🔴/🟡/🟢の3段階で構造化
+   - 妄想ではなく今日から実行可能な具体的アクションに整理
+
+5. **Migration seed 追加**: `20260408000920_seed_achievements_ps8_roadmap_review.sql`
 
 ### 品質確認
 
