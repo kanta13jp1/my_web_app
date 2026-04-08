@@ -139,6 +139,7 @@ import '../pages/subscription_billing_page.dart';
 import '../pages/video_ad_generator_page.dart';
 import '../pages/viral_ad_generator_page.dart';
 import '../pages/viral_video_generator_page.dart';
+import '../pages/youtube_stats_page.dart';
 import '../pages/virtual_pet_page.dart';
 import '../pages/work_menu_page.dart';
 import '../pages/workflow_templates_page.dart';
@@ -1730,6 +1731,16 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: const Color(0xFFE65100),
       keywords: const <String>['バイラル', '動画', 'ショート', 'TikTok', 'Reels', 'viral video'],
       onOpen: (context) => _pushPage(context, const ViralVideoGeneratorPage()),
+    ),
+    HomeToolEntry(
+      id: 'youtube-stats',
+      sectionId: 'growth',
+      title: 'YouTube 統計管理',
+      subtitle: 'チャンネル動画の視聴数・高評価をスナップショット比較',
+      icon: Icons.play_circle_outline,
+      color: Colors.red,
+      keywords: const <String>['YouTube', 'チャンネル', '統計', '視聴回数', '高評価', 'analytics'],
+      onOpen: (context) => _pushPage(context, const YoutubeStatsPage()),
     ),
     HomeToolEntry(
       id: 'affiliate-marketing',

@@ -263,6 +263,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('guitar-recording-studio', 'ギターレコーディングスタジオ + 公開ギャラリー', true, '/guitar-recording-studio', 'スタジオ (/guitar-recording-studio) / 公開ギャラリー (/public-guitar-gallery)'),
     _FnDef('music-collaboration', '音楽コラボレーション', true, '/music-collaboration', '音楽コラボレーションページ'),
     _FnDef('spreadsheet-database', 'スプレッドシート・データベース', true, '/spreadsheet-database', 'スプレッドシートデータベースページ'),
+    _FnDef('youtube-stats', 'YouTube チャンネル統計管理 (TSVインポート)', true, '/youtube-stats', 'YouTube統計管理ページ > TSVインポート・統計一覧'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
