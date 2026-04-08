@@ -42,6 +42,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/referral_share_card.dart';
+import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
 import 'profile_settings_page.dart';
@@ -4190,6 +4191,77 @@ abstinence_slip_details: $slipDetailsText
                               key: const Key('home_section_ceo_office'),
                             ),
                             _buildCeoCard(context),
+                            const SizedBox(height: 12),
+                            // AI 秘書カード
+                            Card(
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                side: BorderSide(
+                                  color: Colors.indigo.withAlpha(60),
+                                ),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => _runTrackedAction(
+                                  'ai-secretary',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          const AISecretaryPage(
+                                        autoRunOnOpen: true,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: Colors.indigo.withAlpha(20),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: const Icon(
+                                          Icons.support_agent,
+                                          color: Colors.indigo,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'AI 秘書',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            SizedBox(height: 2),
+                                            Text(
+                                              '戦略提案・全部署横断指示・本日のタスク生成',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.chevron_right),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                             const SizedBox(height: 12),
                             const TimeWasteGuardWidget(),
                             _buildMorningBriefingCard(
