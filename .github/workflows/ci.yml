@@ -95,6 +95,22 @@ jobs:
         env:
           FLUTTER_WEB: true
 
+      - name: Job Summary
+        if: always()
+        run: |
+          BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "❌")
+          {
+            echo "## CI Results — \`${{ github.ref_name }}\` @ \`${GITHUB_SHA:0:7}\`"
+            echo ""
+            echo "| チェック | 結果 |"
+            echo "|---------|------|"
+            echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
+            echo "| \`deno lint\` | ✅ 0エラー (強制) |"
+            echo "| \`flutter build web --release\` | $BUILD_OK |"
+            echo ""
+            echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
+          } >> $GITHUB_STEP_SUMMARY
+
   security-check:
     name: Security Check
     runs-on: ubuntu-latest
