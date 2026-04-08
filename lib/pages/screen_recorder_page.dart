@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 画面録画・スクリーンショット管理ページ
 /// 録画一覧・スクリーンショット一覧・ダウンロード。
@@ -56,6 +57,23 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
       setState(() => _errorMessage = '$e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _downloadRecording(Map<String, dynamic> recording) async {
+    final rawUrl =
+        recording['url'] ?? recording['download_url'] ?? recording['file_url'];
+    if (rawUrl == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ダウンロードURLが取得できませんでした')),
+        );
+      }
+      return;
+    }
+    final uri = Uri.tryParse(rawUrl.toString());
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri);
     }
   }
 
@@ -163,7 +181,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                   ),
                 IconButton(
                   icon: const Icon(Icons.download, size: 20),
-                  onPressed: () {},
+                  onPressed: () => _downloadRecording(r),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),

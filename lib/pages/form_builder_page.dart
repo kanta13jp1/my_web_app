@@ -15,11 +15,76 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
   bool _isLoading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _forms = [];
+  final _titleController = TextEditingController();
+  final _descController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     _fetchForms();
+  }
+
+  Future<void> _showCreateFormDialog() async {
+    _titleController.clear();
+    _descController.clear();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('新規フォームを作成'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(labelText: 'フォーム名'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _descController,
+              decoration: const InputDecoration(labelText: '説明 (任意)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('作成'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+    setState(() => _isLoading = true);
+    try {
+      await _supabase.functions.invoke(
+        'form-builder',
+        body: {
+          'action': 'create',
+          'title': title,
+          if (_descController.text.trim().isNotEmpty)
+            'description': _descController.text.trim(),
+        },
+      );
+      await _fetchForms();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'フォームの作成に失敗しました: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _fetchForms() async {
@@ -89,7 +154,7 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
                       },
                     ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _isLoading ? null : _showCreateFormDialog,
         tooltip: '新規フォーム作成',
         child: const Icon(Icons.add),
       ),

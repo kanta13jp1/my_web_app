@@ -112,12 +112,18 @@ serve(async (req) => {
         auth: { persistSession: false },
       });
 
-      // ユーザーの完了済みステップを取得
-      const { data: profile } = await adminClient
-        .from("user_profiles")
-        .select("onboarding_completed, display_name, avatar_url, bio")
-        .eq("user_id", user.id)
-        .single();
+      // ユーザーの完了済みステップを並列取得
+      const [{ data: profile }, { count: noteCount }] = await Promise.all([
+        adminClient
+          .from("user_profiles")
+          .select("onboarding_completed, display_name, avatar_url, bio")
+          .eq("user_id", user.id)
+          .single(),
+        adminClient
+          .from("notes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+      ]);
 
       // プロフィール完成度からステップを自動判定
       const completedSteps = new Set<string>();
@@ -126,10 +132,6 @@ serve(async (req) => {
       if (profile?.display_name) completedSteps.add("profile");
 
       // ノート作成確認
-      const { count: noteCount } = await adminClient
-        .from("notes")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
       if ((noteCount ?? 0) > 0) completedSteps.add("first_note");
 
       // metadata のオンボーディング状態

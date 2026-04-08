@@ -15,11 +15,77 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
   bool _isLoading = false;
   String? _errorMessage;
   List<Map<String, dynamic>> _events = [];
+  final _titleController = TextEditingController();
+  final _dateController = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _dateController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     _fetchEvents();
+  }
+
+  Future<void> _showCreateEventDialog() async {
+    _titleController.clear();
+    _dateController.clear();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('イベントを作成'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(labelText: 'イベント名'),
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _dateController,
+              decoration:
+                  const InputDecoration(labelText: '開催日 (例: 2026-05-01)'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('作成'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+    setState(() => _isLoading = true);
+    try {
+      await _supabase.functions.invoke(
+        'event-ticketing',
+        body: {
+          'action': 'create',
+          'title': title,
+          if (_dateController.text.trim().isNotEmpty)
+            'date': _dateController.text.trim(),
+        },
+      );
+      await _fetchEvents();
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'イベントの作成に失敗しました: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _fetchEvents() async {
@@ -89,7 +155,7 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
                       },
                     ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _isLoading ? null : _showCreateEventDialog,
         tooltip: 'イベントを作成',
         child: const Icon(Icons.add),
       ),

@@ -43,14 +43,17 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "POST") {
-      throw new Error("Method not allowed.");
+    if (req.method !== "POST" && req.method !== "GET") {
+      throw new Error("Method not allowed. Use GET or POST.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    const body = (await req.json().catch(() => ({}))) as GrowthReferralRequest;
+    // GET supports load_snapshot only (read-only, no body needed)
+    const body = req.method === "GET"
+      ? ({ action: "load_snapshot" } as GrowthReferralRequest)
+      : (await req.json().catch(() => ({}))) as GrowthReferralRequest;
     const action = body.action ?? "load_snapshot";
     if (!isSupportedAction(action)) {
       throw new Error("Unsupported referral action.");

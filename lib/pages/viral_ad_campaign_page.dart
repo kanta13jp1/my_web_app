@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// バイラル広告キャンペーンページ
-/// viral-growth-pipeline / viral-ad-generator / x-media-post Edge Functions と連携
+/// 直接呼び出し: viral-ad-generator (プレビュー), viral-growth-pipeline (実行)
+/// x-media-post は viral-growth-pipeline のサーバーサイド内部で呼び出される
 class ViralAdCampaignPage extends StatefulWidget {
   const ViralAdCampaignPage({super.key});
 
