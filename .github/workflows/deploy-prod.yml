@@ -1,4 +1,4 @@
-﻿name: Deploy to Production
+name: Deploy to Production
 
 on:
   push:
@@ -335,7 +335,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.version }}
