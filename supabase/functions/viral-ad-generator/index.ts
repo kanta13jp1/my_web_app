@@ -352,7 +352,7 @@ serve(async (req) => {
   }
 
   const auth = req.headers.get("authorization") ?? "";
-  if (!auth.includes(SERVICE_ROLE_KEY) || SERVICE_ROLE_KEY === "") {
+  if (SERVICE_ROLE_KEY === "" || auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
     return jsonResp({ success: false, error: "Unauthorized" }, 401);
   }
 
