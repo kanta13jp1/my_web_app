@@ -160,6 +160,25 @@ jobs:
             gh issue close "$NUM" --comment "✅ カバレッジ100%達成。未接続のEdge Functionはありません。" 2>/dev/null || true
           done
 
+      - name: Record to schedule_task_runs
+        if: always()
+        run: |
+          COVERED="${{ steps.audit.outputs.covered }}"
+          TOTAL="${{ steps.audit.outputs.total }}"
+          MISSING="${{ steps.audit.outputs.missing_count }}"
+          STATUS="success"
+          [ "$MISSING" != "0" ] && STATUS="partial"
+          SUMMARY="Edge Function UI Audit: ${COVERED}/${TOTAL} covered, ${MISSING} missing"
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"edge-function-ui-sync\",\"status\":\"$STATUS\",\"summary\":\"$SUMMARY\"}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
       - name: Summary
         run: |
           echo "✅ Edge Function UI導線チェック完了"

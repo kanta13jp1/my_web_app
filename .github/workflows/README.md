@@ -6,10 +6,15 @@
 
 | ワークフロー | ファイル | トリガー | 用途 |
 |------------|---------|---------|------|
-| **CI** | `ci.yml` | すべてのPR | コード品質チェック |
+| **CI** | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **0エラー強制** + ビルド検証 |
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ |
-| **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ |
+| **Deploy to Production** | `deploy-prod.yml` | `main` へのpush | 本番環境デプロイ + バージョニング |
+| **Daily Report** | `daily-report.yml` | 毎日 08:58 JST / 手動 | 日次レポート生成 + X投稿 + 競合モニタリング |
+| **CS Check** | `cs-check.yml` | 毎時 07分 / 手動 | CS自動対応 + PR自動レビュー + schedule_task_runs記録 |
+| **Edge Function Audit** | `edge-function-audit.yml` | 毎時 47分 / 手動 | EF UI導線カバレッジチェック + schedule_task_runs記録 |
+| **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 |
+| **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) |
 
 ## ワークフロー詳細
 
