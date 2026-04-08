@@ -18,11 +18,24 @@ const X_ACCESS_TOKEN_SECRET = Deno.env.get("X_ACCESS_TOKEN_SECRET") ?? "";
 // -----------------------------------------------------------------------
 // post-x-update
 //
-// Posts a tweet to @kanta13jp1 via X API v2 using OAuth 1.0a.
+// Posts to @kanta13jp1 via X API v2 using OAuth 1.0a.
 // Called by Claude Code Schedule (daily-report task) after generating
 // the daily progress report.
 //
-// Body: { "text": "tweet text (max 280 chars)" }
+// Single tweet:
+//   Body: { "text": "tweet text (max 280 chars)" }
+//
+// Thread (sequential replies):
+//   Body: { "texts": ["tweet1", "tweet2", ...] }
+//         Max 25 tweets per thread.
+//
+// Reply to existing tweet:
+//   Body: { "text": "...", "replyToTweetId": "<tweet_id>" }
+//
+// Dry run (no actual post):
+//   Body: { "text": "...", "dryRun": true }
+//        or { "texts": [...], "dryRun": true }
+//
 // Auth: Bearer SERVICE_ROLE_KEY
 // -----------------------------------------------------------------------
 
@@ -45,16 +58,90 @@ serve(async (req) => {
     await authorizeAutomationActor(admin, req);
 
     if (!X_API_KEY || !X_API_SECRET || !X_ACCESS_TOKEN || !X_ACCESS_TOKEN_SECRET) {
-      throw new Error("X API credentials not configured. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET in Supabase secrets.");
+      throw new Error(
+        "X API credentials not configured. Set X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET in Supabase secrets.",
+      );
     }
 
     const body = (await req.json().catch(() => ({}))) as {
       text?: string;
+      texts?: string[]; // Thread mode: array of tweet texts
+      replyToTweetId?: string; // Reply to an existing tweet
       dryRun?: boolean;
     };
-    const { text, dryRun = false } = body;
-    if (!text || text.trim() === "") throw new Error("text is required.");
+    const { text, texts, replyToTweetId, dryRun = false } = body;
+
+    // ── Thread mode ──────────────────────────────────────────────────────
+    if (texts !== undefined && texts.length > 0) {
+      if (!Array.isArray(texts)) throw new Error("texts must be an array.");
+      if (texts.length > 25) throw new Error("Thread length exceeds maximum of 25 tweets.");
+      for (let i = 0; i < texts.length; i++) {
+        const t = texts[i];
+        if (!t || t.trim() === "") {
+          throw new Error(`texts[${i}] must not be empty.`);
+        }
+        if (t.length > 280) {
+          throw new Error(`texts[${i}] exceeds 280 characters (${t.length}).`);
+        }
+      }
+
+      if (dryRun) {
+        return jsonResponse({
+          success: true,
+          dryRun: true,
+          account: "@kanta13jp1",
+          thread: texts,
+          threadLength: texts.length,
+        });
+      }
+
+      const postedIds: string[] = [];
+      let prevTweetId: string | null = replyToTweetId ?? null;
+
+      for (const tweetText of texts) {
+        const tweetUrl = "https://api.twitter.com/2/tweets";
+        const oauthHeader = await buildOAuthHeader("POST", tweetUrl);
+        const payload: Record<string, unknown> = { text: tweetText };
+        if (prevTweetId) {
+          payload["reply"] = { in_reply_to_tweet_id: prevTweetId };
+        }
+
+        const resp = await fetch(tweetUrl, {
+          method: "POST",
+          headers: {
+            Authorization: oauthHeader,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(
+            `X API error ${resp.status} at thread tweet ${postedIds.length + 1}: ${errText}`,
+          );
+        }
+
+        const result = await resp.json();
+        const newId: string | null = result?.data?.id ?? null;
+        if (newId) postedIds.push(newId);
+        prevTweetId = newId;
+      }
+
+      return jsonResponse({
+        success: true,
+        account: "@kanta13jp1",
+        thread: postedIds,
+        threadLength: postedIds.length,
+      });
+    }
+
+    // ── Single tweet mode ─────────────────────────────────────────────────
+    if (!text || text.trim() === "") {
+      throw new Error("text (or texts for thread) is required.");
+    }
     if (text.length > 280) throw new Error("text exceeds 280 characters.");
+
     if (dryRun) {
       return jsonResponse({
         success: true,
@@ -66,6 +153,10 @@ serve(async (req) => {
 
     const tweetUrl = "https://api.twitter.com/2/tweets";
     const oauthHeader = await buildOAuthHeader("POST", tweetUrl);
+    const tweetPayload: Record<string, unknown> = { text };
+    if (replyToTweetId) {
+      tweetPayload["reply"] = { in_reply_to_tweet_id: replyToTweetId };
+    }
 
     const resp = await fetch(tweetUrl, {
       method: "POST",
@@ -73,7 +164,7 @@ serve(async (req) => {
         Authorization: oauthHeader,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(tweetPayload),
     });
 
     if (!resp.ok) {
@@ -156,8 +247,10 @@ async function computeOAuthSignature(
 }
 
 function pctEncode(str: string): string {
-  return encodeURIComponent(str).replace(/[!'()*]/g, (c) =>
-    `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+  return encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
 }
 
 function jsonResponse(payload: unknown, status = 200): Response {
