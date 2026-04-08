@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # GitHub Actions の自動更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+
+  # Flutter / Dart pub パッケージの自動更新
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "flutter"
+    commit-message:
+      prefix: "deps"
+    ignore:
+      # メジャーバージョンアップは手動で対応
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
