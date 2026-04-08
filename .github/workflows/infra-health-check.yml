@@ -28,13 +28,18 @@ jobs:
       - name: Check Supabase Edge Functions
         id: supabase
         run: |
+          # メイン機能 guitar-recording-studio を含む重要EFを監視
           ENDPOINTS=(
             "development-achievements:POST"
             "get-competitor-features:POST"
             "get-growth-roadmap-progress:POST"
+            "guitar-recording-studio:POST"
+            "get-home-dashboard:POST"
+            "health-check:GET"
           )
 
           ALL_OK=true
+          RESULTS=""
           for EP in "${ENDPOINTS[@]}"; do
             NAME="${EP%%:*}"
             METHOD="${EP##*:}"
@@ -46,18 +51,42 @@ jobs:
               "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/$NAME" \
               --max-time 10 2>/dev/null || echo "000")
 
-            echo "  $NAME: HTTP $CODE"
+            STATUS_ICON="✅"
             if [ "$CODE" = "000" ] || [ "$CODE" -ge 500 ]; then
               ALL_OK=false
+              STATUS_ICON="❌"
             fi
+            echo "  $STATUS_ICON $NAME: HTTP $CODE"
+            RESULTS="${RESULTS}${NAME}=${CODE} "
           done
 
           echo "all_ok=$ALL_OK" >> $GITHUB_OUTPUT
+          echo "results=$RESULTS" >> $GITHUB_OUTPUT
+
+      - name: Record to schedule_task_runs
+        if: always()
+        run: |
+          FIREBASE_CODE="${{ steps.firebase.outputs.code }}"
+          ALL_OK="${{ steps.supabase.outputs.all_ok }}"
+          STATUS="success"
+          if [ "$FIREBASE_CODE" != "200" ] || [ "$ALL_OK" != "true" ]; then
+            STATUS="error"
+          fi
+          SUMMARY="Firebase: HTTP ${FIREBASE_CODE} | EF: all_ok=${ALL_OK} | ${{ steps.supabase.outputs.results }}"
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"infra-health-check\",\"status\":\"$STATUS\",\"summary\":\"$SUMMARY\"}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
 
       - name: Report status
         if: steps.firebase.outputs.code != '200' || steps.supabase.outputs.all_ok != 'true'
         run: |
           echo "⚠️ インフラ異常検知"
           echo "Firebase: HTTP ${{ steps.firebase.outputs.code }}"
-          echo "Supabase: all_ok=${{ steps.supabase.outputs.all_ok }}"
-          # 将来: Slack/Discord通知を追加可能
+          echo "Supabase EFs: all_ok=${{ steps.supabase.outputs.all_ok }}"
+          echo "詳細: ${{ steps.supabase.outputs.results }}"

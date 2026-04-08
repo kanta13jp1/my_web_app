@@ -40,7 +40,7 @@ jobs:
 
       - name: Analyze code
         run: flutter analyze
-        continue-on-error: true # エラーでも続行
+        # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
       - name: Check formatting
         run: dart format --set-exit-if-changed .
