@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Claude Code Schedule タスクの実行状況を管理者ダッシュボードで表示するカード。
 ///
-/// `schedule_task_runs` テーブルから直近の実行ログを取得し、
-/// 各タスクのステータス・最終実行日時・エラー詳細を表示する。
+/// - `_registeredTriggers`: claude.ai に実際に登録されたトリガー4件（リンク付き）
+/// - `_definedTasks`: `schedule_task_runs` テーブルから読む論理タスク一覧
 /// タップで詳細展開・管理ページへのリンクを提供。
 class ScheduleTaskMonitorCard extends StatefulWidget {
   const ScheduleTaskMonitorCard({super.key});
@@ -18,10 +19,56 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
   bool _loading = true;
   List<_ScheduleTaskInfo> _tasks = [];
   final Set<String> _expandedTasks = {};
+  bool _showTriggers = true;
 
-  // 定義済みタスク一覧（CLAUDE.md に記載の全タスク）
-  static const _definedTasks = [
-    _TaskDef('daily-report', '日次レポート + X投稿', '毎日 09:00 JST', Icons.summarize),
+  // ──────────────────────────────────────────────
+  // claude.ai に実際に登録されているトリガー 4件
+  // ──────────────────────────────────────────────
+  static const List<_TriggerDef> _registeredTriggers = [
+    _TriggerDef(
+      id: 'trig_01MwKBLD1sffGZwxeMR1Gkxt',
+      taskId: 'cs-check',
+      name: 'cs-check',
+      description: 'CS対応・バグ修正・Edge UI自動連携・Scheduleヘルス',
+      schedule: '毎時',
+      icon: Icons.support_agent,
+    ),
+    _TriggerDef(
+      id: 'trig_01NMatLGr6gsxoTsYLXW4yQb',
+      taskId: 'daily-report',
+      name: 'daily-report',
+      description: '日次レポート生成・X投稿・競合モニタリング',
+      schedule: '毎日 09:00 JST',
+      icon: Icons.summarize,
+    ),
+    _TriggerDef(
+      id: 'trig_019hVur8DeDvSsSSnGh1ppuE',
+      taskId: 'blog-draft',
+      name: 'blog-draft',
+      description: 'ブログ下書き生成・多プラットフォーム展開',
+      schedule: '毎日 08:00 JST',
+      icon: Icons.article,
+    ),
+    _TriggerDef(
+      id: 'trig_01Ch9p74Nxoyv7P1GaKFeRH9',
+      taskId: 'weekly-sns-draft',
+      name: 'weekly-sns-draft',
+      description: '週次SNSドラフト・脆弱性チェック・PRレビュー',
+      schedule: '毎週月曜 09:00 JST',
+      icon: Icons.edit_note,
+    ),
+  ];
+
+  // ──────────────────────────────────────────────
+  // schedule_task_runs から読む論理タスク
+  // ──────────────────────────────────────────────
+  static const List<_TaskDef> _definedTasks = [
+    _TaskDef(
+      'daily-report',
+      '日次レポート + X投稿',
+      '毎日 09:00 JST',
+      Icons.summarize,
+    ),
     _TaskDef('cs-check', 'CS対応・バグ修正・Edge UI', '毎時', Icons.support_agent),
     _TaskDef(
       'weekly-sns-draft',
@@ -30,54 +77,40 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       Icons.edit_note,
     ),
     _TaskDef('blog-draft', 'ブログ下書き生成', '毎日 08:00 JST', Icons.article),
-    _TaskDef('daily-development', 'ロードマップ推進', '毎日 10:00 JST', Icons.code),
-    _TaskDef('pr-auto-review', 'PRコードレビュー', '3時間毎', Icons.rate_review),
     _TaskDef(
       'competitor-monitoring',
-      '競合21社モニタリング',
-      '毎日 07:00 JST',
+      '競合21社モニタリング (daily-report内)',
+      '毎日 09:00 JST',
       Icons.monitor,
     ),
     _TaskDef(
       'infra-health-check',
-      'インフラ監視',
-      '毎時 30分',
+      'インフラ監視 (cs-check内)',
+      '毎時',
       Icons.health_and_safety,
     ),
     _TaskDef(
       'dependency-audit',
-      '脆弱性チェック',
-      '毎週月曜 08:00 JST',
+      '脆弱性チェック (weekly-sns-draft内)',
+      '毎週月曜 09:00 JST',
       Icons.security,
     ),
     _TaskDef(
-      'blog-auto-post',
-      'ブログ自動投稿',
-      '毎日 12:00 JST',
-      Icons.publish,
-    ),
-    _TaskDef(
-      'schedule-health-monitor',
-      'Scheduleヘルスモニター',
-      '毎時',
-      Icons.monitor_heart,
-    ),
-    _TaskDef(
       'edge-function-ui-sync',
-      'Edge Function UI同期',
+      'Edge Function UI同期 (cs-check内)',
       '毎時',
       Icons.sync,
     ),
     _TaskDef(
-      'self-heal-check',
-      'タスク失敗時の自己修復',
-      '毎時 15分',
-      Icons.auto_fix_high,
+      'schedule-health-monitor',
+      'Scheduleヘルスモニター・自己修復 (cs-check内)',
+      '毎時',
+      Icons.monitor_heart,
     ),
     _TaskDef(
       'guitar-health-check',
-      'ギター録音スタジオ監視',
-      '毎時 (cs-check内)',
+      'ギター録音スタジオ監視 (cs-check内)',
+      '毎時',
       Icons.music_note,
     ),
   ];
@@ -106,13 +139,11 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
         // テーブル未作成の場合は空リストのまま
       }
 
-      // 各タスク定義に最新の実行情報をマッピング
       final tasks = _definedTasks.map((def) {
         final latestRuns =
             runs.where((r) => r['task_id'] == def.id).toList();
         if (latestRuns.isNotEmpty) {
           final run = latestRuns.first;
-          // 連続失敗回数を計算
           int consecutiveErrors = 0;
           for (final r in latestRuns) {
             if (r['status'] == 'error') {
@@ -158,35 +189,28 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ヘッダー
+            // ───── ヘッダー ─────
             Row(
               children: [
                 const Icon(Icons.schedule, color: Color(0xFF6366F1)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Schedule タスク実行状況',
+                    'Claude Code Schedule',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                // 管理ページリンク
                 Tooltip(
-                  message: 'Claude.ai スケジュール管理',
+                  message: 'claude.ai スケジュール管理ページ',
                   child: IconButton(
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'https://claude.ai/code/scheduled でスケジュール管理できます',
-                          ),
-                          duration: Duration(seconds: 4),
-                        ),
-                      );
-                    },
+                    onPressed: () => launchUrl(
+                      Uri.parse('https://claude.ai/code/scheduled'),
+                      mode: LaunchMode.externalApplication,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -196,11 +220,57 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
               ],
             ),
-            // サマリーバッジ
+
+            // ───── 登録済みトリガーセクション ─────
+            InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => setState(() => _showTriggers = !_showTriggers),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6366F1).withAlpha(20),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '登録済みトリガー ${_registeredTriggers.length}件',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF6366F1),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      _showTriggers ? Icons.expand_less : Icons.expand_more,
+                      size: 16,
+                      color: Colors.grey,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            if (_showTriggers) ...[
+              ...List.generate(_registeredTriggers.length, (i) {
+                final t = _registeredTriggers[i];
+                return _buildTriggerRow(t, isDark);
+              }),
+              const Divider(height: 20),
+            ],
+
+            // ───── 実行ログサマリー ─────
             Row(
               children: [
                 Text(
-                  'Claude Code Schedule (${_tasks.length}タスク登録)',
+                  '実行ログ (${_tasks.length}タスク)',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -215,7 +285,8 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ],
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+
             if (_loading)
               const Center(
                 child: Padding(
@@ -234,6 +305,72 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                   return _buildTaskRow(task, isDark);
                 },
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// claude.ai トリガー行（リンク付き）
+  Widget _buildTriggerRow(_TriggerDef trigger, bool isDark) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => launchUrl(
+        Uri.parse(trigger.url),
+        mode: LaunchMode.externalApplication,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withAlpha(20),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(trigger.icon, size: 14, color: const Color(0xFF6366F1)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    trigger.name,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    '${trigger.schedule}  |  ${trigger.description}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.green.withAlpha(20),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                '有効',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.open_in_new, size: 12, color: Colors.grey),
           ],
         ),
       ),
@@ -293,7 +430,6 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // アイコン
                 Container(
                   width: 32,
                   height: 32,
@@ -304,7 +440,6 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                   child: Icon(task.def.icon, size: 16, color: statusColor),
                 ),
                 const SizedBox(width: 10),
-                // テキスト
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +473,6 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     ],
                   ),
                 ),
-                // ステータスバッジ + 展開アイコン
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -363,9 +497,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     if (hasDetail) ...[
                       const SizedBox(width: 4),
                       Icon(
-                        isExpanded
-                            ? Icons.expand_less
-                            : Icons.expand_more,
+                        isExpanded ? Icons.expand_less : Icons.expand_more,
                         size: 16,
                         color: Colors.grey,
                       ),
@@ -374,7 +506,6 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 ),
               ],
             ),
-            // 展開: エラー詳細 or サマリー
             if (isExpanded && hasDetail) ...[
               const SizedBox(height: 8),
               Container(
@@ -474,6 +605,30 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
         return '待機中';
     }
   }
+}
+
+// ─────────────────────────────────────────────────────────
+// データクラス
+// ─────────────────────────────────────────────────────────
+
+class _TriggerDef {
+  final String id;
+  final String taskId;
+  final String name;
+  final String description;
+  final String schedule;
+  final IconData icon;
+
+  String get url => 'https://claude.ai/code/scheduled/$id';
+
+  const _TriggerDef({
+    required this.id,
+    required this.taskId,
+    required this.name,
+    required this.description,
+    required this.schedule,
+    required this.icon,
+  });
 }
 
 class _TaskDef {
