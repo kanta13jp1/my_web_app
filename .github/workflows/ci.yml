@@ -56,6 +56,28 @@ jobs:
         run: deno lint --config supabase/functions/deno.json supabase/functions/
         # プロジェクトルール「deno lint 常に0エラー」をCIで強制
 
+      - name: Check new Edge Functions not in deploy list
+        run: |
+          # deploy-prod.yml のデプロイリストを抽出
+          DEPLOYED=$(grep "supabase functions deploy" .github/workflows/deploy-prod.yml \
+            | grep -v "^#\|#" | awk '{print $4}' | sort)
+          # supabase/functions/ の実EFを抽出 (_shared除く)
+          EXISTING=$(ls supabase/functions/ | grep -v "^_" | sort)
+          # deploy-prod.yml の Tier2コメントに記載済みのものを取得
+          TIER2=$(grep -oP '(?<=# )[a-z][a-z0-9-]+(?=,|$)' \
+            .github/workflows/deploy-prod.yml 2>/dev/null | sort || true)
+          # Tier1にもTier2にも記載がない「未分類EF」を検出
+          UNCATEGORIZED=$(comm -23 <(echo "$EXISTING") \
+            <(echo -e "$DEPLOYED\n$TIER2" | sort -u) || true)
+          if [ -n "$UNCATEGORIZED" ]; then
+            echo "⚠️ 以下のEFがTier1/Tier2いずれにも未登録です:"
+            echo "$UNCATEGORIZED"
+            echo "deploy-prod.yml のTier1またはTier2コメントへの追記を検討してください。"
+          else
+            echo "✅ 全EFがTier1/Tier2に分類済み"
+          fi
+        continue-on-error: true  # 未分類でもCIはブロックしない (警告のみ)
+
       - name: Check formatting
         run: dart format --set-exit-if-changed .
         continue-on-error: true # エラーでも続行
