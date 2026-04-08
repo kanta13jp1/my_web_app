@@ -42,6 +42,15 @@ jobs:
         run: flutter analyze
         # プロジェクトルール「flutter analyze 常に0エラー」をCIで強制 (continue-on-error 削除)
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Deno lint (Edge Functions)
+        run: deno lint --config supabase/functions/deno.json supabase/functions/
+        # プロジェクトルール「deno lint 常に0エラー」をCIで強制
+
       - name: Check formatting
         run: dart format --set-exit-if-changed .
         continue-on-error: true # エラーでも続行
