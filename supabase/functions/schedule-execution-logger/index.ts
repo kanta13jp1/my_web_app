@@ -11,12 +11,14 @@ const corsHeaders = {
 const SCHEDULE_TASKS = [
   { id: "daily-report", name: "日次レポート", cron: "0 0 * * *", description: "毎朝09:00 JST — AI分析・GitHub Issue修復・健全性チェック" },
   { id: "cs-check", name: "CSチェック", cron: "0 * * * *", description: "毎時 — 未返信チケット対応・バグ修正・エスカレーション" },
+  { id: "github-issue-fix", name: "GitHub Issue自動修正", cron: "0 1 * * *", description: "毎日10:00 JST — Open Issueを自動対応・EF UI導線追加・クローズ" },
   { id: "weekly-sns-draft", name: "週次SNSドラフト", cron: "0 0 * * 1", description: "毎週月曜09:00 JST — 実績サマリー・SNS投稿ドラフト" },
   { id: "pr-auto-review", name: "PR自動レビュー", cron: "0 */3 * * *", description: "3時間ごと — GitHub PRコードレビュー" },
-  { id: "competitor-monitoring", name: "競合モニタリング", cron: "0 22 * * *", description: "毎日07:00 JST — 競合14社のWebサイト・機能変更" },
+  { id: "competitor-monitoring", name: "競合モニタリング", cron: "0 22 * * *", description: "毎日07:00 JST — 競合21社のWebサイト・機能変更モニタリング" },
   { id: "infra-health-check", name: "インフラヘルスチェック", cron: "30 * * * *", description: "毎時30分 — DB・テーブル・レスポンスタイム確認" },
   { id: "dependency-audit", name: "依存パッケージ監査", cron: "0 23 * * 1", description: "毎週月曜08:00 JST — 脆弱性チェック" },
   { id: "blog-draft", name: "ブログ下書き", cron: "0 23 * * *", description: "毎日08:00 JST — 技術ブログ下書き生成" },
+  { id: "schedule-run-history", name: "スケジュール実行履歴", cron: "", description: "オンデマンド — 各タスク実行履歴をEFでUI表示" },
 ];
 
 serve(async (req: Request) => {
@@ -169,19 +171,14 @@ serve(async (req: Request) => {
         );
       }
 
-      const { data: logs } = await supabase
+      // Filter by taskId at the DB level (JSONB ->> operator) for efficiency
+      const { data: taskLogs } = await supabase
         .from("app_analytics")
         .select("*")
         .eq("source", "schedule-execution-logger")
+        .filter("metadata->>taskId", "eq", taskId)
         .order("created_at", { ascending: false })
         .limit(100);
-
-      const taskLogs = (logs ?? []).filter(
-        (l: Record<string, unknown>) => {
-          const ed = l.metadata as Record<string, unknown> | null;
-          return ed?.taskId === taskId;
-        }
-      );
 
       const taskDef = SCHEDULE_TASKS.find(t => t.id === taskId);
 

@@ -509,7 +509,17 @@ ${entryData}`;
              return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
-        return new Response(JSON.stringify({ success: false, error: `Action "${action}" not found` }), { headers: corsHeaders, status: 404 });
+        return new Response(JSON.stringify({
+            success: false,
+            error: `Action "${action}" not found`,
+            validActions: [
+                'get_models', 'test_model', 'generate',
+                'analyze_danshari_item', 'hold_board_meeting',
+                'my_struggle_column', 'behavior_analysis',
+                'improve', 'summarize', 'expand', 'translate',
+                'suggest_title', 'custom_prompt',
+            ],
+        }), { headers: corsHeaders, status: 404 });
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -527,6 +537,7 @@ function inferProvider(modelName: string): string {
     if (normalized.startsWith('deepseek')) return 'deepseek';
     if (normalized.startsWith('claude')) return 'anthropic';
     if (normalized.startsWith('gemini') || normalized.startsWith('gemma')) return 'gemini';
+    if (normalized.startsWith('grok')) return 'xai';
     if (normalized.startsWith('gpt') || normalized.startsWith('o')) return 'openai';
     return 'openai';
 }
