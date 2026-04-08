@@ -166,5 +166,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: ' All CI checks passed (with some allowed failures)! The code is ready for review.'
+              body: '✅ CI全チェック通過！\n\n**必須ゲート (強制)**\n- `flutter analyze` 0エラー ✅\n- `deno lint` 0エラー ✅\n- `flutter build web --release` 成功 ✅\n\nコードレビュー準備完了です。'
             })
