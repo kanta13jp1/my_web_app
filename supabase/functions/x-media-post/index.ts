@@ -35,9 +35,9 @@ serve(async (req) => {
     return jsonResp({ success: false, error: "POST only" }, 405);
   }
 
-  // Simple auth: Bearer SERVICE_ROLE_KEY
+  // Auth: exact Bearer SERVICE_ROLE_KEY match
   const auth = req.headers.get("authorization") ?? "";
-  if (!auth.includes(SERVICE_ROLE_KEY) || SERVICE_ROLE_KEY === "") {
+  if (SERVICE_ROLE_KEY === "" || auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
     return jsonResp({ success: false, error: "Unauthorized" }, 401);
   }
   if (!X_API_KEY || !X_API_SECRET || !X_ACCESS_TOKEN || !X_ACCESS_TOKEN_SECRET) {

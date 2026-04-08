@@ -153,9 +153,10 @@ serve(async (req) => {
           healthStatus: healthScore >= 90 ? "healthy" : healthScore >= 70 ? "degraded" : "unhealthy",
           scheduleTasks: SCHEDULE_TASKS,
           taskSummary,
-          improvements: improvements.sort((a, b) =>
-            a.priority === "high" ? -1 : b.priority === "high" ? 1 : 0
-          ),
+          improvements: improvements.sort((a, b) => {
+            const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+            return (order[a.priority] ?? 3) - (order[b.priority] ?? 3);
+          }),
           totalRuns,
           totalFailures,
         }),
