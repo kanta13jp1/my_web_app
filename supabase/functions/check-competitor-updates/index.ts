@@ -16,7 +16,7 @@ type AdminClient = any;
 // -----------------------------------------------------------------------
 // check-competitor-updates
 //
-// Monitors the 14 competitors by checking if their main URL responds.
+// Monitors all 21 competitors by checking if their main URL responds.
 // Stores results in the competitor_monitoring table and returns a summary.
 //
 // Auth: Bearer token with the SERVICE_ROLE_KEY.
@@ -44,6 +44,13 @@ const COMPETITORS: Competitor[] = [
   { name: "Claude Cowork", key: "claude-cowork", url: "https://claude.ai" },
   { name: "Jobcan", key: "jobcan", url: "https://jobcan.ne.jp" },
   { name: "Amazon", key: "amazon", url: "https://amazon.co.jp" },
+  { name: "Google", key: "google", url: "https://www.google.com" },
+  { name: "Microsoft", key: "microsoft", url: "https://www.microsoft.com" },
+  { name: "Discord", key: "discord", url: "https://discord.com" },
+  { name: "LINE", key: "line", url: "https://line.me" },
+  { name: "Facebook", key: "facebook", url: "https://www.facebook.com" },
+  { name: "Liven", key: "liven", url: "https://liven.works" },
+  { name: "GitHub", key: "github", url: "https://github.com" },
 ];
 
 interface CheckResult {
