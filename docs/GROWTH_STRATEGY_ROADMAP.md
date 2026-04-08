@@ -3166,3 +3166,45 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 
 - flutter analyze: 変更対象外 (docs/ のみ変更)
 - deno lint: 変更対象外 (docs/ のみ変更)
+
+---
+
+### Session PS#27 (2026-04-08): CI/CD全10ワークフロー品質強化 (PowerShell全体管理)
+
+#### 実施内容
+
+1. **ci.yml 強化**
+   - `flutter analyze` を強制ゲート化 (continue-on-error 削除)
+   - `deno lint` ステップ追加・強制ゲート化 (denoland/setup-deno@v2)
+   - `timeout-minutes`: lint-and-test=30, security-check=5, build-matrix=25
+   - `concurrency: group: ci-${{ github.ref }}, cancel-in-progress: true`
+   - `$GITHUB_STEP_SUMMARY` 追加 (CI結果表)
+   - EF未分類チェックステップ追加 (Tier1/Tier2カバレッジ警告, continue-on-error)
+
+2. **deploy-prod.yml / deploy-staging.yml / deploy-dev.yml 強化**
+   - `timeout-minutes` 追加 (prod=45, staging/dev=30)
+   - `concurrency` 追加 (cancel-in-progress: true)
+   - 本番URL修正: staging=`my-web-app-b67f4--staging.web.app`, dev=`my-web-app-b67f4--dev.web.app`
+   - deploy-prod に `$GITHUB_STEP_SUMMARY` (バージョン・コミット・URL・EF数表示)
+
+3. **スケジュールワークフロー全7本に schedule_task_runs 記録追加**
+   - daily-report, cs-check, edge-function-audit, infra-health-check, cron-batch, dependency-audit
+   - 全ワークフローに `$GITHUB_STEP_SUMMARY` 追加
+
+4. **dependency-audit.yml 新規作成** (毎週月曜 08:00 JST)
+   - Flutter pub outdated チェック
+   - Deno import URL バージョン固定チェック
+   - schedule_task_runs 記録 (task_id=dependency-audit)
+
+5. **dependabot.yml 新規作成**
+   - github-actions: 毎週月曜 09:00 JST
+   - pub: 毎週月曜 09:30 JST (major更新は除外)
+
+6. **README.md / PR_TEMPLATE / ISSUE_TEMPLATE 更新**
+   - 全10ワークフロー品質指標表を追記
+
+#### 品質確認
+
+- flutter analyze: ✅ 0エラー (強制ゲート)
+- deno lint: ✅ 0エラー (強制ゲート)
+- 全10ワークフロー: concurrency ✅ / timeout-minutes ✅ / schedule_task_runs ✅ / GITHUB_STEP_SUMMARY ✅
