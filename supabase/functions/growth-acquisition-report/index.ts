@@ -35,6 +35,18 @@ const touchpointDefinitions = [
     touchSignal: "touch_referral",
     signupSignal: "signup_submit_referral",
   },
+  {
+    id: "comparison",
+    label: "Comparison page",
+    touchSignal: "touch_comparison",
+    signupSignal: "signup_submit_comparison",
+  },
+  {
+    id: "guitar",
+    label: "Guitar gallery",
+    touchSignal: "touch_guitar_gallery",
+    signupSignal: "signup_submit_guitar",
+  },
 ] as const;
 
 const importPreviewDefinitions = [
@@ -65,15 +77,21 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method !== "POST") {
-      throw new Error("Method not allowed.");
+    if (req.method !== "POST" && req.method !== "GET") {
+      throw new Error("Method not allowed. Use GET or POST.");
     }
     if (SUPABASE_URL === "" || SERVICE_ROLE_KEY === "") {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    const body =
-      (await req.json().catch(() => ({}))) as GrowthAcquisitionReportRequest;
+    const url = new URL(req.url);
+    const body = req.method === "GET"
+      ? ({
+        windowDays: url.searchParams.get("windowDays")
+          ? Number(url.searchParams.get("windowDays"))
+          : undefined,
+      } as GrowthAcquisitionReportRequest)
+      : (await req.json().catch(() => ({}))) as GrowthAcquisitionReportRequest;
     const windowDays = normalizeWindowDays(body.windowDays);
     const dateRange = buildDateRange(windowDays);
 
