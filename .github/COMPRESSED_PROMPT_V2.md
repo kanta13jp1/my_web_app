@@ -80,6 +80,12 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - 堅牢性: Slack webhook `--max-time 10 || true` / `requirements.txt` バージョン上限固定
 - データ精度: `daily-report` fetch-depth `200` / `dependency-audit` Deno import `head -2000`
 
+**追加品質 (PS#31〜33)**:
+- セキュリティ強化: `ci.yml` に Firebase/Google 認証ファイル検出追加 + `.env.example` エスケープ修正
+- コメント精度: `deploy-prod.yml` Tier2実数 (125→138) / `infra-health-check.yml` スケジュール誤記修正
+- 権限修正: `deploy-dev.yml` ci ジョブに `contents: read` 追加 (staging と統一)
+- 堅牢性: 全3環境の notify ジョブ "Comment on commit" に `continue-on-error: true` 追加
+
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
 | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
