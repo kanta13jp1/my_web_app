@@ -2656,7 +2656,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.indigo.withValues(alpha: 0.15)),
       ),
@@ -2776,7 +2776,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           const Divider(height: 1),
           Expanded(
             child: Container(
-              color: const Color(0xFFFDFEFF),
+              color: Theme.of(context).colorScheme.surface,
               child: InteractiveViewer(
                 constrained: false,
                 boundaryMargin: const EdgeInsets.all(120),

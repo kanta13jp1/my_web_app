@@ -551,7 +551,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(

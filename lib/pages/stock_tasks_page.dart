@@ -229,7 +229,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('時間があるときのストック'),
         backgroundColor: Colors.teal,

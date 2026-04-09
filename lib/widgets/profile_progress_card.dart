@@ -66,26 +66,31 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0xFFE0E7FF)),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
+        ),
       ),
-      color: const Color(0xFFF5F3FF),
+      color: isDark ? const Color(0xFF1E1B4B).withAlpha(80) : const Color(0xFFF5F3FF),
       child: ListTile(
-        leading: const Icon(Icons.person_add, color: Color(0xFF4338CA)),
-        title: const Text(
+        leading: Icon(Icons.person_add,
+            color: isDark ? Colors.white70 : const Color(0xFF4338CA),),
+        title: Text(
           'プロフィールを作成しましょう',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF3730A3),
+            color: isDark ? Colors.white : const Color(0xFF3730A3),
           ),
         ),
         subtitle: const Text('他のユーザーに見つけてもらいやすくなります', style: TextStyle(fontSize: 11)),
-        trailing: const Icon(Icons.chevron_right, color: Color(0xFF4338CA)),
+        trailing: Icon(Icons.chevron_right,
+            color: isDark ? Colors.white70 : const Color(0xFF4338CA),),
         onTap: () => Navigator.of(context).pushNamed('/profile-settings').then((_) => _load()),
       ),
     );

@@ -264,7 +264,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
   Widget build(BuildContext context) {
     const Color navy = Color(0xFF0F172A);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: const Text('MAGIモデルステータス'),
         backgroundColor: navy,

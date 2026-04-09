@@ -98,14 +98,17 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
         ? _missingFields.join('、')
         : '${_missingFields.take(3).join('、')}　他${_missingFields.length - 3}件';
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0xFFE0E7FF)),
+        side: BorderSide(
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
+        ),
       ),
-      color: const Color(0xFFF5F3FF),
+      color: isDark ? const Color(0xFF1E1B4B).withAlpha(80) : const Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -114,12 +117,12 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0E7FF),
+                color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person_outline,
-                color: Color(0xFF4338CA),
+                color: isDark ? Colors.white70 : const Color(0xFF4338CA),
                 size: 24,
               ),
             ),
@@ -128,29 +131,29 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'プロフィールを完成させましょう',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF3730A3),
+                      color: isDark ? Colors.white : const Color(0xFF3730A3),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '$displayFieldsが未設定です。',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF4B5563),
+                      color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                       height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
+                  Text(
                     '設定すると他のユーザーに見つけてもらいやすくなります。',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF6B7280),
+                      color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                       height: 1.4,
                     ),
                   ),
@@ -164,7 +167,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/profile-settings'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF4338CA),
+                    foregroundColor: isDark ? Colors.white70 : const Color(0xFF4338CA),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,

@@ -94,7 +94,7 @@ class _DanshariPageState extends State<DanshariPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('断捨離クエスト'),
         backgroundColor: Colors.orange,

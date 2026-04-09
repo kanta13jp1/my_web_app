@@ -617,7 +617,7 @@ class _MindMapPageState extends State<MindMapPage> {
         final minCanvasWidth = math.max(0.0, constraints.maxWidth - 32);
 
         return ColoredBox(
-          color: const Color(0xFFF8FAFC),
+          color: Theme.of(context).colorScheme.surface,
           child: InteractiveViewer(
             constrained: false,
             boundaryMargin: const EdgeInsets.all(200),

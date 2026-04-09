@@ -28,7 +28,6 @@ class _CmoPageState extends State<CmoPage> {
   Map<String, dynamic>? _pressRelease;
 
   final Color _purple = const Color(0xFF7C3AED);
-  final Color _bg = const Color(0xFFF8FAFC);
 
   @override
   void initState() {
@@ -458,7 +457,7 @@ $hashtags
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFF7F9FC),
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
@@ -495,7 +494,7 @@ $hashtags
     final primaryShareLabel = channelKey == 'x_share' ? 'Xへ直接投稿' : '外部へ共有';
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('広報室 (CMO)'),
         backgroundColor: _purple,

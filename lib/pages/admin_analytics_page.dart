@@ -1385,7 +1385,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final averageViewsLast7Days = _averageViews(_dailyStats);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text(
           '経営分析ダッシュボード',
@@ -1524,7 +1524,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
-                    _buildWeeklyDigestCard(),
+                    _buildWeeklyDigestCard(context),
                     const SizedBox(height: 24),
                     const Text(
                       '登録ユーザー管理',
@@ -2837,16 +2837,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     }
   }
 
-  Widget _buildWeeklyDigestCard() {
+  Widget _buildWeeklyDigestCard(BuildContext context) {
     final d = _weeklyDigest;
     final hasData = d.currentWeekStart.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFF),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

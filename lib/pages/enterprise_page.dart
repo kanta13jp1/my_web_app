@@ -64,7 +64,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFF),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
