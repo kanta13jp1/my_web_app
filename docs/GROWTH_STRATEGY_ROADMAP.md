@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-10 VSCode#17 (Colors.grey[]→colorScheme一括置換完了・モバイルコピペ修正・!演算子警告撲滅)
+最終更新: 2026-04-10 competitor-monitoring (Notion 3.4音声入力・Slack 30AI機能・Amazon Rufus Auto Buy・Claude Code /powerup)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -2649,7 +2649,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 **このプロジェクトへの適用方針** (`DESIGN.md` セクション9)
 
 | note 仕様 | 自分株式会社への適用 |
-|---|---|
+| --- | --- |
 | テキスト色 `#08131a` (ほぼ黒) | Light テーマのテキストカラー参考値 |
 | body line-height 2.0 (記事) / 1.5 (UI) | `ThemeService._buildJaTextTheme()` で body 1.7 適用済み |
 | 見出し letterSpacing 0.04em | ThemeService で H1: 0.96px / H2: 0.72px 適用済み |
@@ -3094,7 +3094,8 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 ### ギタースタジオ × バイラル成長の数学
 
 現在の成長方程式:
-```
+
+```text
 新規登録 = (ギャラリー閲覧者 × 登録CVR) + (X投稿閲覧者 × 登録CVR) + SEO流入 + 紹介
 ```
 
@@ -3105,6 +3106,7 @@ body が空の POST リクエストになる。`await req.json()` がエラー�
 - 目標: K ≈ 0.3 (100人達成時) → K ≈ 0.8 (1,000人達成時)
 
 施策:
+
 1. 公開ギャラリーで「聴いた人が登録したくなる」体験 (K の分子を増やす)
 2. 録音→X投稿の摩擦ゼロ化 (K の分母を減らす)
 3. 技術ブログで「作った人を応援したい」共感を得る (SEO 流入の質向上)
@@ -3117,6 +3119,7 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 - worktree + 並列エージェント: 複数エージェントが同時に異なる機能を実装
 
 自分株式会社での実装状況:
+
 - 完了: 4インスタンス並列体制 (VSCode/Web/Windows/PowerShell)
 - 完了: Schedule タスク (cs-check毎時・daily-report毎日・blog-draft毎日)
 - 未実施: worktree 活用による独立機能開発の試験導入
@@ -3128,7 +3131,7 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 ### 管理対象 docs/
 
 | ディレクトリ | 内容 | 更新頻度 |
-|---|---|---|
+| --- | --- | --- |
 | docs/GROWTH_STRATEGY_ROADMAP.md | 本ファイル。全戦略の中核 | 毎セッション |
 | docs/DESIGN.md | デザイントークン定義 (新規作成予定) | 月次 |
 | docs/blog-drafts/ | 技術ブログ下書き | 毎日 (Schedule) |
@@ -3420,3 +3423,20 @@ flutter analyze: 全体0エラー維持
 - `lib/main.dart` line 234: `ErrorReporter.instance.install()` 呼び出し済み
 - `AppLogger.error` → `ErrorReporter.instance.report()` 連携済み
 - 残り: Web版 (submit-feedback EF の auto_error 対応) / Windows版 (migration) は他インスタンス担当
+
+### competitor-monitoring Schedule — 2026-04-10
+
+**競合モニタリング実施** (詳細: `docs/competitor-reports/2026-04-10.md`)
+
+- **Notion 3.4 (2026-04-06)**: デスクトップ音声入力・ダッシュボードビュー・タブブロック・カスタムAIスキル追加 — 🔴 脅威高。当社統合ダッシュボードの強化が急務
+- **Claude Code (Anthropic)**: `/powerup` インタラクティブレッスン・Bedrock セットアップウィザード・Write ツール 60% 高速化・コスト詳細内訳 — 開発生産性向上に直結
+- **Slack (継続)**: Salesforce 30+ AI機能 (会議AI要約・再利用AIスキル・セマンティック検索) — 🔴 脅威高。自社 AI議事録 + X 投稿連携で差別化継続
+- **Amazon Rufus**: Auto Buy・Buy for Me・クロスサービスメモリ強化 — 🟡 脅威中。EC 購買特化 vs 自社の家計全体管理で差別化
+- **Codex**: クレジット制シート・Windows sandbox 強化 — 🟡 脅威中 (開発ツール競合)
+- **Evernote v11**: タブ・テーブルタスク・AI ミーティング強化継続 — 🟡 脅威中
+- **MoneyForward**: 消費税AIエージェント・AKASHI統合 (Cloud 勤怠 Plus) — 🟡 脅威中。法人特化が加速しており個人向け差別化の機会
+
+**アクション提案**:
+1. 自社ホームダッシュボード UI のビジュアル強化 (Notion 3.4 対抗)
+2. AI 議事録 + X 投稿連携ワークフローの LP への訴求強化
+3. 家計管理「節約提案 + 将来シミュレーション」機能の優先度上げ (Amazon Rufus 対抗)
