@@ -182,13 +182,12 @@ web/sitemap.xml          # URL マップ
 VSCode版: `lib/utils/error_reporter.dart` 実装済み + `main.dart` で `ErrorReporter.instance.install()` 呼び出し済み。
 Web版・Windows版の作業 (`is_auto_reported` カラム等) は引き続き他インスタンスで対応。
 
-### バグ #B1: スマホでコピペ・APIキー入力ができない
+### ~~バグ #B1~~: ✅ 解決済み
 
-**症状**: モバイルブラウザ（iOS Safari / Android Chrome）でテキストフィールドへのコピペが動作しない。APIキー等の長い文字列入力が困難。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | 全 `TextField` / `TextFormField` に `enableInteractiveSelection: true` / `toolbarOptions` を明示設定。`web/index.html` の viewport に `user-scalable=yes` を確認。モバイルで長押しコンテキストメニューが出るか確認。APIキー入力フィールドは `keyboardType: TextInputType.visiblePassword` + `obscureText: false` で対応。 |
+全 `obscureText:` フィールド (4箇所) に `enableInteractiveSelection: true` + visibility toggle + paste ボタン適用済み:
+- `emergency_meeting_page.dart` (APIキー)
+- `morning_briefing_page.dart` (APIキー ×2)
+- `landing_page.dart` (パスワード)
 
 ### ~~バグ #B3~~: ✅ 解決済み
 
