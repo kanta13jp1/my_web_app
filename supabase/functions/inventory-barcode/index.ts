@@ -85,10 +85,13 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: products } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "inventory_product");
-        const { data: movements } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "inventory_movement");
+        // 製品・入出庫を並列取得
+        const [{ data: products }, { data: movements }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "inventory_product"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "inventory_movement"),
+        ]);
         const inCount = (movements ?? []).filter((m) => (m.metadata as Record<string, unknown>).type === "in").length;
         const outCount = (movements ?? []).filter((m) => (m.metadata as Record<string, unknown>).type === "out").length;
         return new Response(JSON.stringify({

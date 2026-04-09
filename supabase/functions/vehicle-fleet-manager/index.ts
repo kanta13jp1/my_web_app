@@ -52,9 +52,12 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, records: (records ?? []).map((r) => ({ ...(r.metadata as Record<string, unknown>), createdAt: r.created_at })) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (view === "stats") {
-        const { data: vehicles } = await adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle");
-        const { data: trips } = await adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle_trip");
-        const { data: fuel } = await adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle_fuel");
+        // 車両・走行・燃料を並列取得
+        const [{ data: vehicles }, { data: trips }, { data: fuel }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle_trip"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "vehicle_fuel"),
+        ]);
         let totalKm = 0, totalFuelCost = 0;
         for (const t of trips ?? []) totalKm += ((t.metadata as Record<string, unknown>).distance_km as number) ?? 0;
         for (const f of fuel ?? []) totalFuelCost += ((f.metadata as Record<string, unknown>).cost as number) ?? 0;
