@@ -30,9 +30,9 @@
 | `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 3本 (edge-function-audit / dependency-audit / cron-batch) |
 | Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
 | アクションバージョン固定 (floating tag なし) | ✅ 全10本 |
-| `schedule_task_runs` DB記録 | ✅ スケジュール7本 |
+| `schedule_task_runs` DB記録 | ✅ スケジュール6本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit) |
 | `$GITHUB_STEP_SUMMARY` | ✅ 全10本 |
-| `dependabot` 自動更新 | ✅ Actions + pub (毎週月曜) |
+| `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
 
 ## ワークフロー詳細
 
@@ -61,7 +61,7 @@ on:
 ##### `lint-and-test`
 
 1. **Checkout code**: リポジトリをチェックアウト
-2. **Setup Flutter**: Flutter環境をセットアップ (v3.24.x)
+2. **Setup Flutter**: Flutter環境をセットアップ (v3.38.x)
 3. **Get Flutter version**: Flutterバージョンを確認
 4. **Install dependencies**: `flutter pub get`
 5. **Verify dependencies**: 依存関係の検証
@@ -418,3 +418,4 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 | 日付 | バージョン | 変更内容 |
 |------|-----------|---------|
 | 2025-11-14 | 1.0.0 | 初版作成 |
+| 2026-04-10 | 1.1.0 | Flutter v3.38.x / dependabot pip追加 / schedule_task_runs記録6本に修正 / PS#28-34品質改善反映 |
