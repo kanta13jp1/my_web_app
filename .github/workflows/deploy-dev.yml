@@ -80,6 +80,7 @@ jobs:
       - name: Build Flutter Web (Development)
         run: >
           flutter build web --release
+          --no-tree-shake-icons
           --dart-define=ENVIRONMENT=development
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=${{ env.LANDING_GOOGLE_LOGIN_ENABLED }}
         env:

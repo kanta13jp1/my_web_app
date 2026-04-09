@@ -83,7 +83,7 @@ jobs:
 
       # Build Flutter Web
       - name: Build Flutter Web (Staging)
-        run: flutter build web --release --dart-define=ENVIRONMENT=staging
+        run: flutter build web --release --no-tree-shake-icons --dart-define=ENVIRONMENT=staging
         env:
           # 修正: シークレット名を _STAGING に変更
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_STAGING }}
