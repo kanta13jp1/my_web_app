@@ -79,10 +79,11 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: jobs } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "job_posting");
-        const { data: apps } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "job_application");
+        // 求人とアプリケーションを並列取得
+        const [{ data: jobs }, { data: apps }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "job_posting"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "job_application"),
+        ]);
         const activeJobs = (jobs ?? []).filter((j) => (j.metadata as Record<string, unknown>).status === "active").length;
         const hires = (apps ?? []).filter((a) => (a.metadata as Record<string, unknown>).status === "accepted").length;
         return new Response(JSON.stringify({

@@ -87,14 +87,17 @@ serve(async (req) => {
       }
 
       if (view === "detail" && dbId) {
-        const { data: db } = await adminClient.from("app_analytics").select("metadata, created_at")
-          .eq("user_id", user.id).eq("source", "spreadsheet_db")
-          .eq("metadata->>db_id", dbId).maybeSingle();
+        // DB定義と行数を並列取得
+        const [{ data: db }, { data: rowCount }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata, created_at")
+            .eq("user_id", user.id).eq("source", "spreadsheet_db")
+            .eq("metadata->>db_id", dbId).maybeSingle(),
+          adminClient.from("app_analytics").select("metadata", { count: "exact", head: true })
+            .eq("user_id", user.id).eq("source", "spreadsheet_row").eq("metadata->>db_id", dbId),
+        ]);
         if (!db) {
           return new Response(JSON.stringify({ success: false, error: "Database not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        const { data: rowCount } = await adminClient.from("app_analytics").select("metadata", { count: "exact", head: true })
-          .eq("user_id", user.id).eq("source", "spreadsheet_row").eq("metadata->>db_id", dbId);
         return new Response(JSON.stringify({
           success: true,
           database: { ...(db.metadata as Record<string, unknown>), rowCount: rowCount ?? 0, createdAt: db.created_at },

@@ -42,21 +42,15 @@ serve(async (req) => {
       const view = url.searchParams.get("view"); // 'progress' | 'gaps' | 'category' | 'priority'
       const competitor = url.searchParams.get("competitor");
 
-      // competitor_feature_status テーブルから動的データを取得
-      // テーブルがない場合は get-competitor-features の静的データにフォールバック
-      const { data: overrides, error: _overrideErr } = await adminClient
-        .from("competitor_feature_status")
-        .select("*");
-
-      // 静的データを get-competitor-features から間接取得
-      // (ここでは app_analytics 経由でキャッシュされたデータを使用)
-      const { data: cachedFeatures } = await adminClient
-        .from("app_analytics")
-        .select("metadata")
-        .eq("source", "competitor_feature_cache")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // competitor_feature_status と feature cache を並列取得
+      const [{ data: overrides }, { data: cachedFeatures }] = await Promise.all([
+        adminClient.from("competitor_feature_status").select("*"),
+        adminClient.from("app_analytics").select("metadata")
+          .eq("source", "competitor_feature_cache")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
       // オーバーライドマップを構築
       const overrideMap = new Map<string, string>();

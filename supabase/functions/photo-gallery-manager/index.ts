@@ -94,10 +94,11 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: albums } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "photo_album");
-        const { data: photos } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "photo_item");
+        // アルバムと写真を並列取得
+        const [{ data: albums }, { data: photos }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "photo_album"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "photo_item"),
+        ]);
         const tagCounts: Record<string, number> = {};
         for (const p of photos ?? []) {
           const tags = ((p.metadata as Record<string, unknown>).tags as string[]) ?? [];

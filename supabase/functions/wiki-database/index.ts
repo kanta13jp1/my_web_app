@@ -44,12 +44,14 @@ serve(async (req) => {
       const parentId = url.searchParams.get("parent_id");
 
       if (view === "page" && pageId) {
-        const { data: page } = await adminClient.from("app_analytics").select("metadata, created_at").eq("user_id", user.id).eq("source", "wiki_page").eq("metadata->>page_id", pageId).maybeSingle();
+        // ページ本体と子ページを並列取得
+        const [{ data: page }, { data: children }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata, created_at").eq("user_id", user.id).eq("source", "wiki_page").eq("metadata->>page_id", pageId).maybeSingle(),
+          adminClient.from("app_analytics").select("metadata, created_at").eq("user_id", user.id).eq("source", "wiki_page").eq("metadata->>parent_id", pageId).order("created_at", { ascending: true }),
+        ]);
         if (!page) {
           return new Response(JSON.stringify({ success: false, error: "Page not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        // Get children
-        const { data: children } = await adminClient.from("app_analytics").select("metadata, created_at").eq("user_id", user.id).eq("source", "wiki_page").eq("metadata->>parent_id", pageId).order("created_at", { ascending: true });
         return new Response(JSON.stringify({
           success: true,
           page: { ...(page.metadata as Record<string, unknown>), createdAt: page.created_at },
