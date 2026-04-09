@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -46,6 +47,7 @@ class _LandingPageState extends State<LandingPage> {
   bool _isLoading = false;
   bool _isTrialLoading = false;
   bool _isSignUp = true;
+  bool _obscurePassword = true;
   bool _showSaveCtaPrompt = false;
   bool _showInboxShortcut = false;
   int _magicLinkCooldownSeconds = 0;
@@ -2327,11 +2329,39 @@ $input
               const SizedBox(height: 12),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
+                obscureText: _obscurePassword,
+                enableInteractiveSelection: true,
+                decoration: InputDecoration(
                   labelText: 'パスワード',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock_outline),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
+                        tooltip: _obscurePassword ? '表示' : '非表示',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.content_paste_rounded),
+                        onPressed: () async {
+                          final data = await Clipboard.getData(
+                            Clipboard.kTextPlain,
+                          );
+                          if (data?.text != null) {
+                            _passwordController.text = data!.text!;
+                          }
+                        },
+                        tooltip: '貼り付け',
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 14),

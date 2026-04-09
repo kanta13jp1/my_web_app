@@ -1345,6 +1345,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
+    bool obscureApiKey = true;
     List<Map<String, dynamic>> currentSelectableModels =
         List.from(_selectableModels);
 
@@ -1368,12 +1369,42 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 children: [
                   TextField(
                     controller: apiKeyController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Gemini API Key',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       hintText: 'APIキーを入力してください',
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              obscureApiKey
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () => setDialogState(
+                              () => obscureApiKey = !obscureApiKey,
+                            ),
+                            tooltip: obscureApiKey ? '表示' : '非表示',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.content_paste_rounded),
+                            onPressed: () async {
+                              final data = await Clipboard.getData(
+                                Clipboard.kTextPlain,
+                              );
+                              if (data?.text != null) {
+                                apiKeyController.text = data!.text!;
+                              }
+                            },
+                            tooltip: '貼り付け',
+                          ),
+                        ],
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: obscureApiKey,
+                    enableInteractiveSelection: true,
+                    keyboardType: TextInputType.visiblePassword,
                   ),
                   const SizedBox(height: 8),
                   if (isFetchingModels)

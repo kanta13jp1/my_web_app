@@ -1649,43 +1649,75 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   Future<void> showApiKeyDialog() async {
     final controller = TextEditingController();
+    bool obscureKey = true;
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Gemini APIキーの設定'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('日報を自動生成するにはGemini APIキーが必要です。'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'API Key',
-                border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Gemini APIキーの設定'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('日報を自動生成するにはGemini APIキーが必要です。'),
+              const SizedBox(height: 8),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'API Key',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          obscureKey
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setDialogState(() => obscureKey = !obscureKey),
+                        tooltip: obscureKey ? '表示' : '非表示',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.content_paste_rounded),
+                        onPressed: () async {
+                          final data = await Clipboard.getData(
+                            Clipboard.kTextPlain,
+                          );
+                          if (data?.text != null) {
+                            controller.text = data!.text!;
+                          }
+                        },
+                        tooltip: '貼り付け',
+                      ),
+                    ],
+                  ),
+                ),
+                obscureText: obscureKey,
+                enableInteractiveSelection: true,
+                keyboardType: TextInputType.visiblePassword,
               ),
-              obscureText: true,
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final key = controller.text.trim();
+                if (key.isNotEmpty) {
+                  await _saveGeminiApiKey(key);
+                  if (!mounted || !context.mounted) return;
+                  setState(() => _geminiApiKey = key);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('設定'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final key = controller.text.trim();
-              if (key.isNotEmpty) {
-                await _saveGeminiApiKey(key);
-                if (!mounted || !context.mounted) return;
-                setState(() => _geminiApiKey = key);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('設定'),
-          ),
-        ],
       ),
     );
   }
@@ -1889,6 +1921,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final apiKeyController = TextEditingController(text: _geminiApiKey ?? '');
     String tempSelectedModel = _selectedModel;
     bool isFetchingModels = false;
+    bool obscureApiKey = true;
     List<Map<String, dynamic>> currentSelectableModels =
         List.from(_selectableModels);
 
@@ -1914,12 +1947,42 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   const SizedBox(height: 16),
                   TextField(
                     controller: apiKeyController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Gemini API Key',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       hintText: 'APIキーを入力してください',
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              obscureApiKey
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () => setDialogState(
+                              () => obscureApiKey = !obscureApiKey,
+                            ),
+                            tooltip: obscureApiKey ? '表示' : '非表示',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.content_paste_rounded),
+                            onPressed: () async {
+                              final data = await Clipboard.getData(
+                                Clipboard.kTextPlain,
+                              );
+                              if (data?.text != null) {
+                                apiKeyController.text = data!.text!;
+                              }
+                            },
+                            tooltip: '貼り付け',
+                          ),
+                        ],
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: obscureApiKey,
+                    enableInteractiveSelection: true,
+                    keyboardType: TextInputType.visiblePassword,
                   ),
                   const SizedBox(height: 8),
                   if (isFetchingModels)
