@@ -12,7 +12,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | インスタンス | 担当範囲 | 変更禁止 |
 |---|---|---|
 | **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 240本) | 他3範囲 |
+| **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (11本完備済み) | 他3範囲 |
 
@@ -184,7 +184,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(140本) で全240本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(141本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
 ---
 
