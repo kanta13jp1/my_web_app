@@ -154,7 +154,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 // アバター
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: const Color(0xFFE0E7FF),
+                  backgroundColor: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
                   backgroundImage: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
                       ? NetworkImage(profile.avatarUrl!)
                       : null,
