@@ -453,7 +453,7 @@ jobs:
             ]
           }
           EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
 
       # 失敗時の通知
       - name: Notify Slack on Failure
@@ -488,7 +488,7 @@ jobs:
             ]
           }
           EOF
-          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }}
+          curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
 
       - name: Comment on commit
         if: needs.deploy.result == 'success' && needs.run-batch.result == 'success'

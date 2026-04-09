@@ -104,4 +104,4 @@ jobs:
                     ]
                   }
                   EOF
-                  curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }}
+                  curl -X POST -H 'Content-type: application/json' --data @payload.json ${{ secrets.SLACK_WEBHOOK_URL }} --max-time 10 || true
