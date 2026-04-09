@@ -70,9 +70,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全10ワークフロー品質基準）
+## ⚙️ GitHub Actions CI/CD（全11ワークフロー品質基準）
 
-**全10本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全11本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 **追加品質 (PS#28〜30)**:
 - アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
@@ -88,6 +88,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - ビルド統一: `deploy-staging.yml` / `deploy-dev.yml` に `--no-tree-shake-icons` 追加 (prod/CI と統一)
 - README修正: Flutter version v3.24→v3.38 / schedule_task_runs 7→6本 / dependabot pip追加
 
+**追加品質 (PS#36〜37)**:
+- EF数更新: 238→240 / Tier2 138→140 (Web版 +2EF 反映)
+- **Claude Managed Agents 統合**: `claude-agent-review.yml` 新設 — PRトリガーで Claude API 即時レビュー
+  - 観点: static解析が検出できないルール違反・EF上限管理・アーキテクチャ・データ整合性
+  - 必要なシークレット: `ANTHROPIC_API_KEY` (Anthropic Console → API Keys)
+  - LGTM の場合はコメントなし / 問題あり時のみ PR にコメント投稿
+
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
 | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
@@ -100,6 +107,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
+| `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 

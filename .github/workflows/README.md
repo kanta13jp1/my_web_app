@@ -16,23 +16,25 @@
 | **Infra Health Check** | `infra-health-check.yml` | 毎時 37分 / 手動 | Firebase + 重要EF 6件監視 + schedule_task_runs記録 + Job Summary |
 | **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) + schedule_task_runs記録 |
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
+| **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
 
-## 品質保証指標 (全10ワークフロー)
+## 品質保証指標 (全11ワークフロー)
 
 | 指標 | 状態 |
 |------|------|
 | `flutter analyze` 0エラー強制ゲート | ✅ ci.yml |
 | `deno lint` 0エラー強制ゲート | ✅ ci.yml |
 | EF未分類チェック (Tier1/2カバレッジ) | ✅ ci.yml (未分類0本達成) |
-| `concurrency` 制御 (並列実行防止) | ✅ 全10本 |
-| `timeout-minutes` (ハング防止) | ✅ 全10本 |
-| `permissions` 最小権限原則 | ✅ 全10本 (全ジョブ) |
-| `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 3本 (edge-function-audit / dependency-audit / cron-batch) |
+| `concurrency` 制御 (並列実行防止) | ✅ 全11本 |
+| `timeout-minutes` (ハング防止) | ✅ 全11本 |
+| `permissions` 最小権限原則 | ✅ 全11本 (全ジョブ) |
+| `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 4本 (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) |
 | Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
-| アクションバージョン固定 (floating tag なし) | ✅ 全10本 |
+| アクションバージョン固定 (floating tag なし) | ✅ 全11本 |
 | `schedule_task_runs` DB記録 | ✅ スケジュール6本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit) |
-| `$GITHUB_STEP_SUMMARY` | ✅ 全10本 |
+| `$GITHUB_STEP_SUMMARY` | ✅ 全11本 |
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
+| **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
 
 ## ワークフロー詳細
 
@@ -419,3 +421,4 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 |------|-----------|---------|
 | 2025-11-14 | 1.0.0 | 初版作成 |
 | 2026-04-10 | 1.1.0 | Flutter v3.38.x / dependabot pip追加 / schedule_task_runs記録6本に修正 / PS#28-34品質改善反映 |
+| 2026-04-10 | 1.2.0 | Claude Managed Agents 統合: `claude-agent-review.yml` 新設 (11本体制) / EF総数238→240反映 |

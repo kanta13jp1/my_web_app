@@ -1,0 +1,159 @@
+name: Claude Agent PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+      - staging
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: claude-agent-review-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+# Powered by Claude Managed Agents (claude-sonnet-4-6)
+# PR オープン/更新時に Claude API を呼び出してコードレビューを実施。
+# flutter analyze が検出できない観点（ルール違反・アーキテクチャ・EF上限）を補完。
+# 必要なシークレット: ANTHROPIC_API_KEY (Anthropic Console → API Keys)
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    name: Claude Agent Code Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Extract PR diff
+        id: diff
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          if [ -n "$BASE_SHA" ]; then
+            git diff "${BASE_SHA}...${HEAD_SHA}" -- \
+              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
+              | head -n 400 > pr_diff.txt
+          else
+            git diff HEAD~1...HEAD -- \
+              '*.dart' '*.ts' '*.yaml' '*.sql' '*.json' \
+              | head -n 400 > pr_diff.txt
+          fi
+
+          LINES=$(wc -l < pr_diff.txt | tr -d ' ')
+          echo "lines=$LINES" >> $GITHUB_OUTPUT
+          echo "Diff extracted: ${LINES} lines"
+
+      - name: Claude Agent Review
+        id: review
+        run: |
+          # API KEY チェック
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY が未設定です。GitHub Secrets → ANTHROPIC_API_KEY を追加してください。" \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          DIFF_LINES="${{ steps.diff.outputs.lines }}"
+          if [ "${DIFF_LINES:-0}" -le 5 ]; then
+            echo "差分が少ないためスキップ (${DIFF_LINES} lines)"
+            exit 0
+          fi
+
+          # 10KB 上限で diff を切り出し
+          DIFF=$(head -c 10000 pr_diff.txt)
+
+          PAYLOAD=$(jq -cn --arg diff "$DIFF" '{
+            model: "claude-sonnet-4-6",
+            max_tokens: 1500,
+            messages: [{
+              role: "user",
+              content: (
+                "自分株式会社 (Flutter Web + Supabase) のPRをレビューしてください。\n\n" +
+                "【観点 — static アナライザが検出できないものに集中】\n" +
+                "1. セキュリティ: ハードコードシークレット / SQL injection / 認証バイパス\n" +
+                "2. ルール違反: ダミーデータ使用 / flutter analyze スキップ / continue-on-error 不適切追加\n" +
+                "3. EF 上限管理: 新規 supabase function が Tier1 (100本デプロイ制限) 超過リスク\n" +
+                "4. アーキテクチャ: 複雑ロジックがフロントに置かれ Edge Function ファーストに反する\n" +
+                "5. データ整合性: 実 Supabase データを使っているか (ダミーデータ禁止)\n\n" +
+                "問題なし → 「✅ LGTM — 問題なし」の1行のみ。\n" +
+                "問題あり → 各問題を「### 問題N: タイトル\n**ファイル:** path\n**内容:** 説明\n**修正:** 方法」で列挙。\n\n" +
+                "差分:\n```\n" + $diff + "\n```"
+              )
+            }]
+          }')
+
+          HTTP_RESP=$(curl -s -w "\n%{http_code}" \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            --max-time 60 \
+            -d "$PAYLOAD" \
+            https://api.anthropic.com/v1/messages)
+
+          HTTP_CODE=$(echo "$HTTP_RESP" | tail -n1)
+          RESP_BODY=$(echo "$HTTP_RESP" | head -n -1)
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Claude API エラー (HTTP $HTTP_CODE) — スキップ" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          REVIEW_TEXT=$(echo "$RESP_BODY" | jq -r '.content[0].text // "レスポンス解析失敗"')
+
+          # multiline output (GitHub Actions heredoc 形式)
+          {
+            echo "text<<REVIEW_EOF"
+            echo "$REVIEW_TEXT"
+            echo "REVIEW_EOF"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Post Review Comment
+        if: steps.review.outputs.text != '' && !startsWith(steps.review.outputs.text, '✅ LGTM')
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          REVIEW_BODY: ${{ steps.review.outputs.text }}
+        with:
+          script: |
+            const body = process.env.REVIEW_BODY || '';
+            if (!body || body.startsWith('✅ LGTM')) return;
+            if (!context.issue || !context.issue.number) {
+              core.info('PR コンテキストなし (workflow_dispatch) — コメントスキップ');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 🤖 Claude Agent コードレビュー\n\n${body}\n\n---\n*Powered by Claude Managed Agents (claude-sonnet-4-6)*`
+            });
+
+      - name: Job Summary
+        if: always()
+        run: |
+          RESULT="${{ steps.review.outputs.text }}"
+          {
+            echo "## Claude Agent PR Review — \`${GITHUB_SHA:0:7}\`"
+            echo ""
+            if [ -n "$RESULT" ]; then
+              echo "$RESULT"
+            else
+              echo "スキップ (差分なし / ANTHROPIC_API_KEY 未設定 / workflow_dispatch)"
+            fi
+            echo ""
+            echo "**PR**: #${{ github.event.pull_request.number || 'N/A' }} | **Actor**: ${{ github.actor }}"
+          } >> $GITHUB_STEP_SUMMARY
