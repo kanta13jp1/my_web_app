@@ -194,10 +194,10 @@ class _DanshariPageState extends State<DanshariPage> {
                       child: SingleChildScrollView(
                         child: Text(
                           note.content,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             height: 1.6,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),

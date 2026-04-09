@@ -681,7 +681,7 @@ class _NoteListPageState extends State<NoteListPage> {
   }
 
   Widget _buildDraftCard(BuildContext context, _LocalDraftEntry draft) {
-    const accentColor = Colors.black87;
+    final accentColor = Theme.of(context).colorScheme.onSurface;
     final savedAtLabel = DateFormat('yyyy/MM/dd HH:mm').format(draft.savedAt);
 
     return Card(
@@ -702,7 +702,7 @@ class _NoteListPageState extends State<NoteListPage> {
               children: [
                 CircleAvatar(
                   backgroundColor: accentColor.withValues(alpha: 0.08),
-                  child: const Icon(Icons.drafts_outlined, color: accentColor),
+                  child: Icon(Icons.drafts_outlined, color: accentColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

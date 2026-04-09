@@ -450,7 +450,7 @@ class _WeekendChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black87,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 2),

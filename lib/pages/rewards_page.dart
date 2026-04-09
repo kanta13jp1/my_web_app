@@ -187,7 +187,7 @@ class _RewardsPageState extends State<RewardsPage> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isUnlocked ? Colors.black87 : Colors.grey,
+            color: isUnlocked ? Theme.of(context).colorScheme.onSurface : Colors.grey,
             fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
           ),
           textAlign: TextAlign.center,

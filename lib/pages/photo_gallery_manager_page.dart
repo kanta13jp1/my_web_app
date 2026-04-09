@@ -264,7 +264,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                       right: 0,
                       child: Container(
                         padding: const EdgeInsets.all(2),
-                        color: Colors.black54,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         child: Text(
                           title,
                           style: const TextStyle(

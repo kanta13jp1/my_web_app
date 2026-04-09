@@ -581,7 +581,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                             color: _showAnswers
-                                ? Colors.black87
+                                ? Theme.of(context).colorScheme.onSurface
                                 : Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),

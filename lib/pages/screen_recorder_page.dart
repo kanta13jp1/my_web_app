@@ -231,7 +231,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                 left: 0,
                 right: 0,
                 child: Container(
-                  color: Colors.black54,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
                     title,

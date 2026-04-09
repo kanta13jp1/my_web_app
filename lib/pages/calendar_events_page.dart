@@ -400,7 +400,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                               shape: BoxShape.circle,
                               border: selectedColor == c
                                   ? Border.all(
-                                      color: Colors.black87,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       width: 2.5,
                                     )
                                   : null,

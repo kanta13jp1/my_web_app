@@ -777,7 +777,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Row(

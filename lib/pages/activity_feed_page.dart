@@ -300,7 +300,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style.copyWith(
                         fontSize: 15.0, // テキストサイズを標準に
-                        color: Colors.black87,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                   children: [
                     TextSpan(

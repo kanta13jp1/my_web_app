@@ -312,7 +312,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 13,
-                    color: _singleResult.isEmpty ? Colors.grey : Colors.black87,
+                    color: _singleResult.isEmpty ? Colors.grey : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),

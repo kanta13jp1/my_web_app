@@ -150,7 +150,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                               : FontWeight.normal,
                                           color: isSelected
                                               ? Colors.blue
-                                              : Colors.black87,
+                                              : Theme.of(context).colorScheme.onSurface,
                                         ),
                                       ),
                                     ],
@@ -487,7 +487,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon = Icons.gradient;
         break;
       case template.CardTemplate.darkMode:
-        color = Colors.black87;
+        color = Theme.of(context).colorScheme.onSurface;
         icon = Icons.dark_mode;
         break;
       case template.CardTemplate.colorful:
@@ -508,7 +508,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon,
         color: cardTemplate == template.CardTemplate.darkMode
             ? Colors.white
-            : Colors.black54,
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }

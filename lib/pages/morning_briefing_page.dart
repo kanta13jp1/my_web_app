@@ -3697,7 +3697,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       ? Colors.grey
                                       : (isOverdue
                                           ? Colors.red.shade700
-                                          : Colors.black87),
+                                          : Theme.of(context).colorScheme.onSurface),
                                 ),
                               ),
                             ),
