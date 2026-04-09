@@ -684,7 +684,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 children: [
                   TableRow(
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: Theme.of(context).colorScheme.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     children: [
@@ -720,7 +720,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     (f) => TableRow(
                       decoration: BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Colors.grey[200]!),
+                          bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
                         ),
                       ),
                       children: [

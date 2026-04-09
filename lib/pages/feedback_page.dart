@@ -17,9 +17,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
   bool _isSubmitting = false;
 
   final Map<String, String> _categories = const <String, String>{
-    'feature': '機能のアイデア・要望',
-    'bug': 'バグ・不具合報告',
-    'other': 'その他・ご意見',
+    'feature': '機能改善・追加要望',
+    'bug': '不具合・動作不良',
+    'other': 'その他',
   };
 
   Future<void> _submitFeedback() async {
@@ -34,7 +34,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
       final response = await supabase.functions.invoke(
         'feature-request-manager',
-        headers: {'Authorization': 'Bearer ${session.accessToken}'},
+        headers: <String, String>{
+          'Authorization': 'Bearer ${session.accessToken}',
+        },
         body: <String, dynamic>{
           'action': 'submit_feedback_ticket',
           'category': _selectedCategory,
@@ -44,7 +46,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
       final data = response.data as Map<String, dynamic>?;
       if (response.status != 201 || data?['success'] != true) {
-        throw Exception(data?['error']?.toString() ?? '送信に失敗しました');
+        throw Exception(
+          data?['error']?.toString() ?? '投稿に失敗しました',
+        );
       }
 
       final thankYouEmailSent = data?['thankYouEmailSent'] == true;
@@ -54,18 +58,18 @@ class _FeedbackPageState extends State<FeedbackPage> {
           ? List<String>.from(data!['warnings'] as List)
           : const <String>[];
 
-      final summary = <String>[
-        'フィードバックを送信しました。ありがとうございます。',
+      final lines = <String>[
+        'フィードバックを受け付けました。ありがとうございます。',
         if (thankYouEmailSent) '投稿ありがとうメールを送信しました。',
         if (githubIssueCreated && githubIssueNumber != null)
           'GitHub Issue #$githubIssueNumber に登録しました。',
-        if (warnings.isNotEmpty) '一部の自動処理はバックグラウンドで再試行します。',
-      ].join('\n');
+        if (warnings.isNotEmpty) '一部の自動処理はバックグラウンドで再実行されます。',
+      ];
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(summary),
+          content: Text(lines.join('\n')),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -80,12 +84,14 @@ class _FeedbackPageState extends State<FeedbackPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('送信に失敗しました: $e'),
+          content: Text('投稿に失敗しました: $e'),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -130,7 +136,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'あなたの声がこのアプリを育てます。送信後は投稿ありがとうメールをお送りし、GitHub Issue に登録して開発フローへ載せます。',
+                        '送信後は投稿ありがとうメールをお送りします。あわせて GitHub Issue に登録し、'
+                        'Claude Managed Agents と github-issue-fix キューで対応を追跡します。',
                         style: TextStyle(
                           color: colorScheme.onPrimaryContainer,
                           fontSize: 13,
@@ -182,7 +189,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 controller: _contentController,
                 maxLines: 8,
                 decoration: InputDecoration(
-                  hintText: '例: 〇〇機能が使いにくい、△△機能が欲しい、など',
+                  hintText: '例: カレンダー画面で画像付きメモを貼れるようにしてほしい、など',
                   filled: true,
                   fillColor: colorScheme.surfaceContainerLow,
                   border: OutlineInputBorder(
@@ -206,7 +213,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     return '内容を入力してください';
                   }
                   if (value.trim().length < 5) {
-                    return 'もう少し詳しく教えていただけると助かります';
+                    return 'もう少し詳しく書いていただけると助かります';
                   }
                   return null;
                 },
@@ -229,7 +236,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         )
                       : const Icon(Icons.send_rounded),
                   label: Text(
-                    _isSubmitting ? '送信中...' : '開発者に送信する',
+                    _isSubmitting ? '送信中...' : '送信する',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

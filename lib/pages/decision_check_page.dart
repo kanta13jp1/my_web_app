@@ -349,7 +349,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 const SizedBox(width: 6),
                 Text(
                   _categoryLabels[category] ?? category,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const Spacer(),
                 PopupMenuButton<String>(
@@ -375,7 +375,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   child: Icon(
                     Icons.more_vert,
                     size: 18,
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -418,7 +418,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 DateFormat('yyyy/MM/dd').format(
                   DateTime.tryParse(createdAt)?.toLocal() ?? DateTime.now(),
                 ),
-                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -450,7 +450,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.psychology_outlined, size: 64, color: Colors.grey[300]),
+          Icon(Icons.psychology_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
           const SizedBox(height: 16),
           Text(
             '論理的に決断しよう',
@@ -464,7 +464,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
           Text(
             '衝動的な決意の前に\nまずチェックしてみましょう',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

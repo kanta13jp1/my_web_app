@@ -66,11 +66,29 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
       // 「対応完了」に変更した場合、投稿者にリリース通知メールを送る
       if (newStatus == 'implemented') {
         try {
-          await supabase.functions.invoke(
-            'submit-feedback',
-            queryParameters: {'action': 'notify'},
-            body: {'feedback_id': id},
-          );
+          final session = supabase.auth.currentSession;
+          final payload = <String, dynamic>{
+            'appFeedbackId': id,
+            'status': 'done',
+            'markAsResolved': true,
+            'resolutionSummary':
+                '管理画面から対応完了として反映しました。最新のリリース内容をご確認ください。',
+          };
+
+          if (session == null) {
+            await supabase.functions.invoke(
+              'notify-feature-request',
+              body: payload,
+            );
+          } else {
+            await supabase.functions.invoke(
+              'notify-feature-request',
+              headers: <String, String>{
+                'Authorization': 'Bearer ${session.accessToken}',
+              },
+              body: payload,
+            );
+          }
         } catch (notifyErr) {
           AppLogger.error('Failed to send release notification', error: notifyErr);
           // 通知失敗はステータス変更の成功には影響させない
@@ -162,7 +180,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                         subtitle: Text(
                           '${timeago.format(date, locale: 'ja')} • $userId',
                           style:
-                              TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         children: [
                           Padding(
@@ -192,7 +210,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                     '投稿者メール: ${fb['user_email']}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey[500],
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],

@@ -338,7 +338,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                   '今月の合計',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
@@ -354,7 +354,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
           ),
           Text(
             '${_sessions.length}件の記録',
-            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -393,7 +393,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
               children: [
                 Text(
                   _storeCategories[category] ?? category,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -422,7 +422,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
               children: [
                 Text(
                   _paymentMethods[payment] ?? payment,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 if (purchasedAt != null) ...[
                   const SizedBox(width: 8),
@@ -432,7 +432,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                           DateTime.now(),
                     ),
                     style:
-                        TextStyle(fontSize: 11, color: Colors.grey[400]),
+                        TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -474,7 +474,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
               const SizedBox(height: 4),
               Text(
                 memo,
-                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -489,7 +489,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.receipt_long_outlined,
-              size: 64, color: Colors.grey[300],),
+              size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest,),
           const SizedBox(height: 16),
           Text(
             '買い物を記録しよう',
@@ -503,7 +503,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
           Text(
             'レシート代わりに\nサッと記録できます',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

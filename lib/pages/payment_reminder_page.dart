@@ -406,7 +406,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.payments_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.payments_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             const Text(
               '毎月の支払いを登録して\n忘れずにリマインドしましょう',
@@ -585,7 +585,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                           payee,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                     ],
@@ -604,7 +604,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                       ),
                     Text(
                       '毎月$dueDay日',
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -625,7 +625,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                   Flexible(
                     child: Text(
                       note,
-                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

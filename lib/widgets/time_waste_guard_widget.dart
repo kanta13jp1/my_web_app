@@ -278,7 +278,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                               fontWeight: isActive
                                   ? FontWeight.w700
                                   : FontWeight.normal,
-                              color: isActive ? item.color : Colors.grey[700],
+                              color: isActive ? item.color : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           if (slips > 0) ...[

@@ -2676,7 +2676,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -3383,7 +3383,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       child: LinearProgressIndicator(
                                         value: completionPct / 100,
                                         minHeight: 4,
-                                        backgroundColor: Colors.grey[200],
+                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
                                           profileColor,
@@ -3652,7 +3652,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             child: LinearProgressIndicator(
                               value: completionPct / 100,
                               minHeight: 6,
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 profileColor,
                               ),

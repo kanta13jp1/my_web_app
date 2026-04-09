@@ -461,7 +461,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -479,7 +479,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.shopping_cart_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',
@@ -668,7 +668,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             '$qty${unit.isNotEmpty ? unit : '個'}',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           if (price != null) ...[
@@ -677,7 +677,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               '¥${fmt.format(price)}',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -687,7 +687,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               shop,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Colors.grey[600],
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],

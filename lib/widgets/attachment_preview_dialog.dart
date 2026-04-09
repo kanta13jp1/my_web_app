@@ -81,7 +81,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                         widget.attachment.formattedSize,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -193,7 +193,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
             const SizedBox(height: 8),
             Text(
               widget.attachment.formattedSize,
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -206,7 +206,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
               'ブラウザでPDFを表示します',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],

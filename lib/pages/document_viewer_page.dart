@@ -192,7 +192,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                           widget.document.categoryDisplayName,
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: Colors.grey[600],
+                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -201,21 +201,21 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Divider(color: Colors.grey[300]),
+                              Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Icon(
                                     Icons.insert_drive_file,
                                     size: 16,
-                                    color: Colors.grey[600],
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     widget.document.path,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey[600],
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontFamily: 'monospace',
                                     ),
                                   ),

@@ -321,7 +321,7 @@ class _WardrobePageState extends State<WardrobePage>
             children: [
               Text(
                 '${filtered.length}件',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ],
           ),
@@ -338,12 +338,12 @@ class _WardrobePageState extends State<WardrobePage>
                           Icon(
                             Icons.checkroom,
                             size: 60,
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             '衣類を追加してください',
-                            style: TextStyle(color: Colors.grey[500]),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -388,7 +388,7 @@ class _WardrobePageState extends State<WardrobePage>
                   decoration: BoxDecoration(
                     color: _colorToFlutter(item.color),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[300]!),
+                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -436,7 +436,7 @@ class _WardrobePageState extends State<WardrobePage>
               const SizedBox(height: 6),
               Text(
                 item.memo!,
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ],
             const SizedBox(height: 8),
@@ -635,7 +635,7 @@ class _WardrobePageState extends State<WardrobePage>
                   const SizedBox(height: 8),
                   Text(
                     '${longUnused.length}件の衣類が半年以上着用されていません',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                   ),
                   if (longUnused.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -696,7 +696,7 @@ class _WardrobePageState extends State<WardrobePage>
                     if (longUnused.length > 5)
                       Text(
                         '+${longUnused.length - 5}件...',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                       ),
                   ],
                 ],
@@ -736,7 +736,7 @@ class _WardrobePageState extends State<WardrobePage>
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: pct,
-                                backgroundColor: Colors.grey[200],
+                                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 color: Colors.brown[400],
                                 minHeight: 10,
                               ),
@@ -774,7 +774,7 @@ class _WardrobePageState extends State<WardrobePage>
               color: color,
             ),
           ),
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+          Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       );
 

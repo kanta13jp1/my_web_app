@@ -247,7 +247,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         Text(

@@ -112,7 +112,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
                                   value: progress.clamp(0.0, 1.0),
-                                  backgroundColor: Colors.grey[200],
+                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
                                           Colors.pink,),

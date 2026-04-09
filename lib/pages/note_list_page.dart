@@ -920,7 +920,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 maxLines: highlightShareCandidate ? 3 : 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: Colors.grey[700],
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 12,
                 ),
               ),
@@ -929,7 +929,7 @@ class _NoteListPageState extends State<NoteListPage> {
             Text(
               dateStr,
               style: TextStyle(
-                color: Colors.grey[500],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 10,
               ),
             ),

@@ -97,7 +97,7 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
           Expanded(
             child: LinearProgressIndicator(
               value: val / 100,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               color: color,
               minHeight: 10,
             ),

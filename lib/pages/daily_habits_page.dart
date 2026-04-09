@@ -429,7 +429,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.repeat, size: 64, color: Colors.grey[400]),
+            Icon(Icons.repeat, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             const Text(
               '毎日やることを登録して\n習慣化しましょう',
@@ -653,7 +653,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         desc,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                   ],
@@ -682,7 +682,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 const SizedBox(width: 4),
                 Text(
                   '🏆$bestStreak',
-                  style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
               PopupMenuButton<String>(

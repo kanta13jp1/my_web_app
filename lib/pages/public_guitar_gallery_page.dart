@@ -188,7 +188,7 @@ class _PublicGuitarGalleryPageState
             const SizedBox(height: 12),
             Text(
               'ギャラリーの読み込みに失敗しました',
-              style: TextStyle(color: Colors.grey[400]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -216,14 +216,14 @@ class _PublicGuitarGalleryPageState
             Text(
               'まだ公開録音がありません',
               style: TextStyle(
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 16,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'ギタースタジオで録音して公開しましょう！',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -360,7 +360,7 @@ class _PublicGuitarGalleryPageState
                         Text(
                           dateLabel,
                           style: TextStyle(
-                            color: Colors.grey[500],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 11,
                           ),
                         ),
@@ -370,7 +370,7 @@ class _PublicGuitarGalleryPageState
                 if (shareUrl != null)
                   IconButton(
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     tooltip: '詳細ページ',
                     onPressed: () =>
                         Navigator.of(context).pushNamed(
@@ -433,14 +433,14 @@ class _PublicGuitarGalleryPageState
                   children: [
                     Icon(
                       Icons.play_circle_outline,
-                      color: Colors.grey[500],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       size: 18,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '$plays',
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -509,11 +509,11 @@ class _PublicGuitarGalleryPageState
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey[400]),
+          Icon(icon, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(color: Colors.grey[300], fontSize: 11),
+            style: TextStyle(color: Theme.of(context).colorScheme.surfaceContainerHighest, fontSize: 11),
           ),
         ],
       ),

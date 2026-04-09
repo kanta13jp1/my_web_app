@@ -228,14 +228,14 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                           Icon(
                             Icons.timeline,
                             size: 64,
-                            color: Colors.grey[400],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'まだアクティビティがありません',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey[600],
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -315,7 +315,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                 timeAgo,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

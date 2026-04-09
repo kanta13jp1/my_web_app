@@ -244,12 +244,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Icon(
               Icons.notifications_none,
               size: 64,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
             Text(
               _filter == 'unread' ? '未読通知はありません' : '通知はありません',
-              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
             ),
           ],
         ),
@@ -408,7 +408,7 @@ class _NotifTile extends StatelessWidget {
                         relativeTime,
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey[500],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -427,7 +427,7 @@ class _NotifTile extends StatelessWidget {
                     notif['message'] as String? ?? '',
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

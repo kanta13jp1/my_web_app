@@ -438,7 +438,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
             if (displayDate.isNotEmpty)
               Text(
                 displayDate,
-                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
           ],
         ),
@@ -536,13 +536,13 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                                   Icon(
                                     Icons.bookmarks_outlined,
                                     size: 64,
-                                    color: Colors.grey[300],
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
                                     'ブックマークがありません',
                                     style:
-                                        TextStyle(color: Colors.grey[500]),
+                                        TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                                   ),
                                   const SizedBox(height: 16),
                                   ElevatedButton.icon(

@@ -308,7 +308,7 @@ class _YoutubeChannelAnalyticsCardState
           Text(
             'youtube_video_stats テーブルにデータをインポートしてください。\n'
             'TSV形式のYouTubeアナリティクスデータを管理者ページからアップロードできます。',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],

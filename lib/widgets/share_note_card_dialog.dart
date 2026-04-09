@@ -502,7 +502,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
       ),
       child: Icon(
         icon,

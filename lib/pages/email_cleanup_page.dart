@@ -506,7 +506,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.mail_outline, size: 64, color: Colors.grey[400]),
+            Icon(Icons.mail_outline, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             const Text(
               'メールアカウントを登録して\n整理リマインダーを設定しましょう',
@@ -744,7 +744,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         Text(
           value,

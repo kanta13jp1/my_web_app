@@ -66,7 +66,7 @@ class MarkdownPreview extends StatelessWidget {
         ),
         // コードブロックスタイル
         code: TextStyle(
-          backgroundColor: Colors.grey[100],
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           fontFamily: 'monospace',
           fontSize: 14,
           color: Colors.red[700],
@@ -78,7 +78,7 @@ class MarkdownPreview extends StatelessWidget {
         codeblockPadding: const EdgeInsets.all(16),
         // 引用スタイル
         blockquote: TextStyle(
-          color: Colors.grey[700],
+          color: Theme.of(context).colorScheme.onSurface,
           fontStyle: FontStyle.italic,
         ),
         blockquoteDecoration: BoxDecoration(
@@ -96,19 +96,19 @@ class MarkdownPreview extends StatelessWidget {
         horizontalRuleDecoration: BoxDecoration(
           border: Border(
             top: BorderSide(
-              color: Colors.grey[300]!,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest!,
               width: 2,
             ),
           ),
         ),
         // テーブルスタイル
         tableBorder: TableBorder.all(
-          color: Colors.grey[300]!,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest!,
           width: 1,
         ),
         tableHead: TextStyle(
           fontWeight: FontWeight.bold,
-          backgroundColor: Colors.grey[200],
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
         tableBody: const TextStyle(
           fontSize: 14,
@@ -167,9 +167,9 @@ class CodeElementBuilder extends MarkdownElementBuilder {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: const BorderRadius.only(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF3C3C3C),
+                  borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(8),
                     topRight: Radius.circular(8),
                   ),
@@ -235,9 +235,9 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.grey[800],
-              borderRadius: const BorderRadius.only(
+            decoration: const BoxDecoration(
+              color: Color(0xFF3C3C3C),
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),

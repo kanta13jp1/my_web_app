@@ -372,7 +372,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'セッションを始めると、ここに残り時間と戻る言葉、退避メモが表示されます。',
-            style: TextStyle(color: Colors.grey[700]),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
         ),
       );
@@ -437,7 +437,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
               const SizedBox(height: 8),
               Text(
                 '開始: ${DateFormat('HH:mm').format(_sessionStartedAt!)}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
             if (_distractionNotes.isNotEmpty) ...[
@@ -501,7 +501,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           const SizedBox(height: 6),
           Text(
             '${DateFormat('yyyy/MM/dd HH:mm').format(record.completedAt)} / ${record.durationMinutes}分 / 退避 ${record.distractionCount}件',
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
           ),
           if (record.whyNow.trim().isNotEmpty) ...[
             const SizedBox(height: 6),

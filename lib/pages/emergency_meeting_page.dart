@@ -2680,7 +2680,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           ),
         ],
       ),
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       body: Column(
         children: [
           if (_currentLog == null && !_isLoading)
@@ -2873,7 +2873,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: Text(
                           '${_currentLog!.createdAt.year}年${_currentLog!.createdAt.month}月${_currentLog!.createdAt.day}日 臨時取締役会',
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -2935,7 +2935,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     ),
                     Text(
                       msg.role,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                     ),
                   ],
                 ),

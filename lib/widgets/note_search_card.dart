@@ -61,7 +61,7 @@ class NoteSearchCard extends StatelessWidget {
                       'キーワード・自然言語で全ノートを横断検索',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -69,7 +69,7 @@ class NoteSearchCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 size: 20,
               ),
             ],

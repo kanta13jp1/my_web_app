@@ -397,12 +397,12 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                   Icon(
                     Icons.calendar_today,
                     size: 12,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 2),
                   Text(
                     deadline.substring(0, 10),
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ],
@@ -411,7 +411,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               const SizedBox(height: 6),
               LinearProgressIndicator(
                 value: milestoneTotal > 0 ? progress / 100 : 0,
-                backgroundColor: Colors.grey[200],
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   isCompleted ? Colors.green : tfColor,
                 ),
@@ -419,7 +419,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               const SizedBox(height: 2),
               Text(
                 '$milestoneDone / $milestoneTotal マイルストーン完了',
-                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -563,12 +563,12 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
             Icon(
               isCompleted ? Icons.emoji_events_outlined : Icons.flag_outlined,
               size: 64,
-              color: Colors.grey[300],
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             const SizedBox(height: 12),
             Text(
               isCompleted ? '完了した目標はありません' : 'アクティブな目標がありません',
-              style: TextStyle(color: Colors.grey[500]),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             if (!isCompleted) ...[
               const SizedBox(height: 16),

@@ -446,7 +446,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   const SizedBox(width: 6),
                   Text(
                     _statusLabels[status] ?? status,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const Spacer(),
                   Row(
@@ -463,7 +463,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => _discard(thought['id'] as String),
-                    child: Icon(Icons.close, size: 16, color: Colors.grey[400]),
+                    child: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -479,7 +479,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 const SizedBox(height: 4),
                 Text(
                   '💭 $reflection',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -490,7 +490,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   DateFormat('MM/dd HH:mm').format(
                       DateTime.tryParse(capturedAt)?.toLocal() ??
                           DateTime.now(),),
-                  style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ],
@@ -505,7 +505,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bubble_chart_outlined, size: 64, color: Colors.grey[300]),
+          Icon(Icons.bubble_chart_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
           const SizedBox(height: 16),
           Text(
             '思考を捕まえよう',
@@ -518,7 +518,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
           Text(
             '上のテキストボックスに\n浮かんだことを入力してください',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

@@ -434,7 +434,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 180,
-                    color: Colors.grey[300],
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: const Center(child: Icon(Icons.image, size: 48, color: Colors.grey)),
                   ),
                 ),

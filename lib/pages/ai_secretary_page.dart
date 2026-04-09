@@ -316,7 +316,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 children: [
                   Text(
                     'MAGI秘書が画像からタスクを起案しました。',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                   ),
                   const SizedBox(height: 16),
                   Align(
@@ -602,7 +602,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                 margin: const EdgeInsets.symmetric(vertical: 8),
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Column(

@@ -1416,7 +1416,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2386,7 +2386,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -2404,7 +2404,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                 const Spacer(),
                 Text(
                   '${_comments.length}件',
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -2418,7 +2418,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                         child: Text(
                           'コメントはまだありません\n最初のメモを追加しましょう',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey[500]),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       )
                     : ListView.separated(
@@ -2458,7 +2458,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                 _formatDate(c['created_at']?.toString()),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[500],
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               trailing: IconButton(
