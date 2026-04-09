@@ -162,7 +162,7 @@ jobs:
     if: always()
     
     permissions:
-      contents: write 
+      contents: read
 
     steps:
       - name: Get commit message

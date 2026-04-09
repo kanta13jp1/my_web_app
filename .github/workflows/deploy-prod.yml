@@ -376,6 +376,8 @@ jobs:
     timeout-minutes: 15
     continue-on-error: true
     environment: production
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -409,7 +411,7 @@ jobs:
     if: always()
     environment: production
     permissions:
-      contents: write
+      contents: read
 
     steps:
       # 成功時の通知
