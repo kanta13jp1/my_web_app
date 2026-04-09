@@ -23,7 +23,7 @@ jobs:
       - name: Check Firebase Hosting
         id: firebase
         run: |
-          CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" \
             "https://my-web-app-b67f4.web.app/" \
             --max-time 10 2>/dev/null || echo "000")
           echo "code=$CODE" >> $GITHUB_OUTPUT
@@ -48,7 +48,7 @@ jobs:
             NAME="${EP%%:*}"
             METHOD="${EP##*:}"
 
-            CODE=$(curl -sf -o /dev/null -w "%{http_code}" \
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" \
               -X "$METHOD" \
               -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
               -H "Content-Type: application/json" \
