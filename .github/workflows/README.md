@@ -5,7 +5,7 @@
 ## 📋 ワークフロー一覧
 
 | ワークフロー | ファイル | トリガー | 用途 |
-|------------|---------|---------|------|
+| --- | --- | --- | --- |
 | **CI** | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **0エラー強制** + deno lint **0エラー強制** + ビルド検証 + Job Summary |
 | **Deploy to Development** | `deploy-dev.yml` | `develop` へのpush | 開発環境デプロイ (concurrency制御・timeout付き) |
 | **Deploy to Staging** | `deploy-staging.yml` | `staging` へのpush | ステージング環境デプロイ (concurrency制御・timeout付き) |
@@ -18,22 +18,23 @@
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
 | **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
 | **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
+| **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | ワークフロー失敗時に GitHub Issue 自動生成 (重複スキップ) |
 
-## 品質保証指標 (全12ワークフロー)
+## 品質保証指標 (全13ワークフロー)
 
 | 指標 | 状態 |
-|------|------|
+| --- | --- |
 | `flutter analyze` 0エラー強制ゲート | ✅ ci.yml |
 | `deno lint` 0エラー強制ゲート | ✅ ci.yml |
 | EF未分類チェック (Tier1/2カバレッジ) | ✅ ci.yml (未分類0本達成) |
-| `concurrency` 制御 (並列実行防止) | ✅ 全12本 |
-| `timeout-minutes` (ハング防止) | ✅ 全12本 |
-| `permissions` 最小権限原則 | ✅ 全12本 (全ジョブ) |
+| `concurrency` 制御 (並列実行防止) | ✅ 全13本 |
+| `timeout-minutes` (ハング防止) | ✅ 全13本 |
+| `permissions` 最小権限原則 | ✅ 全13本 (全ジョブ) |
 | `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 4本 (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) |
 | Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
-| アクションバージョン固定 (floating tag なし) | ✅ 全12本 |
+| アクションバージョン固定 (floating tag なし) | ✅ 全13本 |
 | `schedule_task_runs` DB記録 | ✅ スケジュール6本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit) |
-| `$GITHUB_STEP_SUMMARY` | ✅ 全12本 |
+| `$GITHUB_STEP_SUMMARY` | ✅ 全13本 |
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
 | **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
 | **ユーザーフィードバックパイプライン** | ✅ feedback-issue-resolved.yml (`SUPABASE_SERVICE_ROLE_KEY` 使用) |
@@ -345,6 +346,7 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 **症状**: デプロイが失敗し、"Secret not found" エラーが表示される
 
 **解決方法**:
+
 1. リポジトリの `Settings` → `Secrets and variables` → `Actions` を開く
 2. 必要なSecretsを追加
 3. [DEPLOYMENT_GUIDE.md](../../docs/technical/DEPLOYMENT_GUIDE.md#github-secrets設定) を参照
@@ -354,6 +356,7 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 **症状**: ブランチにpushしてもワークフローが実行されない
 
 **解決方法**:
+
 1. ワークフローファイルの `on` セクションを確認
 2. ブランチ名が正しいか確認
 3. `.github/workflows/` ディレクトリに正しく配置されているか確認
@@ -363,13 +366,16 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 **症状**: PRを作成するたびにCIが失敗する
 
 **解決方法**:
+
 1. ローカルで同じチェックを実行
+
    ```bash
    flutter analyze
    dart format --set-exit-if-changed .
    flutter test
    flutter build web --release
    ```
+
 2. エラーメッセージを確認して修正
 3. `.github/workflows/ci.yml` の設定を確認
 
@@ -378,6 +384,7 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 **症状**: デプロイは成功するが、アプリが正しく動作しない
 
 **解決方法**:
+
 1. ブラウザのコンソールでエラーを確認
 2. 環境変数が正しく設定されているか確認
 3. Firebase Hosting の設定を確認
@@ -420,8 +427,9 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 ## 更新履歴
 
 | 日付 | バージョン | 変更内容 |
-|------|-----------|---------|
+| --- | --- | --- |
 | 2025-11-14 | 1.0.0 | 初版作成 |
 | 2026-04-10 | 1.1.0 | Flutter v3.38.x / dependabot pip追加 / schedule_task_runs記録6本に修正 / PS#28-34品質改善反映 |
 | 2026-04-10 | 1.2.0 | Claude Managed Agents 統合: `claude-agent-review.yml` 新設 (11本体制) / EF総数238→240反映 |
 | 2026-04-10 | 1.3.0 | ユーザーフィードバックパイプライン: `feedback-issue-resolved.yml` 新設 (12本体制) |
+| 2026-04-10 | 1.4.0 | ワークフロー失敗Issue自動生成: `workflow-failure-handler.yml` 新設 (13本体制) |

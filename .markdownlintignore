@@ -1,11 +1,15 @@
-# Auto-generated files — excluded from markdownlint
-docs/cs-notes/
+# Auto-generated files
 docs/daily-reports/
-docs/blog-drafts/
+docs/cs-notes/
+docs/weekly-drafts/
 docs/competitor-reports/
 docs/incident-reports/
 docs/security-audit/
-docs/weekly-drafts/
-docs/session-summaries/
-docs/archive/
-node_modules/
+docs/blog-drafts/
+
+# System files
+.claude/
+.codex-vscode-ui/
+
+# Third-party design system references
+docs/design-systems/

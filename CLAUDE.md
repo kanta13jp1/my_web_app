@@ -36,6 +36,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
   - `docs/design-systems/template/DESIGN.md` — 新サービス追加用テンプレート
 
 **重要ルール**:
+
 - 日本語本文の `letter-spacing` は原則 0（見出しのみ使用可）
 - 本文の `line-height` は最低 1.5（推奨 1.7〜2.0）
 - Yu Gothic を使う場合は `@font-face` で Medium→400 マッピングを使う
@@ -297,6 +298,7 @@ gh issue list --state open --json number,title,body,labels --limit 30
 #### Step 2: 各Issueを判断・対応
 
 **ケース A: Edge Function UI導線チェック (`[自動] Edge Function UI導線チェック`)**
+
 - Issue body から未接続の Edge Function 名リストを抽出
 - `lib/widgets/edge_function_summary_card.dart` を読んで、既に追加済みかを確認
 - 未追加の場合: `edge_function_summary_card.dart` の関数リストに追加
@@ -305,10 +307,12 @@ gh issue list --state open --json number,title,body,labels --limit 30
 - Issue をクローズ: `gh issue close <number>`
 
 **ケース B: flutter analyze エラー (`[自動] flutter analyze`)**
+
 - エラー内容を読んで、修正可能なら修正
 - `flutter analyze` で0エラーを確認後、コミット・クローズ
 
 **ケース C: 判断困難または手動対応が必要**
+
 - `docs/cs-notes/YYYY-MM-DD-github-issues.md` にメモを残す
 - Issue はそのまま維持
 
@@ -396,7 +400,7 @@ GitHub PRの自動コードレビュー。
 インフラヘルスチェック。
 
 1. `health-check` Edge Function で DB・テーブル・レスポンスタイムを確認
-2. Firebase Hosting (https://my-web-app-b67f4.web.app/) の可用性を確認
+2. Firebase Hosting (<https://my-web-app-b67f4.web.app/>) の可用性を確認
 3. 異常時のみ `docs/incident-reports/YYYY-MM-DD-HH.md` にレポート作成
 
 ---
