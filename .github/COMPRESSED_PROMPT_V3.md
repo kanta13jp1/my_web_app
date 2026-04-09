@@ -10,7 +10,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 ## 🔀 4インスタンス並行開発スコープ
 
 | インスタンス | 担当範囲 | 変更禁止 |
-|---|---|---|
+| --- | --- | --- |
 | **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
@@ -36,7 +36,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 ## 🧩 コア機能リスト（実装済み含む）
 
 | # | 機能 | 状態 | 主要EF / 担当 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | **競合機能比較ページ** (21社×機能マトリクス) | ✅ | `get-competitor-features` |
 | 2 | **EF UI導線カバレッジ** (未接続→GitHub Issue自動生成) | ✅ | `edge-function-coverage` |
 | 3 | **開発実績タイムライン** | ✅ | `development-achievements` |
@@ -78,7 +78,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 **全12本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
-|---|---|---|
+| --- | --- | --- |
 | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
 | `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
@@ -111,7 +111,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 > GitHub Actions と **並行・補完**する関係。Actions がデータ収集・投稿を担当し、Claude Schedule が AI分析・コード修正を担当。
 
 | Task | 時刻 | 内容 |
-|---|---|---|
+| --- | --- | --- |
 | `daily-report` | 09:00 JST | Actions生成レポート確認 → AI分析追記 → X投稿(失敗時のみ) → commit |
 | `cs-check` | 毎時 | 未返信チケット → FAQ返信 / バグ修正 / エスカレーション → PR自動レビュー |
 | `github-issue-fix` | 10:00 JST | Open Issue → EF UI導線追加 / analyze エラー修正 → クローズ |
@@ -177,7 +177,7 @@ web/sitemap.xml          # URL マップ
 ### 機能 #12: コンソールエラー自動フィードバック投稿
 
 | インスタンス | 作業内容 |
-|---|---|
+| --- | --- |
 | **VSCode版** | `main.dart` に `FlutterError.onError` + `PlatformDispatcher.instance.onError` を追加 → エラー時に `submit-feedback` EF へ POST (`type=auto_error`, `title=Auto Error Report`, `body=スタックトレース`, `email=system@auto`) |
 | **Web版** | `submit-feedback` EF に `type=auto_error` 判定を追加 → GitHub Issue 作成スキップ / `auto_reported: true` フラグ保存 |
 | **Windows版** | `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション |
@@ -187,7 +187,7 @@ web/sitemap.xml          # URL マップ
 **症状**: モバイルブラウザ（iOS Safari / Android Chrome）でテキストフィールドへのコピペが動作しない。APIキー等の長い文字列入力が困難。
 
 | インスタンス | 作業内容 |
-|---|---|
+| --- | --- |
 | **VSCode版** | 全 `TextField` / `TextFormField` に `enableInteractiveSelection: true` / `toolbarOptions` を明示設定。`web/index.html` の viewport に `user-scalable=yes` を確認。モバイルで長押しコンテキストメニューが出るか確認。APIキー入力フィールドは `keyboardType: TextInputType.visiblePassword` + `obscureText: false` で対応。 |
 
 ---
