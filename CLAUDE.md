@@ -382,7 +382,7 @@ GitHub PRの自動コードレビュー。
 
 ### Task: competitor-monitoring (毎日 07:00 JST に実行)
 
-競合14社のWebサイト・機能変更モニタリング。
+競合21社のWebサイト・機能変更モニタリング。
 
 1. `check-competitor-updates` Edge Function で可用性チェック
 2. WebSearch で各競合の最新ニュースを検索
@@ -497,7 +497,7 @@ lib/
   main.dart              # ルーティング
   pages/
     landing_page.dart    # LP (比較リンク、FAB CTA)
-    comparison_page.dart # 競合比較ページ (14社)
+    comparison_page.dart # 競合比較ページ (21社)
     user_manual_page.dart
     admin_analytics_page.dart
 supabase/
@@ -531,10 +531,10 @@ web/
 | `daily-judgment` | AI デイリー判定 |
 | `ai-assistant` | AI アシスタント |
 | `post-x-update` | X (Twitter) 自動投稿 (@kanta13jp1) |
-| `get-growth-roadmap-progress` | 進捗バーデータ (15競合+短中長期) |
-| `get-competitor-features` | 競合14社の機能比較データ |
+| `get-growth-roadmap-progress` | 進捗バーデータ (21競合+短中長期) |
+| `get-competitor-features` | 競合21社の機能比較データ |
 | `health-check` | インフラヘルスチェック |
-| `check-competitor-updates` | 競合14社のWebサイト可用性チェック |
+| `check-competitor-updates` | 競合21社のWebサイト可用性チェック |
 
 ---
 
