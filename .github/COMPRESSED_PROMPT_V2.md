@@ -74,6 +74,12 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 **全10本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
+**追加品質 (PS#28〜30)**:
+- アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
+- セキュリティ: 読み取り専用3本に `persist-credentials: false`
+- 堅牢性: Slack webhook `--max-time 10 || true` / `requirements.txt` バージョン上限固定
+- データ精度: `daily-report` fetch-depth `200` / `dependency-audit` Deno import `head -2000`
+
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
 | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |

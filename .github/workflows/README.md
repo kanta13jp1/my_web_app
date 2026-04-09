@@ -27,6 +27,9 @@
 | `concurrency` 制御 (並列実行防止) | ✅ 全10本 |
 | `timeout-minutes` (ハング防止) | ✅ 全10本 |
 | `permissions` 最小権限原則 | ✅ 全10本 (全ジョブ) |
+| `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 3本 (edge-function-audit / dependency-audit / cron-batch) |
+| Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
+| アクションバージョン固定 (floating tag なし) | ✅ 全10本 |
 | `schedule_task_runs` DB記録 | ✅ スケジュール7本 |
 | `$GITHUB_STEP_SUMMARY` | ✅ 全10本 |
 | `dependabot` 自動更新 | ✅ Actions + pub (毎週月曜) |
