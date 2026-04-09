@@ -14,7 +14,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 239本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (12本完備済み) | 他3範囲 |
+| **PowerShell版** | `.github/workflows/` + CI/CD (13本完備済み) | 他3範囲 |
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -144,7 +144,7 @@ lib/pages/               # 194ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 239本 (Tier1: 100デプロイ済 / Tier2: 139コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 12本 (品質基準完備済み)
+.github/workflows/       # 13本 (品質基準完備済み)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)
