@@ -63,9 +63,29 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
         }
       });
 
+      // 「対応完了」に変更した場合、投稿者にリリース通知メールを送る
+      if (newStatus == 'implemented') {
+        try {
+          await supabase.functions.invoke(
+            'submit-feedback',
+            queryParameters: {'action': 'notify'},
+            body: {'feedback_id': id},
+          );
+        } catch (notifyErr) {
+          AppLogger.error('Failed to send release notification', error: notifyErr);
+          // 通知失敗はステータス変更の成功には影響させない
+        }
+      }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ステータスを $newStatus に更新しました')),
+          SnackBar(
+            content: Text(
+              newStatus == 'implemented'
+                  ? 'ステータスを対応完了に更新し、投稿者に通知しました ✅'
+                  : 'ステータスを $newStatus に更新しました',
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -156,6 +176,26 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(fb['content']),
+                                if (fb['github_issue_url'] != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'GitHub Issue: ${fb['github_issue_url']}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.indigo[400],
+                                    ),
+                                  ),
+                                ],
+                                if (fb['user_email'] != null) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '投稿者メール: ${fb['user_email']}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 16),
                                 const Text(
                                   'ステータス変更:',

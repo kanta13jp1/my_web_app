@@ -206,9 +206,10 @@ jobs:
           supabase functions deploy get-competitor-monitoring --no-verify-jwt
           supabase functions deploy edge-function-coverage --no-verify-jwt
 
-          # --- Tier 1E: Admin & Support (8) ---
+          # --- Tier 1E: Admin & Support (9) ---
           supabase functions deploy get-admin-users --no-verify-jwt
           supabase functions deploy notify-feature-request --no-verify-jwt
+          supabase functions deploy submit-feedback --no-verify-jwt
           supabase functions deploy get-support-tickets --no-verify-jwt
           supabase functions deploy reply-support-request --no-verify-jwt
           supabase functions deploy get-competitor-features --no-verify-jwt
