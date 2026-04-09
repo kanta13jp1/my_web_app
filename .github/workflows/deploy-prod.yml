@@ -79,7 +79,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: v2.84.2
+          version: 2.84.2
 
       - name: Run Supabase migrations
         run: |

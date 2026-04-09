@@ -1804,7 +1804,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               '利用可能メソッド: 未取得',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             )
           else
@@ -2441,7 +2441,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Text(
             detail,
             style: TextStyle(
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -2457,7 +2457,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Text(
             helper,
             style: TextStyle(
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
             ),
           ),
@@ -2597,7 +2597,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ),
                   subtitle: Text(
                     _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   initiallyExpanded: _isHeaderExpanded,
                   onExpansionChanged: (bool expanded) {
@@ -2613,7 +2613,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           const SizedBox(height: 8),
                           Text(
                             'CEO、本日の最優先事項を定義し、実行に移しましょう。',
-                            style: TextStyle(color: Colors.grey.shade700),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           if (_weatherData != null) ...[
                             const SizedBox(height: 16),
@@ -2648,7 +2648,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade300),
+                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.grey.withValues(alpha: 0.1),
@@ -2735,7 +2735,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     }).join('; ')}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.grey.shade600,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
@@ -2837,7 +2837,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 const SizedBox(height: 4),
                                 LinearProgressIndicator(
                                   value: progress,
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                   color: progress == 1.0
                                       ? Colors.orange
                                       : Colors.green,
@@ -3593,7 +3593,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         side: BorderSide(
           color: isOverdue
               ? Colors.red.shade200
-              : (isCompleted ? Colors.grey.shade200 : Colors.grey.shade300),
+              : (isCompleted ? Theme.of(context).colorScheme.surfaceContainerHigh : Theme.of(context).colorScheme.surfaceContainerHighest),
         ),
       ),
       child: InkWell(
@@ -3710,7 +3710,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ),
                       Icon(
                         Icons.chevron_right,
-                        color: Colors.grey.shade500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ],
                   ),
@@ -3771,7 +3771,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     Text(
                       'サブタスク $completedSubtasks/${matchingSubtasks.length} 完了',
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3784,7 +3784,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 child: Text(
                   'タップで詳細',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -3835,7 +3835,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       width: 44,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
+                        color: Theme.of(context).colorScheme.outlineVariant,
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
@@ -3854,7 +3854,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ? 'この日に登録されているタスクはありません。'
                         : '${tasks.length}件のタスクが登録されています。',
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
@@ -3863,7 +3863,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Text('別の日付を選ぶか、タスクを追加してください。'),
@@ -3913,7 +3913,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ? 'この日は未登録です。'
                 : '登録 ${tasks.length}件 / 完了 $completedCount件',
             style: TextStyle(
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -3924,7 +3924,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.grey.shade800,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.4,
               ),
             ),
@@ -3956,7 +3956,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
       child: Column(
         children: [
@@ -3986,7 +3986,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 Text(
                   '登録 ${tasks.length}件 / 完了 $completedCount件',
                   style: TextStyle(
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: dense ? 12 : 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -3996,7 +3996,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text(
                     'カードをタップすると詳細とサブタスクを確認できます。',
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -4011,7 +4011,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   padding: const EdgeInsets.all(24),
                   child: Text(
                     'この日に登録されているタスクはありません。',
-                    style: TextStyle(color: Colors.grey.shade700),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -4110,8 +4110,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       vertical: 4.0,
                     ),
                     decoration: BoxDecoration(
-                      color: isCompleted ? Colors.grey.shade100 : Colors.white,
-                      border: Border.all(color: Colors.grey.shade300),
+                      color: isCompleted ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.white,
+                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: ListTile(
@@ -4341,7 +4341,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
           ),
           child: TableCalendar<Map<String, dynamic>>(
             locale: 'ja_JP',
@@ -4905,7 +4905,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Expanded(
                     child: LinearProgressIndicator(
                       value: subTotal > 0 ? subDone / subTotal : 0,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       color: Colors.blueAccent,
                       minHeight: 4,
                       borderRadius: BorderRadius.circular(2),

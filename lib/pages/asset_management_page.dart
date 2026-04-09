@@ -2035,7 +2035,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade400),
+                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -2047,7 +2047,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -3272,7 +3272,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Card(
       key: const Key('asset_monthly_flow_priority_card'),
       elevation: widget.emphasizeMonthlyFlow ? 6 : 3,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
@@ -3319,7 +3319,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         style: TextStyle(
                           fontSize: 12,
                           height: 1.4,
-                          color: Colors.grey.shade700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -4240,7 +4240,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       avatar: Icon(
         icon,
         size: 16,
-        color: selected ? Colors.white : Colors.grey.shade700,
+        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       selectedColor: Colors.deepPurple,
       labelStyle: TextStyle(
@@ -4361,7 +4361,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
+                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -6153,7 +6153,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   style: TextStyle(
                                     color: isPaid
                                         ? Colors.grey
-                                        : Colors.grey.shade700,
+                                        : Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),

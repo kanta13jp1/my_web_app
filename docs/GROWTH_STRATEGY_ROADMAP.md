@@ -3304,3 +3304,42 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
   - ステータスバッジ: `Colors.*.shade100/700` → `statusColor.withValues(alpha: 0.15)` / `statusColor`
 - **`_metricBadge` ヘルパー追加**: アイコン + 数値のインラインバッジ
 - flutter analyze: 0エラー維持
+
+### Session VSCode#14 (2026-04-10): ダークテーマ色修正 + CI修正
+
+#### supabase/setup-cli@v1 → @v2 (PowerShellスコープ代行)
+
+- `deploy-prod.yml`, `deploy-dev.yml`, `deploy-staging.yml` の3ファイルで `supabase/setup-cli@v1` → `@v2` に修正
+- v1 は削除済みで 404 エラーが発生していた
+
+#### emergency_meeting_page.dart ダークテーマ修正 (10箇所)
+
+- `Colors.grey.shade300` border → `colorScheme.outlineVariant`
+- `Colors.grey.shade600/700/800` text → `colorScheme.onSurfaceVariant/onSurface`
+- ChipのunSelected: `Colors.grey.shade400/800` → `colorScheme.outlineVariant/onSurfaceVariant`
+- 会議メッセージカード: `isCeo ? Colors.blue[50] : Colors.white` → `colorScheme.primaryContainer.withValues(alpha:0.5) / surfaceContainerLow`
+- `Colors.grey.shade200` モデルバッジ bg → `colorScheme.surfaceContainerHigh`
+
+#### morning_briefing_page.dart ダークテーマ修正 (21箇所)
+
+- `Colors.grey.shade[1-9]xx` 全21箇所を colorScheme.* トークンに置換
+- Container色 `Colors.white` → `surfaceContainerLow` (3箇所)
+- プログレスバー bg: `Colors.white` → `surfaceContainerHighest`
+- サブタスクプログレス bg: `Colors.grey.shade200` → `surfaceContainerHigh`
+
+#### enterprise_page.dart ダークテーマ修正 (3箇所)
+
+- セクションContainer bg: `Colors.white` → `colorScheme.surface` (2箇所)
+- ツールカード bg: `Colors.white` / `Color(0xFFE2E8F0)` → `surfaceContainerLow` / `outlineVariant`
+
+#### asset_management_page.dart ダークテーマ修正 (7箇所)
+
+- `Colors.grey.shade[2-7]xx` 6箇所 → colorScheme.*
+- 月次収支カード bg: `Colors.white` → `surfaceContainerLow`
+
+#### mindless_task_page.dart ダークテーマ修正 (19箇所)
+
+- `Colors.grey.shade[1-6]xx` 14箇所 → colorScheme.*
+- パネルコンテナ bg: `Colors.white` 5箇所 → `surfaceContainerLow`
+
+flutter analyze: 全体0エラー維持

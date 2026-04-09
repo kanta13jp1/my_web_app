@@ -210,7 +210,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
         horizontal: isMobile ? 24 : 80,
         vertical: 56,
       ),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -396,7 +396,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 56),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -812,9 +812,9 @@ class _UseCaseCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
