@@ -379,6 +379,11 @@
 - **Gemini APIレスポンスMarkdownブロック除去** (daily-development 2026-03-31): `docs/index.ts` で Gemini API がまれに返す Markdown コードブロック形式（` ```json ` ）を正規表現で自動除去する前処理ロジックを追加。deno lint 0件維持。
 - **ブログ下書き作成** (daily-development 2026-03-31): `docs/blog-drafts/2026-03-31-past-election-results.md` — Gemini APIスキーマ拡張・Dartモデル追加・Flutter UI実装の解説記事。
 
+### 2026-04-09 daily-development 実装済み (自動)
+
+- **ポモドーロ集中タイマー 全面刷新** (daily-development 2026-04-09): `focus_timer_page.dart` を127行スタブから本実装に全面刷新。`CustomPainter` による円形アニメーションタイマー・`dart:async Timer.periodic` リアルタイムカウントダウン・WORK/BREAKモード自動切替・25/5・50/10・90/20プリセット対応。セッション開始/完了/キャンセルを `focus-timer` Edge Function で永続化。集中スコア(30日)/ストリーク日数/累計分/完了セッション数 の統計タブを追加。`focus_sessions` テーブル migration (`20260409000010_create_focus_sessions.sql`) 新規作成。Forest/Focusmate競合。flutter analyze 0件維持。
+- **ブログ下書き作成** (daily-development 2026-04-09): `docs/blog-drafts/2026-04-09-pomodoro-focus-timer.md` — Flutter Web での CustomPainter 円形タイマー・dart:async Timer・dynamic型安全キャスト・Edge Function永続化パターンの解説記事。
+
 ### 2026-04-06 daily-development 実装済み (自動)
 
 - **カレンダービュー (TableCalendar) 全面刷新** (daily-development 2026-04-06): `calendar_events_page.dart` を `table_calendar` パッケージで月次カレンダーUIに全面刷新。月次ビュー切替・日付選択・日付別イベントリスト・イベント作成ダイアログ（タイトル/説明/日付ピッカー/5色カラーピッカー/終日フラグ）・削除確認ダイアログを実装。`calendar-events` Edge Function の GET `view=month` エンドポイントと連携。Notionパリティ「カレンダービュー」を長期ロードマップから前倒し実装完了。flutter analyze 0件維持。
