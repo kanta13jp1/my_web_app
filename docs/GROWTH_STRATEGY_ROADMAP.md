@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-07 PS#27 (awesome-design-md-jp 5サービスDESIGN.md保存・CLAUDE.mdデザインシステム参照追加)
+最終更新: 2026-04-10 VSCode#17 (Colors.grey[]→colorScheme一括置換完了・モバイルコピペ修正・!演算子警告撲滅)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3386,3 +3386,37 @@ flutter analyze: 全体0エラー維持
 2. ドロップ → `FileReader` でバイト読み取り → `AttachmentService.uploadFile()` → Supabase Storage
 3. Markdownリンク (`![画像名](url)`) がカーソル位置に挿入 → 自動保存
 4. 添付ファイルリストに新しい画像が表示
+
+### Session VSCode#17 (2026-04-10): ダークテーマ完全解消・モバイルUI改善
+
+#### Colors.grey[] → colorScheme トークン一括置換
+
+- **対象**: `lib/pages/` 44ファイル + `lib/widgets/` 含む 160件
+- `Colors.grey[100]` → `colorScheme.surfaceContainerLow`
+- `Colors.grey[200/300]` → `colorScheme.surfaceContainerHighest`
+- `Colors.grey[400/500/600]` → `colorScheme.onSurfaceVariant`
+- `Colors.grey[700/800]` → `colorScheme.onSurface`
+- `markdown_preview.dart` の `prefer_const_constructors` エラー修正 (BoxDecoration に const 追加)
+- `flutter analyze`: 0エラー確認 (warnings含め全解消)
+
+#### バグ修正: モバイルでコピペ・APIキー入力できない (#B1)
+
+- **`emergency_meeting_page.dart`** — Gemini APIキーダイアログ: 表示切替ボタン + 貼り付けボタン追加
+- **`morning_briefing_page.dart`** — APIキーダイアログ×2: 同上 + StatefulBuilder化
+- **`landing_page.dart`** — パスワードフィールド: 表示切替ボタン + 貼り付けボタン追加
+- `keyboardType: TextInputType.visiblePassword` でオートコンプリート抑制
+- `enableInteractiveSelection: true` を明示設定
+
+#### コード品質: unnecessary_non_null_assertion 全撲滅 (10件)
+
+- `asset_management_page.dart` (3件) / `comparison_page.dart` (1件)
+- `wardrobe_page.dart` (1件) / `growth_chart_widget.dart` (2件)
+- `markdown_preview.dart` (2件) / `share_note_card_dialog.dart` (1件)
+- `colorScheme.surfaceContainerHighest!` / `onSurfaceVariant!` → `!` 削除
+
+#### 機能 #12 (コンソールエラー自動フィードバック投稿) — VSCode側完了確認
+
+- `lib/utils/error_reporter.dart`: `FlutterError.onError` + `PlatformDispatcher.instance.onError` 実装済み
+- `lib/main.dart` line 234: `ErrorReporter.instance.install()` 呼び出し済み
+- `AppLogger.error` → `ErrorReporter.instance.report()` 連携済み
+- 残り: Web版 (submit-feedback EF の auto_error 対応) / Windows版 (migration) は他インスタンス担当
