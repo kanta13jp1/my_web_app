@@ -221,7 +221,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               borderRadius: BorderRadius.circular(8),
             ),

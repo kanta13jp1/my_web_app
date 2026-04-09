@@ -249,7 +249,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             RepaintBoundary(
               key: _barChartKey,
               child: Container(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 child: Column(
                   children: [
                     Container(

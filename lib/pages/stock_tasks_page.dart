@@ -369,7 +369,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
           Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.1),

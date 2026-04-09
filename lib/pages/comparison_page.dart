@@ -662,7 +662,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
 
   Widget _buildFeatureTable() {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Center(
         child: ConstrainedBox(

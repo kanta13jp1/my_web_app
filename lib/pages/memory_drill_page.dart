@@ -459,7 +459,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
       key: const Key('memory_drill_selected_pack_card'),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
         boxShadow: [

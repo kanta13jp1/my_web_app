@@ -4869,7 +4869,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.amber[100]!),
                 ),

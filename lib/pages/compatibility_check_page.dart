@@ -140,7 +140,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

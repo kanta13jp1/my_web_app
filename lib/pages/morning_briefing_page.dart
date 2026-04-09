@@ -2709,7 +2709,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                               boxShadow: [
@@ -4017,7 +4017,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
@@ -4404,7 +4404,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             denseCalendar ? 8 : 10,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
           ),

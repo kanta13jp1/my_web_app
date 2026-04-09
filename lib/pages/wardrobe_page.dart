@@ -265,7 +265,7 @@ class _WardrobePageState extends State<WardrobePage>
       children: [
         // フィルター
         Container(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Column(
             children: [

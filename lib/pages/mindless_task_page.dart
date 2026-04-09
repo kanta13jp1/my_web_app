@@ -1369,7 +1369,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 6),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: Theme.of(context).colorScheme.surfaceContainerLow,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: Colors.blueGrey.withValues(

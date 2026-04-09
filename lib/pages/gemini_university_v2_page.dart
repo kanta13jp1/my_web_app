@@ -1041,7 +1041,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.orange, width: 4),
         boxShadow: [

@@ -453,7 +453,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: accent.withValues(alpha: 0.18)),
         boxShadow: [
@@ -628,7 +628,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: accent.withValues(alpha: 0.14)),
           ),
