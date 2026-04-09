@@ -308,6 +308,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
               child: Row(
                 children: [
                   _filterChip(
+                      context,
                       '全て',
                       _filterStatus == 'all',
                       () => setState(() {
@@ -315,6 +316,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                             _load();
                           }),),
                   _filterChip(
+                      context,
                       '捕獲',
                       _filterStatus == 'captured',
                       () => setState(() {
@@ -322,6 +324,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                             _load();
                           }),),
                   _filterChip(
+                      context,
                       '振り返り済',
                       _filterStatus == 'reviewed',
                       () => setState(() {
@@ -329,6 +332,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                             _load();
                           }),),
                   _filterChip(
+                      context,
                       '行動済',
                       _filterStatus == 'acted',
                       () => setState(() {
@@ -339,6 +343,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   const VerticalDivider(width: 1),
                   const SizedBox(width: 8),
                   ..._typeLabels.entries.map((e) => _filterChip(
+                        context,
                         e.value.split(' ').last,
                         _filterType == e.key,
                         () => setState(() {
@@ -370,8 +375,9 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
     );
   }
 
-  Widget _filterChip(String label, bool selected, VoidCallback onTap,
-      {Color? color,}) {
+  Widget _filterChip(BuildContext context, String label, bool selected,
+      VoidCallback onTap, {Color? color,}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: GestureDetector(
@@ -382,14 +388,18 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
           decoration: BoxDecoration(
             color: selected
                 ? (color ?? const Color(0xFF6366F1))
-                : const Color(0xFFF1F5F9),
+                : (isDark
+                    ? Theme.of(context).colorScheme.surfaceContainerHighest
+                    : const Color(0xFFF1F5F9)),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 12,
-              color: selected ? Colors.white : Colors.grey[600],
+              color: selected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
             ),
           ),

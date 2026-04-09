@@ -156,7 +156,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                             label: Text(status),
                             backgroundColor: status == 'active'
                                 ? Colors.green[100]
-                                : Colors.grey[200],
+                                : Theme.of(context).colorScheme.surfaceContainerHighest,
                           ),
                         ),
                       );

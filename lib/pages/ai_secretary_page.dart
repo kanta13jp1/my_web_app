@@ -486,15 +486,16 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _buildStrategyButton('今', 'now', Icons.flash_on),
-                    _buildStrategyButton('今日', 'today', Icons.today),
+                    _buildStrategyButton(context, '今', 'now', Icons.flash_on),
+                    _buildStrategyButton(context, '今日', 'today', Icons.today),
                     _buildStrategyButton(
+                      context,
                       '今週',
                       'week',
                       Icons.calendar_view_week,
                     ),
-                    _buildStrategyButton('今月', 'month', Icons.calendar_month),
-                    _buildStrategyButton('今年', 'year', Icons.rocket_launch),
+                    _buildStrategyButton(context, '今月', 'month', Icons.calendar_month),
+                    _buildStrategyButton(context, '今年', 'year', Icons.rocket_launch),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -641,8 +642,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     );
   }
 
-  Widget _buildStrategyButton(String label, String type, IconData icon) {
+  Widget _buildStrategyButton(
+      BuildContext context, String label, String type, IconData icon,) {
     final isSelected = _currentStrategyType == type;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: _isLoading ? null : () => _consultSecretary(type),
       child: Column(
@@ -650,12 +653,20 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.indigo : Colors.grey[200],
+              color: isSelected
+                  ? Colors.indigo
+                  : (isDark
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      : Colors.grey[200]),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.grey[600],
+              color: isSelected
+                  ? Colors.white
+                  : (isDark
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : Colors.grey[600]),
               size: 20,
             ),
           ),
@@ -665,7 +676,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             style: TextStyle(
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.indigo : Colors.grey,
+              color: isSelected
+                  ? Colors.indigo
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],

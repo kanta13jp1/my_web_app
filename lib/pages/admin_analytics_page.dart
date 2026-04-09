@@ -4041,8 +4041,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         dense: true,
                         leading: CircleAvatar(
                           radius: 16,
-                          backgroundColor:
-                              index < 3 ? Colors.amber[100] : Colors.grey[100],
+                          backgroundColor: index < 3
+                              ? Colors.amber[100]
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
                           child: Text(
                             '$votes',
                             style: TextStyle(
@@ -4050,7 +4051,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               fontWeight: FontWeight.bold,
                               color: index < 3
                                   ? Colors.amber[800]
-                                  : Colors.grey[700],
+                                  : Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
