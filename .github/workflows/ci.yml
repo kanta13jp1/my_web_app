@@ -154,11 +154,16 @@ jobs:
         run: |
           # Check for sensitive files
           echo "Checking for sensitive files..."
-          if git ls-files | grep -E '\.(env|key|pem|p12)$' | grep -v '.env.example'; then
+          if git ls-files | grep -E '\.(env|key|pem|p12)$' | grep -v '\.env\.example'; then
             echo "Error: Sensitive files found in repository"
             exit 1
           fi
-          echo "No sensitive files found"
+          # Flutter/Firebase specific credential files
+          if git ls-files | grep -E 'google-services\.json|GoogleService-Info\.plist|serviceAccountKey\.json'; then
+            echo "Error: Firebase/Google credential files found in repository"
+            exit 1
+          fi
+          echo "✅ No sensitive files found"
 
       - name: Check for hardcoded secrets
         run: |

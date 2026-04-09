@@ -1,6 +1,6 @@
 name: Infra Health Check (インフラ監視)
 
-# 30分毎 + 手動実行
+# 毎時 + 手動実行
 on:
   schedule:
     - cron: "37 * * * *"  # 毎時37分

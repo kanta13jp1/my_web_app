@@ -93,7 +93,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
 
-**dependabot**: Actions + pub を毎週月曜自動PR (`flutter-version: '3.38.x'`)
+**dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
 ---
 
