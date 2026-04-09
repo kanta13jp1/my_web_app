@@ -2216,7 +2216,7 @@ abstinence_slip_details: $slipDetailsText
             value: goal.progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? Colors.white24 : Colors.white,
             color: accent,
           ),
           const SizedBox(height: 8),
@@ -2899,6 +2899,7 @@ abstinence_slip_details: $slipDetailsText
       return const SizedBox.shrink();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completedCount = day.completedTaskCount;
     final remainingCount = day.totalTaskCount - completedCount;
     final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
@@ -2980,7 +2981,9 @@ abstinence_slip_details: $slipDetailsText
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: isDark
+                    ? Theme.of(context).colorScheme.surfaceContainerLow
+                    : Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -2998,7 +3001,9 @@ abstinence_slip_details: $slipDetailsText
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.82),
+                  color: isDark
+                      ? Theme.of(context).colorScheme.surfaceContainerLow
+                      : Colors.white.withValues(alpha: 0.82),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: sourceColor.withValues(alpha: 0.14),
@@ -3084,6 +3089,7 @@ abstinence_slip_details: $slipDetailsText
       return const SizedBox.shrink();
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completedCount = day.completedTaskCount;
     final remainingCount = day.totalTaskCount - completedCount;
     final filteredTasks = _filterCalendarPreviewTasks(day.tasks);
@@ -3165,7 +3171,9 @@ abstinence_slip_details: $slipDetailsText
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: isDark
+                    ? Theme.of(context).colorScheme.surfaceContainerLow
+                    : Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -3183,7 +3191,9 @@ abstinence_slip_details: $slipDetailsText
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.82),
+                  color: isDark
+                      ? Theme.of(context).colorScheme.surfaceContainerLow
+                      : Colors.white.withValues(alpha: 0.82),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: sourceColor.withValues(alpha: 0.14),

@@ -200,15 +200,13 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // 背景を白に変更
       appBar: AppBar(
         title: const Text(
           'コミュニティ活動',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 1, // わずかな影をつけて、App Barを分離
+        elevation: 1,
         shadowColor: Colors.black.withValues(alpha: 0.1),
         actions: [
           IconButton(
