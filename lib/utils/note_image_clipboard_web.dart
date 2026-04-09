@@ -56,9 +56,8 @@ class _WebNoteImagePasteRegistration implements NoteImagePasteRegistration {
     }
 
     for (var index = 0; index < items.length; index++) {
-      final item = items.item(index);
-      if (item == null ||
-          item.kind != 'file' ||
+      final item = items[index];
+      if (item.kind != 'file' ||
           !item.type.startsWith('image/')) {
         continue;
       }
