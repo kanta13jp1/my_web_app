@@ -6383,7 +6383,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         gridData: const FlGridData(show: true),
         titlesData: _buildChartTitles(),
         borderData:
-            FlBorderData(show: true, border: Border.all(color: Colors.black12)),
+            FlBorderData(show: true, border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
         lineBarsData: _lineChartBars,
       ),
     );
@@ -6427,7 +6427,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             if (value == 0) {
               return FlLine(color: Theme.of(context).colorScheme.onSurfaceVariant, strokeWidth: 1);
             }
-            return const FlLine(color: Colors.black12, strokeWidth: 1);
+            return FlLine(color: Theme.of(context).colorScheme.outlineVariant, strokeWidth: 1);
           },
         ),
         borderData: FlBorderData(show: false),
