@@ -182,6 +182,14 @@ web/sitemap.xml          # URL マップ
 | **Web版** | `submit-feedback` EF に `type=auto_error` 判定を追加 → GitHub Issue 作成スキップ / `auto_reported: true` フラグ保存 |
 | **Windows版** | `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション |
 
+### バグ #B1: スマホでコピペ・APIキー入力ができない
+
+**症状**: モバイルブラウザ（iOS Safari / Android Chrome）でテキストフィールドへのコピペが動作しない。APIキー等の長い文字列入力が困難。
+
+| インスタンス | 作業内容 |
+|---|---|
+| **VSCode版** | 全 `TextField` / `TextFormField` に `enableInteractiveSelection: true` / `toolbarOptions` を明示設定。`web/index.html` の viewport に `user-scalable=yes` を確認。モバイルで長押しコンテキストメニューが出るか確認。APIキー入力フィールドは `keyboardType: TextInputType.visiblePassword` + `obscureText: false` で対応。 |
+
 ---
 
 > **インスタンス別注意**: `docs/` と `supabase/migrations/` は **Windows版スコープ**。`supabase/functions/` は **Web版スコープ**。`lib/` は **VSCode版スコープ**。`.github/workflows/` は **PowerShell版スコープ**。
