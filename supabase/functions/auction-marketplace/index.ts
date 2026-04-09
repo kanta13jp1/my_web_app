@@ -75,13 +75,16 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: myListings } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "auction_listing");
+        // 出品一覧・レビューを並列取得
+        const [{ data: myListings }, { data: reviews }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "auction_listing"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("source", "auction_review").eq("metadata->>seller_id", user.id),
+        ]);
         const sold = (myListings ?? []).filter((l) => (l.metadata as Record<string, unknown>).status === "sold");
         let totalRevenue = 0;
         for (const s of sold) totalRevenue += ((s.metadata as Record<string, unknown>).sold_price as number) ?? 0;
-        const { data: reviews } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "auction_review").eq("metadata->>seller_id", user.id);
         const avgRating = (reviews ?? []).length > 0
           ? (reviews ?? []).reduce((sum, r) => sum + (((r.metadata as Record<string, unknown>).rating as number) ?? 0), 0) / (reviews ?? []).length
           : 0;

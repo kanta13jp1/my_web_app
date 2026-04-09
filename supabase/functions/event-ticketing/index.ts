@@ -71,10 +71,13 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: events } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "event");
-        const { data: tickets } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "event_ticket");
+        // イベント・チケットを並列取得
+        const [{ data: events }, { data: tickets }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "event"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "event_ticket"),
+        ]);
         let totalRevenue = 0;
         for (const t of tickets ?? []) totalRevenue += ((t.metadata as Record<string, unknown>).price as number) ?? 0;
         return new Response(JSON.stringify({

@@ -54,8 +54,11 @@ serve(async (req) => {
         return new Response(JSON.stringify({ success: true, goals: (goals ?? []).map((g) => ({ ...(g.metadata as Record<string, unknown>), createdAt: g.created_at })) }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       if (view === "stats") {
-        const { data: allEmissions } = await adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "carbon_emission");
-        const { data: offsets } = await adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "carbon_offset");
+        // 排出量・オフセットを並列取得
+        const [{ data: allEmissions }, { data: offsets }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "carbon_emission"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "carbon_offset"),
+        ]);
         let totalEmitted = 0, totalOffset = 0;
         for (const e of allEmissions ?? []) totalEmitted += ((e.metadata as Record<string, unknown>).co2_kg as number) ?? 0;
         for (const o of offsets ?? []) totalOffset += ((o.metadata as Record<string, unknown>).co2_kg as number) ?? 0;

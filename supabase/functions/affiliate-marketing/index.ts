@@ -43,10 +43,13 @@ serve(async (req) => {
       if (view === "performance") {
         const days = parseInt(url.searchParams.get("days") ?? "30");
         const since = new Date(Date.now() - days * 86400000).toISOString();
-        const { data: clicks } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "affiliate_click").gte("created_at", since);
-        const { data: conversions } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "affiliate_conversion").gte("created_at", since);
+        // クリック数・コンバージョン数を並列取得
+        const [{ data: clicks }, { data: conversions }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "affiliate_click").gte("created_at", since),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "affiliate_conversion").gte("created_at", since),
+        ]);
         let totalRevenue = 0;
         let totalCommission = 0;
         for (const c of conversions ?? []) {

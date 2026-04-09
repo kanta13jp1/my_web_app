@@ -89,12 +89,15 @@ serve(async (req) => {
       }
 
       if (view === "stats" && groupId) {
-        const { data: members } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "family_member").eq("metadata->>group_id", groupId);
-        const { data: events } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "family_event").eq("metadata->>group_id", groupId);
-        const { data: expenses } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "family_expense").eq("metadata->>group_id", groupId);
+        // メンバー・イベント・支出を並列取得
+        const [{ data: members }, { data: events }, { data: expenses }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("source", "family_member").eq("metadata->>group_id", groupId),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("source", "family_event").eq("metadata->>group_id", groupId),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("source", "family_expense").eq("metadata->>group_id", groupId),
+        ]);
         let totalSpent = 0;
         for (const e of expenses ?? []) totalSpent += ((e.metadata as Record<string, unknown>).amount as number) ?? 0;
         return new Response(JSON.stringify({
