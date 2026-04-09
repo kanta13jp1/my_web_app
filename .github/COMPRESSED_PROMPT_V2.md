@@ -47,6 +47,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | 実装中 | `viral-video-generator`, `viral-growth-pipeline` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | (Python: `fetch_yt.py`) |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版: `lib/` UI実装済み) |
+| 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue登録+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
+| 12 | **コンソールエラー自動フィードバック投稿** (FlutterError.onError → `submit-feedback` EF に `type=auto_error` で自動送信) | 実装中 | `submit-feedback` (VSCode版: `main.dart` グローバルエラーハンドラ) |
 
 ---
 
@@ -99,9 +101,15 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 **追加品質 (PS#38〜39)**:
 - `infra-health-check.yml` `curl -sf` → `curl -s` バグ修正 / `edge-function-audit.yml` timeout 5→10分
 - **ユーザーフィードバックパイプライン**: `feedback-issue-resolved.yml` 新設
-  - フォーム投稿 → EF (感謝メール + GitHub Issue作成 `user-feedback` ラベル) → github-issue-fix Schedule → Issue クローズ → `notify-feature-resolved` EF でリリース通知メール
-  - 必要なEF (Web版): `notify-feature-resolved` (新規) / `notify-feature-request` (更新: GH Issue作成追加)
-  - 必要なマイグレーション (Windows版): `feature_requests` テーブルに `github_issue_number`, `email`, `responded_at` 追加
+  - フォーム投稿 → EF (感謝メール + GitHub Issue作成 `user-feedback` ラベル) → github-issue-fix Schedule → Issue クローズ → `notify-feature-request` EF でリリース通知メール
+  - `notify-feature-request` Tier1復元 / `code-review-issues` Tier2降格 (Tier1=100本維持)
+
+**追加品質 (PS#40)**:
+- **コンソールエラー自動フィードバック投稿** (機能 #12):
+  - VSCode版: `main.dart` に `FlutterError.onError` + `PlatformDispatcher.instance.onError` グローバルハンドラ追加
+    → `submit-feedback` EF に POST (`type=auto_error`, `title=Auto Error Report`, `body=スタックトレース`, `email=system@auto`)
+  - Web版: `submit-feedback` EF に `type=auto_error` 判定を追加 (GitHubIssue作成スキップ / `auto_reported: true` フラグ保存)
+  - Windows版: `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション
 
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
@@ -116,7 +124,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
-| `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-resolved` EF でリリース通知メール |
+| `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
