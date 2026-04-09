@@ -207,30 +207,14 @@ web/sitemap.xml          # URL マップ
 | --- | --- |
 | **VSCode版** | `lib/pages/edge_function_status_page.dart` 内の `'競合14社の機能比較データ'` → `'競合21社の機能比較データ'`、`'競合14社 Web 可用性チェック'` → `'競合21社 Web 可用性チェック'` に修正 |
 
----
+### 機能 #13: EF統合（action パラメーター分岐で100本以下に削減）
 
-WARNING: Functions using fallback import map: get-admin-users
-Please use recommended per function dependency declaration  https://supabase.com/docs/guides/functions/import-maps
-Bundling Function: get-admin-users
-Specifying import_map through flags is no longer supported. Please use deno.json instead.
-No change found in Function: get-admin-users
-Deployed Functions on project ***: get-admin-users
-You can inspect your deployment in the Dashboard: https://supabase.com/dashboard/project/***/functions
-WARNING: Functions using fallback import map: submit-feedback
-Please use recommended per function dependency declaration  https://supabase.com/docs/guides/functions/import-maps
-Bundling Function: submit-feedback
-Specifying import_map through flags is no longer supported. Please use deno.json instead.
-Deploying Function: submit-feedback (script size: 77.7kB)
-unexpected create function status 402: ***"message":"Max number of functions reached for project"***
-Try rerunning the command with --debug to troubleshoot the error.
-Error: Process completed with exit code 1.
+**背景**: Supabase 100本デプロイ上限。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
 
-GitHub Actionsのworkflowでエラーが発生した場合も、GitHub Issuesが発行されて、
-スケジュールタスクが自動で修正するようにできますか？
-
----
-
-EFについて、パラメーターで処理を分岐するなどして、100本以下になるように統合してまとめてください。
+| インスタンス | 作業内容 |
+| --- | --- |
+| **Web版** | 類似機能の EF を `action` パラメーターで統合（例: `growth-acquisition-signal` + `growth-acquisition-report` → `growth-acquisition` EF に `action: "signal"\|"report"`）。優先統合候補: growth系23本・agent系12本。統合後は `deno lint` 0エラーを確認 |
+| **PowerShell版** | Web版の統合完了後、`deploy-prod.yml` の Tier 1 リストから廃止 EF を削除し Cleanup ステップに追加、Tier 2 コメントを更新 |
 
 ---
 
