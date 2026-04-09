@@ -1686,7 +1686,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outlineVariant,
@@ -1833,7 +1833,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   radius: 4,
                   color: const Color(0xFF0891B2),
                   strokeWidth: 2,
-                  strokeColor: Colors.white,
+                  strokeColor: Theme.of(context).colorScheme.surface,
                 );
               },
             ),
@@ -1958,21 +1958,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 10),
-        const Wrap(
+        Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor: Colors.white,
-              borderColor: Color(0xFFD0D5DD),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
-            _PrefectureLegendChip(
+            const _PrefectureLegendChip(
               label: '要強化',
               backgroundColor: Color(0xFFFFF4CC),
               borderColor: Color(0xFFE0A800),
             ),
-            _PrefectureLegendChip(
+            const _PrefectureLegendChip(
               label: '議員不在',
               backgroundColor: Color(0xFFFDE2E1),
               borderColor: Color(0xFFD92D20),
@@ -2305,12 +2305,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
           decoration: BoxDecoration(
             color: passed
-                ? Colors.grey.shade100
+                ? Theme.of(context).colorScheme.surfaceContainerHigh
                 : const Color(0xFF1D4ED8).withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: passed
-                  ? Colors.grey.shade300
+                  ? Theme.of(context).colorScheme.outlineVariant
                   : const Color(0xFF1D4ED8).withValues(alpha: 0.2),
             ),
           ),
@@ -2321,7 +2321,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: passed ? Colors.grey : const Color(0xFF1D4ED8),
+                  color: passed
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : const Color(0xFF1D4ED8),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -2331,13 +2333,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: passed ? Colors.grey : const Color(0xFF1D4ED8),
+                  color: passed
+                      ? Theme.of(context).colorScheme.onSurfaceVariant
+                      : const Color(0xFF1D4ED8),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 dateStr,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -2592,21 +2599,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ),
         ],
         const SizedBox(height: 12),
-        const Wrap(
+        Wrap(
           spacing: 8,
           runSpacing: 8,
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor: Colors.white,
-              borderColor: Color(0xFFD0D5DD),
+              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+              borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
-            _PrefectureLegendChip(
+            const _PrefectureLegendChip(
               label: '単騎',
               backgroundColor: Color(0xFFFFF4CC),
               borderColor: Color(0xFFE0A800),
             ),
-            _PrefectureLegendChip(
+            const _PrefectureLegendChip(
               label: '未擁立',
               backgroundColor: Color(0xFFFDE2E1),
               borderColor: Color(0xFFD92D20),
@@ -2703,7 +2710,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           if (pastSchedules.isEmpty)
             _buildInlineNotice(
               '過去1年分の結果データがありません。',
-              color: Colors.grey,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               icon: Icons.history,
             )
           else
@@ -2982,14 +2989,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
     return Card(
       color: item.isPast
-          ? Colors.grey.shade50
+          ? Theme.of(context).colorScheme.surfaceContainerLow
           : _scheduleCardBackgroundColor(context, item),
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
           color: item.isPast
-              ? Colors.grey.shade300
+              ? Theme.of(context).colorScheme.outlineVariant
               : _scheduleCardBorderColor(context, item),
         ),
       ),
@@ -3014,15 +3021,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHigh,
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: const Text(
+                              child: Text(
                                 '結果',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.grey,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                             ),
