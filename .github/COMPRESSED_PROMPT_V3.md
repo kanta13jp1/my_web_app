@@ -73,9 +73,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全12ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全13ワークフロー）
 
-**全12本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全13本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -91,6 +91,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
+| `workflow-failure-handler.yml` | workflow_run: [completed] | 主要10ワークフロー失敗時 → GitHub Issue自動生成 (`workflow-failure` ラベル) → `cs-check` が自動修復 |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -226,6 +227,10 @@ Error: Process completed with exit code 1.
 
 GitHub Actionsのworkflowでエラーが発生した場合も、GitHub Issuesが発行されて、
 スケジュールタスクが自動で修正するようにできますか？
+
+---
+
+EFについて、パラメーターで処理を分岐するなどして、100本以下になるように統合してまとめてください。
 
 ---
 

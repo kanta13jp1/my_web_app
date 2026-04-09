@@ -1,0 +1,121 @@
+name: Workflow Failure Handler
+
+on:
+  workflow_run:
+    workflows:
+      - "CI Checks"
+      - "Deploy to Production"
+      - "Deploy to Staging"
+      - "Deploy to Dev"
+      - "Edge Function Audit"
+      - "CS Check"
+      - "Daily Report"
+      - "Cron Batch Analysis"
+      - "Dependency Audit"
+      - "Infrastructure Health Check"
+    types: [completed]
+
+concurrency:
+  group: workflow-failure-handler-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-issue:
+    name: Create Failure Issue
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check for duplicate issue
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'workflow-failure',
+              state: 'open',
+              per_page: 50,
+            });
+            const exists = issues.some(i => i.body && i.body.includes(`run_id: ${runId}`));
+            core.setOutput('exists', exists ? 'true' : 'false');
+            if (exists) core.info('Duplicate — skipping issue creation.');
+
+      - name: Create GitHub Issue
+        id: create
+        if: steps.check.outputs.exists == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const jst = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+
+            const body = [
+              `## ワークフロー失敗: ${run.name}`,
+              '',
+              '| 項目 | 値 |',
+              '| --- | --- |',
+              `| ワークフロー | \`${run.name}\` |`,
+              `| 実行 ID | \`${run.id}\` |`,
+              `| ブランチ | \`${run.head_branch}\` |`,
+              `| コミット | \`${run.head_sha.substring(0, 7)}\` |`,
+              `| 失敗日時 (JST) | ${jst} |`,
+              `| ログ | [GitHub Actions ログを確認](${run.html_url}) |`,
+              '',
+              '## 自動対応チェックリスト',
+              '',
+              '- [ ] ログURLでエラー内容を特定',
+              '- [ ] 修正コードをプッシュ (flutter analyze / deno lint 0エラー確認)',
+              '- [ ] このIssueをクローズ',
+              '',
+              '> このIssueは `workflow-failure-handler.yml` により自動生成されました。',
+              '> `cs-check` スケジュールタスクが自動修復を試みます。',
+              '',
+              `<!-- run_id: ${run.id} -->`,
+              `<!-- workflow_name: ${run.name} -->`,
+              `<!-- head_branch: ${run.head_branch} -->`,
+            ].join('\n');
+
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[CI失敗] ${run.name} (${run.head_branch})`,
+              body,
+              labels: ['workflow-failure', 'bug'],
+            });
+
+            core.setOutput('issue_number', String(issue.number));
+            core.setOutput('issue_url', issue.html_url);
+            core.info(`Created issue #${issue.number}`);
+
+      - name: Job Summary
+        if: always()
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          ISSUE_NUMBER: ${{ steps.create.outputs.issue_number }}
+          ISSUE_URL: ${{ steps.create.outputs.issue_url }}
+          ALREADY_EXISTS: ${{ steps.check.outputs.exists }}
+        run: |
+          {
+            echo "## Workflow Failure Handler $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "| --- | --- |"
+            echo "| 対象ワークフロー | \`${WORKFLOW_NAME}\` |"
+            echo "| 結論 | \`${CONCLUSION}\` |"
+            if [ "${ALREADY_EXISTS}" = "true" ]; then
+              echo "| Issue | スキップ (同一 run_id のIssue既存) |"
+            elif [ -n "${ISSUE_NUMBER}" ]; then
+              echo "| Issue | [#${ISSUE_NUMBER}](${ISSUE_URL}) 作成 |"
+            else
+              echo "| Issue | 作成対象なし |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
