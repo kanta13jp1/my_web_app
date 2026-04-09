@@ -96,14 +96,14 @@ class MarkdownPreview extends StatelessWidget {
         horizontalRuleDecoration: BoxDecoration(
           border: Border(
             top: BorderSide(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest!,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               width: 2,
             ),
           ),
         ),
         // テーブルスタイル
         tableBorder: TableBorder.all(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest!,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           width: 1,
         ),
         tableHead: TextStyle(

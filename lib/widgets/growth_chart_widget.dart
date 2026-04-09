@@ -129,8 +129,8 @@ class GrowthChartWidget extends StatelessWidget {
                   borderData: FlBorderData(
                     show: true,
                     border: Border(
-                      bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
-                      left: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
+                      bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      left: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                     ),
                   ),
                   minX: 0,

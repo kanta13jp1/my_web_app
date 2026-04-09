@@ -720,7 +720,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     (f) => TableRow(
                       decoration: BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
+                          bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                         ),
                       ),
                       children: [

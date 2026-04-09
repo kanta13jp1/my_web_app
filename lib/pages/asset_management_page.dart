@@ -2877,7 +2877,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant!),
+                      border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -5103,7 +5103,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant!),
+                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -5473,7 +5473,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant!),
+                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(

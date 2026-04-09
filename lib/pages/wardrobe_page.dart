@@ -388,7 +388,7 @@ class _WardrobePageState extends State<WardrobePage>
                   decoration: BoxDecoration(
                     color: _colorToFlutter(item.color),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest!),
+                    border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                   ),
                 ),
                 const SizedBox(width: 12),
