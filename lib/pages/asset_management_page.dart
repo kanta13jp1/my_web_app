@@ -4267,7 +4267,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F3FF),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1A0A4E).withAlpha(160)
+            : const Color(0xFFF6F3FF),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.16)),
       ),

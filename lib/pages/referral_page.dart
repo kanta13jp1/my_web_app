@@ -151,7 +151,9 @@ class _ReferralPageState extends State<ReferralPage> {
                       // 紹介実績
                       if (_referralCount > 0) ...[
                         Card(
-                          color: const Color(0xFFECFDF5),
+                          color: isDark
+                              ? const Color(0xFF022C22).withAlpha(180)
+                              : const Color(0xFFECFDF5),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),),
                           child: Padding(
