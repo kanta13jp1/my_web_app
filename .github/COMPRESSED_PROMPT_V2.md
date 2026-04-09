@@ -1,4 +1,4 @@
-# 自分株式会社 統合プロンプト（圧縮版 v2）
+# 自分株式会社 統合プロンプト（圧縮版 v3）
 
 ## 🎯 ミッション
 
@@ -14,7 +14,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (11本完備済み) | 他3範囲 |
+| **PowerShell版** | `.github/workflows/` + CI/CD (12本完備済み) | 他3範囲 |
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -35,7 +35,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ## 🧩 コア機能リスト（実装済み含む）
 
-| # | 機能 | 状態 | 主要EF |
+| # | 機能 | 状態 | 主要EF / 担当 |
 |---|---|---|---|
 | 1 | **競合機能比較ページ** (21社×機能マトリクス) | ✅ | `get-competitor-features` |
 | 2 | **EF UI導線カバレッジ** (未接続→GitHub Issue自動生成) | ✅ | `edge-function-coverage` |
@@ -45,10 +45,10 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
 | 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | 実装中 | `viral-video-generator`, `viral-growth-pipeline` |
-| 9 | **Real Value YouTube競合分析** | 実装中 | (Python: `fetch_yt.py`) |
-| 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版: `lib/` UI実装済み) |
-| 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue登録+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
-| 12 | **コンソールエラー自動フィードバック投稿** (FlutterError.onError → `submit-feedback` EF に `type=auto_error` で自動送信) | 実装中 | `submit-feedback` (VSCode版: `main.dart` グローバルエラーハンドラ) |
+| 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
+| 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
+| 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
+| 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | 実装中 | `submit-feedback` (VSCode版: `main.dart` グローバルハンドラ) |
 
 ---
 
@@ -69,47 +69,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 4. **ダミーデータ禁止** — Supabase 実データ必須
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
-7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへのaction追加優先。超える場合はTier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2コメントに記載
+7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全12ワークフロー品質基準）
+## ⚙️ GitHub Actions CI/CD（全12ワークフロー）
 
 **全12本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
-
-**追加品質 (PS#28〜30)**:
-- アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
-- セキュリティ: 読み取り専用3本に `persist-credentials: false`
-- 堅牢性: Slack webhook `--max-time 10 || true` / `requirements.txt` バージョン上限固定
-- データ精度: `daily-report` fetch-depth `200` / `dependency-audit` Deno import `head -2000`
-
-**追加品質 (PS#31〜35)**:
-- セキュリティ強化: `ci.yml` に Firebase/Google 認証ファイル検出追加 + `.env.example` エスケープ修正
-- コメント精度: `deploy-prod.yml` Tier2実数 (125→138) / `infra-health-check.yml` スケジュール誤記修正
-- 権限修正: `deploy-dev.yml` ci ジョブに `contents: read` 追加 (staging と統一)
-- 堅牢性: 全3環境の notify "Comment on commit" に `continue-on-error: true` 追加
-- ビルド統一: `deploy-staging.yml` / `deploy-dev.yml` に `--no-tree-shake-icons` 追加 (prod/CI と統一)
-- README修正: Flutter version v3.24→v3.38 / schedule_task_runs 7→6本 / dependabot pip追加
-
-**追加品質 (PS#36〜37)**:
-- EF数更新: 238→240 / Tier2 138→140 (Web版 +2EF 反映)
-- **Claude Managed Agents 統合**: `claude-agent-review.yml` 新設 — PRトリガーで Claude API 即時レビュー
-  - 観点: static解析が検出できないルール違反・EF上限管理・アーキテクチャ・データ整合性
-  - 必要なシークレット: `ANTHROPIC_API_KEY` (Anthropic Console → API Keys)
-  - LGTM の場合はコメントなし / 問題あり時のみ PR にコメント投稿
-
-**追加品質 (PS#38〜39)**:
-- `infra-health-check.yml` `curl -sf` → `curl -s` バグ修正 / `edge-function-audit.yml` timeout 5→10分
-- **ユーザーフィードバックパイプライン**: `feedback-issue-resolved.yml` 新設
-  - フォーム投稿 → EF (感謝メール + GitHub Issue作成 `user-feedback` ラベル) → github-issue-fix Schedule → Issue クローズ → `notify-feature-request` EF でリリース通知メール
-  - `notify-feature-request` Tier1復元 / `code-review-issues` Tier2降格 (Tier1=100本維持)
-
-**追加品質 (PS#40)**:
-- **コンソールエラー自動フィードバック投稿** (機能 #12):
-  - VSCode版: `main.dart` に `FlutterError.onError` + `PlatformDispatcher.instance.onError` グローバルハンドラ追加
-    → `submit-feedback` EF に POST (`type=auto_error`, `title=Auto Error Report`, `body=スタックトレース`, `email=system@auto`)
-  - Web版: `submit-feedback` EF に `type=auto_error` 判定を追加 (GitHubIssue作成スキップ / `auto_reported: true` フラグ保存)
-  - Windows版: `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション
 
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
@@ -119,14 +85,24 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
 | `daily-report.yml` | 08:58 JST 毎日 | Supabase API + X投稿 + 競合モニタリング (Claude Scheduleの2分前) |
 | `cs-check.yml` | 毎時 :07 | CS自動対応 + PR自動レビュー + ヘルスチェック |
-| `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 |
+| `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
-| `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
+| `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
+
+### CI/CD 品質基準（達成済み事項）
+
+- アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
+- セキュリティ: 読み取り専用3本に `persist-credentials: false` / `ci.yml` に Firebase/Google 認証ファイル検出
+- 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
+- ビルド統一: 全環境 `--no-tree-shake-icons` 適用
+- EF 管理: Tier1=100本 厳守 (`notify-feature-request` Tier1 / `code-review-issues` Tier2)
+- **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
+- **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
 ---
 
@@ -167,7 +143,7 @@ lib/pages/               # 194ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 100デプロイ済 / Tier2: 141コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 12本 (品質基準完備済み / claude-agent-review / feedback-issue-resolved含む)
+.github/workflows/       # 12本 (品質基準完備済み)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)
@@ -190,9 +166,21 @@ web/sitemap.xml          # URL マップ
 `schedule-daily-digest` / `get-support-tickets` / `reply-support-request` / `get-home-dashboard` / `post-x-update` / `get-growth-roadmap-progress` / `get-competitor-features` / `health-check` / `check-competitor-updates`
 
 **主要機能 EF**:
-`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard`
+`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request`
 
 > **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(141本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+
+---
+
+## 🔜 実装待ち（他インスタンスへの指示）
+
+### 機能 #12: コンソールエラー自動フィードバック投稿
+
+| インスタンス | 作業内容 |
+|---|---|
+| **VSCode版** | `main.dart` に `FlutterError.onError` + `PlatformDispatcher.instance.onError` を追加 → エラー時に `submit-feedback` EF へ POST (`type=auto_error`, `title=Auto Error Report`, `body=スタックトレース`, `email=system@auto`) |
+| **Web版** | `submit-feedback` EF に `type=auto_error` 判定を追加 → GitHub Issue 作成スキップ / `auto_reported: true` フラグ保存 |
+| **Windows版** | `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション |
 
 ---
 
