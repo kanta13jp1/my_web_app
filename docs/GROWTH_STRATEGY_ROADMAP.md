@@ -3437,6 +3437,38 @@ flutter analyze: 全体0エラー維持
 - **MoneyForward**: 消費税AIエージェント・AKASHI統合 (Cloud 勤怠 Plus) — 🟡 脅威中。法人特化が加速しており個人向け差別化の機会
 
 **アクション提案**:
+
 1. 自社ホームダッシュボード UI のビジュアル強化 (Notion 3.4 対抗)
 2. AI 議事録 + X 投稿連携ワークフローの LP への訴求強化
 3. 家計管理「節約提案 + 将来シミュレーション」機能の優先度上げ (Amazon Rufus 対抗)
+
+### Session VSCode#18 (2026-04-10): Colors.black* ダークテーマ完全解消
+
+#### Colors.black87/54/26/38 一括置換 (64件・12ファイル) — commit 434d5d63
+
+- agent_org_page (16), admin_analytics_page (14), agent_workspace_panel (5)
+- mindless_task_page (7), asset_management_page (7), team_workspace_page (3)
+- emergency_meeting_page (3), その他6ファイル
+- const TextStyle から const 削除 (Theme.of(context) は const 不可) × 24箇所
+
+#### Colors.black87/54/12 第2弾 (18件・14ファイル) — commit 25455dfa
+
+- activity_feed_page, calendar_events_page, cmo_page, danshari_page 他
+- note_list_page: `const accentColor` → `final accentColor = Theme.of(context)...`
+- `const Icon(... color: accentColor)` → `Icon(...)` (非const変数は const 不可)
+
+#### チャートの Colors.black12 → colorScheme.outlineVariant — commit 3762518e
+
+- asset_management_page: FlBorderData / FlLine グリッド線2箇所
+
+#### ダークテーマ修正 累計まとめ (VSCode#15〜#18)
+
+| 種類 | 件数 |
+|---|---|
+| Colors.grey.shade* | 200+ |
+| Colors.grey[] | 160件 |
+| Colors.black87/54/26/38/12 | 82+件 |
+| unnecessary_non_null_assertion (!) | 10件 |
+| Colors.white Scaffold/AppBar | 完了 |
+
+- flutter analyze lib/: **0 errors, 0 warnings** (全セッション通じて維持)
