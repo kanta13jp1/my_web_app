@@ -164,10 +164,18 @@ jobs:
         run: |
           echo "Checking for hardcoded secrets..."
           # This is a basic check - consider using tools like gitleaks or trufflehog
+          FOUND=0
+          # Dart files
           if grep -r -E '(password|secret|api_key|private_key)\s*=\s*["\047][^"\047]+["\047]' lib/ --include="*.dart" | grep -v 'your_'; then
-            echo "Warning: Potential hardcoded secrets found"
-            # Don't fail the build, just warn
+            echo "Warning: Potential hardcoded secrets found in Dart files"
+            FOUND=1
           fi
+          # TypeScript files (Edge Functions)
+          if grep -r -E '(password|secret|api_key|private_key)\s*=\s*["\047][^"\047]+["\047]' supabase/functions/ --include="*.ts" | grep -v 'your_\|example\|test\|placeholder'; then
+            echo "Warning: Potential hardcoded secrets found in TypeScript files"
+            FOUND=1
+          fi
+          [ "$FOUND" -eq 0 ] && echo "✅ No hardcoded secrets found"
           echo "Security check completed"
 
   build-matrix:
