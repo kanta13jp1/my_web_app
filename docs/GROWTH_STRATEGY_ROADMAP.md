@@ -3479,3 +3479,35 @@ flutter analyze: 全体0エラー維持
 | Colors.white Scaffold/AppBar | 完了 |
 
 - flutter analyze lib/: **0 errors, 0 warnings** (全セッション通じて維持)
+
+### Session VSCode#19 (2026-04-10): ハードコード hex ライトカラー Scaffold/Container 除去 (Batch 3)
+
+#### Scaffold backgroundColor ハードコード除去 (6ファイル) — commit 07c34b85
+
+- ai_status_page, cmo_page, comparison_page, danshari_page, enterprise_page, stock_tasks_page
+- `const Color(0xFFF8FAFC/F5F7FF/F8FAFF/F5F7FA)` → `colorScheme.surface` に統一
+- cmo_page: `_bg` フィールドを削除し build 内で `Theme.of(context).colorScheme.surface` 使用
+
+#### Container/Canvas 背景ライトカラー除去 (6ファイル) — commit 07c34b85
+
+- memory_drill_page, mindless_task_page (×2), mind_map_page: Canvas/Card → `colorScheme.surface` / `surfaceContainerLow`
+- admin_analytics_page: `_buildWeeklyDigestCard(BuildContext)` context引数追加 + 背景/ボーダー → `surfaceContainerLow` / `outlineVariant`
+
+#### プロフィールウィジェット isDark 対応 — commit 07c34b85 / ce642e92
+
+- profile_progress_card: `_buildEmptyState` に isDark 分岐追加 (Card色・ボーダー・Icon・Text全色)
+- profile_completion_banner: 全体 isDark 対応 (Card背景・アイコンコンテナ・テキスト3種・ボタン色)
+- CircleAvatar backgroundColor: `isDark` 三項演算子追加
+
+#### ダークテーマ修正 累計まとめ (VSCode#15〜#19)
+
+| 種類 | 件数 |
+| --- | --- |
+| Colors.grey.shade* | 200+ |
+| Colors.grey[] | 160件 |
+| Colors.black87/54/26/38/12 | 82+件 |
+| unnecessary_non_null_assertion (!) | 10件 |
+| Colors.white Scaffold/AppBar/Container | 完了 |
+| hex ライトカラー Scaffold/Container | 15+件 完了 |
+
+- flutter analyze lib/: **0 errors, 0 warnings** (全セッション通じて維持)
