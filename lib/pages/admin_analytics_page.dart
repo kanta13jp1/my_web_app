@@ -1678,12 +1678,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '今日の登録目標',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Colors.black54,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -1770,10 +1770,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           const SizedBox(height: 10),
           Text(
             achieved ? statusText : '$statusText あと$remaining人の登録が必要です。',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.4,
             ),
           ),
@@ -1824,10 +1824,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         const SizedBox(height: 4),
                         Text(
                           actionDetail,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                             height: 1.4,
                           ),
                         ),
@@ -1881,10 +1881,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             TextSpan(
               text: '$label ',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.black54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             TextSpan(
@@ -1938,9 +1938,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2055,7 +2055,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
+            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -2198,9 +2198,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2251,10 +2251,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
               child: Text(
                 alertText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.4,
                 ),
               ),
@@ -2270,11 +2270,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       return Card(
         elevation: 1,
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        child: const Padding(
-          padding: EdgeInsets.all(18),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
           child: Text(
             'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       );
@@ -2339,10 +2339,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           Expanded(
                             child: Text(
                               entry.key,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black87,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -2427,9 +2427,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         Text(
                           createdAt,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Colors.black54,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -2438,9 +2438,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       const SizedBox(height: 6),
                       Text(
                         reasonText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.black87,
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -2791,7 +2791,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'copy_link':
         return Colors.deepPurple.shade300;
       case 'share_x':
-        return Colors.black87;
+        return Theme.of(context).colorScheme.onSurface;
       case 'share_line':
         return const Color(0xFF06C755);
       case 'share_facebook':
@@ -3350,9 +3350,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               if (bio != null && bio.isNotEmpty)
                                 Text(
                                   bio,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.black54,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

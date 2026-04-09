@@ -61,9 +61,9 @@ class AgentWorkspacePanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'identity と直近の agent_memories を自動注入した起動コンテキストです。',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -78,10 +78,10 @@ class AgentWorkspacePanel extends StatelessWidget {
                   ),
                   child: SelectableText(
                     currentWorkspace.startupPrompt,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.55,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -107,7 +107,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '自分宛ての未完了タスクだけを表示します。${currentWorkspace.tasks.length}件',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 if (currentWorkspace.tasks.isEmpty)
@@ -118,12 +118,12 @@ class AgentWorkspacePanel extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.03),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       '未完了タスクはありません。',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black54,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   )
@@ -179,9 +179,9 @@ class _TaskCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               task.description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.45,
               ),
             ),

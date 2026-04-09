@@ -871,9 +871,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'ここから永続エージェントへタスクを委任します。委任内容は agent_tasks と記憶ログに保存されます。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -881,9 +881,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Pick a reusable request pattern, then adjust the details before delegating.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -913,10 +913,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   Expanded(
                     child: Text(
                       'Selected template: ${selectedTemplate.label}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black54,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -1012,9 +1012,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'AnimaWorks-style shared channels for cross-team coordination.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -1038,7 +1038,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             const SizedBox(height: 12),
             Text(
               _selectedBoardChannelConfig.description,
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -1061,9 +1061,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   : (value) => setState(() => _selectedBoardAuthorId = value),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Slack-style quick reactions will use the selected Speaker.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1146,9 +1146,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       ),
                       Text(
                         agent.department,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Colors.black54,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -1177,9 +1177,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             const SizedBox(height: 12),
             Text(
               agent.identityPrompt,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.5,
               ),
             ),
@@ -1212,10 +1212,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             const SizedBox(height: 8),
             Text(
               '権限: ${agent.permissionsSummary}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.black54,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 10),
@@ -1304,7 +1304,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               const SizedBox(height: 6),
               Text(
                 '担当: ${assignee.displayName} (${assignee.department})',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
             if (task.description.isNotEmpty) ...[
@@ -1415,7 +1415,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 ),
                 Text(
                   timestamp,
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -1506,7 +1506,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   'task: ${message.linkedTaskId}',
-                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
           ],
@@ -1610,7 +1610,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -1666,9 +1666,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               '自然な言葉で伝えると、秘書が最適な担当エージェントへタスクを振り分けます。会話は記憶ログに保存されます。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1752,9 +1752,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               ],
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'ゴールを1つ入力するとCEOが全部署に役割分担して展開します。部署間で内容が被らないよう自動設計します。',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1838,7 +1838,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(color: Colors.black54),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       ),

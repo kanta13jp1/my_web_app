@@ -173,21 +173,21 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Jobcan-style leave requests',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'Track PTO requests, date ranges, and approval status in one place.',
-                      style: TextStyle(height: 1.5, color: Colors.black54),
+                      style: TextStyle(height: 1.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -252,8 +252,8 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                                 const SizedBox(height: 4),
                                 Text(
                                   request.leaveType,
-                                  style: const TextStyle(
-                                    color: Colors.black54,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

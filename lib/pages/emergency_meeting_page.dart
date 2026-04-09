@@ -2807,16 +2807,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               '使用モデル: ',
-                              style: TextStyle(color: Colors.black54),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                             Flexible(
                               child: Text(
                                 _selectedModel,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -2989,7 +2989,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       margin: const EdgeInsets.only(top: 16, bottom: 40),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.black87,
+        color: Theme.of(context).colorScheme.onSurface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

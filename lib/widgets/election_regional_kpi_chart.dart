@@ -509,7 +509,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Widget _buildSummaryItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black54)),
+        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
       ],

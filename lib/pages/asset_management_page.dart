@@ -2433,7 +2433,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             content: Text(
               isTransfer ? '振替を記録しました' : '収支を記録しました',
             ),
-            backgroundColor: Colors.black87,
+            backgroundColor: Theme.of(context).colorScheme.onSurface,
           ),
         );
       }
@@ -2722,7 +2722,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           content: Text(
             isTransfer ? '振替記録を更新しました' : '収支記録を更新しました',
           ),
-          backgroundColor: Colors.black87,
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
         ),
       );
     } catch (e) {
@@ -2799,9 +2799,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('収支記録を削除しました'),
-          backgroundColor: Colors.black87,
+        SnackBar(
+          content: const Text('収支記録を削除しました'),
+          backgroundColor: Theme.of(context).colorScheme.onSurface,
         ),
       );
     } catch (e) {
@@ -4244,7 +4244,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ),
       selectedColor: Colors.deepPurple,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : Colors.black87,
+        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
         fontWeight: FontWeight.w700,
       ),
       label: Text(label),
@@ -4292,10 +4292,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           Text(
             plan.summary,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.45,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -6128,7 +6128,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 '¥${NumberFormat('#,###').format(item['price'])}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isPaid ? Colors.grey : Colors.black87,
+                                  color: isPaid ? Colors.grey : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -6425,7 +6425,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           checkToShowHorizontalLine: (value) => value == 0,
           getDrawingHorizontalLine: (value) {
             if (value == 0) {
-              return const FlLine(color: Colors.black54, strokeWidth: 1);
+              return FlLine(color: Theme.of(context).colorScheme.onSurfaceVariant, strokeWidth: 1);
             }
             return const FlLine(color: Colors.black12, strokeWidth: 1);
           },

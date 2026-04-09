@@ -114,13 +114,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           const Icon(Icons.business_center, size: 80, color: Colors.indigo),
           const SizedBox(height: 32),
-          const Text(
+          Text(
             'あなたの人生を\n「経営」する',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.4,
             ),
           ),
@@ -202,7 +202,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.history_edu, size: 60, color: Colors.black87),
+          Icon(Icons.history_edu, size: 60, color: Theme.of(context).colorScheme.onSurface),
           const SizedBox(height: 24),
           const Text(
             '代表取締役 就任承諾書',

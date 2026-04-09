@@ -333,20 +333,20 @@ class _OwnedTeamsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (teams.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.group_outlined, size: 64, color: Colors.black26),
-            SizedBox(height: 16),
+            Icon(Icons.group_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
             Text(
               'まだチームがありません',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               '右下のボタンから最初のチームを作成しましょう',
-              style: TextStyle(color: Colors.black38, fontSize: 13),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],
@@ -388,20 +388,20 @@ class _MemberTeamsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (teams.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.black26),
-            SizedBox(height: 16),
+            Icon(Icons.people_outline, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
             Text(
               '参加中のチームはありません',
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               '招待コードを使ってチームに参加できます',
-              style: TextStyle(color: Colors.black38, fontSize: 13),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
             ),
           ],
         ),
@@ -674,9 +674,9 @@ class _JoinTeamDialogState extends State<_JoinTeamDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'チームオーナーから招待コードを受け取り、入力してください。',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
           TextField(

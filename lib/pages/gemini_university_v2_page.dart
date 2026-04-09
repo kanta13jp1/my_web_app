@@ -1066,20 +1066,20 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'AI Master',
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Theme.of(context).colorScheme.onSurface,
               fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'この証書は、AI大学の全課程を修了し、\n生成AIに関する高度な知識を有することを証明します。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           Text(
