@@ -21,6 +21,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
   String? _errorMessage;
   String? _successMessage;
   List<Map<String, dynamic>> _recentRuns = [];
+  Map<String, dynamic>? _stats;
 
   static const _templates = [
     ('growth_stats', '成長統計カード', Icons.bar_chart),
@@ -40,18 +41,29 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
   Future<void> _fetchRecentRuns() async {
     setState(() => _isLoading = true);
     try {
-      final response = await _supabase.functions.invoke(
-        'viral-growth-pipeline',
-        method: HttpMethod.get,
-      );
-      final data = response.data;
-      if (data is Map<String, dynamic> && data['runs'] is List) {
+      final results = await Future.wait([
+        _supabase.functions.invoke(
+          'viral-growth-pipeline',
+          method: HttpMethod.get,
+        ),
+        _supabase.functions.invoke(
+          'viral-growth-pipeline',
+          body: {'action': 'get_stats'},
+        ),
+      ]);
+      final runsData = results[0].data;
+      if (runsData is Map<String, dynamic> && runsData['runs'] is List) {
         setState(() {
-          _recentRuns = (data['runs'] as List).cast<Map<String, dynamic>>();
+          _recentRuns =
+              (runsData['runs'] as List).cast<Map<String, dynamic>>();
         });
       }
+      final statsData = results[1].data;
+      if (statsData is Map<String, dynamic> && statsData['stats'] != null) {
+        setState(() => _stats = statsData['stats'] as Map<String, dynamic>);
+      }
     } catch (e) {
-      // 履歴取得失敗は無視
+      // 取得失敗は無視
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -127,6 +139,120 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     }
   }
 
+  Widget _metricBadge(BuildContext context, IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        const SizedBox(width: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsCard(BuildContext context) {
+    final s = _stats!;
+    final total = s['total_campaigns'] as int? ?? 0;
+    final success = s['successful_tweets'] as int? ?? 0;
+    final byTemplate = s['by_template'] as Map<String, dynamic>? ?? {};
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '効果測定',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _statChip(context, '総実行', '$total'),
+                const SizedBox(width: 8),
+                _statChip(
+                  context,
+                  '投稿成功',
+                  '$success',
+                  highlight: success > 0,
+                ),
+                if (total > 0) ...[
+                  const SizedBox(width: 8),
+                  _statChip(
+                    context,
+                    '成功率',
+                    '${(success / total * 100).toStringAsFixed(0)}%',
+                    highlight: success / total >= 0.8,
+                  ),
+                ],
+              ],
+            ),
+            if (byTemplate.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: byTemplate.entries
+                    .map(
+                      (e) => Chip(
+                        label: Text(
+                          '${e.key}: ${e.value}',
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                        padding: EdgeInsets.zero,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statChip(
+    BuildContext context,
+    String label,
+    String value, {
+    bool highlight = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: highlight
+            ? Colors.orange.withValues(alpha: 0.2)
+            : Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color:
+                  highlight ? Colors.orange : null,
+            ),
+          ),
+          Text(label, style: const TextStyle(fontSize: 11)),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -144,6 +270,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Stats summary
+            if (_stats != null) ...[
+              _buildStatsCard(context),
+              const SizedBox(height: 12),
+            ],
             // Template selector
             Card(
               child: Padding(
@@ -205,15 +336,23 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey.shade100,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
                         ),
-                        child: const Center(
+                        child: Center(
                           child: Text(
                             'SVG 生成済み\n(フロントエンドでの SVG 描画は\nwebview_flutter 等で対応)',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
@@ -247,8 +386,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         style: TextStyle(
                           fontSize: 12,
                           color: _tweetText!.length > 280
-                              ? Colors.red
-                              : Colors.grey,
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -335,51 +474,98 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                 final template = run['template']?.toString() ?? '';
                 final createdAt = run['created_at']?.toString() ?? '';
                 final tweetId = run['tweet_id']?.toString();
+                final impressions = run['impressions'] as int?;
+                final clicks = run['clicks'] as int?;
+                final follows = run['new_follows'] as int?;
+                final hasMetrics =
+                    impressions != null || clicks != null || follows != null;
+                final statusColor = status == 'success'
+                    ? Colors.green
+                    : status == 'dry_run'
+                        ? Colors.orange
+                        : Theme.of(context).colorScheme.error;
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: Icon(
-                      status == 'success'
-                          ? Icons.check_circle
-                          : status == 'dry_run'
-                              ? Icons.science
-                              : Icons.error,
-                      color: status == 'success'
-                          ? Colors.green
-                          : status == 'dry_run'
-                              ? Colors.orange
-                              : Colors.red,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
                     ),
-                    title: Text(template),
-                    subtitle: Text(
-                      '${createdAt.length > 16 ? createdAt.substring(0, 16) : createdAt}'
-                      '${tweetId != null ? '  •  ID: $tweetId' : ''}',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: status == 'success'
-                            ? Colors.green.shade100
-                            : status == 'dry_run'
-                                ? Colors.orange.shade100
-                                : Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        status,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: status == 'success'
-                              ? Colors.green.shade700
-                              : status == 'dry_run'
-                                  ? Colors.orange.shade700
-                                  : Colors.red.shade700,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              status == 'success'
+                                  ? Icons.check_circle
+                                  : status == 'dry_run'
+                                      ? Icons.science
+                                      : Icons.error,
+                              color: statusColor,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(template)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: statusColor,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${createdAt.length > 16 ? createdAt.substring(0, 16) : createdAt}'
+                          '${tweetId != null ? '  •  ID: $tweetId' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        if (hasMetrics) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              if (impressions != null)
+                                _metricBadge(
+                                  context,
+                                  Icons.visibility,
+                                  '$impressions',
+                                ),
+                              if (clicks != null) ...[
+                                const SizedBox(width: 6),
+                                _metricBadge(
+                                  context,
+                                  Icons.touch_app,
+                                  '$clicks',
+                                ),
+                              ],
+                              if (follows != null) ...[
+                                const SizedBox(width: 6),
+                                _metricBadge(
+                                  context,
+                                  Icons.person_add,
+                                  '+$follows',
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 );

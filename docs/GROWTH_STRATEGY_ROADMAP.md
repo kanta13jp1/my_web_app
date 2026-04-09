@@ -3226,4 +3226,67 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 - **パフォーマンス改善** (13b4244/e2713be): semantic-search Promise.all並列化・app-analytics-dashboard 9クエリ全並列化
 - **ai-assistant修正** (09acad7): gpt-5.4→gpt-4o モデルID修正
 - **X投稿**: 環境制約によりスキップ (viral-growth-engine / post-x-update ともに exit code 56 接続不可)
+
+### Session VSCode#8 (2026-04-09): YouTube統計成長分析・選挙スケジュールフィルタ動的化
+
+#### youtube_stats_page.dart 改善
+
+- **成長デルタ表示**: 直近2スナップショット日を特定し `_prevSnapshot` マップを構築。各動画の再生数増分を `+${_fmtK(delta)}` (緑) で表示
+- **エンゲージメント率**: `likes / views` で計算し `EG X.X%` (≥5% でオレンジ) を表示
+- **ソートモード追加**: `enum _SortMode { views, growth, engagement }` を追加。ChoiceChipで切り替え
+- **サマリーカード**: 「スナップ日数」→「成長」に変更し合計成長再生数を表示
+- **データ取得件数**: limit 200 → 500 に拡大してデルタ計算に十分なデータを確保
+
+#### election_victory_page.dart 動的フィルタ化
+
+- `_scheduleFilters` をハードコードリスト (`すべて/今週末/2週後/…/5週後`) から動的生成に変更:
+  `static final List<String> _scheduleFilters = [_allLabel, ...LocalElectionShareService.availableWindows.map((w) => w.label)]`
+- `_matchesScheduleFilter` を `_windowForFilter` / `scheduleWindowRange` 委譲に簡略化 (hardcoded if-else 廃止)
+- 0件チップ非表示: `if (filter != _allLabel && count == 0 && !isSelected) return SizedBox.shrink()`
+- 28週先まで対応 (`LocalElectionShareService.maxWeekendWindowCount = 28`)
+- `trailing comma` lint修正 (`where` コールバック) → flutter analyze 0エラー
+
+#### .codex-vscode-ui 同期
+
+- `election_victory_page.dart`: 0件チップ非表示パターンを追加
+- `_matchesScheduleFilter` の未使用 `thisSunday` 変数を削除
+
+### Session VSCode#9 (2026-04-09): バイラル動画ジェネレーターUI改善
+
+#### viral_video_generator_page.dart 修正
+
+- **GET修正**: `view=history` → `view=recent_briefs`、`data['videos']` → `data['briefs']` (EF実際のレスポンス構造に整合)
+- **POST修正**: `{ prompt, style }` → `{ action: 'generate_brief', productSummary: prompt, adStyle: style }` (EFの `parseCampaignInput` パラメータに整合)
+- **結果パース**: `res.data` → `res.data['brief']` でブリーフオブジェクトを正しく取得
+- **結果カード**: `Colors.green.shade50` (ライトモード色) → `colorScheme.primaryContainer` に修正。`_result!['message']` (存在しないフィールド) → `_buildBriefResultCard` で構造化表示:
+  - `conceptName` + `viralScore` Chip (≥80 でオレンジ)
+  - `primaryHook` / `xPostText` / `cta` を段落表示
+  - `hashtags` を Chip リスト表示
+  - `scenes.length` でシーン数表示
+- **履歴リスト**: `title/prompt/style/created_at` (旧Webページ型) → `conceptName/primaryHook/viralScore/createdAt` (EF ブリーフ型) に修正
+- flutter analyze: 0エラー維持
 - **Supabase 接続**: ⚠️ ブロック継続 — エグレスプロキシにより全API接続が exit 56
+
+### Session VSCode#11 (2026-04-09): マージ競合解消・_buildScheduleCalendar バグ修正
+
+- **マージ競合解消**: `git pull --rebase` で生じた `election_victory_page.dart` UU状態を解消
+- **`_buildScheduleCalendar` パース修正**: HEAD にコミット済みの `_buildScheduleCalendar` 関数に `Container(` の閉じ括弧 `)` が欠落していた (flutter analyze エラー 3件) → 欠落 `)` を追加
+- **home_page.dart**: `Colors.grey.shade200` → `colorScheme.outlineVariant` (ダークテーマ対応)
+- flutter analyze: 0エラー維持 (全プロジェクト)
+
+### Session VSCode#10 (2026-04-09): バイラルキャンペーン効果測定UI完成
+
+#### viral_ad_campaign_page.dart 改善 (Feature #8 効果測定)
+
+- **`get_stats` 並列取得**: `_fetchRecentRuns()` で GET (履歴) と POST `action: 'get_stats'` を `Future.wait` 並列実行
+- **効果測定サマリーカード追加** (`_buildStatsCard`):
+  - 総実行数 / 投稿成功数 / 成功率 (%) をバッジ表示
+  - テンプレート別実行回数を Chip リスト表示
+  - `colorScheme.surfaceContainerHigh` 背景 (ダークテーマ対応)
+- **パフォーマンスメトリクス表示**: 各実行カードに `impressions` / `clicks` / `new_follows` をアイコン付きバッジで表示 (`track_result` で記録された値)
+- **ライトモード色修正**:
+  - SVG プレビュー枠: `Colors.grey.shade300/100` → `dividerColor` / `colorScheme.surfaceContainerHigh`
+  - ツイート文字数: `Colors.grey` → `colorScheme.onSurfaceVariant`
+  - ステータスバッジ: `Colors.*.shade100/700` → `statusColor.withValues(alpha: 0.15)` / `statusColor`
+- **`_metricBadge` ヘルパー追加**: アイコン + 数値のインラインバッジ
+- flutter analyze: 0エラー維持

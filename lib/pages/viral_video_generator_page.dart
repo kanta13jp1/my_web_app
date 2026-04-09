@@ -43,13 +43,13 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
       final res = await _supabase.functions.invoke(
         'viral-video-generator',
         method: HttpMethod.get,
-        queryParameters: {'view': 'history'},
+        queryParameters: {'view': 'recent_briefs'},
       );
       final data = res.data;
-      if (data is Map<String, dynamic> && data['videos'] is List) {
+      if (data is Map<String, dynamic> && data['briefs'] is List) {
         setState(() {
           _videos =
-              (data['videos'] as List).cast<Map<String, dynamic>>();
+              (data['briefs'] as List).cast<Map<String, dynamic>>();
         });
       }
     } catch (e) {
@@ -70,14 +70,121 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     try {
       final res = await _supabase.functions.invoke(
         'viral-video-generator',
-        body: {'prompt': prompt, 'style': _selectedStyle},
+        body: {
+          'action': 'generate_brief',
+          'productSummary': prompt,
+          'adStyle': _selectedStyle,
+        },
       );
-      setState(() => _result = res.data as Map<String, dynamic>?);
+      final data = res.data as Map<String, dynamic>?;
+      setState(() => _result = data?['brief'] as Map<String, dynamic>?);
       await _loadHistory();
     } catch (e) {
       setState(() => _errorMessage = e.toString());
       setState(() => _loading = false);
     }
+  }
+
+  static String _shortDate(String? s) {
+    if (s == null || s.length < 10) return '';
+    return s.substring(0, 10);
+  }
+
+  Widget _buildBriefResultCard({required Map<String, dynamic> brief}) {
+    final score = brief['viralScore'];
+    final scoreInt = score is num ? score.toInt() : null;
+    final hashtags = brief['hashtags'];
+    final hashtagList =
+        hashtags is List ? hashtags.cast<String>() : <String>[];
+    final scenes = brief['scenes'];
+    final sceneCount = scenes is List ? scenes.length : 0;
+
+    return Builder(
+      builder: (context) => Card(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      brief['conceptName']?.toString() ?? '生成完了',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  if (scoreInt != null)
+                    Chip(
+                      label: Text(
+                        'VS $scoreInt',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      backgroundColor: scoreInt >= 80
+                          ? Colors.orange.shade700
+                          : null,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (brief['primaryHook'] != null) ...[
+                Text(
+                  'フック',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Text(brief['primaryHook'].toString()),
+                const SizedBox(height: 8),
+              ],
+              if (brief['xPostText'] != null) ...[
+                Text(
+                  'X投稿文',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Text(brief['xPostText'].toString()),
+                const SizedBox(height: 8),
+              ],
+              if (brief['cta'] != null) ...[
+                Text(
+                  'CTA',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                Text(brief['cta'].toString()),
+                const SizedBox(height: 8),
+              ],
+              if (hashtagList.isNotEmpty) ...[
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: hashtagList
+                      .map(
+                        (tag) => Chip(
+                          label: Text(
+                            tag.startsWith('#') ? tag : '#$tag',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                          padding: EdgeInsets.zero,
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 8),
+              ],
+              if (sceneCount > 0)
+                Text(
+                  'シーン数: $sceneCount',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -172,25 +279,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                   ),
                   if (_result != null) ...[
                     const SizedBox(height: 16),
-                    Card(
-                      color: Colors.green.shade50,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '生成結果',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _result!['message']?.toString() ?? '生成が完了しました',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildBriefResultCard(brief: _result!),
                   ],
                   const SizedBox(height: 16),
                   Text(
@@ -208,20 +297,42 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                       separatorBuilder: (_, __) => const Divider(),
                       itemBuilder: (context, index) {
                         final v = _videos[index];
+                        final score = v['viralScore'];
+                        final scoreInt =
+                            score is num ? score.toInt() : null;
                         return ListTile(
                           leading: const Icon(Icons.video_library),
                           title: Text(
-                            v['title']?.toString() ??
-                                v['prompt']?.toString() ??
-                                '動画 ${index + 1}',
+                            v['conceptName']?.toString() ?? '動画 ${index + 1}',
                           ),
                           subtitle: Text(
-                            v['style']?.toString() ?? '',
+                            v['primaryHook']?.toString() ?? '',
                             style: const TextStyle(fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          trailing: Text(
-                            v['created_at']?.toString().substring(0, 10) ?? '',
-                            style: const TextStyle(fontSize: 11),
+                          trailing: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              if (scoreInt != null)
+                                Text(
+                                  'VS $scoreInt',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: scoreInt >= 80
+                                        ? Colors.orange
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                  ),
+                                ),
+                              Text(
+                                _shortDate(v['createdAt']?.toString()),
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                            ],
                           ),
                         );
                       },

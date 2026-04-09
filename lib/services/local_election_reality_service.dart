@@ -13,6 +13,9 @@ class LocalElectionRealityService {
       'local_election_reality_snapshot_history_v1';
   static const String _memberProfileStoragePrefix =
       'local_election_member_profile_v1_';
+  static const Duration _freshSnapshotWindow = Duration(minutes: 30);
+  static LocalElectionRealitySnapshot? _memorySnapshot;
+  static Future<LocalElectionRealitySnapshot>? _latestSnapshotInFlight;
 
   final SupabaseClient? _client;
 
@@ -143,30 +146,58 @@ class LocalElectionRealityService {
   Future<LocalElectionRealitySnapshot> fetchLatestSnapshot({
     bool includeAiSummary = true,
     SharedPreferences? prefs,
+    bool forceRefresh = false,
   }) async {
     final client = _resolvedClient;
     if (client == null) {
       throw Exception('Supabase client is not available.');
     }
 
-    final response = await client.functions.invoke(
-      'local-election-intelligence',
-      body: <String, dynamic>{
-        'includeAiSummary': includeAiSummary,
-      },
-    );
-    final data = _toMap(response.data);
-    if (data['success'] != true) {
-      throw Exception(
-        data['error']?.toString() ?? 'Latest local election fetch failed.',
-      );
+    final store = prefs ?? await SharedPreferences.getInstance();
+    final LocalElectionRealitySnapshot? cachedSnapshot =
+        await loadCachedSnapshot(prefs: store);
+    final LocalElectionRealitySnapshot? fallbackSnapshot =
+        _pickNewerSnapshot(_memorySnapshot, cachedSnapshot);
+
+    if (!forceRefresh &&
+        fallbackSnapshot != null &&
+        _isSnapshotFresh(fallbackSnapshot)) {
+      _memorySnapshot = fallbackSnapshot;
+      return fallbackSnapshot;
     }
 
-    final snapshot = LocalElectionRealitySnapshot.fromJson(
-      _toMap(data['snapshot']),
-    );
-    await cacheSnapshot(snapshot, prefs: prefs);
-    return snapshot;
+    final Future<LocalElectionRealitySnapshot>? inFlight =
+        _latestSnapshotInFlight;
+    if (inFlight != null) {
+      return inFlight;
+    }
+
+    final Future<LocalElectionRealitySnapshot> request =
+        _fetchLatestSnapshotFromEdgeFunction(
+          client: client,
+          includeAiSummary: includeAiSummary,
+        );
+    _latestSnapshotInFlight = request;
+
+    try {
+      final snapshot = await request;
+      _memorySnapshot = snapshot;
+      await cacheSnapshot(snapshot, prefs: store);
+      return snapshot;
+    } catch (error) {
+      if (fallbackSnapshot != null && fallbackSnapshot.hasData) {
+        debugPrint(
+          'Local election fetch failed, using cached snapshot instead: $error',
+        );
+        _memorySnapshot = fallbackSnapshot;
+        return fallbackSnapshot;
+      }
+      rethrow;
+    } finally {
+      if (identical(_latestSnapshotInFlight, request)) {
+        _latestSnapshotInFlight = null;
+      }
+    }
   }
 
   Future<LocalElectionLegislatorProfile> fetchMemberProfile(
@@ -218,6 +249,51 @@ class LocalElectionRealityService {
 
   String _memberProfileKey(String detailUrl) {
     return '$_memberProfileStoragePrefix${Uri.encodeComponent(detailUrl)}';
+  }
+
+  Future<LocalElectionRealitySnapshot> _fetchLatestSnapshotFromEdgeFunction({
+    required SupabaseClient client,
+    required bool includeAiSummary,
+  }) async {
+    final response = await client.functions
+        .invoke(
+          'local-election-intelligence',
+          body: <String, dynamic>{
+            'includeAiSummary': includeAiSummary,
+          },
+        )
+        .timeout(const Duration(seconds: 20));
+    final data = _toMap(response.data);
+    if (data['success'] != true) {
+      throw Exception(
+        data['error']?.toString() ?? 'Latest local election fetch failed.',
+      );
+    }
+
+    return LocalElectionRealitySnapshot.fromJson(
+      _toMap(data['snapshot']),
+    );
+  }
+
+  bool _isSnapshotFresh(LocalElectionRealitySnapshot snapshot) {
+    if (!snapshot.hasData) {
+      return false;
+    }
+    return DateTime.now().difference(snapshot.fetchedAt) <=
+        _freshSnapshotWindow;
+  }
+
+  LocalElectionRealitySnapshot? _pickNewerSnapshot(
+    LocalElectionRealitySnapshot? left,
+    LocalElectionRealitySnapshot? right,
+  ) {
+    if (left == null) {
+      return right;
+    }
+    if (right == null) {
+      return left;
+    }
+    return left.fetchedAt.isAfter(right.fetchedAt) ? left : right;
   }
 
   Future<void> _cacheHistoryPoint(

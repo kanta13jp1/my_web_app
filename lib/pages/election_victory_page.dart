@@ -2631,7 +2631,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             for (final filter in _scheduleFilters) ...[
               () {
                 final count = upcomingSchedules
-                    .where((s) => _matchesScheduleFilter(s.parsedVoteDate, filter))
+                    .where(
+                      (s) => _matchesScheduleFilter(s.parsedVoteDate, filter),
+                    )
                     .length;
                 final isSelected = _selectedScheduleFilter == filter;
                 return ChoiceChip(
@@ -2826,6 +2828,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
           ),
         ),
+      ),
         const SizedBox(height: 12),
         Text(
           '選択日 ${_dateOnlyFormat.format(selectedDay)}',
