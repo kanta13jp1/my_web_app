@@ -51,10 +51,11 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: releases } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "changelog_release");
-        const { data: entries } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "changelog_entry");
+        // リリース一覧と変更エントリを並列取得
+        const [{ data: releases }, { data: entries }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("source", "changelog_release"),
+          adminClient.from("app_analytics").select("metadata").eq("source", "changelog_entry"),
+        ]);
         const typeCount: Record<string, number> = {};
         for (const e of entries ?? []) {
           const t = ((e.metadata as Record<string, unknown>).type as string) ?? "feature";

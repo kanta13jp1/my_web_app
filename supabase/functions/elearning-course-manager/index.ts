@@ -49,12 +49,14 @@ serve(async (req) => {
       }
 
       if (view === "lessons" && courseId) {
-        const { data: lessons } = await adminClient.from("app_analytics").select("metadata, created_at")
-          .eq("user_id", user.id).eq("source", "course_lesson").eq("metadata->>course_id", courseId)
-          .order("created_at", { ascending: true });
-        // Get progress
-        const { data: progress } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "lesson_progress").eq("metadata->>course_id", courseId);
+        // レッスン一覧と進捗を並列取得
+        const [{ data: lessons }, { data: progress }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata, created_at")
+            .eq("user_id", user.id).eq("source", "course_lesson").eq("metadata->>course_id", courseId)
+            .order("created_at", { ascending: true }),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "lesson_progress").eq("metadata->>course_id", courseId),
+        ]);
         const completedLessons = new Set((progress ?? []).filter((p) => (p.metadata as Record<string, unknown>).completed).map((p) => (p.metadata as Record<string, unknown>).lesson_id as string));
 
         return new Response(JSON.stringify({

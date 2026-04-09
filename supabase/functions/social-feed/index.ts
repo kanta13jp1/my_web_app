@@ -81,25 +81,16 @@ serve(async (req) => {
 
       if (view === "profile") {
         const targetId = userId ?? user.id;
-        const { data: posts } = await adminClient
-          .from("app_analytics")
-          .select("metadata, created_at")
-          .eq("user_id", targetId)
-          .eq("source", "social_post")
-          .order("created_at", { ascending: false })
-          .limit(20);
-
-        const { data: followerCount } = await adminClient
-          .from("app_analytics")
-          .select("metadata", { count: "exact" })
-          .eq("source", "social_follow")
-          .eq("metadata->>following_id", targetId);
-
-        const { data: followingCount } = await adminClient
-          .from("app_analytics")
-          .select("metadata", { count: "exact" })
-          .eq("source", "social_follow")
-          .eq("metadata->>follower_id", targetId);
+        // 投稿・フォロワー数・フォロー数を並列取得
+        const [{ data: posts }, { data: followerCount }, { data: followingCount }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata, created_at")
+            .eq("user_id", targetId).eq("source", "social_post")
+            .order("created_at", { ascending: false }).limit(20),
+          adminClient.from("app_analytics").select("metadata", { count: "exact" })
+            .eq("source", "social_follow").eq("metadata->>following_id", targetId),
+          adminClient.from("app_analytics").select("metadata", { count: "exact" })
+            .eq("source", "social_follow").eq("metadata->>follower_id", targetId),
+        ]);
 
         return new Response(
           JSON.stringify({

@@ -48,10 +48,11 @@ serve(async (req) => {
         const v1 = url.searchParams.get("v1");
         const v2 = url.searchParams.get("v2");
         if (!v1 || !v2) return new Response(JSON.stringify({ success: false, error: "v1 and v2 required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        const { data: ver1 } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "content_version").eq("metadata->>version_id", v1).maybeSingle();
-        const { data: ver2 } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "content_version").eq("metadata->>version_id", v2).maybeSingle();
+        // 2バージョンを並列取得
+        const [{ data: ver1 }, { data: ver2 }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("source", "content_version").eq("metadata->>version_id", v1).maybeSingle(),
+          adminClient.from("app_analytics").select("metadata").eq("source", "content_version").eq("metadata->>version_id", v2).maybeSingle(),
+        ]);
         if (!ver1 || !ver2) return new Response(JSON.stringify({ success: false, error: "Version not found" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         const content1 = ((ver1.metadata as Record<string, unknown>).content as string) ?? "";
         const content2 = ((ver2.metadata as Record<string, unknown>).content as string) ?? "";

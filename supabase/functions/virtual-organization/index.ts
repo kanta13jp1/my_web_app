@@ -110,10 +110,11 @@ serve(async (req) => {
         if (!agentId) {
           return new Response(JSON.stringify({ success: false, error: "agent_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
-        const { data: memories } = await adminClient.from("agent_memories").select("*")
-          .eq("agent_id", agentId).order("created_at", { ascending: false }).limit(20);
-        const { data: personality } = await adminClient.from("app_analytics").select("metadata")
-          .eq("source", "agent_personality").eq("metadata->>agent_id", agentId).maybeSingle();
+        // 記憶とパーソナリティを並列取得
+        const [{ data: memories }, { data: personality }] = await Promise.all([
+          adminClient.from("agent_memories").select("*").eq("agent_id", agentId).order("created_at", { ascending: false }).limit(20),
+          adminClient.from("app_analytics").select("metadata").eq("source", "agent_personality").eq("metadata->>agent_id", agentId).maybeSingle(),
+        ]);
         return new Response(JSON.stringify({
           success: true,
           personality: personality?.metadata ?? null,
@@ -121,9 +122,11 @@ serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Default: summary
-      const { data: agents } = await adminClient.from("agents").select("*", { count: "exact", head: true });
-      const { data: tasks } = await adminClient.from("agent_tasks").select("*", { count: "exact", head: true });
+      // Default: summary — agents + tasks 並列取得
+      const [{ data: agents }, { data: tasks }] = await Promise.all([
+        adminClient.from("agents").select("*", { count: "exact", head: true }),
+        adminClient.from("agent_tasks").select("*", { count: "exact", head: true }),
+      ]);
       return new Response(JSON.stringify({
         success: true,
         summary: {

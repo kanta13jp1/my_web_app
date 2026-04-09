@@ -99,12 +99,12 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: playlists } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "music_playlist");
-        const { data: tracks } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "music_track");
-        const { data: plays } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "music_play");
+        // プレイリスト・トラック・再生履歴を並列取得
+        const [{ data: playlists }, { data: tracks }, { data: plays }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "music_playlist"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "music_track"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "music_play"),
+        ]);
         let totalDuration = 0;
         for (const p of plays ?? []) totalDuration += ((p.metadata as Record<string, unknown>).duration_sec as number) ?? 0;
         return new Response(JSON.stringify({
