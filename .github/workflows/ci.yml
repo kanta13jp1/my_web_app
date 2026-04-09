@@ -61,11 +61,15 @@ jobs:
           # deploy-prod.yml のデプロイリストを抽出
           DEPLOYED=$(grep "supabase functions deploy" .github/workflows/deploy-prod.yml \
             | grep -v "^#\|#" | awk '{print $4}' | sort)
-          # supabase/functions/ の実EFを抽出 (_shared除く)
-          EXISTING=$(ls supabase/functions/ | grep -v "^_" | sort)
-          # deploy-prod.yml の Tier2コメントに記載済みのものを取得
-          TIER2=$(grep -oP '(?<=# )[a-z][a-z0-9-]+(?=,|$)' \
-            .github/workflows/deploy-prod.yml 2>/dev/null | sort || true)
+          # supabase/functions/ の実EFディレクトリのみ抽出 (_shared・設定ファイル除く)
+          EXISTING=$(find supabase/functions -maxdepth 1 -mindepth 1 -type d \
+            | xargs -I{} basename {} | grep -v "^_" | sort)
+          # deploy-prod.yml の Tier2コメントから全EF名を抽出 (カンマ区切りも対応)
+          TIER2=$(sed -n '/Tier 2 (code-only/,/^\s*env:/p' \
+            .github/workflows/deploy-prod.yml \
+            | grep -E '^\s+#\s+[a-z]' \
+            | sed 's/.*#\s*//' | tr ',' '\n' | tr -d ' ' \
+            | grep -E '^[a-z][a-z0-9-]+$' | sort -u || true)
           # Tier1にもTier2にも記載がない「未分類EF」を検出
           UNCATEGORIZED=$(comm -23 <(echo "$EXISTING") \
             <(echo -e "$DEPLOYED\n$TIER2" | sort -u) || true)
