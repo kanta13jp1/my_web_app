@@ -1,0 +1,11 @@
+# Auto-generated files — excluded from markdownlint
+docs/cs-notes/
+docs/daily-reports/
+docs/blog-drafts/
+docs/competitor-reports/
+docs/incident-reports/
+docs/security-audit/
+docs/weekly-drafts/
+docs/session-summaries/
+docs/archive/
+node_modules/

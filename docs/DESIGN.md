@@ -1,6 +1,6 @@
-# 自分株式会社 — DESIGN.md
-# デザインシステム定義 (AI エージェント参照用)
+# 自分株式会社 — デザインシステム定義
 
+> AI エージェント参照用
 > このファイルは [Awesome Design MD JP](https://github.com/kzhrknt/awesome-design-md-jp) フォーマットに準拠しています。
 > Flutter/Dart コードを生成する際は、このファイルのデザイントークンを参照してください。
 > 更新日: 2026-04-06
@@ -119,11 +119,13 @@ static const LinearGradient aiGradient = LinearGradient(
 ### 1. 和文フォント (Japanese Font Stack)
 
 **ゴシック体** (アプリ全体のデフォルト):
+
 - Noto Sans JP (Google Fonts — Flutter Web メインフォント)
 - ヒラギノ角ゴ ProN (macOS フォールバック)
 - メイリオ (Windows フォールバック)
 
 **等幅** (コードブロック・数値表示):
+
 - SFMono-Regular, Consolas, Menlo, monospace
 
 **明朝体**: 使用しない (ダークテーマで可読性が低いため)
@@ -140,6 +142,7 @@ font-family: SFMono-Regular, Consolas, Menlo, Courier, monospace;
 ```
 
 **フォールバックの考え方**:
+
 - Noto Sans JP を先頭 (Flutter Web でロード済み)
 - macOS → Windows の順でシステムフォントを列挙
 - 欧文は Noto Sans JP 内の欧文グリフを利用 (Inter は別指定不要)
@@ -147,7 +150,7 @@ font-family: SFMono-Regular, Consolas, Menlo, Courier, monospace;
 ### 3. 行間・字間 (Japanese-optimized)
 
 | Role | Font Size | line-height (height) | letter-spacing | palt | 備考 |
-|------|-----------|----------------------|---------------|------|------|
+| --- | --- | --- | --- | --- | --- |
 | Heading 1 | 24px | 1.4 | 0.04em 相当 | 推奨 | ページタイトル |
 | Heading 2 | 18px | 1.4 | 0.04em 相当 | 推奨 | セクション見出し |
 | Heading 3 | 15px | 1.4 | normal | なし | カードタイトル |
@@ -157,6 +160,7 @@ font-family: SFMono-Regular, Consolas, Menlo, Courier, monospace;
 | Caption | 10px | 1.5 | normal | なし | 日付・メタ |
 
 **重要ルール** (awesome-design-md-jp 準拠):
+
 - `letter-spacing: 0.04em` と `palt` は**見出し (h1/h2) にのみ**適用する
 - 日本語本文の `line-height` (Flutter: `height`) は **1.5 以上** (推奨 1.7〜2.0)
 - 本文に `letter-spacing` を指定しない (`normal` のまま)
@@ -492,7 +496,7 @@ SnackBar(
 ## アイコンガイドライン
 
 | 用途 | アイコン | カラー |
-|------|---------|--------|
+| --- | --- | --- |
 | ギタースタジオ | Icons.music_note | #FF6B35 |
 | AI 機能 | Icons.psychology | #3D5AFE |
 | 成長・グロース | Icons.trending_up | #4CAF50 |
@@ -623,7 +627,7 @@ Text(
 
 ### 日本語UIで避けるべきパターン
 
-```
+```text
 ❌ letter-spacing を全テキストに適用 (本文が読みにくくなる)
 ❌ font-weight: 700 を多用 (日本語フォントは 500 でも十分太い)
 ❌ 純粋な白 (#FFFFFF) のテキスト on ダーク (目が疲れる → textPrimary 参照)
@@ -636,7 +640,7 @@ Text(
 ### 参考サービスのキーカラー (競合分析用)
 
 | サービス | ブランドカラー | 本文色 | 用途参考 |
-|---------|-------------|-------|---------|
+| --- | --- | --- | --- |
 | note.com | `#41C9B0` (teal) | `#08131a` | コンテンツ投稿・ライト |
 | freee | `#2864F0` (blue) | `#595959` | 会計・HR・企業向け |
 | SmartHR | `#0077C7` (blue) | warm gray | HR・給与管理 |
@@ -648,11 +652,13 @@ Text(
 自分株式会社のデザインは以下を参考にしています:
 
 ### 海外サービス (awesome-design-md より)
+
 - **Spotify** — 漆黒の背景、鮮やかなアクセント、アートワーク主役のレイアウト
 - **Linear** — 極限まで削ぎ落としたミニマル、精密な余白、アクセントカラー
 - **GitHub** — 機能的で情報密度が高い、ダークモード完全対応
 
 ### 国内サービス ([awesome-design-md-jp](https://github.com/kzhrknt/awesome-design-md-jp) より)
+
 - **note.com** — 日本語コンテンツ投稿、行間 2.0、本文 18px の読みやすさ基準
 - **freee** — 日本のビジネス向けUI、4px ベーススペーシング、セマンティックカラー体系
 - **SmartHR** — 日本語 HR プラットフォーム、Yu Gothic 対応、8px ベーススペーシング
@@ -678,7 +684,7 @@ Text(
 
 ### クイックリファレンス
 
-```
+```text
 ■ カラー
 Background:     #0A0A0A  (最暗・メイン背景)
 Surface Card:   #1E1E1E  (カード背景)
@@ -718,7 +724,7 @@ Supabase:    https://smmkxxavexumewbfaqpy.supabase.co/
 
 ### Flutter コードプロンプト例
 
-```
+```text
 自分株式会社のデザインシステムに従って Flutter Widget を作成してください。
 - 背景: Color(0xFF0A0A0A)
 - カード: Color(0xFF1E1E1E) + BorderRadius.circular(12)

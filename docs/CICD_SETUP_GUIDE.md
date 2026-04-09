@@ -10,6 +10,7 @@
 このドキュメントでは、既に構築されたCI/CDパイプラインを有効化するために必要な手動セットアップ手順を説明します。
 
 ### 完了済み ✅
+
 - ✅ GitHub Actionsワークフローファイル作成（4ファイル）
 - ✅ CI/CDガイドドキュメント作成
 - ✅ デプロイメントガイド作成
@@ -17,6 +18,7 @@
 - ✅ develop/stagingブランチ作成（ローカル）
 
 ### 必須作業 🔒
+
 1. **GitHub Secretsの設定** ⚠️ 最優先
 2. **ブランチをリモートにプッシュ**
 3. **ブランチ保護ルールの設定**
@@ -29,7 +31,7 @@ GitHub ActionsでCI/CDを実行するために、以下のSecretsを設定する
 
 ### Secrets設定場所
 
-1. GitHubリポジトリページにアクセス: https://github.com/kanta13jp1/my_web_app
+1. GitHubリポジトリページにアクセス: <https://github.com/kanta13jp1/my_web_app>
 2. `Settings` → `Secrets and variables` → `Actions` を開く
 3. `New repository secret` をクリック
 4. 以下のSecretsを追加
@@ -39,7 +41,7 @@ GitHub ActionsでCI/CDを実行するために、以下のSecretsを設定する
 #### 🔥 Firebase関連（4個）
 
 | Secret名 | 説明 | 取得方法 |
-|---------|------|---------|
+| --- | --- | --- |
 | `FIREBASE_PROJECT_ID` | FirebaseプロジェクトID | Firebase Console → プロジェクト設定 → プロジェクトID |
 | `FIREBASE_SERVICE_ACCOUNT_DEV` | 開発環境用サービスアカウント（JSON） | 下記「Firebase Service Account取得方法」参照 |
 | `FIREBASE_SERVICE_ACCOUNT_STAGING` | ステージング環境用サービスアカウント（JSON） | 同上 |
@@ -61,6 +63,7 @@ firebase service-account:create --json
 ```
 
 または、Firebase Consoleから取得:
+
 1. Firebase Console → プロジェクト設定 → サービスアカウント
 2. 「新しい秘密鍵の生成」をクリック
 3. ダウンロードしたJSONファイルの内容をコピー
@@ -69,7 +72,7 @@ firebase service-account:create --json
 #### 🗄️ Supabase関連（12個）
 
 | Secret名 | 説明 | 取得方法 |
-|---------|------|---------|
+| --- | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | Supabase CLI用アクセストークン | Supabase Dashboard → Account → Access Tokens → Generate new token |
 | `SUPABASE_PROJECT_ID_DEV` | 開発環境プロジェクトID | Supabase Dashboard → Settings → General → Reference ID |
 | `SUPABASE_PROJECT_ID_STAGING` | ステージング環境プロジェクトID | 同上（別プロジェクト） |
@@ -87,12 +90,13 @@ firebase service-account:create --json
 #### 📢 通知関連（1個、オプション）
 
 | Secret名 | 説明 | 取得方法 |
-|---------|------|---------|
+| --- | --- | --- |
 | `SLACK_WEBHOOK_URL` | Slack通知用Webhook URL | Slack → Apps → Incoming Webhooks → Add to Slack |
 
 **Slack Webhook URLの取得方法**:
+
 1. Slackワークスペースにアクセス
-2. https://api.slack.com/messaging/webhooks にアクセス
+2. <https://api.slack.com/messaging/webhooks> にアクセス
 3. 「Create New App」→ 「From scratch」
 4. App名とワークスペースを選択
 5. 「Incoming Webhooks」を有効化
@@ -104,7 +108,7 @@ firebase service-account:create --json
 
 現在、開発・ステージング・本番で**同じSupabaseプロジェクト**を使用している場合:
 
-```
+```text
 SUPABASE_PROJECT_ID_DEV = SUPABASE_PROJECT_ID_STAGING = SUPABASE_PROJECT_ID_PROD
 SUPABASE_DB_PASSWORD_DEV = SUPABASE_DB_PASSWORD_STAGING = SUPABASE_DB_PASSWORD_PROD
 SUPABASE_URL_DEV = SUPABASE_URL_STAGING = SUPABASE_URL_PROD
@@ -163,7 +167,7 @@ git branch -a
 
 ### 設定場所
 
-1. GitHubリポジトリページ: https://github.com/kanta13jp1/my_web_app
+1. GitHubリポジトリページ: <https://github.com/kanta13jp1/my_web_app>
 2. `Settings` → `Branches`
 3. `Branch protection rules` → `Add rule`
 
@@ -172,6 +176,7 @@ git branch -a
 **Branch name pattern**: `main`
 
 **有効にする設定**:
+
 - ✅ Require a pull request before merging
   - Require approvals: `1`
   - Dismiss stale pull request approvals when new commits are pushed
@@ -186,6 +191,7 @@ git branch -a
 **Branch name pattern**: `staging`
 
 **有効にする設定**:
+
 - ✅ Require a pull request before merging
   - Require approvals: `1`（オプション）
 - ✅ Require status checks to pass before merging
@@ -197,6 +203,7 @@ git branch -a
 **Branch name pattern**: `develop`
 
 **有効にする設定**:
+
 - ✅ Require a pull request before merging
 - ✅ Require status checks to pass before merging
   - Status checks: `lint-and-test`, `security-check`, `build-matrix`
@@ -306,6 +313,7 @@ CI/CD環境のセットアップが完了したら、以下のタスクに進み
 **問題**: ワークフローで「Secret not found」エラー
 
 **解決策**:
+
 1. Secret名のスペルミスを確認
 2. リポジトリの Settings → Secrets and variables → Actions で設定されているか確認
 3. 環境別Secretsの場合、環境が作成されているか確認
@@ -315,6 +323,7 @@ CI/CD環境のセットアップが完了したら、以下のタスクに進み
 **問題**: PRを作成してもCIが実行されない
 
 **解決策**:
+
 1. `.github/workflows/` にワークフローファイルが存在するか確認
 2. ワークフローファイルのYAML構文エラーを確認
 3. GitHub Actions タブでエラーを確認
@@ -324,6 +333,7 @@ CI/CD環境のセットアップが完了したら、以下のタスクに進み
 **問題**: デプロイワークフローがエラーで終了
 
 **解決策**:
+
 1. GitHub Secretsが正しく設定されているか確認
 2. Firebase/Supabaseの認証情報が有効か確認
 3. ワークフローログで詳細なエラーメッセージを確認

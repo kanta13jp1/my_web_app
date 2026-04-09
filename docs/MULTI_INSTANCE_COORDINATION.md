@@ -8,7 +8,7 @@
 ## インスタンス分担
 
 | インスタンス | 担当領域 | 禁止領域 |
-|------------|---------|---------|
+| --- | --- | --- |
 | **VSCode** | `lib/` フロントエンド実装 (Dart/Flutter) | `supabase/functions/`, `docs/` |
 | **Web版** | `supabase/functions/` Edge Functions (Deno) | `lib/`, `docs/` |
 | **Windows版** | `docs/` ドキュメント・`supabase/migrations/` | `lib/`, `supabase/functions/` |
@@ -38,7 +38,7 @@ git stash pop
 **各インスタンスは以下の番号帯を使用すること**:
 
 | インスタンス | 番号帯 | 例 |
-|------------|--------|---|
+| --- | --- | --- |
 | **Web / Schedule (自動)** | `000010` ~ `000499` | `20260401000040_seed_session432j.sql` |
 | **VSCode** | `000500` ~ `000699` | `20260401000500_seed_vscode.sql` |
 | **Windows** | `000700` ~ `000899` | `20260401000700_seed_windows.sql` |
@@ -60,7 +60,7 @@ git rebase --abort      # リベースをやめて元に戻す場合
 ## スケジュールタスク一覧 (Claude Code Schedule)
 
 | タスク | スケジュール | 担当機能 |
-|--------|------------|---------|
+| --- | --- | --- |
 | `cs-check` | 毎時 00分 | CS対応 / Edge UI同期 / Issue自動修正 / PR review / ヘルスチェック |
 | `daily-report` | 毎日 09:00 JST | 日次レポート / X投稿 / 競合監視 / Schedule健全性チェック |
 | `blog-draft` | 毎日 08:00 JST | ブログ下書き自動生成 / 投稿管理 |
@@ -75,7 +75,7 @@ git rebase --abort      # リベースをやめて元に戻す場合
 ### 主要テーブル一覧
 
 | テーブル | 用途 | 担当インスタンス |
-|---------|------|---------------|
+| --- | --- | --- |
 | `user_profiles` | ユーザープロフィール (is_admin含む) | PowerShell (スキーマ管理) |
 | `schedule_task_runs` | Schedule実行ログ | PowerShell (スキーマ管理) |
 | `blog_posts` | ブログ投稿管理 | PowerShell (スキーマ管理) |

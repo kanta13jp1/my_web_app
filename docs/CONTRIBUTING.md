@@ -74,7 +74,7 @@ flutter run -d chrome
 flutter run -d web-server
 ```
 
-ブラウザで http://localhost:8080 にアクセスして動作確認してください。
+ブラウザで <http://localhost:8080> にアクセスして動作確認してください。
 
 ### VS Code拡張機能（推奨）
 
@@ -92,7 +92,7 @@ flutter run -d web-server
 
 #### ファイル・ディレクトリ構造
 
-```
+```text
 lib/
 ├── main.dart                 # アプリのエントリーポイント
 ├── models/                   # データモデル
@@ -204,7 +204,7 @@ try {
 
 #### フォーマット
 
-```
+```text
 <type>(<scope>): <subject>
 
 <body>
@@ -229,7 +229,7 @@ try {
 
 #### 良い例
 
-```
+```text
 feat(auth): Add Google sign-in functionality
 
 Implement Google OAuth authentication using Supabase Auth.
@@ -238,7 +238,7 @@ Users can now sign in with their Google account.
 Closes #123
 ```
 
-```
+```text
 fix(notes): Prevent duplicate note creation
 
 Fix race condition that caused duplicate notes when
@@ -249,11 +249,11 @@ Fixes #456
 
 #### 悪い例
 
-```
+```text
 updated files
 ```
 
-```
+```text
 fixed bug
 ```
 
@@ -268,12 +268,14 @@ fixed bug
 ### PRを作成する前に
 
 - [ ] ローカルでCIチェックを実行
+
   ```bash
   flutter analyze
   dart format --set-exit-if-changed .
   flutter test
   flutter build web --release
   ```
+
 - [ ] 関連するIssueが存在する
 - [ ] ブランチ名が規約に従っている (`feature/`, `bugfix/`, `hotfix/`)
 
@@ -364,17 +366,18 @@ git push -u origin feature/your-feature
 
 #### 良いコメント
 
-```
+````text
 この実装は良いですが、パフォーマンスを考慮すると `useMemo` を使った方が
 良いかもしれません。以下のように修正してはどうでしょうか：
 
 ```dart
 // 修正案のコード
 ```
+````
 
 #### 改善が必要なコメント
 
-```
+```text
 これはダメです。
 ```
 
@@ -410,11 +413,13 @@ git push -u origin feature/your-feature
 ### 質問の仕方
 
 質問する前に:
+
 1. ドキュメントを確認
 2. 既存のIssueを検索
 3. コードを読む
 
 質問する際は:
+
 - **具体的に**: 何が問題か明確に説明
 - **再現可能に**: 再現手順を記載
 - **環境情報を含める**: OS、ブラウザ、バージョンなど
@@ -423,7 +428,7 @@ git push -u origin feature/your-feature
 
 良いIssue報告の例:
 
-```markdown
+````markdown
 ## 🐛 バグの概要
 ログイン画面でメールアドレスを入力すると、エラーメッセージが表示されます。
 
@@ -449,10 +454,10 @@ git push -u origin feature/your-feature
 
 ## 📋 追加情報
 コンソールに以下のエラーが表示されています:
-```
+```text
 Error: Invalid credentials
 ```
-```
+````
 
 ## 参考資料
 
