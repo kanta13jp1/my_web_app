@@ -50,11 +50,13 @@ serve(async (req) => {
       const url = new URL(req.url);
       const view = url.searchParams.get("view"); // 'overview' | 'rules' | 'goals'
 
-      // 全エージェントを部署別に集計
-      const { data: agents, error } = await supabase
-        .from("agents")
-        .select("id, display_name, role_title, department, status, supervisor_agent_id")
-        .order("department", { ascending: true });
+      // 全エージェントと部署タスク数を並列取得
+      const [{ data: agents, error }, { data: tasks }] = await Promise.all([
+        supabase.from("agents")
+          .select("id, display_name, role_title, department, status, supervisor_agent_id")
+          .order("department", { ascending: true }),
+        supabase.from("agent_tasks").select("assignee_agent_id, status"),
+      ]);
 
       if (error) throw error;
 
@@ -79,9 +81,6 @@ serve(async (req) => {
       }
 
       // 部署タスク数を集計
-      const { data: tasks } = await supabase
-        .from("agent_tasks")
-        .select("assignee_agent_id, status");
 
       const agentTaskCount = new Map<string, { total: number; completed: number }>();
       for (const t of tasks ?? []) {

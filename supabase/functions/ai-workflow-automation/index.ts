@@ -74,10 +74,11 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: workflows } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "ai_workflow");
-        const { data: execs } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "workflow_execution");
+        // ワークフロー一覧と実行履歴を並列取得
+        const [{ data: workflows }, { data: execs }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "ai_workflow"),
+          adminClient.from("app_analytics").select("metadata").eq("user_id", user.id).eq("source", "workflow_execution"),
+        ]);
         const active = (workflows ?? []).filter((w) => (w.metadata as Record<string, unknown>).is_enabled).length;
         const successful = (execs ?? []).filter((e) => (e.metadata as Record<string, unknown>).status === "success").length;
         return new Response(JSON.stringify({

@@ -93,15 +93,18 @@ serve(async (req) => {
             })
             const { data: { user } } = await userClient.auth.getUser()
             if (!user) return json200({ success: false, error: 'Unauthorized' }, 401)
-            const { data: statsRow } = await supabaseAdmin.from('user_stats')
-                .select('current_streak, last_output_at, updated_at')
-                .eq('user_id', user.id)
-                .maybeSingle()
-            const { data: penalties } = await supabaseAdmin.from('penalty_logs')
-                .select('penalty_type, reason, amount_lost, created_at')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
-                .limit(5)
+            // user_stats と penalty_logs を並列取得
+            const [{ data: statsRow }, { data: penalties }] = await Promise.all([
+                supabaseAdmin.from('user_stats')
+                    .select('current_streak, last_output_at, updated_at')
+                    .eq('user_id', user.id)
+                    .maybeSingle(),
+                supabaseAdmin.from('penalty_logs')
+                    .select('penalty_type, reason, amount_lost, created_at')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(5),
+            ])
             const now = new Date()
             const threshold = new Date(now.getTime() - 24 * 60 * 60 * 1000)
             const isAtRisk = statsRow

@@ -51,15 +51,11 @@ serve(async (req) => {
       const view = url.searchParams.get("view"); // 'workload' | 'unassigned' | 'routing_log'
 
       if (view === "workload") {
-        // 部署別タスク負荷
-        const { data: agents } = await adminClient
-          .from("agents")
-          .select("id, display_name, department, role_title, is_active");
-
-        const { data: tasks } = await adminClient
-          .from("agent_tasks")
-          .select("assignee_agent_id, status")
-          .in("status", ["pending", "in_progress"]);
+        // 部署別タスク負荷 — エージェントとタスクを並列取得
+        const [{ data: agents }, { data: tasks }] = await Promise.all([
+          adminClient.from("agents").select("id, display_name, department, role_title, is_active"),
+          adminClient.from("agent_tasks").select("assignee_agent_id, status").in("status", ["pending", "in_progress"]),
+        ]);
 
         // 部署ごとの集計
         const deptLoad = new Map<string, { agents: number; activeTasks: number; pendingTasks: number }>();
