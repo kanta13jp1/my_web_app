@@ -1,7 +1,10 @@
 name: User Feedback Resolved (解決通知メール)
 
 # ご意見・ご要望フォーム経由の GitHub Issue がクローズされたとき
-# → notify-feature-resolved EF 経由で投稿者に解決通知メールを送信
+# → submit-feedback EF (action=notify) 経由で投稿者に解決通知メールを送信
+# 補足: 管理者が feedback_list_page でステータスを「対応完了」にした場合は
+#       アプリ内から直接 submit-feedback?action=notify が呼ばれるため本ワークフローは
+#       github-issue-fix Schedule が Issue をクローズした場合の補完パスとして動作する
 on:
   issues:
     types: [closed]
@@ -38,21 +41,22 @@ jobs:
             --arg issue_url "$ISSUE_URL" \
             --arg closed_by "$CLOSED_BY" \
             '{
+              action: "notify",
               github_issue_number: $github_issue_number,
               issue_title: $issue_title,
               issue_url: $issue_url,
               closed_by: $closed_by
             }')
 
-          # notify-feature-resolved EF:
-          #   - feature_requests テーブルから github_issue_number でメールアドレスを取得
+          # submit-feedback EF (action=notify):
+          #   - app_feedback テーブルから github_issue_number で user_email を取得
           #   - Resend API 経由でリリース通知メールを送信
           HTTP_CODE=$(curl -s -o /tmp/notify_result.json -w "%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/notify-feature-resolved" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/submit-feedback" \
             --max-time 10 || echo "000")
           echo "code=$HTTP_CODE" >> $GITHUB_OUTPUT
           echo "  HTTP: $HTTP_CODE"
