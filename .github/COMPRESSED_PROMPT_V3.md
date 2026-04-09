@@ -126,7 +126,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ## 🔑 環境変数（Schedule 実行時）
 
-```
+```text
 SUPABASE_DIGEST_URL=https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-daily-digest
 SUPABASE_SERVICE_KEY=<service_role key>
 GITHUB_PAT=<repo + pull_requests スコープ>
@@ -138,7 +138,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 
 ## 📁 主要ディレクトリ
 
-```
+```text
 lib/pages/               # 194ページ (landing / comparison / user_manual / admin_analytics 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 100デプロイ済 / Tier2: 141コードのみ)
