@@ -71,9 +71,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全11ワークフロー品質基準）
+## ⚙️ GitHub Actions CI/CD（全12ワークフロー品質基準）
 
-**全11本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全12本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 **追加品質 (PS#28〜30)**:
 - アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
@@ -96,6 +96,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
   - 必要なシークレット: `ANTHROPIC_API_KEY` (Anthropic Console → API Keys)
   - LGTM の場合はコメントなし / 問題あり時のみ PR にコメント投稿
 
+**追加品質 (PS#38〜39)**:
+- `infra-health-check.yml` `curl -sf` → `curl -s` バグ修正 / `edge-function-audit.yml` timeout 5→10分
+- **ユーザーフィードバックパイプライン**: `feedback-issue-resolved.yml` 新設
+  - フォーム投稿 → EF (感謝メール + GitHub Issue作成 `user-feedback` ラベル) → github-issue-fix Schedule → Issue クローズ → `notify-feature-resolved` EF でリリース通知メール
+  - 必要なEF (Web版): `notify-feature-resolved` (新規) / `notify-feature-request` (更新: GH Issue作成追加)
+  - 必要なマイグレーション (Windows版): `feature_requests` テーブルに `github_issue_number`, `email`, `responded_at` 追加
+
 | ワークフロー | トリガー | 特記事項 |
 |---|---|---|
 | `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
@@ -109,6 +116,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
+| `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-resolved` EF でリリース通知メール |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -151,7 +159,7 @@ lib/pages/               # 194ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 240本 (Tier1: 100デプロイ済 / Tier2: 140コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 11本 (品質基準完備済み / claude-agent-review含む)
+.github/workflows/       # 12本 (品質基準完備済み / claude-agent-review / feedback-issue-resolved含む)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)

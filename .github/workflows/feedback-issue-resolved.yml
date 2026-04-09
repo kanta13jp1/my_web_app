@@ -1,0 +1,79 @@
+name: User Feedback Resolved (解決通知メール)
+
+# ご意見・ご要望フォーム経由の GitHub Issue がクローズされたとき
+# → notify-feature-resolved EF 経由で投稿者に解決通知メールを送信
+on:
+  issues:
+    types: [closed]
+
+concurrency:
+  group: feedback-issue-resolved-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  notify:
+    name: Send Resolution Email
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # アプリ内フォームからの Issue のみ対象 (EF が付与するラベル)
+    if: contains(github.event.issue.labels.*.name, 'user-feedback')
+
+    steps:
+      - name: Notify submitter via Supabase EF
+        id: notify
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          CLOSED_BY: ${{ github.event.sender.login }}
+        run: |
+          # jq で JSON を安全に構築 (タイトルの特殊文字を適切にエスケープ)
+          PAYLOAD=$(jq -n \
+            --argjson github_issue_number "$ISSUE_NUMBER" \
+            --arg issue_title "$ISSUE_TITLE" \
+            --arg issue_url "$ISSUE_URL" \
+            --arg closed_by "$CLOSED_BY" \
+            '{
+              github_issue_number: $github_issue_number,
+              issue_title: $issue_title,
+              issue_url: $issue_url,
+              closed_by: $closed_by
+            }')
+
+          # notify-feature-resolved EF:
+          #   - feature_requests テーブルから github_issue_number でメールアドレスを取得
+          #   - Resend API 経由でリリース通知メールを送信
+          HTTP_CODE=$(curl -s -o /tmp/notify_result.json -w "%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/notify-feature-resolved" \
+            --max-time 10 || echo "000")
+          echo "code=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "  HTTP: $HTTP_CODE"
+          cat /tmp/notify_result.json 2>/dev/null || true
+
+      - name: Job Summary
+        if: always()
+        env:
+          CODE: ${{ steps.notify.outputs.code }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          CLOSED_BY: ${{ github.event.sender.login }}
+        run: |
+          ICON=$([ "$CODE" = "200" ] && echo "✅" || echo "⚠️")
+          {
+            echo "## User Feedback Resolved $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "|------|---|"
+            echo "| Issue | #${ISSUE_NUMBER} |"
+            echo "| タイトル | ${ISSUE_TITLE} |"
+            echo "| Closed by | ${CLOSED_BY} |"
+            echo "| 通知EF | ${ICON} HTTP ${CODE:-未送信} |"
+          } >> $GITHUB_STEP_SUMMARY
