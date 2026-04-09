@@ -45,15 +45,18 @@ class LocalElectionShareService {
   static const String publicCategory = '選挙ダッシュボード';
   static const String metadataType = 'local_election_snapshot';
   static const int lowPresenceThreshold = 4;
+  static const int maxWeekendWindowCount = 28;
   static const int _syntheticNoteIdBase = 90000000000000;
-  static const List<LocalElectionShareWindow> availableWindows =
-      <LocalElectionShareWindow>[
-    LocalElectionShareWindow(label: '今週末', weekendOffset: 0),
-    LocalElectionShareWindow(label: '2週後', weekendOffset: 1),
-    LocalElectionShareWindow(label: '3週後', weekendOffset: 2),
-    LocalElectionShareWindow(label: '4週後', weekendOffset: 3),
-    LocalElectionShareWindow(label: '5週後', weekendOffset: 4),
-  ];
+  static final List<LocalElectionShareWindow> availableWindows =
+      List<LocalElectionShareWindow>.unmodifiable(
+    List<LocalElectionShareWindow>.generate(
+      maxWeekendWindowCount,
+      (index) => LocalElectionShareWindow(
+        label: index == 0 ? '今週末' : '${index + 1}週後',
+        weekendOffset: index,
+      ),
+    ),
+  );
 
   final SupabaseClient _supabase;
   final PublicMemoService _publicMemoService;

@@ -10,8 +10,8 @@ import '../services/public_memo_service.dart';
 
 /// Composer dialog to preview/edit and post an upcoming-election thread to X.
 ///
-/// Shows 5 weekend-specific tabs (今週末 / 2〜5週後) each showing election
-/// count badges. Selecting a tab regenerates the thread preview.
+/// Shows weekend-specific tabs (今週末 / 2〜28週後) with election-count
+/// badges. Selecting a tab regenerates the thread preview.
 class ElectionXPostComposerDialog extends StatefulWidget {
   final LocalElectionRealitySnapshot snapshot;
   final PublicMemo? publishedMemo;
@@ -66,7 +66,7 @@ class _ElectionXPostComposerDialogState
   @override
   void initState() {
     super.initState();
-    const windows = LocalElectionShareService.availableWindows;
+    final windows = LocalElectionShareService.availableWindows;
     _electionCounts = windows
         .map(
           (w) => widget.shareService
@@ -171,7 +171,7 @@ class _ElectionXPostComposerDialogState
   }
 
   Widget _buildWeekendSelector() {
-    const windows = LocalElectionShareService.availableWindows;
+    final windows = LocalElectionShareService.availableWindows;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(

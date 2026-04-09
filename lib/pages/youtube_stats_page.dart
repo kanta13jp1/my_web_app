@@ -7,6 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 /// TSV 形式の YouTube アナリティクスデータを貼り付けてインポートし、
 /// youtube_video_stats テーブルで管理する。
 /// 統計を複数スナップショット日で比較表示する。
+
+enum _SortMode { views, growth, engagement }
+
 class YoutubeStatsPage extends StatefulWidget {
   const YoutubeStatsPage({super.key});
 
@@ -35,6 +38,9 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
   List<Map<String, dynamic>> _stats = [];
   List<String> _channels = [];
   String _selectedChannel = '';
+  _SortMode _sortMode = _SortMode.views;
+  // url → previous snapshot row (for growth delta)
+  Map<String, Map<String, dynamic>> _prevSnapshot = {};
 
   static String _todayIso() {
     final now = DateTime.now();
@@ -69,7 +75,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
           )
           .order('snapshot_date', ascending: false)
           .order('views', ascending: false)
-          .limit(200);
+          .limit(500);
 
       final rows = List<Map<String, dynamic>>.from(data as List);
       final channels = rows
@@ -79,10 +85,30 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
           .toList()
         ..sort();
 
+      // 直近2スナップショット日を特定して成長デルタ用マップを構築
+      final allDates = rows
+          .map((r) => r['snapshot_date']?.toString() ?? '')
+          .where((d) => d.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort((a, b) => b.compareTo(a));
+
+      final prevMap = <String, Map<String, dynamic>>{};
+      if (allDates.length >= 2) {
+        final prevDate = allDates[1];
+        for (final row in rows) {
+          if (row['snapshot_date'] == prevDate) {
+            final url = row['video_url']?.toString() ?? '';
+            if (url.isNotEmpty) prevMap[url] = row;
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
           _stats = rows;
           _channels = channels;
+          _prevSnapshot = prevMap;
           if (_selectedChannel.isEmpty && channels.isNotEmpty) {
             _selectedChannel = channels.first;
           }
@@ -454,15 +480,48 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
     final latestDate = dates.isNotEmpty ? dates.first : '';
 
     // 最新スナップショットの統計
-    final latestRows = filtered
+    var latestRows = filtered
         .where((r) => r['snapshot_date'] == latestDate)
         .toList();
 
     // サマリー計算
-    int totalViews = 0, totalLikes = 0;
+    int totalViews = 0, totalLikes = 0, totalGrowth = 0;
     for (final r in latestRows) {
-      totalViews += (r['views'] as int? ?? 0);
-      totalLikes += (r['likes'] as int? ?? 0);
+      final url = r['video_url']?.toString() ?? '';
+      final views = r['views'] as int? ?? 0;
+      final likes = r['likes'] as int? ?? 0;
+      totalViews += views;
+      totalLikes += likes;
+      final prevViews = _prevSnapshot[url]?['views'] as int? ?? 0;
+      if (prevViews > 0) totalGrowth += (views - prevViews);
+    }
+
+    // ソート
+    latestRows = List.of(latestRows);
+    switch (_sortMode) {
+      case _SortMode.views:
+        latestRows.sort(
+          (a, b) =>
+              ((b['views'] as int? ?? 0)).compareTo(a['views'] as int? ?? 0),
+        );
+      case _SortMode.growth:
+        latestRows.sort((a, b) {
+          final urlA = a['video_url']?.toString() ?? '';
+          final urlB = b['video_url']?.toString() ?? '';
+          final dA = (a['views'] as int? ?? 0) -
+              (_prevSnapshot[urlA]?['views'] as int? ?? 0);
+          final dB = (b['views'] as int? ?? 0) -
+              (_prevSnapshot[urlB]?['views'] as int? ?? 0);
+          return dB.compareTo(dA);
+        });
+      case _SortMode.engagement:
+        latestRows.sort((a, b) {
+          final vA = a['views'] as int? ?? 0;
+          final vB = b['views'] as int? ?? 0;
+          final eA = vA > 0 ? (a['likes'] as int? ?? 0) / vA : 0.0;
+          final eB = vB > 0 ? (b['likes'] as int? ?? 0) / vB : 0.0;
+          return eB.compareTo(eA);
+        });
     }
 
     return RefreshIndicator(
@@ -508,26 +567,63 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       ),
                       const SizedBox(width: 8),
                       _summaryTile(
-                        '総高評価',
+                        '高評価',
                         _fmtK(totalLikes),
                         Colors.orange,
                       ),
                       const SizedBox(width: 8),
                       _summaryTile(
-                        'スナップ',
-                        '${dates.length}日分',
-                        Colors.purple,
+                        '成長',
+                        totalGrowth > 0 ? '+${_fmtK(totalGrowth)}' : '-',
+                        Colors.green,
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
 
                   Text(
-                    '最新: $latestDate  |  全${filtered.length}件',
+                    '最新: $latestDate  |  全${filtered.length}件  |  ${dates.length}スナップショット',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // ソート切り替え
+                  Row(
+                    children: [
+                      Text(
+                        'ソート: ',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      ..._SortMode.values.map((mode) {
+                        final labels = {
+                          _SortMode.views: '視聴数',
+                          _SortMode.growth: '成長数',
+                          _SortMode.engagement: 'エンゲージメント',
+                        };
+                        final active = _sortMode == mode;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: ChoiceChip(
+                            label: Text(
+                              labels[mode]!,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            selected: active,
+                            onSelected: (_) =>
+                                setState(() => _sortMode = mode),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          ),
+                        );
+                      }),
+                    ],
                   ),
                 ],
               ),
@@ -544,6 +640,15 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 final views = row['views'] as int? ?? 0;
                 final likes = row['likes'] as int? ?? 0;
                 final comments = row['comments'] as int? ?? 0;
+
+                // 成長デルタ
+                final prevViews =
+                    _prevSnapshot[url]?['views'] as int? ?? 0;
+                final delta = prevViews > 0 ? views - prevViews : 0;
+
+                // エンゲージメント率
+                final engRate =
+                    views > 0 ? (likes / views * 100) : 0.0;
 
                 return ListTile(
                   dense: true,
@@ -572,9 +677,42 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  subtitle: Text(
-                    '視聴 ${_fmtK(views)}  ♥${_fmtK(likes)}  💬${_fmtK(comments)}',
-                    style: const TextStyle(fontSize: 11),
+                  subtitle: Wrap(
+                    spacing: 8,
+                    children: [
+                      Text(
+                        '視聴 ${_fmtK(views)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      if (delta > 0)
+                        Text(
+                          '+${_fmtK(delta)}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      Text(
+                        '♥${_fmtK(likes)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      Text(
+                        '💬${_fmtK(comments)}',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      Text(
+                        'EG ${engRate.toStringAsFixed(1)}%',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: engRate >= 5
+                              ? Colors.orange
+                              : isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
+                        ),
+                      ),
+                    ],
                   ),
                   trailing: url.isNotEmpty
                       ? IconButton(
