@@ -3343,3 +3343,21 @@ Claude Code 開発者 Boris Cherny が公開した活用法より:
 - パネルコンテナ bg: `Colors.white` 5箇所 → `surfaceContainerLow`
 
 flutter analyze: 全体0エラー維持
+
+### Session VSCode#15 (2026-04-10): Colors.grey.shade* 全面置換完了
+
+#### ダークテーマ色修正 — 大規模バッチ
+
+- **対象**: `lib/pages/` 全194ページ + `lib/widgets/` 6ファイル
+- **置換内容** (計200+箇所):
+  - `Colors.grey.shade50/100/200` → `colorScheme.surfaceContainerLow/High`
+  - `Colors.grey.shade300` → `colorScheme.surfaceContainerHighest` / `outlineVariant`
+  - `Colors.grey.shade400/500` → `colorScheme.outlineVariant` / `onSurfaceVariant`
+  - `Colors.grey.shade600/700` → `colorScheme.onSurfaceVariant`
+  - `Colors.grey.shade800/900` → `colorScheme.onSurface`
+- **追加修正** (個別ページ):
+  - `admin_analytics_page`: Cardのconst→非const + children にconst追加
+  - `election_victory_page`: 7箇所追加修正
+  - `emergency_meeting_page`: 8箇所追加修正
+- `Colors.grey.shade*` 残存: **0件** (全ページ・全ウィジェット完全解消)
+- `flutter analyze`: 0エラー維持 (67ファイル変更、559挿入、239削除)
