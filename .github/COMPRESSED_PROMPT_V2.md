@@ -46,7 +46,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
 | 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | 実装中 | `viral-video-generator`, `viral-growth-pipeline` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | (Python: `fetch_yt.py`) |
-| 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | 未着手 | `memo-image-upload` (Web版: 新規EF要検討) |
+| 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版: `lib/` UI実装済み) |
 
 ---
 
