@@ -97,7 +97,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 ### CI/CD 品質基準（達成済み事項）
 
 - アクション最新化: `codecov@v5` / `softprops/action-gh-release@v2` / `supabase-cli v2.84.2`
-- セキュリティ: 読み取り専用3本に `persist-credentials: false` / `ci.yml` に Firebase/Google 認証ファイル検出
+- セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
 - EF 管理: Tier1=100本 厳守 (`notify-feature-request` Tier1 / `code-review-issues` Tier2)
