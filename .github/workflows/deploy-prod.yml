@@ -266,7 +266,7 @@ jobs:
           # voice-memo-transcriber, ocr-document-scanner, oauth-sso-provider,
           # inventory-manager, order-tracker, ci-cd-pipeline, compensation-manager,
           # financial-report, spreadsheet-database, gantt-timeline-manager,
-          # whiteboard-canvas, form-builder, meeting-manager, schedule-result-tracker,
+          # whiteboard-canvas, form-builder, meeting-manager,
           # edge-function-ui-checker, issue-auto-resolver, horse-racing-predictor,
           # recruitment-job-board, legal-compliance-manager, elearning-course-manager,
           # crm-sales-pipeline, photo-gallery-manager, music-playlist-manager,
@@ -293,7 +293,7 @@ jobs:
           # affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator,
           # ai-writing-assistant, bookmark-sync, focus-timer, note-sharing-enhanced,
           # task-dependency, gemini-election-analysis, poll-survey,
-          # viral-growth-engine, viral-video-ad-generator, viral-video-generator
+          # viral-video-ad-generator, viral-video-generator
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
