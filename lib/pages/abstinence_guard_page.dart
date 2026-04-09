@@ -632,7 +632,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Colors.blueGrey.withValues(alpha: 0.18),
@@ -658,7 +658,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
       ),
@@ -756,7 +756,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.16)),
       ),
@@ -798,7 +798,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
       ),
@@ -884,7 +884,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: statusColor.withValues(alpha: 0.22),
@@ -1067,7 +1067,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       key: Key('abstinence_guard_card_${state.item.id}'),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.22)),
         boxShadow: [

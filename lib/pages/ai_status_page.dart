@@ -453,7 +453,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: navy.withValues(alpha: 0.08)),
         boxShadow: [

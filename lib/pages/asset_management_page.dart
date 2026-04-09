@@ -4306,7 +4306,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: color.withValues(alpha: 0.18)),
               ),
@@ -4844,7 +4844,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.amber[100]!),
               ),

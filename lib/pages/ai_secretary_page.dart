@@ -471,7 +471,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             child: Column(
               children: [
                 const Text(
