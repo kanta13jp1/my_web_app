@@ -1,4 +1,5 @@
 import 'package:logger/logger.dart';
+import 'error_reporter.dart';
 
 /// アプリケーション全体で使用するロガー
 ///
@@ -38,9 +39,14 @@ class AppLogger {
     _logger.w(message, error: error, stackTrace: stackTrace);
   }
 
-  /// エラーレベルのログ
+  /// エラーレベルのログ（自動でエラー報告EFにも送信）
   static void error(dynamic message, {dynamic error, StackTrace? stackTrace}) {
     _logger.e(message, error: error, stackTrace: stackTrace);
+    ErrorReporter.instance.report(
+      message.toString(),
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// トレースレベルのログ（詳細なデバッグ用）

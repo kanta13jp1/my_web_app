@@ -197,6 +197,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_web_app/services/notification_service.dart';
 import 'package:my_web_app/services/theme_service.dart';
 import 'package:my_web_app/widgets/global_header_clock_bar.dart';
+import 'utils/error_reporter.dart';
 
 SupabaseClient? _testSupabaseClient;
 final GrowthPresenceNavigatorObserver _growthPresenceObserver =
@@ -228,6 +229,9 @@ Future<void> main() async {
     anonKey:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
+
+  // Flutter/Dart エラーを自動でフィードバックEFに送信
+  ErrorReporter.instance.install();
 
   runApp(
     MultiProvider(
