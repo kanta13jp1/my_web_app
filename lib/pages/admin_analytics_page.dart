@@ -73,6 +73,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   bool _waitlistLoading = false;
   bool _sendingNotification = false;
   bool _adminUsersLoading = false;
+
+  List<Map<String, dynamic>> _appFeedbacks = [];
+  bool _appFeedbacksLoading = false;
   bool _automationLoading = false;
   bool _automationPostingX = false;
   Map<String, dynamic>? _automationDigest;
@@ -505,6 +508,45 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     _loadBlogPosts();
     _loadGrowthSummary();
     _loadComparisonCvr();
+    _loadAppFeedbacks();
+  }
+
+  Future<void> _loadAppFeedbacks() async {
+    setState(() => _appFeedbacksLoading = true);
+    try {
+      final data = await _supabase
+          .from('app_feedback')
+          .select('id, category, content, status, user_email, github_issue_url, created_at')
+          .order('created_at', ascending: false)
+          .limit(50);
+      if (mounted) {
+        setState(() {
+          _appFeedbacks = List<Map<String, dynamic>>.from(data as List);
+          _appFeedbacksLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _appFeedbacksLoading = false);
+    }
+  }
+
+  Future<void> _updateFeedbackStatus(int id, String newStatus) async {
+    await _supabase.from('app_feedback').update({'status': newStatus}).eq('id', id);
+    if (newStatus == 'implemented') {
+      try {
+        await _supabase.functions.invoke(
+          'submit-feedback',
+          queryParameters: {'action': 'notify'},
+          body: {'feedback_id': id},
+        );
+      } catch (_) {}
+    }
+    if (mounted) {
+      setState(() {
+        final idx = _appFeedbacks.indexWhere((f) => f['id'] == id);
+        if (idx != -1) _appFeedbacks[idx]['status'] = newStatus;
+      });
+    }
   }
 
   Future<void> _loadWeeklyDigest() async {
@@ -5013,6 +5055,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildUserFeedbackCard() {
+    final newCount = _appFeedbacks.where((f) => f['status'] == 'new').length;
+    final cs = Theme.of(context).colorScheme;
+
     return Card(
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -5021,42 +5066,208 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            // ヘッダー行
+            Row(
               children: [
-                Icon(Icons.feedback_outlined, color: Color(0xFF6366F1), size: 20),
-                SizedBox(width: 8),
+                const Icon(Icons.feedback_outlined, color: Color(0xFF6366F1), size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'ユーザーフィードバック',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (newCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '未対応 $newCount',
+                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.refresh, size: 18),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _loadAppFeedbacks,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 件数サマリー
+            if (!_appFeedbacksLoading) ...[
+              Row(
+                children: [
+                  _feedbackCountChip('未対応', newCount, Colors.red),
+                  const SizedBox(width: 8),
+                  _feedbackCountChip(
+                    '確認済',
+                    _appFeedbacks.where((f) => f['status'] == 'reviewed').length,
+                    Colors.orange,
+                  ),
+                  const SizedBox(width: 8),
+                  _feedbackCountChip(
+                    '対応完',
+                    _appFeedbacks.where((f) => f['status'] == 'implemented').length,
+                    Colors.green,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // 最新フィードバックインライン表示
+            if (_appFeedbacksLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_appFeedbacks.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'フィードバックはまだありません',
+                  style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                ),
+              )
+            else
+              ...(_appFeedbacks.take(5).map((fb) => _buildFeedbackInlineRow(fb))),
+
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.open_in_new, size: 16),
+                label: Text('全${_appFeedbacks.length}件を管理する'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FeedbackListPage()),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _feedbackCountChip(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label $count',
+        style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackInlineRow(Map<String, dynamic> fb) {
+    final status = fb['status'] as String? ?? 'new';
+    final category = fb['category'] as String? ?? 'other';
+    final content = fb['content'] as String? ?? '';
+    final issueUrl = fb['github_issue_url'] as String?;
+    final id = fb['id'] as int;
+
+    final statusColor = status == 'new'
+        ? Colors.red
+        : status == 'reviewed'
+            ? Colors.orange
+            : Colors.green;
+    final categoryIcon = category == 'feature'
+        ? Icons.lightbulb_outline
+        : category == 'bug'
+            ? Icons.bug_report_outlined
+            : Icons.chat_bubble_outline;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: statusColor.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(categoryIcon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'ユーザーフィードバック管理',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    content,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    status == 'new' ? '未対応' : status == 'reviewed' ? '確認済' : '対応完',
+                    style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'ユーザーから寄せられた機能要望・バグ報告・ご意見を管理します。',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.open_in_new, size: 16),
-                label: const Text('フィードバック一覧を開く'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const FeedbackListPage()),
-                  );
-                },
+            if (issueUrl != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Issue: $issueUrl',
+                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.primary),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
+            ],
+            if (status == 'new') ...[
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => _updateFeedbackStatus(id, 'reviewed'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('確認済にする', style: TextStyle(fontSize: 11)),
+                  ),
+                  const SizedBox(width: 4),
+                  TextButton(
+                    onPressed: () => _updateFeedbackStatus(id, 'implemented'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: Colors.green,
+                    ),
+                    child: const Text('対応完了', style: TextStyle(fontSize: 11)),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
