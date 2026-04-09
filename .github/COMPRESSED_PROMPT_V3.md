@@ -182,6 +182,14 @@ web/sitemap.xml          # URL マップ
 | **Web版** | `submit-feedback` EF に `type=auto_error` 判定を追加 → GitHub Issue 作成スキップ / `auto_reported: true` フラグ保存 |
 | **Windows版** | `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション |
 
+### バグ #B2: GROWTH_STRATEGY_ROADMAP.md markdownlint MD060
+
+**症状**: `docs/GROWTH_STRATEGY_ROADMAP.md` 2652行目付近でテーブルセパレータ `|---|` に空白がなく MD060 警告。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **Windows版** | `docs/GROWTH_STRATEGY_ROADMAP.md` 全テーブルのセパレータ行を `|---|` → `| --- |` に一括置換: `sed -i 's/|---|/| --- |/g' docs/GROWTH_STRATEGY_ROADMAP.md` |
+
 ### バグ #B1: スマホでコピペ・APIキー入力ができない
 
 **症状**: モバイルブラウザ（iOS Safari / Android Chrome）でテキストフィールドへのコピペが動作しない。APIキー等の長い文字列入力が困難。
