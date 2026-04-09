@@ -1777,7 +1777,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1786,7 +1788,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             '現在のモデル',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 4),
@@ -1819,7 +1821,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             '利用可能なモデル一覧',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
@@ -1830,12 +1832,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: ((model['name']?.toString() ?? '') == selectedModel)
                         ? Colors.indigo.withValues(alpha: 0.25)
-                        : Colors.grey.withValues(alpha: 0.12),
+                        : Theme.of(context)
+                            .colorScheme
+                            .outlineVariant,
                   ),
                 ),
                 child: Column(
@@ -1857,7 +1861,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             '利用可能メソッド: 未取得',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade700,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           );
                         }
@@ -2118,9 +2122,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       Container(
                         padding: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: Theme.of(context).colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
                         ),
                         child: Markdown(
                           data: report,
@@ -2444,7 +2450,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             value: snapshot.progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
             color: accentColor,
           ),
           const SizedBox(height: 8),
@@ -3681,7 +3687,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             maxLines: compact ? 2 : 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.grey.shade700,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               height: 1.4,
                             ),
                           ),
@@ -4273,7 +4279,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         Text(
                           '登録 ${value.length}件 / 完了 $completedCount件',
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -4282,7 +4288,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Text(
                             'カードをタップすると詳細とサブタスクを確認できます。',
                             style: TextStyle(
-                              color: Colors.grey.shade700,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -4640,7 +4646,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         Text(
                           '登録 ${value.length}件 / 完了 $completedCount件',
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -4649,7 +4655,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Text(
                             'カードをタップすると詳細とサブタスクを確認できます。',
                             style: TextStyle(
-                              color: Colors.grey.shade700,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
