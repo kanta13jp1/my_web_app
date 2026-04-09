@@ -17,7 +17,7 @@
 | **Scheduled Analysis Batch** | `cron-batch.yml` | 毎日 00:00 UTC / 手動 | Python分析バッチ (Gemini連携) + schedule_task_runs記録 |
 | **Dependency Audit** | `dependency-audit.yml` | 毎週月曜 08:00 JST / 手動 | Flutter pub outdated + Deno import バージョン監査 + schedule_task_runs記録 + Job Summary |
 | **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
-| **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-resolved` EF でリリース通知メール |
+| **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
 
 ## 品質保証指標 (全12ワークフロー)
 
