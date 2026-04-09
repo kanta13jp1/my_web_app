@@ -130,7 +130,7 @@ jobs:
         run: |
           # Supabase project has a max ~100 function limit.
           # Deploy the 100 most critical functions (Tier 1).
-          # Remaining 140 functions exist in code but are not deployed.
+          # Remaining 141 functions exist in code but are not deployed.
           # To deploy overflow functions, swap them with lower-priority Tier 1 entries.
           #
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
@@ -206,9 +206,8 @@ jobs:
           supabase functions deploy get-competitor-monitoring --no-verify-jwt
           supabase functions deploy edge-function-coverage --no-verify-jwt
 
-          # --- Tier 1E: Admin & Support (9) ---
+          # --- Tier 1E: Admin & Support (8) ---
           supabase functions deploy get-admin-users --no-verify-jwt
-          supabase functions deploy notify-feature-request --no-verify-jwt
           supabase functions deploy submit-feedback --no-verify-jwt
           supabase functions deploy get-support-tickets --no-verify-jwt
           supabase functions deploy reply-support-request --no-verify-jwt
@@ -256,6 +255,7 @@ jobs:
           # Total: 100 functions deployed (Supabase project limit)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # notify-feature-request (superseded by submit-feedback),
           # ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
