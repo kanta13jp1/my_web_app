@@ -12,7 +12,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | インスタンス | 担当範囲 | 変更禁止 |
 |---|---|---|
 | **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 238本) | 他3範囲 |
+| **Web版** | `supabase/functions/` (Edge Functions 240本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (10本完備済み) | 他3範囲 |
 
