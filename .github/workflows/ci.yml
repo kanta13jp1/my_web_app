@@ -22,6 +22,8 @@ jobs:
     name: Lint, Format, and Test
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -141,6 +143,8 @@ jobs:
     name: Security Check
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -170,6 +174,8 @@ jobs:
     name: Build Matrix Test
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
     strategy:
       matrix:
         flutter-version: ['3.38.x'] # 指定のバージョンに戻しました
