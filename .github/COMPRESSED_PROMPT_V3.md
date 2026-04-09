@@ -48,7 +48,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
-| 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | 実装中 | `submit-feedback` (VSCode版: `main.dart` グローバルハンドラ) |
+| 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
 
 ---
 
@@ -177,13 +177,10 @@ web/sitemap.xml          # URL マップ
 
 ## 🔜 実装待ち（他インスタンスへの指示）
 
-### 機能 #12: コンソールエラー自動フィードバック投稿
+### ~~機能 #12~~: ✅ 解決済み
 
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `main.dart` に `FlutterError.onError` + `PlatformDispatcher.instance.onError` を追加 → エラー時に `submit-feedback` EF へ POST (`type=auto_error`, `title=Auto Error Report`, `body=スタックトレース`, `email=system@auto`) |
-| **Web版** | `submit-feedback` EF に `type=auto_error` 判定を追加 → GitHub Issue 作成スキップ / `auto_reported: true` フラグ保存 |
-| **Windows版** | `feature_requests` テーブルに `is_auto_reported boolean default false` カラム追加マイグレーション |
+VSCode版: `lib/utils/error_reporter.dart` 実装済み + `main.dart` で `ErrorReporter.instance.install()` 呼び出し済み。
+Web版・Windows版の作業 (`is_auto_reported` カラム等) は引き続き他インスタンスで対応。
 
 ### バグ #B1: スマホでコピペ・APIキー入力ができない
 
@@ -193,13 +190,9 @@ web/sitemap.xml          # URL マップ
 | --- | --- |
 | **VSCode版** | 全 `TextField` / `TextFormField` に `enableInteractiveSelection: true` / `toolbarOptions` を明示設定。`web/index.html` の viewport に `user-scalable=yes` を確認。モバイルで長押しコンテキストメニューが出るか確認。APIキー入力フィールドは `keyboardType: TextInputType.visiblePassword` + `obscureText: false` で対応。 |
 
-### バグ #B3: edge_function_status_page.dart の競合社数表記ゆれ
+### ~~バグ #B3~~: ✅ 解決済み
 
-**症状**: `lib/pages/edge_function_status_page.dart` の `description` フィールドに「競合14社」と記載されているが、プロジェクト全体の統一表記は「21社」。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `lib/pages/edge_function_status_page.dart` 内の `'競合14社の機能比較データ'` → `'競合21社の機能比較データ'`、`'競合14社 Web 可用性チェック'` → `'競合21社 Web 可用性チェック'` に修正 |
+`edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
 
 ### 機能 #13: EF統合（action パラメーター分岐で100本以下に削減）
 

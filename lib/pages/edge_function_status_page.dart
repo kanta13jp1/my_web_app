@@ -46,7 +46,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
     },
     {
       'name': 'get-competitor-features',
-      'description': '競合14社の機能比較データ',
+      'description': '競合21社の機能比較データ',
       'hasUi': true,
       'uiPath': '/home',
       'uiLabel': 'ホーム: CompetitorFeatureComparisonCard',
@@ -271,7 +271,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
     },
     {
       'name': 'check-competitor-updates',
-      'description': '競合14社 Web 可用性チェック',
+      'description': '競合21社 Web 可用性チェック',
       'hasUi': false,
       'uiPath': '/admin',
       'uiLabel': '管理者ダッシュボード (未実装)',
