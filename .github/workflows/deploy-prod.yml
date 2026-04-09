@@ -214,7 +214,7 @@ jobs:
           supabase functions deploy get-competitor-features --no-verify-jwt
           supabase functions deploy competitor-feature-sync --no-verify-jwt
           supabase functions deploy import-from-competitors --no-verify-jwt
-          supabase functions deploy code-review-issues --no-verify-jwt
+          supabase functions deploy notify-feature-request --no-verify-jwt
 
           # --- Tier 1F: Core App Features (20) ---
           supabase functions deploy subscription-management --no-verify-jwt
@@ -255,8 +255,7 @@ jobs:
           # Total: 100 functions deployed (Supabase project limit)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
-          # notify-feature-request (superseded by submit-feedback),
-          # ab-testing-manager, search-analytics, social-proof-generator,
+          # code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
           # currency-converter, markdown-renderer, social-feed, document-collaboration,
