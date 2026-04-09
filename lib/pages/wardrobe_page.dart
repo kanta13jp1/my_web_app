@@ -405,9 +405,17 @@ class _WardrobePageState extends State<WardrobePage>
                       ),
                       Row(
                         children: [
-                          _chip(item.category, Colors.brown[100]!),
+                          _chip(
+                            item.category,
+                            Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF4E342E).withAlpha(120)
+                                : Colors.brown[100]!,
+                          ),
                           const SizedBox(width: 4),
-                          _chip(item.color, Colors.grey[100]!),
+                          _chip(
+                            item.color,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
+                          ),
                         ],
                       ),
                     ],
