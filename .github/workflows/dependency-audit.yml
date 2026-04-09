@@ -75,7 +75,7 @@ jobs:
                 echo "⚠️ バージョン未固定: $line" >> /tmp/audit_report.txt
               fi
             fi
-          done < <(grep -rh "^import\|from '" supabase/functions/ --include="*.ts" 2>/dev/null | grep -v "_shared" | head -100)
+          done < <(grep -rh "^import\|from '" supabase/functions/ --include="*.ts" 2>/dev/null | grep -v "_shared" | head -2000)
 
           echo "pinned=$PINNED_COUNT" >> $GITHUB_OUTPUT
           echo "unpinned=$UNPINNED_COUNT" >> $GITHUB_OUTPUT
