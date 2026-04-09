@@ -6858,13 +6858,16 @@ class _PersonalityTypeBanner extends StatelessWidget {
           return const SizedBox.shrink();
         }
         final test = snapshot.data;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         if (test != null && test.personalityType != null) {
           final typeCode = test.personalityType!;
           final details =
               PersonalityTestService().getPersonalityTypeDetails(typeCode);
           return Card(
             elevation: 0,
-            color: const Color(0xFFF3E8FF),
+            color: isDark
+                ? const Color(0xFF2E1065).withAlpha(120)
+                : const Color(0xFFF3E8FF),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: ListTile(
@@ -6872,7 +6875,9 @@ class _PersonalityTypeBanner extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDD6FE),
+                  color: isDark
+                      ? const Color(0xFF4C1D95).withAlpha(140)
+                      : const Color(0xFFDDD6FE),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -6901,7 +6906,9 @@ class _PersonalityTypeBanner extends StatelessWidget {
         }
         return Card(
           elevation: 0,
-          color: const Color(0xFFF3E8FF),
+          color: isDark
+              ? const Color(0xFF2E1065).withAlpha(120)
+              : const Color(0xFFF3E8FF),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           child: ListTile(
@@ -6909,7 +6916,9 @@ class _PersonalityTypeBanner extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFDDD6FE),
+                color: isDark
+                    ? const Color(0xFF4C1D95).withAlpha(140)
+                    : const Color(0xFFDDD6FE),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(

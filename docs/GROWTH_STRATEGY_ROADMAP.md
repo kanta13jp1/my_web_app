@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-10 daily-development (予算・財務プランナー全面刷新・AI節約アドバイス・将来シミュレーション・テーマ第3弾)
+最終更新: 2026-04-10 Windows版 (markdownlint全修正・機能#12マイグレーション・COMPRESSED_PROMPT_V3更新)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3511,3 +3511,29 @@ flutter analyze: 全体0エラー維持
 | hex ライトカラー Scaffold/Container | 15+件 完了 |
 
 - flutter analyze lib/: **0 errors, 0 warnings** (全セッション通じて維持)
+
+---
+
+## セッション記録: 2026-04-10 Windows版 (markdownlint全修正・機能#12マイグレーション)
+
+### 実施内容
+
+#### markdownlint 全修正 — commit eb24f799
+
+`.markdownlintignore` を新規作成し自動生成ファイル (cs-notes, daily-reports, blog-drafts 等) を除外。
+手動管理ドキュメント 5ファイルを 0エラーに修正:
+
+| ファイル | 修正ルール |
+| --- | --- |
+| `docs/DESIGN.md` | MD022/025/028/032/040/060 |
+| `docs/MULTI_INSTANCE_COORDINATION.md` | MD060 (テーブルセパレータ 4箇所) |
+| `docs/CICD_SETUP_GUIDE.md` | MD022/032/034/040/060 |
+| `docs/CONTRIBUTING.md` | MD031/032/034/040 (ネストフェンス→4バッククォート対応含む) |
+| `docs/README.md` | MD022/032 |
+
+`.github/COMPRESSED_PROMPT_V3.md` に開発ルール8・9 (毎セッション矛盾チェック + markdownlint) を追記。
+
+#### 機能#12 Windowsマイグレーション — `20260410000700_add_is_auto_reported_to_feature_requests.sql`
+
+`feature_requests` テーブルに `is_auto_reported boolean DEFAULT false` カラムを追加。
+VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 全インスタンス完了。

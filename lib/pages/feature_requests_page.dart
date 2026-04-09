@@ -161,9 +161,15 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2D2000).withAlpha(200)
+                        : const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF92400E).withAlpha(180)
+                          : const Color(0xFFFDE68A),
+                    ),
                   ),
                   child: _submitSuccess
                       ? const Row(

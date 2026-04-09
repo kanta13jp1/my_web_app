@@ -177,14 +177,15 @@ web/sitemap.xml          # URL マップ
 
 ## 🔜 実装待ち（他インスタンスへの指示）
 
-### ~~機能 #12~~: ✅ 解決済み
+### ~~機能 #12~~: ✅ 全インスタンス解決済み
 
-VSCode版: `lib/utils/error_reporter.dart` 実装済み + `main.dart` で `ErrorReporter.instance.install()` 呼び出し済み。
-Web版・Windows版の作業 (`is_auto_reported` カラム等) は引き続き他インスタンスで対応。
+- VSCode版: `lib/utils/error_reporter.dart` + `main.dart` `ErrorReporter.instance.install()` 実装済み
+- Windows版: `supabase/migrations/20260410000700_add_is_auto_reported_to_feature_requests.sql` 作成済み
 
 ### ~~バグ #B1~~: ✅ 解決済み
 
 全 `obscureText:` フィールド (4箇所) に `enableInteractiveSelection: true` + visibility toggle + paste ボタン適用済み:
+
 - `emergency_meeting_page.dart` (APIキー)
 - `morning_briefing_page.dart` (APIキー ×2)
 - `landing_page.dart` (パスワード)
