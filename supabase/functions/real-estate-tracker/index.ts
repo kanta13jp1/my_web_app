@@ -89,10 +89,13 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: properties } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "realestate_property");
-        const { data: txns } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "realestate_txn");
+        // 物件・取引を並列取得
+        const [{ data: properties }, { data: txns }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "realestate_property"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "realestate_txn"),
+        ]);
         let totalValue = 0, totalIncome = 0, totalExpense = 0;
         for (const p of properties ?? []) totalValue += ((p.metadata as Record<string, unknown>).purchase_price as number) ?? 0;
         for (const t of txns ?? []) {

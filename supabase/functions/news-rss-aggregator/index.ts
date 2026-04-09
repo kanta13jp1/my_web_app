@@ -74,10 +74,13 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: feeds } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "news_feed");
-        const { data: articles } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "news_article");
+        // フィード・記事を並列取得
+        const [{ data: feeds }, { data: articles }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "news_feed"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "news_article"),
+        ]);
         const readCount = (articles ?? []).filter((a) => (a.metadata as Record<string, unknown>).is_read).length;
         const bookmarked = (articles ?? []).filter((a) => (a.metadata as Record<string, unknown>).is_bookmarked).length;
         const catCounts: Record<string, number> = {};

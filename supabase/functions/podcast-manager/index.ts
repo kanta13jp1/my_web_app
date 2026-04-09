@@ -70,12 +70,15 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: shows } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "podcast_show");
-        const { data: episodes } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "podcast_episode");
-        const { data: plays } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "podcast_play");
+        // 番組・エピソード・再生履歴を並列取得
+        const [{ data: shows }, { data: episodes }, { data: plays }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "podcast_show"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "podcast_episode"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "podcast_play"),
+        ]);
         let totalDuration = 0;
         for (const p of plays ?? []) totalDuration += ((p.metadata as Record<string, unknown>).duration_sec as number) ?? 0;
         return new Response(JSON.stringify({

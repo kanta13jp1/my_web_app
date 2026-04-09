@@ -84,12 +84,15 @@ serve(async (req) => {
       }
 
       if (view === "stats") {
-        const { data: decks } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "vocab_deck");
-        const { data: cards } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "vocab_card");
-        const { data: reviews } = await adminClient.from("app_analytics").select("metadata")
-          .eq("user_id", user.id).eq("source", "vocab_review");
+        // デッキ・カード・復習を並列取得
+        const [{ data: decks }, { data: cards }, { data: reviews }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "vocab_deck"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "vocab_card"),
+          adminClient.from("app_analytics").select("metadata")
+            .eq("user_id", user.id).eq("source", "vocab_review"),
+        ]);
         let correct = 0;
         for (const r of reviews ?? []) {
           if ((r.metadata as Record<string, unknown>).correct) correct++;
