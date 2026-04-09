@@ -3471,7 +3471,7 @@ flutter analyze: 全体0エラー維持
 #### ダークテーマ修正 累計まとめ (VSCode#15〜#18)
 
 | 種類 | 件数 |
-|---|---|
+| --- | --- |
 | Colors.grey.shade* | 200+ |
 | Colors.grey[] | 160件 |
 | Colors.black87/54/26/38/12 | 82+件 |
