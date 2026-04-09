@@ -327,7 +327,7 @@ jobs:
         id: push_tag
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           TAG=${{ steps.version.outputs.tag }}
           if git ls-remote --tags origin "$TAG" | grep -q .; then
             echo "Tag $TAG already exists remotely, skipping tag push."
