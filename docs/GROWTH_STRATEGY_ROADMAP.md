@@ -3361,3 +3361,28 @@ flutter analyze: 全体0エラー維持
   - `emergency_meeting_page`: 8箇所追加修正
 - `Colors.grey.shade*` 残存: **0件** (全ページ・全ウィジェット完全解消)
 - `flutter analyze`: 0エラー維持 (67ファイル変更、559挿入、239削除)
+
+### Session VSCode#16 (2026-04-10): メモ機能 画像ドラッグ&ドロップ追加
+
+#### 実装内容
+
+- **`lib/utils/note_image_drop.dart`** (新規) — 条件付きエクスポート (web/stub)
+- **`lib/utils/note_image_drop_stub.dart`** (新規) — 非Web環境用no-op実装
+- **`lib/utils/note_image_drop_web.dart`** (新規) — Web版: document の dragover/dragleave/drop イベントをリッスン
+  - `FileList` API経由で画像ファイルを検出 (DataTransferItemList.item() 不使用)
+  - ドラッグオーバー時: Indigo色のオーバーレイ + 「画像をここにドロップ」テキスト表示
+  - `FileReader.readAsDataURL()` → base64デコード → `Uint8List` → 既存の `_handlePastedImage` に流す
+- **`lib/utils/note_image_clipboard.dart/stub/web`** (新規コミット) — Ctrl+V貼り付けユーティリティ (実装済みだった未追跡ファイルをコミット)
+- **`lib/pages/note_editor_page.dart`** 変更:
+  - `NoteImageDropZone` でエディタ領域をラップ
+  - ヒントテキストにドラッグ&ドロップ説明を追加
+  - `dart:typed_data` 不要importを削除、不要castを修正
+- **`lib/widgets/attachment_list_widget.dart`** — `Colors.grey[850/800/600]` → `colorScheme.*` 修正
+- flutter analyze: 0エラー維持
+
+#### 機能の動作フロー
+
+1. ユーザーがファイルマネージャーから画像をドラッグ → ドロップゾーンオーバーレイ表示
+2. ドロップ → `FileReader` でバイト読み取り → `AttachmentService.uploadFile()` → Supabase Storage
+3. Markdownリンク (`![画像名](url)`) がカーソル位置に挿入 → 自動保存
+4. 添付ファイルリストに新しい画像が表示

@@ -1,6 +1,5 @@
 ﻿import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,6 +16,7 @@ import '../services/note_prompt_library_service.dart';
 import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
 import '../utils/note_image_clipboard.dart';
+import '../utils/note_image_drop.dart';
 import '../widgets/attachment_list_widget.dart';
 import '../widgets/markdown_preview.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
@@ -573,8 +573,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     final fallbackOffset = value.text.length;
     final rawStart = selection.isValid ? selection.start : fallbackOffset;
     final rawEnd = selection.isValid ? selection.end : fallbackOffset;
-    final start = rawStart.clamp(0, value.text.length) as int;
-    final end = rawEnd.clamp(start, value.text.length) as int;
+    final start = rawStart.clamp(0, value.text.length);
+    final end = rawEnd.clamp(start, value.text.length);
     final nextText = value.text.replaceRange(start, end, text);
     final offset = start + text.length;
     _contentController.value = TextEditingValue(
@@ -1984,7 +1984,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ctrl+V / Cmd+V で画像を貼り付けると、自動でアップロードして本文へ挿入します。',
+                'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -2002,37 +2002,41 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               ],
               const SizedBox(height: 12),
               Expanded(
-                child: _showMarkdownPreview
-                    ? ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: _contentController,
-                        builder: (context, value, _) {
-                          if (value.text.trim().isEmpty) {
-                            return Center(
-                              child: Text(
-                                '本文や画像を追加すると、ここにプレビューが表示されます。',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                child: NoteImageDropZone(
+                  onImageDropped: (bytes, fileName, mimeType) =>
+                      _handlePastedImage(Uint8List.fromList(bytes), fileName, mimeType),
+                  child: _showMarkdownPreview
+                      ? ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _contentController,
+                          builder: (context, value, _) {
+                            if (value.text.trim().isEmpty) {
+                              return Center(
+                                child: Text(
+                                  '本文や画像を追加すると、ここにプレビューが表示されます。',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
+                              );
+                            }
+                            return SingleChildScrollView(
+                              child: MarkdownPreview(data: value.text),
                             );
-                          }
-                          return SingleChildScrollView(
-                            child: MarkdownPreview(data: value.text),
-                          );
-                        },
-                      )
-                    : TextField(
-                        key: const Key('note_editor_content_field'),
-                        controller: _contentController,
-                        focusNode: _contentFocusNode,
-                        decoration: const InputDecoration(
-                          hintText: 'Write your note here...',
-                          border: InputBorder.none,
+                          },
+                        )
+                      : TextField(
+                          key: const Key('note_editor_content_field'),
+                          controller: _contentController,
+                          focusNode: _contentFocusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Write your note here...',
+                            border: InputBorder.none,
+                          ),
+                          maxLines: null,
+                          expands: true,
                         ),
-                        maxLines: null,
-                        expands: true,
-                      ),
+                ),
               ),
             ],
           ),

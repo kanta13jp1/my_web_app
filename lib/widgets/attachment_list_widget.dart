@@ -23,9 +23,7 @@ class AttachmentListWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[850]
-            : Colors.grey[100],
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -64,9 +62,7 @@ class AttachmentListWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[800]
-              : Colors.white,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: attachment.isImage ? Colors.blue : Colors.orange,
@@ -103,7 +99,7 @@ class AttachmentListWidget extends StatelessWidget {
                   attachment.formattedSize,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -116,7 +112,7 @@ class AttachmentListWidget extends StatelessWidget {
                 child: Icon(
                   Icons.close,
                   size: 18,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
