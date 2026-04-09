@@ -69,14 +69,14 @@ serve(async (req) => {
       }
 
       if (view === "funnel") {
-        // Simple funnel: signup → first_note → streak_3 → share
-        const { data: users } = await adminClient.from("user_profiles").select("user_id", { count: "exact" });
+        // Simple funnel: signup → first_note → streak_3 → share (3クエリ並列)
+        const [{ data: users }, { data: noteUsers }, { data: streakUsers }] = await Promise.all([
+          adminClient.from("user_profiles").select("user_id", { count: "exact" }),
+          adminClient.from("notes").select("user_id").limit(10000),
+          adminClient.from("user_profiles").select("user_id, metadata").not("metadata", "is", null),
+        ]);
         const totalSignups = (users ?? []).length;
-
-        const { data: noteUsers } = await adminClient.from("notes").select("user_id").limit(10000);
         const uniqueNoteUsers = new Set((noteUsers ?? []).map((n) => n.user_id)).size;
-
-        const { data: streakUsers } = await adminClient.from("user_profiles").select("user_id, metadata").not("metadata", "is", null);
         const streakCount = (streakUsers ?? []).filter((u) => {
           const meta = u.metadata as Record<string, unknown>;
           return ((meta?.current_streak as number) ?? 0) >= 3;

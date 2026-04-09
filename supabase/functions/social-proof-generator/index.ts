@@ -64,29 +64,24 @@ serve(async (req: Request) => {
     if (action === "generate") {
       const proofType = url.searchParams.get("type") as TemplateKey | null;
 
-      // Gather real data
-      const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-      const totalUsers = users?.length ?? 0;
-
-      const { data: achievements } = await supabase
-        .from("development_achievements")
-        .select("id")
-        .limit(1000);
+      // Gather real data — 4クエリ並列
+      const [
+        { data: authData },
+        { data: achievements },
+        { data: recentActivity },
+        { data: featureRequests },
+      ] = await Promise.all([
+        supabase.auth.admin.listUsers({ perPage: 1000 }),
+        supabase.from("development_achievements").select("id").limit(1000),
+        supabase.from("app_analytics").select("id")
+          .gte("created_at", new Date(Date.now() - 86400000).toISOString()).limit(1000),
+        supabase.from("app_analytics").select("id")
+          .eq("metadata->>event_type", "feature_request")
+          .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString()).limit(100),
+      ]);
+      const totalUsers = (authData as { users?: unknown[] } | null)?.users?.length ?? 0;
       const achievementCount = achievements?.length ?? 0;
-
-      const { data: recentActivity } = await supabase
-        .from("app_analytics")
-        .select("id")
-        .gte("created_at", new Date(Date.now() - 86400000).toISOString())
-        .limit(1000);
       const activityCount = recentActivity?.length ?? 0;
-
-      const { data: featureRequests } = await supabase
-        .from("app_analytics")
-        .select("id")
-        .eq("metadata->>event_type", "feature_request")
-        .gte("created_at", new Date(Date.now() - 7 * 86400000).toISOString())
-        .limit(100);
       const weeklyRequests = featureRequests?.length ?? 0;
 
       // Calculate total competitor monthly cost
@@ -150,8 +145,8 @@ serve(async (req: Request) => {
     if (action === "share_card") {
       const platform = url.searchParams.get("platform") ?? "x";
 
-      const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-      const totalUsers = users?.length ?? 0;
+      const { data: cardAuthData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const totalUsers = (cardAuthData as { users?: unknown[] } | null)?.users?.length ?? 0;
 
       const platformConfigs: Record<string, { maxLength: number; hashtags: string[]; template: string }> = {
         x: {

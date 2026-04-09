@@ -46,15 +46,12 @@ serve(async (req) => {
     const action = req.method === "GET" ? (url.searchParams.get("action") ?? "graph") : "post";
 
     if (action === "graph") {
-      const { data: deps } = await userClient
-        .from("task_dependencies")
-        .select("*")
-        .eq("user_id", user.id);
-      const { data: tasks } = await userClient
-        .from("tasks")
-        .select("id, title, status, due_date")
-        .eq("user_id", user.id)
-        .in("status", ["todo", "in_progress"]);
+      // 依存関係とタスク一覧を並列取得
+      const [{ data: deps }, { data: tasks }] = await Promise.all([
+        userClient.from("task_dependencies").select("*").eq("user_id", user.id),
+        userClient.from("tasks").select("id, title, status, due_date")
+          .eq("user_id", user.id).in("status", ["todo", "in_progress"]),
+      ]);
 
       const blockers = (deps ?? []).filter((d: { dep_type?: string }) => d.dep_type === "blocks");
       return new Response(JSON.stringify({

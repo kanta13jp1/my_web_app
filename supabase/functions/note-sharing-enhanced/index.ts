@@ -46,8 +46,11 @@ serve(async (req) => {
     const action = req.method === "GET" ? (url.searchParams.get("action") ?? "list") : "post";
 
     if (action === "list") {
-      const { data: links } = await userClient.from("note_share_links").select("*").eq("owner_id", user.id).order("created_at", { ascending: false });
-      const { data: stats } = await userClient.from("note_share_links").select("total_views").eq("owner_id", user.id);
+      // リンク一覧と閲覧統計を並列取得
+      const [{ data: links }, { data: stats }] = await Promise.all([
+        userClient.from("note_share_links").select("*").eq("owner_id", user.id).order("created_at", { ascending: false }),
+        userClient.from("note_share_links").select("total_views").eq("owner_id", user.id),
+      ]);
       const totalViews = (stats ?? []).reduce((sum: number, r: { total_views?: number }) => sum + (r.total_views ?? 0), 0);
       return new Response(JSON.stringify({
         success: true,

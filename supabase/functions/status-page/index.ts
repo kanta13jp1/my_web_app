@@ -39,12 +39,28 @@ serve(async (req) => {
       const view = url.searchParams.get("view");
 
       if (view === "current") {
+        // N+1防止: コンポーネント数分のループクエリを1クエリに集約
+        const { data: allStatuses } = await adminClient
+          .from("app_analytics")
+          .select("metadata, created_at")
+          .eq("source", "component_status")
+          .in("metadata->>component_id", COMPONENTS.map((c) => c.id))
+          .order("created_at", { ascending: false })
+          .limit(COMPONENTS.length * 5); // 各コンポーネントの直近5件で十分
+
+        // 最新ステータスをコンポーネントごとに抽出
+        const statusMap = new Map<string, string>();
+        for (const row of allStatuses ?? []) {
+          const meta = row.metadata as Record<string, unknown>;
+          const compId = meta?.component_id as string;
+          const compStatus = meta?.status as string;
+          if (compId && compStatus && !statusMap.has(compId)) {
+            statusMap.set(compId, compStatus); // 降順なので最初が最新
+          }
+        }
         const statuses: Record<string, string> = {};
         for (const comp of COMPONENTS) {
-          const { data: status } = await adminClient.from("app_analytics").select("metadata")
-            .eq("source", "component_status").eq("metadata->>component_id", comp.id)
-            .order("created_at", { ascending: false }).limit(1).maybeSingle();
-          statuses[comp.id] = status ? ((status.metadata as Record<string, unknown>).status as string) : "operational";
+          statuses[comp.id] = statusMap.get(comp.id) ?? "operational";
         }
         const overallStatus = Object.values(statuses).includes("major_outage") ? "major_outage"
           : Object.values(statuses).includes("partial_outage") ? "partial_outage"

@@ -207,15 +207,11 @@ async function runCampaign(
 async function fetchCurrentStats(
   supabase: ReturnType<typeof createClient>,
 ): Promise<{ users: number; functions: number; pages: number }> {
-  // User count from auth.users
-  const { count: userCount } = await supabase
-    .from("user_profiles")
-    .select("*", { count: "exact", head: true });
-
-  // Function count from edge_function_ui_status or static
-  const { count: funcCount } = await supabase
-    .from("edge_function_ui_status")
-    .select("*", { count: "exact", head: true });
+  // user_profiles と edge_function_ui_status を並列取得
+  const [{ count: userCount }, { count: funcCount }] = await Promise.all([
+    supabase.from("user_profiles").select("*", { count: "exact", head: true }),
+    supabase.from("edge_function_ui_status").select("*", { count: "exact", head: true }),
+  ]);
 
   return {
     users: userCount ?? 4,

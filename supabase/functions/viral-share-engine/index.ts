@@ -71,9 +71,11 @@ serve(async (req) => {
       }
 
       if (view === "viral_metrics") {
-        // Calculate overall viral coefficient (k-factor)
-        const { data: allShares } = await adminClient.from("app_analytics").select("metadata").eq("source", "viral_share");
-        const { count: totalUsers } = await adminClient.from("app_analytics").select("*", { count: "exact", head: true }).eq("source", "user_signup");
+        // Calculate overall viral coefficient (k-factor) — 並列取得
+        const [{ data: allShares }, { count: totalUsers }] = await Promise.all([
+          adminClient.from("app_analytics").select("metadata").eq("source", "viral_share"),
+          adminClient.from("app_analytics").select("*", { count: "exact", head: true }).eq("source", "user_signup"),
+        ]);
         const totalInviteSent = (allShares ?? []).length;
         let totalConversions = 0;
         for (const s of allShares ?? []) totalConversions += ((s.metadata as Record<string, unknown>).signups_from_share as number) ?? 0;
