@@ -302,9 +302,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
               child: SingleChildScrollView(
                 child: SelectableText(
@@ -407,7 +407,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       '類似度スコア',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -425,7 +425,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       child: LinearProgressIndicator(
                         value: ((score + 1) / 2).clamp(0.0, 1.0),
                         minHeight: 12,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           _similarityColor(score),
                         ),
@@ -474,13 +474,13 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     Icon(
                       Icons.compare_arrows,
                       size: 48,
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       '2つのテキストを入力して\n類似度を計算しましょう',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade500),
+                      style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),

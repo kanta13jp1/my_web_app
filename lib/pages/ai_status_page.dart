@@ -319,7 +319,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
       child: InkWell(
         onTap: () => _testSingleModel(modelName),
@@ -370,7 +370,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           'MAGIノード: $nodeCode (${provider.toUpperCase()})',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -671,7 +671,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 child: LinearProgressIndicator(
                   value: totalScore / 100,
                   minHeight: 8,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     totalScore >= 80
                         ? Colors.green
@@ -719,7 +719,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           ),
           child: Text(
             detail,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
 
@@ -800,11 +800,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.timer_outlined, size: 12, color: Colors.grey.shade500),
+              Icon(Icons.timer_outlined, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
               const SizedBox(width: 4),
               Text(
                 '${(levelLatency / 1000).toStringAsFixed(2)}s',
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -813,7 +813,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
             '応答: $response',
             style: TextStyle(
               fontSize: 11,
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,
             ),
             maxLines: 2,

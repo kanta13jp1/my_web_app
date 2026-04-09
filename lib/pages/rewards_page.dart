@@ -173,7 +173,7 @@ class _RewardsPageState extends State<RewardsPage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isUnlocked ? Colors.amber.shade100 : Colors.grey.shade200,
+            color: isUnlocked ? Colors.amber.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
           child: Icon(

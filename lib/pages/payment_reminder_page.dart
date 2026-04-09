@@ -517,7 +517,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         side: BorderSide(
           color: overdue
               ? Colors.red.shade300
-              : (dueSoon ? Colors.orange.shade300 : Colors.grey.shade200),
+              : (dueSoon ? Colors.orange.shade300 : Theme.of(context).colorScheme.surfaceContainerHigh),
           width: overdue || dueSoon ? 1.5 : 1,
         ),
       ),
@@ -614,7 +614,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             Row(
               children: [
                 if (method != null)
-                  _buildMiniTag(method, Colors.grey.shade100),
+                  _buildMiniTag(method, Theme.of(context).colorScheme.surfaceContainerHigh),
                 const SizedBox(width: 6),
                 _buildMiniTag(
                   _categoryLabel(cat),

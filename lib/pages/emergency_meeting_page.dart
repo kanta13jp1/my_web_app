@@ -1452,7 +1452,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1461,7 +1461,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           children: [
                             Text(
                               '現在のモデル: ',
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                             ),
                             Expanded(
                               child: Text(
@@ -1477,7 +1477,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         const Divider(height: 16),
                         Text(
                           '利用可能なモデル一覧 (サポートメソッド):',
-                          style: TextStyle(color: Colors.grey.shade600),
+                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -1489,7 +1489,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           }).join('\n'),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade800,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
@@ -2737,11 +2737,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             selectedColor: chipColor.withValues(alpha: 0.18),
                             side: BorderSide(
                               color:
-                                  isSelected ? chipColor : Colors.grey.shade400,
+                                  isSelected ? chipColor : Theme.of(context).colorScheme.outlineVariant,
                             ),
                             labelStyle: TextStyle(
                               color:
-                                  isSelected ? chipColor : Colors.grey.shade800,
+                                  isSelected ? chipColor : Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                             onSelected: (selected) {
@@ -2757,7 +2757,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: Text(
                           _resolvedFocusInstruction(_selectedFocus),
                           style: TextStyle(
-                            color: Colors.grey.shade700,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.45,
                           ),
                         ),
@@ -2769,7 +2769,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
+                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(

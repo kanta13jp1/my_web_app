@@ -320,7 +320,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.code_off, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.code_off, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
             const SizedBox(height: 12),
             const Text('スニペットがありません'),
             const SizedBox(height: 8),
@@ -367,7 +367,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
-                  color: Colors.grey.shade900,
+                  color: Theme.of(context).colorScheme.onSurface,
                   child: Text(
                     preview,
                     style: const TextStyle(
@@ -445,7 +445,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_off, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.folder_off, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
             const SizedBox(height: 12),
             const Text('コレクションがありません'),
             const SizedBox(height: 8),
@@ -563,7 +563,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                     Expanded(
                       child: LinearProgressIndicator(
                         value: fraction,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         minHeight: 10,
                         borderRadius: BorderRadius.circular(5),
                       ),

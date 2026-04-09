@@ -406,7 +406,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
               const SizedBox(height: 4),
               LinearProgressIndicator(
                 value: ratio.toDouble(),
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),

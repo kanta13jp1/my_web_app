@@ -1116,7 +1116,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   Widget _buildAgentCard(AgentProfile agent) {
     final taskCount = _snapshot.openTaskCountsByAgent[agent.id] ?? 0;
     final memoryCount = _snapshot.memoryCountsByAgent[agent.id] ?? 0;
-    final cardColor = agent.isActive ? Colors.deepPurple : Colors.grey.shade600;
+    final cardColor = agent.isActive ? Colors.deepPurple : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Card(
       elevation: 1,

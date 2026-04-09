@@ -175,7 +175,7 @@ class _ElectionXPostComposerDialogState
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +241,7 @@ class _ElectionXPostComposerDialogState
               margin: const EdgeInsets.only(left: 20),
               width: 2,
               height: 20,
-              color: Colors.grey.shade300,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
           ],
         ),
@@ -283,7 +283,7 @@ class _ElectionXPostComposerDialogState
                   '$len / $_maxTweetLen',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isOver ? Colors.red : Colors.grey.shade600,
+                    color: isOver ? Colors.red : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight:
                         isOver ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -305,7 +305,7 @@ class _ElectionXPostComposerDialogState
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: isOver ? Colors.red : Colors.grey.shade300,
+                  color: isOver ? Colors.red : Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -329,7 +329,7 @@ class _ElectionXPostComposerDialogState
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade200)),
+        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh)),
       ),
       child: Row(
         children: [
@@ -432,14 +432,14 @@ class _WeekendChip extends StatelessWidget {
               ? _xBlue
               : hasElections
                   ? _xBlue.withValues(alpha: 0.07)
-                  : Colors.grey.shade100,
+                  : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
                 ? _xBlue
                 : hasElections
                     ? _xBlue.withValues(alpha: 0.4)
-                    : Colors.grey.shade300,
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
         ),
         child: Column(
@@ -460,7 +460,7 @@ class _WeekendChip extends StatelessWidget {
                 fontSize: 9,
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.85)
-                    : Colors.grey.shade600,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -472,7 +472,7 @@ class _WeekendChip extends StatelessWidget {
                     ? Colors.white.withValues(alpha: 0.25)
                     : hasElections
                         ? _xBlue.withValues(alpha: 0.15)
-                        : Colors.grey.shade200,
+                        : Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -484,7 +484,7 @@ class _WeekendChip extends StatelessWidget {
                       ? Colors.white
                       : hasElections
                           ? _xBlue
-                          : Colors.grey.shade500,
+                          : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -515,7 +515,7 @@ class _SmallIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.all(4),
-          child: Icon(icon, size: 15, color: Colors.grey.shade600),
+          child: Icon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );

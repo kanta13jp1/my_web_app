@@ -223,7 +223,7 @@ ${_compatibilityMatch.description}''';
                   Text(
                     myPersonalityType.nameJa,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -272,7 +272,7 @@ ${_compatibilityMatch.description}''';
                   Text(
                     partnerPersonalityType.nameJa,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                     textAlign: TextAlign.center,
                   ),
@@ -309,7 +309,7 @@ ${_compatibilityMatch.description}''';
             Text(
               '相性スコア',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 16),
@@ -331,7 +331,7 @@ ${_compatibilityMatch.description}''';
                     Text(
                       '/ 100',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],
@@ -403,7 +403,7 @@ ${_compatibilityMatch.description}''';
               child: LinearProgressIndicator(
                 value: _compatibilityMatch.compatibilityScore / 100,
                 minHeight: 12,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Colors.pink.shade400,
                 ),
@@ -443,7 +443,7 @@ ${_compatibilityMatch.description}''';
               _compatibilityMatch.description,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     height: 1.6,
-                    color: Colors.grey.shade800,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
             ),
           ],

@@ -457,7 +457,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               decoration: BoxDecoration(
                 color: isDark ? Colors.black26 : Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
               child: Text(
                 caption.length > 280 ? '${caption.substring(0, 280)}...' : caption,

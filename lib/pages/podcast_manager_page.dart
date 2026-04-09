@@ -148,7 +148,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
                 CircleAvatar(
                   backgroundColor: isPlaying
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.shade200,
+                      : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Icon(
                     isPlaying ? Icons.pause : Icons.play_arrow,
                     color: isPlaying ? Colors.white : Colors.grey,

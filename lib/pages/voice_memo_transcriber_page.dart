@@ -236,7 +236,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                     : null,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
-                fillColor: Colors.grey.shade100,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
               ),
               onSubmitted: _searchMemos,
               onChanged: (v) => setState(() {}),
@@ -365,7 +365,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

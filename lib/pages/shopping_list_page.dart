@@ -600,7 +600,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           side: BorderSide(
             color: needs
                 ? _priorityColor(priority).withAlpha(80)
-                : Colors.grey.shade200,
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
           ),
         ),
         child: InkWell(
@@ -615,7 +615,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   height: 36,
                   decoration: BoxDecoration(
                     color: isPurchased && !needs
-                        ? Colors.grey.shade100
+                        ? Theme.of(context).colorScheme.surfaceContainerHigh
                         : _categoryColor(cat).withAlpha(25),
                     borderRadius: BorderRadius.circular(8),
                   ),

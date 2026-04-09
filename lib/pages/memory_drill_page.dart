@@ -438,7 +438,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                     Text(
                       pack.description,
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.45,
                       ),
                     ),
@@ -490,7 +490,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                     Text(
                       _selectedPack.description,
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.5,
                       ),
                     ),
@@ -582,7 +582,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                                 : FontWeight.w500,
                             color: _showAnswers
                                 ? Colors.black87
-                                : Colors.grey.shade600,
+                                : Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         if (!_showAnswers && _showHints) ...[
@@ -591,7 +591,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                             _buildHint(value),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],

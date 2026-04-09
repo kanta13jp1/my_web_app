@@ -118,7 +118,7 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                               ),
                               backgroundColor: status == 'active'
                                   ? Colors.green.shade100
-                                  : Colors.grey.shade200,
+                                  : Theme.of(context).colorScheme.surfaceContainerHigh,
                             ),
                           ),
                         );

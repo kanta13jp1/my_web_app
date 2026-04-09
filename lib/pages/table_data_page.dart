@@ -619,7 +619,7 @@ class _TableDataPageState extends State<TableDataPage> {
             const SizedBox(height: 8),
             Text(
               'Notionのような表形式でデータを管理できます',
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -645,7 +645,7 @@ class _TableDataPageState extends State<TableDataPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
-                color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+                color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.surfaceContainerHigh,
               ),
             ),
             child: ListTile(
@@ -658,7 +658,7 @@ class _TableDataPageState extends State<TableDataPage> {
                 '${t.columns.length} カラム',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               trailing: PopupMenuButton<String>(
@@ -719,16 +719,16 @@ class _TableDataPageState extends State<TableDataPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              Icon(Icons.table_rows_outlined, size: 16, color: Colors.grey.shade500),
+              Icon(Icons.table_rows_outlined, size: 16, color: Theme.of(context).colorScheme.outlineVariant),
               const SizedBox(width: 4),
               Text(
                 '${_rows.length} 件',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
               Text(
                 '${cols.length} カラム',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -747,8 +747,8 @@ class _TableDataPageState extends State<TableDataPage> {
                 child: DataTable(
                   headingRowColor: WidgetStateProperty.all(
                     isDark
-                        ? Colors.grey.shade800
-                        : Colors.grey.shade100,
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(context).colorScheme.surfaceContainerHigh,
                   ),
                   columnSpacing: 12,
                   columns: [
@@ -760,7 +760,7 @@ class _TableDataPageState extends State<TableDataPage> {
                         child: Icon(
                           Icons.drag_indicator,
                           size: 16,
-                          color: Colors.grey.shade400,
+                          color: Theme.of(context).colorScheme.outlineVariant,
                         ),
                       ),
                     ),
@@ -785,7 +785,7 @@ class _TableDataPageState extends State<TableDataPage> {
                               child: Icon(
                                 Icons.close,
                                 size: 14,
-                                color: Colors.grey.shade400,
+                                color: Theme.of(context).colorScheme.outlineVariant,
                               ),
                             ),
                           ],
@@ -808,7 +808,7 @@ class _TableDataPageState extends State<TableDataPage> {
                               '${i + 1}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey.shade500,
+                                color: Theme.of(context).colorScheme.outlineVariant,
                               ),
                             ),
                           ),
@@ -845,17 +845,17 @@ class _TableDataPageState extends State<TableDataPage> {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Colors.grey.shade300),
+                top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.add, size: 18, color: Colors.grey.shade500),
+                Icon(Icons.add, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(width: 8),
                 Text(
                   '行を追加',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -879,7 +879,7 @@ class _TableDataPageState extends State<TableDataPage> {
         return Text(
           value.isEmpty ? '—' : value,
           style: TextStyle(
-            color: value.isEmpty ? Colors.grey.shade400 : null,
+            color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
             fontSize: 13,
           ),
         );
@@ -887,7 +887,7 @@ class _TableDataPageState extends State<TableDataPage> {
         return Text(
           value.isEmpty ? '—' : value,
           style: TextStyle(
-            color: value.isEmpty ? Colors.grey.shade400 : null,
+            color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
             fontSize: 13,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -898,7 +898,7 @@ class _TableDataPageState extends State<TableDataPage> {
           child: Text(
             value.isEmpty ? '—' : value,
             style: TextStyle(
-              color: value.isEmpty ? Colors.grey.shade400 : null,
+              color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
               fontSize: 13,
             ),
             overflow: TextOverflow.ellipsis,

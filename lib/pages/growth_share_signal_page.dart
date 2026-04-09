@@ -152,7 +152,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                           Text(
                             '集計日: ${d['date']}',
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),

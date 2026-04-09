@@ -202,7 +202,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                         ? e.value.$3.withValues(alpha: 0.15)
                         : (isDark
                             ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.grey.shade100),
+                            : Theme.of(context).colorScheme.surfaceContainerHigh),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: selected

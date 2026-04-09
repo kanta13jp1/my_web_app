@@ -171,7 +171,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                               '哲学者と学ぶメモ習慣',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey.shade700,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],

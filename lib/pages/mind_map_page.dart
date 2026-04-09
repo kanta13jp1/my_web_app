@@ -576,7 +576,7 @@ class _MindMapPageState extends State<MindMapPage> {
               child: Text(
                 '使用モデル: $_selectedModel',
                 style: TextStyle(
-                  color: Colors.grey.shade700,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),

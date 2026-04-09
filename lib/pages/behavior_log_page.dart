@@ -312,14 +312,14 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                           Icon(
                             Icons.psychology,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '行動や発言を記録して\n振り返りを始めましょう',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -370,7 +370,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: regret >= 3 ? Colors.red.shade200 : Colors.grey.shade200,
+          color: regret >= 3 ? Colors.red.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: Padding(
@@ -420,7 +420,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 const SizedBox(width: 6),
                 Text(
                   dateStr,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
               ],
             ),
@@ -430,7 +430,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
               const SizedBox(height: 4),
               Text(
                 '📍 $ctx',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
             if (analysis != null) ...[

@@ -339,7 +339,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -416,7 +416,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                       '未投稿',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade500,
+                        color: Theme.of(context).colorScheme.outlineVariant,
                       ),
                     ),
               trailing: GestureDetector(
@@ -429,12 +429,12 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   decoration: BoxDecoration(
                     color: posted
                         ? platform.color.withValues(alpha: 0.1)
-                        : Colors.grey.shade100,
+                        : Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: posted
                           ? platform.color.withValues(alpha: 0.4)
-                          : Colors.grey.shade300,
+                          : Theme.of(context).colorScheme.surfaceContainerHighest,
                     ),
                   ),
                   child: Row(
@@ -603,13 +603,13 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.grey.shade900
-                  : Colors.grey.shade50,
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: isDark
-                    ? Colors.grey.shade800
-                    : Colors.grey.shade200,
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.surfaceContainerHigh,
               ),
             ),
             child: Row(

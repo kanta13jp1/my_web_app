@@ -814,7 +814,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                         value: isCompleted
                             ? 1.0
                             : (_readingProgress[module.id] ?? 0.0),
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         color: isCompleted ? Colors.green : Colors.blue,
                       ),
                       const SizedBox(height: 16),
@@ -824,8 +824,8 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                           p: const TextStyle(height: 1.6),
                           code: TextStyle(
                             backgroundColor: isDark
-                                ? Colors.grey.shade800
-                                : Colors.grey.shade200,
+                                ? Theme.of(context).colorScheme.onSurface
+                                : Theme.of(context).colorScheme.surfaceContainerHigh,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -995,7 +995,7 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                 child: CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 12,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                   color: isGraduated ? Colors.orange : Colors.indigo,
                 ),
               ),

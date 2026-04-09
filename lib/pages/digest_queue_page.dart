@@ -512,7 +512,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   ? 'この領域には未消化の項目がありません。新しい項目を始められます。'
                   : '今は消化中の項目がないので、次の1件だけ始められます。',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             )
@@ -532,7 +532,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   Text(
                     active.note,
                     style: TextStyle(
-                      color: Colors.grey.shade700,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       height: 1.5,
                     ),
                   ),
@@ -543,7 +543,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                       ? '最新の消化メモ: ${active.latestProgress!.note}'
                       : 'まだ消化メモはありません。理解したことや実行したことを必ず言語化します。',
                   style: TextStyle(
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -551,7 +551,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                 Text(
                   '消化メモ ${active.progressEntries.length}件',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -562,7 +562,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
             Text(
               '待機中 ${waiting.length}件',
               style: TextStyle(
-                color: Colors.grey.shade800,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -572,7 +572,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
                       '・${item.title}',
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -657,7 +657,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   const Spacer(),
                   Text(
                     _formatDate(item.createdAt),
-                    style: TextStyle(color: Colors.grey.shade600),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -674,7 +674,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                 Text(
                   item.note,
                   style: TextStyle(
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),

@@ -306,9 +306,9 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
                 ),
                 child: SingleChildScrollView(
                   child: SelectableText(

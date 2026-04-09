@@ -251,7 +251,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                   url.isNotEmpty
                       ? Image.network(url, fit: BoxFit.cover)
                       : Container(
-                          color: Colors.grey.shade200,
+                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
                           child: const Icon(
                             Icons.image,
                             color: Colors.grey,

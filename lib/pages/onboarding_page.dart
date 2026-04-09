@@ -82,7 +82,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50, // 高級感のあるオフホワイト
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow, // 高級感のあるオフホワイト
       body: SafeArea(
         child: Column(
           children: [
@@ -130,7 +130,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey.shade700,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.8,
             ),
           ),
@@ -222,7 +222,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Column(
@@ -280,7 +280,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           Text(
             'まずこの3つから始めましょう',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 28),
           ...steps.asMap().entries.map((entry) {
@@ -338,7 +338,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           desc,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade700,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),
@@ -387,7 +387,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   shape: BoxShape.circle,
                   color: _currentPage == index
                       ? Colors.indigo
-                      : Colors.grey.shade300,
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               );
             }),

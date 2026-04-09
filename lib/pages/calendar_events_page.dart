@@ -248,12 +248,12 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         Icon(
                           Icons.event_available,
                           size: 48,
-                          color: Colors.grey.shade300,
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'この日のイベントはありません',
-                          style: TextStyle(color: Colors.grey.shade500),
+                          style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
                         ),
                       ],
                     ),

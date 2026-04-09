@@ -109,7 +109,7 @@ class _GrowthAutomationControllerPageState
                       label: Text(status, style: const TextStyle(fontSize: 12)),
                       backgroundColor: status == 'active'
                           ? Colors.green.shade100
-                          : Colors.grey.shade200,
+                          : Theme.of(context).colorScheme.surfaceContainerHigh,
                     ),
                   ),
                 );

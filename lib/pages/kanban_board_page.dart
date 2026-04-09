@@ -312,7 +312,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey.shade200,
+          color: isDark ? Colors.grey[700]! : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
         boxShadow: [
           BoxShadow(

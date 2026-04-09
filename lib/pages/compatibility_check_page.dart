@@ -120,7 +120,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
             Text(
               'あなたのタイプ',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.grey.shade700,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 8),
@@ -161,7 +161,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
   Widget _buildTabSelector() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -216,14 +216,14 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
+              color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey.shade600,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -292,7 +292,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         rankIcon = Icons.emoji_events;
         break;
       case 2:
-        rankColor = Colors.grey.shade600;
+        rankColor = Theme.of(context).colorScheme.onSurfaceVariant;
         rankIcon = Icons.emoji_events;
         break;
       case 3:
@@ -309,7 +309,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: rank <= 3 ? rankColor : Colors.grey.shade300,
+          color: rank <= 3 ? rankColor : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: rank <= 3 ? 2 : 1,
         ),
       ),
@@ -375,7 +375,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                           personalityType.nameJa,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.grey.shade600,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                         ),
                       ],
@@ -384,7 +384,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],
@@ -488,7 +488,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               ? Colors.pink.shade400
               : isMyType
                   ? Colors.blue.shade300
-                  : Colors.grey.shade300,
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: isSelected || isMyType ? 2 : 1,
         ),
       ),
@@ -521,7 +521,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                           ? Colors.pink.shade900
                           : isMyType
                               ? Colors.blue.shade900
-                              : Colors.grey.shade800,
+                              : Theme.of(context).colorScheme.onSurface,
                       letterSpacing: 1.2,
                     ),
               ),
@@ -529,7 +529,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
               Text(
                 personalityType.nameJa,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 10,
                     ),
                 textAlign: TextAlign.center,

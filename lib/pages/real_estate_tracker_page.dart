@@ -375,7 +375,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.home_outlined, size: 64, color: Colors.grey.shade300),
+            Icon(Icons.home_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
             const SizedBox(height: 12),
             const Text('物件が登録されていません'),
             const SizedBox(height: 8),
@@ -481,7 +481,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.receipt_long, size: 48, color: Colors.grey.shade300),
+                      Icon(Icons.receipt_long, size: 48, color: Theme.of(context).colorScheme.surfaceContainerHighest),
                       const SizedBox(height: 8),
                       const Text('収支記録がありません'),
                     ],

@@ -834,7 +834,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(8),
-              color: Colors.grey.shade100,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Text(
                 _lastBatchLog!['message'] ?? '',
                 style: const TextStyle(fontSize: 12),
@@ -1091,7 +1091,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor:
-                      score >= 80 ? Colors.red.shade100 : Colors.grey.shade200,
+                      score >= 80 ? Colors.red.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Text('$score'),
                 ),
                 title: Text(item['content'] ?? ''),

@@ -142,7 +142,7 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
-              headingRowColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) => Colors.grey.shade100),
+              headingRowColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) => Theme.of(context).colorScheme.surfaceContainerHigh),
               columns: const [
                 DataColumn(label: Text('都道府県', style: TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text('現職維持目標', style: TextStyle(fontWeight: FontWeight.bold))),

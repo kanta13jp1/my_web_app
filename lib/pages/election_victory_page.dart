@@ -2389,7 +2389,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           Text(
             '※ 官報告示前の推定日程です。確定次第更新します。',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
           const SizedBox(height: 12),
@@ -2564,7 +2564,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             _buildStatusChip(
               '過去1年 ${_formatInt(pastSchedules.length)} 件',
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -2692,7 +2692,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '過去1年の結果 (${_formatInt(pastSchedules.length)} 件)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
               ),
@@ -2700,7 +2700,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _showPastSchedules
                     ? Icons.expand_less
                     : Icons.expand_more,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -3045,7 +3045,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
-                                color: item.isPast ? Colors.grey.shade600 : null,
+                                color: item.isPast ? Theme.of(context).colorScheme.onSurfaceVariant : null,
                               ),
                             ),
                           ),
@@ -3306,7 +3306,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         Text(
           '国民民主党候補の当落情報（Gemini AI取得）',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 10),
@@ -3367,7 +3367,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 4),
           Text(
             '${result.location}  ${result.date}',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           if (result.dppCandidates.isNotEmpty) ...[
             const SizedBox(height: 8),

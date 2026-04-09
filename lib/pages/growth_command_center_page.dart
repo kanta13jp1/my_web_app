@@ -81,7 +81,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                   brief['owner']?.toString() ?? '',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.grey.shade600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],

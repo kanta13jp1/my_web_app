@@ -367,10 +367,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: earned ? Colors.amber.shade100 : Colors.grey.shade100,
+          color: earned ? Colors.amber.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: earned ? Colors.amber : Colors.grey.shade300,
+            color: earned ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
         ),
         child: Row(

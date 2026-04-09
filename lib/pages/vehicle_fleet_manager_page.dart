@@ -149,7 +149,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor:
-                  status == 'active' ? Colors.green.shade100 : Colors.grey.shade200,
+                  status == 'active' ? Colors.green.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.directions_car,
                 color: status == 'active' ? Colors.green : Colors.grey,

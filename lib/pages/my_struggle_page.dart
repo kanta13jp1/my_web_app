@@ -193,7 +193,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.grey.shade900, Colors.grey.shade700],
+                colors: [Theme.of(context).colorScheme.onSurface, Theme.of(context).colorScheme.onSurfaceVariant],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -217,7 +217,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                 Text(
                   '日々の暮らしの中にある、静かな闘いの記録',
                   style: TextStyle(
-                    color: Colors.grey.shade300,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     fontSize: 12,
                   ),
                 ),
@@ -293,7 +293,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: Colors.grey.shade700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
@@ -315,14 +315,14 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                     Icon(
                       Icons.history_edu,
                       size: 48,
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       'まだ闘争の記録がありません。\n「今日の闘争を記す」で最初の一篇を。',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
                       ),
                     ),
@@ -350,7 +350,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -363,7 +363,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
         ),
         subtitle: Text(
           dateStr,
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
         ),
         leading: const Text('📜', style: TextStyle(fontSize: 20)),
         children: [

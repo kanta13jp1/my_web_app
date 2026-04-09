@@ -450,7 +450,7 @@ class _TeamCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -523,7 +523,7 @@ class _TeamCard extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 description,
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
               ),
             ],
             if (isOwner && inviteCode.isNotEmpty) ...[
@@ -531,9 +531,9 @@ class _TeamCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
                 ),
                 child: Row(
                   children: [
@@ -547,7 +547,7 @@ class _TeamCard extends StatelessWidget {
                       '招待コード: ',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     Text(

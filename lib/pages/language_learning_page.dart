@@ -475,7 +475,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           Container(
             height: 200,
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest)),
             ),
             child: Column(
               children: [
@@ -607,7 +607,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Text(
                               '例: ${card['example']}',
-                              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                               textAlign: TextAlign.center,
                             ),
                           ),

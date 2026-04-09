@@ -1,18 +1,26 @@
 ﻿import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/attachment.dart';
 import '../models/note_snapshot.dart';
 import '../services/ai_model_preference_service.dart';
 import '../services/ai_service.dart';
+import '../services/attachment_cache_service.dart';
+import '../services/attachment_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/note_prompt_library_service.dart';
+import '../services/public_memo_service.dart';
 import '../services/undo_redo_service.dart';
+import '../utils/note_image_clipboard.dart';
+import '../widgets/attachment_list_widget.dart';
+import '../widgets/markdown_preview.dart';
 import '../widgets/note_editor/ai_assistant_menu.dart';
 import '../widgets/note_editor/editor_dialogs.dart';
-import '../services/public_memo_service.dart';
 
 class NoteEditorPage extends StatefulWidget {
   final String? noteId;
@@ -126,21 +134,27 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   late TextEditingController _slashCommandController;
+  late FocusNode _contentFocusNode;
   late AutoSaveService _autoSaveService;
   late UndoRedoService _undoRedoService;
   late final SupabaseClient _supabase;
   late final AIService _aiService;
+  NoteImagePasteRegistration? _imagePasteRegistration;
 
   String? _currentNoteId;
   DateTime? _reminderDate;
   bool _isFavorite = false;
   bool _isLoading = false;
+  bool _isLoadingAttachments = false;
+  bool _isUploadingAttachment = false;
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
+  bool _showMarkdownPreview = false;
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
   List<NotePromptTemplate> _savedPromptTemplates = const <NotePromptTemplate>[];
+  List<Attachment> _attachments = const <Attachment>[];
   static const String _draftKeyPrefix = 'note_editor_draft_';
   static const String _aiStylePreferenceKey = 'note_editor_ai_style';
   static const List<String> _slashCommandSuggestions = <String>[
@@ -189,8 +203,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _contentController =
         TextEditingController(text: widget.initialContent ?? '');
     _slashCommandController = TextEditingController();
+    _contentFocusNode = FocusNode();
     _autoSaveService = AutoSaveService();
     _undoRedoService = UndoRedoService();
+    _imagePasteRegistration = registerNoteImagePasteListener(
+      isEnabled: () =>
+          mounted &&
+          !_showMarkdownPreview &&
+          !_isUploadingAttachment &&
+          _contentFocusNode.hasFocus,
+      onImagePasted: _handlePastedImage,
+    );
 
     _bootstrapEditor();
   }
@@ -203,6 +226,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await _loadNote(_currentNoteId!);
       unawaited(_loadCommentCount());
     }
+    await _loadAttachments();
     await _restoreDraftFromLocal();
     _initializeEditorHistory();
     _attachTextListeners();
@@ -344,6 +368,221 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<int?> _ensureNoteIdForAttachmentFlow() async {
+    final existingNoteId = int.tryParse(_currentNoteId ?? '');
+    if (existingNoteId != null) {
+      return existingNoteId;
+    }
+
+    if (_hasPersistableState) {
+      await _saveNoteWithoutClosing();
+      final savedNoteId = int.tryParse(_currentNoteId ?? '');
+      if (savedNoteId != null) {
+        return savedNoteId;
+      }
+    }
+
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('Login is required.');
+    }
+
+    final dynamic inserted = await _supabase
+        .from('notes')
+        .insert({
+          'user_id': user.id,
+          'title': _titleController.text.trim(),
+          'content': _contentController.text.trim(),
+          'reminder_date': _reminderDate?.toUtc().toIso8601String(),
+          'is_favorite': _isFavorite,
+          'is_archived': false,
+          'is_pinned': false,
+        })
+        .select('id')
+        .maybeSingle();
+
+    final createdNoteId = inserted is Map && inserted['id'] != null
+        ? int.tryParse(inserted['id'].toString())
+        : null;
+    if (createdNoteId == null) {
+      return null;
+    }
+
+    _currentNoteId = createdNoteId.toString();
+    _autoSaveService.markAsSaved();
+    await _clearDraftFromLocal();
+    if (mounted) {
+      setState(() {});
+    }
+    return createdNoteId;
+  }
+
+  Future<void> _loadAttachments() async {
+    final noteId = int.tryParse(_currentNoteId ?? '');
+    if (noteId == null) {
+      if (mounted) {
+        setState(() {
+          _attachments = const <Attachment>[];
+          _isLoadingAttachments = false;
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoadingAttachments = true;
+      });
+    }
+    try {
+      final attachments = await AttachmentService.getAttachments(noteId);
+      if (!mounted) return;
+      setState(() {
+        _attachments = attachments;
+      });
+    } catch (e) {
+      _showMessage('添付ファイルの読み込みに失敗しました: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingAttachments = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _insertAttachmentFromPicker() async {
+    try {
+      final file = await AttachmentService.pickFile();
+      if (file == null) return;
+      await _uploadAttachmentFile(file, sourceLabel: 'ファイル');
+    } catch (e) {
+      _showMessage('画像の追加に失敗しました: $e');
+    }
+  }
+
+  Future<void> _handlePastedImage(
+    Uint8List bytes,
+    String fileName,
+    String mimeType,
+  ) async {
+    final extension = _extensionForMimeType(mimeType);
+    final effectiveFileName = fileName.trim().isEmpty
+        ? 'pasted-image.$extension'
+        : fileName;
+    final file = PlatformFile(
+      name: effectiveFileName,
+      size: bytes.length,
+      bytes: bytes,
+    );
+    await _uploadAttachmentFile(file, sourceLabel: 'クリップボード');
+  }
+
+  Future<void> _uploadAttachmentFile(
+    PlatformFile file, {
+    required String sourceLabel,
+  }) async {
+    if (_isUploadingAttachment) return;
+    final noteId = await _ensureNoteIdForAttachmentFlow();
+    if (noteId == null) {
+      _showMessage('画像を保存できるメモを作成できませんでした');
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isUploadingAttachment = true;
+      });
+    }
+
+    try {
+      final attachment = await AttachmentService.uploadFile(
+        noteId: noteId,
+        file: file,
+      );
+      if (attachment == null) {
+        throw StateError('添付情報を保存できませんでした');
+      }
+
+      AttachmentCacheService.clearNoteCache(noteId);
+      _insertContentAtCursor(_buildAttachmentMarkdown(attachment));
+      await _saveNoteWithoutClosing();
+      await _loadAttachments();
+      _showMessage('$sourceLabelから ${attachment.fileName} を追加しました');
+    } catch (e) {
+      _showMessage('$sourceLabelからの画像追加に失敗しました: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAttachment = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteAttachment(Attachment attachment) async {
+    try {
+      await AttachmentService.deleteAttachment(attachment);
+      AttachmentCacheService.clearNoteCache(attachment.noteId);
+      if (!mounted) return;
+      setState(() {
+        _attachments = _attachments
+            .where((item) => item.id != attachment.id)
+            .toList(growable: false);
+      });
+      _showMessage('添付ファイルを削除しました');
+    } catch (e) {
+      _showMessage('添付ファイルの削除に失敗しました: $e');
+    }
+  }
+
+  String _buildAttachmentMarkdown(Attachment attachment) {
+    final url = AttachmentService.getPublicUrl(attachment.filePath);
+    final label = _escapeMarkdownLabel(
+      attachment.fileName.replaceFirst(RegExp(r'\.[^.]+$'), ''),
+    );
+    if (attachment.isImage) {
+      return '\n![$label]($url)\n';
+    }
+    return '\n[${_escapeMarkdownLabel(attachment.fileName)}]($url)\n';
+  }
+
+  String _escapeMarkdownLabel(String value) {
+    return value.replaceAll('[', r'\[').replaceAll(']', r'\]');
+  }
+
+  String _extensionForMimeType(String mimeType) {
+    switch (mimeType) {
+      case 'image/jpeg':
+      case 'image/jpg':
+        return 'jpg';
+      case 'image/gif':
+        return 'gif';
+      case 'image/webp':
+        return 'webp';
+      default:
+        return 'png';
+    }
+  }
+
+  void _insertContentAtCursor(String text) {
+    final value = _contentController.value;
+    final selection = value.selection;
+    final fallbackOffset = value.text.length;
+    final rawStart = selection.isValid ? selection.start : fallbackOffset;
+    final rawEnd = selection.isValid ? selection.end : fallbackOffset;
+    final start = rawStart.clamp(0, value.text.length) as int;
+    final end = rawEnd.clamp(start, value.text.length) as int;
+    final nextText = value.text.replaceRange(start, end, text);
+    final offset = start + text.length;
+    _contentController.value = TextEditingValue(
+      text: nextText,
+      selection: TextSelection.collapsed(offset: offset),
+      composing: TextRange.empty,
+    );
+    _contentFocusNode.requestFocus();
   }
 
   void _setTitleText(String value) {
@@ -983,6 +1222,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
       if (inserted is Map && inserted['id'] != null) {
         _currentNoteId = inserted['id'].toString();
+        if (mounted) {
+          setState(() {});
+        }
       }
     }
 
@@ -1683,6 +1925,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Widget _buildEditorBody() {
+    final theme = Theme.of(context);
+
     return Stack(
       children: [
         Padding(
@@ -1704,17 +1948,91 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ),
               ),
               const Divider(),
-              Expanded(
-                child: TextField(
-                  key: const Key('note_editor_content_field'),
-                  controller: _contentController,
-                  decoration: const InputDecoration(
-                    hintText: 'Write your note here...',
-                    border: InputBorder.none,
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  FilledButton.icon(
+                    onPressed:
+                        _isUploadingAttachment ? null : _insertAttachmentFromPicker,
+                    icon: _isUploadingAttachment
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.image_outlined),
+                    label: Text(
+                      _isUploadingAttachment ? '画像を追加中...' : '画像を追加',
+                    ),
                   ),
-                  maxLines: null,
-                  expands: true,
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _showMarkdownPreview = !_showMarkdownPreview;
+                      });
+                    },
+                    icon: Icon(
+                      _showMarkdownPreview
+                          ? Icons.edit_note_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                    label: Text(_showMarkdownPreview ? '編集に戻る' : 'プレビュー'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Ctrl+V / Cmd+V で画像を貼り付けると、自動でアップロードして本文へ挿入します。',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
+              ),
+              if (_isLoadingAttachments) ...[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(minHeight: 2),
+              ],
+              if (_attachments.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                AttachmentListWidget(
+                  attachments: _attachments,
+                  onDelete: _deleteAttachment,
+                ),
+              ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: _showMarkdownPreview
+                    ? ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _contentController,
+                        builder: (context, value, _) {
+                          if (value.text.trim().isEmpty) {
+                            return Center(
+                              child: Text(
+                                '本文や画像を追加すると、ここにプレビューが表示されます。',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return SingleChildScrollView(
+                            child: MarkdownPreview(data: value.text),
+                          );
+                        },
+                      )
+                    : TextField(
+                        key: const Key('note_editor_content_field'),
+                        controller: _contentController,
+                        focusNode: _contentFocusNode,
+                        decoration: const InputDecoration(
+                          hintText: 'Write your note here...',
+                          border: InputBorder.none,
+                        ),
+                        maxLines: null,
+                        expands: true,
+                      ),
               ),
             ],
           ),
@@ -1738,6 +2056,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   @override
   void dispose() {
+    _imagePasteRegistration?.dispose();
+    _contentFocusNode.dispose();
     _detachTextListeners();
     _autoSaveService.dispose();
     _undoRedoService.dispose();

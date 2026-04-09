@@ -322,7 +322,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.grey.shade900,
+                        Theme.of(context).colorScheme.onSurface,
                         Colors.brown.shade700,
                       ],
                     ),
@@ -381,14 +381,14 @@ class _WipLimitPageState extends State<WipLimitPage> {
                           Icon(
                             Icons.restaurant,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '今取り組んでいることを登録してください。\n1カテゴリ1つまで。消化してから次。',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -466,7 +466,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                           category,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -488,7 +488,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 const SizedBox(height: 6),
                 Text(
                   note,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 8),
@@ -496,7 +496,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress / 100,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(
                     progress >= 100 ? Colors.green : Colors.orange,
                   ),

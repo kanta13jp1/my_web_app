@@ -451,7 +451,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
         margin: const EdgeInsets.only(bottom: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Colors.grey.shade200),
+          side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
         ),
         color: Colors.white,
         child: ListTile(

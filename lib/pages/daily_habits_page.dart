@@ -607,7 +607,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isCompleted ? Colors.green.shade200 : Colors.grey.shade200,
+          color: isCompleted ? Colors.green.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: InkWell(

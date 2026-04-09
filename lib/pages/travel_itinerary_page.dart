@@ -640,7 +640,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
                     value: ratio,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       ratio < 0.7 ? Colors.green : ratio < 0.9 ? Colors.orange : Colors.red,
                     ),

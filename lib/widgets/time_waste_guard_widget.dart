@@ -258,12 +258,12 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                       decoration: BoxDecoration(
                         color: isActive
                             ? item.color.withAlpha(20)
-                            : Colors.grey.shade100,
+                            : Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isActive
                               ? item.color.withAlpha(80)
-                              : Colors.grey.shade300,
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
                         ),
                       ),
                       child: Row(

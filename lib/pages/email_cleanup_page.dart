@@ -460,7 +460,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         subtitle: progress < 1.0
             ? LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: const AlwaysStoppedAnimation(Color(0xFF4338CA)),
                 minHeight: 4,
                 borderRadius: BorderRadius.circular(2),
@@ -595,7 +595,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: needs ? Colors.orange.shade300 : Colors.grey.shade200,
+          color: needs ? Colors.orange.shade300 : Theme.of(context).colorScheme.surfaceContainerHigh,
           width: needs ? 1.5 : 1,
         ),
       ),

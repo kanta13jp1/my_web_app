@@ -1431,7 +1431,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       height: 220,
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -1885,7 +1885,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -2033,7 +2033,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       elevation: 4,
       shadowColor: Colors.black26,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -2145,7 +2145,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -2225,10 +2225,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildToolExecutionGuardCard() {
     if (_toolExecutionLogs.isEmpty) {
-      return const Card(
+      return Card(
         elevation: 1,
-        color: Colors.white,
-        child: Padding(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        child: const Padding(
           padding: EdgeInsets.all(18),
           child: Text(
             'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
@@ -2248,7 +2248,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
@@ -2562,10 +2562,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildSourceDistribution(Map<String, int> sources) {
     if (sources.isEmpty) {
-      return const Card(
+      return Card(
         elevation: 0,
-        color: Colors.white,
-        child: Padding(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        child: const Padding(
           padding: EdgeInsets.all(24),
           child: Center(
             child: Text('データなし', style: TextStyle(color: Colors.grey)),
@@ -2582,7 +2582,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -2737,7 +2737,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Color _getSourceColor(String key) {
     switch (key) {
       case 'direct':
-        return Colors.grey.shade400;
+        return Theme.of(context).colorScheme.outlineVariant;
       case 'x_share':
         return Colors.black;
       case 'qr_scan':
@@ -2908,9 +2908,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2978,9 +2978,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: ListTile(
             contentPadding:

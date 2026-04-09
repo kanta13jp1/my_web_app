@@ -144,7 +144,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
             leading: CircleAvatar(
               backgroundColor: status == 'open'
                   ? Colors.green.shade100
-                  : Colors.grey.shade200,
+                  : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.work,
                 color: status == 'open' ? Colors.green : Colors.grey,

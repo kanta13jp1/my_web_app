@@ -275,14 +275,14 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                           Icon(
                             Icons.bookmark_border,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             '整理対象のブックマークフォルダを登録してください',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -310,7 +310,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color:
-              isOrganized ? Colors.green.shade200 : Colors.grey.shade200,
+              isOrganized ? Colors.green.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: ListTile(

@@ -651,7 +651,7 @@ class _NoteListPageState extends State<NoteListPage> {
             subtitle,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -722,7 +722,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         draft.isNewNoteDraft ? '新規メモの下書き' : '既存メモの下書き',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -741,7 +741,7 @@ class _NoteListPageState extends State<NoteListPage> {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -753,7 +753,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     '最終保存: $savedAtLabel',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.grey.shade500,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                 ),
@@ -941,7 +941,7 @@ class _NoteListPageState extends State<NoteListPage> {
             IconButton(
               tooltip: isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
               icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-              color: isFavorite ? Colors.amber.shade700 : Colors.grey.shade500,
+              color: isFavorite ? Colors.amber.shade700 : Theme.of(context).colorScheme.outlineVariant,
               onPressed: () {
                 _toggleFavorite(context, note);
               },

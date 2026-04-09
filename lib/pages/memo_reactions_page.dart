@@ -155,11 +155,11 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                         decoration: BoxDecoration(
                           color: isActive
                               ? Colors.amber.shade100
-                              : Colors.grey.shade100,
+                              : Theme.of(context).colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color:
-                                isActive ? Colors.amber : Colors.grey.shade300,
+                                isActive ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest,
                             width: 1.5,
                           ),
                         ),
@@ -175,7 +175,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                                 fontWeight: FontWeight.bold,
                                 color: isActive
                                     ? Colors.amber.shade800
-                                    : Colors.grey.shade700,
+                                    : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],

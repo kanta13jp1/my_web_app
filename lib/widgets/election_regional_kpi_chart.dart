@@ -597,7 +597,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(

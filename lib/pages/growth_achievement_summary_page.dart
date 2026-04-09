@@ -67,7 +67,7 @@ class _GrowthAchievementSummaryPageState
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
               ],
             ),

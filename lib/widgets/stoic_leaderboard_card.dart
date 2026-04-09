@@ -135,7 +135,7 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
     final Color rankColor = rank == 1
         ? Colors.amber
         : (rank == 2
-            ? Colors.grey.shade400
+            ? Theme.of(context).colorScheme.outlineVariant
             : (rank == 3 ? Colors.brown.shade300 : subColor));
 
     return Padding(
