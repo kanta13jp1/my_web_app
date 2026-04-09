@@ -1807,7 +1807,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       padding: const EdgeInsets.all(12),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.05),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
             color: Theme.of(context).colorScheme.outlineVariant,
@@ -4184,7 +4184,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         style: TextStyle(
                           decoration:
                               isCompleted ? TextDecoration.lineThrough : null,
-                          color: isCompleted ? Colors.grey : Colors.black,
+                          color: isCompleted
+                              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       subtitle: Padding(

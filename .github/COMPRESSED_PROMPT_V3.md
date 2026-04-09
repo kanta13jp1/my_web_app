@@ -208,6 +208,25 @@ web/sitemap.xml          # URL マップ
 
 ---
 
+WARNING: Functions using fallback import map: get-admin-users
+Please use recommended per function dependency declaration  https://supabase.com/docs/guides/functions/import-maps
+Bundling Function: get-admin-users
+Specifying import_map through flags is no longer supported. Please use deno.json instead.
+No change found in Function: get-admin-users
+Deployed Functions on project ***: get-admin-users
+You can inspect your deployment in the Dashboard: https://supabase.com/dashboard/project/***/functions
+WARNING: Functions using fallback import map: submit-feedback
+Please use recommended per function dependency declaration  https://supabase.com/docs/guides/functions/import-maps
+Bundling Function: submit-feedback
+Specifying import_map through flags is no longer supported. Please use deno.json instead.
+Deploying Function: submit-feedback (script size: 77.7kB)
+unexpected create function status 402: ***"message":"Max number of functions reached for project"***
+Try rerunning the command with --debug to troubleshoot the error.
+Error: Process completed with exit code 1.
+
+GitHub Actionsのworkflowでエラーが発生した場合も、GitHub Issuesが発行されて、
+スケジュールタスクが自動で修正するようにできますか？
+
 ---
 
 > **インスタンス別注意**: `docs/` と `supabase/migrations/` は **Windows版スコープ**。`supabase/functions/` は **Web版スコープ**。`lib/` は **VSCode版スコープ**。`.github/workflows/` は **PowerShell版スコープ**。

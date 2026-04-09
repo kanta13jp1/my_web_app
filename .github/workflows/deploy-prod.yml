@@ -123,6 +123,8 @@ jobs:
           # --- Session 432z demotions (moved to Tier 2 to make room for guitar studio) ---
           supabase functions delete ab-testing-manager || true
           supabase functions delete search-analytics || true
+          # --- submit-feedback slot確保 (competitor-feature-sync を Tier 2 に降格) ---
+          supabase functions delete competitor-feature-sync || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -206,13 +208,12 @@ jobs:
           supabase functions deploy get-competitor-monitoring --no-verify-jwt
           supabase functions deploy edge-function-coverage --no-verify-jwt
 
-          # --- Tier 1E: Admin & Support (8) ---
+          # --- Tier 1E: Admin & Support (7) ---
           supabase functions deploy get-admin-users --no-verify-jwt
           supabase functions deploy submit-feedback --no-verify-jwt
           supabase functions deploy get-support-tickets --no-verify-jwt
           supabase functions deploy reply-support-request --no-verify-jwt
           supabase functions deploy get-competitor-features --no-verify-jwt
-          supabase functions deploy competitor-feature-sync --no-verify-jwt
           supabase functions deploy import-from-competitors --no-verify-jwt
           supabase functions deploy notify-feature-request --no-verify-jwt
 
@@ -238,7 +239,7 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Guitar Studio + Monitoring (12) ---
+          # --- Tier 1G: Guitar Studio + Monitoring (13) ---
           supabase functions deploy guitar-recording-studio --no-verify-jwt
           supabase functions deploy music-collaboration --no-verify-jwt
           supabase functions deploy audio-effects-processor --no-verify-jwt
@@ -251,6 +252,7 @@ jobs:
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy user-growth-analytics --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
+          supabase functions deploy issue-auto-resolver --no-verify-jwt
 
           # Total: 100 functions deployed (Supabase project limit)
           # ---
@@ -267,7 +269,7 @@ jobs:
           # inventory-manager, order-tracker, ci-cd-pipeline, compensation-manager,
           # financial-report, spreadsheet-database, gantt-timeline-manager,
           # whiteboard-canvas, form-builder, meeting-manager,
-          # edge-function-ui-checker, issue-auto-resolver, horse-racing-predictor,
+          # competitor-feature-sync, edge-function-ui-checker, horse-racing-predictor,
           # recruitment-job-board, legal-compliance-manager, elearning-course-manager,
           # crm-sales-pipeline, photo-gallery-manager, music-playlist-manager,
           # recipe-meal-planner, fitness-health-tracker, travel-itinerary-planner,

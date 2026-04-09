@@ -51,7 +51,7 @@ class _RewardsPageState extends State<RewardsPage> {
       appBar: AppBar(
         title: const Text(' ステータス報酬'),
         backgroundColor: Colors.amber,
-        foregroundColor: Colors.black87,
+        foregroundColor: Colors.black,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

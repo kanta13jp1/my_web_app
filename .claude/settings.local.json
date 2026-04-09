@@ -112,7 +112,8 @@
       "Bash(where python:*)",
       "Bash(python)",
       "WebFetch(domain:smmkxxavexumewbfaqpy.supabase.co)",
-      "Bash(ls -1d \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\supabase\\\\functions\"/*/)"
+      "Bash(ls -1d \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\supabase\\\\functions\"/*/)",
+      "Bash(dart format:*)"
     ]
   }
 }
