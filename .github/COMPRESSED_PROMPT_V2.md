@@ -140,7 +140,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ```
 lib/pages/               # 194ページ (landing / comparison / user_manual / admin_analytics 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 238本 (Tier1: 100デプロイ済 / Tier2: 138コードのみ)
+supabase/functions/      # Deno Edge Functions 240本 (Tier1: 100デプロイ済 / Tier2: 140コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 10本 (品質基準完備済み)
 docs/
@@ -167,7 +167,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(138本) で全238本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(140本) で全240本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
 ---
 
