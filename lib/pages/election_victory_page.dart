@@ -20,7 +20,6 @@ import '../services/public_memo_service.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
-import '../widgets/youtube_channel_analytics_card.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -129,14 +128,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   DateTime _scheduleFocusedDay = DateTime.now();
   DateTime? _selectedScheduleDay;
   bool _showPastSchedules = false;
-  String _selectedScheduleFilter = 'すべて';
-  static const List<String> _scheduleFilters = [
-    'すべて',
-    '今週末',
-    '2週後',
-    '3週後',
-    '4週後',
-    '5週後',
+  String _selectedScheduleFilter = _allLabel;
+  static final List<String> _scheduleFilters = <String>[
+    _allLabel,
+    ...LocalElectionShareService.availableWindows.map((window) => window.label),
   ];
 
   bool get _isPublicView => widget.publicView;
@@ -202,7 +197,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
 
   Future<void> _refreshAll() async {
     await _loadPlan();
-    await _refreshRealityData(showSnackBar: false);
+    await _refreshRealityData(showSnackBar: false, forceRefresh: true);
   }
 
   Future<void> _savePlan(LocalElectionPlanDashboard plan) async {
@@ -464,7 +459,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
   }
 
-  Future<void> _refreshRealityData({required bool showSnackBar}) async {
+  Future<void> _refreshRealityData({
+    required bool showSnackBar,
+    bool forceRefresh = false,
+  }) async {
     if (_isRealityLoading) {
       return;
     }
@@ -474,7 +472,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
 
     try {
-      final snapshot = await _realityService.fetchLatestSnapshot();
+      final snapshot = await _realityService.fetchLatestSnapshot(
+        forceRefresh: forceRefresh,
+      );
       final history = await _realityService.loadSnapshotHistory();
       if (!mounted) {
         return;
@@ -987,7 +987,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           IconButton(
             onPressed: _isRealityLoading
                 ? null
-                : () => _refreshRealityData(showSnackBar: true),
+                : () => _refreshRealityData(
+                    showSnackBar: true,
+                    forceRefresh: true,
+                  ),
             tooltip: '最新の実データを取得',
             icon: _isRealityLoading
                 ? const SizedBox(
@@ -1051,12 +1054,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ...plan
                       .prefecturesForRegion(_selectedRegion)
                       .map(_buildPrefectureCard),
-                  const SizedBox(height: 24),
-                  const YoutubeChannelAnalyticsCard(
-                    channelHandle: '@DPFP_sub',
-                    channelName: '国民民主党サブチャンネル',
-                    channelUrl: 'https://www.youtube.com/@DPFP_sub',
-                  ),
                   const SizedBox(height: 24),
                   Text(
                     '注記: 実データは公式議員ページと2023年の公式選挙結果ページを '
@@ -1354,7 +1351,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading
                           ? null
-                          : () => _refreshRealityData(showSnackBar: true),
+                          : () => _refreshRealityData(
+                              showSnackBar: true,
+                              forceRefresh: true,
+                            ),
                       icon: _isRealityLoading
                           ? const SizedBox(
                               width: 16,
@@ -2420,48 +2420,38 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  /// Returns the [LocalElectionShareService.availableWindows] index that
-  /// corresponds to [filter], or null for 'すべて'.
   int? _filterToWindowIndex(String filter) {
-    // availableWindows = ['今週末', '2週後', '3週後', '4週後', '5週後']
-    // _scheduleFilters  = ['すべて', '今週末', '2週後', '3週後', '4週後', '5週後']
     final idx = LocalElectionShareService.availableWindows
         .indexWhere((w) => w.label == filter);
     return idx >= 0 ? idx : null;
   }
 
+  LocalElectionShareWindow? _windowForFilter(String filter) {
+    final index = _filterToWindowIndex(filter);
+    if (index == null) {
+      return null;
+    }
+    return LocalElectionShareService.availableWindows[index];
+  }
+
   bool _matchesScheduleFilter(DateTime? voteDate, String filter) {
     if (voteDate == null) return true;
-    if (filter == 'すべて') return true;
+    if (filter == _allLabel) return true;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // 今週の日曜日の日付（1:月曜 〜 7:日曜）
-    final daysToSunday = 7 - today.weekday;
-    final thisSunday = today.add(Duration(days: daysToSunday));
-    
-    final targetDate = DateTime(voteDate.year, voteDate.month, voteDate.day);
+    final targetDate = _normalizeDate(voteDate.toLocal());
+    final weekendWindow = _windowForFilter(filter);
 
-    if (filter == '今週末') {
-      return !targetDate.isBefore(today) && !targetDate.isAfter(thisSunday);
-    } else if (filter == '2週後') {
-      final start = thisSunday.add(const Duration(days: 1));
-      final end = thisSunday.add(const Duration(days: 7));
-      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
-    } else if (filter == '3週後') {
-      final start = thisSunday.add(const Duration(days: 8));
-      final end = thisSunday.add(const Duration(days: 14));
-      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
-    } else if (filter == '4週後') {
-      final start = thisSunday.add(const Duration(days: 15));
-      final end = thisSunday.add(const Duration(days: 21));
-      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
-    } else if (filter == '5週後') {
-      final start = thisSunday.add(const Duration(days: 22));
-      final end = thisSunday.add(const Duration(days: 28));
-      return !targetDate.isBefore(start) && !targetDate.isAfter(end);
+    if (weekendWindow != null) {
+      final range = _shareService.scheduleWindowRange(
+        weekendWindow,
+        now: today,
+      );
+      return !targetDate.isBefore(range.start) &&
+          !targetDate.isAfter(range.end);
     }
-    
+
     return true;
   }
 
@@ -2469,7 +2459,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     String filter,
     List<LocalElectionScheduleEntry> upcomingSchedules,
   ) {
-    if (filter == 'すべて') {
+    if (filter == _allLabel) {
       _syncScheduleSelection(_realitySnapshot);
       return;
     }
@@ -2479,28 +2469,26 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }).toList();
 
     if (filtered.isNotEmpty && filtered.first.parsedVoteDate != null) {
-      final targetDate = _normalizeDate(filtered.first.parsedVoteDate!.toLocal());
+      final targetDate =
+          _normalizeDate(filtered.first.parsedVoteDate!.toLocal());
       _selectedScheduleDay = targetDate;
       _scheduleFocusedDay = targetDate;
       return;
     }
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final daysToSunday = 7 - today.weekday;
-    final thisSunday = today.add(Duration(days: daysToSunday));
-
-    DateTime targetDate = today;
-    if (filter == '2週後') {
-      targetDate = thisSunday.add(const Duration(days: 1));
-    } else if (filter == '3週後') {
-      targetDate = thisSunday.add(const Duration(days: 8));
-    } else if (filter == '4週後') {
-      targetDate = thisSunday.add(const Duration(days: 15));
-    } else if (filter == '5週後') {
-      targetDate = thisSunday.add(const Duration(days: 22));
+    final today = _normalizeDate(DateTime.now());
+    final weekendWindow = _windowForFilter(filter);
+    if (weekendWindow == null) {
+      _syncScheduleSelection(_realitySnapshot);
+      return;
     }
 
+    final targetDate = _shareService
+        .scheduleWindowRange(
+          weekendWindow,
+          now: today,
+        )
+        .start;
     _selectedScheduleDay = targetDate;
     _scheduleFocusedDay = targetDate;
   }
@@ -2511,8 +2499,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       snapshot,
       reverseForPast: true,
     ).where((s) => s.isPast).toList();
-    final upcomingSchedules =
-        allSchedules.where((s) => !s.isPast).toList();
+    final upcomingSchedules = allSchedules.where((s) => !s.isPast).toList();
     final filteredUpcomingSchedules = upcomingSchedules.where((s) {
       return _matchesScheduleFilter(s.parsedVoteDate, _selectedScheduleFilter);
     }).toList();
@@ -2672,34 +2659,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
           ],
         ),
-        const SizedBox(height: 8),
-        // "この週末の選挙を X に投稿" shortcut — only shown for specific windows
-        if (_selectedScheduleFilter != 'すべて' &&
-            filteredUpcomingSchedules.isNotEmpty)
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF1DA1F2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              ),
-              onPressed: () => ElectionXPostComposerDialog.show(
-                context,
-                snapshot: snapshot,
-                shareService: _shareService,
-                publishedMemo: _publishedRealityMemo,
-                initialWindowIndex:
-                    _filterToWindowIndex(_selectedScheduleFilter),
-              ),
-              icon: const Icon(Icons.schedule_send, size: 16),
-              label: Text(
-                '$_selectedScheduleFilterの選挙をX投稿',
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-          ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 12),
         if (filteredUpcomingSchedules.isEmpty)
           _buildInlineNotice(
             _selectedScheduleFilter == 'すべて'
@@ -2772,7 +2732,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
-          child: TableCalendar<LocalElectionScheduleEntry>(
+          child: RepaintBoundary(
+            child: TableCalendar<LocalElectionScheduleEntry>(
             locale: 'ja_JP',
             firstDay: firstDay,
             lastDay: lastDay,
@@ -2832,26 +2793,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 final severity = events
                     .map(_scheduleSeverity)
                     .reduce((left, right) => left < right ? left : right);
-                Color color = switch (severity) {
+                final color = switch (severity) {
                   0 => Theme.of(context).colorScheme.error,
                   1 => Colors.amber.shade800,
                   _ => const Color(0xFF0F766E),
                 };
                 final countLabel =
                     events.length > 9 ? '9+' : '${events.length}';
-
-                final hasFilteredEvent = _selectedScheduleFilter == 'すべて' ||
-                    events.any(
-                      (e) => _matchesScheduleFilter(
-                        e.parsedVoteDate,
-                        _selectedScheduleFilter,
-                      ),
-                    );
-
-                if (!hasFilteredEvent) {
-                  color = color.withValues(alpha: 0.3);
-                }
-
                 return Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
@@ -2863,19 +2811,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     decoration: BoxDecoration(
                       color: color,
                       borderRadius: BorderRadius.circular(999),
-                      border: hasFilteredEvent && _selectedScheduleFilter != 'すべて'
-                          ? Border.all(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 1.5,
-                            )
-                          : null,
                     ),
                     child: Text(
                       countLabel,
-                      style: TextStyle(
-                        color: hasFilteredEvent
-                            ? Colors.white
-                            : Colors.white.withValues(alpha: 0.5),
+                      style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
