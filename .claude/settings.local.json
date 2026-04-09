@@ -91,7 +91,28 @@
       "Bash(python3 -c \"import sys,base64; print\\(base64.b64decode\\(sys.stdin.read\\(\\).replace\\(''''\\\\n'''',''''''''\\)\\).decode\\(\\)\\)\")",
       "Bash(del C:/Users/kanta/GitHub/my_web_app/.git/index.lock)",
       "Bash(GIT_AUTHOR_NAME=\"kanta\" GIT_COMMITTER_NAME=\"kanta\" git commit -m \"docs: DESIGN.md を awesome-design-md-jp テンプレートに完全準拠:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(python -c ':*)",
+      "Bash(ls .github/workflows/*.yml)",
+      "Bash(xargs -I{} bash -c 'echo \"$\\(grep -c \"Colors.grey\\\\[\" {} 2>/dev/null\\) {}\"')",
+      "Bash(python3 -)",
+      "Bash(python -)",
+      "Bash(ls /c/Users/kanta/GitHub/my_web_app/.github/workflows/*.yml)",
+      "Bash(awk 'NR>=140 && NR<=175' lib/widgets/markdown_preview.dart)",
+      "Bash(git mv:*)",
+      "Bash(ls .github/COMPRESSED_PROMPT*)",
+      "Bash(wait)",
+      "Bash(sed -n '131,135p' /c/Users/kanta/GitHub/my_web_app/.github/COMPRESSED_PROMPT_V3.md)",
+      "Bash(sed -n '157,161p' /c/Users/kanta/GitHub/my_web_app/.github/COMPRESSED_PROMPT_V3.md)",
+      "Bash(ls /c/Users/kanta/GitHub/my_web_app/.markdownlint*)",
+      "Bash(ls /c/Users/kanta/GitHub/my_web_app/.markdownlintrc*)",
+      "Bash(where python:*)",
+      "Bash(python)",
+      "WebFetch(domain:smmkxxavexumewbfaqpy.supabase.co)",
+      "Bash(ls -1d \"C:\\\\Users\\\\kanta\\\\GitHub\\\\my_web_app\\\\supabase\\\\functions\"/*/)"
     ]
   }
 }
