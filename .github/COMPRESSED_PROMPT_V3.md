@@ -72,6 +72,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
+10. **毎セッション: docs/ .md 全件確認（全インスタンス）** — `docs/` 配下の全 .md ファイル（自動生成・アーカイブを除く）を読み、記載内容（数値・スコープ・機能名・ファイルパス）と現在の実装・CI設定との矛盾を修正する。対象: `CICD_SETUP_GUIDE.md` / `CONTRIBUTING.md` / `MULTI_INSTANCE_COORDINATION.md` / `README.md` / `DESIGN_TOOLING_SETUP.md` / `user-docs/*.md`
 
 ---
 

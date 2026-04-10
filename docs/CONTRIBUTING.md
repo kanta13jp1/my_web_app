@@ -17,7 +17,7 @@
 
 以下のツールをインストールしてください:
 
-- **Flutter SDK** (3.24.x以上)
+- **Flutter SDK** (3.38.x — CI固定バージョン)
 - **Dart SDK** (Flutter SDKに含まれる)
 - **Git**
 - **Firebase CLI**

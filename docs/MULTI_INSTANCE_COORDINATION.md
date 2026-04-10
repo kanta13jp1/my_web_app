@@ -9,10 +9,10 @@
 
 | インスタンス | 担当領域 | 禁止領域 |
 | --- | --- | --- |
-| **VSCode** | `lib/` フロントエンド実装 (Dart/Flutter) | `supabase/functions/`, `docs/` |
-| **Web版** | `supabase/functions/` Edge Functions (Deno) | `lib/`, `docs/` |
-| **Windows版** | `docs/` ドキュメント・`supabase/migrations/` | `lib/`, `supabase/functions/` |
-| **PowerShell** | 全体管理・マイグレーション・ロードマップ・スケジュール | (全体を俯瞰、緊急時に横断対応可) |
+| **VSCode** | `lib/` フロントエンド実装 (Dart/Flutter・193ページ) | `supabase/functions/`, `docs/` |
+| **Web版** | `supabase/functions/` Edge Functions (Deno・241本) | `lib/`, `docs/` |
+| **Windows版** | `docs/` ドキュメント・`supabase/migrations/` + seed SQL | `lib/`, `supabase/functions/` |
+| **PowerShell** | `.github/workflows/` + CI/CD (13本) | 他3範囲 |
 
 ---
 
@@ -61,12 +61,17 @@ git rebase --abort      # リベースをやめて元に戻す場合
 
 | タスク | スケジュール | 担当機能 |
 | --- | --- | --- |
-| `cs-check` | 毎時 00分 | CS対応 / Edge UI同期 / Issue自動修正 / PR review / ヘルスチェック |
-| `daily-report` | 毎日 09:00 JST | 日次レポート / X投稿 / 競合監視 / Schedule健全性チェック |
-| `blog-draft` | 毎日 08:00 JST | ブログ下書き自動生成 / 投稿管理 |
-| `weekly-sns-draft` | 毎週月曜 09:00 JST | SNSドラフト / 脆弱性チェック |
+| `daily-report` | 毎日 09:00 JST | Actions生成レポート確認 → AI分析追記 → X投稿(失敗時のみ) |
+| `cs-check` | 毎時 :07 | CS対応 / PR自動レビュー / ヘルスチェック |
+| `github-issue-fix` | 毎日 10:00 JST | Open Issue → EF UI導線追加 / analyze エラー修正 → クローズ |
+| `weekly-sns-draft` | 毎週月曜 09:00 JST | SNSドラフト + Zenn記事ネタ + 依存脆弱性チェック |
+| `pr-auto-review` | 3時間毎 | セキュリティ/パフォ/バグ観点のPRレビュー |
+| `competitor-monitoring` | 毎日 07:00 JST | 競合21社の可用性 + 最新ニュース調査 |
+| `infra-health-check` | 毎時 :30 | `health-check` EF + Firebase Hosting 確認 |
+| `dependency-audit` | 毎週月曜 08:00 JST | `pub outdated` + Deno import バージョン検査 |
+| `blog-draft` | 毎日 08:00 JST | 直近7日コミット → ブログ下書き → `blog_posts` テーブル登録 |
 
-> **上限**: 現在4件で上限に達しています。新規追加には既存タスクの削除が必要。
+> GitHub Actions と **並行・補完**する関係。Actions がデータ収集・投稿を担当し、Claude Schedule が AI分析・コード修正を担当。
 
 ---
 

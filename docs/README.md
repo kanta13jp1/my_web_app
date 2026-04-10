@@ -2,110 +2,56 @@
 
 このフォルダには、プロジェクトに関連するすべてのドキュメントが含まれています。
 
----
-
-## 🚨 最優先ドキュメント
-
-### ユーザー獲得・成長戦略
-
-- **[成長加速セッション (2025-11-08)](./session-summaries/SESSION_SUMMARY_2025-11-08_GROWTH_ACCELERATION.md)** - 今すぐ実行すべきマーケティング施策の詳細
-- **[成長戦略ロードマップ](./roadmaps/GROWTH_STRATEGY_ROADMAP.md)** - 2人→1億ユーザーへの全体戦略
-- **[競合分析 2025](./roadmaps/COMPETITOR_ANALYSIS_2025.md)** - Notion/Evernote等との差別化戦略
-
-### 事業運営
-
-- **[事業運営計画書](./roadmaps/BUSINESS_OPERATIONS_PLAN.md)** - 開発、マーケティング、財務計画
-
-### 技術実装
-
-- **[プロジェクト総合分析](./session-summaries/PROJECT_ANALYSIS_2025-11-08.md)** - 技術スタック、プラットフォーム戦略
-- **[バックエンド移行計画](./technical/BACKEND_MIGRATION_PLAN.md)** - フロントエンド→バックエンド移行計画
+**最終更新**: 2026-04-10
 
 ---
 
-## フォルダ構成
+## 📌 常時参照ドキュメント
 
-### 📝 release-notes/
-
-リリースノートや変更履歴を格納します。
-
-### 🗺️ roadmaps/
-
-プロジェクトのロードマップや将来の計画を格納します。
-
-- `GROWTH_STRATEGY_ROADMAP.md` - 成長戦略とロードマップ
-- `BUSINESS_OPERATIONS_PLAN.md` - 事業運営計画書（開発、保守、運用、マーケティング、人事、経理、調達、事業計画）
-
-### 📚 user-docs/
-
-ユーザー向けのドキュメントを格納します。
-
-- `GAMIFICATION_README.md` - ゲーミフィケーション機能の説明
-- `GROWTH_FEATURES.md` - 成長機能の詳細
-
-### 📊 session-summaries/
-
-Claude Codeセッションのサマリーやプロジェクト分析を格納します。
-
-- `SESSION_SUMMARY_2025-11-08.md` - セッションサマリー
-- `SESSION_SUMMARY_2025-11-08_BUSINESS_PLAN.md` - 事業計画策定セッション
-- `PROJECT_ANALYSIS_2025-11-08.md` - プロジェクト分析
-
-### 🔧 technical/
-
-技術的なドキュメント、デプロイガイド、移行計画などを格納します。
-
-- `BACKEND_MIGRATION_PLAN.md` - バックエンド移行計画
-- `CORS_FIX.md` - CORS問題の修正方法
-- `NETLIFY_DEPLOY.md` - Netlifyデプロイガイド
-- `NETLIFY_COST_OPTIMIZATION.md` - Netlifyコスト最適化ガイド
-- `GEMINI_MIGRATION_GUIDE.md` - OpenAI→Gemini API移行ガイド
-- `SUPABASE_EDGE_FUNCTIONS_DEPLOY.md` - Supabase Edge Functionsデプロイガイド
-- `IMPROVEMENTS.md` - 改善提案
-
-### 📦 archive/
-
-古くなったトラブルシューティングドキュメントや、完了したタスクのドキュメントを格納します。
-歴史的参照用として保管。
-
-## トップレベルドキュメント
-
-### docs/
-
-- `IMMEDIATE_ACTION_PLAN.md` - AI機能修正の緊急対応ガイド
-- `COMPREHENSIVE_SOLUTION_PLAN.md` - サイト復旧・成長戦略の包括プラン
-- `README.md` - このファイル
-
-## ドキュメントの追加
-
-新しいドキュメントを追加する際は、適切なカテゴリフォルダに配置してください。
-新しいカテゴリが必要な場合は、適切なフォルダ名で作成してください。
+| ファイル | 内容 |
+| --- | --- |
+| [GROWTH_STRATEGY_ROADMAP.md](./GROWTH_STRATEGY_ROADMAP.md) | 全戦略・セッション記録（毎回更新） |
+| [DESIGN.md](./DESIGN.md) | デザイントークン（唯一の真実ソース・Orange+Indigoダークテーマ） |
+| [MULTI_INSTANCE_COORDINATION.md](./MULTI_INSTANCE_COORDINATION.md) | 4インスタンス並行開発・競合防止ガイド |
+| [DESIGN_TOOLING_SETUP.md](./DESIGN_TOOLING_SETUP.md) | Figma MCP / AIDesigner MCP セットアップ |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | コーディング規約・PR作成ガイド |
+| [CICD_SETUP_GUIDE.md](./CICD_SETUP_GUIDE.md) | GitHub Actions / Secrets セットアップ手順 |
 
 ---
 
-## 📊 最新の重要ドキュメント
+## 📁 フォルダ構成
 
-### 成長戦略・マーケティング
+### 自動生成（Claude Schedule / GitHub Actions が書き込み）
 
-- **[成長戦略ロードマップ](./GROWTH_STRATEGY_ROADMAP.md)** - 短中長期の開発計画、ユーザー獲得戦略
-- **[Twitterシェアテンプレート](./TWITTER_SHARE_TEMPLATES.md)** - リリース時のSNS投稿文面集
+| フォルダ | 内容 |
+| --- | --- |
+| `daily-reports/` | 日次レポート（毎朝 09:00 JST 生成） |
+| `cs-notes/` | CSチェックメモ（毎時生成） |
+| `weekly-drafts/` | 週次SNSドラフト（毎週月曜生成） |
+| `blog-drafts/` | ブログ下書き（毎日 08:00 JST 生成） |
+| `competitor-reports/` | 競合モニタリングレポート（毎日 07:00 JST 生成） |
+| `incident-reports/` | インシデントレポート（異常時のみ生成） |
+| `security-audit/` | 脆弱性チェックレポート（毎週月曜生成） |
 
-### 機能設計
+### 参考・設計資料
 
-- **[性格診断機能設計](./PERSONALITY_TEST_DESIGN.md)** - 16personalities風の性格診断機能（ユーザー獲得の鍵）
-- **[タイマー機能設計](./TIMER_FEATURE_DESIGN.md)** - メモ編集中に使えるタイマー機能
-- **[自動保存・UNDO/REDO設計](./AUTO_SAVE_UNDO_REDO_DESIGN.md)** - Notion風の自動保存機能
-
-### バグ管理
-
-- **[バグレポート](./BUG_REPORT.md)** - 既知のバグと修正状況
-- **[包括的バグ分析](./COMPREHENSIVE_BUG_ANALYSIS.md)** - 全機能の動作状況分析
-
-### インフラ・プラットフォーム
-
-- **[プラットフォーム推奨](./PLATFORM_RECOMMENDATION.md)** - Firebase/Vercel/AWS/GCPの選定ガイド
+| フォルダ | 内容 |
+| --- | --- |
+| `design-systems/` | 参考デザインシステム（note / freee / SmartHR / Apple JP / WIRED.jp） |
+| `user-docs/` | ユーザー向け機能説明（GAMIFICATION_README.md / GROWTH_FEATURES.md） |
+| `technical/` | 技術ドキュメント（CI_CD_GUIDE / DEPLOYMENT_GUIDE 等） |
+| `archive/` | 歴史的参照用アーカイブ（変更不要） |
+| `roadmaps/` | 旧ロードマップ（2025年以前・読み取り専用） |
+| `email-templates/` | メールテンプレート（読み取り専用） |
 
 ---
 
-**最終更新**: 2025年11月11日
-**次回レビュー**: 2週間後（2025年11月25日）
+## 🔑 開発ルール（要約）
+
+1. `flutter analyze` — 常に 0エラー（CI強制ゲート）
+2. `deno lint` — 常に 0エラー（CI強制ゲート）
+3. `docs/GROWTH_STRATEGY_ROADMAP.md` — 毎セッション末尾追記
+4. ダミーデータ禁止（Supabase実データ必須）
+5. Edge Function ファースト（複雑ロジックはバックエンドへ）
+
+詳細は [CLAUDE.md](../CLAUDE.md) および [.github/COMPRESSED_PROMPT_V3.md](../.github/COMPRESSED_PROMPT_V3.md) を参照。
