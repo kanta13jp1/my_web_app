@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・191ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・195ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (13本完備済み) | 他3範囲 |
@@ -79,7 +79,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 40 | **メールテンプレート管理** (ビジネス/プライベート定型文) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 41 | **2FA セキュリティ** (多要素認証強化 — セキュリティ差別化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 42 | **公開ギターギャラリー** (録音UGC公開共有 — sitemap/OGP済) | ✅ LP済 | `guitar-recording-studio` `public_gallery` action (VSCode版) |
-| 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 44 | **SaaSデータインポート** (Notion/SaaS一括インポート・プレビュー・コミット) | ✅EF実装済・UI未訴求 | `growth-import-preview`, `growth-import-commit` (Web版) |
 
 ---
 
@@ -177,7 +178,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 191ページ (landing / comparison / user_manual / admin_analytics 等)
+lib/pages/               # 195ページ (landing / comparison / user_manual / admin_analytics 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
@@ -311,6 +312,46 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | ~~**VSCode版**~~ | ✅ `landing_page.dart` に10機能追加 (VSCode#29) — 習慣ゲーミフィケーション・コードプレイグラウンド・不動産管理・eラーニング・車両管理・採用ボード・IoT・法務・メールテンプレート・2FA。"36のこと"に更新 |
+
+### 機能 #44: SaaSデータインポート UI 実装
+
+**背景**: 2026-04-08 AI分析で `growth-import-preview` / `growth-import-commit` EF が実装済みと確認。ユーザーリクエスト上位「Notion インポート強化」に対応するフロントエンド UI が未実装。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `lib/pages/` に ImportPage 作成・`growth-import-preview` EF 呼び出し UI 実装 |
+| **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
+
+### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
+
+> feature_requests 投票上位。優先度順に実装検討する。
+
+1. **Notion インポート強化** — Notion ページ階層・データベース構造インポート (EF実装済み → UI + Notion API 連携が必要)
+2. **MoneyForward 連携** — 家計簿・資産管理データ自動取り込み
+3. **Slack 通知連携** — タスク・メモ更新を Slack チャンネルへ通知
+4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
+5. **Google カレンダー同期** — 予定・タスクの双方向同期
+
+
+### 機能 #44: SaaSデータインポート UI 実装
+
+**背景**: 2026-04-08 AI分析で `growth-import-preview` / `growth-import-commit` EF が実装済みと確認。ユーザーリクエスト上位「Notion インポート強化」に対応するフロントエンド UI が未実装。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `lib/pages/` に ImportPage 作成・`growth-import-preview` EF 呼び出し UI 実装 |
+| **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
+
+### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
+
+> feature_requests 投票上位。優先度順に実装検討する。
+
+1. **Notion インポート強化** — Notion ページ階層・データベース構造インポート (EF実装済み → UI + Notion API 連携が必要)
+2. **MoneyForward 連携** — 家計簿・資産管理データ自動取り込み
+3. **Slack 通知連携** — タスク・メモ更新を Slack チャンネルへ通知
+4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
+5. **Google カレンダー同期** — 予定・タスクの双方向同期
+
 
 ---
 
