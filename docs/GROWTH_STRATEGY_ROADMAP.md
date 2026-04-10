@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#13 (docs/リンク修正: BRANCH_PROTECTION_SETUP.md + LICENSE作成)
+最終更新: 2026-04-11 Windows#18 (docs/リンク修正: BRANCH_PROTECTION_SETUP.md + LICENSE作成)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4119,7 +4119,7 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 
 ---
 
-## セッション記録: Windows版#13 (2026-04-11)
+## セッション記録: Windows版#18 (2026-04-11, docs修正)
 
 ### 完了タスク
 
@@ -4137,8 +4137,7 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 ### 次回優先
 
 1. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新 (growth-acquisition-signal/report → growth-acquisition + my-ai-agent)
-2. **機能 #32 VSCode版**: 習慣ゲーミフィケーション他10機能 LP 追加
-3. **docs/ 残矛盾チェック**: 全 .md ファイルの数値・スコープ確認継続
+2. **docs/ 残矛盾チェック**: 全 .md ファイルの数値・スコープ確認継続
 
 ---
 

@@ -278,7 +278,7 @@ web/sitemap.xml          # URL マップ
 
 コンビニ経営シミュレーションを `_buildUniqueValueSection()` に追加 (Icons.storefront)。タイトル「17のこと」に更新。コア機能リスト #15〜#22 のステータスを「LP未訴求 → LP済」に一括更新。
 
-### ~~docs/ リンク修正~~: ✅ 解決済み (Windows版#13, 2026-04-11)
+### ~~docs/ リンク修正~~: ✅ 解決済み (Windows版#18, 2026-04-11)
 
 - `docs/technical/BRANCH_PROTECTION_SETUP.md` 新規作成 (ブランチ保護設定手順・CI連携・Claude Schedule との関係を記載)
 - `LICENSE` ファイルをリポジトリルートに作成 (MIT License, 2025-2026 kanta13jp1)
