@@ -366,6 +366,15 @@ web/sitemap.xml          # URL マップ
 | cs-check.yml のブランチ作成→PR→マージフロー (39行) | `git push origin HEAD:main` に簡略化 (daily-report.yml と統一) | ✅ 解決済み (PS#22) |
 | 12部署仮想組織 & EdgeFunctionSummaryCard の LP 掲載 | LP 実装済み (機能 #17 / VSCode#24) | ✅ 解決済み |
 
+### CI/CD改善 #C3: 2026-03-29 日次レポート分析からの反映 (PowerShell版#23, 2026-04-11)
+
+**背景**: cs-check / blog-draft / edge-function-audit の3ワークフローが正常稼働中を確認。新規課題は最小権限修正のみ。
+
+| 課題 | 対応 | ステータス |
+| --- | --- | --- |
+| edge-function-audit.yml `pull-requests: write` が過剰 (`gh pr` 未使用) | `pull-requests: read` に変更 (最小権限の原則) | ✅ 解決済み (PS#23) |
+| cs-check/blog-draft/edge-function-audit の稼働確認 | 3ワークフローとも正常動作を確認 | ✅ 確認済み |
+
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
 
 > feature_requests 投票上位。優先度順に実装検討する。
