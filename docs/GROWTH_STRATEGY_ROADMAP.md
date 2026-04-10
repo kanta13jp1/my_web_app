@@ -3545,3 +3545,32 @@ flutter analyze: 全体0エラー維持
 
 `feature_requests` テーブルに `is_auto_reported boolean DEFAULT false` カラムを追加。
 VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 全インスタンス完了。
+
+---
+
+## セッション記録: 2026-04-10 VSCode版#20 (矛盾チェック・最終品質スキャン)
+
+### 実施内容
+
+#### 矛盾チェック (ルール8)
+
+- `user_manual_page.dart` 競合社数: 全箇所「21社」に統一済みを確認
+- `Colors.white` 全使用箇所スキャン: TextStyle / CircularProgressIndicator / BorderColor / map marker label — 全て意図的なもの。Container背景に裸の `Colors.white` なし
+- `Colors.grey[100/200]` スキャン: 全4箇所に isDark ガード済みを確認
+
+#### markdownlint (ルール9)
+
+- `npx markdownlint-cli "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` → **0 issues**
+
+#### flutter analyze
+
+- `flutter analyze lib/` → **No issues found** (0エラー・0警告)
+
+### 結論
+
+ダークテーマスイープ完全完了。lib/ 配下の全194ページで:
+
+- Scaffold `backgroundColor` → `colorScheme.surface` (hex ライト廃止)
+- Container/BoxDecoration ライト hex → isDark 条件分岐 + ダーク代替色
+- `Colors.grey[100/200]` → `surfaceContainerHighest` or isDark-conditional
+- `Colors.white` 残存: map marker / spinner / text on color — 全て意図的
