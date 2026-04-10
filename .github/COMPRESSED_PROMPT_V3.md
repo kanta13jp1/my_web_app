@@ -296,14 +296,10 @@ web/sitemap.xml          # URL マップ
 
 語学学習・レシピ管理・旅行計画・ペット管理・フォトギャラリー + バイラル動画パイプラインを LP 追加。タイトル「20のこと」→「26のこと」。コア機能リスト #8 LP済に更新。
 
-### 機能 #31: マイAIエージェント (Notion Custom Agents 対抗)
+### ~~機能 #31~~: ✅ 解決済み (VSCode#28 + Web版#28, 2026-04-11)
 
-**背景**: 2026-04-03 競合動向。Notion Custom AI Agents (★★★★★) がバックグラウンド自律動作・自己メモリ更新を発表。自分株式会社の AI 統合コンセプトと直接競合。MVP: ユーザー定義タスク自動化フロー。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| ~~**VSCode版**~~ | ✅ `lib/pages/ai_agent_page.dart` 作成済み (VSCode#28) — タスク自動化フロー定義 UI + `/my-ai-agent` ルート追加 |
-| ~~**Web版**~~ | ✅ `my-ai-agent` EF 作成済み (Web版#28) — create/update/delete/run/list アクション実装。ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert |
+- VSCode版: `lib/pages/ai_agent_page.dart` 作成済み — タスク自動化フロー定義 UI + `/my-ai-agent` ルート追加
+- Web版: `my-ai-agent` EF 作成済み — create/update/delete/run/list アクション実装。ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert
 
 ### ~~機能 #32~~: ✅ 解決済み (VSCode#29, 2026-04-11)
 

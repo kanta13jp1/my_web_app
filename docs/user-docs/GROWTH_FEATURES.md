@@ -329,5 +329,4 @@ SELECT cleanup_old_presence();
 ## 関連ドキュメント
 
 - [データベーススキーマ](/supabase/migrations/20251106_growth_features.sql)
-- [既存の改善履歴](/docs/IMPROVEMENTS.md)
 - [メインREADME](/README.md)

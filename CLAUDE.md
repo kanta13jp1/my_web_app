@@ -156,7 +156,7 @@ X への自動投稿先: **@kanta13jp1**
 
 ### Task: daily-report (毎朝 09:00 JST に実行)
 
-> **アーキテクチャ**: GitHub Actions `daily-report.yml` が 08:58 JST に先行実行し、
+> **アーキテクチャ**: GitHub Actions `daily-report.yml` が 07:30 JST に先行実行し、
 > Supabase API 取得・X投稿・競合モニタリングを行う（プロキシ制限なし）。
 > Claude Schedule (09:00 JST) はその結果を読み込み、AI分析・GitHub Issue修復・
 > Schedule健全性チェックを担当する。

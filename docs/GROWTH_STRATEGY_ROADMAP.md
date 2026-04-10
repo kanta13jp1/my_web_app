@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#19 (docs/ 矛盾修正: MULTI_INSTANCE_COORDINATION ページ数 191→195)
+最終更新: 2026-04-11 Windows#20 (CLAUDE.md 時刻修正 + 機能#31 解決済みマーク + user-docs 破損リンク修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4278,3 +4278,20 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **PowerShell版**: `deploy-prod.yml` Tier 1 更新 (growth-acquisition-signal/report 削除 → growth-acquisition + my-ai-agent 追加)
 2. **機能 #44 Web版**: `growth-import-preview` EF に Notion API 連携を追加
 3. **docs/ 継続監査**: `docs/user-docs/*.md` ファイル群の矛盾確認
+
+---
+
+## セッション記録: Windows版#20 (2026-04-11, docs矛盾修正 #2)
+
+### 完了タスク
+
+- **CLAUDE.md 時刻矛盾修正**: `daily-report.yml` 先行実行時刻 `08:58 JST` → `07:30 JST` (PowerShell版#21 で cron 前倒し済み / CLAUDE.md のみ旧値のまま残存)
+- **COMPRESSED_PROMPT_V3.md 機能 #31 ストライク**: VSCode版・Web版ともに ✅ 完了済みにもかかわらずセクションヘッダーが未ストライク → `~~機能 #31~~: ✅ 解決済み` に更新
+- **docs/user-docs/GROWTH_FEATURES.md 破損リンク修正**: `/docs/IMPROVEMENTS.md` が存在しないリンクを削除
+- **markdownlint 0エラー** — 全修正後も 0 エラー確認
+
+### 次回優先
+
+1. **PowerShell版**: `deploy-prod.yml` Tier 1 更新 (機能 #13 残タスク)
+2. **機能 #44 Web版**: `growth-import-preview` EF に Notion API 連携を追加
+3. **docs/user-docs 継続監査**: `GAMIFICATION_README.md` の `supabase_migration.sql` 参照が現行マイグレーション構造と不一致 (低優先)
