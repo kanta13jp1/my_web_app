@@ -3978,3 +3978,22 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **機能 #24/#25**: 集中タイマー・AI文章アシスタント・浪費耐性トレーニングを LP に追加 (VSCode版)
 2. **機能 #13**: EF統合 action パラメーター分岐 (Web版+PowerShell版)
 3. **機能 #16**: ブログ実投稿パイプライン (Web版)
+
+---
+
+## セッション記録: VSCode#27 (2026-04-11)
+
+### 完了タスク
+
+- **機能 #24**: 集中タイマー (Icons.timer) LP追加
+- **機能 #24**: AI文章アシスタント (Icons.edit_note) LP追加
+- **機能 #25**: 浪費耐性トレーニング (Icons.fitness_center) LP追加
+- **LP タイトル更新**: 「17のこと」→「20のこと」
+- **コア機能リスト #23〜#25**: LP済に更新
+- **markdownlint**: 0エラー確認済み
+
+### 次回優先 (他インスタンス)
+
+1. docs/ リンク修正 (Windows版): BRANCH_PROTECTION_SETUP.md / LICENSE
+2. 機能 #13 EF統合 (Web版+PowerShell版)
+3. 機能 #16 ブログ実投稿 (Web版)

@@ -1560,6 +1560,9 @@ $input
       (Icons.notifications, '0xFF0EA5E9', '通知センター', 'アプリ内の全通知を一元管理。未読バッジ・フィルタリング・既読管理で重要な更新を見逃さない。'),
       (Icons.draw, '0xFF64748B', '電子署名', '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'),
       (Icons.storefront, '0xFFEC4899', 'コンビニ経営シミュレーション', '自分株式会社の中でコンビニを経営。春夏秋冬の季節・天気・トレンドをAIが反映した経営判断ゲーム。競合21社に存在しないゲーミフィケーション。'),
+      (Icons.timer, '0xFF10B981', '集中タイマー', 'ポモドーロ/ディープフォーカスモードで深い集中を実現。思考妨害排除ガードと連携しSNS通知を自動ブロック。'),
+      (Icons.edit_note, '0xFF7C3AED', 'AI文章アシスタント', 'メモ・ブログ・SNS投稿の文章作成・推敲・要約をAIが支援。Notion AIを超える日本語特化の文章強化機能。'),
+      (Icons.fitness_center, '0xFFF59E0B', '浪費耐性トレーニング', '買わずに耐えた回数・防いだ出費・取り戻した時間を毎日記録。我慢を筋トレのように可視化して浪費を断つ精神性を育てる。'),
     ];
 
     return Container(
@@ -1577,7 +1580,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない17のこと',
+            '自分株式会社でしかできない20のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
