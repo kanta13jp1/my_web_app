@@ -67,6 +67,17 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 28 | **旅行計画** (行程管理・現地情報・費用管理) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 | 29 | **ペット管理** (健康記録・ワクチン管理・日記) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 | 30 | **フォトギャラリー** (AI分類・思い出管理・共有) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 31 | **マイAIエージェント** (ユーザー定義タスク自動化フロー — Notion Custom Agents 対抗) | 計画中 | `lib/pages/` (VSCode版) + EF (Web版) |
+| 32 | **習慣ゲーミフィケーション** (ポイント・バッジ・ストリーク — Habitica 競合) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 33 | **コードプレイグラウンド** (ブラウザ内コード実行・学習環境) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 34 | **不動産管理** (物件管理・賃料追跡・投資分析) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 35 | **eラーニング** (コース管理・進捗・資格対策 — Duolingo/Udemy 競合) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 36 | **車両管理** (車検・保険・燃費・整備記録) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 37 | **採用ボード** (求職管理・応募追跡・面接スケジュール) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 38 | **IoTダッシュボード** (デバイス連携・センサーデータ可視化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 39 | **法務管理** (契約書管理・法的期限追跡) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 40 | **メールテンプレート管理** (ビジネス/プライベート定型文) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 41 | **2FA セキュリティ** (多要素認証強化 — セキュリティ差別化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -293,6 +304,15 @@ web/sitemap.xml          # URL マップ
 | --- | --- |
 | ~~**VSCode版**~~ | ✅ `lib/pages/ai_agent_page.dart` 作成済み (VSCode#28) — タスク自動化フロー定義 UI + `/my-ai-agent` ルート追加 |
 | ~~**Web版**~~ | ✅ `my-ai-agent` EF 作成済み (Web版#28) — create/update/delete/run/list アクション実装。ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert |
+
+### 機能 #32: PS#15+VSCode#1+VSCode#2 実装済み機能を LP に追加
+
+**背景**: 2026-04-04 日次レポートで確認。PS#15・VSCode#1・VSCode#2で実装済みの10機能が LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の差別化訴求に習慣ゲーミフィケーション・コードプレイグラウンド・不動産管理・eラーニング・車両管理・採用ボード・IoT・法務・メールテンプレート・2FA を追加 |
+
 
 ---
 

@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Web#27 (ブログ実投稿パイプライン: Qiita/dev.to API自動投稿)
+最終更新: 2026-04-11 Web#28 (EF統合: growth-acquisition + マイAIエージェントEF)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4057,3 +4057,44 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. 機能 #31 Web版: `my-ai-agent` EF作成
 2. 機能 #13 EF統合 (Web版+PowerShell版)
 3. docs/ リンク修正 (Windows版)
+
+---
+
+## セッション記録: Web#28 (2026-04-11)
+
+### 完了タスク
+
+- **機能 #13 Web版**: EF統合 — `growth-acquisition-signal` + `growth-acquisition-report` → `growth-acquisition` EF (action:signal|report 分岐)
+  - Tier 1スロット: 2本 → 1本 (PowerShell版が deploy-prod.yml 更新で正式移行)
+  - `deno lint` 0エラー確認
+- **機能 #31 Web版**: `my-ai-agent` EF 新規作成 (フロー実行エンジン)
+  - action: create / update / delete / run / list / get
+  - ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert
+  - JWT認証 (`client.auth.getUser()`) + RLS対応
+  - `deno lint` 0エラー確認
+
+### 次回優先
+
+1. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新 (growth-acquisition-signal/report → growth-acquisition + my-ai-agent)
+2. **機能 #26**: 語学学習・レシピ・旅行・ペット・フォトギャラリー LP追加 (VSCode版スコープ)
+3. **docs/ リンク修正**: `CICD_SETUP_GUIDE.md`/`CONTRIBUTING.md` 壊れたリンク (Windows版スコープ)
+
+---
+
+## セッション記録: Windows版#12 (2026-04-11)
+
+### 完了タスク
+
+- **日次レポート分析 (2026-04-04)**: PS#14〜17・VSCode#1〜2 完了内容を抽出
+  - PS#15: 習慣ゲーミフィケーション / コードプレイグラウンド / 不動産管理
+  - VSCode#1: eラーニング / 車両管理 / 採用ボード
+  - VSCode#2: IoTダッシュボード / 法務管理 / メールテンプレート / 2FA
+  - 競合: Notion Custom Agents 継続最大脅威 (機能#31 計画済み)
+- **COMPRESSED_PROMPT_V3.md**: コア機能リスト #31〜#41 追加
+- **COMPRESSED_PROMPT_V3.md**: 機能 #32 LP訴求タスク (10機能まとめ) を実装待ちに追加
+
+### 次回優先
+
+1. **機能 #26/#32**: PS#13〜17 + VSCode#1〜2 全実装済み機能を LP に追加 (VSCode版)
+2. **機能 #31**: マイAIエージェント MVP (Notion対抗)
+3. **機能 #13**: EF統合 action パラメーター分岐
