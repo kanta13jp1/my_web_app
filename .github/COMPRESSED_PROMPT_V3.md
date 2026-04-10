@@ -43,7 +43,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 4 | **ブログ自動投稿** (Zenn/Qiita/note/dev.to等, `blog_posts`テーブル管理) | ✅ | `blog-post-manager`, `blog-auto-publisher` |
 | 5 | **モバイルギターレコーディングスタジオ** (H.264録画 + X自動シェア + AI演奏評価) | ✅ | `guitar-recording-studio` |
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
-| 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
+| 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ LP済 | `local-election-intelligence`, `gemini-election-analysis` |
 | 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅ LP済 | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |

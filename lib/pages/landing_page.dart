@@ -1584,6 +1584,7 @@ $input
       (Icons.dynamic_feed, '0xFF0F172A', 'アクティビティフィード', '自分の行動ログ・達成記録・コミュニティ更新をタイムライン表示。Discord/Slackを超えるパーソナルアクティビティ可視化。'),
       (Icons.emoji_events, '0xFFF59E0B', '報酬・達成バッジ', '習慣継続・目標達成でポイントとバッジを獲得。ゲーミフィケーションでモチベーションを維持し継続率を劇的に改善。'),
       (Icons.alarm, '0xFF0369A1', '支払いリマインダー', '月次サブスク・公共料金・ローン返済を自動リマインド。MoneyForwardを超える決済管理と浪費防止の統合機能。'),
+      (Icons.how_to_vote, '0xFF1D4ED8', '地方選挙インテリジェンス', '47都道府県×1年先の選挙を自動追跡。X/SNSへの候補者分析スレッドをAIが自動生成。競合21社に存在しない市民×AI政治情報プラットフォーム。'),
     ];
 
     return Container(
@@ -1601,7 +1602,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない41のこと',
+            '自分株式会社でしかできない42のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
