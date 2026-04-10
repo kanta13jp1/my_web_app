@@ -59,6 +59,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 21 | **通知センター** (NotificationsPage — `notification-center` EF 連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅ LP済 | EF: `e-signature` 系 (Web版) |
+| 23 | **集中タイマー** (ポモドーロ/ディープフォーカス — 思考妨害排除ガードと連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 24 | **AI文章アシスタント** (文章作成・推敲・要約) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 25 | **浪費耐性トレーニング** (浪費トラッキングと連携した行動変容トレーニング) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -269,6 +272,22 @@ web/sitemap.xml          # URL マップ
 | --- | --- |
 | **Windows版** | `docs/CICD_SETUP_GUIDE.md` 211行・304行: `docs/technical/BRANCH_PROTECTION_SETUP.md` への参照が存在しないファイルを指している → ファイル作成 or 参照先修正 |
 | **Windows版** | `docs/CONTRIBUTING.md` 478行: `../LICENSE` ファイルが存在しない → `LICENSE` ファイル作成 or 参照削除 |
+### 機能 #24: 集中タイマー・AI文章アシスタントを LP に追加
+
+**背景**: 2026-04-02 週間サマリーで確認。思考妨害排除ガードと連携する集中タイマーと AI 文章アシスタントが実装済みだが LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の差別化訴求に集中タイマー・AI文章アシスタントを追加 |
+
+### 機能 #25: 浪費耐性トレーニングを LP 行動変容機能として追加
+
+**背景**: 2026-04-02 週間サマリーで確認。浪費トラッキング (#16) と連携した行動変容トレーニング機能が実装済みだが LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` に浪費耐性トレーニングを追加 |
+
 
 ---
 
