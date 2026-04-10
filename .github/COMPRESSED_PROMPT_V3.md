@@ -261,6 +261,15 @@ web/sitemap.xml          # URL マップ
 
 コンビニ経営シミュレーションを `_buildUniqueValueSection()` に追加 (Icons.storefront)。タイトル「17のこと」に更新。コア機能リスト #15〜#22 のステータスを「LP未訴求 → LP済」に一括更新。
 
+### docs/ リンク修正（Windows版タスク）
+
+**背景**: VSCode#26 の docs/ 矛盾チェックで発見。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **Windows版** | `docs/CICD_SETUP_GUIDE.md` 211行・304行: `docs/technical/BRANCH_PROTECTION_SETUP.md` への参照が存在しないファイルを指している → ファイル作成 or 参照先修正 |
+| **Windows版** | `docs/CONTRIBUTING.md` 478行: `../LICENSE` ファイルが存在しない → `LICENSE` ファイル作成 or 参照削除 |
+
 ---
 
 ## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
