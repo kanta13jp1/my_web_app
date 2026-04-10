@@ -57,6 +57,9 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
+**設計思想**: 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
+Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
+
 ### セッション開始: Master Brain 参照
 
 セッション開始時に必ず以下を確認する:
@@ -66,43 +69,66 @@ C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.m
 ```
 
 前回の成功パターン・禁止事項・新規発見を読んで、セッションの出発点とする。
-記憶が消える弱点を「永続メモリ」で補う。
+記憶が消える弱点を「永続メモリ + NotebookLM Master Brain」で補う。
 
 ### 重い分析: `/deep-research` で NotebookLM に委譲（必須）
 
 以下のいずれかに該当する場合は **必ず** `python notebooklm_research.py` を呼ぶ:
 
-| 条件 | 例 |
-| --- | --- |
-| 3ファイル以上を同時に読む | 複数Dartファイルの整合性チェック |
-| URLを分析する | 競合サービスの機能調査 |
-| ドキュメント全体を俯瞰する | DESIGN.md + landing_page.dart の比較 |
-| 競合21社のリサーチ | 最新動向・機能比較 |
+| 条件 | Claude 消費 | NotebookLM 委譲後 |
+| --- | --- | --- |
+| 3ファイル以上を同時に読む | ~150K tokens | ~5K tokens |
+| URLを分析する | ~60K tokens | ~2K tokens |
+| 競合21社のリサーチ | ~80K tokens | ~3K tokens |
+| ドキュメント全体を俯瞰する | ~100K tokens | ~4K tokens |
 
-**原則**: Claude のトークンは「判断・編集・統合」にのみ使う。
-分析処理は Google 側 (NotebookLM/Gemini) に無料で投げる。
+**コマンド**:
 
 ```bash
-# トピック検索
-python notebooklm_research.py "競合21社の最新動向"
+# セットアップ確認（初回のみ）
+PYTHONUTF8=1 python notebooklm_research.py --setup
 
-# ファイル分析
-python notebooklm_research.py --files lib/pages/landing_page.dart docs/DESIGN.md --query "UIと設計の整合性"
+# トピック検索
+PYTHONUTF8=1 python notebooklm_research.py "競合21社の最新動向"
+
+# ファイル分析（3ファイル以上は必須）
+PYTHONUTF8=1 python notebooklm_research.py --files lib/pages/landing_page.dart docs/DESIGN.md --query "UIと設計の整合性"
 
 # URL調査
-python notebooklm_research.py --url "https://..." --query "要約して"
+PYTHONUTF8=1 python notebooklm_research.py --url "https://..." --query "要約して"
+```
+
+スクリプトがない or 認証未完了の場合は以下を案内して処理を止める:
+
+```
+notebooklm login が必要です:
+  pip install "notebooklm-py[browser]"
+  playwright install chromium
+  notebooklm login
 ```
 
 ### セッション終了: `/wrap-up` で学習を永続保存（必須）
 
 作業完了後、必ず `/wrap-up` を実行する:
 
-- 成功パターン → `memory/feedback_success_YYYYMMDD.md`
-- 失敗・禁止事項 → `memory/feedback_correction_YYYYMMDD.md`
-- 新規発見 → `memory/project_YYYYMMDD.md`
-- 未完了タスク → `MEMORY.md` 末尾にコメント記録
+1. ローカル memory/ に保存:
+   - 成功パターン → `memory/feedback_success_YYYYMMDD.md`
+   - 失敗・禁止事項 → `memory/feedback_correction_YYYYMMDD.md`
+   - 新規発見 → `memory/project_YYYYMMDD.md`
+2. NotebookLM Master Brain に蓄積（認証済みの場合のみ）:
+   ```bash
+   PYTHONUTF8=1 python notebooklm_research.py --notebook "jibun-master-brain" "[セッション要約300字]"
+   ```
+3. 未完了タスク → `MEMORY.md` 末尾にコメント記録
 
 **これを怠るとセッション間の記憶が消え、同じ失敗を繰り返す。**
+
+### NotebookLM セットアップ状態
+
+- **インストール**: `pip install "notebooklm-py[browser]"` + `playwright install chromium`
+- **認証**: `notebooklm login` (ブラウザで Google ログイン、一度だけ必要)
+- **確認**: `PYTHONUTF8=1 python notebooklm_research.py --setup`
+- **注意**: Windows では必ず `PYTHONUTF8=1` を付けて実行すること (CP932 エンコードエラー回避)
 
 ---
 

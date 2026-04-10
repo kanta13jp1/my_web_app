@@ -1,189 +1,254 @@
+#!/usr/bin/env python3
 """
-notebooklm_research.py — NotebookLM リサーチ CLI
-Claude Code の /deep-research コマンドから呼ばれる。
-重いドキュメント分析を NotebookLM に委譲し、Claude のトークンを節約する。
+notebooklm_research.py — ゼロトークンリサーチ ヘルパー
+Claude Code の /deep-research コマンドから呼び出される。
 
 使い方:
-  python notebooklm_research.py "質問テキスト"
-  python notebooklm_research.py --files file1.txt file2.md --query "質問"
-  python notebooklm_research.py --url "https://example.com" --query "要約して"
-  python notebooklm_research.py --setup   # 接続テスト
-
-事前準備:
-  pip install "notebooklm-py[browser]"
-  notebooklm login   # ブラウザで Google アカウント認証
+  python notebooklm_research.py "競合21社の最新動向"
+  python notebooklm_research.py --files doc1.md doc2.md --query "APIとUIの整合性"
+  python notebooklm_research.py --url https://example.com --query "要約して"
+  python notebooklm_research.py --setup   # セットアップ確認
 """
 
-import os
-import sys
 import asyncio
 import argparse
+import sys
+import os
 import json
 from pathlib import Path
+from datetime import datetime
 
-try:
-    from notebooklm import NotebookLMClient
-except ImportError:
-    print("ERROR: notebooklm-py が未インストールです。")
-    print("  pip install \"notebooklm-py[browser]\"")
-    print("  notebooklm login")
-    sys.exit(1)
+# PYTHONUTF8 を強制（Windows CP932 エンコードエラー回避）
+os.environ.setdefault("PYTHONUTF8", "1")
 
-# =====================================================================
-# 設定
-# =====================================================================
-
-NOTEBOOK_TITLE = "Claude Code Deep Research (一時ノート)"
-MAX_FILE_CHARS = 200_000   # 1ファイルあたり最大文字数
-MAX_TOTAL_CHARS = 800_000  # 全ファイル合計の上限
-
-SYSTEM_PROMPT = """あなたは優秀なリサーチアナリストです。
-以下のドキュメントや情報を分析し、日本語で簡潔かつ構造化されたレポートを作成してください。
-
-レポートの形式:
-1. **要約** (3〜5行)
-2. **主要な発見** (箇条書き)
-3. **アクションアイテム** (優先度付き)
-4. **注意点・リスク** (あれば)
-
-このプロジェクトのコンテキスト:
-- Flutter Web + Supabase の AI ライフマネジメントアプリ「自分株式会社」
-- 競合21社の機能を統合することがゴール
-- 実ユーザー4人、本番稼働中: https://my-web-app-b67f4.web.app/
-"""
+STORAGE_PATH = Path.home() / ".notebooklm" / "storage_state.json"
+NOTEBOOK_PREFIX = "jibun-research"
 
 
-# =====================================================================
-# 入力ローダー
-# =====================================================================
-
-def load_files(file_paths: list[str]) -> list[tuple[str, str]]:
-    """(タイトル, テキスト) のリストを返す"""
-    results = []
-    total = 0
-    for path_str in file_paths:
-        path = Path(path_str)
-        if not path.exists():
-            print(f"WARN: ファイルが見つかりません: {path_str}", file=sys.stderr)
-            continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        if len(text) > MAX_FILE_CHARS:
-            text = text[:MAX_FILE_CHARS] + f"\n\n[... 残り {len(text)-MAX_FILE_CHARS:,} 文字は省略 ...]"
-        total += len(text)
-        results.append((path.name, text))
-        if total >= MAX_TOTAL_CHARS:
-            print("[合計文字数上限に達したため以降のファイルを省略]", file=sys.stderr)
-            break
-    return results
+def check_auth() -> bool:
+    """認証状態を確認する"""
+    return STORAGE_PATH.exists()
 
 
-# =====================================================================
-# NotebookLM 呼び出し
-# =====================================================================
+def setup_guide():
+    """セットアップ手順を表示する"""
+    print("""
+NotebookLM セットアップ手順:
 
-async def run_research(query: str, files: list[str] | None, url: str | None) -> str:
+  Step 1: notebooklm-py のインストール
+    pip install "notebooklm-py[browser]"
+    playwright install chromium
+
+  Step 2: Google アカウントでログイン
+    notebooklm login
+    -> ブラウザが開くので Google アカウントでログイン
+
+  Step 3: 動作確認
+    python notebooklm_research.py --setup
+""")
+
+
+async def research_topic(query: str, notebook_name: str = None) -> dict:
+    """トピックを NotebookLM でリサーチする"""
     try:
-        client = await NotebookLMClient.from_storage()
-    except Exception as e:
-        print(f"ERROR: NotebookLM への接続に失敗しました: {e}", file=sys.stderr)
-        print("  notebooklm login  を実行して Google 認証を完了してください。", file=sys.stderr)
-        sys.exit(1)
+        from notebooklm import NotebookLMClient  # noqa: PLC0415
+    except ImportError:
+        return {"error": "notebooklm-py がインストールされていません。`pip install notebooklm-py[browser]` を実行してください。"}
 
-    notebook = None
-    async with client:
+    if not check_auth():
+        return {"error": "未認証です。`notebooklm login` を実行してください。"}
+
+    name = notebook_name or f"{NOTEBOOK_PREFIX}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    async with await NotebookLMClient.from_storage() as client:
+        nb = await client.notebooks.create(name)
+        print(f"[NotebookLM] ノートブック作成: {name} (id: {nb.id[:8]}...)", file=sys.stderr)
+
+        print(f"[NotebookLM] Web リサーチ中: {query}", file=sys.stderr)
+        await client.sources.add_research(nb.id, query, mode="fast")
+
+        print("[NotebookLM] 質問送信中...", file=sys.stderr)
+        result = await client.chat.ask(nb.id, query)
+
         try:
-            # ノートブック作成
-            print("📓 NotebookLM ノートブックを作成中...", file=sys.stderr)
-            notebook = await client.notebooks.create(NOTEBOOK_TITLE)
-
-            # システムプロンプトをソースとして追加
-            await client.sources.add_text(
-                notebook.id,
-                title="分析指示・プロジェクトコンテキスト",
-                content=SYSTEM_PROMPT,
+            summary_result = await client.chat.ask(
+                nb.id,
+                "このノートブックの内容を300字以内で日本語で要約してください",
             )
+            summary = summary_result.answer if hasattr(summary_result, "answer") else str(summary_result)
+        except Exception:
+            summary = ""
 
-            # ファイルをソースとして追加
-            if files:
-                file_data = load_files(files)
-                for title, content in file_data:
-                    print(f"  📄 ソース追加: {title}", file=sys.stderr)
-                    await client.sources.add_text(notebook.id, title=title, content=content)
-
-            # URL をソースとして追加
-            if url:
-                print(f"  🌐 URL ソース追加: {url}", file=sys.stderr)
-                await client.sources.add_url(notebook.id, url)
-
-            # 質問を送信
-            print(f"🔍 NotebookLM で分析中...", file=sys.stderr)
-            result = await client.chat.ask(notebook.id, query)
-            return result.answer
-
-        finally:
-            # 一時ノートブックを削除（クリーンアップ）
-            if notebook is not None:
-                try:
-                    await client.notebooks.delete(notebook.id)
-                    print("🗑️  一時ノートブックを削除しました。", file=sys.stderr)
-                except Exception:
-                    pass  # クリーンアップ失敗は無視
+        return {
+            "notebook_id": nb.id,
+            "notebook_name": name,
+            "query": query,
+            "answer": result.answer if hasattr(result, "answer") else str(result),
+            "summary": summary,
+            "citations": getattr(result, "citations", []),
+        }
 
 
-async def setup_test():
-    """接続テスト"""
-    print("NotebookLM 接続テスト中...")
+async def research_files(files: list, query: str, notebook_name: str = None) -> dict:
+    """ファイルを読み込んで NotebookLM に質問する"""
     try:
-        client = await NotebookLMClient.from_storage()
-    except Exception as e:
-        print(f"ERROR: 接続失敗: {e}")
-        print("  notebooklm login  を実行してください。")
+        from notebooklm import NotebookLMClient  # noqa: PLC0415
+    except ImportError:
+        return {"error": "notebooklm-py がインストールされていません。"}
+
+    if not check_auth():
+        return {"error": "未認証です。`notebooklm login` を実行してください。"}
+
+    name = notebook_name or f"{NOTEBOOK_PREFIX}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    async with await NotebookLMClient.from_storage() as client:
+        nb = await client.notebooks.create(name)
+        print(f"[NotebookLM] ノートブック作成: {name} (id: {nb.id[:8]}...)", file=sys.stderr)
+
+        all_content = []
+        for f in files:
+            path = Path(f)
+            if not path.exists():
+                print(f"[NotebookLM] ファイルが見つかりません: {f}", file=sys.stderr)
+                continue
+            print(f"[NotebookLM] ファイル読込: {path.name}", file=sys.stderr)
+            if path.suffix.lower() == ".pdf":
+                await client.sources.add_file(nb.id, str(path), wait=True)
+            else:
+                content = path.read_text(encoding="utf-8", errors="ignore")
+                all_content.append(f"# {path.name}\n\n{content[:4000]}")
+
+        if all_content:
+            combined = "\n\n---\n\n".join(all_content)
+            full_query = f"以下のファイル内容を分析してください:\n\n{combined[:6000]}\n\n質問: {query}"
+            print("[NotebookLM] 質問送信中...", file=sys.stderr)
+            result = await client.chat.ask(nb.id, full_query)
+        else:
+            print("[NotebookLM] 質問送信中...", file=sys.stderr)
+            result = await client.chat.ask(nb.id, query)
+
+        return {
+            "notebook_id": nb.id,
+            "notebook_name": name,
+            "query": query,
+            "answer": result.answer if hasattr(result, "answer") else str(result),
+            "citations": getattr(result, "citations", []),
+            "files": files,
+        }
+
+
+async def research_url(url: str, query: str, notebook_name: str = None) -> dict:
+    """URL を NotebookLM に追加してリサーチする"""
+    try:
+        from notebooklm import NotebookLMClient  # noqa: PLC0415
+    except ImportError:
+        return {"error": "notebooklm-py がインストールされていません。"}
+
+    if not check_auth():
+        return {"error": "未認証です。`notebooklm login` を実行してください。"}
+
+    name = notebook_name or f"{NOTEBOOK_PREFIX}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    async with await NotebookLMClient.from_storage() as client:
+        nb = await client.notebooks.create(name)
+        print(f"[NotebookLM] ノートブック作成: {name} (id: {nb.id[:8]}...)", file=sys.stderr)
+
+        print(f"[NotebookLM] URL 追加中: {url}", file=sys.stderr)
+        await client.sources.add_url(nb.id, url, wait=True)
+
+        print(f"[NotebookLM] 質問送信中: {query}", file=sys.stderr)
+        result = await client.chat.ask(nb.id, query)
+
+        return {
+            "notebook_id": nb.id,
+            "notebook_name": name,
+            "query": query,
+            "answer": result.answer if hasattr(result, "answer") else str(result),
+            "citations": getattr(result, "citations", []),
+            "url": url,
+        }
+
+
+def print_result(result: dict):
+    """結果を整形して表示する"""
+    if "error" in result:
+        print(f"\n[ERROR] {result['error']}", file=sys.stderr)
+        setup_guide()
         sys.exit(1)
 
-    async with client:
-        nb = await client.notebooks.create("テスト (すぐ削除)")
-        await client.sources.add_text(nb.id, title="テスト", content="自分株式会社はAIライフマネジメントアプリです。")
-        result = await client.chat.ask(nb.id, "このアプリを10文字で説明してください。")
-        await client.notebooks.delete(nb.id)
-        print(f"✅ 接続成功\n回答: {result.answer}")
+    print("\n" + "=" * 60)
+    print(f"Notebook: {result.get('notebook_name', '')}")
+    print(f"Query   : {result.get('query', '')}")
+    print("=" * 60)
+    print("\n## NotebookLM の回答\n")
+    print(result.get("answer", ""))
 
+    if result.get("summary"):
+        print("\n## サマリー\n")
+        print(result["summary"])
 
-# =====================================================================
-# メイン
-# =====================================================================
+    citations = result.get("citations", [])
+    if citations:
+        print(f"\n## 引用 ({len(citations)}件)\n")
+        for i, c in enumerate(citations[:5], 1):
+            print(f"{i}. {c}")
+
+    print("\n" + "=" * 60)
+    print(f"NotebookLM ID: {result.get('notebook_id', '')[:16]}...")
+    print("=" * 60)
+
 
 def main():
-    parser = argparse.ArgumentParser(description="NotebookLM ゼロトークンリサーチ CLI")
-    parser.add_argument("query", nargs="?", help="分析クエリ（位置引数）")
-    parser.add_argument("--query", "-q", dest="query_opt", help="分析クエリ（オプション）")
-    parser.add_argument("--files", "-f", nargs="+", help="分析するファイルパス（複数可）")
-    parser.add_argument("--url", "-u", help="分析する URL")
-    parser.add_argument("--output", "-o", help="結果を保存するファイルパス")
-    parser.add_argument("--setup", action="store_true", help="接続テスト")
-    parser.add_argument("--json", action="store_true", help="JSON形式で出力")
+    parser = argparse.ArgumentParser(
+        description="NotebookLM zero-token research helper for Claude Code /deep-research",
+    )
+    parser.add_argument("query", nargs="?", help="リサーチするトピックや質問")
+    parser.add_argument("--files", nargs="+", metavar="FILE", help="分析するファイルパス (複数可)")
+    parser.add_argument("--url", help="分析するURL")
+    parser.add_argument("--notebook", help="ノートブック名 (省略時は自動生成)")
+    parser.add_argument("--setup", action="store_true", help="セットアップ状況を確認する")
+    parser.add_argument("--json", dest="output_json", action="store_true", help="結果を JSON で出力する")
+
     args = parser.parse_args()
 
     if args.setup:
-        asyncio.run(setup_test())
+        print("[Check] NotebookLM セットアップ確認中...")
+        try:
+            import notebooklm as nlm_module  # noqa: PLC0415
+            version = getattr(nlm_module, "__version__", "unknown")
+            print(f"[OK] notebooklm-py: {version}")
+        except ImportError:
+            print("[NG] notebooklm-py: 未インストール")
+            setup_guide()
+            sys.exit(1)
+
+        if check_auth():
+            print(f"[OK] 認証: {STORAGE_PATH}")
+            print("\n[OK] セットアップ完了！ /deep-research コマンドを使用できます。")
+        else:
+            print(f"[NG] 認証: 未ログイン")
+            print("     run: notebooklm login")
+            setup_guide()
+            sys.exit(1)
         return
 
-    query = args.query or args.query_opt
-    if not query:
+    if not args.query and not args.files and not args.url:
         parser.print_help()
         sys.exit(1)
 
-    result = asyncio.run(run_research(query, args.files, args.url))
+    query = args.query or "このドキュメントを分析して主要なポイントを教えてください"
 
-    if args.json:
-        output = json.dumps({"query": query, "result": result}, ensure_ascii=False, indent=2)
+    if args.files:
+        result = asyncio.run(research_files(args.files, query, args.notebook))
+    elif args.url:
+        result = asyncio.run(research_url(args.url, query, args.notebook))
     else:
-        output = result
+        result = asyncio.run(research_topic(query, args.notebook))
 
-    if args.output:
-        Path(args.output).write_text(output, encoding="utf-8")
-        print(f"✅ 結果を保存: {args.output}", file=sys.stderr)
+    if args.output_json:
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(output)
+        print_result(result)
 
 
 if __name__ == "__main__":
