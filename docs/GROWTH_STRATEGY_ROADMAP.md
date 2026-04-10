@@ -3714,3 +3714,24 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 ### 優先度判断
 
 思考妨害排除ガードは **競合21社に存在しない唯一の差別化機能** であり、完全実装済みにもかかわらず LP に掲載されていない。ユーザー獲得に直結するため機能#15を最優先とする。
+
+---
+
+## セッション記録: PowerShell版 #4 (2026-04-10)
+
+### 実施内容
+
+1. **ゼロトークンリサーチ + Master Brain ワークフロー導入**
+   - `gemini_research.py`: Gemini API に重い分析を委譲する Python CLI
+   - `.claude/commands/deep-research.md`: `/deep-research` スラッシュコマンド
+   - `.claude/commands/wrap-up.md`: `/wrap-up` セッション末尾メモリ保存コマンド
+   - COMPRESSED_PROMPT_V3.md に「ゼロトークンリサーチ + Master Brain ワークフロー」セクション追加
+   - コミット: `0edfcd3c`
+
+2. **google-genai 依存確認**: `requirements.txt` に `google-genai>=1.0.0,<2.0.0` 追記済み（前セッションで対応済み）
+
+### 次回優先
+
+- 機能 #15: `landing_page.dart` の `_buildUniqueValueSection()` に思考妨害排除ガードを追加（VSCode版）
+- 機能 #16: `blog-auto-publisher` EF の Zenn CLI 連携実装（Web版）
+- 機能 #13: EF統合（`action` パラメーター分岐で 99本以下に削減）（Web版→PowerShell版）

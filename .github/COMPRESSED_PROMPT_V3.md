@@ -224,4 +224,40 @@ web/sitemap.xml          # URL マップ
 
 ---
 
+## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
+
+**目的**: 重いドキュメント分析を Gemini に委譲して Claude のトークンを節約し、セッション間で学習を蓄積する。
+
+### スラッシュコマンド
+
+| コマンド | 定義ファイル | 用途 |
+| --- | --- | --- |
+| `/deep-research <トピック/ファイルパス>` | `.claude/commands/deep-research.md` | Gemini に分析委譲 → Claude が結果を整理 |
+| `/wrap-up` | `.claude/commands/wrap-up.md` | セッション末尾: 学習を `memory/` に永続保存 |
+
+### gemini_research.py
+
+```bash
+python gemini_research.py "質問テキスト"
+python gemini_research.py --files file1.dart file2.ts --query "質問"
+python gemini_research.py --url "https://..." --query "要約して"
+python gemini_research.py --setup   # 接続テスト
+```
+
+- **MODEL_CASCADE**: `gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-2.0-flash` → fallback
+- **環境変数**: `GEMINI_API_KEY` が必要（`batch_analysis.py` と共通）
+- **依存**: `requirements.txt` に `google-genai>=1.0.0,<2.0.0` 追記済み
+
+### Master Brain (memory/)
+
+保存先: `C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\`
+
+| ファイルパターン | 内容 |
+| --- | --- |
+| `feedback_success_YYYYMMDD.md` | 成功パターン・承認されたアプローチ |
+| `feedback_correction_YYYYMMDD.md` | 修正・禁止事項 |
+| `project_YYYYMMDD.md` | 新規発見・プロジェクト固有の仕様 |
+
+---
+
 > **インスタンス別注意**: `docs/` と `supabase/migrations/` は **Windows版スコープ**。`supabase/functions/` は **Web版スコープ**。`lib/` は **VSCode版スコープ**。`.github/workflows/` は **PowerShell版スコープ**。
