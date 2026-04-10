@@ -49,6 +49,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
+| 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅実装済・LP未訴求 | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
+| 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | 実装中 | `blog-post-manager`, `blog-auto-publisher` |
 
 ---
 
@@ -195,7 +197,7 @@ web/sitemap.xml          # URL マップ
 
 `edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
 
-### 機能 #13: EF統合（action パラメーター分岐で99本以下に削減）
+### 機能 #13 (旧番): EF統合（action パラメーター分岐で99本以下に削減）
 
 **背景**: Supabase 100本デプロイ上限 (現在99本運用)。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
 
@@ -203,6 +205,22 @@ web/sitemap.xml          # URL マップ
 | --- | --- |
 | **Web版** | 類似機能の EF を `action` パラメーターで統合（例: `growth-acquisition-signal` + `growth-acquisition-report` → `growth-acquisition` EF に `action: "signal"\|"report"`）。優先統合候補: growth系23本・agent系12本。統合後は `deno lint` 0エラーを確認 |
 | **PowerShell版** | Web版の統合完了後、`deploy-prod.yml` の Tier 1 リストから廃止 EF を削除し Cleanup ステップに追加、Tier 2 コメントを更新 |
+
+### 機能 #15: 思考妨害排除ガードを LP 差別化訴求に追加（最優先）
+
+**背景**: 2026-03-27 日次レポートで「競合21社に存在しない唯一の機能」と判定されたが、LP の「自分株式会社でしかできない8つのこと」に未掲載。`abstinence_guard_page.dart` は 1252行で完全実装済み。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `lib/pages/landing_page.dart` の `_buildUniqueValueSection()` に思考妨害排除ガードを9つ目として追加。文言例: `(Icons.block, '0xFFEF4444', '思考妨害排除ガード', 'SNS・ゲーム・衝動買いなどの依存を断ち切る専用モード。断ち切り日数を追跡。競合21社に存在しない唯一の機能。')` |
+
+### 機能 #16: ブログ実投稿パイプライン完成
+
+**背景**: `blog-draft` Schedule タスクで `docs/blog-drafts/` への下書き自動生成は稼働中。しかし Zenn/Qiita/note への実投稿は `blog_posts` テーブルの `status='draft'` のまま停滞している。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **Web版** | `blog-auto-publisher` EF を確認し、Zenn API または Zenn CLI 連携で `status='draft'` → `'posted'` に更新するフローを実装。まず Zenn CLI (`npx zenn`) を使った GitHub Actions 連携を検討する |
 
 ---
 
