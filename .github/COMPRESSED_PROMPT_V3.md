@@ -70,8 +70,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
 7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
-8. **毎セッション: 矛盾チェック（Windows版）** — `docs/DESIGN.md` / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) と実装の記述を照合し、矛盾があれば `docs/` 側を修正する
-9. **毎セッション: markdownlint（Windows版）** — `npx markdownlint-cli "docs/**/*.md"` を実行し指摘があれば修正する（自動生成ファイルは `.markdownlintignore` で除外済み）
+8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
+9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 
 ---
 

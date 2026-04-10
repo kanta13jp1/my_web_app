@@ -132,7 +132,7 @@ jobs:
         run: |
           # Supabase project has a max ~100 function limit.
           # Deploy the 100 most critical functions (Tier 1).
-          # Remaining 139 functions exist in code but are not deployed.
+          # Remaining 141 functions exist in code but are not deployed.
           # To deploy overflow functions, swap them with lower-priority Tier 1 entries.
           #
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS

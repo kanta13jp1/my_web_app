@@ -3594,3 +3594,22 @@ VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 
 #### ルール9: markdownlint
 
 全対象ファイルで 0エラー維持 (`docs/**/*.md` + `.github/**/*.md` + `CLAUDE.md`)
+
+---
+
+## セッション記録: 2026-04-10 PowerShell版 (矛盾チェック + markdownlint)
+
+### 実施内容
+
+#### 矛盾チェック
+
+- EFカウント修正: Windows版#2 が実施済みを確認 (239→241, Tier2 139→141)
+- `deploy-prod.yml` の "Remaining 139" を 141 に修正
+- 開発ルール #8/#9 のスコープを「Windows版」→「全インスタンス」に拡張
+- markdownlint コマンドを `docs/**/*.md` + `.github/**/*.md` + `CLAUDE.md` に拡充
+
+#### markdownlint
+
+- `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md" "README.md"` → **0 issues**
+- `README.md`: `--fix` で自動修正済み (旧Geminiハンドオーバードキュメント)
+- `.github/ISSUE_TEMPLATE/`, `PULL_REQUEST_TEMPLATE.md`, `workflows/README.md`, `CLAUDE.md`: MD022/MD031/MD032/MD034/MD040/MD060 修正済み (commit: 52475aed)
