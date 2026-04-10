@@ -544,15 +544,23 @@ URL: https://my-web-app-b67f4.web.app/
 #FlutterWeb #Supabase #buildinpublic
 ```
 
-#### Step 3: 投稿記録をSupabaseに保存
+#### Step 3: 投稿記録をSupabaseに保存 (`blog-post-manager` EF)
 
-以下のSQLで `blog_posts` テーブルに下書きを登録:
+`blog-post-manager` EF の POST で `blog_posts` テーブルに下書きを登録:
 
-```sql
-INSERT INTO blog_posts (title, draft_path, status, target_platforms, created_at)
-VALUES ('<タイトル案1>', 'docs/blog-drafts/YYYY-MM-DD.md', 'draft', ARRAY['zenn','qiita'], NOW())
-ON CONFLICT DO NOTHING;
+```http
+POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-post-manager
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+Content-Type: application/json
+{
+  "title": "<タイトル案1>",
+  "draft_path": "docs/blog-drafts/YYYY-MM-DD.md",
+  "target_platforms": ["qiita", "devto"],
+  "content_preview": "<本文最初の200字>"
+}
 ```
+
+レスポンスの `post.id` (UUID) を Step 4 で使用する。
 
 ※ `blog_posts` テーブルのスキーマ:
 
@@ -561,7 +569,34 @@ id uuid, title text, draft_path text, status text (draft/posted/skipped),
 target_platforms text[], posted_at timestamptz, url text, created_at timestamptz
 ```
 
-#### Step 4: コミット
+#### Step 4: 自動投稿 (`blog-auto-publisher` EF)
+
+Step 3 で登録した `post.id` と本文全体を使って実投稿:
+
+```http
+POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-auto-publisher
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+Content-Type: application/json
+{
+  "action": "auto_publish",
+  "id": "<post.id>",
+  "content": "<本文下書きのMarkdown全文>",
+  "tags": ["Flutter", "Supabase", "buildinpublic"]
+}
+```
+
+**投稿先と必要なシークレット**:
+
+| プラットフォーム | Supabaseシークレット | 設定方法 |
+| --- | --- | --- |
+| Qiita | `QIITA_ACCESS_TOKEN` | https://qiita.com/settings/tokens/new でトークン発行 |
+| dev.to | `DEVTO_API_KEY` | https://dev.to/settings/extensions で API key 発行 |
+| Zenn | — | GitHubリポジトリ連携のため手動 (Zenn CLIは別途) |
+
+シークレット未設定の場合、そのプラットフォームはスキップされ `results.{platform}.error` に理由が記録される。
+少なくとも1プラットフォームに投稿成功すると `blog_posts.status` が `'posted'` に更新される。
+
+#### Step 5: コミット
 
 ```bash
 git add docs/blog-drafts/

@@ -228,13 +228,9 @@ web/sitemap.xml          # URL マップ
 
 `lib/pages/landing_page.dart` `_buildUniqueValueSection()` に9つ目として追加。タイトル「9つのこと」に更新。コミット `ffc849bd`。
 
-### 機能 #16: ブログ実投稿パイプライン完成
+### ~~機能 #16~~: ✅ 解決済み (Web版#27, 2026-04-11)
 
-**背景**: `blog-draft` Schedule タスクで `docs/blog-drafts/` への下書き自動生成は稼働中。しかし Zenn/Qiita/note への実投稿は `blog_posts` テーブルの `status='draft'` のまま停滞している。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **Web版** | `blog-auto-publisher` EF を確認し、Zenn API または Zenn CLI 連携で `status='draft'` → `'posted'` に更新するフローを実装。まず Zenn CLI (`npx zenn`) を使った GitHub Actions 連携を検討する |
+`blog-auto-publisher` EF に Qiita API (`publish_qiita`) / dev.to API (`publish_devto`) / `auto_publish` アクションを実装。`blog_posts.status` を `draft→posted` に自動更新。`CLAUDE.md` の blog-draft Schedule タスクに Step 4 (auto_publish 呼び出し) を追加。Supabase シークレット: `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を設定すれば即稼働。
 
 ### ~~機能 #17~~: ✅ 解決済み (VSCode#24, 2026-04-11)
 
