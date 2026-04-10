@@ -206,6 +206,14 @@ web/sitemap.xml          # URL マップ
 
 `edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
 
+### バグ #B4: JWT署名未検証 — note-comments Edge Function（セキュリティ最優先）
+
+**背景**: 2026-03-30 日次レポート / Issue #249。`note-comments/index.ts` が JWT を検証せずにユーザーIDを信頼するため、攻撃者が偽造 JWT で任意ユーザーのコメントを操作可能。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **Web版** | `supabase/functions/note-comments/index.ts` で `supabaseClient.auth.getUser()` による正式認証に切り替えるか、Supabase RLS を有効化。修正後 `deno lint` 0エラー確認 |
+
 ### 機能 #13 (旧番): EF統合（action パラメーター分岐で99本以下に削減）
 
 **背景**: Supabase 100本デプロイ上限 (現在99本運用)。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
