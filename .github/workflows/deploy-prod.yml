@@ -127,6 +127,9 @@ jobs:
           supabase functions delete competitor-feature-sync || true
           # --- issue-auto-resolver slot確保 (user-growth-analytics を Tier 2 に降格) ---
           supabase functions delete user-growth-analytics || true
+          # --- 機能#13: growth-acquisition統合 (signal/report → growth-acquisition に統合) ---
+          supabase functions delete growth-acquisition-signal || true
+          supabase functions delete growth-acquisition-report || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -159,10 +162,9 @@ jobs:
           supabase functions deploy development-stats --no-verify-jwt
           supabase functions deploy system-status --no-verify-jwt
 
-          # --- Tier 1B: Growth & Viral Engine (23) ---
+          # --- Tier 1B: Growth & Viral Engine (22) ---
           supabase functions deploy growth-weekly-digest --no-verify-jwt
-          supabase functions deploy growth-acquisition-signal --no-verify-jwt
-          supabase functions deploy growth-acquisition-report --no-verify-jwt
+          supabase functions deploy growth-acquisition --no-verify-jwt
           supabase functions deploy growth-command-center --no-verify-jwt
           supabase functions deploy growth-referral --no-verify-jwt
           supabase functions deploy growth-share-signal --no-verify-jwt
@@ -184,7 +186,7 @@ jobs:
           supabase functions deploy viral-growth-pipeline --no-verify-jwt
           supabase functions deploy viral-growth-engine --no-verify-jwt
 
-          # --- Tier 1C: AI & Agent System (12) ---
+          # --- Tier 1C: AI & Agent System (13) ---
           supabase functions deploy daily-judgment --no-verify-jwt
           supabase functions deploy ai-assistant --no-verify-jwt
           supabase functions deploy ai-search --no-verify-jwt
@@ -197,6 +199,7 @@ jobs:
           supabase functions deploy agent-task-router --no-verify-jwt
           supabase functions deploy agent-performance-monitor --no-verify-jwt
           supabase functions deploy virtual-organization --no-verify-jwt
+          supabase functions deploy my-ai-agent --no-verify-jwt
 
           # --- Tier 1D: Schedule & Automation (10) ---
           supabase functions deploy schedule-daily-digest --no-verify-jwt
@@ -258,6 +261,7 @@ jobs:
           # Total: 99 functions deployed (Supabase project limit: 100)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # growth-acquisition-signal, growth-acquisition-report (機能#13で growth-acquisition に統合),
           # user-growth-analytics, code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
@@ -369,7 +373,7 @@ jobs:
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | Tier 1: 100本デプロイ済み |"
+            echo "| Edge Functions | Tier 1: 99本デプロイ済み |"
           } >> $GITHUB_STEP_SUMMARY
 
   run-batch:

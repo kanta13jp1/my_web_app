@@ -121,7 +121,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
-| `daily-report.yml` | 08:58 JST 毎日 | Supabase API + X投稿 + 競合モニタリング (Claude Scheduleの2分前) |
+| `daily-report.yml` | 07:30 JST 毎日 | Supabase API + X投稿 + 競合モニタリング (Claude Scheduleの1.5時間前) |
 | `cs-check.yml` | 毎時 :07 | CS自動対応 + PR自動レビュー + ヘルスチェック |
 | `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
