@@ -3638,3 +3638,31 @@ VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 
 
 - Tier1=100→99、Tier2=141→142 を3箇所修正
 - 機能#13の説明文も 100→99 に更新
+
+---
+
+## セッション記録: 2026-04-10 VSCode版#21 (ダークテーマ継続・YouTubeStats改善)
+
+### 実施内容
+
+#### YouTube統計ページ改善 — commit 58c6789e
+
+`lib/pages/youtube_stats_page.dart` の TSV パーサーを強化:
+
+1. **quoted改行対応**: `_mergeQuotedLines()` で `"森ようすけ\nかごしま彰宏"` のような複数出演者行を正しく解析
+2. **マルチスナップショット自動検出**: `2026/M/D` 形式ヘッダー行を検出し5スナップショット分を一括upsert。`views==0` の未収録行はスキップ
+3. UI: 結果メッセージに `(5スナップショット日を自動検出)` を表示
+
+#### ダークテーマ継続 — commit 07c96df7
+
+`lib/pages/election_strategy_page.dart`:
+
+- `FloatingActionButton.small(backgroundColor: Colors.white)` → `colorScheme.surface`
+- Station Card `color: Colors.white` → `colorScheme.surface` (isDark時も対応)
+
+#### 矛盾チェック (ルール8)
+
+- `Colors.white` 全ページ再スキャン: 残存は全て TextStyle/spinner/chart tooltip/map marker — 全て意図的
+- flutter analyze lib/ → **0 issues**
+- markdownlint → **0 issues**
+- ページ数: 193本 (COMPRESSED_PROMPT_V3と一致)
