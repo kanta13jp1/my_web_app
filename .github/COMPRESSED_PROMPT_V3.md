@@ -181,7 +181,7 @@ web/sitemap.xml          # URL マップ
 `schedule-daily-digest` / `get-support-tickets` / `reply-support-request` / `get-home-dashboard` / `post-x-update` / `get-growth-roadmap-progress` / `get-competitor-features` / `health-check` / `check-competitor-updates`
 
 **主要機能 EF**:
-`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request`
+`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager`
 
 > **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(142本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
