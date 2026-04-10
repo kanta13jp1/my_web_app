@@ -396,6 +396,22 @@ web/sitemap.xml          # URL マップ
 
 > **Web版へ**: 主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すると CI で自動テストが走る体制が整った。
 
+### CI/CD改善 #C5: 2026-04-02〜2026-04-10 日次レポート分析 (PowerShell版#26, 2026-04-11)
+
+**背景**: 2026-04-02〜2026-04-10 の9日分レポートを一括分析。全報告を横断すると以下の重複パターンが確認された。
+
+| 課題 | 分析結果 | ステータス |
+| --- | --- | --- |
+| Supabase API接続ブロック (全9日分レポート) | CI/CD改善 #C1 で解決済み (daily-report.yml GitHub Actions移管) | ✅ 確認済み |
+| X投稿失敗 (全9日分) | CI/CD改善 #C1 で解決済み (daily-report.yml Step5 + リトライ) | ✅ 確認済み |
+| 競合監視3社のみ | CI/CD改善 #C1 で解決済み (7社に拡大) | ✅ 確認済み |
+| cs-check.yml / daily-report.yml GH006 | CI/CD改善 #C2 で解決済み (PR→マージ方式) | ✅ 確認済み |
+| deno test CI未統合 | CI/CD改善 #C4 で解決済み | ✅ 確認済み |
+| 全10ワークフローに GITHUB_STEP_SUMMARY 未追加 | PS#27 (2026-04-09) で解決済み (別セッション) | ✅ 確認済み |
+| workflow-failure-handler.yml 未追加 | PS#27 (2026-04-09) で解決済み — 失敗時 Issue 自動生成 + cs-check 自動修復 | ✅ 確認済み |
+
+**新規追加改善なし**: 2026-04-02〜2026-04-10 のレポートで提言された全CI/CD改善は既に対応済みを確認。
+
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
 
 > feature_requests 投票上位。優先度順に実装検討する。
