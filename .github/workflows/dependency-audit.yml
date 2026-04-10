@@ -83,13 +83,70 @@ jobs:
           echo "unpinned=$UNPINNED_COUNT" >> $GITHUB_OUTPUT
           echo "📦 Deno imports: pinned=$PINNED_COUNT, unpinned=$UNPINNED_COUNT"
 
+      # ── docs分析発見: Deno std古バージョン検出 ─────────────────────────────
+      - name: Check Deno std version (古化検出)
+        id: deno_std_version
+        run: |
+          echo "" >> /tmp/audit_report.txt
+          echo "## Deno std バージョン古化チェック" >> /tmp/audit_report.txt
+          echo "" >> /tmp/audit_report.txt
+
+          # std@0.1xx.0 系 (2023年以前の古バージョン) を検出
+          OLD_STD_COUNT=$(grep -r "deno\.land/std@0\.\(1[0-9][0-9]\|[0-9][0-9]\)\." \
+            supabase/functions/ --include="*.ts" 2>/dev/null | \
+            grep -v "_shared" | wc -l | tr -d ' ')
+
+          CURRENT_STD=$(grep -roh "deno\.land/std@[0-9.]*" \
+            supabase/functions/ --include="*.ts" 2>/dev/null | \
+            head -1 | grep -oP 'std@\K[0-9.]+' || echo "不明")
+
+          echo "old_std_count=$OLD_STD_COUNT" >> $GITHUB_OUTPUT
+          echo "current_std=$CURRENT_STD" >> $GITHUB_OUTPUT
+
+          if [ "$OLD_STD_COUNT" -gt "0" ] 2>/dev/null; then
+            echo "⚠️ std@${CURRENT_STD} (古バージョン) を使用: ${OLD_STD_COUNT}件" >> /tmp/audit_report.txt
+            echo "   推奨: jsr:@std/* または std@0.220.0+ に更新" >> /tmp/audit_report.txt
+          else
+            echo "✅ Deno std バージョン問題なし" >> /tmp/audit_report.txt
+          fi
+          echo "📦 Deno std 古化: ${OLD_STD_COUNT}件 (現在: std@${CURRENT_STD})"
+
+      # ── docs分析発見: pubspec.yaml バージョン未固定依存チェック ────────────
+      - name: Check pubspec.yaml unconstrained dependencies
+        id: pubspec_unconstrained
+        run: |
+          echo "" >> /tmp/audit_report.txt
+          echo "## pubspec.yaml バージョン制約チェック" >> /tmp/audit_report.txt
+          echo "" >> /tmp/audit_report.txt
+
+          UNCONSTRAINED=""
+          # dependencies / dev_dependencies セクション内の "any" を検出
+          while IFS= read -r line; do
+            PKG=$(echo "$line" | grep -E '^\s+[a-z_]+:\s+any\s*$' | \
+              grep -oP '^\s+\K[a-z_]+(?=:)' || true)
+            if [ -n "$PKG" ]; then
+              UNCONSTRAINED="${UNCONSTRAINED} $PKG"
+              echo "⚠️ バージョン未固定: $PKG: any" >> /tmp/audit_report.txt
+            fi
+          done < pubspec.yaml
+
+          UNCONSTRAINED_COUNT=$(echo "$UNCONSTRAINED" | tr -s ' ' '\n' | grep -c '.' 2>/dev/null || echo "0")
+          echo "unconstrained_count=$UNCONSTRAINED_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$UNCONSTRAINED_COUNT" = "0" ]; then
+            echo "✅ 全パッケージにバージョン制約あり" >> /tmp/audit_report.txt
+          fi
+          echo "📦 pubspec.yaml 未固定パッケージ: ${UNCONSTRAINED_COUNT}件 (${UNCONSTRAINED})"
+
       - name: Record to schedule_task_runs
         if: always()
         run: |
           OUTDATED="${{ steps.flutter_outdated.outputs.outdated_count }}"
           UNPINNED="${{ steps.deno_imports.outputs.unpinned }}"
+          OLD_STD="${{ steps.deno_std_version.outputs.old_std_count }}"
+          UNCONSTRAINED="${{ steps.pubspec_unconstrained.outputs.unconstrained_count }}"
           STATUS="success"
-          SUMMARY="Dependency Audit: flutter_outdated=${OUTDATED}, deno_unpinned=${UNPINNED}"
+          SUMMARY="Dependency Audit: flutter_outdated=${OUTDATED}, deno_unpinned=${UNPINNED}, deno_std_old=${OLD_STD:-0}, pubspec_any=${UNCONSTRAINED:-0}"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -105,8 +162,13 @@ jobs:
         run: |
           OUTDATED="${{ steps.flutter_outdated.outputs.outdated_count }}"
           UNPINNED="${{ steps.deno_imports.outputs.unpinned }}"
+          OLD_STD="${{ steps.deno_std_version.outputs.old_std_count }}"
+          CURRENT_STD="${{ steps.deno_std_version.outputs.current_std }}"
+          UNCONSTRAINED="${{ steps.pubspec_unconstrained.outputs.unconstrained_count }}"
           FLUTTER_ICON=$([ "$OUTDATED" = "0" ] && echo "✅" || echo "⚠️ ${OUTDATED}件")
           DENO_ICON=$([ "$UNPINNED" = "0" ] && echo "✅" || echo "⚠️ ${UNPINNED}件")
+          STD_ICON=$([ "${OLD_STD:-0}" = "0" ] && echo "✅" || echo "⚠️ ${OLD_STD}件 (std@${CURRENT_STD})")
+          PKG_ICON=$([ "${UNCONSTRAINED:-0}" = "0" ] && echo "✅" || echo "⚠️ ${UNCONSTRAINED}件")
           {
             echo "## Dependency Audit $(TZ=Asia/Tokyo date +'%Y-%m-%d')"
             echo ""
@@ -114,6 +176,8 @@ jobs:
             echo "|-----------|------|"
             echo "| Flutter pub outdated | $FLUTTER_ICON |"
             echo "| Deno import (unpinned) | $DENO_ICON |"
+            echo "| Deno std 古バージョン | $STD_ICON |"
+            echo "| pubspec.yaml 未固定 (`any`) | $PKG_ICON |"
             echo ""
             echo "<details><summary>詳細レポート</summary>"
             echo ""
@@ -125,4 +189,6 @@ jobs:
           echo "✅ 依存パッケージ監査完了"
           echo "  Flutter outdated: ${OUTDATED}件"
           echo "  Deno unpinned: ${UNPINNED}件"
+          echo "  Deno std 古化: ${OLD_STD:-0}件"
+          echo "  pubspec 未固定: ${UNCONSTRAINED:-0}件"
           cat /tmp/audit_report.txt 2>/dev/null || true

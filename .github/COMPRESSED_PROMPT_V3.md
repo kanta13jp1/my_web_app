@@ -118,7 +118,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
-10. **毎セッション: docs/ .md 全件確認（全インスタンス）** — `docs/` 配下の全 .md ファイル（自動生成・アーカイブを除く）を読み、記載内容（数値・スコープ・機能名・ファイルパス）と現在の実装・CI設定との矛盾を修正する。対象: `CICD_SETUP_GUIDE.md` / `CONTRIBUTING.md` / `MULTI_INSTANCE_COORDINATION.md` / `README.md` / `DESIGN_TOOLING_SETUP.md` / `user-docs/*.md`
+10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
 11. **セッション開始: Master Brain 参照（必須）** — `memory/MEMORY.md` を必ず読んで前回の成功パターン・禁止事項・発見を最初に把握する。「記憶が消える弱点」を永続メモリで補う
 12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `python notebooklm_research.py` で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。高負荷な分析を Google 側に無料で投げる
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
@@ -395,6 +395,18 @@ web/sitemap.xml          # URL マップ
 | `flutter test` の結果が Job Summary に未表示 | `id: flutter_test` / `id: deno_test` 追加、Job Summary にテスト結果行を追加 | ✅ 解決済み (PS#24) |
 
 > **Web版へ**: 主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すると CI で自動テストが走る体制が整った。
+
+### CI/CD改善 #C6: docs/ 戦略ドキュメント分析からの反映 (PowerShell版#27, 2026-04-11)
+
+**背景**: 2026-04-11 初回 docs/ 戦略ドキュメント全件分析 (新ルール #10 初回実施)。計24ドキュメントを横断分析し、CI/CD スコープに影響する2件の技術的負債を特定。
+
+| 課題 | 対応 | ステータス |
+| --- | --- | --- |
+| `deno.land/std@0.168.0` 古化 (238本・2023年版) | `dependency-audit.yml` に古バージョン検出ステップを追加 | ✅ 解決済み (PS#27) |
+| `pubspec.yaml` の `http: any` (バージョン制約なし) | `dependency-audit.yml` に unconstrained deps チェックを追加 | ✅ 解決済み (PS#27) |
+| 多数の技術文書が2025年時点の旧情報 (GitHub Secrets未設定・Backend Migration未着手 等) | 現状と乖離した文書として記録 — Windows版が次回更新 | 🔄 Windows版へ |
+
+**Windows版への引き継ぎ**: `docs/technical/BACKEND_MIGRATION_PLAN.md`, `docs/technical/GEMINI_MIGRATION_GUIDE.md`, `docs/technical/REFACTORING_PLAN.md`, `docs/technical/CICD_SETUP_GUIDE.md` は2025年時点の記述が残存。現在の実装状態と照合して更新・アーカイブ化すること。
 
 ### CI/CD改善 #C5: 2026-04-02〜2026-04-10 日次レポート分析 (PowerShell版#26, 2026-04-11)
 
