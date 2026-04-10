@@ -64,7 +64,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 
 セッション開始時に必ず以下を確認する:
 
-```
+```text
 C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.md
 ```
 
@@ -100,7 +100,7 @@ PYTHONUTF8=1 python notebooklm_research.py --url "https://..." --query "要約�
 
 スクリプトがない or 認証未完了の場合は以下を案内して処理を止める:
 
-```
+```text
 notebooklm login が必要です:
   pip install "notebooklm-py[browser]"
   playwright install chromium
@@ -116,9 +116,11 @@ notebooklm login が必要です:
    - 失敗・禁止事項 → `memory/feedback_correction_YYYYMMDD.md`
    - 新規発見 → `memory/project_YYYYMMDD.md`
 2. NotebookLM Master Brain に蓄積（認証済みの場合のみ）:
+
    ```bash
    PYTHONUTF8=1 python notebooklm_research.py --notebook "jibun-master-brain" "[セッション要約300字]"
    ```
+
 3. 未完了タスク → `MEMORY.md` 末尾にコメント記録
 
 **これを怠るとセッション間の記憶が消え、同じ失敗を繰り返す。**
