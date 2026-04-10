@@ -1,8 +1,12 @@
 # Google Gemini APIへの移行ガイド
 
+> **⚠️ アーカイブ済 (2026-04-11 Windows版#28 確認)**: このドキュメントは 2025年11月時点の計画書です。
+> Gemini API 移行は **実施済み**: `gemini-election-analysis` / `local-election-intelligence` / `ai-assistant` EF が
+> Gemini 2.5 Flash を本番稼働中。OpenAI APIは使用していません。
+
 **作成日**: 2025年11月8日
 **目的**: OpenAI APIからGoogle Gemini APIへ移行し、レート制限問題を解決
-**ステータス**: 実装待ち
+**ステータス**: ~~実装待ち~~ ✅ 完了 (2026年)
 
 ---
 
