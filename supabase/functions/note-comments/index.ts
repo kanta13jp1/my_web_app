@@ -6,6 +6,7 @@
  * DELETE { id }                 → { ok: true }
  *
  * All operations require a valid JWT (user must own the note).
+ * JWT signature is verified via supabaseClient.auth.getUser() — NOT manual base64 decode.
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -26,21 +27,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function getUserIdFromJwt(req: Request): string | null {
-  const auth = req.headers.get("authorization") ?? "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token) return null;
-  try {
-    // JWT payload is base64url-encoded second segment
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return payload.sub ?? null;
-  } catch {
-    return null;
-  }
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS });
@@ -50,11 +36,6 @@ serve(async (req) => {
     return json({ error: "misconfigured" }, 500);
   }
 
-  const userId = getUserIdFromJwt(req);
-  if (!userId) {
-    return json({ error: "unauthorized" }, 401);
-  }
-
   // Use ANON_KEY + user JWT so RLS policies on note_comments apply at DB level.
   // SERVICE_ROLE_KEY is intentionally NOT used for user-scoped operations.
   const authHeader = req.headers.get("authorization") ?? "";
@@ -62,6 +43,14 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
     auth: { autoRefreshToken: false, persistSession: false },
   });
+
+  // Verify JWT signature via Supabase auth — rejects forged tokens.
+  // This replaces the previous manual base64-decode approach which did NOT verify signatures.
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) {
+    return json({ error: "unauthorized" }, 401);
+  }
+  const userId = user.id;
 
   // ── GET ──────────────────────────────────────────────────────────────────────
   if (req.method === "GET") {

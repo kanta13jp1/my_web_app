@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 VSCode#25 (LP 16のこと: 通知センター・電子署名 LP追加完了)
+最終更新: 2026-04-10 Web#26 (セキュリティ: note-comments JWT署名検証修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3924,3 +3924,22 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **バグ #B4**: JWT 認証修正 (Web版スコープ)
 2. **機能 #13**: EF統合 action パラメーター分岐 (Web版+PowerShell版)
 3. **機能 #16**: ブログ実投稿パイプライン (Web版)
+
+---
+
+## セッション記録: Web#26 (2026-04-10)
+
+### 完了タスク
+
+- **バグ #B4 解決**: `note-comments/index.ts` の JWT 署名検証修正
+  - 削除: `getUserIdFromJwt()` — base64 decode のみで署名未検証 (脆弱性)
+  - 追加: `client.auth.getUser()` による Supabase 公式JWT署名検証
+  - `deno lint` 0エラー確認
+- **COMPRESSED_PROMPT_V3.md**: バグ #B4 → ✅ 解決済み (Web版#26) にマーク
+- **機能 #21/#22**: COMPRESSED_PROMPT_V3.md の LP訴求タスクを解決済みにマーク (前セッション分)
+
+### 次回優先
+
+1. **機能 #13**: EF統合 action パラメーター分岐 (Web版+PowerShell版)
+2. **機能 #16**: ブログ実投稿パイプライン (Web版)
+3. 新規スタブページの実装継続

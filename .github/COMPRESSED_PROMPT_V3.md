@@ -208,13 +208,9 @@ web/sitemap.xml          # URL マップ
 
 `edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
 
-### バグ #B4: JWT署名未検証 — note-comments Edge Function（セキュリティ最優先）
+### ~~バグ #B4~~: ✅ 解決済み (Web版#26, 2026-04-10)
 
-**背景**: 2026-03-30 日次レポート / Issue #249。`note-comments/index.ts` が JWT を検証せずにユーザーIDを信頼するため、攻撃者が偽造 JWT で任意ユーザーのコメントを操作可能。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **Web版** | `supabase/functions/note-comments/index.ts` で `supabaseClient.auth.getUser()` による正式認証に切り替えるか、Supabase RLS を有効化。修正後 `deno lint` 0エラー確認 |
+`note-comments/index.ts` の `getUserIdFromJwt()` (署名未検証) を削除し、`client.auth.getUser()` による正式JWT署名検証に置き換え。`deno lint` 0エラー確認済み。
 
 ### 機能 #13 (旧番): EF統合（action パラメーター分岐で99本以下に削減）
 
@@ -252,7 +248,14 @@ web/sitemap.xml          # URL マップ
 ### ~~機能 #20~~: ✅ 解決済み (VSCode#24, 2026-04-11)
 
 ノートコメント・リアクション・OGP シェアを `_buildUniqueValueSection()` に追加。タイトル「14のこと」に更新。
-### 機能 #21: 通知センターを LP に追加
+
+### ~~機能 #21~~: ✅ 解決済み (VSCode#25, 2026-04-11)
+
+通知センターを `_buildUniqueValueSection()` に追加。
+
+### ~~機能 #22~~: ✅ 解決済み (VSCode#25, 2026-04-11)
+
+電子署名を `_buildUniqueValueSection()` に追加。タイトル「16のこと」に更新。
 
 **背景**: 2026-04-01 実装完了。NotificationsPage + `notification-center` EF が稼働中だが LP 未掲載。
 
@@ -267,7 +270,6 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | **VSCode版** | `landing_page.dart` に電子署名機能を法人向けセクションまたは差別化訴求として追加 |
-
 
 ---
 
