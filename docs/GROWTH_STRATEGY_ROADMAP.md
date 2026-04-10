@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#26 (2026-04-01日次レポート分析: EF158本体制・電子署名/AI自動化訴求済み確認)
+最終更新: 2026-04-11 Windows#27 (COMPRESSED_PROMPT_V3 コア機能リスト#49-#58追加確認・LP52のこと更新確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4564,3 +4564,39 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 
 1. **LP漏れ追加継続**: `access_control_page.dart`, `inventory_barcode_page.dart`, `template_marketplace_page.dart` など未追加ページを確認
 2. **flutter analyze 0エラー維持**: landing_page.dart の analyze 確認
+
+---
+
+## セッション記録: Windows版#27 (2026-04-11, COMPRESSED_PROMPT_V3 状態確認)
+
+### 変更確認サマリー
+
+前回セッション開始時点 (コア機能リスト #48 まで) からの差分を把握・記録。
+
+| 更新内容 | コミット | 詳細 |
+| --- | --- | --- |
+| コア機能リスト #49〜#58 追加 | VSCode#33 `100ff7fa` | ビデオ会議/スマート受信箱/パスワード金庫/ポッドキャスト管理/スクリーン録画/オークション/音声メモ文字起こし/仮想ホワイトボード/ワークフロー自動化/QRコード生成 — 全て ✅ LP済 |
+| LP「44のこと」→「52のこと」 | VSCode#33 `100ff7fa` | 8機能を `_buildUniqueValueSection()` に追加 |
+| PowerShell版#25: GITHUB_TOKEN 直接 push 禁止対応 | `6825b7f9` | ブランチ保護バイパス不可 → PR→マージ方式に戻す (`cs-check.yml` / `daily-report.yml`) |
+
+### 残課題チェック (Windows版視点)
+
+| 項目 | 状態 |
+| --- | --- |
+| #48 マインドマップ LP未訴求 | ⚠️ 引き続き未対応 — VSCode版タスク |
+| タスク T-1 第2弾 (`2026-03-28-note-comments.md`) | ⚠️ 未実行 — 継続課題 |
+| deno test 技術負債 | ⚠️ CI ステップは整備済み (PS#24) — テストファイル未作成 |
+
+### COMPRESSED_PROMPT_V3.md 現状 (2026-04-11 確認)
+
+- **コア機能リスト**: #1〜#58 (全58項目 / #48のみ LP未訴求 / 残57項目 LP済)
+- **Edge Functions**: Tier1 99本デプロイ済 / Tier2 142本コードのみ / 合計 241本
+- **LP**: 「52のこと」(VSCode#33 完了)
+- **CI/CD**: 13ワークフロー完備 (deno test / flutter test Job Summary 表示済み PS#24)
+- **ページ数**: 195ページ (lib/pages/)
+
+### 次回優先
+
+1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **#48 マインドマップ LP追加**: VSCode版に依頼継続
+3. **日次レポート分析継続**: `docs/daily-reports/2026-04-02.md` 以降を順次処理
