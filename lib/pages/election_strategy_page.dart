@@ -679,7 +679,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.9),
+                color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(color: Colors.black26, blurRadius: 4),

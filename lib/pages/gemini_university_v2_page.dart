@@ -761,7 +761,9 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                     module.title,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isLocked ? Colors.grey : Colors.black,
+                      color: isLocked
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
