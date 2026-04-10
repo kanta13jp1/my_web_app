@@ -22,8 +22,8 @@
 
 **実装ファイル**:
 
-- `/lib/pages/statistics_page.dart`
-- `/lib/services/presence_service.dart`
+- `/lib/pages/stats_page.dart` (ゲーミフィケーション統計)
+- `/lib/services/growth_mission_service.dart` (プレゼンス・統計更新)
 - `/lib/models/site_statistics.dart`
 - `/lib/models/user_presence.dart`
 
@@ -51,7 +51,6 @@
 **実装ファイル**:
 
 - `/lib/pages/referral_page.dart`
-- `/lib/services/referral_service.dart`
 - `/lib/models/referral_code.dart`
 
 **データベーステーブル**:
@@ -79,7 +78,7 @@
 
 **実装場所**:
 
-- `/lib/pages/auth_page.dart` の `_handleAuth()` メソッド
+- `/lib/pages/landing_page.dart` の認証フロー
 
 ---
 
@@ -100,8 +99,7 @@
 
 **実装ファイル**:
 
-- `/lib/services/daily_login_service.dart`
-- HomePageとAuthPageで自動チェック
+- `/lib/services/growth_mission_service.dart` (ログインボーナス処理含む)
 
 **データベーステーブル**:
 
@@ -126,7 +124,6 @@
 
 **実装ファイル**:
 
-- `/lib/pages/daily_challenges_page.dart`
 - `/lib/services/daily_challenge_service.dart`
 - `/lib/models/daily_challenge.dart`
 
@@ -155,7 +152,7 @@
 
 **実装ファイル**:
 
-- `/lib/pages/memo_gallery_page.dart`
+- `/lib/pages/public_memo_directory_page.dart`
 - `/lib/services/public_memo_service.dart`
 - `/lib/models/public_memo.dart`
 
@@ -181,7 +178,7 @@
 **実装場所**:
 
 - HomePageの `initState()` と `dispose()` で自動的に開始/停止
-- `/lib/services/presence_service.dart`
+- `/lib/services/growth_mission_service.dart`
 
 ---
 
