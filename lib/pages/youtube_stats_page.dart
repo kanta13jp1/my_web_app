@@ -130,8 +130,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
 
     final channelHandle = _channelHandleController.text.trim();
     final snapshotDate = _snapshotDateController.text.trim();
-    if (channelHandle.isEmpty || snapshotDate.isEmpty) {
-      _setResult('チャンネルハンドルとスナップショット日付を入力してください', false);
+    if (channelHandle.isEmpty) {
+      _setResult('チャンネルハンドルを入力してください', false);
       return;
     }
 
@@ -173,7 +173,15 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
         total += batch.length;
       }
 
-      _setResult('✅ $total 件をインポートしました ($snapshotDate)', true);
+      // 検出されたスナップショット日数を表示
+      final detectedDates = records
+          .map((r) => r['snapshot_date']?.toString() ?? '')
+          .toSet()
+        ..remove('');
+      final dateInfo = detectedDates.length > 1
+          ? ' (${detectedDates.length}スナップショット日を自動検出)'
+          : ' (${detectedDates.firstOrNull ?? snapshotDate})';
+      _setResult('✅ $total 件をインポートしました$dateInfo', true);
       await _loadStats();
       _tsvController.clear();
       _tabController.animateTo(1);
@@ -184,56 +192,120 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
     }
   }
 
+  /// RFC 4180 準拠: ダブルクォート内の改行を空白に置換してから行分割できるよう前処理
+  static String _mergeQuotedLines(String tsv) {
+    final buf = StringBuffer();
+    var inQuote = false;
+    for (var i = 0; i < tsv.length; i++) {
+      final c = tsv[i];
+      if (c == '"') {
+        inQuote = !inQuote;
+        buf.write(c);
+      } else if (c == '\n' && inQuote) {
+        buf.write(' '); // quoted 改行 → スペースに置換
+      } else {
+        buf.write(c);
+      }
+    }
+    return buf.toString();
+  }
+
+  /// "2026/4/2" → "2026-04-02"
+  static String _normalizeDate(String d) {
+    final parts = d.split('/');
+    if (parts.length == 3) {
+      return '${parts[0].padLeft(4, '0')}-'
+          '${parts[1].padLeft(2, '0')}-'
+          '${parts[2].padLeft(2, '0')}';
+    }
+    return d;
+  }
+
   List<Map<String, dynamic>> _parseTsv(
     String tsv,
     String channelHandle,
     String snapshotDate,
   ) {
-    final lines = tsv.split('\n').map((l) => l.trimRight()).toList();
+    final merged = _mergeQuotedLines(tsv);
+    final lines = merged.split('\n').map((l) => l.trimRight()).toList();
     final records = <Map<String, dynamic>>[];
+
+    // マルチスナップショット形式を検出:
+    // 「URL / 種別 / 投稿日 / 出演者 / 2026/M/D ...」のヘッダー行を探す
+    List<String>? snapshotDates; // スナップショット日付リスト (col 6 から3列ずつ)
 
     for (final line in lines) {
       if (line.isEmpty) continue;
       final cols = line.split('\t');
-      if (cols.length < 4) continue;
 
-      // 行の先頭が数字（行番号）かチェック
+      // 日付ヘッダー行: "2026/" を含む列がある
+      if (snapshotDates == null &&
+          cols.any((c) => c.trim().contains('2026/'))) {
+        snapshotDates = [];
+        for (var i = 6; i < cols.length; i += 3) {
+          final d = cols[i].trim();
+          if (d.isNotEmpty) snapshotDates.add(_normalizeDate(d));
+        }
+        continue;
+      }
+
+      // 先頭が行番号（数字）かチェック
       final firstCol = cols[0].trim();
-      final rowNum = int.tryParse(firstCol);
-      if (rowNum == null) continue; // ヘッダー行はスキップ
-
-      // 期待フォーマット: 行番号, URL, 種別, 投稿日, タイトル, 出演者, [コメント, 高評価, 視聴回数...]
+      if (int.tryParse(firstCol) == null) continue; // ヘッダー/空行はスキップ
       if (cols.length < 6) continue;
+
       final url = cols[1].trim();
       final type = cols[2].trim();
       final publishedAt = cols[3].trim();
       final title = cols[4].trim();
-      final performers = cols[5].trim();
+      final performers = cols[5].trim().replaceAll('"', '');
 
       if (url.isEmpty || !url.startsWith('http')) continue;
 
-      // 最後の3カラム（コメント数・高評価数・視聴回数）を取得
-      // 複数日の場合は最後の3カラムが最新
-      int views = 0, likes = 0, comments = 0;
-      final numCols = cols.length;
-      if (numCols >= 9) {
-        comments = _parseInt(cols[numCols - 3]);
-        likes = _parseInt(cols[numCols - 2]);
-        views = _parseInt(cols[numCols - 1]);
+      if (snapshotDates != null && snapshotDates.isNotEmpty) {
+        // マルチスナップショット: 各日付ごとにレコードを生成
+        for (var i = 0; i < snapshotDates.length; i++) {
+          final baseCol = 6 + i * 3;
+          if (baseCol + 2 >= cols.length) break;
+          final comments = _parseInt(cols[baseCol]);
+          final likes = _parseInt(cols[baseCol + 1]);
+          final views = _parseInt(cols[baseCol + 2]);
+          if (views == 0) continue; // データ未収録スナップショットをスキップ
+          records.add({
+            'channel_handle': channelHandle,
+            'video_url': url,
+            'video_type': type,
+            'published_at': publishedAt,
+            'title': title,
+            'performers': performers,
+            'snapshot_date': snapshotDates[i],
+            'views': views,
+            'likes': likes,
+            'comments': comments,
+          });
+        }
+      } else {
+        // シングルスナップショット: 最後の3カラムを使用
+        final numCols = cols.length;
+        int views = 0, likes = 0, comments = 0;
+        if (numCols >= 9) {
+          comments = _parseInt(cols[numCols - 3]);
+          likes = _parseInt(cols[numCols - 2]);
+          views = _parseInt(cols[numCols - 1]);
+        }
+        records.add({
+          'channel_handle': channelHandle,
+          'video_url': url,
+          'video_type': type,
+          'published_at': publishedAt,
+          'title': title,
+          'performers': performers,
+          'snapshot_date': snapshotDate,
+          'views': views,
+          'likes': likes,
+          'comments': comments,
+        });
       }
-
-      records.add({
-        'channel_handle': channelHandle,
-        'video_url': url,
-        'video_type': type,
-        'published_at': publishedAt,
-        'title': title,
-        'performers': performers,
-        'snapshot_date': snapshotDate,
-        'views': views,
-        'likes': likes,
-        'comments': comments,
-      });
     }
     return records;
   }
@@ -314,7 +386,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     '1. YouTube Studio → アナリティクス → コンテンツ\n'
                     '2. 動画一覧テーブルをコピー（Ctrl+A → Ctrl+C）\n'
                     '3. 下のテキストエリアに貼り付け\n'
-                    '4. 列の形式: 行番号 | URL | 種別 | 投稿日 | タイトル | 出演者 | [コメント | 高評価 | 視聴回数]',
+                    '4. 列の形式: 行番号 | URL | 種別 | 投稿日 | タイトル | 出演者 | [コメント | 高評価 | 視聴回数]\n'
+                    '💡 複数日付ヘッダー付きの TSV は全スナップショット日を自動検出してまとめてインポートします',
                     style: TextStyle(fontSize: 12, height: 1.6),
                   ),
                 ],
@@ -344,8 +417,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 child: TextField(
                   controller: _snapshotDateController,
                   decoration: const InputDecoration(
-                    labelText: 'スナップショット日 (YYYY-MM-DD)',
-                    hintText: '2026-04-08',
+                    labelText: 'スナップショット日 (YYYY-MM-DD) ※複数日付TSVは自動検出',
+                    hintText: '2026-04-10',
                     border: OutlineInputBorder(),
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
