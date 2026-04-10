@@ -51,6 +51,10 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
 | 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅ | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
 | 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | 実装中 | `blog-post-manager`, `blog-auto-publisher` |
+| 15 | **見栄ガード** (かっこつけない・見栄をはらない仕組み — 衝動的自己顕示を可視化・抑制) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 17 | **12部署仮想組織 / AI秘書ゴール設定** (Slack・Chatwork・ジョブカン対抗軸) | ✅実装済・LP未訴求 | `AgentOrgPage` (VSCode版) |
+| 18 | **コンビニ経営シミュレーション** (`conveni_stores` テーブル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -220,6 +224,22 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | **Web版** | `blog-auto-publisher` EF を確認し、Zenn API または Zenn CLI 連携で `status='draft'` → `'posted'` に更新するフローを実装。まず Zenn CLI (`npx zenn`) を使った GitHub Actions 連携を検討する |
+### 機能 #17: 見栄ガード・浪費トラッキングを LP 差別化訴求に追加
+
+**背景**: 2026-03-28 日次レポートで追加確認。競合21社にない「自己認識・自己規律」カテゴリの独自機能群が実装済みだが LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の `_buildUniqueValueSection()` または差別化訴求セクションに見栄ガード・浪費トラッキングを追加。文言例: 見栄ガード「かっこつけず・見栄をはらずに生きる仕組み。衝動的な自己顕示を記録・可視化」 |
+
+### 機能 #18: AI組織管理 (12部署仮想組織) を LP 法人訴求に追加
+
+**背景**: Slack・Chatwork・ジョブカンへの対抗軸として訴求力が高く、法人顧客獲得の糸口になる (2026-03-28 レポート提案)。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の法人向けセクションまたは差別化訴求に「12部署AI仮想組織・ゴール管理」を追加 |
+
 
 ---
 
