@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#21 (2026-03-27日次レポート再分析 → 技術記事実投稿タスク機能#45追加)
+最終更新: 2026-04-11 Windows#22 (2026-03-28日次レポート分析 → マインドマップ#48追加・タスクT-1リナンバー・下書き54本確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4391,3 +4391,36 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 - #11 ユーザーフィードバックパイプライン
 - #12 コンソールエラー自動フィードバック投稿
 - #13 思考妨害排除ガード (LP に記載済みか要確認)
+
+---
+
+## セッション記録: Windows版#22 (2026-04-11, 2026-03-28日次レポート分析)
+
+### 分析概要
+
+`docs/daily-reports/2026-03-28.md` を分析。GitHub Actions 移行当日のレポートであり、3提言を現状と照合。
+
+### 3提言の現状
+
+| 提言 | 現在の状態 |
+| --- | --- |
+| ①Zenn/Qiita技術記事を即日公開 | タスク T-1 (下書き54本蓄積・シークレット未設定が唯一のブロッカー) |
+| ②Schedule/GitHub Actions ネットワーク制限恒久対応 | ✅ 完全解決 (daily-report.yml 07:30 JST 正常稼働) |
+| ③12部署仮想組織 & EdgeFunctionSummaryCard をLPに掲載 | ✅ 完全解決 (機能 #17 LP済) |
+
+### 新発見・開発計画反映
+
+1. **マインドマップ機能 (2026-03-28 #241)**: コア機能リスト未記載と判明 → **#48 として追加** (LP未訴求 / VSCode版に LP掲載を依頼)
+
+2. **ブログ下書き 54本確認**: Windows版#21 の「6本」は過小評価だった。実際は54本 (うちZennフロントマター形式 17本) が `docs/blog-drafts/` に蓄積。
+   - **即公開推奨**: `2026-03-28-zenn-database-view.md` (`published: false` 付) — Notion Database実装の記事
+   - **即公開推奨**: `2026-03-27-zenn-schedule-automation.md` — Claude Code Schedule完全自動化
+   - `publish_qiita` アクション: シークレット設定のみで即実行可
+
+3. **「機能 #45 技術記事実投稿」ラベルの修正**: コア機能リスト #45 (アクティビティフィード) と衝突 → 「タスク T-1」にリナンバー。COMPRESSED_PROMPT_V3.md を更新済み。
+
+### 次回優先
+
+1. **タスク T-1 (最優先)**: `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` をSupabaseシークレットに設定 → 記事54本を実投稿
+2. **機能 #48 LP訴求**: マインドマップ機能を LP に追加 (VSCode版)
+3. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新

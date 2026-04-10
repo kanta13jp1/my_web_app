@@ -84,6 +84,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 45 | **アクティビティフィード** (行動ログ・達成記録タイムライン — Discord/Slack対抗) | ✅ LP済 | `lib/pages/activity_feed_page.dart` (VSCode版) |
 | 46 | **報酬・達成バッジ** (ポイント・バッジ獲得ゲーミフィケーション) | ✅ LP済 | `lib/pages/rewards_page.dart` (VSCode版) |
 | 47 | **支払いリマインダー** (月次サブスク・公共料金・ローン返済 — MoneyForward対抗) | ✅ LP済 | `lib/pages/payment_reminder_page.dart` (VSCode版) |
+| 48 | **マインドマップ** (ノード追加・拡大縮小スクロール — アイデア整理・思考可視化) | ✅ LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -329,16 +330,20 @@ web/sitemap.xml          # URL マップ
 | X投稿失敗時のリトライなし | 失敗時に20秒後1回リトライを追加 | ✅ 解決済み (PS#21) |
 | ユーザー数4人で停滞 (2026-03-27〜2026-04-11) | LP機能追加・Zenn/Qiita自動投稿稼働中 → 継続監視 | 🔄 対応中 |
 
-> ✅ **Windows版#21 対応済み**: `GROWTH_STRATEGY_ROADMAP.md` にユーザー獲得停滞緊急度を記録。
-> 「Zenn/Qiita記事実投稿」は **パイプライン完成・下書き6本蓄積済み・シークレット未設定** と確認 → 機能 #45 として計画化。
+> ✅ **Windows版#21/#22 対応済み**: ユーザー獲得停滞緊急度記録。下書き54本(Zenn形式17本)蓄積確認 → タスク T-1 として計画化。
 
-### 機能 #45: 技術記事の実投稿実行 (最優先・即実行可能)
+### タスク T-1: 技術記事の実投稿実行 (最優先・即実行可能)
 
-**背景**: 2026-03-27 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と提言。パイプライン (`blog-auto-publisher`) が完成した今こそ実行フェーズ。
+> ※コア機能リストの番号と競合しないよう「タスク T-1」として管理する。
+
+**背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
 **現状**:
 
-- 下書き6本が `docs/blog-drafts/2026-03-27-*.md` に存在 (Zenn/Qiita/dev.to/note/Medium/はてな)
+- **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
+  - 推奨優先: `2026-03-28-zenn-database-view.md` (Notion Database実装, `published: false` 付)
+  - 推奨優先: `2026-03-27-zenn-schedule-automation.md` (Claude Code Schedule完全自動化)
+  - 推奨優先: `2026-03-27-qiita-schedule-setup.md` (CS自動化手順 Qiita向け)
 - `blog-auto-publisher` EF の `auto_publish` アクション実装済み
 - **ブロッカー**: Supabase シークレット 2件が未設定
 
@@ -347,10 +352,10 @@ web/sitemap.xml          # URL マップ
 | 担当 | 作業 |
 | --- | --- |
 | **ユーザー (手動)** | Supabase ダッシュボード → Edge Functions → Secrets に `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を追加 |
-| **Web版 or 任意** | `blog-auto-publisher` EF の `auto_publish` を呼び出し `docs/blog-drafts/2026-03-27-zenn-schedule-automation.md` を Zenn CLI 経由で投稿 (Zenn は GitHub 連携のため手動) |
 | **Web版 or 任意** | シークレット設定後に `publish_qiita` アクションで `2026-03-27-qiita-schedule-setup.md` を Qiita に投稿 |
+| **ユーザー (Zenn)** | `2026-03-28-zenn-database-view.md` は `published: false` → `true` に変更して Zenn GitHub 連携でデプロイ |
 
-**推定ROI**: #buildinpublic / #FlutterWeb / #Supabase タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
+**推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
 ### CI/CD改善 #C2: 2026-03-28 日次レポート分析からの反映 (PowerShell版#22, 2026-04-11)
 
