@@ -266,6 +266,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('youtube-stats', 'YouTube チャンネル統計管理 (TSVインポート)', true, '/youtube-stats', 'YouTube統計管理ページ > TSVインポート・統計一覧'),
     // 追加 (cs-check 自動連携)
     _FnDef('submit-feedback', 'フィードバック投稿・通知 (確認メール + GitHub Issue)', true, '/feedback', 'フィードバックページ > 投稿フォーム'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('growth-acquisition', '成長獲得統合 (Signal記録+レポート)', true, '/growth-acquisition', '成長獲得ダッシュボードページ'),
+    _FnDef('my-ai-agent', 'マイAIエージェント フロー実行エンジン', true, '/my-ai-agent', 'マイAIエージェントページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

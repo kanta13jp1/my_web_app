@@ -60,6 +60,7 @@ import 'package:my_web_app/pages/ai_suggest_tags_page.dart';
 import 'package:my_web_app/pages/analyze_reality_page.dart';
 import 'package:my_web_app/pages/support_tickets_page.dart';
 import 'package:my_web_app/pages/growth_achievement_summary_page.dart';
+import 'package:my_web_app/pages/growth_acquisition_page.dart';
 import 'package:my_web_app/pages/growth_acquisition_report_page.dart';
 import 'package:my_web_app/pages/growth_command_center_page.dart';
 import 'package:my_web_app/pages/growth_share_signal_page.dart';
@@ -559,6 +560,10 @@ class MyApp extends StatelessWidget {
           case '/growth-achievement-summary':
             return MaterialPageRoute(
               builder: (_) => const GrowthAchievementSummaryPage(),
+            );
+          case '/growth-acquisition':
+            return MaterialPageRoute(
+              builder: (_) => const GrowthAcquisitionPage(),
             );
           case '/growth-acquisition-report':
             return MaterialPageRoute(
