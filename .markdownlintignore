@@ -6,6 +6,15 @@ docs/competitor-reports/
 docs/incident-reports/
 docs/security-audit/
 docs/blog-drafts/
+docs/blog/
+
+# Archive (historical, read-only)
+docs/archive/
+
+# Older reference docs (pre-2026, not actively maintained)
+docs/roadmaps/
+docs/technical/
+docs/email-templates/
 
 # System files
 .claude/
