@@ -121,7 +121,6 @@ Supabaseのダッシュボードにログインし、SQL Editorで`supabase_migr
 - `lib/pages/stats_page.dart` - 統計・実績ページ
 - `lib/widgets/achievement_card_widget.dart` - 実績カード
 - `lib/widgets/level_display_widget.dart` - レベル表示
-- `lib/widgets/stats_overview_widget.dart` - 統計概要
 - `lib/widgets/achievement_notification.dart` - 実績通知
 
 ### 今後の拡張可能性
