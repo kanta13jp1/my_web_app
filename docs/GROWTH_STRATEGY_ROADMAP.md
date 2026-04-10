@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-10 daily-development #2 (DNS・ドメイン管理全面実装・ブログ下書き作成)
+最終更新: 2026-04-11 VSCode#25 (LP 16のこと: 通知センター・電子署名 LP追加完了)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3904,3 +3904,23 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 2. **機能 #22**: 電子署名 LP 訴求 (VSCode版 — 競合対抗・緊急)
 3. **機能 #17〜#21**: LP 差別化訴求一括追加 (VSCode版)
 4. **機能 #16**: ブログ実投稿パイプライン (Web版)
+
+---
+
+## セッション記録: VSCode#25 (2026-04-11)
+
+### 完了タスク
+
+- **機能 #21**: 通知センター LP 追加 — `_buildUniqueValueSection()` に Icons.notifications で追加
+- **機能 #22**: 電子署名 LP 追加 — `_buildUniqueValueSection()` に Icons.draw で追加
+- **LP タイトル更新**: "14のこと" → "16のこと"
+- **markdownlint 0エラー維持**: COMPRESSED_PROMPT_V3.md / CLAUDE.md 修正済み
+- **ページ数修正**: 193 → 191 (COMPRESSED_PROMPT_V3.md 2箇所 + MULTI_INSTANCE_COORDINATION.md)
+- **機能 #15**: 思考妨害排除ガード LP 追加
+- **機能 #17〜#20**: 見栄ガード・浪費トラッキング・12部署AI仮想組織・友達招待・ノートコメント LP 追加
+
+### 次回優先
+
+1. **バグ #B4**: JWT 認証修正 (Web版スコープ)
+2. **機能 #13**: EF統合 action パラメーター分岐 (Web版+PowerShell版)
+3. **機能 #16**: ブログ実投稿パイプライン (Web版)

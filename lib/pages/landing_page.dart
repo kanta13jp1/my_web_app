@@ -1557,6 +1557,8 @@ $input
       (Icons.corporate_fare, '0xFF6366F1', '12部署AI仮想組織', '自分一人でCEO・CFO・CMO・開発部・営業部など12部署20人のAI組織を持てる。Slack・Chatwork・ジョブカン対抗の次世代チーム管理。'),
       (Icons.group_add, '0xFF22C55E', '友達招待・紹介コード', '紹介リンクをシェアするだけで招待実績が積み上がる。バイラル成長の仕組みを個人レベルで実装。'),
       (Icons.chat_bubble_outline, '0xFF8B5CF6', 'ノートコメント・リアクション', '公開メモにコメント・絵文字リアクション・OGPシェアが可能。Notion/Evernoteを超えるソーシャル連携機能。'),
+      (Icons.notifications, '0xFF0EA5E9', '通知センター', 'アプリ内の全通知を一元管理。未読バッジ・フィルタリング・既読管理で重要な更新を見逃さない。'),
+      (Icons.draw, '0xFF64748B', '電子署名', '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'),
     ];
 
     return Container(
@@ -1574,7 +1576,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない14のこと',
+            '自分株式会社でしかできない16のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
