@@ -140,7 +140,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
 | `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
-| `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import バージョン固定チェック |
+| `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import 固定チェック + **Deno std 古バージョン検出** + **pubspec.yaml 未固定パッケージ検出** |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
 | `workflow-failure-handler.yml` | workflow_run: [completed] | 主要10ワークフロー失敗時 → GitHub Issue自動生成 (`workflow-failure` ラベル) → `cs-check` が自動修復 |
@@ -348,22 +348,22 @@ web/sitemap.xml          # URL マップ
 
 **背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
-**現状**:
+**現状 (2026-04-11 Windows版#23 で第1弾完了)**:
 
 - **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
-  - 推奨優先: `2026-03-28-zenn-database-view.md` (Notion Database実装, `published: false` 付)
-  - 推奨優先: `2026-03-27-zenn-schedule-automation.md` (Claude Code Schedule完全自動化)
-  - 推奨優先: `2026-03-27-qiita-schedule-setup.md` (CS自動化手順 Qiita向け)
-- `blog-auto-publisher` EF の `auto_publish` アクション実装済み
-- **ブロッカー**: Supabase シークレット 2件が未設定
+- `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ Supabase シークレット設定済み (Windows版#23)
+- ✅ **投稿済み**:
+  - Qiita: [Claude Code Schedule でCS自動化](https://qiita.com/kanta13jp1/items/38f0383e0ea01b787900)
+  - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
+  - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
 
-**必要作業**:
+**次回候補 (第2弾)**:
 
-| 担当 | 作業 |
-| --- | --- |
-| **ユーザー (手動)** | Supabase ダッシュボード → Edge Functions → Secrets に `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を追加 |
-| **Web版 or 任意** | シークレット設定後に `publish_qiita` アクションで `2026-03-27-qiita-schedule-setup.md` を Qiita に投稿 |
-| **ユーザー (Zenn)** | `2026-03-28-zenn-database-view.md` は `published: false` → `true` に変更して Zenn GitHub 連携でデプロイ |
+| 優先度 | 下書き | 媒体 |
+| --- | --- | --- |
+| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
+| 高 | `2026-03-31-notification-center.md` — dart:html→package:web 移行パターン | Zenn |
+| 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
