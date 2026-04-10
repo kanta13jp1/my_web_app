@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Web#28 (EF統合: growth-acquisition + マイAIエージェントEF)
+最終更新: 2026-04-11 Windows#13 (docs/リンク修正: BRANCH_PROTECTION_SETUP.md + LICENSE作成)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4116,3 +4116,43 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **機能 #26/#32**: PS#13〜17 + VSCode#1〜3 全実装済み機能を LP に一括追加 (VSCode版)
 2. **機能 #31**: マイAIエージェント MVP (Notion対抗)
 3. **機能 #13**: EF統合 action パラメーター分岐
+
+---
+
+## セッション記録: Windows版#13 (2026-04-11)
+
+### 完了タスク
+
+- **docs/ リンク修正**:
+  - `docs/technical/BRANCH_PROTECTION_SETUP.md` 新規作成
+    - ブランチ保護設定手順 (main/staging/develop)
+    - CI status checks との連携 (lint-and-test / security-check / build-matrix)
+    - Claude Code Schedule との関係記載
+  - `LICENSE` ファイル作成 (MIT License, 2025-2026 kanta13jp1)
+  - `docs/CICD_SETUP_GUIDE.md` 211行・304行の壊れたリンクが解消
+  - `docs/CONTRIBUTING.md` 478行の壊れたリンクが解消
+- **markdownlint 0エラー**: COMPRESSED_PROMPT_V3.md MD012 (連続空行) 1件修正
+- **コア機能リスト整合性修正**: 機能 #26-30 を「LP未訴求 → LP済」に更新、機能 #31 を「計画中 → 実装済」に更新
+
+### 次回優先
+
+1. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新 (growth-acquisition-signal/report → growth-acquisition + my-ai-agent)
+2. **機能 #32 VSCode版**: 習慣ゲーミフィケーション他10機能 LP 追加
+3. **docs/ 残矛盾チェック**: 全 .md ファイルの数値・スコープ確認継続
+
+---
+
+## Session VSCode#29 — 2026-04-11
+
+### 実施内容
+
+- **機能 #32 完了**: `landing_page.dart` `_buildUniqueValueSection()` に10機能追加
+  - 習慣ゲーミフィケーション、コードプレイグラウンド、不動産管理、eラーニング
+  - 車両管理、採用ボード、IoTダッシュボード、法務管理、メールテンプレート管理、2FA セキュリティ
+  - タイトル更新: "26のこと" → "36のこと"
+- **COMPRESSED_PROMPT_V3.md 更新**: #31 LP済、#32-#41 全て LP済、機能 #32 解決済みマーク
+
+### 次回優先
+
+1. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新
+2. **docs/ 残矛盾チェック**: 全 .md ファイルの数値・スコープ確認継続

@@ -1569,6 +1569,16 @@ $input
       (Icons.flight_takeoff, '0xFF0369A1', '旅行計画・行程管理', '行程管理・現地情報・費用管理を一元化。Google旅行機能を超えるAI行程最適化で旅をもっと豊かに。'),
       (Icons.pets, '0xFF7E22CE', 'ペット健康管理', 'ワクチン記録・健康日記・体重管理をアプリ内で完結。競合21社にない個人ライフ全領域カバーの証明。'),
       (Icons.photo_library, '0xFF065F46', 'フォトギャラリー', 'AI自動分類・思い出管理・家族共有まで対応。Google フォトに対抗しつつ自分株式会社データとシームレス連携。'),
+      (Icons.emoji_events, '0xFFEAB308', '習慣ゲーミフィケーション', 'ストリーク・バッジ・XP獲得で習慣を楽しく継続。Duolingo式ゲーミフィケーションで継続率3倍。'),
+      (Icons.code, '0xFF0F172A', 'コードプレイグラウンド', 'ブラウザだけでコードを書いて即実行。学習・プロト制作・アイデア検証を一気通貫でサポート。'),
+      (Icons.home_work, '0xFF0284C7', '不動産管理', '物件情報・家賃・更新日を一元管理。投資用物件の収益計算もAIが自動化。'),
+      (Icons.school, '0xFF4338CA', 'eラーニング', 'コース作成・受講管理・修了証発行まで対応。Udemyを超える自分専用LMSを無料で構築。'),
+      (Icons.directions_car, '0xFF374151', '車両管理', '車検・整備記録・燃費管理を自動追跡。複数台・法人向け車両フリートにも対応。'),
+      (Icons.work_history, '0xFF059669', '採用ボード', '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を完全無料で実現。'),
+      (Icons.sensors, '0xFF7C3AED', 'IoTダッシュボード', '家電・センサー・スマートデバイスをダッシュボードで一元管理。スマートホームを自分株式会社に統合。'),
+      (Icons.gavel, '0xFFDC2626', '法務管理', '契約書・利用規約・コンプライアンスチェックをAIが支援。LegalForceを超える自動法務レビュー機能。'),
+      (Icons.mark_email_read, '0xFF0891B2', 'メールテンプレート管理', '返信テンプレート・差し込み変数・ABテストをAIが最適化。メール生産性を10倍に引き上げる。'),
+      (Icons.security, '0xFF16A34A', '2FA/多要素認証', 'TOTP・SMSで全アカウントを堅牢に保護。パスワードマネージャーと連携して認証情報を一元管理。'),
     ];
 
     return Container(
@@ -1586,7 +1596,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない26のこと',
+            '自分株式会社でしかできない36のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
