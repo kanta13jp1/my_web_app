@@ -4295,3 +4295,14 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **PowerShell版**: `deploy-prod.yml` Tier 1 更新 (機能 #13 残タスク)
 2. **機能 #44 Web版**: `growth-import-preview` EF に Notion API 連携を追加
 3. **docs/user-docs 継続監査**: `GAMIFICATION_README.md` の `supabase_migration.sql` 参照が現行マイグレーション構造と不一致 (低優先)
+
+---
+
+## Session VSCode#30 wrap-up — 2026-04-11
+
+### 完了タスク (追記)
+
+- `growth_acquisition_page.dart` trailing comma 8件修正 (dart format + 手動)
+- GROWTH_STRATEGY_ROADMAP.md Windows版#16重複ヘッダー → #13bに修正
+- `project_20260410.md` ページ数 191 → 195 に更新
+- コア機能 #1〜#44 全て ✅ LP済 達成確認
