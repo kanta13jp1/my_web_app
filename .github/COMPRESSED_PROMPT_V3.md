@@ -80,7 +80,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 41 | **2FA セキュリティ** (多要素認証強化 — セキュリティ差別化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 42 | **公開ギターギャラリー** (録音UGC公開共有 — sitemap/OGP済) | ✅ LP済 | `guitar-recording-studio` `public_gallery` action (VSCode版) |
 | 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅ LP済 | `lib/pages/` (VSCode版) |
-| 44 | **SaaSデータインポート** (Notion/SaaS一括インポート・プレビュー・コミット) | ✅EF実装済・UI未訴求 | `growth-import-preview`, `growth-import-commit` (Web版) |
+| 44 | **SaaSデータインポート** (Notion/Evernote/Markdown → 一括インポートUI+EF) | ✅ LP済 | `lib/pages/import_page.dart` (VSCode版) + `growth-import-preview`, `growth-import-commit` (Web版) |
 
 ---
 
@@ -319,7 +319,7 @@ web/sitemap.xml          # URL マップ
 
 | インスタンス | 作業内容 |
 | --- | --- |
-| **VSCode版** | `lib/pages/` に ImportPage 作成・`growth-import-preview` EF 呼び出し UI 実装 |
+| ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
 | **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
 
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
