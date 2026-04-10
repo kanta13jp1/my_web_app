@@ -57,6 +57,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 18 | **コンビニ経営シミュレーション** (`conveni_stores` テーブル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 | 19 | **友達招待 / 紹介コード** (ReferralShareCard — ホーム画面常設) | ✅実装済・LP未訴求 | `lib/widgets/` (VSCode版) |
 | 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 21 | **通知センター** (NotificationsPage — `notification-center` EF 連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅実装済・LP未訴求 | EF: `e-signature` 系 (Web版) |
 
 ---
 
@@ -250,6 +252,22 @@ web/sitemap.xml          # URL マップ
 ### ~~機能 #20~~: ✅ 解決済み (VSCode#24, 2026-04-11)
 
 ノートコメント・リアクション・OGP シェアを `_buildUniqueValueSection()` に追加。タイトル「14のこと」に更新。
+### 機能 #21: 通知センターを LP に追加
+
+**背景**: 2026-04-01 実装完了。NotificationsPage + `notification-center` EF が稼働中だが LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の差別化訴求に通知センター機能を追加 |
+
+### 機能 #22: 電子署名を LP 法人訴求に追加（競合対抗・緊急）
+
+**背景**: 2026-04-01 競合情報。GitHub Workflows に DocuSign 連携が追加され電子署名が注目機能に。当社は既に EF 実装済みだが LP 完全未掲載。法人・フリーランス向け差別化軸として今すぐ訴求すべき。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` に電子署名機能を法人向けセクションまたは差別化訴求として追加 |
+
 
 ---
 
