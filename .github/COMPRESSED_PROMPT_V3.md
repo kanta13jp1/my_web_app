@@ -234,13 +234,10 @@ web/sitemap.xml          # URL マップ
 
 `note-comments/index.ts` の `getUserIdFromJwt()` (署名未検証) を削除し、`client.auth.getUser()` による正式JWT署名検証に置き換え。`deno lint` 0エラー確認済み。
 
-### 機能 #13 (旧番): EF統合（Web版完了 / PowerShell版 deploy-prod.yml 更新待ち）
+### ~~機能 #13~~: ✅ 全インスタンス解決済み (Web版#28 + PowerShell版#20, 2026-04-11)
 
-**Web版 ✅ 完了 (Web版#28, 2026-04-11)**: `growth-acquisition/index.ts` 新規作成。`growth-acquisition-signal` + `growth-acquisition-report` を `action: "signal"|"report"` 分岐で統合。`deno lint` 0エラー確認。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **PowerShell版** | `deploy-prod.yml` Tier 1 から `growth-acquisition-signal` と `growth-acquisition-report` を削除し `growth-acquisition` と `my-ai-agent` を追加 (net: 99→98→99→100 ではなく 99→97→99 で2枠確保)。旧2本を Tier 2 コメントに移動。 |
+- Web版: `growth-acquisition/index.ts` 新規作成。`growth-acquisition-signal` + `growth-acquisition-report` を `action: "signal"|"report"` 分岐で統合。`deno lint` 0エラー確認。
+- PowerShell版: `deploy-prod.yml` Tier 1B から旧2本を削除し `growth-acquisition` + `my-ai-agent` を追加。Cleanup step に削除コマンド追加。Tier 2 コメントに旧2本を記録。
 
 ### ~~機能 #15~~: ✅ 解決済み (VSCode#23, 2026-04-10)
 
