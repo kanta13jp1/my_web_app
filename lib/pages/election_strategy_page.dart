@@ -760,7 +760,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               // データ再取得ボタン
               FloatingActionButton.small(
                 heroTag: 'btn_refresh',
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 onPressed: _fetchCandidates,
                 tooltip: '最新データを読み込み',
                 child: const Icon(Icons.refresh, color: Colors.indigo),
@@ -1043,7 +1043,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         final isS = rank == 'S';
         return Card(
           elevation: isS ? 4 : 1,
-          color: isS ? Colors.red.shade50 : Colors.white,
+          color: isS
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? Colors.red.withAlpha(40)
+                  : Colors.red.shade50)
+              : Theme.of(context).colorScheme.surface,
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: isS ? Colors.red : Colors.blue,
