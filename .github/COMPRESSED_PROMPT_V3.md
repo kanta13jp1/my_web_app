@@ -55,6 +55,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 | 17 | **12部署仮想組織 / AI秘書ゴール設定** (Slack・Chatwork・ジョブカン対抗軸) | ✅実装済・LP未訴求 | `AgentOrgPage` (VSCode版) |
 | 18 | **コンビニ経営シミュレーション** (`conveni_stores` テーブル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 19 | **友達招待 / 紹介コード** (ReferralShareCard — ホーム画面常設) | ✅実装済・LP未訴求 | `lib/widgets/` (VSCode版) |
+| 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -239,6 +241,22 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | **VSCode版** | `landing_page.dart` の法人向けセクションまたは差別化訴求に「12部署AI仮想組織・ゴール管理」を追加 |
+
+### 機能 #19: 友達招待 / 紹介コードを LP ユーザー獲得訴求に追加
+
+**背景**: 2026-03-29 レポートで追加確認。ReferralShareCard 実装済みだが LP 未掲載。現ユーザー4人からのバイラル拡散の鍵となる。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` に「友達紹介でアプリを広げよう」セクションまたは差別化訴求の1つとして紹介コード機能を追加 |
+
+### 機能 #20: ノートコメント・絵文字リアクション・OGP シェアを LP に追加
+
+**背景**: 2026-03-29 実装。Notion/Evernote 対抗のソーシャル連携機能が揃い、LP の「コラボレーション機能」として訴求できる。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の差別化訴求またはソーシャル機能セクションにコメント・リアクション・OGP シェア機能を追加 |
 
 
 ---
