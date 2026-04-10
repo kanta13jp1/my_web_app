@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#25 (2026-03-31日次レポート分析: EF66本体制・PowerShell#6・UI接続完結確認)
+最終更新: 2026-04-11 Windows#26 (2026-04-01日次レポート分析: EF158本体制・電子署名/AI自動化訴求済み確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4513,3 +4513,37 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 1. **タスク T-1 第2弾実行**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
 2. **deno test 技術負債**: 主要 EF (notification-center / feature-request-manager) に最低限のテスト追加を検討
 3. **競合動向フォロー**: Notion 3.4 ダッシュボードビュー対抗として KPI カード追加 (VSCode版)
+
+---
+
+## セッション記録: Windows版#26 (2026-04-11, 2026-04-01日次レポート分析)
+
+### 分析概要
+
+`docs/daily-reports/2026-04-01.md` を分析し、AI提言3点を現状と照合した。
+
+この日は Edge Functions が **66本→158本** (実質的には複数セッションで段階的追加) に急増し、通知センター UI 実装・PowerShell #8 schema 修正が完了した大規模進化日。
+
+| 提言 | 内容 | 現状 |
+| --- | --- | --- |
+| ①ノーコードAI自動化 UX 早期公開 (Notion Workers/Custom Agents対抗) | `ai-automation` EF → ホーム画面「ボタン1つでAI自動化」カード追加 | ✅ コア機能リスト #31 **マイAIエージェント** ✅ LP済。`WorkflowAutomationPage` (/workflow-automation) が session432u で実装済み (`home_tool_catalog.dart` growth セクション登録済み) |
+| ②電子署名機能の訴求強化 (GitHub DocuSign 連携競合) | LP・ユーザーマニュアルに `/e-signature` 導線追加 | ✅ コア機能リスト #22 **電子署名** ✅ LP済 (VSCode#25 で `_buildUniqueValueSection()` に追加、タイトル「16のこと」更新済み) |
+| ③ユーザー獲得導線最適化 (4人→50人目標) | X投稿・技術ブログ・LP「158機能対応」更新 | ✅ X投稿→GitHub Actions 07:30 JST で解決。技術ブログ→タスクT-1第1弾完了 (Windows版#23)。LP機能更新→継続実施中 |
+
+### 新規発見・アクション
+
+1. **Notion Workers (コード実行環境)** 発表を確認: 当社コア機能リスト #33 **コードプレイグラウンド** (✅ LP済) が直接競合。差別化ポイントとして「20言語対応・スニペット共有」を LP で訴求強化を検討 (VSCode版)。
+
+2. **Slack Real-Time Search API GA**: 当社は Gemini Embeddings 基盤のセマンティック検索 (EmbeddingLab, `/embedding-lab`) を実装済み。全文検索強化の記事は `docs/blog-drafts/2026-03-31-embedding-similarity.md` で準備済み。
+
+3. **タスク T-1 ブログ候補 (2026-04-01 実装内容)**:
+   - `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md` — Zapier/Zoom 3競合SaaS同時実装 + 215 Edge Functions 達成
+   - `docs/blog-drafts/2026-04-01-focus-timer-ai-writing.md` — 集中タイマー + AI文章アシスタント実装
+
+4. **EF 158本体制**: 当日の段階的追加 (session432f〜i: 135→158) により多領域カバーを達成。UI 接続は session432u + PowerShell#7 で全215本完全同期済み。
+
+### 次回優先
+
+1. **タスク T-1 第2弾実行**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **コードプレイグラウンド LP 訴求強化**: Notion Workers 競合として「20言語対応」差別化ポイントを追記検討 (VSCode版)
+3. **deno test 技術負債**: 引き続き中期課題として管理
