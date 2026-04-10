@@ -232,21 +232,23 @@ web/sitemap.xml          # URL マップ
 
 | コマンド | 定義ファイル | 用途 |
 | --- | --- | --- |
-| `/deep-research <トピック/ファイルパス>` | `.claude/commands/deep-research.md` | Gemini に分析委譲 → Claude が結果を整理 |
+| `/deep-research <トピック/ファイルパス>` | `.claude/commands/deep-research.md` | NotebookLM に分析委譲 → Claude が結果を整理 |
 | `/wrap-up` | `.claude/commands/wrap-up.md` | セッション末尾: 学習を `memory/` に永続保存 |
 
-### gemini_research.py
+### notebooklm_research.py
 
 ```bash
-python gemini_research.py "質問テキスト"
-python gemini_research.py --files file1.dart file2.ts --query "質問"
-python gemini_research.py --url "https://..." --query "要約して"
-python gemini_research.py --setup   # 接続テスト
+python notebooklm_research.py "テキスト"
+python notebooklm_research.py --files file1.dart --query "質問"
+python notebooklm_research.py --url "https://..." --query "要約して"
+python notebooklm_research.py --setup
 ```
 
-- **MODEL_CASCADE**: `gemini-2.5-flash` → `gemini-2.5-pro` → `gemini-2.0-flash` → fallback
-- **環境変数**: `GEMINI_API_KEY` が必要（`batch_analysis.py` と共通）
-- **依存**: `requirements.txt` に `google-genai>=1.0.0,<2.0.0` 追記済み
+- **バックエンド**: Google NotebookLM (notebooklm-py 経由)
+- **認証**: notebooklm login でブラウザ Google 認証
+- **フロー**: 一時ノートブック作成 → ソース追加 → Q&A → ノートブック削除
+- **依存**: requirements.txt に notebooklm-py>=0.1.0 追記済み
+- **注意**: 非公式ライブラリ。undocumented Google API 使用のため突然の仕様変更あり
 
 ### Master Brain (memory/)
 

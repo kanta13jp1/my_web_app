@@ -1,15 +1,15 @@
 ---
-description: 重いドキュメント分析を Gemini に委譲してトークンを節約する（ゼロトークンリサーチ）。引数にトピックまたはファイルパスを渡す。
+description: 重いドキュメント分析を NotebookLM に委譲してトークンを節約する（ゼロトークンリサーチ）。引数にトピックまたはファイルパスを渡す。
 ---
 
-**ゼロトークンリサーチ**: 指定されたトピックやドキュメントの重い分析を Gemini API に委譲し、Claude は結果の整理・統合だけを担当する。
+**ゼロトークンリサーチ**: 指定されたトピックやドキュメントの重い分析を NotebookLM に委譲し、Claude は結果の整理・統合だけを担当する。
 
 ## 引数の解釈
 
 `$ARGUMENTS` を以下のいずれかとして処理する:
 
-- **テキスト/トピック**: そのまま Gemini への質問として使う
-- **ファイルパス**: ファイルを読み込んで内容を Gemini に渡す
+- **テキスト/トピック**: そのまま NotebookLM への質問として使う
+- **ファイルパス**: ファイルを読み込んで内容を NotebookLM に渡す
 - **複数ファイル (スペース区切り)**: 全ファイルを読んでまとめて分析
 
 ## 実行手順
@@ -18,23 +18,35 @@ description: 重いドキュメント分析を Gemini に委譲してトーク�
 
 `$ARGUMENTS` を解析し、何を分析するか1行で確認する。
 
-### Step 2: gemini_research.py で分析を実行
+### Step 2: notebooklm_research.py で分析を実行
 
 ```bash
-python gemini_research.py "[分析クエリ]"
+python notebooklm_research.py "[分析クエリ]"
 ```
 
 ファイルが指定された場合:
 
 ```bash
-python gemini_research.py --files "[ファイルパス1]" "[ファイルパス2]" --query "[質問]"
+python notebooklm_research.py --files "[ファイルパス1]" "[ファイルパス2]" --query "[質問]"
 ```
 
-スクリプトが存在しない場合や GEMINI_API_KEY が未設定の場合は、その旨を伝えてセットアップ手順を案内する。
+URL が指定された場合:
+
+```bash
+python notebooklm_research.py --url "https://..." --query "[質問]"
+```
+
+スクリプトが存在しない場合や認証未完了の場合は、その旨を伝えてセットアップ手順を案内する:
+
+```
+⚠️ セットアップが必要です:
+  pip install "notebooklm-py[browser]"
+  notebooklm login
+```
 
 ### Step 3: 結果を整理・統合
 
-Gemini の出力を受け取り:
+NotebookLM の出力を受け取り:
 
 1. 重複・冗長な部分を除去
 2. このプロジェクトのコンテキストに合わせて解釈
@@ -47,13 +59,14 @@ Gemini の出力を受け取り:
 
 ## セットアップ確認
 
-`gemini_research.py` がない場合:
+`notebooklm_research.py` がない場合:
 
 ```
-⚠️ gemini_research.py が見つかりません。
+⚠️ notebooklm_research.py が見つかりません。
 以下を実行してください:
-  python gemini_research.py --setup
-または GEMINI_API_KEY 環境変数を設定してから再実行してください。
+  pip install "notebooklm-py[browser]"
+  notebooklm login
+  python notebooklm_research.py --setup
 ```
 
 ## 使用例
