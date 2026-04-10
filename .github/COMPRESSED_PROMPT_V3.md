@@ -326,8 +326,37 @@ web/sitemap.xml          # URL マップ
 | X投稿失敗時のリトライなし | 失敗時に20秒後1回リトライを追加 | ✅ 解決済み (PS#21) |
 | ユーザー数4人で停滞 (2026-03-27〜2026-04-11) | LP機能追加・Zenn/Qiita自動投稿稼働中 → 継続監視 | 🔄 対応中 |
 
-> **Windows版へ**: `docs/GROWTH_STRATEGY_ROADMAP.md` にユーザー獲得停滞の緊急度を記録すること。
-> 2026-03-27 時点で提案された「Zenn/Qiita技術記事の即日公開」が実行されたか確認・記録が必要。
+> ✅ **Windows版#21 対応済み**: `GROWTH_STRATEGY_ROADMAP.md` にユーザー獲得停滞緊急度を記録。
+> 「Zenn/Qiita記事実投稿」は **パイプライン完成・下書き6本蓄積済み・シークレット未設定** と確認 → 機能 #45 として計画化。
+
+### 機能 #45: 技術記事の実投稿実行 (最優先・即実行可能)
+
+**背景**: 2026-03-27 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と提言。パイプライン (`blog-auto-publisher`) が完成した今こそ実行フェーズ。
+
+**現状**:
+
+- 下書き6本が `docs/blog-drafts/2026-03-27-*.md` に存在 (Zenn/Qiita/dev.to/note/Medium/はてな)
+- `blog-auto-publisher` EF の `auto_publish` アクション実装済み
+- **ブロッカー**: Supabase シークレット 2件が未設定
+
+**必要作業**:
+
+| 担当 | 作業 |
+| --- | --- |
+| **ユーザー (手動)** | Supabase ダッシュボード → Edge Functions → Secrets に `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を追加 |
+| **Web版 or 任意** | `blog-auto-publisher` EF の `auto_publish` を呼び出し `docs/blog-drafts/2026-03-27-zenn-schedule-automation.md` を Zenn CLI 経由で投稿 (Zenn は GitHub 連携のため手動) |
+| **Web版 or 任意** | シークレット設定後に `publish_qiita` アクションで `2026-03-27-qiita-schedule-setup.md` を Qiita に投稿 |
+
+**推定ROI**: #buildinpublic / #FlutterWeb / #Supabase タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
+
+### CI/CD改善 #C2: 2026-03-28 日次レポート分析からの反映 (PowerShell版#22, 2026-04-11)
+
+**背景**: 2026-03-28 は GitHub Actions 移行当日。cs-check が「PR経由コミット」で実装されたが、ブランチ名衝突・push rejected が頻発 (commit #234/#235)。daily-report.yml は PS#19 で直接 push 化済みだが cs-check.yml は未対応だった。
+
+| 課題 | 対応 | ステータス |
+| --- | --- | --- |
+| cs-check.yml のブランチ作成→PR→マージフロー (39行) | `git push origin HEAD:main` に簡略化 (daily-report.yml と統一) | ✅ 解決済み (PS#22) |
+| 12部署仮想組織 & EdgeFunctionSummaryCard の LP 掲載 | LP 実装済み (機能 #17 / VSCode#24) | ✅ 解決済み |
 
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
 
