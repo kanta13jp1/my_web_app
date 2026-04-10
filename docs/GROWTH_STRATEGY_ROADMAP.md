@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-10 Windows版 (markdownlint全修正・機能#12マイグレーション・COMPRESSED_PROMPT_V3更新)
+最終更新: 2026-04-10 Windows版#2 (矛盾チェック: EF数241・ページ数193に修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3574,3 +3574,23 @@ VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 
 - Container/BoxDecoration ライト hex → isDark 条件分岐 + ダーク代替色
 - `Colors.grey[100/200]` → `surfaceContainerHighest` or isDark-conditional
 - `Colors.white` 残存: map marker / spinner / text on color — 全て意図的
+
+---
+
+## セッション記録: 2026-04-10 Windows版#2 (矛盾チェック)
+
+### 実施内容
+
+#### ルール8: 矛盾チェック
+
+`COMPRESSED_PROMPT_V3.md` の数値が実態と乖離していたため修正:
+
+| 項目 | 修正前 | 修正後 | 根拠 |
+| --- | --- | --- | --- |
+| lib/pages/ ページ数 | 194 | 193 | `ls lib/pages/*.dart \| wc -l` = 193 |
+| supabase/functions/ EF数 | 239 | 241 | `ls supabase/functions/ \| grep -v ^_ \| wc -l` = 241 |
+| Tier2コメント数 | 139 | 141 | EF数241 - Tier1 100 = 141 |
+
+#### ルール9: markdownlint
+
+全対象ファイルで 0エラー維持 (`docs/**/*.md` + `.github/**/*.md` + `CLAUDE.md`)

@@ -11,8 +11,8 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・194ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 239本) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・193ページ・ウィジェット) | 他3範囲 |
+| **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (13本完備済み) | 他3範囲 |
 
@@ -142,9 +142,9 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 194ページ (landing / comparison / user_manual / admin_analytics 等)
+lib/pages/               # 193ページ (landing / comparison / user_manual / admin_analytics 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 239本 (Tier1: 100デプロイ済 / Tier2: 139コードのみ)
+supabase/functions/      # Deno Edge Functions 241本 (Tier1: 100デプロイ済 / Tier2: 141コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 13本 (品質基準完備済み)
 docs/
@@ -171,7 +171,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(139本) で全239本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(141本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
 ---
 
