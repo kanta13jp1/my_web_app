@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#20 (CLAUDE.md 時刻修正 + 機能#31 解決済みマーク + user-docs 破損リンク修正)
+最終更新: 2026-04-11 Windows#21 (2026-03-27日次レポート再分析 → 技術記事実投稿タスク機能#45追加)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -3696,11 +3696,11 @@ VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 
 
 ### 分析結果
 
-| 提言 | 当時の状態 | 現在の状態 |
+| 提言 | 当時の状態 | 現在の状態 (2026-04-11 更新) |
 | --- | --- | --- |
-| ①Supabase API接続を自動化 | 手動・接続不可 | ✅ `daily-report.yml` (GitHub Actions) で解決済み |
-| ②思考妨害排除機能をLPに訴求 | DBのみ・UI未実装 | ⚠️ `abstinence_guard_page.dart` 1252行実装済みだが LP 未掲載 |
-| ③Zenn/Qiita記事を即日公開 | 未着手 | 🔶 下書き自動生成は稼働、実投稿パイプライン未確立 |
+| ①Supabase API接続を自動化 | 手動・接続不可 | ✅ `daily-report.yml` (GitHub Actions 07:30 JST) で解決済み |
+| ②思考妨害排除機能をLPに訴求 | DBのみ・UI未実装 | ✅ `abstinence_guard_page.dart` 実装済み + LP掲載済み (機能 #13 LP済) |
+| ③Zenn/Qiita記事を即日公開 | 未着手 | ⚠️ パイプライン完成 (機能 #16 ✅) / 下書き6本蓄積済み / **シークレット未設定・実投稿未実行** |
 
 ### 開発計画への反映
 
@@ -4306,3 +4306,53 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 - GROWTH_STRATEGY_ROADMAP.md Windows版#16重複ヘッダー → #13bに修正
 - `project_20260410.md` ページ数 191 → 195 に更新
 - コア機能 #1〜#44 全て ✅ LP済 達成確認
+
+---
+
+## セッション記録: Windows版#21 (2026-04-11, 2026-03-27日次レポート再分析)
+
+### 分析概要
+
+`docs/daily-reports/2026-03-27.md` を再分析し、3つの提言すべての現状を更新。
+
+#### 3提言の最終ステータス
+
+| 提言 | 解決状況 | 残作業 |
+| --- | --- | --- |
+| ①API自動化 | ✅ 完全解決 | なし |
+| ②思考妨害排除 LP訴求 | ✅ 完全解決 | なし |
+| ③技術記事実投稿 | 🔶 パイプライン完成・未実行 | シークレット設定 + 記事投稿実行 |
+
+#### 提言③ 残作業の詳細
+
+- **下書き蓄積状況**: `docs/blog-drafts/` に2026-03-27付で6本の高品質下書きが存在
+  - `2026-03-27-zenn-schedule-automation.md` — Claude Code Schedule 完全自動化 (Zenn メイン)
+  - `2026-03-27-qiita-schedule-setup.md` — CS自動化の具体的手順 (Qiita)
+  - `2026-03-27-devto-schedule-automation-en.md` — 英語版 (dev.to)
+  - `2026-03-27-medium-ai-ops-automation.md` — Medium
+  - `2026-03-27-note-essay-building-in-public.md` — note エッセイ
+  - `2026-03-27-hatena-weekly-growth.md` — はてなブログ
+
+- **インフラ**: `blog-auto-publisher` EF 実装済み (機能 #16, Web版#27)
+  - `publish_qiita`: Qiita API 連携実装済み
+  - `publish_devto`: dev.to API 連携実装済み
+  - `auto_publish`: `target_platforms` に基づき自動ルーティング
+
+- **ブロッカー**: Supabase シークレット 2件が未設定
+  - `QIITA_ACCESS_TOKEN` — Qiita設定ページでトークン発行が必要
+  - `DEVTO_API_KEY` — dev.to Extensionsページで API Key 発行が必要
+
+- **推定効果**: #buildinpublic / #FlutterWeb タグで Zenn/Qiita 開発者コミュニティへのリーチが最大化。ユーザー4人→増加への最短経路。
+
+### 開発計画への反映
+
+COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
+
+- `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を Supabase シークレットに設定
+- `blog-auto-publisher` EF の `auto_publish` アクションで 6本の下書きを投稿実行
+
+### 次回優先
+
+1. **機能 #45 (最優先・即実行可)**: Qiita/dev.to シークレット設定 → `blog-auto-publisher` で下書き6本を実投稿
+2. **PowerShell版**: `deploy-prod.yml` Tier 1 更新 (機能 #13)
+3. **機能 #44 Web版**: `growth-import-preview` Notion API 連携
