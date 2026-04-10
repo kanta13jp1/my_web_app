@@ -125,14 +125,16 @@ jobs:
           supabase functions delete search-analytics || true
           # --- submit-feedback slot確保 (competitor-feature-sync を Tier 2 に降格) ---
           supabase functions delete competitor-feature-sync || true
+          # --- issue-auto-resolver slot確保 (user-growth-analytics を Tier 2 に降格) ---
+          supabase functions delete user-growth-analytics || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Deploy Supabase Edge Functions
         run: |
           # Supabase project has a max ~100 function limit.
-          # Deploy the 100 most critical functions (Tier 1).
-          # Remaining 141 functions exist in code but are not deployed.
+          # Deploy the 99 most critical functions (Tier 1).
+          # Remaining 142 functions exist in code but are not deployed.
           # To deploy overflow functions, swap them with lower-priority Tier 1 entries.
           #
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
@@ -239,7 +241,7 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Guitar Studio + Monitoring (13) ---
+          # --- Tier 1G: Guitar Studio + Monitoring (12) ---
           supabase functions deploy guitar-recording-studio --no-verify-jwt
           supabase functions deploy music-collaboration --no-verify-jwt
           supabase functions deploy audio-effects-processor --no-verify-jwt
@@ -250,14 +252,13 @@ jobs:
           supabase functions deploy schedule-execution-logger --no-verify-jwt
           supabase functions deploy edge-function-test-runner --no-verify-jwt
           supabase functions deploy admin-notification-hub --no-verify-jwt
-          supabase functions deploy user-growth-analytics --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
           supabase functions deploy issue-auto-resolver --no-verify-jwt
 
-          # Total: 100 functions deployed (Supabase project limit)
+          # Total: 99 functions deployed (Supabase project limit: 100)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
-          # code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
+          # user-growth-analytics, code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
           # clipboard-history, quick-note, pomodoro-timer, weather-widget,
           # currency-converter, markdown-renderer, social-feed, document-collaboration,

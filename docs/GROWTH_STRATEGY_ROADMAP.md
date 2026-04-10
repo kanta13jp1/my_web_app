@@ -3613,3 +3613,28 @@ VSCode版 (`error_reporter.dart`) の自動エラー投稿と連携。機能#12 
 - `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md" "README.md"` → **0 issues**
 - `README.md`: `--fix` で自動修正済み (旧Geminiハンドオーバードキュメント)
 - `.github/ISSUE_TEMPLATE/`, `PULL_REQUEST_TEMPLATE.md`, `workflows/README.md`, `CLAUDE.md`: MD022/MD031/MD032/MD034/MD040/MD060 修正済み (commit: 52475aed)
+
+---
+
+## セッション記録: 2026-04-10 PowerShell版#2 (402エラー修正)
+
+### 実施内容
+
+#### deploy-prod.yml 402エラー修正
+
+`issue-auto-resolver` デプロイ時に 402 "Max number of functions reached" が発生していた問題を修正。
+
+**原因**: Supabaseプロジェクトが 100本上限に達しており、`issue-auto-resolver` (新規) の追加が 101本目になる。
+
+**対応**: `user-growth-analytics` を Tier1→Tier2 に降格し、cleanup ステップで削除してスロットを確保。
+
+| 項目 | 修正前 | 修正後 |
+| --- | --- | --- |
+| Tier1デプロイ数 | 100本 | 99本 |
+| Tier2コードのみ | 141本 | 142本 |
+| cleanup追加 | — | `user-growth-analytics` |
+
+#### COMPRESSED_PROMPT_V3.md 数値修正
+
+- Tier1=100→99、Tier2=141→142 を3箇所修正
+- 機能#13の説明文も 100→99 に更新

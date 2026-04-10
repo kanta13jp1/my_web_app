@@ -103,7 +103,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: Tier1=100本 厳守 (`notify-feature-request` Tier1 / `code-review-issues` Tier2)
+- EF 管理: Tier1=99本 厳守 (`notify-feature-request` Tier1 / `code-review-issues`, `user-growth-analytics` Tier2)
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
@@ -144,7 +144,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ```text
 lib/pages/               # 193ページ (landing / comparison / user_manual / admin_analytics 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 241本 (Tier1: 100デプロイ済 / Tier2: 141コードのみ)
+supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 13本 (品質基準完備済み)
 docs/
@@ -171,7 +171,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(100本) と Tier2コメント(141本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(142本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
 ---
 
@@ -194,9 +194,9 @@ web/sitemap.xml          # URL マップ
 
 `edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
 
-### 機能 #13: EF統合（action パラメーター分岐で100本以下に削減）
+### 機能 #13: EF統合（action パラメーター分岐で99本以下に削減）
 
-**背景**: Supabase 100本デプロイ上限。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
+**背景**: Supabase 100本デプロイ上限 (現在99本運用)。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
 
 | インスタンス | 作業内容 |
 | --- | --- |
