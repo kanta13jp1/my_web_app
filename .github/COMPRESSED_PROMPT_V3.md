@@ -44,21 +44,21 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 5 | **モバイルギターレコーディングスタジオ** (H.264録画 + X自動シェア + AI演奏評価) | ✅ | `guitar-recording-studio` |
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
-| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | 実装中 | `viral-video-generator`, `viral-growth-pipeline` |
+| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅EF実装済・UI確認待ち | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
 | 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅ | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
 | 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | 実装中 | `blog-post-manager`, `blog-auto-publisher` |
-| 15 | **見栄ガード** (かっこつけない・見栄をはらない仕組み — 衝動的自己顕示を可視化・抑制) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
-| 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
-| 17 | **12部署仮想組織 / AI秘書ゴール設定** (Slack・Chatwork・ジョブカン対抗軸) | ✅実装済・LP未訴求 | `AgentOrgPage` (VSCode版) |
-| 18 | **コンビニ経営シミュレーション** (`conveni_stores` テーブル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
-| 19 | **友達招待 / 紹介コード** (ReferralShareCard — ホーム画面常設) | ✅実装済・LP未訴求 | `lib/widgets/` (VSCode版) |
-| 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
-| 21 | **通知センター** (NotificationsPage — `notification-center` EF 連携) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
-| 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅実装済・LP未訴求 | EF: `e-signature` 系 (Web版) |
+| 15 | **見栄ガード** (かっこつけない・見栄をはらない仕組み — 衝動的自己顕示を可視化・抑制) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 17 | **12部署仮想組織 / AI秘書ゴール設定** (Slack・Chatwork・ジョブカン対抗軸) | ✅ LP済 | `AgentOrgPage` (VSCode版) |
+| 18 | **コンビニ経営シミュレーション** (`conveni_stores` テーブル連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 19 | **友達招待 / 紹介コード** (ReferralShareCard — ホーム画面常設) | ✅ LP済 | `lib/widgets/` (VSCode版) |
+| 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 21 | **通知センター** (NotificationsPage — `notification-center` EF 連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅ LP済 | EF: `e-signature` 系 (Web版) |
 
 ---
 
@@ -183,7 +183,7 @@ web/sitemap.xml          # URL マップ
 `schedule-daily-digest` / `get-support-tickets` / `reply-support-request` / `get-home-dashboard` / `post-x-update` / `get-growth-roadmap-progress` / `get-competitor-features` / `health-check` / `check-competitor-updates`
 
 **主要機能 EF**:
-`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager`
+`guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
 > **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(142本) で全241本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
@@ -257,19 +257,9 @@ web/sitemap.xml          # URL マップ
 
 電子署名を `_buildUniqueValueSection()` に追加。タイトル「16のこと」に更新。
 
-**背景**: 2026-04-01 実装完了。NotificationsPage + `notification-center` EF が稼働中だが LP 未掲載。
+### ~~機能 #23~~: ✅ 解決済み (VSCode#26, 2026-04-11)
 
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `landing_page.dart` の差別化訴求に通知センター機能を追加 |
-
-### 機能 #22: 電子署名を LP 法人訴求に追加（競合対抗・緊急）
-
-**背景**: 2026-04-01 競合情報。GitHub Workflows に DocuSign 連携が追加され電子署名が注目機能に。当社は既に EF 実装済みだが LP 完全未掲載。法人・フリーランス向け差別化軸として今すぐ訴求すべき。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `landing_page.dart` に電子署名機能を法人向けセクションまたは差別化訴求として追加 |
+コンビニ経営シミュレーションを `_buildUniqueValueSection()` に追加 (Icons.storefront)。タイトル「17のこと」に更新。コア機能リスト #15〜#22 のステータスを「LP未訴求 → LP済」に一括更新。
 
 ---
 

@@ -1559,6 +1559,7 @@ $input
       (Icons.chat_bubble_outline, '0xFF8B5CF6', 'ノートコメント・リアクション', '公開メモにコメント・絵文字リアクション・OGPシェアが可能。Notion/Evernoteを超えるソーシャル連携機能。'),
       (Icons.notifications, '0xFF0EA5E9', '通知センター', 'アプリ内の全通知を一元管理。未読バッジ・フィルタリング・既読管理で重要な更新を見逃さない。'),
       (Icons.draw, '0xFF64748B', '電子署名', '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'),
+      (Icons.storefront, '0xFFEC4899', 'コンビニ経営シミュレーション', '自分株式会社の中でコンビニを経営。春夏秋冬の季節・天気・トレンドをAIが反映した経営判断ゲーム。競合21社に存在しないゲーミフィケーション。'),
     ];
 
     return Container(
@@ -1576,7 +1577,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない16のこと',
+            '自分株式会社でしかできない17のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
