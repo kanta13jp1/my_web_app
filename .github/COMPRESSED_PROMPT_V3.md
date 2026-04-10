@@ -78,6 +78,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 39 | **法務管理** (契約書管理・法的期限追跡) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 40 | **メールテンプレート管理** (ビジネス/プライベート定型文) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 41 | **2FA セキュリティ** (多要素認証強化 — セキュリティ差別化) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 42 | **公開ギターギャラリー** (録音UGC公開共有 — sitemap/OGP済) | ✅ LP済 | `guitar-recording-studio` `public_gallery` action (VSCode版) |
+| 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
