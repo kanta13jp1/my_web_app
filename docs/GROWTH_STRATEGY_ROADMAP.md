@@ -3735,3 +3735,21 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 - 機能 #15: `landing_page.dart` の `_buildUniqueValueSection()` に思考妨害排除ガードを追加（VSCode版）
 - 機能 #16: `blog-auto-publisher` EF の Zenn CLI 連携実装（Web版）
 - 機能 #13: EF統合（`action` パラメーター分岐で 99本以下に削減）（Web版→PowerShell版）
+
+---
+
+## セッション記録: VSCode #23 (2026-04-10)
+
+### 実施内容
+
+1. **機能 #15: 思考妨害排除ガード LP追加**
+   - `lib/pages/landing_page.dart` の `_buildUniqueValueSection()` に9つ目の機能として追加
+   - タイトル: `'自分株式会社でしかできない8つのこと'` → `'9つのこと'`
+   - アイコン: `Icons.do_not_disturb_on`、カラー: `#EF4444`
+   - 説明: SNS・通知・散漫思考ブロック、フォーカスセッション中の通知自動ミュート
+   - `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- 機能 #16: `blog-auto-publisher` EF の Zenn CLI 連携実装（Web版）
+- 機能 #13: EF統合（`action` パラメーター分岐で 99本以下に削減）（Web版→PowerShell版）

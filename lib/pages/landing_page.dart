@@ -1551,6 +1551,7 @@ $input
       (Icons.hub, '0xFFA855F7', 'マインドマップ', '思考の整理をビジュアルで。ノートと連携。'),
       (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
       (Icons.psychology_alt, '0xFF8B5CF6', '性格診断 (16タイプ MBTI)', 'MBTIベースの自己分析でメモ術・学習スタイルを最適化。恋愛相性診断も。他にはない自己理解機能。'),
+      (Icons.do_not_disturb_on, '0xFFEF4444', '思考妨害排除ガード', 'SNS・通知・散漫思考をブロックして深い集中を守る。フォーカスセッション中はアプリ内通知を自動ミュート。他のサービスにはない認知コスト削減機能。'),
     ];
 
     return Container(
@@ -1568,7 +1569,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない8つのこと',
+            '自分株式会社でしかできない9つのこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
