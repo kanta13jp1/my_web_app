@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#24 (2026-03-30日次レポート分析: ノートコメント/B2B/チームワークスペース確認 + Notion3.4脅威対応)
+最終更新: 2026-04-11 Windows#25 (2026-03-31日次レポート分析: EF66本体制・PowerShell#6・UI接続完結確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4479,3 +4479,37 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
 2. **SNS告知**: 投稿済み Qiita/dev.to/Zenn 記事を X でツイート (@kanta13jp1)
 3. **Notion 3.4 対抗**: ホームKPIカード追加検討 (VSCode版)
+
+---
+
+## セッション記録: Windows版#25 (2026-04-11, 2026-03-31日次レポート分析)
+
+### 分析概要
+
+`docs/daily-reports/2026-03-31.md` を分析し、AI提言3点を現状と照合した。
+
+この日は Edge Functions が 56→66本へ急増（seo-optimizer / search-analytics / webhook-manager / data-export-manager / ab-testing-manager / competitor-feature-sync / user-activity-tracker / feature-request-manager / app-analytics-dashboard）し、PowerShell #6 で 13新ページが一括統合された大規模進化日。
+
+| 提言 | 内容 | 現状 |
+| --- | --- | --- |
+| ①ユーザー獲得加速 (技術記事週1本) | Zenn/Qiita 投稿フロー確立 | ✅ タスクT-1 第1弾完了 (Windows版#23: Qiita/dev.to/Zenn) → 第2弾候補特定 (Windows版#24) |
+| ②UI から EF 呼び出し完結 | app-analytics-dashboard → user-activity-tracker → ab-testing-manager 接続 | ✅ session432u で EdgeFunctionSummaryCard 全215本完全同期済み。PowerShell#7 で全102関数UI対応完了 |
+| ③自動テストカバレッジ強化 | 主要 EF に deno test 追加・CI 実行 | ⚠️ 未対応。edge-function-coverage EF は存在するが deno test 追加は未実施 |
+
+### 新規発見・アクション
+
+1. **EF 66本体制** (2026-03-31時点): 当日追加9本はすべてバックエンドファースト戦略の継続。その後 session432u 等で 215本まで増加済み (GROWTH_STRATEGY_ROADMAP 記録済み)。
+
+2. **notification-center セキュリティ修正確認** (Issue #254): `service_role` 認証・所有者確認追加 (commit `4959332`) → 以降 Web版 RLS 修正パターンとして活用済み。
+
+3. **deno test 自動化は引き続き未対応**: CI 上でのカバレッジ計測は `edge-function-coverage` EF 経由で可能だが、test ファイル自体が未整備。中期技術負債として管理。
+
+4. **タスク T-1 ブログ候補 (2026-03-31実装内容)**:
+   - `docs/blog-drafts/2026-03-31-notification-center.md` — 通知センター + dart:html→package:web 移行パターン
+   - `docs/blog-drafts/2026-03-31-embedding-similarity.md` — Gemini Embeddings コサイン類似度比較
+
+### 次回優先
+
+1. **タスク T-1 第2弾実行**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **deno test 技術負債**: 主要 EF (notification-center / feature-request-manager) に最低限のテスト追加を検討
+3. **競合動向フォロー**: Notion 3.4 ダッシュボードビュー対抗として KPI カード追加 (VSCode版)
