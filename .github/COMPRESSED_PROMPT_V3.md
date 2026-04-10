@@ -49,7 +49,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
-| 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅ | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
+| 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅ LP済 | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
 | 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | ✅ | `blog-post-manager`, `blog-auto-publisher` |
 | 15 | **見栄ガード** (かっこつけない・見栄をはらない仕組み — 衝動的自己顕示を可視化・抑制) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅ LP済 | `lib/pages/` (VSCode版) |
@@ -84,7 +84,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 45 | **アクティビティフィード** (行動ログ・達成記録タイムライン — Discord/Slack対抗) | ✅ LP済 | `lib/pages/activity_feed_page.dart` (VSCode版) |
 | 46 | **報酬・達成バッジ** (ポイント・バッジ獲得ゲーミフィケーション) | ✅ LP済 | `lib/pages/rewards_page.dart` (VSCode版) |
 | 47 | **支払いリマインダー** (月次サブスク・公共料金・ローン返済 — MoneyForward対抗) | ✅ LP済 | `lib/pages/payment_reminder_page.dart` (VSCode版) |
-| 48 | **マインドマップ** (ノード追加・拡大縮小スクロール — アイデア整理・思考可視化) | ✅ LP未訴求 | `lib/pages/` (VSCode版) |
+| 48 | **マインドマップ** (ノード追加・拡大縮小スクロール — アイデア整理・思考可視化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 49 | **ビデオ会議・ミーティング管理** (ビデオ通話・会議室予約・議事録自動生成 — Zoom/Meet対抗) | ✅ LP済 | `lib/pages/video_meeting_page.dart`, `meeting_manager_page.dart` (VSCode版) |
 | 50 | **スマート受信箱** (AIメール・通知・タスク自動分類・優先度付け) | ✅ LP済 | `lib/pages/smart_inbox_triage_page.dart` (VSCode版) |
 | 51 | **パスワード金庫** (ゼロ知識暗号化・自動入力・セキュリティ監査 — 1Password対抗) | ✅ LP済 | `lib/pages/password_vault_page.dart` (VSCode版) |
