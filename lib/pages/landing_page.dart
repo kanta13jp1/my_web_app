@@ -1581,6 +1581,9 @@ $input
       (Icons.security, '0xFF16A34A', '2FA/多要素認証', 'TOTP・SMSで全アカウントを堅牢に保護。パスワードマネージャーと連携して認証情報を一元管理。'),
       (Icons.music_video, '0xFFE11D48', '公開ギターギャラリー', 'スマホで録音したギター演奏をUGCとして公開共有。OGP・sitemap対応でSEO流入も獲得。競合21社にない音楽SNS機能。'),
       (Icons.calendar_month, '0xFF0F766E', '月次カレンダービュー', '月間スケジュールをカレンダー形式で一覧表示。タスク・習慣・イベントをTimeTree/Googleカレンダーを超える統合ビューで管理。'),
+      (Icons.dynamic_feed, '0xFF0F172A', 'アクティビティフィード', '自分の行動ログ・達成記録・コミュニティ更新をタイムライン表示。Discord/Slackを超えるパーソナルアクティビティ可視化。'),
+      (Icons.emoji_events, '0xFFF59E0B', '報酬・達成バッジ', '習慣継続・目標達成でポイントとバッジを獲得。ゲーミフィケーションでモチベーションを維持し継続率を劇的に改善。'),
+      (Icons.alarm, '0xFF0369A1', '支払いリマインダー', '月次サブスク・公共料金・ローン返済を自動リマインド。MoneyForwardを超える決済管理と浪費防止の統合機能。'),
     ];
 
     return Container(
@@ -1598,7 +1601,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない38のこと',
+            '自分株式会社でしかできない41のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

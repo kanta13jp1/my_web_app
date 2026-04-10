@@ -4356,3 +4356,19 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 1. **機能 #45 (最優先・即実行可)**: Qiita/dev.to シークレット設定 → `blog-auto-publisher` で下書き6本を実投稿
 2. **PowerShell版**: `deploy-prod.yml` Tier 1 更新 (機能 #13)
 3. **機能 #44 Web版**: `growth-import-preview` Notion API 連携
+
+---
+
+## Session VSCode#31 — 2026-04-11
+
+### 実施内容
+
+- **2026-03-27 日次レポート精査**: ActivityFeedPage・RewardsPage・PaymentReminderPage が LP 未掲載を発見
+- **機能 #45/#46/#47 LP追加**: アクティビティフィード・報酬バッジ・支払いリマインダー
+  - タイトル更新: "38のこと" → "41のこと"
+- **COMPRESSED_PROMPT コア機能リスト**: #45〜#47 追加
+
+### 次回優先
+
+1. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新
+2. **ユーザーリクエスト実装**: MoneyForward連携・Slack通知・Googleカレンダー同期

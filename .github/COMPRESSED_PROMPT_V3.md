@@ -81,6 +81,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 42 | **公開ギターギャラリー** (録音UGC公開共有 — sitemap/OGP済) | ✅ LP済 | `guitar-recording-studio` `public_gallery` action (VSCode版) |
 | 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 44 | **SaaSデータインポート** (Notion/Evernote/Markdown → 一括インポートUI+EF) | ✅ LP済 | `lib/pages/import_page.dart` (VSCode版) + `growth-import-preview`, `growth-import-commit` (Web版) |
+| 45 | **アクティビティフィード** (行動ログ・達成記録タイムライン — Discord/Slack対抗) | ✅ LP済 | `lib/pages/activity_feed_page.dart` (VSCode版) |
+| 46 | **報酬・達成バッジ** (ポイント・バッジ獲得ゲーミフィケーション) | ✅ LP済 | `lib/pages/rewards_page.dart` (VSCode版) |
+| 47 | **支払いリマインダー** (月次サブスク・公共料金・ローン返済 — MoneyForward対抗) | ✅ LP済 | `lib/pages/payment_reminder_page.dart` (VSCode版) |
 
 ---
 
