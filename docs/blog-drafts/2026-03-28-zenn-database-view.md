@@ -3,7 +3,7 @@ title: FlutterとSupabaseでNotionのDatabase機能を実装した話 — jsonb�
 emoji: 📊
 type: tech
 topics: [flutter, supabase, dart, notion]
-published: false
+published: true
 ---
 
 # FlutterとSupabaseでNotionのDatabase機能を実装した話
