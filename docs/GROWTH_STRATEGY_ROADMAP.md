@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Windows#27 (COMPRESSED_PROMPT_V3 コア機能リスト#49-#58追加確認・LP52のこと更新確認)
+最終更新: 2026-04-11 Windows版#28 (COMPRESSED_PROMPT_V3差分確認・タスクT-1ブロッカー解消・旧技術文書アーカイブ通知)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4589,7 +4589,7 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 
 ### COMPRESSED_PROMPT_V3.md 現状 (2026-04-11 確認)
 
-- **コア機能リスト**: #1〜#58 (全58項目 / #48のみ LP未訴求 / 残57項目 LP済)
+- **コア機能リスト**: #1〜#58 (全58項目 / **全58項目 LP済** ← #48 マインドマップも commit `86f53936` で LP済に更新)
 - **Edge Functions**: Tier1 99本デプロイ済 / Tier2 142本コードのみ / 合計 241本
 - **LP**: 「52のこと」(VSCode#33 完了)
 - **CI/CD**: 13ワークフロー完備 (deno test / flutter test Job Summary 表示済み PS#24)
@@ -4599,4 +4599,80 @@ COMPRESSED_PROMPT_V3.md に **機能 #45** を追加:
 
 1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
 2. **#48 マインドマップ LP追加**: VSCode版に依頼継続
+3. **日次レポート分析継続**: `docs/daily-reports/2026-04-02.md` 以降を順次処理
+
+---
+
+## VSCode版#34 セッション記録 (2026-04-11)
+
+### 作業内容
+
+**COMPRESSED_PROMPT_V3.md コア機能リスト #59-#63 追加**
+
+LP `_buildUniqueValueSection()` に存在するがコア機能リストに未登録だった5機能を追加:
+
+| # | 機能 | 状態 |
+| --- | --- | --- |
+| 59 | AI役員会議 (MAGI) — CEO/CFO/CMO/CHRO AIペルソナ多角的アドバイス | ✅ LP済 |
+| 60 | 記憶ドリル — 忘却曲線反復学習 | ✅ LP済 |
+| 61 | 経営コックピット — 収支・資産・KPI一画面管理 | ✅ LP済 |
+| 62 | 公開メモ・SEO — メモURL共有・集客 | ✅ LP済 |
+| 63 | 性格診断 (16タイプ MBTI) — 自己分析・恋愛相性診断 | ✅ LP済 |
+
+- コア機能リスト: #1-#63 全件整合確認完了
+- LP feature 数: 52（タイトル「52のこと」確認済み）
+- markdownlint: 0エラー確認
+
+### 次回優先
+
+1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **`docs/CICD_SETUP_GUIDE.md` 確認**: 2025-11-14 作成の旧情報を現状に更新
+
+---
+
+## セッション記録: Windows版#28 (2026-04-11, COMPRESSED_PROMPT_V3 差分確認 + 旧技術文書アーカイブ)
+
+### 変更確認サマリー
+
+前回 Windows版#27 以降に他インスタンスが行った変更を確認・対応した。
+
+| 変更 | コミット | 内容 |
+| --- | --- | --- |
+| #48 マインドマップ LP未訴求 → LP済 | `86f53936` | COMPRESSED_PROMPT #13/#48 LP済に更新 |
+| CI/CD改善 #C5 追加 | `3565b5aa` (PS#26) | 2026-04-02〜10 日次レポート分析の CI 改善記録 |
+| CI/CD改善 #C6 追加 | `a995c32e` (PS#27) | docs/ 戦略ドキュメント全件分析 + **Windows版引き継ぎタスク** |
+| 開発ルール #10 拡張 | `a995c32e` (PS#27) | 単純な全件確認 → 戦略ドキュメント分析・計画反映に強化 |
+
+### 実施内容
+
+**1. タスク T-1 ブロッカー解消** (COMPRESSED_PROMPT_V3.md 更新)
+
+旧: `ブロッカー: Supabase シークレット 2件が未設定` → 実態は Windows版#23 で解決済み。
+COMPRESSED_PROMPT_V3.md の タスク T-1 セクションを実態に合わせて更新:
+
+- `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ 設定済み
+- 第1弾投稿済み (Qiita / dev.to / Zenn)
+- 第2弾候補3本を明記 (`2026-03-28-note-comments.md` など)
+
+**2. 旧技術文書アーカイブ通知追加** (CI/CD改善 #C6 引き継ぎ)
+
+以下3ファイルにアーカイブ済み通知を追加 (先頭に blockquote):
+
+| ファイル | アーカイブ理由 |
+| --- | --- |
+| `docs/technical/BACKEND_MIGRATION_PLAN.md` | 2025-11-08作成。EFファーストアーキテクチャが241本で完全実施済み |
+| `docs/technical/GEMINI_MIGRATION_GUIDE.md` | 2025-11-08作成。Gemini API移行は完了済み (gemini-election-analysis等稼働中) |
+| `docs/technical/REFACTORING_PLAN.md` | 2025-11-14作成。当時80ファイル→現在195ページ。flutter analyze 0エラーCI維持済み |
+
+※ `docs/CICD_SETUP_GUIDE.md` (CI/CD改善 #C6 引き継ぎに記載) は `docs/technical/` ではなく `docs/` ルートに存在。次回 Windows版で確認・更新予定。
+
+**3. COMPRESSED_PROMPT_V3.md 現状スナップショット更新**
+
+- コア機能リスト: 全58項目 LP済 (Windows版#27 で #48 LP未訴求と誤記していたが実際は済み)
+- 開発ルール #10: より包括的な「戦略ドキュメント全件分析・計画反映」に拡張済み
+
+### 次回優先
+
+1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **`docs/CICD_SETUP_GUIDE.md` 確認**: 2025-11-14 作成の旧情報を現状に更新
 3. **日次レポート分析継続**: `docs/daily-reports/2026-04-02.md` 以降を順次処理

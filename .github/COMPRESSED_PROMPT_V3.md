@@ -95,6 +95,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 56 | **仮想ホワイトボード** (コラボキャンバス — Miro/FigJam対抗) | ✅ LP済 | `lib/pages/virtual_whiteboard_page.dart` (VSCode版) |
 | 57 | **ワークフロー自動化** (トリガー&アクション ノーコード自動化 — Zapier対抗) | ✅ LP済 | `lib/pages/workflow_automation_page.dart` (VSCode版) |
 | 58 | **QRコード生成** (URL・テキスト→QR即時変換・共有) | ✅ LP済 | `lib/pages/qr_code_generator_page.dart` (VSCode版) |
+| 59 | **AI役員会議 (MAGI)** (CEO/CFO/CMO/CHRO AIペルソナが多角的アドバイス — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/cfo_office_page.dart`, `cho_office_page.dart`, `chro_office_page.dart`, `cmo_office_page.dart` (VSCode版) |
+| 60 | **記憶ドリル** (忘却曲線に基づく反復学習 — Evernoteにはない学習機能) | ✅ LP済 | `lib/pages/memory_drill_page.dart` (VSCode版) |
+| 61 | **経営コックピット** (収支・資産・KPIを一画面で管理 — MoneyForward代替) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 62 | **公開メモ・SEO** (メモをURLで共有・知識アウトプットが集客につながる) | ✅ LP済 | `lib/pages/public_memo_directory_page.dart` (VSCode版) |
+| 63 | **性格診断 (16タイプ MBTI)** (MBTIベース自己分析・学習スタイル最適化・恋愛相性診断) | ✅ LP済 | `lib/pages/personality_test_questions_page.dart` (VSCode版) |
 
 ---
 
