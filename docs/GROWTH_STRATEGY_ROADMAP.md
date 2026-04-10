@@ -4215,3 +4215,28 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **機能 #44**: SaaSデータインポート UI 実装 + Notion API 連携 (VSCode版+Web版)
 2. **機能 #31**: マイAIエージェント MVP (Notion Custom Agents 対抗)
 3. **X投稿**: `post-x-update` を GitHub Actions 経由に移管 (プロキシブロック回避)
+
+---
+
+## Session VSCode#30 — 2026-04-11
+
+### 実施内容
+
+- **機能 #42/#43 LP追加**: `landing_page.dart` に公開ギターギャラリー・月次カレンダービューを追加
+  - タイトル更新: "36のこと" → "38のこと"
+- **COMPRESSED_PROMPT 更新**:
+  - ページ数 191 → 195 (2箇所)
+  - #43 月次カレンダービュー: LP未訴求 → LP済
+  - MD024 重複ヘッダー2件修正 (機能 #44、ユーザーリクエスト上位)
+  - MD012 二重空行修正
+- **GROWTH_STRATEGY_ROADMAP.md**: Windows版#13 重複ヘッダー修正 (MD024)
+- **markdownlint**: 0エラー確認
+
+### 達成状況
+
+コア機能リスト #1〜#43 全て ✅ LP済 (実装中 #9 を除く)
+
+### 次回優先
+
+1. **機能 #44 VSCode版**: SaaSデータインポート UI (`lib/pages/` に ImportPage 作成)
+2. **機能 #13 PowerShell版**: `deploy-prod.yml` Tier 1 更新

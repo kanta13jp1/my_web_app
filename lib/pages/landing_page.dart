@@ -1579,6 +1579,8 @@ $input
       (Icons.gavel, '0xFFDC2626', '法務管理', '契約書・利用規約・コンプライアンスチェックをAIが支援。LegalForceを超える自動法務レビュー機能。'),
       (Icons.mark_email_read, '0xFF0891B2', 'メールテンプレート管理', '返信テンプレート・差し込み変数・ABテストをAIが最適化。メール生産性を10倍に引き上げる。'),
       (Icons.security, '0xFF16A34A', '2FA/多要素認証', 'TOTP・SMSで全アカウントを堅牢に保護。パスワードマネージャーと連携して認証情報を一元管理。'),
+      (Icons.music_video, '0xFFE11D48', '公開ギターギャラリー', 'スマホで録音したギター演奏をUGCとして公開共有。OGP・sitemap対応でSEO流入も獲得。競合21社にない音楽SNS機能。'),
+      (Icons.calendar_month, '0xFF0F766E', '月次カレンダービュー', '月間スケジュールをカレンダー形式で一覧表示。タスク・習慣・イベントをTimeTree/Googleカレンダーを超える統合ビューで管理。'),
     ];
 
     return Container(
@@ -1596,7 +1598,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない36のこと',
+            '自分株式会社でしかできない38のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

@@ -332,27 +332,6 @@ web/sitemap.xml          # URL マップ
 4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
 5. **Google カレンダー同期** — 予定・タスクの双方向同期
 
-
-### 機能 #44: SaaSデータインポート UI 実装
-
-**背景**: 2026-04-08 AI分析で `growth-import-preview` / `growth-import-commit` EF が実装済みと確認。ユーザーリクエスト上位「Notion インポート強化」に対応するフロントエンド UI が未実装。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `lib/pages/` に ImportPage 作成・`growth-import-preview` EF 呼び出し UI 実装 |
-| **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
-
-### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
-
-> feature_requests 投票上位。優先度順に実装検討する。
-
-1. **Notion インポート強化** — Notion ページ階層・データベース構造インポート (EF実装済み → UI + Notion API 連携が必要)
-2. **MoneyForward 連携** — 家計簿・資産管理データ自動取り込み
-3. **Slack 通知連携** — タスク・メモ更新を Slack チャンネルへ通知
-4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
-5. **Google カレンダー同期** — 予定・タスクの双方向同期
-
-
 ---
 
 ## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
