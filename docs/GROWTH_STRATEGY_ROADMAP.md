@@ -3821,3 +3821,32 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **バグ #B4**: JWT認証修正 (Web版 — セキュリティ最優先)
 2. 機能 #17〜#20: LP 差別化訴求への掲載 (VSCode版)
 3. 機能 #16: ブログ実投稿パイプライン (Web版)
+
+---
+
+## セッション記録: VSCode #24 (2026-04-11)
+
+### 実施内容
+
+1. **機能 #17: 見栄ガード・浪費トラッキング LP追加**
+   - 見栄ガード: `Icons.visibility_off` / `#F97316` — SNS承認欲求・衝動的自己顕示の断ち切り
+   - 浪費トラッキング: `Icons.money_off` / `#14B8A6` — 投資除く資産放出の日次記録・可視化
+
+2. **機能 #18: 12部署AI仮想組織 LP追加**
+   - `Icons.corporate_fare` / `#6366F1` — Slack・Chatwork・ジョブカン対抗軸として訴求
+
+3. **機能 #19: 友達招待・紹介コード LP追加**
+   - `Icons.group_add` / `#22C55E` — バイラル成長の仕組みを個人レベルで
+
+4. **機能 #20: ノートコメント・リアクション・OGP LP追加**
+   - `Icons.chat_bubble_outline` / `#8B5CF6` — Notion/Evernote超えのソーシャル連携機能
+
+5. **markdownlint修正**: COMPRESSED_PROMPT_V3 の MD058/MD022/MD012 修正
+
+6. **タイトル更新**: `_buildUniqueValueSection()` 「9つのこと」→「14のこと」
+
+### 次回優先
+
+- VSCode版: 新規 LP 訴求タスクなし。次は既存ページのUX改善または新機能実装
+- Web版: 機能 #16 (blog-auto-publisher Zenn連携)
+- Web版: 機能 #13 (EF統合 action パラメーター分岐)

@@ -1552,6 +1552,11 @@ $input
       (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
       (Icons.psychology_alt, '0xFF8B5CF6', '性格診断 (16タイプ MBTI)', 'MBTIベースの自己分析でメモ術・学習スタイルを最適化。恋愛相性診断も。他にはない自己理解機能。'),
       (Icons.do_not_disturb_on, '0xFFEF4444', '思考妨害排除ガード', 'SNS・通知・散漫思考をブロックして深い集中を守る。フォーカスセッション中はアプリ内通知を自動ミュート。他のサービスにはない認知コスト削減機能。'),
+      (Icons.visibility_off, '0xFFF97316', '見栄ガード', 'かっこつけず・見栄をはらずに生きる仕組み。SNS承認欲求や衝動的な自己顕示を記録・可視化して断ち切る。競合21社に存在しない自己規律機能。'),
+      (Icons.money_off, '0xFF14B8A6', '浪費トラッキング', '投資を除いた資産放出を日次で記録・可視化。無意識の浪費パターンを把握してMoneyForwardを超える節制管理。'),
+      (Icons.corporate_fare, '0xFF6366F1', '12部署AI仮想組織', '自分一人でCEO・CFO・CMO・開発部・営業部など12部署20人のAI組織を持てる。Slack・Chatwork・ジョブカン対抗の次世代チーム管理。'),
+      (Icons.group_add, '0xFF22C55E', '友達招待・紹介コード', '紹介リンクをシェアするだけで招待実績が積み上がる。バイラル成長の仕組みを個人レベルで実装。'),
+      (Icons.chat_bubble_outline, '0xFF8B5CF6', 'ノートコメント・リアクション', '公開メモにコメント・絵文字リアクション・OGPシェアが可能。Notion/Evernoteを超えるソーシャル連携機能。'),
     ];
 
     return Container(
@@ -1569,7 +1574,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない9つのこと',
+            '自分株式会社でしかできない14のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
