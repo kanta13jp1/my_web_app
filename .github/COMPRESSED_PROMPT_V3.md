@@ -315,6 +315,20 @@ web/sitemap.xml          # URL マップ
 | ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
 | **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
 
+### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
+
+**背景**: 2026-03-27 レポートで「競合監視3社のみ」「X投稿リトライなし」「Supabase API接続ブロック」が課題として確認。
+
+| 課題 | 対応 | ステータス |
+| --- | --- | --- |
+| Supabase API接続ブロック (エグレスプロキシ) | `daily-report.yml` を GitHub Actions に移管し07:30 JSTに先行実行 | ✅ 解決済み (PS#19) |
+| 競合監視が3社のみ (Notion/Evernote/Slack) | 7社に拡大: Slack/GitHub/Notion/Evernote/Discord/LINE/X | ✅ 解決済み (PS#21) |
+| X投稿失敗時のリトライなし | 失敗時に20秒後1回リトライを追加 | ✅ 解決済み (PS#21) |
+| ユーザー数4人で停滞 (2026-03-27〜2026-04-11) | LP機能追加・Zenn/Qiita自動投稿稼働中 → 継続監視 | 🔄 対応中 |
+
+> **Windows版へ**: `docs/GROWTH_STRATEGY_ROADMAP.md` にユーザー獲得停滞の緊急度を記録すること。
+> 2026-03-27 時点で提案された「Zenn/Qiita技術記事の即日公開」が実行されたか確認・記録が必要。
+
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
 
 > feature_requests 投票上位。優先度順に実装検討する。

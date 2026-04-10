@@ -74,13 +74,14 @@ jobs:
           cat /tmp/recent_commits.txt
 
       # ── Step 3: 競合モニタリング ────────────────────────────────────────────
-      - name: Step 3 - 競合モニタリング (Notion / Evernote / Slack)
+      - name: Step 3 - 競合モニタリング (21社中7社の主要競合)
         id: competitor
         run: |
           > /tmp/competitor_notes.txt
+          DOWN_COUNT=0
 
           check_site() {
-            local NAME="$1" URL="$2" MARKER_FILE="$3"
+            local NAME="$1" URL="$2"
             local HTTP TITLE
             HTTP=$(curl -s -o /tmp/comp_body.html -w "%{http_code}" \
               -L --max-time 15 -A "Mozilla/5.0" "$URL" 2>/dev/null || echo "000")
@@ -90,14 +91,22 @@ jobs:
               echo "- **$NAME** ($URL): HTTP $HTTP ✅" >> /tmp/competitor_notes.txt
             else
               echo "- **$NAME** ($URL): HTTP $HTTP ⚠️" >> /tmp/competitor_notes.txt
+              DOWN_COUNT=$((DOWN_COUNT + 1))
             fi
           }
 
-          check_site "Notion"   "https://www.notion.so/"       ""
-          check_site "Evernote" "https://evernote.com/"         ""
-          check_site "Slack"    "https://slack.com/intl/ja-jp/" ""
+          # 脅威レベル高 (Supabase AI分析で🔴判定の競合を優先)
+          check_site "Slack"    "https://slack.com/intl/ja-jp/"
+          check_site "GitHub"   "https://github.com/"
+          check_site "Notion"   "https://www.notion.so/"
+          check_site "Evernote" "https://evernote.com/"
+          check_site "Discord"  "https://discord.com/"
+          check_site "LINE"     "https://line.me/ja/"
+          check_site "X"        "https://x.com/"
 
-          echo "has_notes=true" >> $GITHUB_OUTPUT
+          echo "has_notes=true"    >> $GITHUB_OUTPUT
+          echo "down_count=$DOWN_COUNT" >> $GITHUB_OUTPUT
+          echo "📊 ダウン検知: $DOWN_COUNT / 7社"
 
       # ── Step 4: 日次レポート生成 ────────────────────────────────────────────
       - name: Step 4 - 日次レポート生成
@@ -176,14 +185,23 @@ jobs:
           JSON_PAYLOAD=$(jq -n --arg text "$TWEET" '{"text": $text}')
           echo "📝 投稿文: $TWEET"
 
+          x_post() {
+            curl -s -o /tmp/xpost.json -w "%{http_code}" \
+              -X POST \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "$JSON_PAYLOAD" \
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update" \
+              --max-time 20
+          }
+
           set +e
-          POST_CODE=$(curl -s -o /tmp/xpost.json -w "%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/post-x-update" \
-            --max-time 15)
+          POST_CODE=$(x_post)
+          if [ "$POST_CODE" != "200" ]; then
+            echo "⚠️ 1回目失敗 (HTTP $POST_CODE) — 20秒後にリトライ"
+            sleep 20
+            POST_CODE=$(x_post)
+          fi
           set -e
 
           echo "post_code=$POST_CODE" >> $GITHUB_OUTPUT
@@ -191,18 +209,17 @@ jobs:
           if [ "$POST_CODE" = "200" ]; then
             echo "x_posted=true" >> $GITHUB_OUTPUT
             echo "✅ X投稿成功"
-            # レポートに追記
             echo "" >> "${{ steps.report.outputs.filepath }}"
             echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
             echo "- ステータス: ✅ 投稿成功 (HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
             echo "- 投稿内容: $TWEET" >> "${{ steps.report.outputs.filepath }}"
           else
             echo "x_posted=false" >> $GITHUB_OUTPUT
-            echo "⚠️ X投稿失敗 (HTTP $POST_CODE)"
+            echo "⚠️ X投稿失敗 (リトライ後も HTTP $POST_CODE)"
             cat /tmp/xpost.json 2>/dev/null || true
             echo "" >> "${{ steps.report.outputs.filepath }}"
             echo "## X投稿" >> "${{ steps.report.outputs.filepath }}"
-            echo "- ステータス: ⚠️ 投稿失敗 (HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
+            echo "- ステータス: ⚠️ 投稿失敗 (リトライ後も HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
           fi
 
       # ── Step 6: schedule_task_runs 記録 ────────────────────────────────────
@@ -257,8 +274,10 @@ jobs:
           COMMITS="${{ steps.gitlog.outputs.count }}"
           API_OK="${{ steps.digest.outputs.api_ok }}"
           X_POSTED="${{ steps.xpost.outputs.x_posted }}"
+          DOWN="${{ steps.competitor.outputs.down_count }}"
           API_ICON=$([ "$API_OK" = "true" ] && echo "✅" || echo "⚠️")
           X_ICON=$([ "$X_POSTED" = "true" ] && echo "✅" || echo "—")
+          COMP_ICON=$([ "${DOWN:-0}" = "0" ] && echo "✅ 全7社正常" || echo "⚠️ ${DOWN}社ダウン")
           {
             echo "## 日次レポート $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
             echo ""
@@ -269,4 +288,5 @@ jobs:
             echo "| 新規リクエスト | ${NEW_TODAY}件 |"
             echo "| 24h コミット | ${COMMITS}件 |"
             echo "| X投稿 | $X_ICON |"
+            echo "| 競合監視 (7社) | $COMP_ICON |"
           } >> $GITHUB_STEP_SUMMARY
