@@ -44,13 +44,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 5 | **モバイルギターレコーディングスタジオ** (H.264録画 + X自動シェア + AI演奏評価) | ✅ | `guitar-recording-studio` |
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
-| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅EF実装済・UI確認待ち | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
+| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅実装済・LP未訴求 | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
 | 13 | **思考妨害排除ガード** (デジタル/衝動/SNS 依存をブロック・断ち切り日数追跡 — 競合21社に存在しない唯一の機能) | ✅ | `lib/pages/abstinence_guard_page.dart` (VSCode版) |
-| 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | 実装中 | `blog-post-manager`, `blog-auto-publisher` |
+| 14 | **ブログ記事実投稿パイプライン** (下書き自動生成済み → Zenn/Qiita/note への実投稿自動化) | ✅ | `blog-post-manager`, `blog-auto-publisher` |
 | 15 | **見栄ガード** (かっこつけない・見栄をはらない仕組み — 衝動的自己顕示を可視化・抑制) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 16 | **浪費トラッキング** (投資を除いた資産放出の記録・可視化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 17 | **12部署仮想組織 / AI秘書ゴール設定** (Slack・Chatwork・ジョブカン対抗軸) | ✅ LP済 | `AgentOrgPage` (VSCode版) |
@@ -62,6 +62,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 23 | **集中タイマー** (ポモドーロ/ディープフォーカス — 思考妨害排除ガードと連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 24 | **AI文章アシスタント** (文章作成・推敲・要約) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 25 | **浪費耐性トレーニング** (浪費トラッキングと連携した行動変容トレーニング) | ✅ LP済 | `lib/pages/` (VSCode版) |
+| 26 | **語学学習** (フラッシュカード・発音練習・進捗管理) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 27 | **レシピ管理** (食材管理・献立提案・栄養分析) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 28 | **旅行計画** (行程管理・現地情報・費用管理) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 29 | **ペット管理** (健康記録・ワクチン管理・日記) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
+| 30 | **フォトギャラリー** (AI分類・思い出管理・共有) | ✅実装済・LP未訴求 | `lib/pages/` (VSCode版) |
 
 ---
 
@@ -276,6 +281,24 @@ web/sitemap.xml          # URL マップ
 ### ~~機能 #25~~: ✅ 解決済み (VSCode#27, 2026-04-11)
 
 浪費耐性トレーニング (Icons.fitness_center) を `_buildUniqueValueSection()` に追加。タイトル「17のこと」→「20のこと」に更新。コア機能リスト #23〜#25 LP済に更新。
+
+### 機能 #26: 語学学習・レシピ・旅行・ペット・フォトギャラリーを LP に追加
+
+**背景**: 2026-04-03 日次レポートで確認。PS#13 として実装済みの5機能が LP 未掲載。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `landing_page.dart` の差別化訴求に5機能を追加（生活密着型として訴求） |
+
+### 機能 #31: マイAIエージェント (Notion Custom Agents 対抗)
+
+**背景**: 2026-04-03 競合動向。Notion Custom AI Agents (★★★★★) がバックグラウンド自律動作・自己メモリ更新を発表。自分株式会社の AI 統合コンセプトと直接競合。MVP: ユーザー定義タスク自動化フロー。
+
+| インスタンス | 作業内容 |
+| --- | --- |
+| **VSCode版** | `lib/pages/ai_agent_page.dart` 新規作成 (タスク自動化フロー定義 UI) |
+| **Web版** | `my-ai-agent` EF 作成 (フロー実行エンジン) |
+
 
 ---
 
