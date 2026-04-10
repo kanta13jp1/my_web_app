@@ -55,6 +55,57 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ---
 
+## Multi-AI ワークフロー（毎回必ず実行）
+
+### セッション開始: Master Brain 参照
+
+セッション開始時に必ず以下を確認する:
+
+```
+C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.md
+```
+
+前回の成功パターン・禁止事項・新規発見を読んで、セッションの出発点とする。
+記憶が消える弱点を「永続メモリ」で補う。
+
+### 重い分析: `/deep-research` で NotebookLM に委譲（必須）
+
+以下のいずれかに該当する場合は **必ず** `python notebooklm_research.py` を呼ぶ:
+
+| 条件 | 例 |
+| --- | --- |
+| 3ファイル以上を同時に読む | 複数Dartファイルの整合性チェック |
+| URLを分析する | 競合サービスの機能調査 |
+| ドキュメント全体を俯瞰する | DESIGN.md + landing_page.dart の比較 |
+| 競合21社のリサーチ | 最新動向・機能比較 |
+
+**原則**: Claude のトークンは「判断・編集・統合」にのみ使う。
+分析処理は Google 側 (NotebookLM/Gemini) に無料で投げる。
+
+```bash
+# トピック検索
+python notebooklm_research.py "競合21社の最新動向"
+
+# ファイル分析
+python notebooklm_research.py --files lib/pages/landing_page.dart docs/DESIGN.md --query "UIと設計の整合性"
+
+# URL調査
+python notebooklm_research.py --url "https://..." --query "要約して"
+```
+
+### セッション終了: `/wrap-up` で学習を永続保存（必須）
+
+作業完了後、必ず `/wrap-up` を実行する:
+
+- 成功パターン → `memory/feedback_success_YYYYMMDD.md`
+- 失敗・禁止事項 → `memory/feedback_correction_YYYYMMDD.md`
+- 新規発見 → `memory/project_YYYYMMDD.md`
+- 未完了タスク → `MEMORY.md` 末尾にコメント記録
+
+**これを怠るとセッション間の記憶が消え、同じ失敗を繰り返す。**
+
+---
+
 ## Claude Code Schedule 自動化タスク
 
 > **注意**: 以下のタスクは Claude Code Schedule (定期実行) 用の指示です。
