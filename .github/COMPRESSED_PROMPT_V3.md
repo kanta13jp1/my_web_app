@@ -375,6 +375,17 @@ web/sitemap.xml          # URL マップ
 | edge-function-audit.yml `pull-requests: write` が過剰 (`gh pr` 未使用) | `pull-requests: read` に変更 (最小権限の原則) | ✅ 解決済み (PS#23) |
 | cs-check/blog-draft/edge-function-audit の稼働確認 | 3ワークフローとも正常動作を確認 | ✅ 確認済み |
 
+### CI/CD改善 #C4: 2026-03-31 日次レポート分析からの反映 (PowerShell版#24, 2026-04-11)
+
+**背景**: AI分析提言3「新規EFに deno test を追加し CI で自動実行する体制を整える」。ci.yml に deno test ステップが存在せず、flutter test の結果も Job Summary に表示されていなかった。
+
+| 課題 | 対応 | ステータス |
+| --- | --- | --- |
+| ci.yml に `deno test` ステップなし | `deno test` ステップ追加 (`continue-on-error: true`)。`*.test.ts` 未存在時はスキップ。将来テスト追加時に自動実行 | ✅ 解決済み (PS#24) |
+| `flutter test` の結果が Job Summary に未表示 | `id: flutter_test` / `id: deno_test` 追加、Job Summary にテスト結果行を追加 | ✅ 解決済み (PS#24) |
+
+> **Web版へ**: 主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すると CI で自動テストが走る体制が整った。
+
 ### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
 
 > feature_requests 投票上位。優先度順に実装検討する。

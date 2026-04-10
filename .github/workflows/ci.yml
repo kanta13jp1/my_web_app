@@ -58,6 +58,17 @@ jobs:
         run: deno lint --config supabase/functions/deno.json supabase/functions/
         # プロジェクトルール「deno lint 常に0エラー」をCIで強制
 
+      - name: Deno test (Edge Functions)
+        id: deno_test
+        run: |
+          TEST_FILES=$(find supabase/functions -name "*.test.ts" 2>/dev/null | head -1)
+          if [ -n "$TEST_FILES" ]; then
+            deno test --allow-all --no-check --config supabase/functions/deno.json supabase/functions/
+          else
+            echo "⚠️ deno test: *.test.ts が見つかりません — スキップ"
+          fi
+        continue-on-error: true  # テスト追加前はスキップ想定。安定次第 continue-on-error 削除予定
+
       - name: Check new Edge Functions not in deploy list
         run: |
           # deploy-prod.yml のデプロイリストを抽出
@@ -89,6 +100,7 @@ jobs:
         continue-on-error: true # エラーでも続行
 
       - name: Run tests
+        id: flutter_test
         run: flutter test --coverage
         continue-on-error: true # エラーでも続行
 
@@ -127,6 +139,10 @@ jobs:
         if: always()
         run: |
           BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "❌")
+          FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
+          DENO_TEST="${{ steps.deno_test.outcome }}"
+          FT_ICON=$([ "$FLUTTER_TEST" = "success" ] && echo "✅" || [ "$FLUTTER_TEST" = "skipped" ] && echo "—" || echo "⚠️")
+          DT_ICON=$([ "$DENO_TEST" = "success" ] && echo "✅" || [ "$DENO_TEST" = "skipped" ] && echo "—" || echo "⚠️")
           {
             echo "## CI Results — \`${{ github.ref_name }}\` @ \`${GITHUB_SHA:0:7}\`"
             echo ""
@@ -134,6 +150,8 @@ jobs:
             echo "|---------|------|"
             echo "| \`flutter analyze\` | ✅ 0エラー (強制) |"
             echo "| \`deno lint\` | ✅ 0エラー (強制) |"
+            echo "| \`flutter test\` | $FT_ICON $FLUTTER_TEST (continue-on-error) |"
+            echo "| \`deno test\` | $DT_ICON $DENO_TEST (continue-on-error) |"
             echo "| \`flutter build web --release\` | $BUILD_OK |"
             echo ""
             echo "**Actor**: ${{ github.actor }} | **Trigger**: ${{ github.event_name }}"
