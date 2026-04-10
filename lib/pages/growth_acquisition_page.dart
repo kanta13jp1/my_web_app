@@ -84,11 +84,15 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _loadReport, child: const Text('再試行')),
+                        onPressed: _loadReport,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -110,25 +114,26 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('獲得サマリー (30日)',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+                const Text(
+                  '獲得サマリー (30日)',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
+                _summaryRow('総タッチ数', '${summary['totalTouches'] ?? 0}'),
+                _summaryRow('総登録数', '${summary['totalSignups'] ?? 0}'),
                 _summaryRow(
-                    '総タッチ数', '${summary['totalTouches'] ?? 0}'),
-                _summaryRow(
-                    '総登録数', '${summary['totalSignups'] ?? 0}'),
-                _summaryRow(
-                    'コンバージョン率',
-                    '${summary['conversionRate'] ?? '0.0'}%'),
+                  'コンバージョン率',
+                  '${summary['conversionRate'] ?? '0.0'}%',
+                ),
               ],
             ),
           ),
         ),
         const SizedBox(height: 16),
-        const Text('タッチポイント別',
-            style:
-                TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        const Text(
+          'タッチポイント別',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         if (touchpoints.isEmpty)
           const Card(
@@ -144,19 +149,20 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
               child: ListTile(
                 title: Text(item['touchpoint']?.toString() ?? ''),
                 subtitle: Text(
-                    'タッチ: ${item['touches'] ?? 0}  登録: ${item['signups'] ?? 0}'),
+                  'タッチ: ${item['touches'] ?? 0}  登録: ${item['signups'] ?? 0}',
+                ),
                 trailing: Text(
                   '${item['rate'] ?? '0.0'}%',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             );
           }),
         const SizedBox(height: 24),
-        const Text('シグナル記録',
-            style:
-                TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        const Text(
+          'シグナル記録',
+          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -167,10 +173,12 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
             'touch_public_memo',
             'touch_referral',
           ]
-              .map((key) => OutlinedButton(
-                    onPressed: () => _recordSignal(key),
-                    child: Text(key),
-                  ))
+              .map(
+                (key) => OutlinedButton(
+                  onPressed: () => _recordSignal(key),
+                  child: Text(key),
+                ),
+              )
               .toList(),
         ),
       ],
@@ -184,8 +192,7 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text(value,
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
