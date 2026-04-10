@@ -44,7 +44,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 5 | **モバイルギターレコーディングスタジオ** (H.264録画 + X自動シェア + AI演奏評価) | ✅ | `guitar-recording-studio` |
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ | `local-election-intelligence`, `gemini-election-analysis` |
-| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅実装済・LP未訴求 | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
+| 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅ LP済 | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
 | 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
@@ -220,14 +220,13 @@ web/sitemap.xml          # URL マップ
 
 `note-comments/index.ts` の `getUserIdFromJwt()` (署名未検証) を削除し、`client.auth.getUser()` による正式JWT署名検証に置き換え。`deno lint` 0エラー確認済み。
 
-### 機能 #13 (旧番): EF統合（action パラメーター分岐で99本以下に削減）
+### 機能 #13 (旧番): EF統合（Web版完了 / PowerShell版 deploy-prod.yml 更新待ち）
 
-**背景**: Supabase 100本デプロイ上限 (現在99本運用)。今後の追加余地確保のため、類似 EF を `action` パラメーター分岐に統合する。
+**Web版 ✅ 完了 (Web版#28, 2026-04-11)**: `growth-acquisition/index.ts` 新規作成。`growth-acquisition-signal` + `growth-acquisition-report` を `action: "signal"|"report"` 分岐で統合。`deno lint` 0エラー確認。
 
 | インスタンス | 作業内容 |
 | --- | --- |
-| **Web版** | 類似機能の EF を `action` パラメーターで統合（例: `growth-acquisition-signal` + `growth-acquisition-report` → `growth-acquisition` EF に `action: "signal"\|"report"`）。優先統合候補: growth系23本・agent系12本。統合後は `deno lint` 0エラーを確認 |
-| **PowerShell版** | Web版の統合完了後、`deploy-prod.yml` の Tier 1 リストから廃止 EF を削除し Cleanup ステップに追加、Tier 2 コメントを更新 |
+| **PowerShell版** | `deploy-prod.yml` Tier 1 から `growth-acquisition-signal` と `growth-acquisition-report` を削除し `growth-acquisition` と `my-ai-agent` を追加 (net: 99→98→99→100 ではなく 99→97→99 で2枠確保)。旧2本を Tier 2 コメントに移動。 |
 
 ### ~~機能 #15~~: ✅ 解決済み (VSCode#23, 2026-04-10)
 
@@ -282,13 +281,9 @@ web/sitemap.xml          # URL マップ
 
 浪費耐性トレーニング (Icons.fitness_center) を `_buildUniqueValueSection()` に追加。タイトル「17のこと」→「20のこと」に更新。コア機能リスト #23〜#25 LP済に更新。
 
-### 機能 #26: 語学学習・レシピ・旅行・ペット・フォトギャラリーを LP に追加
+### ~~機能 #26~~: ✅ 解決済み (VSCode#28, 2026-04-11)
 
-**背景**: 2026-04-03 日次レポートで確認。PS#13 として実装済みの5機能が LP 未掲載。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| **VSCode版** | `landing_page.dart` の差別化訴求に5機能を追加（生活密着型として訴求） |
+語学学習・レシピ管理・旅行計画・ペット管理・フォトギャラリー + バイラル動画パイプラインを LP 追加。タイトル「20のこと」→「26のこと」。コア機能リスト #8 LP済に更新。
 
 ### 機能 #31: マイAIエージェント (Notion Custom Agents 対抗)
 
@@ -296,9 +291,8 @@ web/sitemap.xml          # URL マップ
 
 | インスタンス | 作業内容 |
 | --- | --- |
-| **VSCode版** | `lib/pages/ai_agent_page.dart` 新規作成 (タスク自動化フロー定義 UI) |
-| **Web版** | `my-ai-agent` EF 作成 (フロー実行エンジン) |
-
+| ~~**VSCode版**~~ | ✅ `lib/pages/ai_agent_page.dart` 作成済み (VSCode#28) — タスク自動化フロー定義 UI + `/my-ai-agent` ルート追加 |
+| ~~**Web版**~~ | ✅ `my-ai-agent` EF 作成済み (Web版#28) — create/update/delete/run/list アクション実装。ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert |
 
 ---
 

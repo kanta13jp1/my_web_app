@@ -1563,6 +1563,12 @@ $input
       (Icons.timer, '0xFF10B981', '集中タイマー', 'ポモドーロ/ディープフォーカスモードで深い集中を実現。思考妨害排除ガードと連携しSNS通知を自動ブロック。'),
       (Icons.edit_note, '0xFF7C3AED', 'AI文章アシスタント', 'メモ・ブログ・SNS投稿の文章作成・推敲・要約をAIが支援。Notion AIを超える日本語特化の文章強化機能。'),
       (Icons.fitness_center, '0xFFF59E0B', '浪費耐性トレーニング', '買わずに耐えた回数・防いだ出費・取り戻した時間を毎日記録。我慢を筋トレのように可視化して浪費を断つ精神性を育てる。'),
+      (Icons.video_camera_back, '0xFFDC2626', 'バイラル動画パイプライン', 'AIが広告動画を自動生成→X/SNSに自動投稿→効果測定まで全自動。TikTok・YouTube Shortsを超えるバイラル成長エンジン。'),
+      (Icons.translate, '0xFF0891B2', '語学学習', 'フラッシュカード・発音練習・進捗管理をAIが支援。Duolingoを超える日本語圏特化の語学習得システム。'),
+      (Icons.restaurant_menu, '0xFFB45309', 'レシピ・献立管理', '食材管理・献立提案・栄養分析をAIが自動化。MoneyForwardの家計管理と食費を連携した生活密着型機能。'),
+      (Icons.flight_takeoff, '0xFF0369A1', '旅行計画・行程管理', '行程管理・現地情報・費用管理を一元化。Google旅行機能を超えるAI行程最適化で旅をもっと豊かに。'),
+      (Icons.pets, '0xFF7E22CE', 'ペット健康管理', 'ワクチン記録・健康日記・体重管理をアプリ内で完結。競合21社にない個人ライフ全領域カバーの証明。'),
+      (Icons.photo_library, '0xFF065F46', 'フォトギャラリー', 'AI自動分類・思い出管理・家族共有まで対応。Google フォトに対抗しつつ自分株式会社データとシームレス連携。'),
     ];
 
     return Container(
@@ -1580,7 +1586,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない20のこと',
+            '自分株式会社でしかできない26のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

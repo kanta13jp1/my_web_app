@@ -4038,3 +4038,22 @@ COMPRESSED_PROMPT_V3.md に以下を追加:
 1. **機能 #26**: 語学学習・レシピ・旅行・ペット・フォトギャラリーを LP に追加 (VSCode版)
 2. **機能 #31**: マイAIエージェント MVP (VSCode版 UI + Web版 EF)
 3. **機能 #13**: EF統合 action パラメーター分岐 (Web版+PowerShell版)
+
+---
+
+## セッション記録: VSCode#28 (2026-04-11)
+
+### 完了タスク
+
+- **機能 #26**: 語学学習・レシピ管理・旅行計画・ペット管理・フォトギャラリー LP追加
+- **機能 #26**: バイラル動画パイプライン LP追加
+- **LP タイトル更新**: 「20のこと」→「26のこと」
+- **機能 #31 VSCode部分**: `ai_agent_page.dart` 新規作成 + `/my-ai-agent` ルート追加
+- **CLAUDE.md markdownlint修正**: MD034 bare URL 2件修正 (Web版#27が追加)
+- **コア機能リスト**: #8 LP済・#14 ✅ に更新
+
+### 次回優先 (他インスタンス)
+
+1. 機能 #31 Web版: `my-ai-agent` EF作成
+2. 機能 #13 EF統合 (Web版+PowerShell版)
+3. docs/ リンク修正 (Windows版)

@@ -589,8 +589,8 @@ Content-Type: application/json
 
 | プラットフォーム | Supabaseシークレット | 設定方法 |
 | --- | --- | --- |
-| Qiita | `QIITA_ACCESS_TOKEN` | https://qiita.com/settings/tokens/new でトークン発行 |
-| dev.to | `DEVTO_API_KEY` | https://dev.to/settings/extensions で API key 発行 |
+| Qiita | `QIITA_ACCESS_TOKEN` | Qiita設定のトークン発行ページでトークン発行 |
+| dev.to | `DEVTO_API_KEY` | dev.to設定のExtensionsページで API key 発行 |
 | Zenn | — | GitHubリポジトリ連携のため手動 (Zenn CLIは別途) |
 
 シークレット未設定の場合、そのプラットフォームはスキップされ `results.{platform}.error` に理由が記録される。
