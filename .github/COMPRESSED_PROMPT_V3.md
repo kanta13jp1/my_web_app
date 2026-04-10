@@ -85,6 +85,16 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 46 | **報酬・達成バッジ** (ポイント・バッジ獲得ゲーミフィケーション) | ✅ LP済 | `lib/pages/rewards_page.dart` (VSCode版) |
 | 47 | **支払いリマインダー** (月次サブスク・公共料金・ローン返済 — MoneyForward対抗) | ✅ LP済 | `lib/pages/payment_reminder_page.dart` (VSCode版) |
 | 48 | **マインドマップ** (ノード追加・拡大縮小スクロール — アイデア整理・思考可視化) | ✅ LP未訴求 | `lib/pages/` (VSCode版) |
+| 49 | **ビデオ会議・ミーティング管理** (ビデオ通話・会議室予約・議事録自動生成 — Zoom/Meet対抗) | ✅ LP済 | `lib/pages/video_meeting_page.dart`, `meeting_manager_page.dart` (VSCode版) |
+| 50 | **スマート受信箱** (AIメール・通知・タスク自動分類・優先度付け) | ✅ LP済 | `lib/pages/smart_inbox_triage_page.dart` (VSCode版) |
+| 51 | **パスワード金庫** (ゼロ知識暗号化・自動入力・セキュリティ監査 — 1Password対抗) | ✅ LP済 | `lib/pages/password_vault_page.dart` (VSCode版) |
+| 52 | **ポッドキャスト管理** (制作・公開・リスナー分析 — Anchor/Spotify対抗) | ✅ LP済 | `lib/pages/podcast_manager_page.dart` (VSCode版) |
+| 53 | **スクリーン録画** (ブラウザ録画・即時共有 — Loom対抗) | ✅ LP済 | `lib/pages/screen_recorder_page.dart` (VSCode版) |
+| 54 | **オークション・マーケットプレイス** (フリマ・出品・決済 — メルカリ/ヤフオク対抗) | ✅ LP済 | `lib/pages/auction_marketplace_page.dart` (VSCode版) |
+| 55 | **音声メモ文字起こし** (AI自動文字起こし・要約 — Otter.ai対抗) | ✅ LP済 | `lib/pages/voice_memo_transcriber_page.dart` (VSCode版) |
+| 56 | **仮想ホワイトボード** (コラボキャンバス — Miro/FigJam対抗) | ✅ LP済 | `lib/pages/virtual_whiteboard_page.dart` (VSCode版) |
+| 57 | **ワークフロー自動化** (トリガー&アクション ノーコード自動化 — Zapier対抗) | ✅ LP済 | `lib/pages/workflow_automation_page.dart` (VSCode版) |
+| 58 | **QRコード生成** (URL・テキスト→QR即時変換・共有) | ✅ LP済 | `lib/pages/qr_code_generator_page.dart` (VSCode版) |
 
 ---
 
@@ -363,7 +373,7 @@ web/sitemap.xml          # URL マップ
 
 | 課題 | 対応 | ステータス |
 | --- | --- | --- |
-| cs-check.yml のブランチ作成→PR→マージフロー (39行) | `git push origin HEAD:main` に簡略化 (daily-report.yml と統一) | ✅ 解決済み (PS#22) |
+| cs-check.yml / daily-report.yml の直接プッシュ | GITHUB_TOKEN はブランチ保護をバイパス不可 → PR→マージ方式に戻す (PS#25) | ✅ 解決済み (PS#25) |
 | 12部署仮想組織 & EdgeFunctionSummaryCard の LP 掲載 | LP 実装済み (機能 #17 / VSCode#24) | ✅ 解決済み |
 
 ### CI/CD改善 #C3: 2026-03-29 日次レポート分析からの反映 (PowerShell版#23, 2026-04-11)
