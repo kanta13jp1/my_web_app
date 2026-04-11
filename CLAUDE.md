@@ -74,6 +74,22 @@ C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.m
 前回の成功パターン・禁止事項・新規発見を読んで、セッションの出発点とする。
 記憶が消える弱点を「永続メモリ + NotebookLM Master Brain」で補う。
 
+**アーキテクチャ・意思決定・好みの質問には必ず Master Brain に問い合わせる**:
+
+> プロジェクトのアーキテクチャ・過去の技術的意思決定・ユーザーの設計上の好みに
+> 関する質問には、回答する前に必ず以下で Master Brain を参照する:
+>
+> ```bash
+> notebooklm use jibun-master-brain
+> notebooklm ask "過去の意思決定: [質問内容]"
+> ```
+>
+> 例: 「なぜ Supabase を選んだか」「Edge Function の設計方針は」
+> 「過去に試して失敗したアプローチは何か」など
+
+これにより、複数セッションにまたがる設計の一貫性を保てる。
+メモリが圧縮されてもセッション横断の知見が失われない。
+
 ### ゼロトークンリサーチ: `/deep-research` で NotebookLM に委譲（必須）
 
 以下のいずれかに該当する場合は **必ず** `notebooklm` CLI を使う:

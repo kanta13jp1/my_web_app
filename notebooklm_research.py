@@ -8,6 +8,17 @@ Claude Code の /deep-research コマンドから呼び出される。
   python notebooklm_research.py --files doc1.md doc2.md --query "APIとUIの整合性"
   python notebooklm_research.py --url https://example.com --query "要約して"
   python notebooklm_research.py --setup   # セットアップ確認
+
+  # Master Brain に保存 (セッション記録の蓄積)
+  python notebooklm_research.py --add-to-master-brain memory/project_20260411.md
+  python notebooklm_research.py --add-to-master-brain memory/feedback_success_20260411.md memory/project_20260411.md
+
+  # 成果物を生成
+  python notebooklm_research.py --generate slide-deck
+  python notebooklm_research.py --generate audio --generate-prompt "engaging deep dive"
+
+  # リサーチ後に成果物生成 + Master Brain 追加を一括実行
+  python notebooklm_research.py "Flutter performance" --generate flashcards --add-to-master-brain ./memory/project_today.md
 """
 
 import asyncio
@@ -198,6 +209,64 @@ def print_result(result: dict):
     print("=" * 60)
 
 
+MASTER_BRAIN_NOTEBOOK = "jibun-master-brain"
+
+
+def add_to_master_brain(files: list):
+    """ファイルを Master Brain ノートブックにソースとして追加する"""
+    import subprocess  # noqa: PLC0415
+
+    if not check_auth():
+        print("[ERROR] 未認証です。`notebooklm login` を実行してください。", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"[Master Brain] ノートブック切り替え: {MASTER_BRAIN_NOTEBOOK}", file=sys.stderr)
+    subprocess.run(["notebooklm", "use", MASTER_BRAIN_NOTEBOOK], check=False)
+
+    for f in files:
+        path = Path(f)
+        if not path.exists():
+            print(f"[Master Brain] ファイルが見つかりません: {f}", file=sys.stderr)
+            continue
+        print(f"[Master Brain] ソース追加: {path.name}", file=sys.stderr)
+        result = subprocess.run(
+            ["notebooklm", "source", "add", str(path)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(f"[Master Brain] ✅ 追加完了: {path.name}", file=sys.stderr)
+        else:
+            print(f"[Master Brain] ❌ 追加失敗: {path.name} — {result.stderr.strip()}", file=sys.stderr)
+
+
+def generate_artifact(artifact_type: str, prompt: str = ""):
+    """NotebookLM でリサーチ成果物を生成する"""
+    import subprocess  # noqa: PLC0415
+
+    valid_types = ["slide-deck", "flashcards", "mind-map", "data-table", "audio", "quiz", "infographic", "video"]
+    if artifact_type not in valid_types:
+        print(f"[ERROR] 無効な成果物タイプ: {artifact_type}", file=sys.stderr)
+        print(f"       有効なタイプ: {', '.join(valid_types)}", file=sys.stderr)
+        sys.exit(1)
+
+    cmd = ["notebooklm", "generate", artifact_type]
+    if prompt:
+        cmd.append(prompt)
+    if artifact_type == "audio":
+        cmd.append("--wait")
+
+    print(f"[NotebookLM] 成果物生成中: {artifact_type}", file=sys.stderr)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode == 0:
+        print(f"[NotebookLM] ✅ 生成完了: {artifact_type}")
+        if result.stdout:
+            print(result.stdout)
+    else:
+        print(f"[NotebookLM] ❌ 生成失敗: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="NotebookLM zero-token research helper for Claude Code /deep-research",
@@ -208,6 +277,23 @@ def main():
     parser.add_argument("--notebook", help="ノートブック名 (省略時は自動生成)")
     parser.add_argument("--setup", action="store_true", help="セットアップ状況を確認する")
     parser.add_argument("--json", dest="output_json", action="store_true", help="結果を JSON で出力する")
+    parser.add_argument(
+        "--add-to-master-brain",
+        nargs="+",
+        metavar="FILE",
+        help=f"指定ファイルを {MASTER_BRAIN_NOTEBOOK} ノートブックにソース追加する",
+    )
+    parser.add_argument(
+        "--generate",
+        metavar="TYPE",
+        help="成果物を生成する (slide-deck/flashcards/mind-map/data-table/audio/quiz/infographic/video)",
+    )
+    parser.add_argument(
+        "--generate-prompt",
+        metavar="PROMPT",
+        default="",
+        help="--generate に渡す追加プロンプト",
+    )
 
     args = parser.parse_args()
 
@@ -226,10 +312,20 @@ def main():
             print(f"[OK] 認証: {STORAGE_PATH}")
             print("\n[OK] セットアップ完了！ /deep-research コマンドを使用できます。")
         else:
-            print(f"[NG] 認証: 未ログイン")
+            print("[NG] 認証: 未ログイン")
             print("     run: notebooklm login")
             setup_guide()
             sys.exit(1)
+        return
+
+    # Master Brain へのソース追加（単独モード）
+    if args.add_to_master_brain and not args.query and not args.files and not args.url:
+        add_to_master_brain(args.add_to_master_brain)
+        return
+
+    # 成果物生成（単独モード）
+    if args.generate and not args.query and not args.files and not args.url:
+        generate_artifact(args.generate, args.generate_prompt)
         return
 
     if not args.query and not args.files and not args.url:
@@ -249,6 +345,14 @@ def main():
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
         print_result(result)
+
+    # リサーチ後に成果物生成（オプション）
+    if args.generate:
+        generate_artifact(args.generate, args.generate_prompt)
+
+    # リサーチ後に Master Brain へ追加（オプション）
+    if args.add_to_master_brain:
+        add_to_master_brain(args.add_to_master_brain)
 
 
 if __name__ == "__main__":
