@@ -438,7 +438,7 @@ web/sitemap.xml          # URL マップ
 
 **背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
-**現状 (2026-04-12 PS#37 で第2弾完了)**:
+**現状 (2026-04-12 PS#40 で第2弾 Qiita 投稿ブロッカー解消)**:
 
 - **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
 - `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ Supabase シークレット設定済み (Windows版#23)
@@ -447,14 +447,14 @@ web/sitemap.xml          # URL マップ
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
   - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
-- ⚠️ **Qiita**: トークンが 401 Unauthorized (無効トークン) — [Qiita設定ページ](https://qiita.com/settings/tokens/new) で新規トークン再発行 (`write_qiita` スコープ) → `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン>` → `blog-publish.yml` dispatch で `2026-03-31-notification-center.md` 再実行
+- ✅ **blog-publish.yml Qiita 403 修正済み** (PS#40, commit `08bc6c37`): Zenn形式 `topics:` フロントマターに対応していなかったバグを修正。`grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic` を追加。`notification-center.md` を dispatch 実行済み (結果確認要)
 
 **次回候補 (第3弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita(要トークン再設定)/dev.to |
-| 高 | `2026-03-31-notification-center.md` — Qiita 投稿 (dev.to は完了済み) | Qiita(要トークン再設定) |
+| 高 | `2026-03-31-notification-center.md` — Qiita (dispatch済み・結果確認要) | Qiita |
+| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
 | 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
