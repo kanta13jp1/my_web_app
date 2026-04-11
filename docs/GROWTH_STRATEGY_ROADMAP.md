@@ -5739,3 +5739,24 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - T-1 第3弾: `notification-center.md` Qiita 投稿確認 → 第3弾下書き選定
 - Web版: `ai_university_badges` バッジ発行 EF 🟡 高
 - Web版: `ai_university_streaks` ストリーク計算 EF 🟡 高
+
+---
+
+## Windows版#33b 継続セッション — AI大学2層更新アーキテクチャ確立 (2026-04-12)
+
+### 実施内容
+
+- **AI大学コンテンツ更新2層化**:
+  - Layer 1: GitHub Actions `ai-university-update.yml` — cron `0 */2 * * *` (2時間毎), 9プロバイダーRSS取得+UPSERT
+  - Layer 2: Claude Schedule (4時間毎) — NotebookLM Deep Research 一次調査 → 詳細コンテンツ生成
+- **CLAUDE.md Rule 11/12 追加**: AI大学→開発ワークフロー反映 / UI改善ツールチェーン5ステップ
+- **COMPRESSED_PROMPT_V3.md Rule #18/#19 追加**: 毎セッション必須ルールとして全インスタンスに適用
+- **モバイル表示修正**: `gemini_university_v2_page.dart` — `FittedBox(fit: BoxFit.scaleDown)` でシェアカードダイアログの375px Dialog内溢れ修正
+- **テキスト修正**: `ai_university_home_card.dart` — 「7社以上」→「9社以上」に更新
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
+- T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
+- Rule 19 実際の実行: design-skills + Figma MCP + AIDesigner MCP でLP/ホーム改善 🟢 中
