@@ -1,3 +1,4 @@
+import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -364,14 +365,33 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   Future<void> _shareProgress() async {
     final count = _answeredQuizzes.length;
     final total = _quizzes.length;
-    await SharePlus.instance.share(
-      ShareParams(
-        text: '自分株式会社の AI 大学でクイズ $count/$total 問正解！\n'
-            'Google・OpenAI・Anthropic・DeepSeekなど複数のAIプロバイダーを総合的に学べます。\n'
-            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
-            '#AILearning #buildinpublic #FlutterWeb',
-      ),
-    );
+    const url = 'https://my-web-app-b67f4.web.app/#/gemini-university';
+
+    // A/B/C テスト: 3バリエーションをランダム選択
+    final variant = Random().nextInt(3);
+    final String text;
+    switch (variant) {
+      case 0:
+        // A: 正解数フォーカス
+        text = '🎓 AI 大学でクイズ $count/$total 問正解！\n'
+            'Google・OpenAI・Anthropic など主要AIを体系的に学習中。\n'
+            '$url\n'
+            '#AILearning #buildinpublic #FlutterWeb';
+      case 1:
+        // B: プロバイダー制覇フォーカス
+        text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
+            'Google・OpenAI・DeepSeek・Mistral... 9社を比較学習できます。\n'
+            '$url\n'
+            '#AIUniversity #buildinpublic';
+      default:
+        // C: ランキング/競争フォーカス
+        text = '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
+            '複数のAIを使い比べながら正しく理解。ランキングで競おう！\n'
+            '$url\n'
+            '#AILearning #FlutterWeb';
+    }
+
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
