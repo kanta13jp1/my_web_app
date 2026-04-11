@@ -12,7 +12,7 @@
 | **VSCode** | `lib/` フロントエンド実装 (Dart/Flutter・205ページ) | `supabase/functions/`, `docs/` |
 | **Web版** | `supabase/functions/` Edge Functions (Deno・241本) | `lib/`, `docs/` |
 | **Windows版** | `docs/` ドキュメント・`supabase/migrations/` + seed SQL | `lib/`, `supabase/functions/` |
-| **PowerShell** | `.github/workflows/` + CI/CD (16本) | 他3範囲 |
+| **PowerShell** | `.github/workflows/` + CI/CD (17本) | 他3範囲 |
 
 ---
 
