@@ -5459,16 +5459,18 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - 追加モードのSQL生成はスキルなしでもベースラインが同等品質を実現 (既存ファイル参照で自力テンプレート発見)
 - 次イテレーション候補: 発見モードのアサーションを強化 (Groqなどニッチプロバイダーへの評価精度向上)
 
-### Eval出力物 (実プロジェクト適用可能)
+### Eval出力物 → 実プロジェクト適用完了
 
-- Mistral AI SQL: `.claude/skills/ai-university-add-provider-workspace/iteration-1/eval-add-mistral/with_skill/outputs/migration.sql`
-- Perplexity SQL: `.claude/skills/ai-university-add-provider-workspace/iteration-1/eval-add-perplexity/with_skill/outputs/migration.sql`
+- `supabase/migrations/20260412000100_seed_mistral_ai_university.sql` — Mistral AI (overview/models/api, 日本語, ON CONFLICT DO NOTHING)
+- `supabase/migrations/20260412000200_seed_perplexity_ai_university.sql` — Perplexity AI (overview/models/api, 日本語, Sonar API)
+- CLAUDE.md + COMPRESSED_PROMPT_V3.md: 登録プロバイダー 7社 → 9社 更新
+- commit `10491ceb` push済み
 
 ### 次回優先
 
 - Web版: `ai-university-content` EF + スコア書き込み EF
-- VSCode版: ランキングUI + ストリーク表示
-- Windows版: eval生成済みの Mistral/Perplexity migration を実プロジェクトに適用
+- VSCode版: ランキングUI + ストリーク表示 (ランキングページは#53で実装済み)
+- PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加、TOTAL_PROVIDERS 7→9
 - スキル iteration-2: 発見モードのアサーション精度向上 (より具体的な閾値テスト追加)
 
 ## VSCode版#53 セッション記録 (2026-04-12)
