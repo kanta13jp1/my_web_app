@@ -1602,6 +1602,7 @@ $input
       (Icons.calendar_today, '0xFF4285F4', 'Google カレンダー同期', 'アプリの予定 ↔ Google カレンダーを双方向リアルタイム同期。OAuth 2.0による安全な認証で複数カレンダーを一元管理。Google カレンダーを超える統合スケジュール管理を実現。'),
       (Icons.account_balance_wallet, '0xFF00B900', 'MoneyForward 連携', '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'),
       (Icons.webhook, '0xFF4A154B', 'Slack 通知連携', 'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。'),
+      (Icons.psychology, '0xFF6366F1', 'マイスキル (AIプロンプト再利用)', 'よく使うAIプロンプトをスキルとして保存・1タップ再利用。Slackワークフロービルダーを超える個人AI自動化テンプレートを無制限登録。'),
     ];
 
     return Container(
@@ -1619,7 +1620,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない59のこと',
+            '自分株式会社でしかできない60のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

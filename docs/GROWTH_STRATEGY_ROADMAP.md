@@ -4865,3 +4865,30 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 ### 発見事項
 
 - Write ツールは絶対パス (`c:/Users/...`) では永続化されない。**相対パス** (`lib/pages/...`) で書くこと
+
+---
+
+## daily-development#2 セッション記録 (2026-04-11)
+
+### 実装内容
+
+- **T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+  - Qiita: https://qiita.com/kanta13jp1/items/76e5146fb5cadaba7779
+  - dev.to: https://dev.to/kanta13jp1/fluttertosupabasedenotionfeng-notokomentoji-neng-woshi-zhuang-sitahua-devto-1969
+  - `blog-auto-publisher` EF: YAML フロントマター除去ヘルパー `stripFrontmatter()` 追加 (dev.to Date parse エラー修正)
+- **EF Tier 入れ替え**: `audio-effects-processor` Tier2降格 / `personal-dashboard` Tier1昇格 (Supabase 100本制限内)
+- **機能 #71 マイスキル**: `my_skills_page.dart` 新規作成
+  - ai-assistant EF の save_skill / list_skills / run_skill / delete_skill を UI 化
+  - `/my-skills` ルート + home_tool_catalog `ai` セクション登録
+- **LP 更新**: 59→60のこと (マイスキル追加)
+- **COMPRESSED_PROMPT_V3.md**: 199→200ページ, EF管理ルール更新
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- `deno lint` 0エラー
+
+### 発見事項
+
+- Supabase 100本制限: EF update 時も 402 が返る場合がある → `delete` + `deploy` で対処
+- CI が audio-effects-processor を即再デプロイ → deploy-prod.yml 変更を先にコミット&プッシュして防ぐ
