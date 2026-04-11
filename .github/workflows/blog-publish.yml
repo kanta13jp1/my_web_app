@@ -1,0 +1,213 @@
+name: Blog Publish (技術記事投稿)
+
+# 手動トリガーで docs/blog-drafts/ の記事を Qiita / dev.to に投稿する
+# 必要な Supabase シークレット: QIITA_ACCESS_TOKEN, DEVTO_API_KEY (Supabase側に設定)
+on:
+  workflow_dispatch:
+    inputs:
+      draft_path:
+        description: '投稿するブログドラフトのパス (例: docs/blog-drafts/2026-03-28-note-comments.md)'
+        required: true
+        default: 'docs/blog-drafts/2026-03-28-note-comments.md'
+      platforms:
+        description: '投稿先プラットフォーム (qiita, devto, 両方: qiita,devto)'
+        required: false
+        default: 'qiita,devto'
+      dry_run:
+        description: 'ドライラン (true=投稿しない, false=実投稿)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: blog-publish-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish Blog Draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # ── Step 1: コード取得 ────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
+      - name: Step 2 - Extract metadata from draft
+        id: meta
+        run: |
+          DRAFT_PATH="${{ github.event.inputs.draft_path }}"
+          if [ ! -f "$DRAFT_PATH" ]; then
+            echo "Error: $DRAFT_PATH not found"
+            exit 1
+          fi
+
+          # frontmatter から title と tags を抽出
+          TITLE=$(grep '^title:' "$DRAFT_PATH" | head -1 | sed 's/title: *//;s/^"//;s/"$//')
+          TAGS=$(grep '^tags:' "$DRAFT_PATH" | head -1 | sed 's/tags: *\[\(.*\)\]/\1/' | tr -d ' ')
+          PUBLISHED=$(grep '^published:' "$DRAFT_PATH" | head -1 | awk '{print $2}')
+
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "already_published=$PUBLISHED" >> $GITHUB_OUTPUT
+          echo "draft_path=$DRAFT_PATH" >> $GITHUB_OUTPUT
+          echo "📄 タイトル: $TITLE"
+          echo "🏷️ タグ: $TAGS"
+          echo "✅ 既投稿: $PUBLISHED"
+
+      - name: Check already published
+        if: steps.meta.outputs.already_published == 'true'
+        run: |
+          echo "⚠️ このドラフトは既に published: true です。再投稿をスキップします。"
+          echo "強制再投稿が必要な場合は frontmatter の published: を false に変更してください。"
+          exit 0
+
+      # ── Step 3: blog-post-manager EF に登録 ─────────────────────────────
+      - name: Step 3 - Register in blog_posts table
+        id: register
+        if: steps.meta.outputs.already_published != 'true'
+        run: |
+          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
+          TITLE="${{ steps.meta.outputs.title }}"
+          TAGS="${{ steps.meta.outputs.tags }}"
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+
+          # 本文 (frontmatter 除く)
+          CONTENT=$(awk '/^---/{if(++c==2){found=1;next}} found{print}' "$DRAFT_PATH")
+          CONTENT_PREVIEW=$(echo "$CONTENT" | head -c 200)
+
+          PLATFORMS="${{ github.event.inputs.platforms }}"
+          PLATFORM_JSON=$(echo "$PLATFORMS" | tr ',' '\n' | jq -R . | jq -s .)
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 [DRY RUN] 登録をスキップ"
+            echo "post_id=dry-run-id" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"title\": $(echo "$TITLE" | jq -R .),
+              \"draft_path\": $(echo "$DRAFT_PATH" | jq -R .),
+              \"target_platforms\": $PLATFORM_JSON,
+              \"content_preview\": $(echo "$CONTENT_PREVIEW" | jq -R .)
+            }" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-post-manager" \
+            --max-time 15)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP: $HTTP_CODE"
+          echo "$BODY" | jq .
+
+          POST_ID=$(echo "$BODY" | jq -r '.post.id // ""')
+          echo "post_id=$POST_ID" >> $GITHUB_OUTPUT
+          echo "✅ blog_posts ID: $POST_ID"
+
+      # ── Step 4: blog-auto-publisher EF で実投稿 ─────────────────────────
+      - name: Step 4 - Publish to platforms
+        id: publish
+        if: steps.meta.outputs.already_published != 'true'
+        run: |
+          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
+          POST_ID="${{ steps.register.outputs.post_id }}"
+          TAGS="${{ steps.meta.outputs.tags }}"
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+
+          CONTENT=$(awk '/^---/{if(++c==2){found=1;next}} found{print}' "$DRAFT_PATH")
+          TAGS_JSON=$(echo "$TAGS" | tr ',' '\n' | jq -R . | jq -s .)
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 [DRY RUN] 投稿をスキップ"
+            echo "results={}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"action\": \"auto_publish\",
+              \"id\": $(echo "$POST_ID" | jq -R .),
+              \"content\": $(echo "$CONTENT" | jq -R -s .),
+              \"tags\": $TAGS_JSON
+            }" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-auto-publisher" \
+            --max-time 30)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP: $HTTP_CODE"
+          echo "$BODY" | jq . || echo "$BODY"
+
+          # Qiita / dev.to の結果を出力
+          QIITA_URL=$(echo "$BODY" | jq -r '.results.qiita.url // ""')
+          DEVTO_URL=$(echo "$BODY" | jq -r '.results.devto.url // ""')
+          echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
+          echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
+
+      # ── Step 5: frontmatter を published: true に更新 ───────────────────
+      - name: Step 5 - Mark draft as published
+        if: steps.meta.outputs.already_published != 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
+          sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DRAFT_PATH"
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
+          git push origin main
+
+      # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
+      - name: Step 6 - schedule_task_runs 記録
+        if: always()
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          STATUS="success"
+          SUMMARY="blog-publish: ${{ steps.meta.outputs.title }} | dry_run=$DRY_RUN | qiita=${{ steps.publish.outputs.qiita_url }} | devto=${{ steps.publish.outputs.devto_url }}"
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"blog-publish\",\"status\":\"$STATUS\",\"summary\":$(echo "$SUMMARY" | jq -R .)}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          QIITA="${{ steps.publish.outputs.qiita_url }}"
+          DEVTO="${{ steps.publish.outputs.devto_url }}"
+          {
+            echo "## Blog Publish $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "| --- | --- |"
+            echo "| ドラフト | \`${{ steps.meta.outputs.draft_path }}\` |"
+            echo "| タイトル | ${{ steps.meta.outputs.title }} |"
+            echo "| ドライラン | $DRY_RUN |"
+            if [ -n "$QIITA" ]; then
+              echo "| Qiita | [投稿済み]($QIITA) |"
+            else
+              echo "| Qiita | スキップ (トークン未設定または失敗) |"
+            fi
+            if [ -n "$DEVTO" ]; then
+              echo "| dev.to | [投稿済み]($DEVTO) |"
+            else
+              echo "| dev.to | スキップ (APIキー未設定または失敗) |"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
