@@ -287,130 +287,269 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     CourseModule(
       id: 'api_reference',
       title: 'Gemini API リファレンス',
-      description: 'REST APIやSDKの技術仕様を学ぶ',
+      description: '2026/4/11版のGemini API仕様・構造・実例を学ぶ',
       icon: Icons.integration_instructions,
-      // Markdownコードブロックの干渉を避けるため、文字列結合で記述しています
-      content: '### Gemini API Reference\n'
-          '*Last Updated: 2026/1/23*\n\n'
-          '> We have updated our Terms of Service.\n'
-          '> 利用規約を更新しました。\n\n'
-          'This API reference describes the standard, streaming, and realtime APIs you can use to interact with the Gemini models.\n'
-          '> このAPIリファレンスは、Geminiモデルとのやり取りに使用できる標準API、ストリーミングAPI、リアルタイムAPIについて説明します。\n\n'
-          'You can use the REST APIs in any environment that supports HTTP requests.\n'
-          '> HTTPリクエストをサポートする環境であれば、どの環境でもREST APIを利用できます。\n\n'
-          'Refer to the Quickstart guide for how to get started with your first API call.\n'
-          '> 最初のAPI呼び出しを開始する方法については、クイックスタートガイドを参照してください。\n\n'
-          "If you're looking for the references for our language-specific libraries and SDKs, go to the link for that language in the left navigation under SDK references.\n"
-          '> 言語固有のライブラリおよびSDKの参照情報をお探しの場合は、左ナビゲーションの「SDKリファレンス」にある該当言語のリンクをご覧ください。\n\n'
-          '---\n\n'
-          '### Primary endpoints / 主要評価項目\n\n'
-          'The Gemini API is organized around the following major endpoints:\n'
-          '> Gemini APIは以下の主要なエンドポイントを中心に構成されています：\n\n'
-          '**Standard content generation (generateContent):** A standard REST endpoint that processes your request and returns the model\'s full response in a single package. This is best for non-interactive tasks where you can wait for the entire result.\n'
-          '> **標準コンテンツ生成 (generateContent):** リクエストを処理し、モデルの完全な応答を単一のパッケージで返す標準的なRESTエンドポイントです。結果全体を待機できる非対話型タスクに最適です。\n\n'
-          '**Streaming content generation (streamGenerateContent):** Uses Server-Sent Events (SSE) to push chunks of the response to you as they are generated. This provides a faster, more interactive experience for applications like chatbots.\n'
-          '> **ストリーミングコンテンツ生成 (streamGenerateContent):** サーバー送信イベント (SSE) を使用して、生成されたレスポンスのチャンクをプッシュ配信します。これにより、チャットボットなどのアプリケーションにおいて、より高速でインタラクティブな体験を提供します。\n\n'
-          '**Multimodal Live API (BidiGenerateContent):** A stateful WebSocket-based API for bi-directional streaming of audio and video, designed for real-time conversational use cases with sub-second latency.\n'
-          '> **マルチモーダル・ライブAPI (BidiGenerateContent):** 音声とビデオの双方向ストリーミングのためのステートフルなWebSocketベースのAPI。1秒未満の低遅延でリアルタイムな会話ユースケース向けに設計されています。\n\n'
-          '**Batch mode (batchGenerateContent):** (*Updated: 2026/1/15*) A standard REST endpoint for submitting batches of generateContent requests.\n'
-          '> **バッチモード (batchGenerateContent):** (*2026/1/15 更新*) generateContentリクエストのバッチを送信するための標準的なRESTエンドポイント。\n\n'
-          '**Embeddings (embedContent):** (*Updated: 2026/1/16*) A standard REST endpoint that generates a text embedding vector from the input Content.\n'
-          '> **埋め込み（embedContent）：**(*2026/1/16 更新*) 入力コンテンツからテキスト埋め込みベクトルを生成する標準的なRESTエンドポイント。\n\n'
-          '**Semantic Retrieval (AQA):** (*New: 2026/1/20*) Attributed Question Answering (AQA) endpoint for grounding responses in your own data with source citations.\n'
-          '> **セマンティック検索 (AQA):** (*2026/1/20 新機能*) 出典を明記しながら独自のデータに基づいて回答を生成する、根拠付け（Grounding）に特化したエンドポイント。\n\n'
-          '**Gen Media APIs:** (*Updated: 2026/1/16*) Endpoints for generating media with our specialized models such as Imagen for image generation, and Veo for video generation. Gemini also has these capabilities built in which you can access using the generateContent API.\n'
-          '> **Gen Media API:** (*2026/1/16 更新*) 画像生成用のImagenや動画生成用のVeoなど、当社の専用モデルを用いたメディア生成のためのエンドポイントです。Geminiにも同様の機能が組み込まれており、generateContent APIを使用してアクセスできます。\n\n'
-          '**Platform APIs:** (*Updated: 2026/1/17*) Utility endpoints that support core capabilities such as uploading files, and counting tokens.\n'
-          '> **プラットフォームAPI:** (*2026/1/17 更新*) ファイルのアップロードやトークンのカウントといった中核機能をサポートするユーティリティエンドポイント。\n\n'
-          '---\n\n'
-          '### Authentication / 認証\n'
-          '*Updated: 2026/1/17*\n\n'
-          'All requests to the Gemini API must include an `x-goog-api-key` header with your API key. Create one with a few clicks in Google AI Studio.\n'
-          '> Gemini APIへのすべてのリクエストには、APIキーを含む`x-goog-api-key`ヘッダーを含める必要があります。Google AI Studioで数クリックで作成できます。\n\n'
-          'The following is an example request with the API key included in the header: (*Updated: 2026/1/21*)\n'
-          '> 以下は、ヘッダーにAPIキーを含めたリクエストの例です： (*2026/1/21 更新*)\n'
-          '```bash\n'
-          'curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \\\n'
-          '  -H "x-goog-api-key: \$GEMINI_API_KEY" \\\n'
-          "  -H 'Content-Type: application/json' \\\n"
-          '  -X POST \\\n'
-          "  -d '{\n"
-          '    "contents": [\n'
-          '      {\n'
-          '        "parts": [\n'
-          '          {\n'
-          '            "text": "Explain how AI works in a few words"\n'
-          '          }\n'
-          '        ]\n'
-          '      }\n'
-          '    ]\n'
-          "  }'\n"
-          '```\n\n'
-          'For instructions on how to pass your key to the API using Gemini SDKs, see the Using Gemini API keys guide. (*Updated: 2026/1/21*)\n'
-          '> Gemini SDKを使用してAPIにキーを渡す方法については、「Gemini APIキーの使用」ガイドを参照してください。 (*2026/1/21 更新*)\n\n'
-          '---\n\n'
-          '### Content generation / コンテンツ生成\n'
-          '*Updated: 2026/1/21*\n\n'
-          'This is the central endpoint for sending prompts to the model.\n'
-          '> これはモデルにプロンプトを送信するための中央エンドポイントです。\n\n'
-          'There are two endpoints for generating content, the key difference is how you receive the response:\n'
-          '> コンテンツ生成には2つのエンドポイントがあり、主な違いはレスポンスの受け取り方です：\n\n'
-          '**generateContent (REST):** Receives a request and provides a single response after the model has finished its entire generation.\n'
-          '> **generateContent (REST):** リクエストを受け取り、モデルの生成が完全に終了した後に単一のレスポンスを返します。\n\n'
-          '**streamGenerateContent (SSE):** Receives the exact same request, but the model streams back chunks of the response as they are generated. This provides a better user experience for interactive applications as it lets you display partial results immediately.\n'
-          '> **streamGenerateContent (SSE):** まったく同じリクエストを受け取りますが、モデルが生成されたレスポンスのチャンクをストリーミングで返します。これにより、部分的な結果を即座に表示できるため、インタラクティブなアプリケーションにおいて優れたユーザー体験を提供します。\n\n'
-          '---\n\n'
-          '### Request body structure / リクエスト本文の構造\n'
-          '*Updated: 2026/1/23*\n\n'
-          'The request body is a JSON object that is identical for both standard and streaming modes and is built from a few core objects:\n'
-          '> リクエスト本体は、標準モードとストリーミングモードの両方で同一のJSONオブジェクトであり、以下のコアオブジェクトから構成されます：\n\n'
-          '**Content object:** Represents a single turn in a conversation.\n'
-          '> **コンテンツオブジェクト：**会話における単一のターンを表す。\n\n'
-          '**Part object:** A piece of data within a Content turn (like text or an image).\n'
-          '> **部分オブジェクト：**コンテンツターン内のデータの一部（テキストや画像など）。\n\n'
-          '**inline_data (Blob):** (*Updated: 2026/1/23*) A container for raw media bytes and their MIME type.\n'
-          '> **inline_data (Blob):** (*2026/1/23 更新*) 生メディアバイトとそのMIMEタイプを格納するコンテナ。\n\n'
-          '---\n\n'
-          '### Advanced Configuration / 高度な設定\n\n'
-          '**System Instructions:** Define the behavior and constraints of the model before any user input.\n'
-          '> **システム指示:** ユーザー入力の前に、モデルの振る舞いや制約を定義します。\n\n'
-          '**Safety Settings:** Configure thresholds for blocking harmful content across categories like harassment and hate speech.\n'
-          '> **安全設定:** 嫌がらせやヘイトスピーチなどのカテゴリごとに、有害なコンテンツをブロックする閾値を設定します。\n\n'
-          '**Generation Config:** Fine-tune the output using parameters like `temperature`, `topP`, `topK`, and `maxOutputTokens`.\n'
-          '> **生成設定:** `temperature`、`topP`、`topK`、`maxOutputTokens` などのパラメータを使用して出力を微調整します。\n\n'
-          '**Thinking Config:** (*New*) Enable the model to perform internal reasoning before generating the final response.\n'
-          '> **思考設定 (Thinking Config):** (*新機能*) 最終的な回答を生成する前に、モデルが内部的な推論（思考プロセス）を実行できるようにします。\n\n'
-          '```json\n'
-          '{\n'
-          '  "contents": [...],\n'
-          '  "generationConfig": {\n'
-          '    "thinking_config": {\n'
-          '      "include_thoughts": true\n'
-          '    }\n'
-          '  }\n'
-          '}\n'
-          '```',
+      content: r'''
+### Gemini API Reference
+*Last Updated: 2026/4/11*
+
+この講義では、Gemini API リファレンスの内容を AI大学向けに整理し直し、英語原文の要点と日本語理解をセットで学べるようにまとめています。
+
+---
+
+### 1. 概要
+
+Gemini API リファレンスは、Gemini モデルとやり取りするための **標準API / ストリーミングAPI / リアルタイムAPI** を説明する技術資料です。
+
+- REST API は、HTTP リクエストを送れる環境ならどこからでも利用できます。
+- 最初の導入は Quickstart を見ながら進めるのが最短です。
+- 言語別 SDK の詳細は SDK reference を参照します。
+
+---
+
+### 2. 主要エンドポイント
+
+Gemini API は主に次のエンドポイント群で構成されています。
+
+- **generateContent**
+  - 標準的な REST エンドポイント
+  - 1回のリクエストに対して、生成完了後にまとめてレスポンスを返します
+  - 非対話型タスクやバッチ的な利用に向いています
+
+- **streamGenerateContent**
+  - Server-Sent Events (SSE) を使ったストリーミング応答
+  - 生成途中のチャンクを順次受け取れるため、チャットUIなどに向いています
+
+- **BidiGenerateContent**
+  - WebSocket ベースの双方向リアルタイム API
+  - 音声や動画を含むリアルタイム会話ユースケース向けです
+
+- **batchGenerateContent**
+  - `generateContent` リクエストをまとめて送信するためのバッチ API
+
+- **embedContent**
+  - 入力テキストから埋め込みベクトルを生成します
+
+- **Gen Media APIs**
+  - Imagen や Veo のような専用モデルを使った画像・動画生成 API 群です
+
+- **Platform APIs**
+  - ファイルアップロードやトークン数カウントなど、周辺機能を支える API です
+
+---
+
+### 3. 認証
+
+Gemini API のすべてのリクエストには、API キーを含む `x-goog-api-key` ヘッダーが必要です。API キーは Google AI Studio で作成できます。
+
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+  -H "x-goog-api-key: ${'$'}GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "parts": [
+          {
+            "text": "Explain how AI works in a few words"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+SDK を使う場合でも、最終的には API キーの受け渡し設定が必要です。
+
+---
+
+### 4. コンテンツ生成の考え方
+
+コンテンツ生成の中心は `generateContent` 系です。
+
+- **generateContent**
+  - モデルが最後まで生成し終わってから、単一レスポンスを返します
+
+- **streamGenerateContent**
+  - 同じ本文構造を使います
+  - ただしレスポンスは生成中の断片が順次返るため、UX が良くなります
+
+実務では、まず `generateContent` で疎通確認し、その後に必要なら `streamGenerateContent` に切り替える流れが扱いやすいです。
+
+---
+
+### 5. リクエスト本文の構造
+
+標準モードでもストリーミングモードでも、リクエスト本文は同じ JSON 構造です。中心になるのは次のオブジェクトです。
+
+- **Content**
+  - 会話における 1 ターンを表します
+
+- **Part**
+  - 1 ターンの中に含まれるデータ片です
+  - テキスト、画像、音声などをここに載せます
+
+- **role**
+  - `user` や `model` のように、その Content が誰のターンかを表します
+
+- **inline_data (Blob)**
+  - 生のメディアバイトと MIME タイプを格納します
+
+最小構成では、`contents` の中に `role` と `parts` を置くだけで十分です。
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Explain how AI works in a single paragraph."
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 6. レスポンス本文の構造
+
+レスポンス本文も、標準レスポンスとストリーミングレスポンスで大枠は似ています。
+
+- ルートは **GenerateContentResponse**
+- その中に **candidates** が入ります
+- 各 candidate の中に **content** があり
+- さらにその中に **parts** が入ります
+
+つまり、入力側が `contents -> parts` なのに対し、出力側は `candidates -> content -> parts` をたどる意識を持つと読みやすくなります。
+
+実装では次の理解が重要です。
+
+- 単発 REST では 1 つの完成レスポンスを受け取る
+- ストリーミングでは candidate の断片が複数回届く
+- UI 側では parts を連結して表示する設計が多い
+
+---
+
+### 7. 高度な設定
+
+- **System Instructions**
+  - ユーザー入力前に、モデルのふるまいと制約を定義します
+
+- **Safety Settings**
+  - 嫌がらせ、ヘイトスピーチなどのカテゴリ単位でブロック閾値を設定します
+
+- **Generation Config**
+  - `temperature`、`topP`、`topK`、`maxOutputTokens` などで生成傾向を調整します
+
+- **Thinking Config**
+  - 最終回答の前に、モデル内部の推論を有効化できます
+
+```json
+{
+  "contents": [...],
+  "generationConfig": {
+    "thinking_config": {
+      "include_thoughts": true
+    }
+  }
+}
+```
+
+---
+
+### 8. 実務での読み解きポイント
+
+- **まずは generateContent**
+  - API の最小疎通確認はここから始める
+
+- **対話UIなら streamGenerateContent**
+  - 「考え中」の待ち時間を短く見せたいときに有効
+
+- **音声・動画のリアルタイム対話なら BidiGenerateContent**
+  - チャット API の延長ではなく、別種のリアルタイム API として考える
+
+- **Content と Part を混同しない**
+  - Content はターン
+  - Part はターン内の部品
+
+- **レスポンスは candidates 起点で読む**
+  - `candidates[0].content.parts` を追う実装が基本になります
+''',
+      labContent: r'''
+### ハンズオン: Gemini API リファレンスを実装目線で読む
+
+#### 1. テキストだけの最小リクエスト
+
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent" \
+  -H "x-goog-api-key: ${'$'}GEMINI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -X POST \
+  -d '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Explain how AI works in a single paragraph."
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+#### 2. 画像も扱うマルチモーダル入力の考え方
+
+```json
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Describe this image."
+        },
+        {
+          "inline_data": {
+            "mime_type": "image/png",
+            "data": "<base64-encoded-image>"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 3. 実装時のチェックポイント
+
+1. `Content` は 1 ターン、`Part` はその中身
+2. ストリーミングでもリクエスト本文はほぼ同じ
+3. レスポンス側は `candidates -> content -> parts` で読む
+4. まずテキストだけで通し、その後で画像や音声を足すと事故が少ない
+''',
       quiz: Quiz(
-        question:
-            'リアルタイム会話型ユースケース向けに設計された、双方向ストリーミングのためのWebSocketベースのAPIはどれですか？',
-        options: [
-          'generateContent',
-          'streamGenerateContent',
-          'BidiGenerateContent',
-          'batchGenerateContent',
-        ],
-        correctIndex: 2,
+        question: 'Gemini API のリクエスト本文で、会話における 1 ターンを表すコアオブジェクトはどれですか？',
+        options: ['Content', 'Part', 'Candidate', 'Blob'],
+        correctIndex: 0,
       ),
       officialDocs: [
         {
+          'title': 'AI API Reference Home',
+          'url': 'https://ai.google.dev/api',
+        },
+        {
           'title': 'Gemini REST API reference',
-          'url':
-              '[https://ai.google.dev/api/rest](https://ai.google.dev/api/rest)',
+          'url': 'https://ai.google.dev/api/rest',
         },
         {
           'title': 'SDK Quickstart',
-          'url':
-              '[https://ai.google.dev/gemini-api/docs/quickstart](https://ai.google.dev/gemini-api/docs/quickstart)',
+          'url': 'https://ai.google.dev/gemini-api/docs/quickstart',
         },
       ],
     ),
@@ -816,7 +955,8 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                         value: isCompleted
                             ? 1.0
                             : (_readingProgress[module.id] ?? 0.0),
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         color: isCompleted ? Colors.green : Colors.blue,
                       ),
                       const SizedBox(height: 16),
@@ -827,7 +967,9 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                           code: TextStyle(
                             backgroundColor: isDark
                                 ? Theme.of(context).colorScheme.onSurface
-                                : Theme.of(context).colorScheme.surfaceContainerHigh,
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHigh,
                             fontFamily: 'monospace',
                           ),
                         ),
@@ -997,7 +1139,8 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
                 child: CircularProgressIndicator(
                   value: progress,
                   strokeWidth: 12,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHigh,
                   color: isGraduated ? Colors.orange : Colors.indigo,
                 ),
               ),
@@ -1081,7 +1224,9 @@ BigQueryのコードアシスト機能におけるGeminiのクォータは、Gem
           Text(
             'この証書は、AI大学の全課程を修了し、\n生成AIに関する高度な知識を有することを証明します。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 24),
           Text(
