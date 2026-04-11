@@ -1626,6 +1626,11 @@ $input
       (Icons.checkroom, '0xFFF97316', 'ワードローブ管理', '所持服の登録・コーデ提案・購入計画をAIが管理。ファッションコストを削減しながらスタイルを最適化。'),
       (Icons.eco, '0xFF22C55E', 'カーボンフットプリント', '日常行動のCO2排出量を自動計算・可視化。移動・食事・エネルギー消費から個人の環境負荷を数値化し持続可能な生活を設計。'),
       (Icons.timer_outlined, '0xFF6366F1', 'タイムトラッキング', 'プロジェクト別・タスク別の作業時間を自動記録。Toggleを超えるAI分析付き時間管理で生産性の無駄を即特定。'),
+      (Icons.menu_book, '0xFF0F766E', 'Wikiデータベース', '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを完全無料で構築。'),
+      (Icons.view_kanban, '0xFFF59E0B', 'WIPリミット管理', '進行中タスク数の上限設定・ボトルネック検出・フロー可視化。Jiraを超えるリーンカンバン管理で作業効率を最大化。'),
+      (Icons.rss_feed, '0xFFEC4899', '技術ブログトラッカー', 'Zenn/Qiita/note/dev.toの投稿管理・PV分析・読者獲得トレンドを一元追跡。エンジニアの影響力成長を数値化。'),
+      (Icons.calendar_view_day, '0xFF6366F1', '予約・アポイント管理', '来客予約・医療予約・会議調整をカレンダー連携で一元管理。Calendlyを超えるAI最適スケジューリングシステム。'),
+      (Icons.terminal, '0xFF0F172A', 'API プレイグラウンド', 'REST API・Supabase EF・外部APIをブラウザから即テスト。Postmanを超えるアプリ内API開発環境で実装速度を10倍に。'),
     ];
 
     return Container(
@@ -1643,7 +1648,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない83のこと',
+            '自分株式会社でしかできない88のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

@@ -5123,3 +5123,44 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 
 - `flutter analyze` 0エラー
 - LP機能数 78→83のこと / ページ数 205
+
+---
+
+## セッション: Windows版#30 (2026-04-11)
+
+### 実施内容
+
+- **docs/ 矛盾チェック・最新化**: `MULTI_INSTANCE_COORDINATION.md` ページ数 195→205・CI/CD 13→16本
+- **T-1 第5弾**: `2026-03-31-notification-center.md` を Zenn に公開 (`published: true` commit)
+  - 内容: Flutter Web 通知センター + dart:html→package:web 移行パターン
+  - Qiita/dev.to は `blog-publish.yml` #B5 バグで保留 (PowerShell版スコープ)
+- **CI/CD バグ #B5 特定**: blog-publish.yml の title 抽出失敗 + GH006 Step5 問題を COMPRESSED_PROMPT_V3 に記録
+- **markdownlint 0エラー維持**
+- commit: 0ca7d48d / c4e74db2
+
+### 次回優先
+
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | CI/CD バグ #B5: blog-publish.yml 修正 | PowerShell版 |
+| 🟡 | T-1 第5弾 Qiita/dev.to: #B5 修正後に通知センター記事を投稿 | daily-dev/Web |
+| 🟡 | AI介入提案 (ai-assistant EF + slip パターン) | Web版 |
+| 🟡 | Notion API 連携強化 (growth-import-preview) | Web版 |
+| 🟢 | モバイルアプリ (iOS/Android) Flutter ビルド対応 | VSCode版 |
+
+---
+
+## セッション: VSCode#42 (2026-04-11)
+
+### 実施内容
+
+- **LP #95-#99 追加** (既存ページのLP掲載化):
+  - #95: Wikiデータベース / #96: WIPリミット管理 / #97: 技術ブログトラッカー
+  - #98: 予約・アポイント管理 / #99: API プレイグラウンド
+  - LP 83→88のこと
+- **COMPRESSED_PROMPT_V3**: #95-#99 コア機能追加
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- LP機能数 83→88のこと / ページ数 205

@@ -131,6 +131,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 92 | **ワードローブ管理** (所持服登録・コーデ提案・購入計画のAI最適化) | ✅ LP済 | `lib/pages/wardrobe_page.dart` (VSCode版) |
 | 93 | **カーボンフットプリント** (CO2排出量自動計算・可視化・持続可能生活設計) | ✅ LP済 | `lib/pages/carbon_footprint_tracker_page.dart` (VSCode版) |
 | 94 | **タイムトラッキング** (プロジェクト別作業時間自動記録・AI分析 — Toggl対抗) | ✅ LP済 | `lib/pages/time_tracker_page.dart` (VSCode版) |
+| 95 | **Wikiデータベース** (階層式Wiki・社内マニュアル・ナレッジベース — Confluence対抗) | ✅ LP済 | `lib/pages/wiki_database_page.dart` (VSCode版) |
+| 96 | **WIPリミット管理** (進行中タスク上限設定・ボトルネック検出・リーンカンバン — Jira対抗) | ✅ LP済 | `lib/pages/wip_limit_page.dart` (VSCode版) |
+| 97 | **技術ブログトラッカー** (Zenn/Qiita/note投稿管理・PV分析・読者獲得トレンド) | ✅ LP済 | `lib/pages/tech_blog_tracker_page.dart` (VSCode版) |
+| 98 | **予約・アポイント管理** (来客・医療・会議の予約カレンダー連携 — Calendly対抗) | ✅ LP済 | `lib/pages/appointment_scheduler_page.dart` (VSCode版) |
+| 99 | **API プレイグラウンド** (REST API・Supabase EFのブラウザテスト環境 — Postman対抗) | ✅ LP済 | `lib/pages/api_playground_page.dart` (VSCode版) |
 
 ---
 
@@ -504,6 +509,17 @@ web/sitemap.xml          # URL マップ
 ### ~~markdownlint 残件 (Windows版スコープ)~~ ✅ 解決済み (PS#33, 2026-04-11)
 
 `docs/GROWTH_STRATEGY_ROADMAP.md` の MD029/MD032/MD012/MD034 を修正済み。
+
+### CI/CD バグ #B5: `blog-publish.yml` 2問題 (PowerShell版スコープ)
+
+**背景**: Windows版#30 (2026-04-11) で `blog-publish.yml` 経由の Qiita/dev.to 投稿を試みた際に2問題を確認。
+
+| 問題 | 詳細 | 対応方針 |
+| --- | --- | --- |
+| title 抽出失敗 (Zenn フォーマット) | Step2 の `grep '^title:'` + sed が Zenn フォーマットの引用符付きタイトルで空文字を返す → blog-post-manager に `HTTP 400 "title is required"` | `python3 -c "import re,sys; ..."` か `sed` の引用符除去ロジックを修正 |
+| GH006 Step5 保護ブランチ直接 push | Step5 で `git push origin main` → ブランチ保護違反。C2改善と同じ問題 | Step5 を PR 作成→自動マージ方式に変更 (CS-check.yml の方式を参考) |
+
+**暫定対応 (Windows版#30)**: Zenn は `published: true` commit で直接公開可能なため、通知センター記事は Zenn のみ公開済み。Qiita/dev.to は #B5 修正後に blog-publish.yml で再実行。
 
 ---
 
