@@ -6637,3 +6637,36 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第6弾: AI大学10社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高
 - cross-instance-pr `20260412_groq_provider_ui.md` 処理: VSCode版 `_providerMeta` に Groq 追加 🟡 高
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+
+---
+
+## Windows版#35 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**: 前セッション(#34)で実施済みのため今回は数値確認のみ
+2. **AI大学 Cohere 追加 (11社目)**: migration `20260412002000_seed_cohere_ai_university.sql`
+   - overview: エンタープライズRAG特化・Command R+・Embed・Rerank・Aya 130言語
+   - models: Command A (256K/35B)、Embed v4.0、Rerank v3.5 料金表
+   - api: Embed + Rerank + Command R+ RAGパイプライン完全実装例 (Python)
+   - cross-instance-pr: `20260412_cohere_provider_ui.md` (VSCode版に _providerMeta 追加依頼)
+3. **AI大学 Amazon (Bedrock/Nova) 追加 (12社目)**: migration `20260412003000_seed_amazon_ai_university.sql`
+   - overview: Bedrock マルチモデルプラットフォーム (50+モデル)・Nova シリーズ
+   - models: Nova Micro/Lite/Pro/Premier/Canvas/Reel 全モデル表
+   - api: boto3・Converse API・Knowledge Bases RAG 実装例
+   - cross-instance-pr: `20260412_amazon_provider_ui.md` (VSCode版に _providerMeta 追加依頼)
+4. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 10社 → 12社
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 12社 (Cohere・Amazon追加)
+
+### 次回優先
+
+- T-1 第6弾: AI大学12社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Groq/Cohere/Amazon 追加 🟡 高
+- AI大学 次追加候補検討: Apple Intelligence / Baidu ERNIE / Samsung Gauss 🟢 中
+- docs/ 残件確認: IMPROVEMENTS.md 日付古い / GROWTH_FEATURES.md 未実装機能更新 🟢 中
