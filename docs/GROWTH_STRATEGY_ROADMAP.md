@@ -6705,3 +6705,36 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第6弾: AI大学13社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Groq/Cohere/Amazon/Stability 追加 🟡 高 (VSCode版)
 - AI大学 次追加候補: Nvidia NIM / Hugging Face 🟢 中 (Windows版)
+
+---
+
+## Windows版#37 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: EF=99/151/250本・ユーザー=4人・ワークフロー=17本 → 全て正確
+   - VSCode版#59 の cross-instance-pr 完了確認: Cohere/Amazon/Stability → status: done
+
+2. **AI大学 Hugging Face 追加 (14社目)**: migration `20260412005000_seed_huggingface_ai_university.sql`
+   - 採用理由: OSS AI モデルハブ最大・Inference API 公開・日本語モデル豊富 (rinna/ELYZA/CyberAgent)
+   - overview: 100万+モデル・transformers・Spaces・日本語エコシステム
+   - models: LLaMA 3.3/Mistral/Phi-4/Gemma3・日本語特化モデル表・FLUX/Whisper
+   - api: Inference API・transformers ローカル実行・InferenceClient (OpenAI互換)・FLUX画像生成
+   - cross-instance-pr: `20260412_huggingface_provider_ui.md` (emoji: '🤗', color: 0xFFFFD21E)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 13→14社
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 14社 (Hugging Face追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Hugging Face 追加 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学14社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Nvidia NIM / Baidu ERNIE 🟢 中 (Windows版)

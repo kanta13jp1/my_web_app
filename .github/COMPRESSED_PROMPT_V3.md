@@ -576,10 +576,10 @@ web/sitemap.xml          # URL マップ
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#36 時点: 13社)
+#### 現在の登録プロバイダー (Windows版#37 時点: 14社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
@@ -666,12 +666,13 @@ streak_updated_at timestamptz
 9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
 ```
 
-**次回追加候補**: Nvidia NIM (nvidia) / Hugging Face (huggingface) / Baidu ERNIE (baidu)
+**次回追加候補**: Nvidia NIM (nvidia) / Baidu ERNIE (baidu) / IBM watsonx (ibm)
 **Apple Intelligence: 見送り** (API非公開・統合OS機能のみ・開発者向け教材として不適)
 **追加完了 (Windows版#33)**: Mistral AI / Perplexity AI — migration適用済み (`20260412000100/000200_seed_*_ai_university.sql`)
 **追加完了 (Windows版#34)**: Groq — migration適用済み (`20260412001000_seed_groq_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#35)**: Cohere / Amazon — migration適用済み (`20260412002000/003000_seed_*_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#36)**: Stability AI — migration適用済み (`20260412004000_seed_stability_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
+**追加完了 (Windows版#37)**: Hugging Face — migration適用済み (`20260412005000_seed_huggingface_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 
 #### `ai_university_content` テーブルスキーマ
 
