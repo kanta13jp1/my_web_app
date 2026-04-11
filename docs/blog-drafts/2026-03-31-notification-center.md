@@ -3,7 +3,7 @@ title: "Flutter WebでSupabaseを使ったアプリ内通知センターを実�
 emoji: "🔔"
 type: "tech"
 topics: ["flutter", "supabase", "dart", "web"]
-published: false
+published: true
 ---
 
 # Flutter WebでSupabaseを使ったアプリ内通知センターを実装した話
