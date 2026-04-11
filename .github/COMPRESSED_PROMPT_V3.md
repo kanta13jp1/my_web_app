@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・203ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・204ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (16本完備済み) | 他3範囲 |
@@ -114,6 +114,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 75 | **Discord 通知連携** (Webhook URLでタスク完了・習慣達成をDiscordチャンネルに自動通知 — Discord対抗) | ✅ LP済 | `lib/pages/discord_notification_page.dart` (VSCode版) |
 | 76 | **LINE 通知連携** (LINE Notifyトークンでタスク・習慣・ゴール達成をLINEに自動通知 — LINE対抗) | ✅ LP済 | `lib/pages/line_notification_page.dart` (VSCode版) |
 | 77 | **GitHub PR 管理** (GitHubリポジトリのPR一覧・レビュー状況・統計をアプリ内で一元管理 — GitHub対抗) | ✅ LP済 | `lib/pages/github_pr_page.dart` (VSCode版) |
+| 78 | **思考妨害パターン診断** (4質問で衝動・時間帯・前兆サインを特定し禁欲ガード自動設定 — THOUGHT_INTERRUPT_ELIMINATOR #T2) | ✅ LP済 | `lib/pages/thought_interrupt_diagnosis_page.dart` (VSCode版) |
 
 ---
 
@@ -215,7 +216,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 203ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
+lib/pages/               # 204ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
@@ -479,7 +480,7 @@ web/sitemap.xml          # URL マップ
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | `abstinence_slips` テーブル作成 (マイグレーション) | Windows版 | 🟡 中 |
-| 思考妨害パターン診断UI (4質問形式) | VSCode版 | 🟡 中 |
+| ~~思考妨害パターン診断UI (4質問形式)~~ ✅ 完了 (`thought_interrupt_diagnosis_page.dart` + LP#78 + route `/thought-interrupt-diagnosis`) | VSCode版 | ✅ 完了 |
 | リアルタイム介入ウィジェット (ホーム画面衝動ボタン) | VSCode版 | 🟡 中 |
 | 週次パターンレポート (slip 分析・タイムスタンプ集計) | VSCode版 | 🟢 低 |
 | AI介入提案 (`ai-assistant` EF に slip パターン渡し) | Web版 | 🟢 低 |

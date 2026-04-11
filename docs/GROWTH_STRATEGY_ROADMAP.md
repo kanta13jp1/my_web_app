@@ -4946,3 +4946,27 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 ### 発見事項
 
 - Supabase 100本上限: 100本でのアップデートも402になる → 1本削除してから更新が必要なパターンが繰り返し発生
+
+
+---
+
+## セッション: VSCode#37 (2026-04-11)
+
+### 実施内容
+
+- **#T2 思考妨害パターン診断UI** (`thought_interrupt_diagnosis_page.dart` 新規作成):
+  - 4質問ウィザード: 集中が途切れた時の行動 / 衝動の種類 / ピーク時間帯 / 前兆サイン
+  - AnimatedContainer 選択カード (6択) + プログレスバー + ローカルフォールバック
+  - `daily-judgment` EF に `save_thought_interrupt_diagnosis` アクション連携
+  - 診断完了後 `/abstinence-guard` へ遷移
+  - Route: `/thought-interrupt-diagnosis`
+  - LP: `_buildUniqueValueSection()` に #78「思考妨害パターン診断」追加 → 67のこと
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- LP機能数 66→67のこと / ページ数 203→204
+
+### 発見事項
+
+- `_DiagOption`/`_DiagQuestion` に `const` コンストラクタを付けると `static final` リストでも `prefer_const_constructors` lint が発生する → `const` を削除して対処

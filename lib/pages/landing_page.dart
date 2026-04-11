@@ -1609,6 +1609,7 @@ $input
       (Icons.notifications_active, '0xFF5865F2', 'Discord 通知連携', 'タスク完了・習慣達成・日次サマリーをリアルタイムでDiscordチャンネルに通知。Webhook URLを設定するだけで即稼働する自動通知ルーティング。'),
       (Icons.notifications_active, '0xFF06C755', 'LINE 通知連携', 'タスク完了・習慣達成・ゴール達成をLINEにリアルタイム通知。LINE Notify トークン1枚で設定完了。LINEを超えるタスク×通知の完全統合。'),
       (Icons.merge_type, '0xFF24292F', 'GitHub PR 管理', 'GitHubリポジトリのPull Request一覧・レビュー状況・マージ統計をアプリ内で一元管理。開発とライフマネジメントを自分株式会社に完全統合。'),
+      (Icons.psychology_alt, '0xFF4338CA', '思考妨害パターン診断', '4つの質問で最大の思考妨害要因を特定し禁欲ガードの対象を自動設定。SNS・ゲーム・動画など6カテゴリから衝動パターンを診断し、集中が途切れる時間帯と前兆サインを可視化するAIセルフケアツール。'),
     ];
 
     return Container(
@@ -1626,7 +1627,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない66のこと',
+            '自分株式会社でしかできない67のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

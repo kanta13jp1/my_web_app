@@ -204,6 +204,7 @@ import 'package:my_web_app/pages/revenue_forecaster_page.dart';
 import 'package:my_web_app/pages/weather_widget_page.dart';
 import 'package:my_web_app/pages/team_chat_page.dart';
 import 'package:my_web_app/pages/health_coach_page.dart';
+import 'package:my_web_app/pages/thought_interrupt_diagnosis_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1155,6 +1156,10 @@ class MyApp extends StatelessWidget {
           case '/health-coach':
             return MaterialPageRoute(
               builder: (_) => const HealthCoachPage(),
+            );
+          case '/thought-interrupt-diagnosis':
+            return MaterialPageRoute(
+              builder: (_) => const ThoughtInterruptDiagnosisPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
