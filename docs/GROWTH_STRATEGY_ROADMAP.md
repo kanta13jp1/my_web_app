@@ -5637,3 +5637,20 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Qiita: `QIITA_ACCESS_TOKEN` 再設定 (write_qiita スコープ) → notification-center.md 投稿
 - VSCode版: `ai_university_badges` バッジ発行 EF + UI
+
+## VSCode版#56 セッション記録 (2026-04-12)
+
+### SNS シェアカード実装 (OGP スタイル画像生成)
+
+- `gemini_university_v2_page.dart` に `_showShareCardDialog()` / `_buildShareCard()` / `_captureAndDownload()` 追加
+- シェアカードデザイン: インジゴグラデーション背景 + プロバイダーバッジ (学習済みはカラー/未学習はグレー) + クイズ達成数
+- `RepaintBoundary` + `RenderRepaintBoundary.toImage()` でウィジェットをPNG化
+- `package:web/web.dart` の `HTMLAnchorElement` 経由でブラウザダウンロード
+- AppBar シェアボタン: `_shareProgress()` → `_showShareCardDialog()` に更新 (テキストシェアはダイアログ内ボタンで維持)
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- Web版: `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) 🟡 高
+- PowerShell/daily-dev: T-1 第3弾 技術記事投稿 (Qiita 403 要トークン再設定)
