@@ -588,14 +588,50 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | `_providerMeta`: DeepSeek/Mistral/Cohere/Perplexity/Amazon 追加 | ✅ VSCode版#51 |
 | Claude Code Schedule `ai-university-update` タスク登録 | ✅ PS#35 |
 
+#### 完了済み (Windows版#32, 2026-04-11)
+
+| 作業内容 | 状態 |
+| --- | --- |
+| `ai_university_streaks` テーブル (連続学習日数) migration | ✅ `20260411003800_create_ai_university_streaks.sql` |
+| `ai_university_badges` テーブル (達成バッジ) migration | ✅ `20260411004000_create_ai_university_badges.sql` |
+| CLAUDE.md: AI大学キラーコンテンツ化方針を KPI・3Step・ロードマップで大幅強化 | ✅ Windows版#32 |
+
 #### 未完了 (各インスタンスへ指示)
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
-| `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
-| ランキングUI (`ai_university_ranking_page.dart`): leaderboard ビューを表示 | VSCode版 | 🟡 中 |
-| `ai_university_scores` にスコア書き込み (EF + Flutter側) | Web版+VSCode版 | 🟡 中 |
-| 学習連続日数バッジ (`studied_at` 活用) | VSCode版 | 🟢 低 |
+| `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 最高 |
+| `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
+| ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
+| `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
+| `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
+| シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
+| ホームカード: ストリーク日数・バッジ数を動的表示 | VSCode版 | 🟡 中 |
+| SharedPreferences → Supabase 移行 (クロスデバイス学習記録) | VSCode版+Web版 | 🟢 中 |
+| 学習リマインダー通知 (3日未学習 → notification-center EF) | Web版 | 🟢 中 |
+| SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化) | VSCode版+Web版 | 🟢 低 |
+
+#### `ai_university_badges` テーブルスキーマ
+
+```sql
+badge_id      text PRIMARY KEY  -- 'first_study'|'quiz_master'|'streak_7d'|'all_providers' など
+user_id       uuid (FK auth.users)
+badge_name    text              -- 表示名 (例: 「AI探求者」)
+icon_emoji    text              -- バッジ絵文字
+condition     text              -- 達成条件の説明文
+awarded_at    timestamptz       -- 取得日時
+is_public     boolean           -- ランキング・シェアに表示するか
+```
+
+#### `ai_university_streaks` テーブルスキーマ
+
+```sql
+user_id       uuid PRIMARY KEY (FK auth.users)
+current_streak int              -- 現在の連続学習日数
+longest_streak int              -- 過去最長記録
+last_studied_date date          -- 最終学習日 (毎学習時に更新)
+streak_updated_at timestamptz
+```
 
 #### 新規プロバイダー追加手順 (毎セッション Step 0 として実施)
 

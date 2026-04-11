@@ -618,26 +618,71 @@ git push origin main
 
 ### AI大学 キラーコンテンツ化方針（毎セッション検討必須）
 
-AI大学はユーザー数拡大のための**最重要差別化機能**。毎セッションで以下を検討・実施する:
+AI大学はユーザー数拡大のための**最重要差別化機能**。毎セッションで必ず以下の3Stepを実行する。
 
-| 検討項目 | 状態 | 次アクション |
+#### 目標 KPI
+
+| KPI | 目標 | 測定方法 |
 | --- | --- | --- |
-| ホーム最上部表示 (`AiUniversityHomeCard`) | ✅ VSCode#51 | 定期的にカードデザイン改善 |
-| シェア機能 (share_plus) | ✅ VSCode#51 | シェア文言のA/Bテスト |
-| クイズ達成度永続化 (SharedPreferences) | ✅ VSCode#51 | — |
-| ランキング機能 (`ai_university_scores` テーブル) | ✅ migration VSCode#51 | Web版: EFでスコア書込み・ランキングUI実装 |
-| プロバイダー無制限追加 | ✅ VSCode#51 | 毎セッションで新プロバイダー検討 |
-| コンテンツ毎週自動更新 | ✅ CLAUDE.md タスク | ai-university-content EF (Web版スコープ) |
-| ランキングUI (`ai_university_ranking_page.dart`) | 🔴 未実装 | VSCode版 |
-| 学習連続日数バッジ | 🟡 未実装 | `ai_university_scores.studied_at` 活用 |
-| SNS シェア画像生成 | 🟡 未実装 | OGP/カード生成 |
-| 他ユーザーの学習状況表示 | 🟢 未実装 | プライバシー設定と合わせて |
+| 週次アクティブ学習者率 | 登録ユーザーの 40% 以上 | ai_university_scores.studied_at |
+| クイズ完了率 | 初回訪問の 60% 以上 | SharedPreferences → Supabase 移行後 |
+| シェア転換率 | 学習完了の 10% 以上 | share_plus イベント計測 |
+| ランキング参加率 | 学習者の 30% 以上 | ai_university_leaderboard ビュー |
+| 連続学習日数 (ストリーク) | 平均 7 日以上 | ai_university_streaks テーブル |
 
-**毎セッションの確認事項**:
+#### 毎セッション 3Step（必須）
 
-1. 新規プロバイダー追加候補を検討 (Step 0 参照)
-2. ランキング・達成バッジ未実装項目を1件以上進める
-3. ホームカードのクリック率向上策を検討 (文言・デザイン改善)
+**Step A: ホームカード改善 (VSCode版)**
+
+毎セッション必ず `lib/widgets/ai_university_home_card.dart` を見直す:
+
+- 学習済みプロバイダー数・クイズ正解数・ストリーク日数を動的表示できるか？
+- タップ時のCTA文言・ボタン色を改善できるか？
+- 新規ユーザーと復帰ユーザーで表示を出し分けられるか？
+
+**Step B: バイラル機能強化 (VSCode版 + Web版)**
+
+シェア・ランキング・バッジで口コミ拡散を加速する:
+
+- **シェア文言 A/B テスト**: 「X 社を制覇」「クイズ全問正解」等バリエーションを試す
+- **ランキングUI** (`ai_university_ranking_page.dart`): 週次TOP10・全体ランキング表示
+- **バッジシステム** (`ai_university_badges` テーブル): 達成条件別バッジ発行・シェア誘導
+- **SNSカード生成**: シェア時にOGP画像で「何社学習済み」を視覚化
+
+**Step C: リテンション強化 (Windows版 migration + Web版 EF)**
+
+一度使ったユーザーが戻ってくる仕掛けを入れる:
+
+- **学習ストリーク** (`ai_university_streaks`): 連続学習日数バッジ → 7日/30日/100日
+- **学習リマインダー** (`notification-center` EF 連携): 3日未学習でプッシュ
+- **コンテンツ鮮度表示**: 「X日前に更新」を AI大学ページに表示
+- **パーソナライズ**: 学習済みプロバイダーを次回訪問時に先頭表示
+
+#### 実装ロードマップ（優先度順）
+
+| 優先度 | 機能 | 担当インスタンス | 状態 |
+| --- | --- | --- | --- |
+| 🔴 最高 | ランキングUI (`ai_university_ranking_page.dart`) | VSCode版 | 未実装 |
+| 🔴 最高 | `ai-university-content` EF (GET/UPSERT) | Web版 | 未実装 |
+| 🔴 最高 | `ai_university_scores` スコア書込み (EF + Dart) | Web版+VSCode版 | 未実装 |
+| 🟡 高 | `ai_university_streaks` テーブル + ストリークUI | Windows版+VSCode版 | migration作成済み |
+| 🟡 高 | `ai_university_badges` バッジ発行 EF | Web版+VSCode版 | migration作成済み |
+| 🟡 高 | シェア文言 A/B テスト (3バリエーション) | VSCode版 | 未実装 |
+| 🟢 中 | ホームカード: ストリーク日数表示 | VSCode版 | 未実装 |
+| 🟢 中 | 学習リマインダー通知 | Web版 | 未実装 |
+| 🟢 中 | SNS シェア画像生成 (OGP カード) | VSCode版+Web版 | 未実装 |
+| 🔵 低 | 他ユーザー学習状況表示 | VSCode版 | 未実装 |
+
+#### 既存実装（改善のベースライン）
+
+| 機能 | 実装場所 | 改善ポイント |
+| --- | --- | --- |
+| ホーム最上部カード | `ai_university_home_card.dart` | ストリーク表示を追加 |
+| シェア機能 | `gemini_university_v2_page.dart` `_shareProgress()` | バリエーション追加 |
+| クイズ達成度 | SharedPreferences `ai_univ_answered_quizzes` | Supabase に移行してクロスデバイス対応 |
+| プロバイダー無制限 | DB 駆動タブ (9社対応済み) | 毎セッションで新プロバイダー検討 |
+| コンテンツ自動更新 | `ai-university-update.yml` (毎週月曜) | ai-university-content EF 完成後にフル稼働 |
+| DB スキーマ | `ai_university_scores` + `leaderboard` ビュー | EF とUI接続が未完了 |
 
 ---
 
