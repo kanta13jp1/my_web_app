@@ -146,6 +146,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 107 | **ソーシャルフィード** (達成記録・習慣ストリーク・ノート共有タイムライン — Facebook/Discord対抗) | ✅ LP済 | `lib/pages/social_feed_page.dart` (VSCode版) |
 | 108 | **意思決定チェック** (認知バイアス診断・クリアな判断支援 — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/decision_check_page.dart` (VSCode版) |
 | 109 | **デジタルウォレット** (ポイント・ギフト券・仮想通貨・電子マネー一元管理) | ✅ LP済 | `lib/pages/digital_wallet_page.dart` (VSCode版) |
+| 110 | **バーチャルペット** (タスク達成・習慣継続でペット成長するゲーミフィケーション) | ✅ LP済 | `lib/pages/virtual_pet_page.dart` (VSCode版) |
+| 111 | **リアル断捨離記録** (実物写真記録・手放し数値化・身軽さ可視化) | ✅ LP済 | `lib/pages/real_world_danshari_page.dart` (VSCode版) |
+| 112 | **思考アンカー** (雑念・不安・割り込みをキャプチャしアンカー変換する認知制御機能) | ✅ LP済 | `lib/pages/thought_anchor_page.dart` (VSCode版) |
+| 113 | **思考キャプチャ** (0.5秒でひらめきをInboxキャプチャ・AI自動分類GTD式思考管理) | ✅ LP済 | `lib/pages/thought_capture_page.dart` (VSCode版) |
+| 114 | **セマンティック検索** (意味・文脈で全データ横断検索するAI理解型検索エンジン — Notion対抗) | ✅ LP済 | `lib/pages/semantic_search_page.dart` (VSCode版) |
 
 ---
 
