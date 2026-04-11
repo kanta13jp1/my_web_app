@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・196ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・199ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (15本完備済み) | 他3範囲 |
@@ -104,6 +104,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 65 | **在庫・バーコード管理** (商品スキャン・在庫追跡・入出庫記録 — Amazon対抗) | ✅ LP済 | `lib/pages/inventory_barcode_page.dart` (VSCode版) |
 | 66 | **テンプレート広場** (6カテゴリ18種テンプレート即適用 — Notionマーケットプレイス対抗) | ✅ LP済 | `lib/pages/template_marketplace_page.dart` (VSCode版) |
 | 67 | **パーソナルダッシュボード** (ノート・タスク・習慣・集中時間KPIチャート可視化 — Notion 3.4対抗) | ✅ LP済 | `lib/pages/personal_dashboard_page.dart` (VSCode版) |
+| 68 | **Google カレンダー同期** (アプリ予定 ↔ Google カレンダー双方向同期・複数カレンダー管理) | ✅ LP済 | `lib/pages/google_calendar_sync_page.dart` (VSCode版) |
+| 69 | **MoneyForward 連携** (銀行・証券・クレカ残高自動取り込み・総資産管理 — MoneyForward対抗) | ✅ LP済 | `lib/pages/money_forward_page.dart` (VSCode版) |
+| 70 | **Slack 通知連携** (タスク・習慣・リクエストをSlackチャンネルへリアルタイム通知 — Slack対抗) | ✅ LP済 | `lib/pages/slack_notification_page.dart` (VSCode版) |
 
 ---
 
@@ -204,7 +207,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 196ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard 等)
+lib/pages/               # 199ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
@@ -443,15 +446,15 @@ web/sitemap.xml          # URL マップ
 
 **新規追加改善なし**: 2026-04-02〜2026-04-10 のレポートで提言された全CI/CD改善は既に対応済みを確認。
 
-### ユーザーリクエスト上位 (2026-04-08 確認 / 未対応)
+### ユーザーリクエスト上位 (2026-04-08 確認)
 
 > feature_requests 投票上位。優先度順に実装検討する。
 
 1. **Notion インポート強化** — Notion ページ階層・データベース構造インポート (EF実装済み → UI + Notion API 連携が必要)
-2. **MoneyForward 連携** — 家計簿・資産管理データ自動取り込み
-3. **Slack 通知連携** — タスク・メモ更新を Slack チャンネルへ通知
+2. ~~**MoneyForward 連携**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `money_forward_page.dart` 実装 + LP追加
+3. ~~**Slack 通知連携**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `slack_notification_page.dart` 実装 + LP追加
 4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
-5. **Google カレンダー同期** — 予定・タスクの双方向同期
+5. ~~**Google カレンダー同期**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `google_calendar_sync_page.dart` 実装 + LP追加
 
 ### 競合脅威対応タスク (2026-04-11 Claude Schedule 競合モニタリングから追加)
 
@@ -460,6 +463,10 @@ web/sitemap.xml          # URL マップ
 | ~~`admin_analytics_page.dart` 拡張~~: `personal_dashboard_page.dart` 新規作成で対応済み (daily-dev 2026-04-11) | Notion 3.4 ダッシュボードビュー | VSCode版 | ✅ 完了 |
 | `ai-assistant` EF: マイスキル登録・再利用機能 | Slack AI 再利用スキル | Web版 | 🟡 中 |
 | ~~`pr-auto-review` Schedule: CI失敗自動 fix コミット機能~~: `ci-auto-fix.yml` 新規作成で対応済み (PS#30) | GitHub Copilot Autopilot | PowerShell版 | ✅ 完了 |
+
+### markdownlint 残件 (Windows版スコープ)
+
+`docs/GROWTH_STRATEGY_ROADMAP.md` に MD029/MD032 エラー2件 (4843〜4844行) — Windows版が次回修正。
 
 ---
 

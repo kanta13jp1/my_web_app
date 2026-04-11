@@ -134,6 +134,9 @@ import 'package:my_web_app/pages/viral_ad_campaign_page.dart';
 import 'package:my_web_app/pages/virtual_pet_page.dart';
 import 'package:my_web_app/pages/affiliate_marketing_page.dart';
 import 'package:my_web_app/pages/calendar_events_page.dart';
+import 'package:my_web_app/pages/google_calendar_sync_page.dart';
+import 'package:my_web_app/pages/money_forward_page.dart';
+import 'package:my_web_app/pages/slack_notification_page.dart';
 import 'package:my_web_app/pages/expense_tracker_page.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
 import 'package:my_web_app/pages/ar_navigation_page.dart';
@@ -1110,6 +1113,18 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const WeatherWidgetPage(),
               settings: const RouteSettings(name: '/weather-widget'),
+            );
+          case '/google-calendar-sync':
+            return MaterialPageRoute(
+              builder: (_) => const GoogleCalendarSyncPage(),
+            );
+          case '/money-forward':
+            return MaterialPageRoute(
+              builder: (_) => const MoneyForwardPage(),
+            );
+          case '/slack-notifications':
+            return MaterialPageRoute(
+              builder: (_) => const SlackNotificationPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

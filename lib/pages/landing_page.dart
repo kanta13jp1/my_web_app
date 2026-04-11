@@ -1599,6 +1599,9 @@ $input
       (Icons.inventory, '0xFF059669', '在庫・バーコード管理', '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'),
       (Icons.dashboard_customize, '0xFF7C3AED', 'テンプレート広場', 'ビジネス・学習・ライフスタイル・技術開発など6カテゴリ18種のテンプレートを即適用。Notionマーケットプレイスを超える日本語特化テンプレート集。'),
       (Icons.bar_chart, '0xFF0891B2', 'パーソナルダッシュボード', 'ノート数・タスク達成率・習慣ストリーク・集中時間をチャートで可視化。Notion 3.4のダッシュボードビューを超えるAIパーソナルKPI分析。'),
+      (Icons.calendar_today, '0xFF4285F4', 'Google カレンダー同期', 'アプリの予定 ↔ Google カレンダーを双方向リアルタイム同期。OAuth 2.0による安全な認証で複数カレンダーを一元管理。Google カレンダーを超える統合スケジュール管理を実現。'),
+      (Icons.account_balance_wallet, '0xFF00B900', 'MoneyForward 連携', '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'),
+      (Icons.webhook, '0xFF4A154B', 'Slack 通知連携', 'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。'),
     ];
 
     return Container(
@@ -1616,7 +1619,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない56のこと',
+            '自分株式会社でしかできない59のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

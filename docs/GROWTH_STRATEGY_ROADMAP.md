@@ -4841,4 +4841,27 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 ### 次回優先 (PowerShell版)
 
 - 新規 COMPRESSED_PROMPT タスクに従い対応 (context refresh 待ち)
-3. **personal-dashboard EF**: Tier2→Tier1 デプロイ (94本制限内で削除1件が必要)
+
+1. **personal-dashboard EF**: Tier2→Tier1 デプロイ (94本制限内で削除1件が必要)
+
+---
+
+## VSCode版#35 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- 機能 #68 **Google カレンダー同期** UI — `google_calendar_sync_page.dart` 新規作成 + `/google-calendar-sync` ルート追加
+- 機能 #69 **MoneyForward 連携** UI — `money_forward_page.dart` 新規作成 + `/money-forward` ルート追加
+- 機能 #70 **Slack 通知連携** UI — `slack_notification_page.dart` 新規作成 + `/slack-notifications` ルート追加
+- LP タイトル「56のこと」→「59のこと」に更新
+- COMPRESSED_PROMPT_V3.md: コア機能リスト #68〜#70 追加、ページ数 196→199、ユーザーリクエスト上位3件を解決済みに更新
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- `.github/**/*.md` / `CLAUDE.md` markdownlint 0エラー
+- `docs/GROWTH_STRATEGY_ROADMAP.md` MD029/MD032 残件あり → Windows版に委譲
+
+### 発見事項
+
+- Write ツールは絶対パス (`c:/Users/...`) では永続化されない。**相対パス** (`lib/pages/...`) で書くこと
