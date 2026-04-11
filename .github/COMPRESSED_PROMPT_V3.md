@@ -565,14 +565,19 @@ web/sitemap.xml          # URL マップ
 | 6プロバイダー初期コンテンツ seed | ✅ `20260411003200_seed_ai_university_content.sql` |
 | `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 | ✅ 毎週月曜 11:00 JST |
 
+#### 完了済み (VSCode版#50, 2026-04-11)
+
+| 作業内容 | 状態 |
+| --- | --- |
+| `gemini_university_v2_page.dart` 完全書き換え: 6プロバイダータブ + Supabase DB連携 + フォールバック | ✅ VSCode版#50 |
+| LP「AI大学」説明文を6プロバイダー対応に更新 | ✅ VSCode版#50 |
+| Claude Code Schedule `ai-university-update` タスク登録 (週次月曜 11:00 JST) | ✅ PS#35 |
+
 #### 未完了 (各インスタンスへ指示)
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
-| `gemini_university_v2_page.dart` を `ai_university_page.dart` に改修: タブを6プロバイダー別に変更・EFからデータ取得 | VSCode版 | 🔴 高 |
-| Claude Code Schedule に `ai-university-update` タスクを登録 (週次月曜 11:00 JST) | PowerShell版 | 🟡 中 |
-| LP に「AI大学 (6大AI総合学習)」機能を更新 (Gemini限定→6プロバイダーに修正) | VSCode版 | 🟡 中 |
 
 #### `ai_university_content` テーブルスキーマ
 
