@@ -6402,3 +6402,33 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第3弾: Qiita トークン確認 → `notification-center.md` 投稿確認 🟡 高
 - VSCode版: Rule 19 継続 — Figma/AIDesigner MCPでホーム画面改善 🟡 高
 - Web版: `ai-university-content` EF の Dart クライアント接続 (Flutter側のRSS表示) 🟢 中
+
+---
+
+## PR#317マージ + AI大学テスト追加 + ROADMAP整備 (2026-04-12)
+
+### 実施内容
+
+- **PR#317 マージ**: `claude/ai-life-management-app-2Inq5` → `main` (Web版#28-#36 全12コミット)
+  - AI大学 EF 3本 main 着地: `ai-university-content` / `ai-university-streaks` / `ai-university-badges`
+  - CI: flutter analyze / deno lint / deno test (33 tests) 全クリア ✅
+  - `dart:js_interop` CI失敗は pre-existing issue (continue-on-error: true で非ブロッキング) と確認
+- **pure-logic テスト追加** (commit `0cd44eb2`):
+  - `ai-university-content/index.test.ts`: 19 tests (asString/asNumber/VALID_CATEGORIES/limit/byProvider/auth)
+  - `ai-university-streaks/index.test.ts`: 9 tests (limit/leaderboard/get default)
+  - `ai-university-badges/index.test.ts`: 13 tests (STREAK_BADGES/record_score/quiz_master/email)
+  - 合計テスト数: **74 tests** (33 + 41)
+- **ROADMAP整備** (commit `d23f63bd`):
+  - COMPRESSED_PROMPT_V3.md: AI大学「未完了」→「✅ 完了 (PR#317)」に全エントリ更新
+  - CLAUDE.md 実装ロードマップ: 全行を完了ステータスに修正
+
+### 技術的発見
+- Write tool で絵文字多用ファイルを書くと 1 byte になる silent fail → `wc -c` で検証必須
+- TS2367: literal type と `""` の比較は `: string` アノテーションで回避
+
+### 次回優先
+
+- T-1 第3弾: Qiita 新規トークン発行 → `notification-center.md` 投稿 🟡 高
+- Rule 19 実際の実行: design-skills + Figma MCP + AIDesigner MCP でホームUI改善 🟢 中
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+- AI大学 Tier2 EF (content/streaks/badges) → Tier1 昇格 (PowerShell版・EFスロット空き次第) 🔵 低
