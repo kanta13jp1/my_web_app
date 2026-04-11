@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
@@ -336,11 +338,39 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   String? _error;
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
+  static const String _prefsKey = 'ai_univ_answered_quizzes';
 
   @override
   void initState() {
     super.initState();
     _fetchContent();
+    _loadAnsweredQuizzes();
+  }
+
+  Future<void> _loadAnsweredQuizzes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_prefsKey) ?? '';
+    if (saved.isNotEmpty && mounted) {
+      setState(() => _answeredQuizzes.addAll(saved.split(',')));
+    }
+  }
+
+  Future<void> _saveAnsweredQuizzes() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, _answeredQuizzes.join(','));
+  }
+
+  Future<void> _shareProgress() async {
+    final count = _answeredQuizzes.length;
+    final total = _quizzes.length;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: '自分株式会社の AI 大学でクイズ $count/$total 問正解！\n'
+            'Google・OpenAI・Anthropic・DeepSeekなど複数のAIプロバイダーを総合的に学べます。\n'
+            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
+            '#AILearning #buildinpublic #FlutterWeb',
+      ),
+    );
   }
 
   @override
@@ -397,7 +427,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   void _awardQuizPoints(String providerId) {
     if (_answeredQuizzes.contains(providerId)) return;
-    _answeredQuizzes.add(providerId);
+    setState(() => _answeredQuizzes.add(providerId));
+    _saveAnsweredQuizzes();
     context
         .read<GamificationService>()
         .awardPoints(50, reason: 'AI大学クイズ正解: ${_meta(providerId).name}');
@@ -435,6 +466,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               context,
               MaterialPageRoute(builder: (_) => const ApiPlaygroundPage()),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: '進捗をシェア',
+            onPressed: _shareProgress,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),

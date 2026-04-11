@@ -575,22 +575,26 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 (随時拡張対応) | ✅ 毎週月曜 11:00 JST |
 | `ai-university-update.yml` ワークフロー (DeepSeek 含む7プロバイダー) | ✅ PS#35 + Windows版#31 |
 
-#### 完了済み (VSCode版#51, 2026-04-11)
+#### 完了済み (VSCode版#51〜#52, 2026-04-11)
 
 | 作業内容 | 状態 |
 | --- | --- |
-| `gemini_university_v2_page.dart` 完全書き換え: **DB駆動・プロバイダー数無制限** (タブ数=DB内distinct provider数) | ✅ VSCode版#51 |
-| `_providerMeta` マップ: DeepSeek/Mistral/Cohere/Perplexity/Amazon 追加 | ✅ VSCode版#51 |
-| `_fallback` マップ: 全11プロバイダー分のフォールバックMarkdown | ✅ VSCode版#51 |
-| `_quizzes` マップ: DeepSeek/Mistral/Perplexity クイズ追加 | ✅ VSCode版#51 |
-| CLAUDE.md `ai-university-update` Step 0: dart ファイル更新手順を追記 | ✅ VSCode版#51 |
-| Claude Code Schedule `ai-university-update` タスク登録 (週次月曜 11:00 JST) | ✅ PS#35 |
+| `gemini_university_v2_page.dart`: DB駆動タブ・プロバイダー数無制限・シェア・達成度永続化 | ✅ VSCode版#51〜#52 |
+| `AiUniversityHomeCard` ウィジェット: ホーム最上部バナー・プログレスバー・シェアボタン | ✅ VSCode版#52 |
+| `home_page.dart` 最上部に `AiUniversityHomeCard` 追加 | ✅ VSCode版#52 |
+| `ai_university_scores` テーブル + leaderboard ビュー (migration) | ✅ VSCode版#52 |
+| CLAUDE.md: AI大学キラーコンテンツ化方針 + 毎セッション確認事項を追加 | ✅ VSCode版#52 |
+| `_providerMeta`: DeepSeek/Mistral/Cohere/Perplexity/Amazon 追加 | ✅ VSCode版#51 |
+| Claude Code Schedule `ai-university-update` タスク登録 | ✅ PS#35 |
 
 #### 未完了 (各インスタンスへ指示)
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
+| ランキングUI (`ai_university_ranking_page.dart`): leaderboard ビューを表示 | VSCode版 | 🟡 中 |
+| `ai_university_scores` にスコア書き込み (EF + Flutter側) | Web版+VSCode版 | 🟡 中 |
+| 学習連続日数バッジ (`studied_at` 活用) | VSCode版 | 🟢 低 |
 
 #### 新規プロバイダー追加手順 (毎セッション Step 0 として実施)
 

@@ -41,6 +41,7 @@ import '../widgets/profile_completion_banner.dart';
 import '../widgets/profile_progress_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
+import '../widgets/ai_university_home_card.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
@@ -4158,7 +4159,10 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 最上部: ギター録音スタジオ (メイン機能)
+                            // 最上部: AI大学キラーコンテンツバナー
+                            const AiUniversityHomeCard(),
+                            const SizedBox(height: 12),
+                            // ギター録音スタジオ
                             const _GuitarMainFeatureBanner(),
                             const SizedBox(height: 10),
                             // 競合21社 vs 開発進捗バー

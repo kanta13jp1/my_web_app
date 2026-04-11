@@ -616,6 +616,31 @@ git push origin main
 
 ---
 
+### AI大学 キラーコンテンツ化方針（毎セッション検討必須）
+
+AI大学はユーザー数拡大のための**最重要差別化機能**。毎セッションで以下を検討・実施する:
+
+| 検討項目 | 状態 | 次アクション |
+| --- | --- | --- |
+| ホーム最上部表示 (`AiUniversityHomeCard`) | ✅ VSCode#51 | 定期的にカードデザイン改善 |
+| シェア機能 (share_plus) | ✅ VSCode#51 | シェア文言のA/Bテスト |
+| クイズ達成度永続化 (SharedPreferences) | ✅ VSCode#51 | — |
+| ランキング機能 (`ai_university_scores` テーブル) | ✅ migration VSCode#51 | Web版: EFでスコア書込み・ランキングUI実装 |
+| プロバイダー無制限追加 | ✅ VSCode#51 | 毎セッションで新プロバイダー検討 |
+| コンテンツ毎週自動更新 | ✅ CLAUDE.md タスク | ai-university-content EF (Web版スコープ) |
+| ランキングUI (`ai_university_ranking_page.dart`) | 🔴 未実装 | VSCode版 |
+| 学習連続日数バッジ | 🟡 未実装 | `ai_university_scores.studied_at` 活用 |
+| SNS シェア画像生成 | 🟡 未実装 | OGP/カード生成 |
+| 他ユーザーの学習状況表示 | 🟢 未実装 | プライバシー設定と合わせて |
+
+**毎セッションの確認事項**:
+
+1. 新規プロバイダー追加候補を検討 (Step 0 参照)
+2. ランキング・達成バッジ未実装項目を1件以上進める
+3. ホームカードのクリック率向上策を検討 (文言・デザイン改善)
+
+---
+
 ### Task: ai-university-update (毎週月曜 11:00 JST に実行)
 
 AI大学コンテンツを最新情報に自動更新する。**プロバイダー数は固定せず**、重要性が高い新興AIプロバイダーを毎回検討して随時追加する。
