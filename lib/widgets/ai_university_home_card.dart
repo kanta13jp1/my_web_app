@@ -44,10 +44,18 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
       setState(() => _answeredCount = answered.length);
     }
 
-    // Supabase からストリーク・バッジ数を取得 (ログイン済みの場合のみ)
+    // Supabase からクロスデバイス学習記録・ストリーク・バッジ数を取得
     final user = _supabase.auth.currentUser;
     if (user == null) return;
     try {
+      final scoresRow = await _supabase
+          .from('ai_university_scores')
+          .select('provider_id')
+          .eq('user_id', user.id)
+          .eq('quiz_correct', true)
+          .timeout(const Duration(seconds: 5));
+      final remoteCount =
+          ((scoresRow as List).cast<Map<String, dynamic>>()).length;
       final streakRow = await _supabase
           .from('ai_university_streaks')
           .select('current_streak')
@@ -60,13 +68,15 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
           .count(CountOption.exact);
       if (mounted) {
         setState(() {
+          // リモート記録があればローカルより優先 (クロスデバイス対応)
+          if (remoteCount > _answeredCount) _answeredCount = remoteCount;
           _currentStreak =
               (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
           _badgeCount = badgeRow.count;
         });
       }
     } catch (_) {
-      // ストリーク取得失敗はサイレント
+      // 取得失敗はサイレント — ローカルデータを維持
     }
   }
 

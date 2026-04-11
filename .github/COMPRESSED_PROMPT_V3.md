@@ -612,7 +612,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 | `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
 | ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
-| SharedPreferences → Supabase 移行 (クロスデバイス学習記録) | VSCode版+Web版 | 🟢 中 |
+| ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
 | 学習リマインダー通知 (3日未学習 → notification-center EF) | Web版 | 🟢 中 |
 | SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化) | VSCode版+Web版 | 🟢 低 |
 

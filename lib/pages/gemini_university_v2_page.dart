@@ -350,10 +350,39 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   }
 
   Future<void> _loadAnsweredQuizzes() async {
+    // ローカル (SharedPreferences) から読み込み
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefsKey) ?? '';
-    if (saved.isNotEmpty && mounted) {
-      setState(() => _answeredQuizzes.addAll(saved.split(',')));
+    final localSet =
+        saved.isNotEmpty ? saved.split(',').toSet() : <String>{};
+
+    // Supabase からクロスデバイス記録を取得してマージ
+    final user = _supabase.auth.currentUser;
+    Set<String> remoteSet = {};
+    if (user != null) {
+      try {
+        final rows = await _supabase
+            .from('ai_university_scores')
+            .select('provider_id')
+            .eq('user_id', user.id)
+            .eq('quiz_correct', true)
+            .timeout(const Duration(seconds: 5));
+        remoteSet = (rows as List)
+            .cast<Map<String, dynamic>>()
+            .map((r) => r['provider_id'] as String)
+            .toSet();
+      } catch (_) {
+        // Supabase 取得失敗はサイレント — ローカルデータを使用
+      }
+    }
+
+    final merged = localSet.union(remoteSet);
+    if (mounted && merged.isNotEmpty) {
+      setState(() => _answeredQuizzes.addAll(merged));
+      // ローカルにも同期して次回起動時のオフライン対応
+      if (merged.length > localSet.length) {
+        await prefs.setString(_prefsKey, merged.join(','));
+      }
     }
   }
 
