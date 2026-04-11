@@ -14,7 +14,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **VSCode版** | `lib/` (Flutter UI・195ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (13本完備済み) | 他3範囲 |
+| **PowerShell版** | `.github/workflows/` + CI/CD (14本完備済み) | 他3範囲 |
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -45,7 +45,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 6 | **AI仮想秘書** (日次判定・タスク提案・スケジュール管理) | ✅ | `daily-judgment`, `ai-assistant` |
 | 7 | **地方選挙インテリジェンス** (47都道府県×1年先×週末X投稿) | ✅ LP済 | `local-election-intelligence`, `gemini-election-analysis` |
 | 8 | **バイラル動画パイプライン** (自動生成→投稿→効果測定) | ✅ LP済 | `viral-video-ad-generator`, `x-media-post`, `viral-growth-engine` |
-| 9 | **Real Value YouTube競合分析** | 実装中 | Python: `fetch_yt.py` |
+| 9 | **Real Value YouTube競合分析** | ✅ CI/CD自動化済 | Python: `fetch_yt.py` + `update_tsv.py` → `youtube-analysis.yml` 毎日11:00 JST |
 | 10 | **メモ画像貼り付け** (Note/Notion風ドラッグ&ドロップ + クリップボードペースト → Supabase Storage) | ✅ | `memo-image-upload` (VSCode版) |
 | 11 | **ユーザーフィードバックパイプライン** (フォーム投稿→お礼メール+GH Issue+管理者一覧+スケジュール自動修正+リリース通知メール) | ✅ | `submit-feedback`, `notify-feature-request` |
 | 12 | **コンソールエラー自動フィードバック投稿** (`FlutterError.onError` → `submit-feedback` EF に `type=auto_error` 自動送信) | ✅ | `submit-feedback` (VSCode版: `lib/utils/error_reporter.dart` + `main.dart`) |
@@ -130,9 +130,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全13ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全14ワークフロー）
 
-**全13本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全14本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -148,7 +148,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import 固定チェック + **Deno std 古バージョン検出** + **pubspec.yaml 未固定パッケージ検出** |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
-| `workflow-failure-handler.yml` | workflow_run: [completed] | 主要10ワークフロー失敗時 → GitHub Issue自動生成 (`workflow-failure` ラベル) → `cs-check` が自動修復 |
+| `workflow-failure-handler.yml` | workflow_run: [completed] | 主要11ワークフロー失敗時 → GitHub Issue自動生成 (`workflow-failure` ラベル) → `cs-check` が自動修復 |
+| `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -201,7 +202,7 @@ lib/pages/               # 195ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 13本 (品質基準完備済み)
+.github/workflows/       # 14本 (品質基準完備済み)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)
