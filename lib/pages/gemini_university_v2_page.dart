@@ -126,6 +126,30 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6C35DE),
     officialUrl: 'https://platform.stability.ai/',
   ),
+  'huggingface': _ProviderMeta(
+    name: 'Hugging Face',
+    emoji: '🤗',
+    color: const Color(0xFFFFD21E),
+    officialUrl: 'https://huggingface.co/',
+  ),
+  'nvidia': _ProviderMeta(
+    name: 'Nvidia',
+    emoji: '🟢',
+    color: const Color(0xFF76B900),
+    officialUrl: 'https://build.nvidia.com/',
+  ),
+  'ibm': _ProviderMeta(
+    name: 'IBM watsonx',
+    emoji: '🔵',
+    color: const Color(0xFF0F62FE),
+    officialUrl: 'https://cloud.ibm.com/watsonx',
+  ),
+  'sakana': _ProviderMeta(
+    name: 'Sakana AI',
+    emoji: '🐟',
+    color: const Color(0xFF00B4D8),
+    officialUrl: 'https://huggingface.co/SakanaAI',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,6 +227,26 @@ final Map<String, _Quiz> _quizzes = {
   'stability': _Quiz(
     question: 'Stable Diffusion を開発した企業はどこですか？',
     options: ['Stability AI', 'OpenAI', 'Midjourney', 'Adobe'],
+    correct: 0,
+  ),
+  'huggingface': _Quiz(
+    question: 'Hugging Face Hub に登録されているモデル数はおよそ何個ですか？',
+    options: ['100万以上', '1万以上', '10万以上', '1000以上'],
+    correct: 0,
+  ),
+  'nvidia': _Quiz(
+    question: 'NVIDIA NIM の API は何の API と互換性がありますか？',
+    options: ['OpenAI API', 'Anthropic API', 'Gemini API', '独自 API'],
+    correct: 0,
+  ),
+  'ibm': _Quiz(
+    question: 'IBM Granite モデルのオープンソースライセンスは？',
+    options: ['Apache 2.0', 'MIT', 'GPL v3', 'CC BY-NC'],
+    correct: 0,
+  ),
+  'sakana': _Quiz(
+    question: 'Sakana AI が開発した独自のモデル作成手法は？',
+    options: ['進化的モデルマージング', 'LoRA ファインチューニング', 'RLHF', '知識蒸留'],
     correct: 0,
   ),
 };
@@ -415,6 +459,71 @@ Stable Diffusion の開発元。テキストから画像・動画・音楽・3D�
 - ComfyUI / Automatic1111 エコシステム
 
 [Stability AI Platform](https://platform.stability.ai/)
+''',
+  'huggingface': '''
+# Hugging Face — OSS AI モデルの GitHub
+
+100万以上の AI モデルをホスティングする世界最大のモデルハブ。
+LLaMA / Mistral / FLUX / Whisper など主要 OSS モデルが全て入手可能。
+
+## 主要機能
+- Hub: 100万+ モデル・50万+ データセット (多くは商用可)
+- Transformers: BERT/GPT/LLaMA を統一 API で利用
+- Inference API: クラウドでモデルを即利用 (無料枠あり)
+- Spaces: Gradio/Streamlit でデモアプリ公開
+- 日本語モデル: rinna / ELYZA / CyberAgent / llm-jp など
+
+[Hugging Face Hub](https://huggingface.co/)
+''',
+  'nvidia': '''
+# Nvidia — GPU AI インフラの世界標準
+
+ChatGPT / Gemini / Claude など主要 AI の大半が Nvidia GPU で動いています。
+NIM (Inference Microservices) で OpenAI 互換の高速推論 API を提供。
+
+## 主要機能
+- NVIDIA NIM: 100+モデルを OpenAI 互換 API で利用
+- TensorRT-LLM: 同 GPU で最大 5 倍高速化
+- ローカルデプロイ: Docker コンテナで完全オンプレ運用可
+- Nemotron-70B: Meta LLaMA3.1 を Nvidia がチューニング
+
+[build.nvidia.com](https://build.nvidia.com/) で無料体験可能
+''',
+  'ibm': '''
+# IBM watsonx — エンタープライズ AI の老舗
+
+金融・医療・公共機関での導入実績が豊富な企業向け AI プラットフォーム。
+Granite LLM は Apache 2.0 で OSS 公開されており、商用利用・ファインチューニング可能。
+
+## 主要コンポーネント
+- watsonx.ai: モデル構築・デプロイ・推論
+- watsonx.data: ガバナンス付きデータレイク
+- watsonx.governance: AI 監査・バイアス検出
+- Granite: IBM 独自 OSS モデル (テキスト・コード生成)
+
+## 特徴
+- 東京リージョン対応・データ主権要件に対応
+- HIPAA/GDPR/ISO27001 準拠
+- OpenAI 互換 API で移行容易
+
+[watsonx.ai](https://cloud.ibm.com/watsonx)
+''',
+  'sakana': '''
+# Sakana AI — 東京発・日本語 AI の最前線
+
+Transformer 論文著者の一人 Llion Jones が共同創業した東京の AI 研究スタートアップ。
+「進化的モデルマージング」で少ない計算コストで高性能日本語モデルを実現。
+
+## 主要モデル (Hugging Face で無料公開)
+- EvoLLM-JP-A-v1-7B: 日本語特化 LLM
+- EvoVLM-JP-v1-7B: 日本語マルチモーダル
+- Tanuki-8B / Tanuki-8x8B: 実用日本語モデル
+
+## 注目プロジェクト
+- AI Scientist: AI が論文を完全自動生成 (世界初)
+- Continuous Thought Machines: 新推論アーキテクチャ
+
+[Sakana AI Hub](https://huggingface.co/SakanaAI)
 ''',
 };
 
