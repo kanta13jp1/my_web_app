@@ -6381,3 +6381,24 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
 - T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
 - Rule 19 継続: Figma/AIDesigner MCPでコンポーネントデザイン取得 → ホーム画面改善 🟡 高
+
+## PS#40 (PowerShell版) — Qiita 403修正 + Rule19追加 + テスト拡大 + ROADMAP整備 (2026-04-12)
+
+### 実施内容
+
+- **blog-publish.yml Qiita 403 根本修正** (commit `08bc6c37`):
+  - 原因: Zenn形式 `topics:` フロントマターを `tags:` のみで読んでいた → `TAGS=""` → Qiita 403
+  - 修正: `grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic`
+- **UI改善ツールチェーン必須ルール追加** (commit `985201dc`):
+  - `COMPRESSED_PROMPT_V3.md` Rule #19 / `CLAUDE.md` Rule 12 に詳細5ステップワークフロー追加
+- **pure-logic テスト拡大** (commit `0cd44eb2`, 41 tests):
+  - `ai-university-content/index.test.ts` — 19 tests (asString/asNumber/カテゴリ/日付/limit/グルーピング)
+  - `ai-university-streaks/index.test.ts` — 14 tests (limit/ランク付け/デフォルトレスポンス)
+  - `ai-university-badges/index.test.ts` — 19 tests (ストリーク閾値/クイズマスター条件/once-correct/集計/emailサニタイズ)
+- **COMPRESSED_PROMPT_V3.md ROADMAP整備**: 「ai-university-content EF 未実装」等のstale entries を完了マーク
+
+### 次回優先
+
+- T-1 第3弾: Qiita トークン確認 → `notification-center.md` 投稿確認 🟡 高
+- VSCode版: Rule 19 継続 — Figma/AIDesigner MCPでホーム画面改善 🟡 高
+- Web版: `ai-university-content` EF の Dart クライアント接続 (Flutter側のRSS表示) 🟢 中

@@ -622,7 +622,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 | ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
-| 学習リマインダー通知 (3日未学習 → notification-center EF) | Web版 | 🟢 中 |
+| ~~学習リマインダー通知 (3日未学習 → notification-center EF)~~ ✅ 完了 (Web版#34, 2026-04-12, PR#317) | Web版 | ✅ |
 | ~~SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化)~~ ✅ 完了 (VSCode版#56, 2026-04-12) | VSCode版 | ✅ |
 
 #### `ai_university_badges` テーブルスキーマ
