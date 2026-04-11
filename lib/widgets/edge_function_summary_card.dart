@@ -269,6 +269,8 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     // 追加 (cs-check 自動連携)
     _FnDef('growth-acquisition', '成長獲得統合 (Signal記録+レポート)', true, '/growth-acquisition', '成長獲得ダッシュボードページ'),
     _FnDef('my-ai-agent', 'マイAIエージェント フロー実行エンジン', true, '/my-ai-agent', 'マイAIエージェントページ'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('personal-dashboard', 'パーソナルダッシュボード (個人統合ビュー)', true, '/personal-dashboard', 'パーソナルダッシュボードページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
