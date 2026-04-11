@@ -5509,3 +5509,18 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai_university_scores` スコア書き込み EF (Supabase側トリガー・バッジ発行連携)
 - VSCode版: ホームカード ストリーク日数・バッジ数動的表示
 - VSCode版: シェア文言 A/Bテスト (3バリエーション)
+
+## VSCode版#54 追記 — ホームカード・シェアA/Bテスト (2026-04-12)
+
+### 追加実装
+
+- シェア文言 A/B/C テスト 3バリエーション (`_shareProgress` を Random.nextInt(3) で切り替え)
+- ホームカード: `ai_university_streaks` / `ai_university_badges` から動的取得し 🔥 X日連続 / 🏅 Xバッジ 表示
+- `_awardQuizPoints`: `update_ai_university_streak` RPC 呼び出しでクイズ正解時にストリーク更新
+- `flutter analyze` 0エラー確認・push済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF + バッジ発行ロジック
+- VSCode版: SharedPreferences → Supabase 移行 (クロスデバイス学習記録)
