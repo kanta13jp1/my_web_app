@@ -5524,3 +5524,24 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Web版: `ai_university_scores` スコア書き込み EF + バッジ発行ロジック
 - VSCode版: SharedPreferences → Supabase 移行 (クロスデバイス学習記録)
+
+## PowerShell版#37 — T-1 第2弾: notification-center.md dev.to 投稿完了 (2026-04-12)
+
+### 実装内容
+
+- **blog-publish.yml 修正 2件**:
+  1. Zenn `published: true` ガード削除 — Qiita/dev.to は別システムのため通過させるよう変更
+  2. JSON構築を `jq -n --arg` 方式に変更 — 日本語タイトル(`jq -R .` + 文字列連結)の エンコードバグを修正
+- デフォルトパスを `notification-center.md` に更新
+- workflow dispatch 実行
+
+### 投稿結果
+
+- **dev.to** ✅ 投稿完了: https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3
+- **Qiita** ❌ 403 Forbidden — Supabase シークレット `QIITA_ACCESS_TOKEN` の再設定が必要 (権限 write_qiita)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: トークン再設定 → `2026-03-28-note-comments.md` を Qiita 投稿
+- VSCode版: SharedPreferences → Supabase 移行

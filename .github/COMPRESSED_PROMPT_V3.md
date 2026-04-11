@@ -188,7 +188,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 4. **ダミーデータ禁止** — Supabase 実データ必須
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
-7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
+7. **EF上限: 99本厳守** — Supabase は **99本まで（100本目で402エラー）**。新規EF追加前に既存EFへの `action` 追加を優先。超える場合は Tier2（コードのみ）に降格し `deploy-prod.yml` の Tier2コメントに記載
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
@@ -197,6 +197,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
+16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
 
 ---
 
@@ -427,7 +428,7 @@ web/sitemap.xml          # URL マップ
 
 **背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
-**現状 (2026-04-11 Windows版#23 で第1弾完了)**:
+**現状 (2026-04-12 PS#37 で第2弾完了)**:
 
 - **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
 - `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ Supabase シークレット設定済み (Windows版#23)
@@ -435,14 +436,16 @@ web/sitemap.xml          # URL マップ
   - Qiita: [Claude Code Schedule でCS自動化](https://qiita.com/kanta13jp1/items/38f0383e0ea01b787900)
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
+  - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
+- ⚠️ **Qiita**: `QIITA_ACCESS_TOKEN` が 403 Forbidden — Supabase シークレット再設定が必要 (`write_qiita` スコープ)
 
-**次回候補 (第2弾)**:
+**次回候補 (第3弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
-| 高 | `2026-03-31-notification-center.md` — dart:html→package:web 移行パターン | Zenn |
-| 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita |
+| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita(要トークン再設定)/dev.to |
+| 高 | `2026-03-31-notification-center.md` — Qiita 投稿 (dev.to は完了済み) | Qiita(要トークン再設定) |
+| 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
@@ -553,7 +556,7 @@ web/sitemap.xml          # URL マップ
 | title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d '\r'` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
 | GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
-**次回 Qiita/dev.to 再実行可能**: `2026-03-31-notification-center.md` を blog-publish.yml で再実行すること。
+**dev.to 投稿済み (PS#37)**: `2026-03-31-notification-center.md` → [dev.to投稿完了](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3)。Qiita は `QIITA_ACCESS_TOKEN` 再設定後に再実行。
 
 ### 機能強化 #T3: AI大学 マルチプロバイダー対応 + 毎週自動更新 (Windows版#30〜#31, 2026-04-11)
 
