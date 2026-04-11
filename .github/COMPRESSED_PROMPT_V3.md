@@ -9,12 +9,14 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ## 🔀 4インスタンス並行開発スコープ
 
-| インスタンス | 担当範囲 | 変更禁止 |
+| インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・211ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 250本) | 他3範囲 |
-| **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (17本完備済み) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・211ページ) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
+| **Web版** | `supabase/functions/` (EF 250本) + `supabase/migrations/*_schema_*.sql` | — |
+| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | Rule 10 (docs全件分析) 主担当 |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
+
+**緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -203,10 +205,10 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
-16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
-17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
-18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス・必須）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
-19. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページ(`lib/pages/` のいずれか)を `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙する、(2) **Figma MCP** (`mcp__figma__authenticate`) でデザインコンポーネントを参照・実装との差分を特定する、(3) **AIDesigner MCP** (`mcp__aidesigner__authenticate`) でDesktop/Mobile 両対応の改善案 2〜3 案を生成する、(4) **Nanobanana API** でカラーパレット・アイコン・グラデーションなどのデザインアセットを取得し Flutter コードに反映する、(5) 改善コードを `lib/` に実装 → `flutter analyze 0エラー` → commit → GROWTH_STRATEGY_ROADMAP に「UI改善: [ページ名] — [変更内容]」を記録する。**優先ページ順**: LP → ホーム画面 → AI大学 → 高トラフィックページ。**制約**: `docs/DESIGN.md` のトークン（色・フォント・間隔）違反案は採用禁止 / `ThemeService` カスタムテーマ優先 / 詳細手順は `docs/DESIGN_TOOLING_SETUP.md` 参照
+16. **毎セッション: Web/モバイル表示チェック（VSCode版 専任・修正）** — VSCode版は `flutter analyze 0エラー` 確認後、本番 `https://my-web-app-b67f4.web.app/` の主要ページ(ホーム/AI大学/LP/ランキング)をWeb・モバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を修正する。**他3インスタンスは確認のみ可・修正は VSCode版 に cross-instance-pr で依頼**
+17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版 専任）** — PowerShell版が `.github/workflows/` を毎セッション見直す: (a) 常にエラーになるステップを無効化、(b) push + workflow_call 二重起動防止、(c) `continue-on-error: true` 乱用排除、(d) timeout-minutes 実態確認。**加えて全ブランチの CI 失敗を監視し `.github/ci-failures/<sha>.json` に記録する（他インスタンスは次セッション冒頭で確認）**。改善後は ROADMAP に記録する
+18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
+19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他3インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
 
 ---
 

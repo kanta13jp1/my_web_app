@@ -1,18 +1,36 @@
 # 4インスタンス並列開発 — 競合防止ガイド
 
 作成日: 2026-03-30
+最終更新: 2026-04-12 (PS#40b — 役割分担見直し)
 管理: PowerShell インスタンス (全体管理)
 
 ---
 
 ## インスタンス分担
 
-| インスタンス | 担当領域 | 禁止領域 |
+| インスタンス | 担当領域 (write) | 専任責務 |
 | --- | --- | --- |
-| **VSCode** | `lib/` フロントエンド実装 (Dart/Flutter・205ページ) | `supabase/functions/`, `docs/` |
-| **Web版** | `supabase/functions/` Edge Functions (Deno・241本) | `lib/`, `docs/` |
-| **Windows版** | `docs/` ドキュメント・`supabase/migrations/` + seed SQL | `lib/`, `supabase/functions/` |
-| **PowerShell** | `.github/workflows/` + CI/CD (17本) | 他3範囲 |
+| **VSCode版** | `lib/` (Dart/Flutter UI・211ページ) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` |
+| **Web版** | `supabase/functions/` (EF 250本) + `supabase/migrations/*_schema_*.sql` | deno lint 0エラー / EF テスト維持 |
+| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | docs 全件分析・鮮度管理 / seed データ管理 |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 / 全ブランチ CI 監視 |
+
+### 緊急横断権限（Blocking 解消）
+
+担当インスタンスを待てない場合、非 owner インスタンスは以下の手順で変更提案をコミットできる:
+
+1. `docs/cross-instance-prs/YYYYMMDD_<内容>.md` を作成し変更内容を記述
+2. 担当インスタンスが次セッション冒頭で採否を判断してマージ or クローズ
+3. 緊急性が高い場合はコードを直接修正しコミットメッセージに `[cross-instance: <担当>版 に要確認]` を付記
+
+### 変更禁止領域（厳守）
+
+| インスタンス | 変更禁止 |
+| --- | --- |
+| VSCode版 | `supabase/functions/`, `docs/` (DESIGN.md は own), `.github/` |
+| Web版 | `lib/`, `docs/`, `.github/` |
+| Windows版 | `lib/`, `supabase/functions/`, `.github/` |
+| PowerShell版 | `lib/`, `supabase/functions/`, `docs/` (MULTI_INSTANCE_COORDINATION.md は own) |
 
 ---
 
@@ -58,6 +76,9 @@ git rebase --abort      # リベースをやめて元に戻す場合
 ---
 
 ## スケジュールタスク一覧 (Claude Code Schedule)
+
+> **Owner: PowerShell版** — Schedule タスクの定義・追加・変更は PowerShell版 が担当。
+> 実行時の成果物 (`docs/daily-reports/`, `docs/cs-notes/`, etc.) は各インスタンスの owned scope に書き込む。
 
 | タスク | スケジュール | 担当機能 |
 | --- | --- | --- |
