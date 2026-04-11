@@ -5794,6 +5794,111 @@ Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち (PS#38
 - PowerShell版: `notification-reminder` cron 追加 (毎日 10:00 JST → `send_study_reminders`)
 - VSCode版: HomeCard 絵文字 `Wrap` 化 (Web版#31 検出、🟡 高)
 
+## セッション: Web版#35 (2026-04-11)
+
+### 実装内容: THOUGHT_INTERRUPT_ELIMINATOR #T2 AI介入提案 action 完成 (🟢 低タスク)
+
+**課題**: 思考妨害排除ガード機能強化 #T2 の最後の未着手項目「AI介入提案 (`ai-assistant` EF に slip パターン渡し)」が残っていた。ユーザーの slip (誘惑に負けた記録) パターンを CBT/ACT の専門家視点で分析し、個別化された介入提案を生成する AI 機能。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+
+- 新規 EF を作らず、既存 `ai-assistant` EF に action を追加する設計を採用
+- `behavior_analysis` と近い認知行動療法系のプロンプトなので、自然な拡張点
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `suggest_slip_intervention` | ユーザー JWT | `abstinence_slips` 直近30日を集計 → CBT/ACT専門家プロンプトで LLM に送信 → 介入提案を JSON で返却 |
+
+**集計ロジック**:
+
+```typescript
+// 1. 直近30日の slip を RLS 経由で取得 (本人分のみ)
+const { data: slips } = await supabaseClient
+  .from('abstinence_slips')
+  .select('item_id, slipped_at, context, trigger_note')
+  .gte('slipped_at', sinceIso)
+  .order('slipped_at', { ascending: false });
+
+// 2. 曜日/時間帯/アイテム別に集計 (JST ベース)
+const weekdayCounts = ...; // 日月火水木金土 の 7値
+const hourCounts = ...;    // 0-23時の分布
+const itemCounts = ...;    // item_id 毎の出現回数
+
+// 3. risk_score: 直近7日 vs 週次平均から増減傾向を算出
+const riskRaw = last7d / weeklyAvg;
+const riskScore = Math.round(riskRaw * 50); // 0-100 にクリップ
+```
+
+**LLM プロンプト設計** (CBT/ACT 専門家プロンプト):
+
+- CBT/ACT の具体技法を必ず引用 (認知再構成・If-Then プラン・値の明確化・脱フュージョン)
+- 批判・説教ではなく共感と次の一手を提示
+- `intervention_tips`: 3〜5件の実行可能な行動レベル提案 (各60字以内)
+- `insights`: 200〜300字の洞察文 (曜日・時間帯パターンに言及)
+
+**レスポンス構造**:
+
+```json
+{
+  "success": true,
+  "result": {
+    "total_slips": 42,              // 直近30日総数
+    "last_7d_slips": 12,            // 直近7日数
+    "risk_score": 68,               // 0-100 (100=高リスク)
+    "insights": "金曜夜の21-23時に集中...",
+    "intervention_tips": [
+      "金曜19時にアプリをブロック設定する",
+      "21時以降はスマホをリビングに置く",
+      "..."
+    ],
+    "top_items": [{item_id, count}, ...],
+    "top_weekdays": [{weekday: "金", count: 8}, ...],
+    "top_hours": [{hour_range: "22時台", count: 6}, ...]
+  }
+}
+```
+
+**zero-slip フォールバック**: 30日間 slip が 0 件の場合は LLM を呼ばず「現状維持で問題なし」固定メッセージを返却してトークン節約。
+
+### VSCode版 ハンドオフタスク
+
+🟢 低: `lib/pages/weekly_slip_report_page.dart` or 新規 `thought_intervention_page.dart` で `suggest_slip_intervention` を呼び出す UI を追加
+- 「AI介入提案を生成」ボタン → `ai-assistant` EF に `{action: 'suggest_slip_intervention'}` POST
+- レスポンスの `insights` / `intervention_tips` をカード表示
+- `risk_score` を円グラフ or プログレスバーで可視化
+- `top_weekdays` / `top_hours` をチップで表示
+
+### ファイル変更
+
+- `supabase/functions/ai-assistant/index.ts`: +162 行 (917 → 1079 行、actionが13 → 14)
+
+### 品質確認
+
+- `deno lint supabase/functions/ai-assistant/` → **0エラー** (`Checked 1 file`)
+- 既存 `behavior_analysis` action と同じ LLM フォールバックチェーン (`runPromptWithStrategy`) を使用
+- RLS `abstinence_slips_select_own` policy により user JWT で本人分のみ自動絞り込み
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件のうち、PS#38 で ci.yml 無駄ビルド削除完了。run-batch 重複削除 / cron-batch.yml 停止も Windows版#33 で完了。EF デプロイ並列化 / --no-tree-shake-icons 検討は継続監視。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件**
+
+### 次回優先
+
+- Web版: `growth-import-preview` 既存 Notion API 実装を拡張 (ブロック再帰取得 / Rate limit protection)
+- Web版: SNS シェア画像 OGP カード生成 EF (Tier2 コード運用)
+- PowerShell版: `notification-reminder.yml` cron 追加 (毎日 10:00 JST → `send_study_reminders`)
+- PowerShell版: `slip-intervention.yml` cron 追加 (週次、risk_score 高ユーザーに通知送信 連携)
+- VSCode版: `thought_intervention_page.dart` 新規作成 (Web版#35 の AI 介入提案 UI)
+
 ## セッション: Windows版#33 (2026-04-12)
 
 ### 実施内容

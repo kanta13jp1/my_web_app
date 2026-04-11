@@ -443,6 +443,168 @@ ${entryData}`;
             }), { headers: corsHeaders });
         }
 
+        // THOUGHT_INTERRUPT_ELIMINATOR #T2: AI介入提案
+        // abstinence_slips の 30日分を集計し、曜日/時間帯/アイテム別の
+        // 傾向を LLM に渡して介入提案を生成する
+        if (action === 'suggest_slip_intervention') {
+            // 直近 30日間の slip を取得 (RLS により本人分のみ)
+            const sinceIso = new Date(Date.now() - 30 * 86_400_000).toISOString();
+            const { data: slipRows, error: slipErr } = await supabaseClient
+                .from('abstinence_slips')
+                .select('item_id, slipped_at, context, trigger_note')
+                .gte('slipped_at', sinceIso)
+                .order('slipped_at', { ascending: false })
+                .limit(200);
+
+            if (slipErr) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: `Failed to load slips: ${slipErr.message}`,
+                }), { headers: corsHeaders, status: 500 });
+            }
+
+            const slips = (slipRows ?? []) as Array<{
+                item_id: string;
+                slipped_at: string;
+                context: string | null;
+                trigger_note: string | null;
+            }>;
+
+            if (slips.length === 0) {
+                return new Response(JSON.stringify({
+                    success: true,
+                    result: {
+                        total_slips: 0,
+                        insights: '直近30日間のslip記録がありません。現状維持で問題ありません。',
+                        intervention_tips: [],
+                        risk_score: 0,
+                        top_items: [],
+                        top_weekdays: [],
+                        top_hours: [],
+                    },
+                }), { headers: corsHeaders });
+            }
+
+            // ── 集計: アイテム別 / 曜日別 / 時間帯別 ──
+            const itemCounts = new Map<string, number>();
+            const weekdayCounts = new Map<number, number>();
+            const hourCounts = new Map<number, number>();
+            const triggers: string[] = [];
+
+            const weekdayLabels = ['日', '月', '火', '水', '木', '金', '土'];
+
+            for (const slip of slips) {
+                itemCounts.set(slip.item_id, (itemCounts.get(slip.item_id) ?? 0) + 1);
+                // JST に変換して曜日・時間を取得
+                const jstMs = Date.parse(slip.slipped_at) + 9 * 60 * 60 * 1000;
+                const d = new Date(jstMs);
+                const weekday = d.getUTCDay(); // 0=日 ... 6=土
+                const hour = d.getUTCHours();
+                weekdayCounts.set(weekday, (weekdayCounts.get(weekday) ?? 0) + 1);
+                hourCounts.set(hour, (hourCounts.get(hour) ?? 0) + 1);
+                if (slip.trigger_note && slip.trigger_note.trim().length > 0) {
+                    triggers.push(slip.trigger_note.trim());
+                }
+            }
+
+            const topItems = [...itemCounts.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([item_id, count]) => ({ item_id, count }));
+
+            const topWeekdays = [...weekdayCounts.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([wd, count]) => ({
+                    weekday: weekdayLabels[wd] ?? String(wd),
+                    count,
+                }));
+
+            const topHours = [...hourCounts.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([hour, count]) => ({
+                    hour_range: `${hour}時台`,
+                    count,
+                }));
+
+            // 直近7日 vs 直近30日 の傾向で risk score を算出
+            const now = Date.now();
+            const last7d = slips.filter((s) =>
+                Date.parse(s.slipped_at) >= now - 7 * 86_400_000
+            ).length;
+            const last30d = slips.length;
+            // 30日平均/週と比較して直近7日が多ければ risk 増
+            const weeklyAvg = last30d / (30 / 7);
+            const riskRaw = weeklyAvg > 0 ? last7d / weeklyAvg : 0;
+            const riskScore = Math.max(
+                0,
+                Math.min(100, Math.round(riskRaw * 50)),
+            );
+
+            // ── LLM プロンプト ──
+            const triggerSample = triggers.slice(0, 10).join(' / ') || '記録なし';
+            const prompt = `あなたは認知行動療法(CBT)とACT(アクセプタンス&コミットメント)の専門家です。
+ユーザーの「思考妨害 slip (誘惑に負けた記録)」を分析し、個別化された介入提案を提供してください。
+
+[分析データ]
+- 直近30日の slip 総数: ${last30d}件
+- 直近7日の slip 数: ${last7d}件 (週次平均 ${weeklyAvg.toFixed(1)} に対して${
+    riskRaw > 1.2 ? '増加傾向' : riskRaw < 0.8 ? '減少傾向' : '横ばい'
+})
+- 最頻アイテム: ${topItems.map((x) => `${x.item_id}(${x.count}回)`).join(', ')}
+- 最頻曜日: ${topWeekdays.map((x) => `${x.weekday}(${x.count}回)`).join(', ')}
+- 最頻時間帯: ${topHours.map((x) => `${x.hour_range}(${x.count}回)`).join(', ')}
+- トリガー記録サンプル: ${triggerSample}
+
+出力ルール:
+- CBT/ACT の具体技法 (認知再構成、If-Then プラン、値の明確化、脱フュージョン等) を必ず引用する
+- 批判・説教ではなく、共感と具体的な次の一手を提示
+- intervention_tips は 3〜5件の実行可能な行動レベルの提案 (各 60字以内)
+- insights は 200〜300字の洞察文 (曜日・時間帯パターンに言及)
+- 日本語で出力
+
+出力フォーマット (JSONのみ):
+{
+  "insights": "洞察文",
+  "intervention_tips": ["提案1", "提案2", "提案3"]
+}`;
+
+            const resultStr = await runPromptWithStrategy(prompt);
+            const match = resultStr.match(/\{[\s\S]*\}/);
+            let insights = resultStr.substring(0, 400);
+            let intervention_tips: string[] = [];
+            if (match) {
+                try {
+                    const parsed = JSON.parse(match[0]);
+                    if (typeof parsed.insights === 'string') {
+                        insights = parsed.insights;
+                    }
+                    if (Array.isArray(parsed.intervention_tips)) {
+                        intervention_tips = parsed.intervention_tips
+                            .filter((t: unknown): t is string =>
+                                typeof t === 'string' && t.trim().length > 0
+                            )
+                            .slice(0, 5);
+                    }
+                } catch { /* use raw */ }
+            }
+
+            return new Response(JSON.stringify({
+                success: true,
+                result: {
+                    total_slips: last30d,
+                    last_7d_slips: last7d,
+                    risk_score: riskScore,
+                    insights,
+                    intervention_tips,
+                    top_items: topItems,
+                    top_weekdays: topWeekdays,
+                    top_hours: topHours,
+                },
+            }), { headers: corsHeaders });
+        }
+
         if (action === 'test_model') {
             const benchmarkPrompt = [
                 'You are running a connectivity benchmark.',

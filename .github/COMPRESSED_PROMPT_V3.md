@@ -542,7 +542,7 @@ web/sitemap.xml          # URL マップ
 | ~~思考妨害パターン診断UI (4質問形式)~~ ✅ 完了 (`thought_interrupt_diagnosis_page.dart` + LP#78 + route `/thought-interrupt-diagnosis`) | VSCode版 | ✅ 完了 |
 | ~~リアルタイム介入ウィジェット (ホーム画面衝動ボタン)~~ ✅ 完了 (`lib/widgets/thought_interrupt_quick_widget.dart` + ホーム禁欲ガードパネルに組込み) | VSCode版 | ✅ 完了 |
 | ~~週次パターンレポート (slip 分析・タイムスタンプ集計)~~ ✅ 完了 (`weekly_slip_report_page.dart` + LP#79 + route `/weekly-slip-report`, PS#33, 2026-04-11) | VSCode版 | ✅ 完了 |
-| AI介入提案 (`ai-assistant` EF に slip パターン渡し) | Web版 | 🟢 低 |
+| ~~AI介入提案 (`ai-assistant` EF に slip パターン渡し)~~ ✅ 完了 (Web版#35, 2026-04-11) `ai-assistant` EF に `suggest_slip_intervention` action 追加。直近30日の `abstinence_slips` を曜日/時間帯/アイテム別に集計 → CBT/ACT 専門家プロンプトで LLM に介入提案生成。riskスコア・intervention_tips 3-5件・insights 200-300字を JSON で返却 | Web版 | ✅ 完了 |
 
 ### ~~markdownlint 残件 (Windows版スコープ)~~ ✅ 解決済み (PS#33, 2026-04-11)
 
