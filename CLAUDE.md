@@ -791,7 +791,7 @@ AI大学コンテンツを最新情報に自動更新する。**プロバイダ�
 #### 現在の登録プロバイダー
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 ```
 
 登録済みプロバイダーは `ai_university_content` テーブルの `provider` カラム個別値で確認できる。
