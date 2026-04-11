@@ -75,6 +75,13 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
     - **デプロイ高速化**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップなど逐次実行されている重ステップを並列化 (`xargs -P8` / `matrix` strategy / 差分デプロイ `git diff --name-only` で変更EFのみ対象) で大幅短縮を検討する
     - **スコープ別修正**: `.github/workflows/*.yml` の変更は PowerShell版スコープ。Web版/VSCode版/Windows版 は発見事項を `COMPRESSED_PROMPT_V3.md`「実装待ち」に追記し PowerShell版にハンドオフ
     - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「ワークフロー改善」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
+11. **毎セッション: UI 改善ワークフロー実行（必須）** — Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md` を駆使して、毎セッション最低 1 コンポーネント / 1 ページの UI 改善を実施する。以下の 5 ステップを順番に実行する:
+    - **Step 1 (分析)**: `/design-review` スキルで直近セッションで触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査し、`docs/DESIGN.md` (Orange+Indigo ダークテーマ) のトークン違反・コントラスト不足・余白ミスを検出する
+    - **Step 2 (設計案生成)**: `/design-workflow` スキルで Figma MCP から既存デザインを読み取り、AIDesigner MCP で改善案を生成する。既存デザインがない場合は Nano Banana (`nano-banana` スキル) で参考ビジュアルを生成してムードボードに使う
+    - **Step 3 (コンポーネント実装)**: `/design-component` スキルで Flutter ウィジェットを生成し、`docs/DESIGN.md` のトークン (色・タイポ・スペーシング) を適用する。新規ウィジェットは `lib/widgets/` に配置、既存ウィジェットを改修する場合は Edit で変更する
+    - **Step 4 (品質チェック)**: `/design-check` スキルでデザイン品質を検証し、`flutter analyze` 0エラー・`deno lint` 0エラー・WCAG AA コントラスト 4.5:1 以上を満たすことを確認する
+    - **スコープ別対応**: `lib/` 変更は VSCode版スコープ。Web版は発見事項を `COMPRESSED_PROMPT_V3.md`「実装待ち」に追記し VSCode版にハンドオフ。Web版単独で実施する場合は Step 1・Step 2 の分析成果物 (改善提案) のみを生成し、`docs/design-reviews/YYYY-MM-DD-web-<session>.md` に記録する
+    - **記録**: 実施内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI改善ワークフロー」項目に必ず追記する (Step 1 のみでも「分析実施: 改善提案 N 件」と記録)
 
 ---
 

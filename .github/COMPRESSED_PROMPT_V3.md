@@ -199,6 +199,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
+18. **毎セッション: UI 改善ワークフロー実行（全インスタンス・必須）** — **Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md`** を駆使して、毎セッション最低 1 コンポーネント / 1 ページの UI 改善を実施する。5 ステップで実行:
+    - **Step 1 (分析)**: `/design-review` で直近触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査し、`docs/DESIGN.md` (Orange+Indigo ダークテーマ) のトークン違反・コントラスト不足・余白ミスを検出
+    - **Step 2 (設計案生成)**: `/design-workflow` で Figma MCP 読み取り + AIDesigner MCP 生成、既存デザインがなければ `nano-banana` スキルで参考ビジュアル生成しムードボードに使う
+    - **Step 3 (実装)**: `/design-component` で Flutter ウィジェット生成 or 既存ウィジェットを Edit で改修。`docs/DESIGN.md` トークン (色・タイポ・スペーシング) を適用
+    - **Step 4 (品質チェック)**: `/design-check` でデザイン品質検証 + `flutter analyze` 0エラー + `deno lint` 0エラー + WCAG AA コントラスト 4.5:1 を確認
+    - **スコープ別対応**: `lib/` 変更は **VSCode版** スコープ。Web版/Windows版/PowerShell版 は Step 1・2 の分析成果物 (改善提案) のみ生成し `docs/design-reviews/YYYY-MM-DD-<instance>-<session>.md` に記録し VSCode版にハンドオフ
+    - **記録**: 実施内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI改善ワークフロー」項目に必ず追記 (Step 1 のみでも「分析実施: 改善提案 N 件」と記録)
 
 ---
 
@@ -615,6 +622,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 | ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
 | **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
+| **DESIGN.md 準拠化 — 4ファイル 54 違反修正**: `docs/design-reviews/2026-04-11-web-36.md` に行番号付き詳細あり。🔴 Priority 1: `lib/utils/design_tokens.dart` 新規作成し `AppColors` / `AppSpacing` / `AppTypography` 定数を DESIGN.md から転記 → 違反の 80% が一括解決。🟡 Priority 2: 日本語タイポ準拠 (`height: 1.7` 追加 / `letterSpacing` 本文から削除 / `fontFamily: 'Serif'` 削除)。🟡 Priority 3: Material テーマ参照 (`Theme.of(context).colorScheme.*` / `Colors.grey[900]` / `Colors.indigo.shade800`) を AppColors に置換。対象: `ai_university_ranking_page.dart` / `ai_university_home_card.dart` / `notifications_page.dart` / `onboarding_page.dart`。Web版#36 design-review Step 1 で検出 (2026-04-11) | VSCode版 | 🟡 高 |
 | ~~学習リマインダー通知 (3日未学習 → notification-center EF)~~ ✅ 完了 (Web版#34, 2026-04-11) `supabase/functions/notification-center/index.ts` に `send_study_reminders` action 追加。`ai_university_streaks` から 3〜30日未学習のユーザーを抽出、直近3日以内の同種通知をスパム防止で除外、`app_notifications` に復帰促進メッセージを一括挿入。`dry_run` / `min_idle_days` / `max_idle_days` パラメータ対応。新規EF 作成せずスロット維持 | Web版 | ✅ 完了 |
 | ~~SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化)~~ ✅ 完了 (VSCode版#56, 2026-04-12) | VSCode版 | ✅ |
 

@@ -5973,11 +5973,60 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 今セッションの新規検出なし。PS#38/Windows版#33 で既存検出項目は対応済み。
 **チェック実施: 新規検出 0 件**
 
+### UI改善ワークフロー (CLAUDE.md #11 新規ルール / COMPRESSED_PROMPT_V3.md #18)
+
+ユーザー指示による新ルール #11 追加: **毎セッション Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md` を駆使した UI 改善必須化**。本セッションは初回実施。
+
+#### ルール追加内容 (CLAUDE.md #11 / COMPRESSED_PROMPT_V3.md #18)
+
+5 ステップワークフロー:
+
+1. **分析** (`/design-review`): 直近触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査しトークン違反検出
+2. **設計案生成** (`/design-workflow`): Figma MCP 読み取り + AIDesigner MCP 生成。不在なら `nano-banana` で参考ビジュアル生成
+3. **実装** (`/design-component`): Flutter ウィジェット生成 or 既存改修
+4. **品質チェック** (`/design-check`): デザイン品質 + `flutter analyze` 0エラー + WCAG AA 4.5:1
+5. **記録**: ROADMAP.md に追記。Web版/Windows版/PowerShell版 は Step 1・2 のみ実施して VSCode版ハンドオフ
+
+#### Step 1 実施 (Web版スコープ: 分析のみ)
+
+**対象ファイル** (Web版 直近作業に関連する 4 UI):
+
+| # | ファイル | スコア | 関連 Web版 作業 |
+| --- | --- | --- | --- |
+| 1 | `lib/pages/ai_university_ranking_page.dart` | 62/100 | Web版#30 streaks EF → VSCode版#53 UI |
+| 2 | `lib/widgets/ai_university_home_card.dart` | 58/100 | Web版#31 UI検出 + #34 リマインダー |
+| 3 | `lib/pages/notifications_page.dart` | 55/100 | Web版#34 send_study_reminders |
+| 4 | `lib/pages/onboarding_page.dart` | 48/100 | Web版#36 onboarding-flow テスト |
+
+**検出違反合計**: 54 件 (🔴 critical 3 / 🟡 medium 42 / 🟢 low 9)
+
+**主な違反カテゴリ**:
+
+- **ハードコード色**: `Color(0xFF1a1a2e)` / `Colors.indigo.shade800` / `Colors.amber` / `Colors.grey` など Material テーマ経由の色参照が多数
+- **スペーシングスケール外**: `padding: 14/18/20`, `margin: 10`, `vertical: 1/2` など {2,4,8,12,16,20,24,32,48,64} 外の値
+- **日本語タイポグラフィ違反**: 本文 `fontSize: 14` に `height: 1.7` 欠落 (DESIGN.md は line-height 1.5 以上必須)
+- **禁止色使用**: `lib/widgets/ai_university_home_card.dart` L222 で `Colors.white` を背景に使用 (DESIGN.md L670 禁止)
+- **禁止フォント使用**: `lib/pages/onboarding_page.dart` L212 で `fontFamily: 'Serif'` (DESIGN.md L131 で明朝体禁止)
+
+**VSCode版 への優先ハンドオフ (Top 3)**:
+
+1. 🔴 `lib/utils/design_tokens.dart` を新規作成し DESIGN.md の全トークンを `AppColors` / `AppSpacing` / `AppTypography` として定義。違反の 80% がこれで一括解決
+2. 🟡 日本語タイポグラフィ準拠 — 全 body `height: 1.7` / 見出し `height: 1.4` / 本文 `letterSpacing` 全削除 / `fontFamily: 'Serif'` 削除 (15箇所以上)
+3. 🟡 強制ダークテーマ化 — `Theme.of(context).colorScheme.*` / `Colors.grey[900]` / `Colors.indigo.shade800` を AppColors 定数に置換 (8箇所以上)
+
+**成果物**: `docs/design-reviews/2026-04-11-web-36.md` に行番号付き詳細レポート + 修正スニペット保存 (256行)。VSCode版 #57 以降で本ファイル参照。
+
+**使用スキル**: `Explore` subagent で静的コード解析を実施 (Flutter MCP/Figma MCP/Nano Banana は Web版 環境では不要 — 純粋分析のみ)
+
+**分析実施: 改善提案 54 件 / VSCode版ハンドオフ完了**
+
 ### 次回優先
 
 - Web版: `ai-assistant` / `ai-university-streaks` / `ai-university-content` など主要 EF に同様の pure-logic テストを追加 (継続的カバレッジ拡大)
 - Web版: `growth-import-preview` 既存 Notion API 実装を拡張 (ブロック再帰取得 / Rate limit protection)
 - Web版: SNS シェア画像 OGP カード生成 EF (Tier2 コード運用)
+- Web版: 次セッションの design-review 対象候補 — `lib/pages/thought_interrupt_diagnosis_page.dart` / `lib/pages/feature_requests_page.dart` / `lib/pages/ai_assistant_page.dart` (触れたEFに関連するUIをローテーション)
+- VSCode版: `docs/design-reviews/2026-04-11-web-36.md` 記載の 54 違反を修正
 - PowerShell版: `ci.yml` の `deno test` ステップを `--fail-fast` ONに切替 (テスト実装後はエラー顕在化の方が価値高い)
 
 ## セッション: Windows版#33 (2026-04-12)
