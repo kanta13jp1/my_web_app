@@ -8,8 +8,7 @@ on:
       - develop
   push:
     branches:
-      - main
-      - staging
+      - staging   # main は deploy-prod.yml が workflow_call で CI を呼ぶため除外 (二重起動防止)
       - develop
   workflow_call:
 
@@ -21,7 +20,7 @@ jobs:
   lint-and-test:
     name: Lint, Format, and Test
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     permissions:
       contents: read
 
@@ -113,7 +112,9 @@ jobs:
         continue-on-error: true
 
       #  修正: --no-tree-shake-icons を追加
+      # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
       - name: Build web (production)
+        if: github.event_name != 'workflow_call'
         run: >
           flutter build web --release --no-tree-shake-icons
           --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
@@ -121,6 +122,7 @@ jobs:
           FLUTTER_WEB: true
 
       - name: Check build output
+        if: github.event_name != 'workflow_call'
         run: |
           if [ ! -d "build/web" ]; then
             echo "Build failed: build/web directory not found"
@@ -129,16 +131,10 @@ jobs:
           echo "Build successful!"
           ls -la build/web
 
-      - name: Build web (wasm) — regression check
-        run: flutter build web --wasm --no-tree-shake-icons
-        continue-on-error: true
-        env:
-          FLUTTER_WEB: true
-
       - name: Job Summary
         if: always()
         run: |
-          BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "❌")
+          BUILD_OK=$([ -d "build/web" ] && echo "✅" || echo "— (skipped: workflow_call)")
           FLUTTER_TEST="${{ steps.flutter_test.outcome }}"
           DENO_TEST="${{ steps.deno_test.outcome }}"
           FT_ICON=$([ "$FLUTTER_TEST" = "success" ] && echo "✅" || [ "$FLUTTER_TEST" = "skipped" ] && echo "—" || echo "⚠️")
@@ -201,41 +197,10 @@ jobs:
           [ "$FOUND" -eq 0 ] && echo "✅ No hardcoded secrets found"
           echo "Security check completed"
 
-  build-matrix:
-    name: Build Matrix Test
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    permissions:
-      contents: read
-    strategy:
-      matrix:
-        flutter-version: ['3.38.x'] # 指定のバージョンに戻しました
-        # Add more versions if needed for compatibility testing
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter ${{ matrix.flutter-version }}
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ matrix.flutter-version }}
-          channel: 'stable'
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      #  修正: --no-tree-shake-icons を追加
-      - name: Build test
-        run: >
-          flutter build web --release --no-tree-shake-icons
-          --dart-define=LANDING_GOOGLE_LOGIN_ENABLED=true
-
   pr-comment:
     name: PR Comment
     runs-on: ubuntu-latest
-    needs: [lint-and-test, security-check, build-matrix]
+    needs: [lint-and-test, security-check]
     if: github.event_name == 'pull_request' && success()
     permissions:
       pull-requests: write

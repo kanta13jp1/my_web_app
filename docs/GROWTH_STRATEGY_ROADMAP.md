@@ -5682,3 +5682,189 @@ Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち。今�
 - Web版: `growth-import-preview` に Notion API 連携追加 (#44)
 - PowerShell版: 前回検出 4 件のワークフロー改善 (run-batch 重複削除 / cron-batch.yml 停止 / EF デプロイ並列化 / --no-tree-shake-icons 検討)
 - VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク/バッジ統合 + `record_score` 呼び出し組み込み
+## セッション: Windows版#33 (2026-04-12)
+
+### 実施内容
+
+- **CI バグ修正**: `ai_university_leaderboard` ビューが `public.profiles` 参照でエラー
+  - `profiles` JOIN を削除し `u.email` 直接使用に変更
+  - `GROUP BY` から `p.full_name` 除去
+  - commit `af180c98` push済み → Deploy キュー入り
+
+- **`ai-university-add-provider` スキル Creator ワークフロー完了**:
+  - SKILL.md 作成済み (発見モード + 追加モード の2モード)
+  - 3テストケース × 2エージェント = 6並行実行
+  - ベンチマーク: with-skill **100%** vs without-skill **80%** (+20%)
+  - 最大差分: 発見モード 5/5 vs 2/5 (3軸スコア形式・合計X/9・次ステップ案内が差別化点)
+  - 追加モード: 6/6 vs 6/6 (差なし — ベースラインもDeepSeek migrationをテンプレートとして自力発見)
+  - eval reviewer HTML 生成済み: `ai-university-add-provider-workspace/iteration-1/review.html`
+
+### 知見
+
+- スキルの価値は**発見モード**の構造化評価フレームワーク (3軸スコアリング・閾値判定・次ステップ案内)
+- 追加モードのSQL生成はスキルなしでもベースラインが同等品質を実現 (既存ファイル参照で自力テンプレート発見)
+- 次イテレーション候補: 発見モードのアサーションを強化 (Groqなどニッチプロバイダーへの評価精度向上)
+
+### Eval出力物 → 実プロジェクト適用完了
+
+- `supabase/migrations/20260412000100_seed_mistral_ai_university.sql` — Mistral AI (overview/models/api, 日本語, ON CONFLICT DO NOTHING)
+- `supabase/migrations/20260412000200_seed_perplexity_ai_university.sql` — Perplexity AI (overview/models/api, 日本語, Sonar API)
+- CLAUDE.md + COMPRESSED_PROMPT_V3.md: 登録プロバイダー 7社 → 9社 更新
+- commit `10491ceb` push済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF + スコア書き込み EF
+- VSCode版: ランキングUI + ストリーク表示 (ランキングページは#53で実装済み)
+- PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加、TOTAL_PROVIDERS 7→9
+- スキル iteration-2: 発見モードのアサーション精度向上 (より具体的な閾値テスト追加)
+
+## VSCode版#53 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/ai_university_ranking_page.dart` 新規作成
+  - `ai_university_leaderboard` ビューから TOP10 取得・表示
+  - 金/銀/銅メダル絵文字 + ランク色 + 「あなた」バッジ
+  - 正解数/学習プロバイダー数/最終学習日表示
+  - ローディング/エラー/空状態の3パターン対応
+- `lib/main.dart` — `/ai-university-ranking` ルート追加
+- `lib/pages/gemini_university_v2_page.dart` — AppBar に `Icons.leaderboard` ボタン追加
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF
+- VSCode版: ホームカード ストリーク日数・バッジ数動的表示
+
+## VSCode版#54 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/gemini_university_v2_page.dart` — `_awardQuizPoints` を `async` 化、Supabase `ai_university_scores` upsert 追加
+  - クイズ正解時に `ai_university_scores(user_id, provider_id, quiz_correct, studied_at)` を upsert
+  - `onConflict: 'user_id,provider_id'` で重複登録防止
+  - RLS `users_own_scores` ポリシーにより EF 不要で直接書き込み
+  - upsert 失敗はサイレント — SharedPreferences ローカル保存は維持
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF (Supabase側トリガー・バッジ発行連携)
+- VSCode版: ホームカード ストリーク日数・バッジ数動的表示
+- VSCode版: シェア文言 A/Bテスト (3バリエーション)
+
+## VSCode版#54 追記 — ホームカード・シェアA/Bテスト (2026-04-12)
+
+### 追加実装
+
+- シェア文言 A/B/C テスト 3バリエーション (`_shareProgress` を Random.nextInt(3) で切り替え)
+- ホームカード: `ai_university_streaks` / `ai_university_badges` から動的取得し 🔥 X日連続 / 🏅 Xバッジ 表示
+- `_awardQuizPoints`: `update_ai_university_streak` RPC 呼び出しでクイズ正解時にストリーク更新
+- `flutter analyze` 0エラー確認・push済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF + バッジ発行ロジック
+- VSCode版: SharedPreferences → Supabase 移行 (クロスデバイス学習記録)
+
+## PowerShell版#37 — T-1 第2弾: notification-center.md dev.to 投稿完了 (2026-04-12)
+
+### 実装内容
+
+- **blog-publish.yml 修正 2件**:
+  1. Zenn `published: true` ガード削除 — Qiita/dev.to は別システムのため通過させるよう変更
+  2. JSON構築を `jq -n --arg` 方式に変更 — 日本語タイトル(`jq -R .` + 文字列連結)の エンコードバグを修正
+- デフォルトパスを `notification-center.md` に更新
+- workflow dispatch 実行
+
+### 投稿結果
+
+- **dev.to** ✅ 投稿完了: https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3
+- **Qiita** ❌ 403 Forbidden — Supabase シークレット `QIITA_ACCESS_TOKEN` の再設定が必要 (権限 write_qiita)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: トークン再設定 → `2026-03-28-note-comments.md` を Qiita 投稿
+- VSCode版: SharedPreferences → Supabase 移行
+
+## VSCode版#55 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/gemini_university_v2_page.dart` — `_loadAnsweredQuizzes` 強化
+  - Supabase `ai_university_scores` から `quiz_correct=true` の記録を取得
+  - ローカル SharedPreferences とマージ → クロスデバイス学習記録が同期される
+  - Supabase 取得失敗はサイレント (オフライン時はローカルキャッシュを使用)
+  - マージ結果がローカルより多い場合、SharedPreferences も更新して次回起動を高速化
+- `lib/widgets/ai_university_home_card.dart` — answered_count もリモート取得
+  - `ai_university_scores` から正解数をカウントし、ローカルより大きければ表示数を更新
+- `flutter analyze` 0エラー確認・commit `8c4598f7` push済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` EF + バッジ発行ロジック
+- VSCode版: SNS シェア画像生成 (OGP カード) 🟢 低
+- LP残りページ掲載化 (#132以降)
+
+## PS#38 セッション記録 (2026-04-12)
+
+### CI/CD 最適化 — ci.yml 無駄ビルド削除
+
+**問題**: `git push main` → deploy-prod + CI が合計4回Flutter buildを実行していた
+- `lint-and-test` production build (~15分)
+- `lint-and-test` WASM build (~10分)
+- `build-matrix` (単一バージョン, ~15分 — 完全に冗長)
+- deploy-prod の本番ビルド (必要)
+
+**対応**:
+1. `build-matrix` ジョブ丸ごと削除 (単一バージョンマトリクスは冗長)
+2. WASM build ステップ削除 (`continue-on-error: true` で毎回失敗 or 不要な10分)
+3. production build / check build output に `if: github.event_name != 'workflow_call'` 追加 — deploy-prod経由の場合はスキップ
+4. `pr-comment` の `needs:` から `build-matrix` 除去
+5. `lint-and-test` timeout-minutes 30→20 に短縮
+6. COMPRESSED_PROMPT_V3 ルール#17 を「全インスタンス・必須」に更新し具体的チェック項目 (e)(f) 追加
+
+**効果**: mainへのpush時のCI実行時間を推定 **約25〜30分短縮**
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: QIITA_ACCESS_TOKEN 再設定 (write_qiita スコープ) → notification-center.md 再投稿
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`)
+
+## Windows版#33 追記 — GitHub Actions 最適化 (2026-04-12)
+
+### 問題
+
+- `deploy-prod.yml` の `run-batch` ジョブが毎回15分を占有し、常にエラー終了
+- `notify` ジョブが `run-batch.result == 'success'` を条件にしており、成功通知が一度も送られない状態
+- `ci.yml` が main への push でもトリガーされ、`deploy-prod.yml` の `workflow_call` と二重実行
+- `cron-batch.yml` が `batch_analysis.py` を毎日実行するもシークレット未設定でエラー継続
+
+### 対応
+
+1. `deploy-prod.yml` — `run-batch` ジョブ丸ごと削除
+2. `deploy-prod.yml` — `notify` ジョブ: `needs: [deploy]` のみに変更、成功/失敗条件を `deploy` 単体に修正
+3. `deploy-prod.yml` — EF制限コメント: "Supabase project limit: 100" → "100本目で402エラー — 絶対に超えないこと"
+4. `ci.yml` — push トリガーから `main` を削除 (staging/develop のみ)
+5. `cron-batch.yml` — `schedule` 削除 + `if: false` 追加 (workflow_dispatch のみ残存)
+6. CLAUDE.md ルール 7-9 追加: EF99本制限 / Web+モバイル表示チェック / workflow最適化チェック
+7. COMPRESSED_PROMPT_V3.md: ルール#16/#17 追加、CI/CDテーブル更新 (ci.yml/cron-batch.yml)
+
+### 効果
+
+- main への push 時の CI 実行時間: 約 **15分短縮** (run-batch 削除分)
+- 成功通知が正常に送信されるようになった
+- cron-batch.yml の毎日エラーが停止
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加 (TOTAL_PROVIDERS 7→9)
+- Web/モバイル表示チェック (Flutter preview 環境で確認)

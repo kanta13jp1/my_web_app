@@ -188,7 +188,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 4. **ダミーデータ禁止** — Supabase 実データ必須
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
-7. **EF上限管理** — **Supabase 99本がハードリミット (100本でデプロイエラー)** → 新規作成より既存EFへの `action` 追加を最優先。既に Tier 1 は 99/99 で満杯のため、新規EFは強制的に Tier 2（コードのみ）運用。昇格したい場合は既存EFを降格してスロットを空ける必要あり。`deploy-prod.yml` の Tier 2 コメントに全件記載
+7. **EF上限: 99本厳守** — Supabase は **99本まで（100本目で402エラー）**。新規EF追加前に既存EFへの `action` 追加を優先。超える場合は Tier2（コードのみ）に降格し `deploy-prod.yml` の Tier2コメントに記載
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
@@ -197,28 +197,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
-16. **毎セッション: Web版 + モバイル版 UI 表示崩れチェック・修正（全インスタンス必須）** — 以下のフローを毎セッション必ず実行する:
-    1. **静的チェック (全インスタンス)**: 直近5セッションで触った `lib/pages/*.dart` と `lib/widgets/*.dart` を対象に、以下のアンチパターンを `Grep` で走査する
-       - `Row` / `Column` 内で `width: double.infinity` を `Expanded` なしで使用 → Web広幅で overflow リスク
-       - `SizedBox(width: 数値)` の 300 以上ハードコード → モバイル縦画面で横スクロール発生
-       - `Text(..., maxLines: 1)` + `TextOverflow.ellipsis` 未指定 → 狭幅で `RenderFlex overflowed` 発生
-       - `MediaQuery.of(context).size.width` を条件分岐なしで使用 → ブレークポイント未対応
-       - `FittedBox` / `LayoutBuilder` / `OrientationBuilder` 不在のフルスクリーンダイアログ → モバイルで切れる
-    2. **実機チェック (VSCode版が代表実施)**: `flutter run -d chrome --web-browser-flag="--window-size=390,844"` (iPhone 14 サイズ) と `--window-size=1440,900` (デスクトップ) で起動し、以下のキー画面を目視確認する
-       - ランディングページ (`landing_page.dart`) — ヒーロー・比較リンク・FAB CTA
-       - ホーム (`home_page.dart`) — 進捗バー21本・`AiUniversityHomeCard`・機能タイル
-       - AI大学 (`gemini_university_v2_page.dart`) — タブバー・プロバイダータブスクロール
-       - 比較ページ (`comparison_page.dart`) — 21社×機能マトリクス (横スクロール必須)
-       - ユーザーマニュアル (`user_manual_page.dart`) — 見出し・画像・リスト
-    3. **修正 (スコープ別)**: 発見した問題は担当インスタンスで即修正する (Web版は UI を持たないので検出のみ → 他インスタンスへ `COMPRESSED_PROMPT_V3.md` 「実装待ち」追記 or 本ファイルで直接担当指定)。`flutter analyze` 0エラー維持必須
-    4. **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
-17. **毎セッション: GitHub Actions ワークフロー改善・無駄検出（全インスタンス必須）** — デプロイが遅すぎる / 毎回失敗しているワークフローがある場合、コスト (実行時間・GitHub Actions 分数消費) が純粋な無駄となる。毎セッション以下を必ず実行する:
-    1. **失敗ワークフロー特定**: 直近 7 日間で連続失敗しているワークフローを洗い出し、原因調査 or disable / 削除する。「毎回エラーで通知だけ鳴る」ワークフローは純コスト → 即削除候補
-       - 既知: `cron-batch.yml` の `Run Python Analysis Batch` は毎回失敗中 (Web版#32 発見、2026-04-11)。同ジョブは `deploy-prod.yml` L381 にも重複配置されているため **本番 push のたびに同じ失敗が再発している**
-    2. **重複ワークフロー特定**: 2本以上のワークフローで同一ロジックが走っていないか確認。例: `run-batch` ジョブが `cron-batch.yml` + `deploy-prod.yml` の両方にあり、`deploy-prod.yml` では `needs: [deploy, run-batch]` により `notify` ジョブの開始を遅延させている
-    3. **デプロイ高速化**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップは 99本を逐次実行 (≈40分)。並列化 (`xargs -P8` / `matrix` strategy) と差分デプロイ (`git diff --name-only supabase/functions/` で変更EFのみ) の両方で所要時間を大幅短縮できる
-    4. **スコープ別修正**: `.github/workflows/*.yml` の変更は PowerShell版 スコープ。Web版/VSCode版/Windows版 で発見した事項は本ファイル「実装待ち」に追記し PowerShell版 にハンドオフ
-    5. **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「ワークフロー改善」項目に必ず追記 (0件でも「チェック実施: 問題なし」と記録)
+16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
+17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
 
 ---
 
@@ -228,7 +208,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
-| `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
+| `ci.yml` | PR + push (staging/develop) ※main は deploy-prod が workflow_call で実行 | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
 | `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
@@ -236,7 +216,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `cs-check.yml` | 毎時 :07 | CS自動対応 + PR自動レビュー + ヘルスチェック |
 | `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
-| `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
+| `cron-batch.yml` | ⛔ 無効化済み (if:false + schedule削除) | Python分析バッチ — シークレット未設定で毎回エラーのため無効化。手動dispatch のみ残存 |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import 固定チェック + **Deno std 古バージョン検出** + **pubspec.yaml 未固定パッケージ検出** |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
@@ -244,7 +224,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
-| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (7プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
+| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -449,7 +429,7 @@ web/sitemap.xml          # URL マップ
 
 **背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
-**現状 (2026-04-11 Windows版#23 で第1弾完了)**:
+**現状 (2026-04-12 PS#37 で第2弾完了)**:
 
 - **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
 - `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ Supabase シークレット設定済み (Windows版#23)
@@ -457,14 +437,16 @@ web/sitemap.xml          # URL マップ
   - Qiita: [Claude Code Schedule でCS自動化](https://qiita.com/kanta13jp1/items/38f0383e0ea01b787900)
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
+  - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
+- ⚠️ **Qiita**: `QIITA_ACCESS_TOKEN` が 403 Forbidden — Supabase シークレット再設定が必要 (`write_qiita` スコープ)
 
-**次回候補 (第2弾)**:
+**次回候補 (第3弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
-| 高 | `2026-03-31-notification-center.md` — dart:html→package:web 移行パターン | Zenn |
-| 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita |
+| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita(要トークン再設定)/dev.to |
+| 高 | `2026-03-31-notification-center.md` — Qiita 投稿 (dev.to は完了済み) | Qiita(要トークン再設定) |
+| 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
@@ -575,16 +557,16 @@ web/sitemap.xml          # URL マップ
 | title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d '\r'` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
 | GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
-**次回 Qiita/dev.to 再実行可能**: `2026-03-31-notification-center.md` を blog-publish.yml で再実行すること。
+**dev.to 投稿済み (PS#37)**: `2026-03-31-notification-center.md` → [dev.to投稿完了](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3)。Qiita は `QIITA_ACCESS_TOKEN` 再設定後に再実行。
 
 ### 機能強化 #T3: AI大学 マルチプロバイダー対応 + 毎週自動更新 (Windows版#30〜#31, 2026-04-11)
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#31 時点: 7社)
+#### 現在の登録プロバイダー (Windows版#33 時点: 9社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
@@ -623,19 +605,15 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
-| ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き。**PowerShell版へ**: Tier1 は 99/99 満杯 (100本でデプロイエラー) のため、本EFは Tier2 コード運用にする or 既存 EF を1本降格して `supabase functions deploy ai-university-content --no-verify-jwt` を追加 | Web版 | ✅ 完了 |
-| `ai_university_scores` にスコア書き込み (EF + Flutter) ✅ **EF 完了** (Web版#33, 2026-04-11) `ai-university-badges` EF に 3 action 追加: `record_score` (UPSERT + 新規正解時はバッジ審査連続実行) / `get_scores` (自分の全スコア降順) / `score_leaderboard` (`ai_university_leaderboard` view, email→ハンドルサニタイズ)。内部で `evaluateQuizMaster` ヘルパー抽出 (check_quiz_master と共有)。新規 EF 作成せずスロット節約 (99/99 維持)。**VSCode版へ**: クイズ正解時 `record_score` 呼び出し、`awarded_badges` が空でなければバッジ獲得モーダル→シェアCTA | Web版+VSCode版 | 🟡 Flutter 側残 |
-| ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 — 2タブ構成推奨 (バッジ数 `leaderboard` / クイズ正解数 `score_leaderboard`)。両方とも service_role 読み出しで未ログインでも閲覧可能 | VSCode版 | 🔴 高 |
-| ~~`ai_university_badges` バッジ発行 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard` の5 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング | Web版 | ✅ 完了 |
+| ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版#28, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き | Web版 | ✅ 完了 |
+| ~~`ai_university_scores` にスコア書き込み (EF + Flutter)~~ ✅ 完了 (VSCode版#54-#55 + Web版#33, 2026-04-12) VSCode側は SharedPreferences→Supabase 移行済み。Web版は `ai-university-badges` EF に 3 action 追加: `record_score` (UPSERT + 新規正解時はバッジ審査連続実行) / `get_scores` (自分の全スコア降順) / `score_leaderboard` (`ai_university_leaderboard` view, email→ハンドルサニタイズ)。内部で `evaluateQuizMaster` ヘルパー抽出 (check_quiz_master と共有)。新規 EF 作成せずスロット節約 (99/99 維持) | Web版+VSCode版 | ✅ 完了 |
+| ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) / **追加検討**: `score_leaderboard` action を使ってクイズ正解数ランキングの2タブ目を追加 | VSCode版 | 🟢 中 |
+| ~~`ai_university_badges` バッジ発行 EF (達成条件判定・INSERT)~~ ✅ 完了 (Web版#30-#33, 2026-04-11〜04-12) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard`/`record_score`/`get_scores`/`score_leaderboard` の8 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング + スコア書き込み統合 | Web版 | ✅ 完了 |
+| ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action / ~~HomeCard 連続日数表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | Web版+VSCode版 | ✅ 完了 |
+| ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
+| ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
+| ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
 | **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
-| **ワークフロー無駄削除 #1**: `deploy-prod.yml` L381 `run-batch` ジョブを**完全削除** — `cron-batch.yml` と完全重複。失敗 Python バッチが本番 push のたびに走って `notify` ジョブ開始を遅延。削除後は `notify:` の `needs: [deploy, run-batch]` → `needs: [deploy]` に修正、`run-batch.result` 参照も除去 | PowerShell版 | 🔴 最高 |
-| **ワークフロー無駄削除 #2**: `cron-batch.yml` を `workflow_dispatch` のみに変更 (schedule 削除) or 完全削除 — `batch_analysis.py` が毎回失敗中。まず batch_analysis.py のエラー原因を特定し、復旧困難なら cron を停止して GitHub Actions 分数消費を止める | PowerShell版 | 🔴 最高 |
-| **デプロイ高速化 #1**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップ (L148-259) で 99本を逐次 `supabase functions deploy` → 実測 30-40分。以下の2段階で大幅短縮可能: (a) 変更検知: `git diff --name-only HEAD~1 HEAD supabase/functions/` で変更された関数のみデプロイ、(b) 並列化: 変更が多い場合は `printf "%s\n" "${FUNCS[@]}" \| xargs -P8 -I{} supabase functions deploy {} --no-verify-jwt` | PowerShell版 | 🔴 最高 |
-| **デプロイ高速化 #2**: `deploy-prod.yml` の Flutter Web build ステップで `--no-tree-shake-icons` が有効化されている (L315)。アセット肥大・ビルド時間増の原因になり得るので削除を検討 (削除すると `Icons.xxx` の動的参照箇所でビルドエラーの可能性あり、`flutter analyze` で検証が必要) | PowerShell版 | 🟡 高 |
-| ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action。`update_ai_university_streak` RPC ラッパー + JWT認可 + public leaderboard (service_role) / **VSCode版へ**: HomeCard連続日数表示UI残タスク | Web版 | ✅ 完了 |
-| シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
-| ホームカード: ストリーク日数・バッジ数を動的表示 | VSCode版 | 🟡 中 |
-| SharedPreferences → Supabase 移行 (クロスデバイス学習記録) | VSCode版+Web版 | 🟢 中 |
 | 学習リマインダー通知 (3日未学習 → notification-center EF) | Web版 | 🟢 中 |
 | SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化) | VSCode版+Web版 | 🟢 低 |
 
@@ -676,7 +654,8 @@ streak_updated_at timestamptz
 9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
 ```
 
-**次回追加候補**: Mistral AI (mistral) / Cohere (cohere) / Perplexity AI (perplexity) / Amazon Nova (amazon)
+**次回追加候補**: Groq (groq) / Cohere (cohere) / Amazon Nova (amazon)
+**追加完了 (Windows版#33)**: Mistral AI / Perplexity AI — migration適用済み (`20260412000100/000200_seed_*_ai_university.sql`)
 
 #### `ai_university_content` テーブルスキーマ
 

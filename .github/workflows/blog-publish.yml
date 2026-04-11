@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       draft_path:
-        description: '投稿するブログドラフトのパス (例: docs/blog-drafts/2026-03-28-note-comments.md)'
+        description: '投稿するブログドラフトのパス (例: docs/blog-drafts/2026-03-31-notification-center.md)'
         required: true
-        default: 'docs/blog-drafts/2026-03-28-note-comments.md'
+        default: 'docs/blog-drafts/2026-03-31-notification-center.md'
       platforms:
         description: '投稿先プラットフォーム (qiita, devto, 両方: qiita,devto)'
         required: false
@@ -61,17 +61,15 @@ jobs:
           echo "🏷️ タグ: $TAGS"
           echo "✅ 既投稿: $PUBLISHED"
 
-      - name: Check already published
+      - name: Check already published (Zenn status)
         if: steps.meta.outputs.already_published == 'true'
         run: |
-          echo "⚠️ このドラフトは既に published: true です。再投稿をスキップします。"
-          echo "強制再投稿が必要な場合は frontmatter の published: を false に変更してください。"
-          exit 0
+          echo "ℹ️ このドラフトは Zenn で published: true です。"
+          echo "Zenn はすでに公開済みですが、Qiita / dev.to への投稿は続行します。"
 
       # ── Step 3: blog-post-manager EF に登録 ─────────────────────────────
       - name: Step 3 - Register in blog_posts table
         id: register
-        if: steps.meta.outputs.already_published != 'true'
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
           TITLE="${{ steps.meta.outputs.title }}"
@@ -91,16 +89,19 @@ jobs:
             exit 0
           fi
 
+          # jq -n --arg でJSONを安全に構築 (日本語/特殊文字のエンコード問題を回避)
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --arg draft_path "$DRAFT_PATH" \
+            --argjson target_platforms "$PLATFORM_JSON" \
+            --arg content_preview "$CONTENT_PREVIEW" \
+            '{title: $title, draft_path: $draft_path, target_platforms: $target_platforms, content_preview: $content_preview}')
+
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"title\": $(echo "$TITLE" | jq -R .),
-              \"draft_path\": $(echo "$DRAFT_PATH" | jq -R .),
-              \"target_platforms\": $PLATFORM_JSON,
-              \"content_preview\": $(echo "$CONTENT_PREVIEW" | jq -R .)
-            }" \
+            -d "$PAYLOAD" \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-post-manager" \
             --max-time 15)
 
@@ -117,7 +118,6 @@ jobs:
       # ── Step 4: blog-auto-publisher EF で実投稿 ─────────────────────────
       - name: Step 4 - Publish to platforms
         id: publish
-        if: steps.meta.outputs.already_published != 'true'
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
           POST_ID="${{ steps.register.outputs.post_id }}"
@@ -133,16 +133,19 @@ jobs:
             exit 0
           fi
 
+          # jq -n --arg でJSONを安全に構築 (日本語/大容量コンテンツのエンコード問題を回避)
+          PAYLOAD=$(jq -n \
+            --arg action "auto_publish" \
+            --arg id "$POST_ID" \
+            --arg content "$CONTENT" \
+            --argjson tags "$TAGS_JSON" \
+            '{action: $action, id: $id, content: $content, tags: $tags}')
+
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"action\": \"auto_publish\",
-              \"id\": $(echo "$POST_ID" | jq -R .),
-              \"content\": $(echo "$CONTENT" | jq -R -s .),
-              \"tags\": $TAGS_JSON
-            }" \
+            -d "$PAYLOAD" \
             "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-auto-publisher" \
             --max-time 30)
 
@@ -160,7 +163,7 @@ jobs:
 
       # ── Step 5: frontmatter を published: true に更新 ───────────────────
       - name: Step 5 - Mark draft as published
-        if: steps.meta.outputs.already_published != 'true' && github.event.inputs.dry_run != 'true'
+        if: github.event.inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

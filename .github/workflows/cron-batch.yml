@@ -1,9 +1,9 @@
 name: Scheduled Analysis Batch
+# DISABLED: batch_analysis.py が毎回エラー (SUPABASE_SERVICE_ROLE_KEY / GEMINI_API_KEY 未設定疑い)
+# 復活させる場合はシークレット設定後に on: の schedule を戻すこと
 
 on:
-    schedule:
-        - cron: "0 0 * * *"
-    workflow_dispatch:
+    workflow_dispatch:  # 手動実行のみ残す (schedule は無効化)
 
 concurrency:
     group: cron-batch
@@ -18,6 +18,7 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 20
         environment: production
+        if: false  # 常にスキップ — 有効化するには if: true に変更
 
         steps:
             - name: Checkout code

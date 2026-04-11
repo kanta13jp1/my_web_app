@@ -1,3 +1,4 @@
+import 'dart:math' show Random;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
+import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -348,10 +350,39 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   }
 
   Future<void> _loadAnsweredQuizzes() async {
+    // ローカル (SharedPreferences) から読み込み
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefsKey) ?? '';
-    if (saved.isNotEmpty && mounted) {
-      setState(() => _answeredQuizzes.addAll(saved.split(',')));
+    final localSet =
+        saved.isNotEmpty ? saved.split(',').toSet() : <String>{};
+
+    // Supabase からクロスデバイス記録を取得してマージ
+    final user = _supabase.auth.currentUser;
+    Set<String> remoteSet = {};
+    if (user != null) {
+      try {
+        final rows = await _supabase
+            .from('ai_university_scores')
+            .select('provider_id')
+            .eq('user_id', user.id)
+            .eq('quiz_correct', true)
+            .timeout(const Duration(seconds: 5));
+        remoteSet = (rows as List)
+            .cast<Map<String, dynamic>>()
+            .map((r) => r['provider_id'] as String)
+            .toSet();
+      } catch (_) {
+        // Supabase 取得失敗はサイレント — ローカルデータを使用
+      }
+    }
+
+    final merged = localSet.union(remoteSet);
+    if (mounted && merged.isNotEmpty) {
+      setState(() => _answeredQuizzes.addAll(merged));
+      // ローカルにも同期して次回起動時のオフライン対応
+      if (merged.length > localSet.length) {
+        await prefs.setString(_prefsKey, merged.join(','));
+      }
     }
   }
 
@@ -363,14 +394,33 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   Future<void> _shareProgress() async {
     final count = _answeredQuizzes.length;
     final total = _quizzes.length;
-    await SharePlus.instance.share(
-      ShareParams(
-        text: '自分株式会社の AI 大学でクイズ $count/$total 問正解！\n'
-            'Google・OpenAI・Anthropic・DeepSeekなど複数のAIプロバイダーを総合的に学べます。\n'
-            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
-            '#AILearning #buildinpublic #FlutterWeb',
-      ),
-    );
+    const url = 'https://my-web-app-b67f4.web.app/#/gemini-university';
+
+    // A/B/C テスト: 3バリエーションをランダム選択
+    final variant = Random().nextInt(3);
+    final String text;
+    switch (variant) {
+      case 0:
+        // A: 正解数フォーカス
+        text = '🎓 AI 大学でクイズ $count/$total 問正解！\n'
+            'Google・OpenAI・Anthropic など主要AIを体系的に学習中。\n'
+            '$url\n'
+            '#AILearning #buildinpublic #FlutterWeb';
+      case 1:
+        // B: プロバイダー制覇フォーカス
+        text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
+            'Google・OpenAI・DeepSeek・Mistral... 9社を比較学習できます。\n'
+            '$url\n'
+            '#AIUniversity #buildinpublic';
+      default:
+        // C: ランキング/競争フォーカス
+        text = '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
+            '複数のAIを使い比べながら正しく理解。ランキングで競おう！\n'
+            '$url\n'
+            '#AILearning #FlutterWeb';
+    }
+
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
@@ -425,7 +475,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   _ProviderMeta _meta(String id) => _providerMeta[id] ?? _unknownMeta;
 
-  void _awardQuizPoints(String providerId) {
+  Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
@@ -438,6 +488,28 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         duration: const Duration(seconds: 2),
       ),
     );
+    // Supabase にスコアを記録 (RLS: users_own_scores で直接書き込み可)
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      try {
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
+        // ストリーク更新 (DB関数で連続学習日数を計算)
+        await _supabase.rpc(
+          'update_ai_university_streak',
+          params: {'p_user_id': user.id},
+        );
+      } catch (_) {
+        // スコア保存失敗はサイレント — ローカルの SharedPreferences は保持済み
+      }
+    }
   }
 
   @override
@@ -459,6 +531,16 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         backgroundColor: Colors.indigo.shade800,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard),
+            tooltip: 'ランキング',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AiUniversityRankingPage(),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.science),
             tooltip: 'API実験室',
