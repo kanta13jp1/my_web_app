@@ -451,7 +451,7 @@ web/sitemap.xml          # URL マップ
 
 | タスク | 競合 | インスタンス | 優先度 |
 | --- | --- | --- | --- |
-| `admin_analytics_page.dart` 拡張 — KPI・チャートダッシュボード強化 | Notion 3.4 ダッシュボードビュー | VSCode版 | 🔴 高 |
+| ~~`admin_analytics_page.dart` 拡張~~: `personal_dashboard_page.dart` 新規作成で対応済み (daily-dev 2026-04-11) | Notion 3.4 ダッシュボードビュー | VSCode版 | ✅ 完了 |
 | `ai-assistant` EF: マイスキル登録・再利用機能 | Slack AI 再利用スキル | Web版 | 🟡 中 |
 | `pr-auto-review` Schedule: CI失敗自動 fix コミット機能 | GitHub Copilot Autopilot | PowerShell版 | 🟡 中 |
 
