@@ -63,6 +63,35 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 **設計思想**: 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
 Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
 
+### マルチエージェント協調パターン (新機能設計時に参照)
+
+新しい自動化・AI機能を設計するとき、以下の5パターンから選ぶ。**最も単純なパターンから始めて、行き詰まったら進化させる。**
+
+| パターン | 採用基準 | このプロジェクトでの実例 |
+| --- | --- | --- |
+| **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
+| **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (7プロバイダー並行RSS取得) |
+| **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
+| **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
+
+**新機能設計フロー**:
+
+```text
+品質ゲートが必要? → Generator-Verifier
+↓ No
+ステップが事前確定? → Orchestrator-Subagent
+↓ No
+長時間の独立タスク? → Agent Teams (= 新インスタンス/新ワークフロー)
+↓ No
+イベント駆動で拡張性が必要? → Message Bus (= 新 workflow_run トリガー)
+↓ No
+エージェント間でリアルタイム共有が必要? → Shared State (= Supabase テーブル活用)
+```
+
+**推奨スタート**: ほとんどのユースケースは **Orchestrator-Subagent** から始める。
+行き詰まった箇所を観察してから他パターンに進化させる。
+
 ### セッション開始: Master Brain 参照
 
 セッション開始時に必ず以下を確認する:
