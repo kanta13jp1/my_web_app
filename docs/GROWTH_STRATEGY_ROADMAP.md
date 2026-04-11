@@ -5408,3 +5408,28 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI + ストリーク表示 + シェア A/Bテスト
 - Windows版: 新規プロバイダー (Mistral/Cohere等) の seed migration
 - T-1 第6弾: 技術記事 Qiita/dev.to 投稿 — 🟡 高
+
+---
+
+## セッション: PowerShell版#36 (2026-04-11)
+
+### 実施内容
+
+- **Claude Code + NotebookLM 統合ワークフロー強化** (記事反映):
+  - CLAUDE.md: アーキテクチャ/意思決定質問には Master Brain を必ず参照するルール追加
+  - `notebooklm_research.py`: `--add-to-master-brain <files>` フラグ追加 (セッション記録の蓄積)
+  - `notebooklm_research.py`: `--generate <type>` / `--generate-prompt` フラグ追加 (成果物生成)
+  - リサーチ→成果物生成→Master Brain蓄積を一括実行するパターンを docstring に記載
+  - commit `4f00c879` push済み
+
+### 技術的改善
+
+- `notebooklm skill install` 実施済み (v0.3.4 — `~/.claude/skills/notebooklm/SKILL.md`)
+- wrap-up.md / deep-research.md は前セッション(PS#35)で既に最新化済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news/get_by_provider/get_all)
+- VSCode版: ランキングUI + ストリーク表示 + シェア A/Bテスト
+- T-1 第6弾: 技術記事 Qiita/dev.to 投稿
+- `notebooklm login` 再認証 (cookie期限切れ)
