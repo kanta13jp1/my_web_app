@@ -273,7 +273,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ```text
 lib/pages/               # 205ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 248本 (Tier1: 99デプロイ済 / Tier2: 149コードのみ / ai-university-content は PowerShell版#36 で Tier1 昇格待ち)
+supabase/functions/      # Deno Edge Functions 250本 (Tier1: 99デプロイ済 / Tier2: 151コードのみ / ai-university-content + ai-university-streaks + ai-university-badges は PowerShell版#36 で Tier1 昇格待ち)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 17本 (品質基準完備済み)
 docs/
@@ -300,7 +300,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(149本) で全248本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。`ai-university-content` は PowerShell版#36 で Tier1 昇格待ち (99→100、Supabase上限到達)。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(151本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。AI大学キラー機能3本 (`ai-university-content` / `ai-university-streaks` / `ai-university-badges`) は PowerShell版#36 で Tier1 昇格待ち (99→100でSupabase上限、残り2本はTier2運用 or 既存EFの降格が必要)。
 
 ---
 
@@ -604,8 +604,8 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き。**PowerShell版へ**: `deploy-prod.yml` Tier 1D (Schedule & Automation) に `supabase functions deploy ai-university-content --no-verify-jwt` を追加 (Tier 1: 99→100、Supabase上限到達) | Web版 | ✅ 完了 |
 | `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
 | ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
-| `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
-| `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
+| ~~`ai_university_badges` バッジ発行 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard` の5 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング | Web版 | ✅ 完了 |
+| ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action。`update_ai_university_streak` RPC ラッパー + JWT認可 + public leaderboard (service_role) / **VSCode版へ**: HomeCard連続日数表示UI残タスク | Web版 | ✅ 完了 |
 | シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
 | ホームカード: ストリーク日数・バッジ数を動的表示 | VSCode版 | 🟡 中 |
 | SharedPreferences → Supabase 移行 (クロスデバイス学習記録) | VSCode版+Web版 | 🟢 中 |

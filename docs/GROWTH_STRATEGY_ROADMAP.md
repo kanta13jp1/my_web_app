@@ -5468,3 +5468,49 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: `gemini_university_v2_page.dart` を `ai-university-content` EF 経由に切り替え
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`)
 - T-1 第6弾: 技術記事 Qiita/dev.to 投稿
+
+## セッション: Web版#30 (2026-04-11)
+
+### 実施内容
+
+- **AI大学キラー機能2本 (streaks + badges EF) を新規作成** (COMPRESSED_PROMPT_V3.md 🟡 高 × 2):
+  - **`supabase/functions/ai-university-streaks/index.ts`** — `update_ai_university_streak` RPC ラッパー
+    - 3アクション: `update` / `get` / `leaderboard`
+    - `update`: Supabase JWT 認可 → SECURITY DEFINER RPC 経由で当日スキップ・連続日数インクリメント・リセット判定を一括実行、`{current_streak, longest_streak, is_new_streak_day}` を返却
+    - `get`: 認証ユーザー自身のストリーク状態 (+ `streak_updated_at`) を取得。未登録は 0 フォールバック
+    - `leaderboard`: service_role で RLS バイパス → `current_streak DESC, longest_streak DESC` の TOP N (既定10、最大100) を公開ランキング出力
+    - GET/POST 両対応、CORS preflight OK
+  - **`supabase/functions/ai-university-badges/index.ts`** — `award_ai_university_badge` RPC ラッパー + 条件自動評価
+    - 5アクション: `list` / `award` / `check_streaks` / `check_quiz_master` / `leaderboard`
+    - `list`: 自分のバッジ一覧 (JWT) / `user_id` 指定時は公開バッジのみ (service_role, 認証不要)
+    - `award`: 手動バッジ付与 (social_sharer 等クライアントイベント駆動向け)
+    - `check_streaks`: `ai_university_streaks.current_streak` を参照し `streak_3d` (🔥) / `streak_7d` (🔥) / `streak_30d` (🏆) を一括自動付与 → 新規発行分を `awarded[]` で返却
+    - `check_quiz_master`: `ai_university_scores` の `quiz_correct=true` ユニークプロバイダー数と `ai_university_content.is_active` プロバイダー総数を比較し、3社以上で `quiz_master_3` (🌟)、全社制覇で `quiz_master_all` (👑) を付与
+    - `leaderboard`: `is_public=true` バッジを user_id 別に集計した保有数ランキング (service_role)
+    - DB migration のバッジ定義コメントとコード内定数を同期 (`STREAK_BADGES` / `QUIZ_MASTER_*`)
+
+### 品質確認
+
+- `deno lint supabase/functions/ai-university-streaks/ supabase/functions/ai-university-badges/` → **0エラー** (`Checked 2 files`)
+- `update_ai_university_streak` RPC が `RETURNS TABLE` で配列返却になるのを考慮し `Array.isArray(data) && data.length > 0` で受け (streaks EF)
+- バッジ付与 action は既存レコードとの競合時に RPC 側の `ON CONFLICT DO NOTHING` + `FOUND` で `newly_awarded` フラグを決定 (二重発行防止)
+- 全 action 共通で CORS (OPTIONS preflight 対応) + `asString`/`asNumber` 型強制ヘルパ使用
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ**: `deploy-prod.yml` に以下2本を追加する必要あり (Tier 1 は 99/100 に達した後のため、現実的には Tier2 コード運用 or 既存の使用頻度低 EF を降格してスロットを空ける):
+  - `supabase functions deploy ai-university-streaks --no-verify-jwt`
+  - `supabase functions deploy ai-university-badges --no-verify-jwt`
+- **VSCode版へ**: 以下2点の UI 実装が残タスク:
+  - HomeCard (`ai_university_home_card.dart`) で `ai-university-streaks?action=get` を呼んで `current_streak` / `longest_streak` を動的表示
+  - 学習完了ボタン押下時に `ai-university-streaks action=update` → 続けて `ai-university-badges action=check_streaks` と `check_quiz_master` を連続呼び出しして自動バッジ発行
+  - バッジ表示ウィジェット: `ai-university-badges action=list` の `badges[]` を icon_emoji + badge_name でグリッド表示
+- **Windows版へ**: 既存 `20260411003800_create_ai_university_streaks.sql` と `20260411004000_create_ai_university_badges.sql` にスキーマ変更は不要 (EF は既存 RPC/テーブルをそのまま利用)
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- Web版: SNS シェア画像 OGP カード生成 EF
+- Web版: Feature #44 — `growth-import-preview` に Notion API 連携追加
+- VSCode版: HomeCard にストリーク・バッジ表示統合 + ランキングUI
