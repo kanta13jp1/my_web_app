@@ -494,7 +494,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1a237e), Color(0xFF283593), Color(0xFF3949AB)],
+          colors: [Color(0xFF1A0A2E), Color(0xFF0D1B3E)],
         ),
       ),
       child: Column(
@@ -550,8 +550,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: learned
-                      ? m.color.withAlpha(180)
-                      : Colors.white.withAlpha(20),
+                      ? m.color.withValues(alpha: 0.71)
+                      : Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -571,9 +571,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.amber.withAlpha(40),
+              color: const Color(0xFFFFC107).withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.withAlpha(80)),
+              border: Border.all(
+                color: const Color(0xFFFFC107).withValues(alpha: 0.31),
+              ),
             ),
             child: Row(
               children: [
@@ -582,7 +584,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 Text(
                   'クイズ正解: $count / $total 問',
                   style: const TextStyle(
-                    color: Colors.amber,
+                    color: Color(0xFFFFC107),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -727,7 +729,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 大学'),
-        backgroundColor: Colors.indigo.shade800,
+        backgroundColor: const Color(0xFF1A0A2E),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -779,11 +781,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         children: [
           if (_error != null)
             Container(
-              color: Colors.orange.shade100,
+              color: const Color(0xFFFFC107).withValues(alpha: 0.15),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber, color: Colors.orange, size: 18),
+                  const Icon(Icons.warning_amber, color: Color(0xFFFFC107), size: 18),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -817,7 +819,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   Widget _buildProviderTab(String providerId, bool isDark) {
     final m = _meta(providerId);
     final rows = _content[providerId];
-    final surface = isDark ? Colors.grey.shade900 : Colors.grey.shade50;
+    final surface = isDark ? const Color(0xFF1E1E1E) : const Color(0xFF1E1E1E);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -856,7 +858,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [m.color.withAlpha(200), m.color.withAlpha(130)],
+          colors: [m.color.withValues(alpha: 0.78), m.color.withValues(alpha: 0.51)],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -971,10 +973,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     final answered = _answeredQuizzes.contains(providerId);
 
     return Card(
-      color: m.color.withAlpha(25),
+      color: m.color.withValues(alpha: 0.10),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: m.color.withAlpha(80)),
+        side: BorderSide(color: m.color.withValues(alpha: 0.31)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -994,10 +996,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 ),
                 if (answered) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.check_circle, color: Colors.green, size: 18),
+                  const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 18),
                   const Text(
                     ' +50pt',
-                    style: TextStyle(color: Colors.green, fontSize: 12),
+                    style: TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
                   ),
                 ],
               ],
@@ -1013,7 +1015,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 padding: const EdgeInsets.only(bottom: 4),
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: m.color.withAlpha(100)),
+                    side: BorderSide(color: m.color.withValues(alpha: 0.39)),
                     minimumSize: const Size(double.infinity, 40),
                     alignment: Alignment.centerLeft,
                   ),
