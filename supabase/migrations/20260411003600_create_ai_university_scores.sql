@@ -15,15 +15,14 @@ CREATE TABLE IF NOT EXISTS ai_university_scores (
 CREATE OR REPLACE VIEW ai_university_leaderboard AS
 SELECT
   u.id                            AS user_id,
-  COALESCE(p.full_name, u.email)  AS display_name,
+  u.email                         AS display_name,
   COUNT(*) FILTER (WHERE s.quiz_correct)::int AS total_correct,
   COUNT(DISTINCT s.provider_id)   AS providers_studied,
   MAX(s.studied_at)               AS last_studied_at,
   RANK() OVER (ORDER BY COUNT(*) FILTER (WHERE s.quiz_correct) DESC) AS rank
 FROM auth.users u
-LEFT JOIN public.profiles p ON p.id = u.id
 LEFT JOIN ai_university_scores s ON s.user_id = u.id
-GROUP BY u.id, p.full_name, u.email
+GROUP BY u.id, u.email
 ORDER BY total_correct DESC;
 
 -- RLS
