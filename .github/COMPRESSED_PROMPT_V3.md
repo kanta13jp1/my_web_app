@@ -196,6 +196,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `python notebooklm_research.py` で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。高負荷な分析を Google 側に無料で投げる
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
+15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 
 ---
 

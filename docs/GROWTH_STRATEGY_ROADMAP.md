@@ -5340,3 +5340,43 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Qiita/dev.to 再実行: `2026-03-31-notification-center.md` (B5解決済み)
 - タスク T-1 第2弾: `2026-03-28-note-comments.md` (Qiita)
+
+---
+
+## セッション: VSCode版#51〜#52 (2026-04-11)
+
+### 実施内容
+
+- **VSCode#51: AI大学プロバイダー無制限化 (DB駆動)**
+  - `gemini_university_v2_page.dart` 全書き換え: Gemini固定 → DB駆動N-provider
+  - `TickerProviderStateMixin` で動的 `TabController` 対応
+  - `_providerMeta` Map に DeepSeek/Mistral/Cohere/Perplexity/Amazon 追加
+  - `(rows as List).cast<Map<String, dynamic>>()` で avoid_dynamic_calls 回避
+  - SharedPreferences `ai_univ_answered_quizzes` でクイズ進捗永続化
+  - share_plus v12 API: `SharePlus.instance.share(ShareParams(...))`
+
+- **VSCode#52: AI大学キラーコンテンツ化 — ホームバナー・シェア・ランキング基盤**
+  - `lib/widgets/ai_university_home_card.dart` 新規作成
+    - インディゴグラデーション背景、プロバイダー絵文字、進捗バー (amber)、CTA ボタン
+    - SharedPreferences からクイズ達成数を取得して表示
+    - share_plus でシェア機能
+  - `lib/pages/home_page.dart`: `AiUniversityHomeCard` をリスト最上部に追加
+  - `supabase/migrations/20260411003600_create_ai_university_scores.sql`:
+    - `ai_university_scores` テーブル + `ai_university_leaderboard` VIEW (RANK() OVER)
+    - RLS: ユーザー自分スコアのみ読み書き / ランキングは全員閲覧可
+  - `CLAUDE.md`: AI大学キラーコンテンツ化方針セクション追加 (毎セッション必須検討)
+  - `COMPRESSED_PROMPT_V3.md`: 開発ルール #15 追加 (AI大学毎セッション改善検討)
+
+### 品質確認
+
+- flutter analyze 0エラー
+- LP: 120のこと / ページ数: 205
+- EF: 247本 (変更なし)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) — 🔴 最高
+- VSCode版: ランキングUI `ai_university_ranking_page.dart` + スコア書き込み — 🟡 高
+- PowerShell版: blog-publish.yml #B5 最終修正 (Zenn topics: + GH006) — 🟡 高
+- VSCode版: LP残りページ掲載化 (#132以降) — 🟡 高
+- T-1 第6弾: 技術記事 Qiita/dev.to 投稿 — 🟡 高
