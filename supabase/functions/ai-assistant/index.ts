@@ -94,6 +94,13 @@ interface AIRequest {
     balthasarModel?: string;
     casperModel?: string;
     synthesisModel?: string;
+    // マイスキル関連
+    skillId?: string;
+    skillName?: string;
+    skillDescription?: string;
+    promptTemplate?: string;
+    skillModel?: string;
+    skillTags?: string[];
 }
 
 interface Fighter {
@@ -492,6 +499,74 @@ ${entryData}`;
             return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
+        // --- 3.6. マイスキル管理 ---
+        if (action === 'save_skill') {
+            const { skillName, skillDescription, promptTemplate, skillModel, skillTags } = requestData;
+            if (!skillName?.trim()) throw new Error('skillName is required');
+            if (!promptTemplate?.trim()) throw new Error('promptTemplate is required');
+            const { data, error: dbErr } = await supabaseClient
+                .from('user_skills')
+                .upsert({
+                    user_id: user.id,
+                    name: skillName.trim(),
+                    description: skillDescription?.trim() ?? null,
+                    prompt_template: promptTemplate.trim(),
+                    model: skillModel?.trim() ?? null,
+                    tags: skillTags ?? [],
+                }, { onConflict: 'user_id,name' })
+                .select('id, name')
+                .single();
+            if (dbErr) throw new Error(dbErr.message);
+            return new Response(JSON.stringify({ success: true, skill: data }), { headers: corsHeaders });
+        }
+
+        if (action === 'list_skills') {
+            const { data, error: dbErr } = await supabaseClient
+                .from('user_skills')
+                .select('id, name, description, prompt_template, model, tags, use_count, created_at')
+                .order('use_count', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(50);
+            if (dbErr) throw new Error(dbErr.message);
+            return new Response(JSON.stringify({ success: true, skills: data ?? [] }), { headers: corsHeaders });
+        }
+
+        if (action === 'delete_skill') {
+            const { skillId } = requestData;
+            if (!skillId) throw new Error('skillId is required');
+            const { error: dbErr } = await supabaseClient
+                .from('user_skills')
+                .delete()
+                .eq('id', skillId)
+                .eq('user_id', user.id);
+            if (dbErr) throw new Error(dbErr.message);
+            return new Response(JSON.stringify({ success: true }), { headers: corsHeaders });
+        }
+
+        if (action === 'run_skill') {
+            const { skillId } = requestData;
+            if (!skillId) throw new Error('skillId is required');
+            const { data: skill, error: fetchErr } = await supabaseClient
+                .from('user_skills')
+                .select('prompt_template, model, use_count')
+                .eq('id', skillId)
+                .eq('user_id', user.id)
+                .single();
+            if (fetchErr || !skill) throw new Error('Skill not found');
+            // use_count をインクリメント (fire-and-forget)
+            supabaseClient
+                .from('user_skills')
+                .update({ use_count: ((skill as { use_count?: number }).use_count ?? 0) + 1 })
+                .eq('id', skillId)
+                .then(() => {/* ignore */})
+                .catch(() => {/* ignore */});
+            const prompt = requestContent
+                ? `${skill.prompt_template}\n\nContent:\n${requestContent}`
+                : skill.prompt_template;
+            const result = await runPromptWithStrategy(prompt);
+            return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
+        }
+
         // --- 4. Generic Actions ---
         if (['improve', 'summarize', 'expand', 'translate', 'suggest_title', 'custom_prompt'].includes(action)) {
              const normalizedStyleInstruction = requestData.styleInstruction?.trim();
@@ -518,6 +593,7 @@ ${entryData}`;
                 'my_struggle_column', 'behavior_analysis',
                 'improve', 'summarize', 'expand', 'translate',
                 'suggest_title', 'custom_prompt',
+                'save_skill', 'list_skills', 'delete_skill', 'run_skill',
             ],
         }), { headers: corsHeaders, status: 404 });
 
