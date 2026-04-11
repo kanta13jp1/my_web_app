@@ -2,9 +2,15 @@
 // 通知センター — アプリ内通知の管理
 // - 新機能通知 / CS チケット更新 / 開発実績 / システム通知
 // - 既読管理 / 通知設定
+// - AI大学 学習リマインダー (3日未学習者への復帰促進)
 //
 // GET  → 通知一覧 (未読/既読/全件)
-// POST → 通知作成 / 既読マーク / 設定更新
+// POST → 通知作成 / 既読マーク / 学習リマインダー送信
+//
+// 追加 action: send_study_reminders (service_role only)
+//   AI大学 3日以上未学習のユーザーに `app_notifications` を一括作成する。
+//   直近3日以内に同種のリマインダーを送信済みのユーザーはスキップ (スパム防止)。
+//   Schedule/Cron から 1日1回呼び出すことを想定。
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -257,6 +263,165 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (action === "send_study_reminders") {
+        // service_role のみ (Schedule/Cron からの一括送信専用)
+        const authHeader = req.headers.get("Authorization");
+        const token = authHeader?.replace("Bearer ", "") ?? "";
+        if (token !== SERVICE_ROLE_KEY) {
+          return new Response(
+            JSON.stringify({ success: false, error: "Service role required" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+          auth: { persistSession: false },
+        });
+
+        // パラメータ: 何日間未学習でリマインドするか (既定 3)
+        // dry_run: true なら DB 書き込みせず対象のみ返却
+        const minIdleDays = typeof body.min_idle_days === "number"
+          ? Math.max(1, Math.min(30, body.min_idle_days as number))
+          : 3;
+        const maxIdleDays = typeof body.max_idle_days === "number"
+          ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number))
+          : 30; // 30日以上未学習は諦めて対象外 (完全離脱とみなす)
+        const dryRun = Boolean(body.dry_run);
+
+        // JST ベースで last_studied_date を比較するため、日付を直接計算
+        const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000); // +9h for JST
+        const today = nowJst.toISOString().slice(0, 10);
+        const minDate = new Date(nowJst.getTime() - maxIdleDays * 86_400_000)
+          .toISOString().slice(0, 10);
+        const maxDate = new Date(nowJst.getTime() - minIdleDays * 86_400_000)
+          .toISOString().slice(0, 10);
+
+        // 対象ユーザー取得: last_studied_date が [minDate, maxDate] の範囲
+        // = 3日以上 30日未満の未学習ユーザー
+        const { data: streakRows, error: streakErr } = await adminClient
+          .from("ai_university_streaks")
+          .select("user_id, current_streak, longest_streak, last_studied_date")
+          .gte("last_studied_date", minDate)
+          .lte("last_studied_date", maxDate);
+
+        if (streakErr) throw streakErr;
+
+        const candidates = streakRows ?? [];
+        if (candidates.length === 0) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              eligible: 0,
+              sent: 0,
+              skipped_recently_reminded: 0,
+              dry_run: dryRun,
+              today,
+              window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        // スパム防止: 直近 minIdleDays 日以内に同種のリマインダーを受け取っている
+        // ユーザーをスキップする。type='system' + title が既定の prefix で判定
+        const REMINDER_TITLE_PREFIX = "[AI大学] 学習リマインダー";
+        const reminderSinceIso = new Date(
+          Date.now() - minIdleDays * 86_400_000,
+        ).toISOString();
+
+        const userIds = candidates.map((row) =>
+          (row as { user_id: string }).user_id
+        );
+
+        const { data: recentRows, error: recentErr } = await adminClient
+          .from("app_notifications")
+          .select("user_id")
+          .in("user_id", userIds)
+          .eq("type", "system")
+          .ilike("title", `${REMINDER_TITLE_PREFIX}%`)
+          .gte("created_at", reminderSinceIso);
+
+        if (recentErr) throw recentErr;
+
+        const recentlyReminded = new Set<string>();
+        for (const row of recentRows ?? []) {
+          const uid = (row as { user_id: string | null }).user_id;
+          if (typeof uid === "string") recentlyReminded.add(uid);
+        }
+
+        // 未リマインド対象だけ抽出
+        const targets = candidates.filter((row) => {
+          const uid = (row as { user_id: string }).user_id;
+          return !recentlyReminded.has(uid);
+        });
+
+        if (targets.length === 0 || dryRun) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              eligible: candidates.length,
+              sent: 0,
+              skipped_recently_reminded: recentlyReminded.size,
+              targets: dryRun ? targets.length : undefined,
+              dry_run: dryRun,
+              today,
+              window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        // INSERT ペイロード: 復帰促進メッセージをユーザーごとに生成
+        const createdAt = new Date().toISOString();
+        const payload = targets.map((row) => {
+          const r = row as {
+            user_id: string;
+            current_streak: number;
+            longest_streak: number;
+            last_studied_date: string;
+          };
+          const idleDays = Math.max(
+            0,
+            Math.floor(
+              (Date.parse(today) - Date.parse(r.last_studied_date)) / 86_400_000,
+            ),
+          );
+          const bestStreak = Math.max(r.current_streak, r.longest_streak);
+          const title = `${REMINDER_TITLE_PREFIX} — ${idleDays}日ぶりにAIを学ぼう`;
+          const message = bestStreak > 1
+            ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！1分クイズでストリーク復活。`
+            : `前回の学習から${idleDays}日経過。AI大学で1分クイズに挑戦して知識をアップデート。`;
+          return {
+            user_id: r.user_id,
+            title,
+            message,
+            type: "system",
+            link: "/ai-university",
+            is_read: false,
+            created_at: createdAt,
+          };
+        });
+
+        const { error: insertErr } = await adminClient
+          .from("app_notifications")
+          .insert(payload);
+
+        if (insertErr) throw insertErr;
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            eligible: candidates.length,
+            sent: payload.length,
+            skipped_recently_reminded: recentlyReminded.size,
+            dry_run: false,
+            today,
+            window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+          }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }

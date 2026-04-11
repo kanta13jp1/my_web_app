@@ -5436,6 +5436,599 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 
 ---
 
+## セッション: Web版#29 (2026-04-11)
+
+### 実施内容
+
+- **AI大学キラーコンテンツ基盤: `ai-university-content` EF 新規作成** (COMPRESSED_PROMPT_V3.md #T3 🔴 最高):
+  - `supabase/functions/ai-university-content/index.ts` 実装
+  - 3アクション対応: `get_all` / `get_by_provider` / `upsert_news`
+  - `get_all`: プロバイダー別グルーピング付きで全アクティブコンテンツ返却 (Flutter クライアント向け)
+  - `get_by_provider`: `provider` + 任意の `category` 絞り込み (最大 limit=200)
+  - `upsert_news`: service-role 認可必須 (`Authorization: Bearer SERVICE_ROLE_KEY`)。既存 `(provider, category, title)` を探索して update / insert 判定
+  - カテゴリ検証: `overview/models/api/pricing/news/tutorial` 以外は 400 エラー
+  - `published_at` は YYYY-MM-DD パターン検証付き (不正なら今日付にフォールバック)
+  - GET / POST 両対応でクエリ・JSON body どちらからも呼び出し可能
+
+### 品質確認
+
+- `deno lint` 0エラー確認 (`/tmp/deno lint supabase/functions/ai-university-content/` → `Checked 1 file`)
+- 既存 EF 3本 (blog-post-manager / growth-acquisition / my-ai-agent) も同時 lint し回帰なし確認
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ**: `deploy-prod.yml` Tier 1D (Schedule & Automation) に `supabase functions deploy ai-university-content --no-verify-jwt` を追加 (Tier 1: 99→100、Supabase上限到達)
+- **VSCode版へ**: `gemini_university_v2_page.dart` の `_fallback` マップを削除し、新EF経由で `ai_university_content` テーブルからコンテンツ取得する実装に切り替え可能
+- **Windows版へ**: 新規プロバイダー (Mistral/Cohere 等) の seed migration 作成時は本EF経由で UPSERT 推奨
+
+### 次回優先
+
+- Web版: `ai-university-streaks` 計算 EF (`update_ai_university_streak` RPC ラッパー) → HomeCard 連続日数表示
+- Web版: `ai-university-badges` 発行 EF (達成条件判定 + `award_ai_university_badge` RPC)
+- VSCode版: `gemini_university_v2_page.dart` を `ai-university-content` EF 経由に切り替え
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`)
+- T-1 第6弾: 技術記事 Qiita/dev.to 投稿
+
+## セッション: Web版#30 (2026-04-11)
+
+### 実施内容
+
+- **AI大学キラー機能2本 (streaks + badges EF) を新規作成** (COMPRESSED_PROMPT_V3.md 🟡 高 × 2):
+  - **`supabase/functions/ai-university-streaks/index.ts`** — `update_ai_university_streak` RPC ラッパー
+    - 3アクション: `update` / `get` / `leaderboard`
+    - `update`: Supabase JWT 認可 → SECURITY DEFINER RPC 経由で当日スキップ・連続日数インクリメント・リセット判定を一括実行、`{current_streak, longest_streak, is_new_streak_day}` を返却
+    - `get`: 認証ユーザー自身のストリーク状態 (+ `streak_updated_at`) を取得。未登録は 0 フォールバック
+    - `leaderboard`: service_role で RLS バイパス → `current_streak DESC, longest_streak DESC` の TOP N (既定10、最大100) を公開ランキング出力
+    - GET/POST 両対応、CORS preflight OK
+  - **`supabase/functions/ai-university-badges/index.ts`** — `award_ai_university_badge` RPC ラッパー + 条件自動評価
+    - 5アクション: `list` / `award` / `check_streaks` / `check_quiz_master` / `leaderboard`
+    - `list`: 自分のバッジ一覧 (JWT) / `user_id` 指定時は公開バッジのみ (service_role, 認証不要)
+    - `award`: 手動バッジ付与 (social_sharer 等クライアントイベント駆動向け)
+    - `check_streaks`: `ai_university_streaks.current_streak` を参照し `streak_3d` (🔥) / `streak_7d` (🔥) / `streak_30d` (🏆) を一括自動付与 → 新規発行分を `awarded[]` で返却
+    - `check_quiz_master`: `ai_university_scores` の `quiz_correct=true` ユニークプロバイダー数と `ai_university_content.is_active` プロバイダー総数を比較し、3社以上で `quiz_master_3` (🌟)、全社制覇で `quiz_master_all` (👑) を付与
+    - `leaderboard`: `is_public=true` バッジを user_id 別に集計した保有数ランキング (service_role)
+    - DB migration のバッジ定義コメントとコード内定数を同期 (`STREAK_BADGES` / `QUIZ_MASTER_*`)
+
+### 品質確認
+
+- `deno lint supabase/functions/ai-university-streaks/ supabase/functions/ai-university-badges/` → **0エラー** (`Checked 2 files`)
+- `update_ai_university_streak` RPC が `RETURNS TABLE` で配列返却になるのを考慮し `Array.isArray(data) && data.length > 0` で受け (streaks EF)
+- バッジ付与 action は既存レコードとの競合時に RPC 側の `ON CONFLICT DO NOTHING` + `FOUND` で `newly_awarded` フラグを決定 (二重発行防止)
+- 全 action 共通で CORS (OPTIONS preflight 対応) + `asString`/`asNumber` 型強制ヘルパ使用
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ**: `deploy-prod.yml` に以下2本を追加する必要あり (Tier 1 は 99/100 に達した後のため、現実的には Tier2 コード運用 or 既存の使用頻度低 EF を降格してスロットを空ける):
+  - `supabase functions deploy ai-university-streaks --no-verify-jwt`
+  - `supabase functions deploy ai-university-badges --no-verify-jwt`
+- **VSCode版へ**: 以下2点の UI 実装が残タスク:
+  - HomeCard (`ai_university_home_card.dart`) で `ai-university-streaks?action=get` を呼んで `current_streak` / `longest_streak` を動的表示
+  - 学習完了ボタン押下時に `ai-university-streaks action=update` → 続けて `ai-university-badges action=check_streaks` と `check_quiz_master` を連続呼び出しして自動バッジ発行
+  - バッジ表示ウィジェット: `ai-university-badges action=list` の `badges[]` を icon_emoji + badge_name でグリッド表示
+- **Windows版へ**: 既存 `20260411003800_create_ai_university_streaks.sql` と `20260411004000_create_ai_university_badges.sql` にスキーマ変更は不要 (EF は既存 RPC/テーブルをそのまま利用)
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- Web版: SNS シェア画像 OGP カード生成 EF
+- Web版: Feature #44 — `growth-import-preview` に Notion API 連携追加
+- VSCode版: HomeCard にストリーク・バッジ表示統合 + ランキングUI
+
+## セッション: Web版#31 (2026-04-11)
+
+### 実施内容
+
+- **プロンプト重要修正 — EF上限の誤り訂正**: COMPRESSED_PROMPT_V3.md と CLAUDE.md で「Supabase 100本」と誤記していたのを **「99本がハードリミット (100本目でデプロイエラー)」** に全面修正 (3箇所)。Tier1 は既に 99/99 で満杯。新規EFは強制的に Tier2 コード運用、Tier1 昇格には既存EF降格が必須。Web版#29/#30 の「Tier1: 99→100」ハンドオフ記述も訂正
+- **プロンプト新ルール追加 — 毎セッション Web/モバイル UI 表示チェック**:
+  - COMPRESSED_PROMPT_V3.md 開発ルール #16 追加 (静的 Grep 走査 + 実機チェック + スコープ別修正 + 記録の4ステップ)
+  - CLAUDE.md 開発ルール #8 として同等内容を追加、#9 に EF上限99本のルールも追加
+  - 走査対象アンチパターン: `Row` 内の `width: double.infinity`、ハードコード 300px+ の `SizedBox`、`TextOverflow.ellipsis` 未指定の `maxLines:1`、`MediaQuery` 条件分岐なし、フルスクリーンダイアログの `LayoutBuilder` 不在
+  - 実機チェック対象: ランディング / ホーム / AI大学 / 比較ページ / ユーザーマニュアル (`iPhone 14` 390×844 + デスクトップ 1440×900)
+- **今セッションの UI 表示チェック実施**:
+  - `landing_page.dart` (2745 LOC): `Center > SingleChildScrollView > ConstrainedBox(maxWidth: 760) > Column(stretch)` で全セクションをラップ → Web/モバイル両対応 ✅
+  - `home_page.dart` (長大): `maxLines: 1` 全 6箇所すべて `TextOverflow.ellipsis` とセット確認済み ✅
+  - `comparison_page.dart`: `ConstrainedBox(maxWidth: 720)` + `FlexColumnWidth` Table (3列設計) → モバイルでも Table 内要素が比率計算で収まる ✅
+  - `gemini_university_v2_page.dart`: `TabBar(isScrollable: true, tabAlignment: TabAlignment.start)` → プロバイダー増加時も自動横スクロール ✅
+  - **⚠️ `ai_university_home_card.dart` L106-115: 9 プロバイダー絵文字の `Row` が `Wrap`/`SingleChildScrollView` 未使用** — iPhone SE (320px幅) では外周 padding 36px を引いた 284px に 9絵文字 (20pt × 右 padding 6px) で約 270px、境界線ギリギリ。10プロバイダー目追加で overflow 確実 → **VSCode版タスクとして「実装待ち」に追記** (修正方針: `Row` → `Wrap(spacing: 6, runSpacing: 4)`)
+
+### 品質確認
+
+- COMPRESSED_PROMPT_V3.md / CLAUDE.md は markdown 編集のみ、Edge Function コード変更なし → `deno lint` 不要
+- UI 静的チェックは Python ベースの正規表現スキャン (`maxLines` + ellipsis / `SizedBox` 300px+ / `width: double.infinity` × 親 Row 判定) で実施。誤検出 1件 (home_page.dart:3602 の Column 子 Container を Row 子と誤検出) は手動レビューで除外
+
+### 他インスタンスへのハンドオフ
+
+- **VSCode版へ**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。`flutter analyze` 0エラー維持後コミット。COMPRESSED_PROMPT_V3.md 実装待ちテーブルに 🟡 高 で追記済み
+- **全インスタンスへ**: 以降のセッションでは CLAUDE.md #8 の UI 表示チェックを毎回実施し、`docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録に「UI 表示チェック」項目を必ず追記すること (0件でも「実施: 問題なし」と明記)
+- **全インスタンスへ**: CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7 を再確認すること — Tier1 は 99/99 満杯、新規EF作成前に既存EFへの action 追加を最優先検討する
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録、`award_ai_university_badge` trigger 連動済み)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- VSCode版: 絵文字 Wrap 修正 + HomeCard にストリーク・バッジ表示統合
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 新規
+- PowerShell版: Tier1 から使用頻度低EFを1本以上降格し、AI大学キラー3本のうち最重要 (`ai-university-content`) を Tier1 昇格
+
+## セッション: Web版#32 (2026-04-11)
+
+### 実施内容
+
+- **プロンプト新ルール追加 — 毎セッション GitHub Actions ワークフロー改善・無駄検出必須**:
+  - CLAUDE.md 開発ルール #10 追加 (失敗ワークフロー特定 / 重複ワークフロー特定 / デプロイ高速化 / スコープ別修正 / 記録必須 の5ステップ)
+  - COMPRESSED_PROMPT_V3.md 開発ルール #17 として同等内容を追加
+  - 「毎回エラーで通知だけ鳴らしているワークフローは純コスト → 即削除候補」と明記
+- **今セッション ワークフロー改善チェック実施 — 3件の重大な無駄を発見**:
+  1. **🔴 `deploy-prod.yml` L381 `run-batch` ジョブが `cron-batch.yml` と完全重複**
+     - `cron-batch.yml` が毎日 0:00 UTC に `Run Python Analysis Batch` を実行 (毎回失敗)
+     - 更に `deploy-prod.yml` の中でも `run-batch:` ジョブが `needs: deploy` で定義されており、**本番 push の度に同じ Python バッチ (同じ batch_analysis.py) が再実行**されている
+     - `continue-on-error: true` なので deploy は成功扱いだが、`notify:` ジョブが `needs: [deploy, run-batch]` で待機するため本番デプロイの完了通知が数分遅延
+     - **解決策**: `deploy-prod.yml` から `run-batch` ジョブを完全削除し、`notify.needs` を `[deploy]` に変更、本文中の `run-batch.result` 参照も除去
+  2. **🔴 `cron-batch.yml` 自体が毎回失敗中 (Python batch_analysis.py)**
+     - `batch_analysis.py` (213行、`google-genai` + `supabase` 依存) が daily で失敗
+     - 原因特定せず放置されている → GitHub Actions 分数の純粋な浪費
+     - **解決策**: batch_analysis.py のエラー原因特定 → 復旧困難なら cron を止め `workflow_dispatch` 専用化 or ワークフロー削除
+  3. **🔴 `deploy-prod.yml` `Deploy Supabase Edge Functions` ステップが 99本 EF を逐次デプロイ**
+     - L148-259 で `supabase functions deploy` を **99回シリアル実行** (Tier1A ~ Tier1G)
+     - 1本あたり 20-30秒 × 99本 = **30-40分の逐次処理**。これがデプロイ遅延の主因
+     - **解決策 (2段階)**:
+       - (a) 変更検知: `git diff --name-only HEAD~1 HEAD -- supabase/functions/` で変更されたディレクトリを抽出、該当EFのみデプロイ → 多くのセッションで 1-3 本のみが対象になる
+       - (b) 並列化: 変更が多い場合は `printf "%s\n" "${CHANGED[@]}" | xargs -P8 -I{} supabase functions deploy {} --no-verify-jwt` で 8並列。40分 → 約6分に短縮可能
+  4. **🟡 `deploy-prod.yml` Flutter Web build に `--no-tree-shake-icons` が有効** (L315) — アセット肥大・ビルド時間増の原因の可能性。削除を検討 (ただし `Icons.xxx` 動的参照箇所でビルドエラーの可能性あり、検証必須)
+
+### 品質確認
+
+- CLAUDE.md / COMPRESSED_PROMPT_V3.md / GROWTH_STRATEGY_ROADMAP.md の markdown 編集のみ → `deno lint` 不要、`flutter analyze` 不要
+- `.github/workflows/*.yml` は Web版スコープ外のため本セッションでは**変更せず**、発見事項は `COMPRESSED_PROMPT_V3.md`「実装待ち」にハンドオフ (4件追加)
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ (🔴 最高 × 3 + 🟡 高 × 1)**: COMPRESSED_PROMPT_V3.md 実装待ちテーブルに追加済み
+  - 🔴 最高: `deploy-prod.yml` L381 `run-batch` ジョブ削除 + `notify.needs` 修正
+  - 🔴 最高: `cron-batch.yml` の batch_analysis.py エラー調査 → 復旧困難なら cron 停止
+  - 🔴 最高: `deploy-prod.yml` EF デプロイの差分検知 + 並列化 (xargs -P8)
+  - 🟡 高: Flutter Web build の `--no-tree-shake-icons` 削除検討
+- **全インスタンスへ**: 以降のセッションでは CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17 に従い、毎回ワークフロー改善チェックを実施して `GROWTH_STRATEGY_ROADMAP.md` に「ワークフロー改善」項目として記録する
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- Web版: SNS シェア画像 OGP カード生成 EF
+- PowerShell版: 上記 4件のワークフロー修正 (デプロイ時間 40分 → 6分を目標)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク表示統合
+
+## セッション: Web版#33 (2026-04-11)
+
+### 実装内容: AI大学 クイズスコア書き込み EF 完成 (🔴 最高タスク)
+
+**課題**: AI大学キラーコンテンツ化の 🔴 最高タスク `ai_university_scores` スコア書き込み EF が未実装だった。
+クイズ正解を DB に保存しないとクロスデバイス学習記録・バッジ自動付与・ランキング反映ができない。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+- 新規 EF を作らず、既存 `ai-university-badges` EF に 3 アクション追加する設計を採用
+- 既に `check_quiz_master` で `ai_university_scores` を読んでいたため、書き込みも同じ EF に集約するのが自然
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `record_score` | ユーザー JWT | `ai_university_scores` に UPSERT。正解を一度記録したら不正解で上書きしない。新規正解時は `evaluateQuizMaster` を連続実行してバッジ審査 |
+| `get_scores` | ユーザー JWT | 自分の全プロバイダースコアを `studied_at` 降順で取得 |
+| `score_leaderboard` | service_role | `ai_university_leaderboard` ビューを `rank` 昇順で読み出し、`email` → ハンドル (@ 前のみ) にサニタイズ |
+
+**内部リファクタリング**:
+- `check_quiz_master` ロジックを `evaluateQuizMaster(client, userId)` ヘルパー関数として抽出
+- `check_quiz_master` と `record_score` (新規正解時) の両方から呼び出し可能に
+- 重複コード削除: `ai_university_scores` 読み込み + `ai_university_content` プロバイダー数カウント + 2 バッジ審査を一箇所に集約
+
+**record_score のキー設計**:
+```typescript
+const wasCorrect = existing && existing.quiz_correct;       // 既に正解済み?
+const isNewProvider = existing === null;                     // 初めてのプロバイダー?
+const newlyCorrect = !wasCorrect && quizCorrect;             // 今回が初正解?
+// UPDATE 時: nextCorrect = wasCorrect || quizCorrect (一度正解したら永続)
+// newlyCorrect なら evaluateQuizMaster を呼び出しバッジ自動付与
+```
+
+**シェア誘導ロジック**: `record_score` のレスポンスに `awarded_badges: string[]` を含めるため、
+VSCode版のクイズページで `result.awarded_badges.length > 0` ならバッジ獲得モーダル→シェア CTA を出せる。
+
+### VSCode版 ハンドオフタスク (ai-university-badges EF スコア系 活用)
+
+🔴 最高: クイズ正解時に `record_score` 呼び出しを追加
+- `lib/pages/gemini_university_v2_page.dart` のクイズ正解ハンドラで以下を実行
+  ```dart
+  final res = await Supabase.instance.client.functions.invoke(
+    'ai-university-badges',
+    body: {'action': 'record_score', 'provider_id': providerId, 'quiz_correct': true},
+  );
+  final awarded = (res.data?['awarded_badges'] as List?)?.cast<String>() ?? [];
+  if (awarded.isNotEmpty) {
+    // バッジ獲得モーダル → シェアCTA
+  }
+  ```
+- SharedPreferences `ai_univ_answered_quizzes` との並行保存 (DB 優先、prefs はフォールバック)
+
+🟡 高: ランキングページ (`ai_university_ranking_page.dart`) で `score_leaderboard` 使用
+- バッジ保有数ランキング (`leaderboard`) と クイズ正解ランキング (`score_leaderboard`) の2タブ
+- 未ログインでも閲覧可能 (service_role 読み出し)
+
+🟡 高: HomeCard に `get_scores` で正解数表示
+- `ai_university_home_card.dart` の `_answeredCount` を DB 由来に置き換え
+- SharedPreferences はオフライン/未ログイン時のフォールバック
+
+### ファイル変更
+
+- `supabase/functions/ai-university-badges/index.ts`: +149 行 / -78 行 (ヘッダーコメント拡充 + 3 アクション追加 + `evaluateQuizMaster` ヘルパー)
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+アンチパターン Grep スキャン: 直近5セッションの `lib/pages/*.dart` / `lib/widgets/*.dart` はWeb版スコープ外のため実施せず (VSCode版担当)。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件 (前回検出分のハンドオフ進行中)**
+
+### 次回優先
+
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` EF 連携、新規 action 追加方式)
+- Web版: SNS シェア画像 OGP カード生成 EF (新規 EF は Tier2 のみ可能)
+- Web版: `growth-import-preview` に Notion API 連携追加 (#44)
+- PowerShell版: 前回検出 4 件のワークフロー改善 (run-batch 重複削除 / cron-batch.yml 停止 / EF デプロイ並列化 / --no-tree-shake-icons 検討)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク/バッジ統合 + `record_score` 呼び出し組み込み
+
+## セッション: Web版#34 (2026-04-11)
+
+### 実装内容: AI大学 学習リマインダー通知 EF 完成 (🟢 中タスク)
+
+**課題**: 3日以上未学習のユーザーへの復帰促進通知が未実装。リテンション向上のために `notification-center` EF 経由で `app_notifications` テーブルへ一括インサートする必要があった。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+
+- 新規 EF を作らず、既存 `notification-center` EF に action を追加する設計を採用
+- 通知作成ロジックは既に `notification-center` EF にあるため、学習リマインダーは自然な拡張点
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `send_study_reminders` | service_role | `ai_university_streaks` から未学習ユーザーを抽出 → `app_notifications` に復帰促進通知を一括挿入。`dry_run` / `min_idle_days` / `max_idle_days` / スパム防止フィルタ対応 |
+
+**主要ロジック**:
+
+```typescript
+// 1. JST ベースで未学習期間ウィンドウを計算
+const minDate = now - maxIdleDays days; // 既定 30日前
+const maxDate = now - minIdleDays days; // 既定 3日前
+
+// 2. ai_university_streaks から該当ユーザー取得
+const candidates = select * from ai_university_streaks
+  where last_studied_date between minDate and maxDate;
+
+// 3. スパム防止: 直近 minIdleDays 日以内に同種通知を受け取った user_id を除外
+const recentlyReminded = select user_id from app_notifications
+  where type = 'system' and title like '[AI大学] 学習リマインダー%'
+  and created_at >= (now - minIdleDays days);
+
+// 4. 未リマインド対象のみ復帰メッセージを一括 INSERT
+const payload = targets.map(row => ({
+  user_id: row.user_id,
+  title: '[AI大学] 学習リマインダー — X日ぶりにAIを学ぼう',
+  message: bestStreak > 1
+    ? `前回から${idle}日経過。過去最長 ${best} 日連続を更新しよう！`
+    : `前回から${idle}日経過。AI大学で1分クイズに挑戦。`,
+  type: 'system',
+  link: '/ai-university',
+  is_read: false,
+}));
+```
+
+**呼び出しパターン**:
+
+```bash
+# 通常実行 (Schedule から 1日1回)
+curl -X POST .../functions/v1/notification-center \
+  -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -d '{"action": "send_study_reminders"}'
+
+# dry_run でターゲット数のみ確認
+curl ... -d '{"action": "send_study_reminders", "dry_run": true}'
+
+# 7日以上未学習に変更
+curl ... -d '{"action": "send_study_reminders", "min_idle_days": 7}'
+```
+
+**レスポンス**:
+
+```json
+{
+  "success": true,
+  "eligible": 42,               // ウィンドウ内の候補ユーザー数
+  "sent": 35,                   // 実際に通知を作成した人数
+  "skipped_recently_reminded": 7, // 直近に既にリマインド済みで除外
+  "dry_run": false,
+  "today": "2026-04-11",
+  "window": { "min_idle_days": 3, "max_idle_days": 30 }
+}
+```
+
+### PowerShell版 ハンドオフタスク
+
+🟢 中: Schedule/Cron から毎日 10:00 JST に `send_study_reminders` を呼び出す設定を追加
+- `.github/workflows/notification-reminder.yml` 新規 or 既存 cron に `curl` 呼び出し追加
+- service_role key を `secrets.SUPABASE_SERVICE_ROLE_KEY` から注入
+- 成功レスポンスの `sent` 数を step outputs に出力 → Slack 通知連携 (任意)
+
+### ファイル変更
+
+- `supabase/functions/notification-center/index.ts`: +155 行 (ヘッダーコメント更新 + `send_study_reminders` action 追加)
+
+### 品質確認
+
+- `deno lint supabase/functions/notification-center/` → **0エラー** (`Checked 1 file`)
+- JST 日付計算は `Date.now() + 9*60*60*1000` オフセット方式 (既存 CLAUDE.md パターン踏襲)
+- INSERT は `app_notifications` RLS `service_role_full_access_notifications` policy 経由
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち (PS#38 で部分対応済み: cron-batch.yml 停止 + ci.yml 無駄ビルド削除)。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件**
+
+### 次回優先
+
+- Web版: SNS シェア画像 OGP カード生成 EF (🟢 低、新規 EF 作成は Tier2 コード運用のみ可能)
+- Web版: `growth-import-preview` に Notion API 連携追加 (#44)
+- Web版: AI介入提案 (`ai-assistant` EF に slip パターン渡し) — 機能強化 #T2 🟢 低
+- PowerShell版: `notification-reminder` cron 追加 (毎日 10:00 JST → `send_study_reminders`)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 (Web版#31 検出、🟡 高)
+
+## セッション: Web版#35 (2026-04-11)
+
+### 実装内容: THOUGHT_INTERRUPT_ELIMINATOR #T2 AI介入提案 action 完成 (🟢 低タスク)
+
+**課題**: 思考妨害排除ガード機能強化 #T2 の最後の未着手項目「AI介入提案 (`ai-assistant` EF に slip パターン渡し)」が残っていた。ユーザーの slip (誘惑に負けた記録) パターンを CBT/ACT の専門家視点で分析し、個別化された介入提案を生成する AI 機能。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+
+- 新規 EF を作らず、既存 `ai-assistant` EF に action を追加する設計を採用
+- `behavior_analysis` と近い認知行動療法系のプロンプトなので、自然な拡張点
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `suggest_slip_intervention` | ユーザー JWT | `abstinence_slips` 直近30日を集計 → CBT/ACT専門家プロンプトで LLM に送信 → 介入提案を JSON で返却 |
+
+**集計ロジック**:
+
+```typescript
+// 1. 直近30日の slip を RLS 経由で取得 (本人分のみ)
+const { data: slips } = await supabaseClient
+  .from('abstinence_slips')
+  .select('item_id, slipped_at, context, trigger_note')
+  .gte('slipped_at', sinceIso)
+  .order('slipped_at', { ascending: false });
+
+// 2. 曜日/時間帯/アイテム別に集計 (JST ベース)
+const weekdayCounts = ...; // 日月火水木金土 の 7値
+const hourCounts = ...;    // 0-23時の分布
+const itemCounts = ...;    // item_id 毎の出現回数
+
+// 3. risk_score: 直近7日 vs 週次平均から増減傾向を算出
+const riskRaw = last7d / weeklyAvg;
+const riskScore = Math.round(riskRaw * 50); // 0-100 にクリップ
+```
+
+**LLM プロンプト設計** (CBT/ACT 専門家プロンプト):
+
+- CBT/ACT の具体技法を必ず引用 (認知再構成・If-Then プラン・値の明確化・脱フュージョン)
+- 批判・説教ではなく共感と次の一手を提示
+- `intervention_tips`: 3〜5件の実行可能な行動レベル提案 (各60字以内)
+- `insights`: 200〜300字の洞察文 (曜日・時間帯パターンに言及)
+
+**レスポンス構造**:
+
+```json
+{
+  "success": true,
+  "result": {
+    "total_slips": 42,              // 直近30日総数
+    "last_7d_slips": 12,            // 直近7日数
+    "risk_score": 68,               // 0-100 (100=高リスク)
+    "insights": "金曜夜の21-23時に集中...",
+    "intervention_tips": [
+      "金曜19時にアプリをブロック設定する",
+      "21時以降はスマホをリビングに置く",
+      "..."
+    ],
+    "top_items": [{item_id, count}, ...],
+    "top_weekdays": [{weekday: "金", count: 8}, ...],
+    "top_hours": [{hour_range: "22時台", count: 6}, ...]
+  }
+}
+```
+
+**zero-slip フォールバック**: 30日間 slip が 0 件の場合は LLM を呼ばず「現状維持で問題なし」固定メッセージを返却してトークン節約。
+
+### VSCode版 ハンドオフタスク
+
+🟢 低: `lib/pages/weekly_slip_report_page.dart` or 新規 `thought_intervention_page.dart` で `suggest_slip_intervention` を呼び出す UI を追加
+- 「AI介入提案を生成」ボタン → `ai-assistant` EF に `{action: 'suggest_slip_intervention'}` POST
+- レスポンスの `insights` / `intervention_tips` をカード表示
+- `risk_score` を円グラフ or プログレスバーで可視化
+- `top_weekdays` / `top_hours` をチップで表示
+
+### ファイル変更
+
+- `supabase/functions/ai-assistant/index.ts`: +162 行 (917 → 1079 行、actionが13 → 14)
+
+### 品質確認
+
+- `deno lint supabase/functions/ai-assistant/` → **0エラー** (`Checked 1 file`)
+- 既存 `behavior_analysis` action と同じ LLM フォールバックチェーン (`runPromptWithStrategy`) を使用
+- RLS `abstinence_slips_select_own` policy により user JWT で本人分のみ自動絞り込み
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件のうち、PS#38 で ci.yml 無駄ビルド削除完了。run-batch 重複削除 / cron-batch.yml 停止も Windows版#33 で完了。EF デプロイ並列化 / --no-tree-shake-icons 検討は継続監視。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件**
+
+### 次回優先
+
+- Web版: `growth-import-preview` 既存 Notion API 実装を拡張 (ブロック再帰取得 / Rate limit protection)
+- Web版: SNS シェア画像 OGP カード生成 EF (Tier2 コード運用)
+- PowerShell版: `notification-reminder.yml` cron 追加 (毎日 10:00 JST → `send_study_reminders`)
+- PowerShell版: `slip-intervention.yml` cron 追加 (週次、risk_score 高ユーザーに通知送信 連携)
+- VSCode版: `thought_intervention_page.dart` 新規作成 (Web版#35 の AI 介入提案 UI)
+
+## セッション: Web版#36 (2026-04-11)
+
+### 課題
+
+PowerShell版#24 (CI/CD改善 #C4) で `ci.yml` に `deno test` ステップ (`continue-on-error: true`) が追加され、
+「主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すれば CI で自動テストが走る」
+と Web版にハンドオフされた。しかし対象 3 EF にはテストファイルが1つも存在せず、CI 側の `deno test` ステップは常に空振り状態だった。
+
+### 実施内容
+
+#### 設計判断: pure-logic 単体テスト戦略
+
+EF 3 本とも `serve(async (req) => {...})` を**モジュールトップレベル**で呼び出しているため、
+`import` しただけで HTTP サーバーが起動してしまいテスト実行が困難。
+そのため **純粋ロジック (validators / helpers / constants / 計算式) を index.ts と同一アルゴリズムで複製し検証する** 戦略を採用した。
+
+利点:
+
+- index.ts をリファクタリングせずにテストを追加可能 (既存動作リスクゼロ)
+- CI の `deno test` ステップで安定実行 (サーバー起動や DB 接続が不要)
+- テスト自体が「仕様書」として機能 (JST 日付計算などの暗黙ルールを明文化)
+
+#### 追加ファイル
+
+| ファイル | テスト数 | 検証対象 |
+| --- | --- | --- |
+| `supabase/functions/notification-center/index.test.ts` | 9 | `NOTIFICATION_TYPES` / `send_study_reminders` の min/max クランプ・JST 日付計算・title prefix スパム防止・idle_days 計算・personalized message 分岐・recently reminded スキップ・CORS headers |
+| `supabase/functions/feature-request-manager/index.test.ts` | 11 | `normalizeCategory` (3カテゴリ × 正常系/大文字・空白/不正値) / `buildFeedbackTitle` (プレフィックス切替/改行1行目採用/連続空白圧縮/72文字省略) / GitHub label 計算 / vote null-safety |
+| `supabase/functions/onboarding-flow/index.test.ts` | 13 | `ONBOARDING_STEPS` (6ステップ・order 連番・必須2件・キー重複なし) / 進捗計算 (0% → 17% → 50% → 100%) / `nextStep` 判定 / `onboarding_completed` merge / 入力検証 / `noteCount` null-safety |
+
+**合計 33 テスト / 全 pass / deno lint 0エラー**
+
+#### 軽量アサーション戦略
+
+外部 import `https://deno.land/std@0.168.0/testing/asserts.ts` を避け、各テストファイル冒頭に
+以下のインライン関数を定義した:
+
+```typescript
+function assertEquals<T>(actual: T, expected: T, msg?: string): void {
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if (a !== e) {
+    throw new Error(`assertEquals failed: expected ${e}, got ${a}${msg ? ` — ${msg}` : ""}`);
+  }
+}
+```
+
+理由:
+
+- **オフライン実行保証** — ネットワーク障害時も CI が安定動作
+- **依存ゼロ** — std バージョン更新時にテストが壊れない
+- **最小重複** — 必要な関数のみを各ファイルに 10 行程度コピー
+
+### 品質確認
+
+- `deno lint supabase/functions/{notification-center,feature-request-manager,onboarding-flow}/` → **0エラー** (Checked 6 files)
+- `deno test supabase/functions/{notification-center,feature-request-manager,onboarding-flow}/index.test.ts` → **33 passed / 0 failed (78ms)**
+
+### ファイル変更
+
+- `supabase/functions/notification-center/index.test.ts` 新規作成 (+138行)
+- `supabase/functions/feature-request-manager/index.test.ts` 新規作成 (+131行)
+- `supabase/functions/onboarding-flow/index.test.ts` 新規作成 (+158行)
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+今セッションの新規検出なし。PS#38/Windows版#33 で既存検出項目は対応済み。
+**チェック実施: 新規検出 0 件**
+
+### UI改善ワークフロー (CLAUDE.md #11 新規ルール / COMPRESSED_PROMPT_V3.md #18)
+
+ユーザー指示による新ルール #11 追加: **毎セッション Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md` を駆使した UI 改善必須化**。本セッションは初回実施。
+
+#### ルール追加内容 (CLAUDE.md #11 / COMPRESSED_PROMPT_V3.md #18)
+
+5 ステップワークフロー:
+
+1. **分析** (`/design-review`): 直近触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査しトークン違反検出
+2. **設計案生成** (`/design-workflow`): Figma MCP 読み取り + AIDesigner MCP 生成。不在なら `nano-banana` で参考ビジュアル生成
+3. **実装** (`/design-component`): Flutter ウィジェット生成 or 既存改修
+4. **品質チェック** (`/design-check`): デザイン品質 + `flutter analyze` 0エラー + WCAG AA 4.5:1
+5. **記録**: ROADMAP.md に追記。Web版/Windows版/PowerShell版 は Step 1・2 のみ実施して VSCode版ハンドオフ
+
+#### Step 1 実施 (Web版スコープ: 分析のみ)
+
+**対象ファイル** (Web版 直近作業に関連する 4 UI):
+
+| # | ファイル | スコア | 関連 Web版 作業 |
+| --- | --- | --- | --- |
+| 1 | `lib/pages/ai_university_ranking_page.dart` | 62/100 | Web版#30 streaks EF → VSCode版#53 UI |
+| 2 | `lib/widgets/ai_university_home_card.dart` | 58/100 | Web版#31 UI検出 + #34 リマインダー |
+| 3 | `lib/pages/notifications_page.dart` | 55/100 | Web版#34 send_study_reminders |
+| 4 | `lib/pages/onboarding_page.dart` | 48/100 | Web版#36 onboarding-flow テスト |
+
+**検出違反合計**: 54 件 (🔴 critical 3 / 🟡 medium 42 / 🟢 low 9)
+
+**主な違反カテゴリ**:
+
+- **ハードコード色**: `Color(0xFF1a1a2e)` / `Colors.indigo.shade800` / `Colors.amber` / `Colors.grey` など Material テーマ経由の色参照が多数
+- **スペーシングスケール外**: `padding: 14/18/20`, `margin: 10`, `vertical: 1/2` など {2,4,8,12,16,20,24,32,48,64} 外の値
+- **日本語タイポグラフィ違反**: 本文 `fontSize: 14` に `height: 1.7` 欠落 (DESIGN.md は line-height 1.5 以上必須)
+- **禁止色使用**: `lib/widgets/ai_university_home_card.dart` L222 で `Colors.white` を背景に使用 (DESIGN.md L670 禁止)
+- **禁止フォント使用**: `lib/pages/onboarding_page.dart` L212 で `fontFamily: 'Serif'` (DESIGN.md L131 で明朝体禁止)
+
+**VSCode版 への優先ハンドオフ (Top 3)**:
+
+1. 🔴 `lib/utils/design_tokens.dart` を新規作成し DESIGN.md の全トークンを `AppColors` / `AppSpacing` / `AppTypography` として定義。違反の 80% がこれで一括解決
+2. 🟡 日本語タイポグラフィ準拠 — 全 body `height: 1.7` / 見出し `height: 1.4` / 本文 `letterSpacing` 全削除 / `fontFamily: 'Serif'` 削除 (15箇所以上)
+3. 🟡 強制ダークテーマ化 — `Theme.of(context).colorScheme.*` / `Colors.grey[900]` / `Colors.indigo.shade800` を AppColors 定数に置換 (8箇所以上)
+
+**成果物**: `docs/design-reviews/2026-04-11-web-36.md` に行番号付き詳細レポート + 修正スニペット保存 (256行)。VSCode版 #57 以降で本ファイル参照。
+
+**使用スキル**: `Explore` subagent で静的コード解析を実施 (Flutter MCP/Figma MCP/Nano Banana は Web版 環境では不要 — 純粋分析のみ)
+
+**分析実施: 改善提案 54 件 / VSCode版ハンドオフ完了**
+
+### 次回優先
+
+- Web版: `ai-assistant` / `ai-university-streaks` / `ai-university-content` など主要 EF に同様の pure-logic テストを追加 (継続的カバレッジ拡大)
+- Web版: `growth-import-preview` 既存 Notion API 実装を拡張 (ブロック再帰取得 / Rate limit protection)
+- Web版: SNS シェア画像 OGP カード生成 EF (Tier2 コード運用)
+- Web版: 次セッションの design-review 対象候補 — `lib/pages/thought_interrupt_diagnosis_page.dart` / `lib/pages/feature_requests_page.dart` / `lib/pages/ai_assistant_page.dart` (触れたEFに関連するUIをローテーション)
+- VSCode版: `docs/design-reviews/2026-04-11-web-36.md` 記載の 54 違反を修正
+- PowerShell版: `ci.yml` の `deno test` ステップを `--fail-fast` ONに切替 (テスト実装後はエラー顕在化の方が価値高い)
+
 ## セッション: Windows版#33 (2026-04-12)
 
 ### 実施内容
