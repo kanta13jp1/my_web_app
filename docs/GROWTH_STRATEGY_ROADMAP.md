@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 Claude Schedule daily-report (競合モニタリング: Notion 3.4/Slack AI 30機能/GitHub Copilot Autopilot)
+最終更新: 2026-04-11 Windows版#29 (CICD_SETUP_GUIDE アーカイブ通知・CI/CD改善 #C6 完了・コア機能 #59-#63 確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -4697,3 +4697,62 @@ COMPRESSED_PROMPT_V3.md の タスク T-1 セクションを実態に合わせ�
 - [ ] パーソナルダッシュボードUI (admin_analytics_page.dart 拡張) — Notion 対抗 🔴高優先
 - [ ] ai-assistant EF: マイスキル登録・再利用機能 — Slack 対抗 🟡中優先
 - [ ] pr-auto-review: CI 失敗自動 fix コミット機能 — GitHub Copilot 対抗 🟡中優先
+
+---
+
+## セッション記録: Windows版#29 (2026-04-11, CICD_SETUP_GUIDE アーカイブ・CI/CD改善 #C6 完了)
+
+### 変更確認サマリー
+
+COMPRESSED_PROMPT_V3.md v3 差分を確認。Windows版#28 から v3 の追加変更点:
+
+| 変更 | 内容 |
+| --- | --- |
+| コア機能 #59-#63 LP済 | AI役員会議/記憶ドリル/経営コックピット/公開メモSEO/性格診断 — commit `83e52e6f` で追加確認 |
+| `dependency-audit.yml` 説明更新 | Deno std 古バージョン検出 + pubspec.yaml 未固定パッケージ検出 を明記 (PS#27) |
+| CI/CD改善 #C6 引き継ぎ | `docs/CICD_SETUP_GUIDE.md` が残存タスクとして確認 |
+
+### 実施内容
+
+**1. `docs/CICD_SETUP_GUIDE.md` アーカイブ通知追加**
+
+2025-11-14 作成の CI/CD セットアップ手順書。現在は GitHub Actions 13本が本番稼働済みのため旧情報。
+先頭に blockquote 形式のアーカイブ済み通知を追加:
+
+- 参照先: `.github/COMPRESSED_PROMPT_V3.md` の CI/CD改善セクション (#C1〜#C6)
+- 現状: 13本ワークフロー本番稼働・GitHub Secrets 全設定済み
+
+**2. CI/CD改善 #C6 完了マーク** (COMPRESSED_PROMPT_V3.md 更新)
+
+旧技術文書アーカイブ対応が全4件完了:
+
+| ファイル | 対応バージョン |
+| --- | --- |
+| `docs/technical/BACKEND_MIGRATION_PLAN.md` | Windows版#28 ✅ |
+| `docs/technical/GEMINI_MIGRATION_GUIDE.md` | Windows版#28 ✅ |
+| `docs/technical/REFACTORING_PLAN.md` | Windows版#28 ✅ |
+| `docs/CICD_SETUP_GUIDE.md` | Windows版#29 ✅ |
+
+CI/CD改善 #C6 のステータスを 🔄 Windows版へ → ✅ 解決済み (Windows版#28/#29) に更新。
+
+**3. コア機能 #59-#63 確認記録**
+
+- #59 AI役員会議 / #60 記憶ドリル / #61 経営コックピット / #62 公開メモSEO / #63 性格診断
+- 全件 LP済 確認 (commit `83e52e6f`)
+- コア機能リスト: #1-#63 全63件整合確認完了
+
+### コア機能リスト (最新: #1-#63 全件 LP済)
+
+| # | 機能 | ステータス |
+| --- | --- | --- |
+| 59 | AI役員会議 — 社内意思決定AI | ✅ LP済 |
+| 60 | 記憶ドリル (フラッシュカード) — 学習記憶定着 | ✅ LP済 |
+| 61 | 経営コックピット — KPI・財務・人事ダッシュボード | ✅ LP済 |
+| 62 | 公開メモSEO — 知識ベースSEO公開 | ✅ LP済 |
+| 63 | 性格診断 (16タイプ MBTI) — 自己分析・恋愛相性診断 | ✅ LP済 |
+
+### 次回優先
+
+1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
+2. **日次レポート分析継続**: `docs/daily-reports/2026-04-02.md` 以降を順次処理
+3. **競合対抗実装**: パーソナルダッシュボードUI (Notion 3.4 対抗) 🔴高優先

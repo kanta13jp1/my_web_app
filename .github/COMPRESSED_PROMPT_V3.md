@@ -409,9 +409,16 @@ web/sitemap.xml          # URL マップ
 | --- | --- | --- |
 | `deno.land/std@0.168.0` 古化 (238本・2023年版) | `dependency-audit.yml` に古バージョン検出ステップを追加 | ✅ 解決済み (PS#27) |
 | `pubspec.yaml` の `http: any` (バージョン制約なし) | `dependency-audit.yml` に unconstrained deps チェックを追加 | ✅ 解決済み (PS#27) |
-| 多数の技術文書が2025年時点の旧情報 (GitHub Secrets未設定・Backend Migration未着手 等) | 現状と乖離した文書として記録 — Windows版が次回更新 | 🔄 Windows版へ |
+| 多数の技術文書が2025年時点の旧情報 (GitHub Secrets未設定・Backend Migration未着手 等) | アーカイブ済み通知を先頭に追記 — Windows版#28/#29 実施 | ✅ 解決済み (Windows版#28/#29) |
 
-**Windows版への引き継ぎ**: `docs/technical/BACKEND_MIGRATION_PLAN.md`, `docs/technical/GEMINI_MIGRATION_GUIDE.md`, `docs/technical/REFACTORING_PLAN.md`, `docs/technical/CICD_SETUP_GUIDE.md` は2025年時点の記述が残存。現在の実装状態と照合して更新・アーカイブ化すること。
+**アーカイブ対応済み (Windows版#28/#29)**:
+
+| ファイル | 対応バージョン |
+| --- | --- |
+| `docs/technical/BACKEND_MIGRATION_PLAN.md` | Windows版#28 ✅ |
+| `docs/technical/GEMINI_MIGRATION_GUIDE.md` | Windows版#28 ✅ |
+| `docs/technical/REFACTORING_PLAN.md` | Windows版#28 ✅ |
+| `docs/CICD_SETUP_GUIDE.md` | Windows版#29 ✅ |
 
 ### CI/CD改善 #C5: 2026-04-02〜2026-04-10 日次レポート分析 (PowerShell版#26, 2026-04-11)
 
