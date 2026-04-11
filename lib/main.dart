@@ -139,6 +139,7 @@ import 'package:my_web_app/pages/money_forward_page.dart';
 import 'package:my_web_app/pages/discord_notification_page.dart';
 import 'package:my_web_app/pages/github_pr_page.dart';
 import 'package:my_web_app/pages/line_notification_page.dart';
+import 'package:my_web_app/pages/weekly_slip_report_page.dart';
 import 'package:my_web_app/pages/slack_notification_page.dart';
 import 'package:my_web_app/pages/expense_tracker_page.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
@@ -1132,6 +1133,10 @@ class MyApp extends StatelessWidget {
           case '/money-forward':
             return MaterialPageRoute(
               builder: (_) => const MoneyForwardPage(),
+            );
+          case '/weekly-slip-report':
+            return MaterialPageRoute(
+              builder: (_) => const WeeklySlipReportPage(),
             );
           case '/discord-notifications':
             return MaterialPageRoute(
