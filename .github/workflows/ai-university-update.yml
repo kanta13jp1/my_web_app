@@ -1,6 +1,7 @@
 name: AI大学コンテンツ更新 (週次)
 
-# 6大AIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
+# 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
+# プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek)
 # 毎週月曜 11:00 JST (= UTC 02:00) に自動実行
 on:
   schedule:
@@ -87,11 +88,16 @@ jobs:
           upsert_provider "microsoft"  "https://blogs.microsoft.com/ai/feed/"     "Microsoft AI"
           upsert_provider "meta"       "https://ai.meta.com/blog/rss/"            "Meta AI"
           upsert_provider "x"          "https://x.ai/blog/rss.xml"               "xAI"
+          upsert_provider "deepseek"   "https://api-docs.deepseek.com/rss.xml"    "DeepSeek"
+          # 新規プロバイダーを追加する場合はここに upsert_provider 行を追記する
+          # 例: upsert_provider "mistral" "https://mistral.ai/news/rss.xml" "Mistral AI"
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          echo "📊 更新結果: ${SUCCESS_COUNT}/6 成功"
+          TOTAL_PROVIDERS=7  # プロバイダー追加時はここも更新
+          echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
+          echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
       # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
       - name: Step 3 - Append to daily report and commit via PR
@@ -142,7 +148,7 @@ jobs:
           set +e
           PR_URL=$(gh pr create \
             --title "自動: AI大学コンテンツ更新 ${TODAY}" \
-            --body "ai-university-update ワークフローによる自動コンテンツ更新 (${SUCCESS_COUNT}/6 成功)" \
+            --body "ai-university-update ワークフローによる自動コンテンツ更新 (${SUCCESS_COUNT}/${{ steps.update.outputs.total_providers }} 成功)" \
             --base main \
             --head "$BRANCH")
           if [ -n "$PR_URL" ]; then
@@ -187,8 +193,10 @@ jobs:
             echo "| Microsoft AI | RSS取得・UPSERT |"
             echo "| Meta AI | RSS取得・UPSERT |"
             echo "| X/xAI | RSS取得・UPSERT |"
+            echo "| DeepSeek | RSS取得・UPSERT |"
             echo ""
-            echo "**更新成功**: ${SUCCESS_COUNT}/6"
+            TOTAL="${{ steps.update.outputs.total_providers }}"
+          echo "**更新成功**: ${SUCCESS_COUNT}/${TOTAL}"
             if [ -n "$FAILED" ]; then
               echo "**失敗**:${FAILED}"
             fi
