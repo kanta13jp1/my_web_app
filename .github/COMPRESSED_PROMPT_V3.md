@@ -478,6 +478,7 @@ web/sitemap.xml          # URL マップ
 | `flutter test` の結果が Job Summary に未表示 | `id: flutter_test` / `id: deno_test` 追加、Job Summary にテスト結果行を追加 | ✅ 解決済み (PS#24) |
 
 > **Web版へ**: 主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すると CI で自動テストが走る体制が整った。
+> → ✅ **完了 (Web版#36, 2026-04-11)**: 3 EF に index.test.ts を追加 (合計33テスト / 全 pass / deno lint 0エラー)。外部 import を避け軽量アサーションをインライン定義しオフライン実行も担保。純粋ロジック (normalizeCategory / buildFeedbackTitle / ONBOARDING_STEPS 進捗計算 / JST 日付計算 / send_study_reminders スパム防止) を検証対象にした。
 
 ### CI/CD改善 #C6: docs/ 戦略ドキュメント分析からの反映 (PowerShell版#27, 2026-04-11)
 

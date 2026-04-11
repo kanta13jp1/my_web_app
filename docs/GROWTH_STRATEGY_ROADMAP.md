@@ -5899,6 +5899,87 @@ Web版#32 で検出済みの 4 件のうち、PS#38 で ci.yml 無駄ビルド�
 - PowerShell版: `slip-intervention.yml` cron 追加 (週次、risk_score 高ユーザーに通知送信 連携)
 - VSCode版: `thought_intervention_page.dart` 新規作成 (Web版#35 の AI 介入提案 UI)
 
+## セッション: Web版#36 (2026-04-11)
+
+### 課題
+
+PowerShell版#24 (CI/CD改善 #C4) で `ci.yml` に `deno test` ステップ (`continue-on-error: true`) が追加され、
+「主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すれば CI で自動テストが走る」
+と Web版にハンドオフされた。しかし対象 3 EF にはテストファイルが1つも存在せず、CI 側の `deno test` ステップは常に空振り状態だった。
+
+### 実施内容
+
+#### 設計判断: pure-logic 単体テスト戦略
+
+EF 3 本とも `serve(async (req) => {...})` を**モジュールトップレベル**で呼び出しているため、
+`import` しただけで HTTP サーバーが起動してしまいテスト実行が困難。
+そのため **純粋ロジック (validators / helpers / constants / 計算式) を index.ts と同一アルゴリズムで複製し検証する** 戦略を採用した。
+
+利点:
+
+- index.ts をリファクタリングせずにテストを追加可能 (既存動作リスクゼロ)
+- CI の `deno test` ステップで安定実行 (サーバー起動や DB 接続が不要)
+- テスト自体が「仕様書」として機能 (JST 日付計算などの暗黙ルールを明文化)
+
+#### 追加ファイル
+
+| ファイル | テスト数 | 検証対象 |
+| --- | --- | --- |
+| `supabase/functions/notification-center/index.test.ts` | 9 | `NOTIFICATION_TYPES` / `send_study_reminders` の min/max クランプ・JST 日付計算・title prefix スパム防止・idle_days 計算・personalized message 分岐・recently reminded スキップ・CORS headers |
+| `supabase/functions/feature-request-manager/index.test.ts` | 11 | `normalizeCategory` (3カテゴリ × 正常系/大文字・空白/不正値) / `buildFeedbackTitle` (プレフィックス切替/改行1行目採用/連続空白圧縮/72文字省略) / GitHub label 計算 / vote null-safety |
+| `supabase/functions/onboarding-flow/index.test.ts` | 13 | `ONBOARDING_STEPS` (6ステップ・order 連番・必須2件・キー重複なし) / 進捗計算 (0% → 17% → 50% → 100%) / `nextStep` 判定 / `onboarding_completed` merge / 入力検証 / `noteCount` null-safety |
+
+**合計 33 テスト / 全 pass / deno lint 0エラー**
+
+#### 軽量アサーション戦略
+
+外部 import `https://deno.land/std@0.168.0/testing/asserts.ts` を避け、各テストファイル冒頭に
+以下のインライン関数を定義した:
+
+```typescript
+function assertEquals<T>(actual: T, expected: T, msg?: string): void {
+  const a = JSON.stringify(actual);
+  const e = JSON.stringify(expected);
+  if (a !== e) {
+    throw new Error(`assertEquals failed: expected ${e}, got ${a}${msg ? ` — ${msg}` : ""}`);
+  }
+}
+```
+
+理由:
+
+- **オフライン実行保証** — ネットワーク障害時も CI が安定動作
+- **依存ゼロ** — std バージョン更新時にテストが壊れない
+- **最小重複** — 必要な関数のみを各ファイルに 10 行程度コピー
+
+### 品質確認
+
+- `deno lint supabase/functions/{notification-center,feature-request-manager,onboarding-flow}/` → **0エラー** (Checked 6 files)
+- `deno test supabase/functions/{notification-center,feature-request-manager,onboarding-flow}/index.test.ts` → **33 passed / 0 failed (78ms)**
+
+### ファイル変更
+
+- `supabase/functions/notification-center/index.test.ts` 新規作成 (+138行)
+- `supabase/functions/feature-request-manager/index.test.ts` 新規作成 (+131行)
+- `supabase/functions/onboarding-flow/index.test.ts` 新規作成 (+158行)
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+今セッションの新規検出なし。PS#38/Windows版#33 で既存検出項目は対応済み。
+**チェック実施: 新規検出 0 件**
+
+### 次回優先
+
+- Web版: `ai-assistant` / `ai-university-streaks` / `ai-university-content` など主要 EF に同様の pure-logic テストを追加 (継続的カバレッジ拡大)
+- Web版: `growth-import-preview` 既存 Notion API 実装を拡張 (ブロック再帰取得 / Rate limit protection)
+- Web版: SNS シェア画像 OGP カード生成 EF (Tier2 コード運用)
+- PowerShell版: `ci.yml` の `deno test` ステップを `--fail-fast` ONに切替 (テスト実装後はエラー顕在化の方が価値高い)
+
 ## セッション: Windows版#33 (2026-04-12)
 
 ### 実施内容
