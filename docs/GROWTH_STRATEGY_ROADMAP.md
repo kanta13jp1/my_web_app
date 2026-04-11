@@ -6911,3 +6911,30 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia/IBM/Sakana/Baidu 追加 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学18社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - AI大学 次追加候補: Oracle AI / Reka AI 🟢 中 (Windows版)
+
+---
+
+## VSCode版#59 セッション記録 (2026-04-12)
+
+### 実施内容
+
+| # | 内容 | 結果 |
+| --- | --- | --- |
+| 1 | cross-instance-pr 処理: Groq UI追加 (10社目) | ✅ commit d924a444 |
+| 2 | cross-instance-pr 処理: Cohere/Amazon/Stability UI追加 (11-13社目) | ✅ commit 4cc28b3d |
+| 3 | コア機能#138-#141追加 + LP 126→130のこと | ✅ commit fab2274e (Windows版#39が main.dart/LP を含めてコミット) |
+| 4 | cross-instance-pr 処理: HuggingFace/Nvidia/IBM/Sakana UI追加 (14-17社目) | ✅ commit e5c20f0d |
+
+### 現状数値 (2026-04-12 VSCode版#59時点)
+
+- LP: 130のこと (Baidu PR未処理で実質131のこと予定)
+- ページ数: 215 (brain_dump / project_gantt / business_card_manager / family_calendar 追加)
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー UI: 17社対応 (gemini_university_v2_page.dart _providerMeta)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-pr 処理: `20260412_baidu_provider_ui.md` (Baidu ERNIE 18社目 UI追加) 🔴 最高 (VSCode版)
+- Rule 19 UI改善: design-skills サブエージェントで AI大学ページまたは新規4ページ改善 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学17社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
