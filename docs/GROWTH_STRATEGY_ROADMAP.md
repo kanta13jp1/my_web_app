@@ -5545,3 +5545,23 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Qiita: トークン再設定 → `2026-03-28-note-comments.md` を Qiita 投稿
 - VSCode版: SharedPreferences → Supabase 移行
+
+## VSCode版#55 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/gemini_university_v2_page.dart` — `_loadAnsweredQuizzes` 強化
+  - Supabase `ai_university_scores` から `quiz_correct=true` の記録を取得
+  - ローカル SharedPreferences とマージ → クロスデバイス学習記録が同期される
+  - Supabase 取得失敗はサイレント (オフライン時はローカルキャッシュを使用)
+  - マージ結果がローカルより多い場合、SharedPreferences も更新して次回起動を高速化
+- `lib/widgets/ai_university_home_card.dart` — answered_count もリモート取得
+  - `ai_university_scores` から正解数をカウントし、ローカルより大きければ表示数を更新
+- `flutter analyze` 0エラー確認・commit `8c4598f7` push済み
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` EF + バッジ発行ロジック
+- VSCode版: SNS シェア画像生成 (OGP カード) 🟢 低
+- LP残りページ掲載化 (#132以降)
