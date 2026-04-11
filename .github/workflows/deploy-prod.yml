@@ -253,7 +253,7 @@ jobs:
           supabase functions deploy generate-daily-challenges --no-verify-jwt
           supabase functions deploy schedule-result-tracker --no-verify-jwt
           supabase functions deploy schedule-execution-logger --no-verify-jwt
-          supabase functions deploy edge-function-test-runner --no-verify-jwt
+          supabase functions deploy ai-university-content --no-verify-jwt
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
           supabase functions deploy issue-auto-resolver --no-verify-jwt
@@ -261,6 +261,8 @@ jobs:
           # Total: 99 functions deployed (100本目で402エラー — 絶対に超えないこと)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # edge-function-test-runner (2026-04-12 Tier2降格 → ai-university-content と入れ替え),
+          # ai-university-streaks, ai-university-badges (AI大学ストリーク・バッジ EF / EFスロット空き次第 Tier1昇格予定),
           # audio-effects-processor (2026-04-11 Tier2降格 → personal-dashboard と入れ替え),
           # growth-acquisition-signal, growth-acquisition-report (機能#13で growth-acquisition に統合),
           # user-growth-analytics, code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
