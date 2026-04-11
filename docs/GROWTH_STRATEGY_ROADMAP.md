@@ -6569,3 +6569,37 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢
 - T-1 第6弾: `docs/blog-drafts/` 次記事 Qiita/dev.to 投稿 (PowerShell版) 🟢
 - AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵
+
+## Windows版#34 — docs全件分析 + Groq AI大学追加 + docs数値修正 (2026-04-12)
+
+### 実施内容 (Rule 10: docs全件分析)
+
+**修正した古い情報 (3件)**:
+- `docs/technical/EDGE_FUNCTIONS_INVENTORY.md`: 241本 → 250本 (Tier2: 142→151) + 日付更新
+- `docs/roadmaps/BUSINESS_OPERATIONS_PLAN.md`: ユーザー数 2人 → 4人 (2026-04-12)
+- `docs/CICD_SETUP_GUIDE.md`: ワークフロー数 13本 → 17本
+
+**スタレーションを確認したが即時対応不要のファイル**:
+- `docs/technical/IMPROVEMENTS.md`: 2025-11-06 最終更新 (アーカイブ済みコメント追加検討)
+- `docs/roadmaps/COMPETITOR_ANALYSIS_2025.md`: 2025年版 (年次更新サイクルのため保留)
+- `docs/user-docs/GROWTH_FEATURES.md`: 新機能追記 (VSCode版担当)
+
+### AI大学 10社目: Groq 追加
+
+- migration: `20260412001000_seed_groq_ai_university.sql` (overview/models/api 日本語コンテンツ)
+- COMPRESSED_PROMPT プロバイダーリスト更新: 9社 → 10社
+- cross-instance-pr: `docs/cross-instance-prs/20260412_groq_provider_ui.md` (VSCode版に _providerMeta 追加依頼)
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 10社 (Groq追加)
+
+### 次回優先
+
+- T-1 第6弾: AI大学10社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+- AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
+- Cohere / Amazon Nova 追加検討 🔵 低
