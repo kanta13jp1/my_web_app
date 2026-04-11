@@ -7037,3 +7037,34 @@ action分岐パターンで5つのmega-hubに統合。
 - 🔴 Rule19 UI改善: design-skills + FigmaMCP + AIDesignerMCP で1ページ以上改善
 - 🟡 Baidu cross-instance-pr: gemini_university_v2_page.dartにBaidu ERNIE UI追加 (19社目)
 - 🟢 新規機能は既存hubへのaction追加で対応 (EF上限99到達)
+
+---
+
+## VSCode版 #61 (2026-04-12) — EFハードキャップ50本 + Tier1/Tier2廃止
+
+### 目標
+EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15hubで管理。
+
+### 実施内容
+
+| # | 内容 | 結果 |
+| --- | --- | --- |
+| 1 | macro-hub 6本新規作成: core/growth/ai/admin/app/schedule (旧80本スタンドアロン統合) | ✅ |
+| 2 | tools-hub: habit.gamification.* アクション追加 (profile/badges/challenges/leaderboard) | ✅ |
+| 3 | deploy-prod.yml: 94本→15本 (cleanup step + deploy step 全面改訂) | ✅ |
+| 4 | CLAUDE.md ルール#7: EF上限99本→ハードキャップ50本以下・Tier1/Tier2廃止 | ✅ |
+| 5 | Dart 12ファイル: EF呼び出しを新hub名+action形式に更新 | ✅ |
+| 6 | COMPRESSED_PROMPT_V3.md: EF管理セクション更新 | ✅ |
+
+### 現状数値 (2026-04-12 VSCode版#61時点)
+
+- EF deployed: **15本** (ハードキャップ50本以下 / Tier1/Tier2廃止)
+- Hub構成: standalone 4本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar) + macro-hub 6本 + mega-hub 5本
+- 新規EF追加ルール: 既存hubへのaction追加のみ / 新EF作成は既存統合で50本以下維持が条件
+- LP: 126のこと / ページ数: 211 / AI大学: 18社
+
+### 次回優先タスク
+
+- 🔴 Rule19 UI改善: design-skills + FigmaMCP + AIDesignerMCP で1ページ改善
+- 🟡 GROWTH_ROADMAP セッション記録更新
+- 🟢 新機能はhub action追加形式で実装 (EFハードキャップ維持)
