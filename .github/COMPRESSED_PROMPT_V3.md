@@ -156,6 +156,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 117 | **AI画像生成** (テキスト→画像即時生成・プレゼン/SNS/ブログ素材AIクリエイティブ — Midjourney対抗) | ✅ LP済 | `lib/pages/ai_image_generator_page.dart` (VSCode版) |
 | 118 | **AI横断検索** (全データをAI横断検索するパーソナルナレッジ検索エンジン) | ✅ LP済 | `lib/pages/ai_search_page.dart` (VSCode版) |
 | 119 | **現実確認チェック** (目標・計画・実績を客観スコアリング・バイアス排除意思決定支援 — 独自機能) | ✅ LP済 | `lib/pages/reality_check_page.dart` (VSCode版) |
+| 120 | **相性チェック** (人・目標・習慣・ライフスタイルのAI相性スコア多角分析) | ✅ LP済 | `lib/pages/compatibility_check_page.dart` (VSCode版) |
+| 121 | **サイトマップ分析** (全URL可視化・SEO健全性チェック・クロール最適化) | ✅ LP済 | `lib/pages/sitemap_analytics_page.dart` (VSCode版) |
+| 122 | **顧客フィードバック** (ユーザーの声一元収集・AI分析・優先度付け — Intercom対抗) | ✅ LP済 | `lib/pages/customer_feedback_page.dart` (VSCode版) |
+| 123 | **変更履歴管理** (コード・ドキュメント変更の自動追跡・Changelog自動生成) | ✅ LP済 | `lib/pages/changelog_manager_page.dart` (VSCode版) |
+| 124 | **支払いチャンネル台帳** (複数支払い手段・口座のAI自動仕訳・可視化台帳) | ✅ LP済 | `lib/pages/payment_channel_ledger_page.dart` (VSCode版) |
 
 ---
 

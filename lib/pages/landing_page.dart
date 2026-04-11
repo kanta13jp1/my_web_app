@@ -1651,6 +1651,11 @@ $input
       (Icons.image, '0xFFF97316', 'AI画像生成', 'テキストから画像を即時生成。プレゼン・SNS・ブログ素材をAIが自動制作。Midjourneyを超えるライフマネジメント統合型AIクリエイティブツール。'),
       (Icons.search, '0xFF0F766E', 'AI横断検索', '自分株式会社の全データ(ノート・タスク・習慣・財務)をAIが横断検索。Notionの検索・Googleを超えるパーソナルナレッジ検索エンジン。'),
       (Icons.balance, '0xFF4338CA', '現実確認チェック', '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。'),
+      (Icons.compare_arrows, '0xFF8B5CF6', '相性チェック', '人・目標・習慣・ライフスタイルの相性をAIが多角分析。恋愛・ビジネスパートナー・チームメンバーとの相性スコアを科学的に算出。'),
+      (Icons.analytics_outlined, '0xFFFE4E1E', 'サイトマップ分析', 'サイトの全URLを可視化・SEO健全性チェック・クロール最適化をAIが自動分析。Googleサーチコンソールを超えるサイト構造把握ツール。'),
+      (Icons.feedback, '0xFF22C55E', '顧客フィードバック', 'ユーザーの声・評価・要望を一元収集・AI分析・優先度付け。Intercomを超える個人×AI顧客インサイト管理プラットフォーム。'),
+      (Icons.history, '0xFF0891B2', '変更履歴管理', 'コード・ドキュメント・設定の変更履歴を自動追跡。Changelogを自動生成してチームと変更情報を透明に共有。'),
+      (Icons.payments, '0xFF10B981', '支払いチャンネル台帳', '複数の支払い手段・口座・チャンネルを台帳形式で一元管理。誰に何をいくら支払ったかをAIが自動仕訳・可視化。'),
     ];
 
     return Container(
@@ -1668,7 +1673,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない108のこと',
+            '自分株式会社でしかできない113のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
