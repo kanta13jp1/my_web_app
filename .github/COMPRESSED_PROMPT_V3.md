@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・195ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・196ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (14本完備済み) | 他3範囲 |
@@ -100,6 +100,10 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 61 | **経営コックピット** (収支・資産・KPIを一画面で管理 — MoneyForward代替) | ✅ LP済 | `lib/pages/home_page.dart` (VSCode版) |
 | 62 | **公開メモ・SEO** (メモをURLで共有・知識アウトプットが集客につながる) | ✅ LP済 | `lib/pages/public_memo_directory_page.dart` (VSCode版) |
 | 63 | **性格診断 (16タイプ MBTI)** (MBTIベース自己分析・学習スタイル最適化・恋愛相性診断) | ✅ LP済 | `lib/pages/personality_test_questions_page.dart` (VSCode版) |
+| 64 | **アクセス制御・権限管理** (ロール設定・ユーザー権限・アクセスログ — ジョブカン対抗) | ✅ LP済 | `lib/pages/access_control_page.dart` (VSCode版) |
+| 65 | **在庫・バーコード管理** (商品スキャン・在庫追跡・入出庫記録 — Amazon対抗) | ✅ LP済 | `lib/pages/inventory_barcode_page.dart` (VSCode版) |
+| 66 | **テンプレート広場** (6カテゴリ18種テンプレート即適用 — Notionマーケットプレイス対抗) | ✅ LP済 | `lib/pages/template_marketplace_page.dart` (VSCode版) |
+| 67 | **パーソナルダッシュボード** (ノート・タスク・習慣・集中時間KPIチャート可視化 — Notion 3.4対抗) | ✅ LP済 | `lib/pages/personal_dashboard_page.dart` (VSCode版) |
 
 ---
 
@@ -198,7 +202,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 195ページ (landing / comparison / user_manual / admin_analytics 等)
+lib/pages/               # 196ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
