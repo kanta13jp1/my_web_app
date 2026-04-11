@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
+import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -459,6 +460,16 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         backgroundColor: Colors.indigo.shade800,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard),
+            tooltip: 'ランキング',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AiUniversityRankingPage(),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.science),
             tooltip: 'API実験室',

@@ -5470,3 +5470,22 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI + ストリーク表示
 - Windows版: eval生成済みの Mistral/Perplexity migration を実プロジェクトに適用
 - スキル iteration-2: 発見モードのアサーション精度向上 (より具体的な閾値テスト追加)
+
+## VSCode版#53 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/ai_university_ranking_page.dart` 新規作成
+  - `ai_university_leaderboard` ビューから TOP10 取得・表示
+  - 金/銀/銅メダル絵文字 + ランク色 + 「あなた」バッジ
+  - 正解数/学習プロバイダー数/最終学習日表示
+  - ローディング/エラー/空状態の3パターン対応
+- `lib/main.dart` — `/ai-university-ranking` ルート追加
+- `lib/pages/gemini_university_v2_page.dart` — AppBar に `Icons.leaderboard` ボタン追加
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF
+- VSCode版: ホームカード ストリーク日数・バッジ数動的表示

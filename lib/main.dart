@@ -28,6 +28,7 @@ import 'package:my_web_app/pages/onboarding_page.dart';
 import 'package:my_web_app/pages/activity_feed_page.dart';
 import 'package:my_web_app/pages/public_memo_detail_page.dart';
 import 'package:my_web_app/pages/public_memo_directory_page.dart';
+import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
@@ -339,6 +340,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => AgentOrgPage());
           case '/my-ai-agent':
             return MaterialPageRoute(builder: (_) => const AiAgentPage());
+          case '/ai-university-ranking':
+            return MaterialPageRoute(
+              builder: (_) => const AiUniversityRankingPage(),
+            );
           case '/gemini-university':
             return MaterialPageRoute(
               builder: (_) => const GeminiUniversityV2Page(),
