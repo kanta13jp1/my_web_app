@@ -5310,3 +5310,33 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider)
 - PowerShell版: blog-publish.yml #B5 修正 (Zenn topics: 対応)
 - VSCode版: LP残りページ掲載化 (#132以降 約60本残存)
+
+---
+
+## セッション: PowerShell版#35 (2026-04-11)
+
+### 実施内容
+
+- **CI/CD バグ #B5 修正** (`blog-publish.yml` 2問題):
+  - title 抽出: `tr -d '\r'` (CRLF対応) + `sed "s/^['\"]//;s/['\"]$//"` (引用符両対応)
+  - Step5 保護ブランチ直接 push → PR 作成→自動マージ方式に変更
+  - `pull-requests: write` パーミッション追加 + `GH_TOKEN` 追加
+  - commit 対象: `.github/workflows/blog-publish.yml` (Windows版#31 で先行コミット済み)
+
+- **機能強化 #T3: ai-university-update GitHub Actions 登録**:
+  - `.github/workflows/ai-university-update.yml` 新規作成
+  - cron: `0 2 * * 1` (JST 月曜 11:00) + `workflow_dispatch`
+  - 6プロバイダー RSS 取得 → Supabase REST API UPSERT
+  - 日次レポート追記 + PR 経由コミット
+  - `schedule_task_runs` 記録 + Job Summary
+
+### 品質確認
+
+- EF: 247本 (変更なし)
+- LP: 120のこと / ページ数: 205
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita/dev.to 再実行: `2026-03-31-notification-center.md` (B5解決済み)
+- タスク T-1 第2弾: `2026-03-28-note-comments.md` (Qiita)

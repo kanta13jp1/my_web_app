@@ -542,35 +542,48 @@ web/sitemap.xml          # URL マップ
 
 `docs/GROWTH_STRATEGY_ROADMAP.md` の MD029/MD032/MD012/MD034 を修正済み。
 
-### CI/CD バグ #B5: `blog-publish.yml` 2問題 (PowerShell版スコープ)
+### ~~CI/CD バグ #B5~~: ✅ 解決済み (PowerShell版#35, 2026-04-11)
 
 **背景**: Windows版#30 (2026-04-11) で `blog-publish.yml` 経由の Qiita/dev.to 投稿を試みた際に2問題を確認。
 
-| 問題 | 詳細 | 対応方針 |
+| 問題 | 詳細 | 対応 |
 | --- | --- | --- |
-| title 抽出失敗 (Zenn フォーマット) | Step2 の `grep '^title:'` + sed が Zenn フォーマットの引用符付きタイトルで空文字を返す → blog-post-manager に `HTTP 400 "title is required"` | `python3 -c "import re,sys; ..."` か `sed` の引用符除去ロジックを修正 |
-| GH006 Step5 保護ブランチ直接 push | Step5 で `git push origin main` → ブランチ保護違反。C2改善と同じ問題 | Step5 を PR 作成→自動マージ方式に変更 (CS-check.yml の方式を参考) |
+| title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d ''` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
+| GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
-**暫定対応 (Windows版#30)**: Zenn は `published: true` commit で直接公開可能なため、通知センター記事は Zenn のみ公開済み。Qiita/dev.to は #B5 修正後に blog-publish.yml で再実行。
+**次回 Qiita/dev.to 再実行可能**: `2026-03-31-notification-center.md` を blog-publish.yml で再実行すること。
 
-### 機能強化 #T3: AI大学 6プロバイダー対応 + 毎週自動更新 (Windows版#30, 2026-04-11)
+### 機能強化 #T3: AI大学 マルチプロバイダー対応 + 毎週自動更新 (Windows版#30〜#31, 2026-04-11)
 
-**背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。Google/OpenAI/Anthropic/Microsoft/Meta/X の6社を網羅し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
+**背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 完了済み (Windows版#30)
+#### 現在の登録プロバイダー (Windows版#31 時点: 7社)
+
+```text
+google, openai, anthropic, microsoft, meta, x, deepseek
+```
+
+新規プロバイダーを追加するたびにこのリストを更新する。
+
+#### 完了済み (Windows版#30〜#31)
 
 | 作業内容 | 状態 |
 | --- | --- |
 | `ai_university_content` テーブル作成 | ✅ `20260411003000_create_ai_university_content.sql` |
-| 6プロバイダー初期コンテンツ seed | ✅ `20260411003200_seed_ai_university_content.sql` |
-| `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 | ✅ 毎週月曜 11:00 JST |
+| 6プロバイダー初期コンテンツ seed (google/openai/anthropic/microsoft/meta/x) | ✅ `20260411003200_seed_ai_university_content.sql` |
+| DeepSeek 初期コンテンツ seed (overview/models/api) | ✅ `20260411003400_seed_deepseek_ai_university.sql` |
+| `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 (随時拡張対応) | ✅ 毎週月曜 11:00 JST |
+| `ai-university-update.yml` ワークフロー (DeepSeek 含む7プロバイダー) | ✅ PS#35 + Windows版#31 |
 
-#### 完了済み (VSCode版#50, 2026-04-11)
+#### 完了済み (VSCode版#51, 2026-04-11)
 
 | 作業内容 | 状態 |
 | --- | --- |
-| `gemini_university_v2_page.dart` 完全書き換え: 6プロバイダータブ + Supabase DB連携 + フォールバック | ✅ VSCode版#50 |
-| LP「AI大学」説明文を6プロバイダー対応に更新 | ✅ VSCode版#50 |
+| `gemini_university_v2_page.dart` 完全書き換え: **DB駆動・プロバイダー数無制限** (タブ数=DB内distinct provider数) | ✅ VSCode版#51 |
+| `_providerMeta` マップ: DeepSeek/Mistral/Cohere/Perplexity/Amazon 追加 | ✅ VSCode版#51 |
+| `_fallback` マップ: 全11プロバイダー分のフォールバックMarkdown | ✅ VSCode版#51 |
+| `_quizzes` マップ: DeepSeek/Mistral/Perplexity クイズ追加 | ✅ VSCode版#51 |
+| CLAUDE.md `ai-university-update` Step 0: dart ファイル更新手順を追記 | ✅ VSCode版#51 |
 | Claude Code Schedule `ai-university-update` タスク登録 (週次月曜 11:00 JST) | ✅ PS#35 |
 
 #### 未完了 (各インスタンスへ指示)
@@ -579,10 +592,27 @@ web/sitemap.xml          # URL マップ
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
 
+#### 新規プロバイダー追加手順 (毎セッション Step 0 として実施)
+
+```text
+1. WebSearch で新興AI動向を調査
+2. 技術革新性・API公開状況・話題性の3軸で評価
+3. supabase/migrations/YYYYMMDDXXXXXX_seed_{provider}_ai_university.sql を作成
+   - overview / models / api の3レコードを INSERT ON CONFLICT DO NOTHING
+4. lib/pages/gemini_university_v2_page.dart の _providerMeta マップに表示設定を追加
+5. 同ファイルの _fallback マップにフォールバック markdown を追加
+6. 同ファイルの _quizzes マップにクイズを追加 (任意)
+7. .github/workflows/ai-university-update.yml に検索クエリを追加
+8. COMPRESSED_PROMPT_V3.md「現在の登録プロバイダー」リストを更新
+9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
+```
+
+**次回追加候補**: Mistral AI (mistral) / Cohere (cohere) / Perplexity AI (perplexity) / Amazon Nova (amazon)
+
 #### `ai_university_content` テーブルスキーマ
 
 ```sql
-provider    text  -- 'google' | 'openai' | 'anthropic' | 'microsoft' | 'meta' | 'x'
+provider    text  -- 'google' | 'openai' | ... | 追加自由
 category    text  -- 'models' | 'api' | 'pricing' | 'news' | 'tutorial' | 'overview'
 title       text
 content     text  -- Markdown形式

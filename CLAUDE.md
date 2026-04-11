@@ -618,11 +618,50 @@ git push origin main
 
 ### Task: ai-university-update (毎週月曜 11:00 JST に実行)
 
-AI大学コンテンツを最新情報に自動更新する。6大AIプロバイダー（Google/OpenAI/Anthropic/Microsoft/Meta/X）の最新ニュース・モデル情報を取得して `ai_university_content` テーブルを上書き更新する。
+AI大学コンテンツを最新情報に自動更新する。**プロバイダー数は固定せず**、重要性が高い新興AIプロバイダーを毎回検討して随時追加する。
 
-#### Step 1: 各プロバイダーの最新情報を WebSearch で取得
+#### 現在の登録プロバイダー
 
-以下の6プロバイダーについて WebSearch を実行し、最新情報を収集する:
+```text
+google, openai, anthropic, microsoft, meta, x, deepseek
+```
+
+登録済みプロバイダーは `ai_university_content` テーブルの `provider` カラム個別値で確認できる。
+
+#### Step 0: 新規プロバイダー候補を検討（毎回必須）
+
+WebSearch で「AI provider new model release 2026」を検索し、以下の観点で新規追加候補を評価する:
+
+| 評価基準 | 追加する | 見送る |
+| --- | --- | --- |
+| 技術的革新性 | 新アーキテクチャ・SOTA達成 | 既存モデルの軽微な更新のみ |
+| 利用可能性 | API公開済み・広く利用可能 | クローズドβのみ |
+| 話題性 | SNS/ニュースで大きく取り上げ | マイナーな言及のみ |
+
+**候補プロバイダー例** (評価対象 — 追加済みでない場合):
+
+```text
+Mistral AI    (mistral)   — 欧州発オープンソース、Mistral Large/Small
+Cohere        (cohere)    — エンタープライズRAG特化、Command R+
+Perplexity AI (perplexity)— AI検索エンジン、独自LLM
+Amazon        (amazon)    — Amazon Nova/Bedrock、AWS AI統合
+Apple         (apple)     — Apple Intelligence、オンデバイスAI
+Baidu         (baidu)     — ERNIE Bot、中国最大AI
+Samsung       (samsung)   — Gauss、オンデバイスAI
+```
+
+**新規追加が決まったら**:
+
+1. `supabase/migrations/YYYYMMDDXXXXXX_seed_{provider}_ai_university.sql` を作成し overview / models / api の3カテゴリで初期コンテンツを seed
+2. `lib/pages/gemini_university_v2_page.dart` の `_providerMeta` マップに表示設定を追加（任意: 未登録でもタブは自動生成されるが色・絵文字がデフォルトになる）
+3. `_fallback` マップ（同ファイル）にフォールバック markdown を追加
+4. `_quizzes` マップ（同ファイル）にクイズを追加（任意）
+5. `ai-university-update.yml` の検索クエリリストにプロバイダーを追加
+6. COMPRESSED_PROMPT_V3.md の「現在の登録プロバイダー」リストを更新
+
+#### Step 1: 登録済み各プロバイダーの最新情報を WebSearch で取得
+
+登録済みプロバイダーについて WebSearch を実行し、最新情報を収集する:
 
 ```text
 検索クエリ (各プロバイダーごと):
@@ -632,6 +671,7 @@ AI大学コンテンツを最新情報に自動更新する。6大AIプロバイ
 - Microsoft: "Microsoft Copilot Azure OpenAI latest 2026"
 - Meta:      "Meta AI LLaMA latest news 2026"
 - X/xAI:    "xAI Grok latest news models 2026"
+- DeepSeek: "DeepSeek AI latest news models 2026"
 ```
 
 各プロバイダーの公式ブログ・リリースノートも参照する:
@@ -643,6 +683,7 @@ https://www.anthropic.com/news
 https://blogs.microsoft.com/ai/
 https://ai.meta.com/blog/
 https://x.ai/blog
+https://api-docs.deepseek.com/news/
 ```
 
 #### Step 2: `ai_university_content` テーブルを UPSERT で更新
@@ -682,11 +723,13 @@ curl -X POST \
 ## AI大学コンテンツ更新 (ai-university-update)
 - Google: Gemini 2.x 最新リリース情報を更新
 - OpenAI: o3 mini 料金改定情報を追加
+- DeepSeek: V3 新バージョン情報を追加
+- 新規追加: [プロバイダー名] — [追加理由]
 - ...（各プロバイダーの更新内容）
 ```
 
 ```bash
-git add docs/daily-reports/
+git add docs/daily-reports/ supabase/migrations/ .github/workflows/
 git commit -m "自動: AI大学コンテンツ更新 YYYY-MM-DD"
 git push origin main
 ```
