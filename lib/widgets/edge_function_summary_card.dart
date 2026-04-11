@@ -290,6 +290,11 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('media-hub', 'メディアハブ (動画/音声/ドキュメント/会議統合)', true, '/admin', '管理者ダッシュボード > メディア管理'),
     _FnDef('social-commerce-hub', 'ソーシャル・コマースハブ (SNS/EC/決済/学習統合)', true, '/social-feed', 'ソーシャルフィード > コマース機能'),
     _FnDef('tools-hub', 'ツールハブ (生産性ツール/メモ/習慣/テンプレート統合)', true, '/home', 'ホーム > クイックアクセス > ツール'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('admin-hub', '管理者ハブ統合 (CS/競合/ユーザー/統計)', true, '/admin', '管理者ダッシュボード > 統合管理'),
+    _FnDef('ai-hub', 'AIハブ統合 (要約/選挙分析/トリガー)', true, '/ai-summarizer', 'AI要約ページ / 選挙戦略ページ > AIアシスタント'),
+    _FnDef('growth-hub', '成長ハブ統合 (グロース指令/自動化/週次)', true, '/growth-mission', '成長ミッションページ > グロース指令センター'),
+    _FnDef('schedule-hub', 'スケジュールハブ統合 (実行ログ/ヘルスチェック/結果/モニター)', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
