@@ -7003,3 +7003,37 @@ agent-hub POST {action:runtime_cycle} ← agent-runtime-cycle
 - 🔴 ai-university-streaks / ai-university-badges を Tier1昇格 (5スロット空き)
 - 🟡 AI大学19社目追加 (Oracle AI / Reka AI / Aleph Alpha 候補)
 - 🟢 Qiita再投稿 (blog-publish.yml tags/topics両対応済み)
+
+---
+
+## VSCode版 #60 (2026-04-12) — EF Tier2全統合: mega-hub 5本でaction分岐
+
+### 目標
+Supabase EF 上限99本の中で、Tier2の全150本をTier1デプロイ済みにする。
+action分岐パターンで5つのmega-hubに統合。
+
+### 実施内容
+
+| # | 内容 | 結果 |
+| --- | --- | --- |
+| 1 | `tools-hub` 新規作成: 30本統合 (bookmark/note/goal/contact/habit/vault/qr/weather/pomodoro等) | ✅ |
+| 2 | `media-hub` 新規作成: 18本統合 (video/audio/whiteboard/esign/meeting/podcast/OCR等) | ✅ |
+| 3 | `enterprise-hub` 新規作成: 42本統合 (HR/analytics/CI/AI-writing/CRM/GitHub連携等) | ✅ |
+| 4 | `social-commerce-hub` 新規作成: 26本統合 (SNS/EC/payment/loyalty/elearning等) | ✅ |
+| 5 | `lifestyle-hub` 新規作成: 29本統合 (health/travel/IoT/notification/security等) | ✅ |
+| 6 | `deploy-prod.yml` Tier1H セクション追加: 5本deploy + Tier2=0コメント記載 | ✅ |
+| 7 | `COMPRESSED_PROMPT_V3.md` EF数更新: 94本(5空き)→99本(上限到達/Tier2=0) | ✅ |
+
+### 現状数値 (2026-04-12 VSCode版#60時点)
+
+- EF deployed: **99本** (上限到達 / Tier2=0本 / 全250本デプロイ済み)
+- mega-hub構成: tools-hub(30) / media-hub(18) / enterprise-hub(42) / social-commerce-hub(26) / lifestyle-hub(29)
+- AI大学プロバイダー: 18社
+- LP: 126のこと
+- ページ数: 211
+
+### 次回優先タスク
+
+- 🔴 Rule19 UI改善: design-skills + FigmaMCP + AIDesignerMCP で1ページ以上改善
+- 🟡 Baidu cross-instance-pr: gemini_university_v2_page.dartにBaidu ERNIE UI追加 (19社目)
+- 🟢 新規機能は既存hubへのaction追加で対応 (EF上限99到達)
