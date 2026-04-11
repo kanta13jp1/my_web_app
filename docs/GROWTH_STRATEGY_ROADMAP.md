@@ -6603,3 +6603,37 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
 - AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
 - Cohere / Amazon Nova 追加検討 🔵 低
+
+---
+
+## VSCode版#59 (2026-04-12)
+
+### Rule 19: AI大学ページ (`gemini_university_v2_page.dart`) DESIGN.md準拠
+
+**design-skills** エージェントで 10箇所の違反を検出、全修正完了。
+
+| 修正箇所 | 変更内容 |
+| --- | --- |
+| ヘッダーグラデ (L497) | 旧indigo 3色 → AI大学推奨グラデ `0xFF1A0A2E` / `0xFF0D1B3E` |
+| AppBar背景 (L730) | `Colors.indigo.shade800` → `Color(0xFF1A0A2E)` (AI大学テーマ統一) |
+| クイズ達成バー (L574/576/585) | `Colors.amber` → `Color(0xFFFFC107)` + `withAlpha` → `withValues` |
+| 警告バナー (L782/786) | `Colors.orange.shade100/Colors.orange` → `Color(0xFFFFC107).withValues` |
+| サーフェス (L820) | `Colors.grey.shade900/shade50` → `Color(0xFF1E1E1E)` (surface2固定) |
+| プロバイダーヘッダーグラデ (L859) | `withAlpha(200/130)` → `withValues(alpha:0.78/0.51)` |
+| クイズカード (L974/977/997/1000/1016) | `withAlpha` → `withValues` / `Colors.green` → `Color(0xFF4CAF50)` |
+
+- コミット: `aa12189d`
+- Material色定数違反: 残0件確認 (grep 0ヒット)
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 10社
+
+### 次回優先
+
+- T-1 第6弾: AI大学10社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高
+- cross-instance-pr `20260412_groq_provider_ui.md` 処理: VSCode版 `_providerMeta` に Groq 追加 🟡 高
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
