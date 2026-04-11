@@ -5379,4 +5379,32 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI `ai_university_ranking_page.dart` + スコア書き込み — 🟡 高
 - PowerShell版: blog-publish.yml #B5 最終修正 (Zenn topics: + GH006) — 🟡 高
 - VSCode版: LP残りページ掲載化 (#132以降) — 🟡 高
+
+---
+
+## セッション: Windows版#32 (2026-04-11)
+
+### 実施内容
+
+- **AI大学 キラーコンテンツ化 方針強化** (Windows版#32):
+  - CLAUDE.md: KPI目標 (週次アクティブ40%/クイズ完了60%/シェア10%) + 毎セッション3Step + 10項目ロードマップを追加
+  - COMPRESSED_PROMPT_V3: #T3 未完了タスクを3→10件に拡充 (バッジ/ストリーク/シェアA|B等)
+  - `ai_university_streaks` テーブル + `update_ai_university_streak()` 関数 (連続学習日数計算)
+  - `ai_university_badges` テーブル + `award_ai_university_badge()` + 自動付与トリガー
+  - commit `cc985a8f` push済み
+
+### 対応プロバイダー数
+
+9社 (Google/OpenAI/Anthropic/Microsoft/Meta/X/DeepSeek/Mistral/Perplexity)
+
+### 品質確認
+
+- markdownlint 0エラー
+- migration 2本追加 (streaks + badges)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF + スコア書き込み + バッジ発行 EF
+- VSCode版: ランキングUI + ストリーク表示 + シェア A/Bテスト
+- Windows版: 新規プロバイダー (Mistral/Cohere等) の seed migration
 - T-1 第6弾: 技術記事 Qiita/dev.to 投稿 — 🟡 高
