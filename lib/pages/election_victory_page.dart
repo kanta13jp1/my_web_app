@@ -38,6 +38,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   static const String _allAssemblyCategories = 'all';
   static const int _memberPageSize = 24;
   static const int _lowPresenceThreshold = 4;
+  static const int _pastElectionOutcomeAccordionThreshold = 4;
+  static const int _pastElectionBreakdownAccordionThreshold = 6;
+  static const int _pastElectionCandidateAccordionThreshold = 4;
   static const List<String> _allPrefectures = <String>[
     '北海道',
     '青森県',
@@ -988,9 +991,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             onPressed: _isRealityLoading
                 ? null
                 : () => _refreshRealityData(
-                    showSnackBar: true,
-                    forceRefresh: true,
-                  ),
+                      showSnackBar: true,
+                      forceRefresh: true,
+                    ),
             tooltip: '最新の実データを取得',
             icon: _isRealityLoading
                 ? const SizedBox(
@@ -1352,9 +1355,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       onPressed: _isRealityLoading
                           ? null
                           : () => _refreshRealityData(
-                              showSnackBar: true,
-                              forceRefresh: true,
-                            ),
+                                showSnackBar: true,
+                                forceRefresh: true,
+                              ),
                       icon: _isRealityLoading
                           ? const SizedBox(
                               width: 16,
@@ -1473,7 +1476,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               _buildRealityPrefectureSection(realitySnapshot),
               const SizedBox(height: 20),
               _buildScheduleSection(realitySnapshot),
-              if (realitySnapshot.pastElectionResults.isNotEmpty) ...[
+              if (_displayPastElectionResults(realitySnapshot).isNotEmpty) ...[
                 const SizedBox(height: 20),
                 _buildPastElectionResultsSection(realitySnapshot),
               ],
@@ -1964,7 +1967,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHigh,
               borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
             const _PrefectureLegendChip(
@@ -2187,7 +2191,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return s.isAlertRed || s.isAlertYellow;
     }).toList();
 
-    final pastResults = _pastElectionResults;
+    final pastResults = _displayPastElectionResults(snapshot);
 
     if (alertSchedules.isEmpty && pastResults.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2227,25 +2231,21 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
 
     if (pastResults.isNotEmpty) {
-      buffer.writeln('--- 過去の選挙結果 (AI取得) ---');
+      buffer.writeln('--- 過去の選挙結果 ---');
       buffer.writeln('投票日,場所,選挙名,候補者名,当落,得票数');
       for (final result in pastResults) {
-        final date = result['date']?.toString() ?? '';
-        final location =
-            result['location']?.toString().replaceAll(',', '、') ?? '';
-        final electionName =
-            result['electionName']?.toString().replaceAll(',', '、') ?? '';
-        final candidates = (result['dppCandidates'] as List<dynamic>? ?? [])
-            .whereType<Map<String, dynamic>>()
-            .toList();
+        final date = result.date.replaceAll(',', '、');
+        final location = result.location.replaceAll(',', '、');
+        final electionName = result.electionName.replaceAll(',', '、');
+        final candidates = result.resolvedCandidates.toList();
 
         if (candidates.isEmpty) {
           buffer.writeln('$date,$location,$electionName,候補者情報なし,N/A,0');
         } else {
           for (final candidate in candidates) {
-            final name = candidate['name']?.toString() ?? '';
-            final status = candidate['status']?.toString() ?? '';
-            final votes = (candidate['votes'] as num?)?.toString() ?? '0';
+            final name = candidate.name;
+            final status = candidate.status;
+            final votes = candidate.votes.toString();
             buffer
                 .writeln('$date,$location,$electionName,$name,$status,$votes');
           }
@@ -2605,7 +2605,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _PrefectureLegendChip(
               label: '通常',
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHigh,
               borderColor: Theme.of(context).colorScheme.outlineVariant,
             ),
             const _PrefectureLegendChip(
@@ -2649,7 +2650,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     filter == 'すべて' ? filter : '$filter ($count)',
                     style: TextStyle(
                       color: isSelected ? Colors.white : null,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.normal,
                       fontSize: 13,
                     ),
                   ),
@@ -2697,9 +2699,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 ),
               ),
               Icon(
-                _showPastSchedules
-                    ? Icons.expand_less
-                    : Icons.expand_more,
+                _showPastSchedules ? Icons.expand_less : Icons.expand_more,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ],
@@ -2743,99 +2743,99 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ),
           child: RepaintBoundary(
             child: TableCalendar<LocalElectionScheduleEntry>(
-            locale: 'ja_JP',
-            firstDay: firstDay,
-            lastDay: lastDay,
-            focusedDay: _scheduleFocusedDay,
-            calendarFormat: _scheduleCalendarFormat,
-            selectedDayPredicate: (day) => isSameDay(day, selectedDay),
-            eventLoader: (day) =>
-                calendarEvents[_normalizeDate(day)] ??
-                const <LocalElectionScheduleEntry>[],
-            startingDayOfWeek: StartingDayOfWeek.monday,
-            availableCalendarFormats: const {
-              CalendarFormat.month: '月',
-              CalendarFormat.twoWeeks: '2週',
-              CalendarFormat.week: '週',
-            },
-            onFormatChanged: (format) {
-              if (_scheduleCalendarFormat == format) {
-                return;
-              }
-              setState(() {
-                _scheduleCalendarFormat = format;
-              });
-            },
-            onDaySelected: (selected, focused) {
-              setState(() {
-                _selectedScheduleDay = _normalizeDate(selected);
-                _scheduleFocusedDay = _normalizeDate(focused);
-              });
-            },
-            onPageChanged: (focused) {
-              setState(() {
-                _scheduleFocusedDay = _normalizeDate(focused);
-              });
-            },
-            calendarStyle: CalendarStyle(
-              outsideDaysVisible: false,
-              canMarkersOverflow: false,
-              markersMaxCount: 1,
-              todayDecoration: BoxDecoration(
-                color: const Color(0xFF2563EB).withValues(alpha: 0.18),
-                shape: BoxShape.circle,
-              ),
-              selectedDecoration: const BoxDecoration(
-                color: Color(0xFF1D4ED8),
-                shape: BoxShape.circle,
-              ),
-              markerDecoration: BoxDecoration(
-                color: Colors.blueGrey.shade400,
-                shape: BoxShape.circle,
-              ),
-            ),
-            calendarBuilders: CalendarBuilders(
-              markerBuilder: (context, day, events) {
-                if (events.isEmpty) {
-                  return const SizedBox.shrink();
+              locale: 'ja_JP',
+              firstDay: firstDay,
+              lastDay: lastDay,
+              focusedDay: _scheduleFocusedDay,
+              calendarFormat: _scheduleCalendarFormat,
+              selectedDayPredicate: (day) => isSameDay(day, selectedDay),
+              eventLoader: (day) =>
+                  calendarEvents[_normalizeDate(day)] ??
+                  const <LocalElectionScheduleEntry>[],
+              startingDayOfWeek: StartingDayOfWeek.monday,
+              availableCalendarFormats: const {
+                CalendarFormat.month: '月',
+                CalendarFormat.twoWeeks: '2週',
+                CalendarFormat.week: '週',
+              },
+              onFormatChanged: (format) {
+                if (_scheduleCalendarFormat == format) {
+                  return;
                 }
-                final severity = events
-                    .map(_scheduleSeverity)
-                    .reduce((left, right) => left < right ? left : right);
-                final color = switch (severity) {
-                  0 => Theme.of(context).colorScheme.error,
-                  1 => Colors.amber.shade800,
-                  _ => const Color(0xFF0F766E),
-                };
-                final countLabel =
-                    events.length > 9 ? '9+' : '${events.length}';
-                return Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
-                      vertical: 1,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      countLabel,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+                setState(() {
+                  _scheduleCalendarFormat = format;
+                });
+              },
+              onDaySelected: (selected, focused) {
+                setState(() {
+                  _selectedScheduleDay = _normalizeDate(selected);
+                  _scheduleFocusedDay = _normalizeDate(focused);
+                });
+              },
+              onPageChanged: (focused) {
+                setState(() {
+                  _scheduleFocusedDay = _normalizeDate(focused);
+                });
+              },
+              calendarStyle: CalendarStyle(
+                outsideDaysVisible: false,
+                canMarkersOverflow: false,
+                markersMaxCount: 1,
+                todayDecoration: BoxDecoration(
+                  color: const Color(0xFF2563EB).withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                selectedDecoration: const BoxDecoration(
+                  color: Color(0xFF1D4ED8),
+                  shape: BoxShape.circle,
+                ),
+                markerDecoration: BoxDecoration(
+                  color: Colors.blueGrey.shade400,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              calendarBuilders: CalendarBuilders(
+                markerBuilder: (context, day, events) {
+                  if (events.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final severity = events
+                      .map(_scheduleSeverity)
+                      .reduce((left, right) => left < right ? left : right);
+                  final color = switch (severity) {
+                    0 => Theme.of(context).colorScheme.error,
+                    1 => Colors.amber.shade800,
+                    _ => const Color(0xFF0F766E),
+                  };
+                  final countLabel =
+                      events.length > 9 ? '9+' : '${events.length}';
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        countLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
         const SizedBox(height: 12),
         Text(
           '選択日 ${_dateOnlyFormat.format(selectedDay)}',
@@ -3045,7 +3045,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 17,
-                                color: item.isPast ? Theme.of(context).colorScheme.onSurfaceVariant : null,
+                                color: item.isPast
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                    : null,
                               ),
                             ),
                           ),
@@ -3289,10 +3293,441 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     return _dateOnlyFormat.format(parsed.toLocal());
   }
 
+  List<PastElectionResult> _displayPastElectionResults(
+    LocalElectionRealitySnapshot snapshot,
+  ) {
+    final merged = <String, PastElectionResult>{};
+
+    for (final result in _rawPastElectionResults()) {
+      merged[_pastElectionResultKey(result)] = result;
+    }
+
+    for (final result in snapshot.resolvedPastElectionResults) {
+      merged.putIfAbsent(_pastElectionResultKey(result), () => result);
+    }
+
+    final results =
+        merged.values.where((item) => item.hasResolvedCandidates).toList()
+          ..sort((left, right) {
+            final leftDate = left.parsedDate;
+            final rightDate = right.parsedDate;
+            if (leftDate != null && rightDate != null) {
+              final dateCompare = rightDate.compareTo(leftDate);
+              if (dateCompare != 0) {
+                return dateCompare;
+              }
+            } else if (rightDate != null) {
+              return 1;
+            } else if (leftDate != null) {
+              return -1;
+            }
+            return right.electionName.compareTo(left.electionName);
+          });
+    return results;
+  }
+
+  List<PastElectionResult> _rawPastElectionResults() {
+    final results = <PastElectionResult>[];
+    for (final item in _pastElectionResults) {
+      try {
+        final result = PastElectionResult.fromJson(item);
+        if (result.hasResolvedCandidates) {
+          results.add(result);
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+    return results;
+  }
+
+  String _pastElectionResultKey(PastElectionResult result) {
+    final parsedDate = result.parsedDate;
+    final dateKey = parsedDate == null
+        ? result.date.trim()
+        : '${parsedDate.year.toString().padLeft(4, '0')}-'
+            '${parsedDate.month.toString().padLeft(2, '0')}-'
+            '${parsedDate.day.toString().padLeft(2, '0')}';
+    return '$dateKey|${result.location.trim()}|${result.electionName.trim()}';
+  }
+
+  Map<int, List<PastElectionResult>> _groupPastElectionResultsByYear(
+    List<PastElectionResult> results,
+  ) {
+    final grouped = <int, List<PastElectionResult>>{};
+    for (final result in results) {
+      final year = result.parsedDate?.year;
+      if (year == null) {
+        continue;
+      }
+      grouped.putIfAbsent(year, () => <PastElectionResult>[]).add(result);
+    }
+
+    final entries = grouped.entries.toList()
+      ..sort((left, right) => right.key.compareTo(left.key));
+    return Map<int, List<PastElectionResult>>.fromEntries(entries);
+  }
+
+  int _pastElectionBattleCount(List<PastElectionResult> results) {
+    return results.fold<int>(
+      0,
+      (sum, result) => sum + result.resolvedCandidateCount,
+    );
+  }
+
+  List<String> _pastElectionOutcomeLines(
+    List<PastElectionResult> results, {
+    required bool wins,
+  }) {
+    final entries = <({DateTime? date, String text})>[];
+    for (final result in results) {
+      for (final candidate in result.resolvedCandidates) {
+        if (wins && !candidate.isWin) {
+          continue;
+        }
+        if (!wins && !candidate.isLoss) {
+          continue;
+        }
+        entries.add(
+          (
+            date: result.parsedDate,
+            text: _formatPastElectionOutcomeLine(result, candidate),
+          ),
+        );
+      }
+    }
+
+    entries.sort((left, right) {
+      final leftDate = left.date;
+      final rightDate = right.date;
+      if (leftDate != null && rightDate != null) {
+        final dateCompare = rightDate.compareTo(leftDate);
+        if (dateCompare != 0) {
+          return dateCompare;
+        }
+      } else if (rightDate != null) {
+        return 1;
+      } else if (leftDate != null) {
+        return -1;
+      }
+      return left.text.compareTo(right.text);
+    });
+    return entries.map((item) => item.text).toList();
+  }
+
+  String _formatPastElectionOutcomeLine(
+    PastElectionResult result,
+    PastElectionCandidate candidate,
+  ) {
+    final date = result.parsedDate;
+    final dateLabel = date == null ? result.date : '${date.month}月${date.day}日';
+    final voteLabel = candidate.votes > 0
+        ? ' (${_numberFormat.format(candidate.votes)}票)'
+        : '';
+    return '$dateLabel ${result.electionName} ${candidate.name} ${candidate.status}$voteLabel';
+  }
+
+  Widget _buildPastElectionYearSummary(
+    int year,
+    List<PastElectionResult> results,
+  ) {
+    final winCount =
+        results.fold<int>(0, (sum, result) => sum + result.winCount);
+    final lossCount =
+        results.fold<int>(0, (sum, result) => sum + result.lossCount);
+    final battleCount = _pastElectionBattleCount(results);
+    final winLines = _pastElectionOutcomeLines(results, wins: true);
+    final lossLines = _pastElectionOutcomeLines(results, wins: false);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$year年',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildPastElectionRecordChip(
+                label: '${_formatInt(battleCount)}戦',
+                backgroundColor:
+                    const Color(0xFF0F172A).withValues(alpha: 0.08),
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+              ),
+              _buildPastElectionRecordChip(
+                label: '${_formatInt(winCount)}勝',
+                backgroundColor: Colors.green.withValues(alpha: 0.12),
+                foregroundColor: Colors.green.shade800,
+              ),
+              _buildPastElectionRecordChip(
+                label: '${_formatInt(lossCount)}敗',
+                backgroundColor: Colors.red.withValues(alpha: 0.10),
+                foregroundColor: Colors.red.shade800,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildPastElectionOutcomeGroup(
+            title: '当選',
+            lines: winLines,
+            accentColor: Colors.green,
+            emptyLabel: '当選記録はまだありません',
+          ),
+          const SizedBox(height: 8),
+          _buildPastElectionOutcomeGroup(
+            title: '落選',
+            lines: lossLines,
+            accentColor: Colors.red,
+            emptyLabel: '落選記録はまだありません',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPastElectionRecordChip({
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: foregroundColor,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastElectionOutcomeGroup({
+    required String title,
+    required List<String> lines,
+    required Color accentColor,
+    required String emptyLabel,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (lines.isEmpty)
+            Text(
+              title,
+              style: TextStyle(
+                color: accentColor,
+                fontWeight: FontWeight.w800,
+              ),
+            )
+          else if (lines.length > _pastElectionOutcomeAccordionThreshold)
+            Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+              ),
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                iconColor: accentColor,
+                collapsedIconColor: accentColor,
+                shape: const Border(),
+                collapsedShape: const Border(),
+                title: Text(
+                  title,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                subtitle: Text(
+                  '${lines.length}件のため折りたたみ表示',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                children: [
+                  const SizedBox(height: 8),
+                  ...lines.map(_buildBulletLine),
+                ],
+              ),
+            )
+          else
+            Text(
+              title,
+              style: TextStyle(
+                color: accentColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          if (lines.length <= _pastElectionOutcomeAccordionThreshold)
+            const SizedBox(height: 8),
+          if (lines.isEmpty)
+            Text(
+              emptyLabel,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            )
+          else if (lines.length <= _pastElectionOutcomeAccordionThreshold)
+            ...lines.map(_buildBulletLine),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPastElectionBreakdownBlock(List<PastElectionResult> results) {
+    if (results.length <= _pastElectionBreakdownAccordionThreshold) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '選挙別の内訳',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 10),
+          ...results.map((result) => _buildPastElectionCard(result)),
+        ],
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: EdgeInsets.zero,
+          shape: const Border(),
+          collapsedShape: const Border(),
+          title: Text(
+            '選挙別の内訳',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          subtitle: Text(
+            '${results.length}件のため折りたたみ表示',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          children: [
+            const SizedBox(height: 8),
+            ...results.map((result) => _buildPastElectionCard(result)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPastElectionCandidateBlock(
+    List<PastElectionCandidate> candidates,
+  ) {
+    final chips = Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: candidates.map((candidate) {
+        final isWin = candidate.isWin;
+        return Chip(
+          label: Text(
+            '${candidate.name} ${candidate.status}${candidate.votes > 0 ? ' (${candidate.votes}票)' : ''}',
+            style: TextStyle(
+              fontSize: 11,
+              color: isWin ? Colors.green.shade800 : Colors.red.shade800,
+            ),
+          ),
+          backgroundColor: isWin
+              ? Colors.green.withValues(alpha: 0.12)
+              : Colors.red.withValues(alpha: 0.10),
+          side: BorderSide(
+            color: isWin
+                ? Colors.green.withValues(alpha: 0.35)
+                : Colors.red.withValues(alpha: 0.28),
+          ),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: EdgeInsets.zero,
+        );
+      }).toList(),
+    );
+
+    if (candidates.length <= _pastElectionCandidateAccordionThreshold) {
+      return chips;
+    }
+
+    return Theme(
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+      ),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: EdgeInsets.zero,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        title: Text(
+          '候補者内訳',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        subtitle: Text(
+          '${candidates.length}件のため折りたたみ表示',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+        children: [
+          const SizedBox(height: 8),
+          chips,
+        ],
+      ),
+    );
+  }
+
   Widget _buildPastElectionResultsSection(
     LocalElectionRealitySnapshot snapshot,
   ) {
-    final results = snapshot.pastElectionResults;
+    final results = _displayPastElectionResults(snapshot);
+    final yearlyResults = _groupPastElectionResultsByYear(results);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3304,21 +3739,33 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ),
         const SizedBox(height: 6),
         Text(
-          '国民民主党候補の当落情報（Gemini AI取得）',
+          '国民民主党候補の当落情報を年別戦績つきで表示します。',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
+        if (yearlyResults.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          ...yearlyResults.entries.map(
+            (entry) => _buildPastElectionYearSummary(entry.key, entry.value),
+          ),
+        ],
         const SizedBox(height: 10),
-        ...results.map((result) => _buildPastElectionCard(result)),
+        _buildPastElectionBreakdownBlock(results),
       ],
     );
   }
 
   Widget _buildPastElectionCard(PastElectionResult result) {
     final winCount = result.winCount;
-    final totalCount = result.totalCount;
+    final lossCount = result.lossCount;
+    final battleCount = result.resolvedCandidateCount > 0
+        ? result.resolvedCandidateCount
+        : result.totalCount;
     final hasWin = winCount > 0;
+    final displayCandidates = result.resolvedCandidates.isNotEmpty
+        ? result.resolvedCandidates.toList()
+        : result.dppCandidates;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -3354,7 +3801,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$winCount/$totalCount 当選',
+                  '$battleCount戦 ${_formatInt(winCount)}勝 ${_formatInt(lossCount)}敗',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 11,
@@ -3367,37 +3814,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           const SizedBox(height: 4),
           Text(
             '${result.location}  ${result.date}',
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-          if (result.dppCandidates.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: result.dppCandidates.map((c) {
-                final isWin = c.isWin;
-                return Chip(
-                  label: Text(
-                    '${c.name} ${c.status}${c.votes > 0 ? ' (${c.votes}票)' : ''}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color:
-                          isWin ? Colors.green.shade800 : Colors.red.shade800,
-                    ),
-                  ),
-                  backgroundColor: isWin
-                      ? Colors.green.withValues(alpha: 0.12)
-                      : Colors.red.withValues(alpha: 0.10),
-                  side: BorderSide(
-                    color: isWin
-                        ? Colors.green.withValues(alpha: 0.35)
-                        : Colors.red.withValues(alpha: 0.28),
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  padding: EdgeInsets.zero,
-                );
-              }).toList(),
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+          ),
+          if (displayCandidates.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildPastElectionCandidateBlock(displayCandidates),
           ],
         ],
       ),

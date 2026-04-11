@@ -412,6 +412,25 @@ class PastElectionCandidate {
 
   bool get isWin => status.contains('当選');
 
+  bool get isLoss =>
+      status.contains('落選') || status.contains('次点') || status.contains('敗');
+
+  bool get hasResolvedOutcome => isWin || isLoss;
+
+  static bool hasResolvedOutcomeStatus(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      return false;
+    }
+    return normalized.contains('当選') ||
+        normalized.contains('トップ') ||
+        normalized.contains('再選') ||
+        normalized.contains('無投票') ||
+        normalized.contains('落選') ||
+        normalized.contains('次点') ||
+        normalized.contains('敗');
+  }
+
   static int _readInt(Object? value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -462,12 +481,46 @@ class PastElectionResult {
   }
 
   int get winCount => dppCandidates.where((c) => c.isWin).length;
+  int get lossCount => dppCandidates.where((c) => c.isLoss).length;
   int get totalCount => dppCandidates.length;
+  int get resolvedCandidateCount =>
+      dppCandidates.where((c) => c.hasResolvedOutcome).length;
+  bool get hasResolvedCandidates => resolvedCandidateCount > 0;
+
+  Iterable<PastElectionCandidate> get resolvedCandidates =>
+      dppCandidates.where((c) => c.hasResolvedOutcome);
+
+  DateTime? get parsedDate => _parseDateValue(date);
 
   static int _readInt(Object? value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
     return int.tryParse('$value') ?? 0;
+  }
+
+  static DateTime? _parseDateValue(String raw) {
+    final value = raw.trim();
+    if (value.isEmpty) {
+      return null;
+    }
+    final direct = DateTime.tryParse(value) ??
+        DateTime.tryParse(value.replaceAll('/', '-'));
+    if (direct != null) {
+      return direct;
+    }
+    final japaneseMatch = RegExp(
+      r'^(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日$',
+    ).firstMatch(value);
+    if (japaneseMatch == null) {
+      return null;
+    }
+    final year = int.tryParse(japaneseMatch.group(1) ?? '');
+    final month = int.tryParse(japaneseMatch.group(2) ?? '');
+    final day = int.tryParse(japaneseMatch.group(3) ?? '');
+    if (year == null || month == null || day == null) {
+      return null;
+    }
+    return DateTime(year, month, day);
   }
 }
 
@@ -662,13 +715,44 @@ class LocalElectionRealitySnapshot {
 
   bool get hasScheduleData => upcomingSchedules.isNotEmpty;
 
-  int get redAlertScheduleCount => upcomingSchedules
-      .where((item) => !item.isPast && item.isAlertRed)
-      .length;
+  int get redAlertScheduleCount =>
+      upcomingSchedules.where((item) => !item.isPast && item.isAlertRed).length;
 
   int get yellowAlertScheduleCount => upcomingSchedules
       .where((item) => !item.isPast && item.isAlertYellow)
       .length;
+
+  List<PastElectionResult> get resolvedPastElectionResults {
+    final merged = <String, PastElectionResult>{};
+
+    for (final result in pastElectionResults.where(
+      (item) => item.hasResolvedCandidates,
+    )) {
+      merged[_pastElectionResultKey(result)] = result;
+    }
+
+    for (final result in _derivePastElectionResultsFromSchedules()) {
+      merged.putIfAbsent(_pastElectionResultKey(result), () => result);
+    }
+
+    final values = merged.values.toList()
+      ..sort((left, right) {
+        final leftDate = left.parsedDate;
+        final rightDate = right.parsedDate;
+        if (leftDate != null && rightDate != null) {
+          final dateCompare = rightDate.compareTo(leftDate);
+          if (dateCompare != 0) {
+            return dateCompare;
+          }
+        } else if (rightDate != null) {
+          return 1;
+        } else if (leftDate != null) {
+          return -1;
+        }
+        return right.electionName.compareTo(left.electionName);
+      });
+    return values;
+  }
 
   bool get isStale {
     if (!hasData) {
@@ -853,5 +937,72 @@ class LocalElectionRealitySnapshot {
       return 1;
     }
     return 2;
+  }
+
+  List<PastElectionResult> _derivePastElectionResultsFromSchedules() {
+    final results = <PastElectionResult>[];
+    for (var scheduleIndex = 0;
+        scheduleIndex < upcomingSchedules.length;
+        scheduleIndex++) {
+      final schedule = upcomingSchedules[scheduleIndex];
+      if (!schedule.isPast) {
+        continue;
+      }
+
+      final candidates = <PastElectionCandidate>[];
+      for (var candidateIndex = 0;
+          candidateIndex < schedule.kokuminCandidateNames.length;
+          candidateIndex++) {
+        final name = schedule.kokuminCandidateNames[candidateIndex].trim();
+        final status = candidateIndex < schedule.kokuminCandidateStatuses.length
+            ? schedule.kokuminCandidateStatuses[candidateIndex].trim()
+            : '';
+        if (name.isEmpty ||
+            !PastElectionCandidate.hasResolvedOutcomeStatus(status)) {
+          continue;
+        }
+        candidates.add(PastElectionCandidate(name: name, status: status));
+      }
+
+      if (candidates.isEmpty) {
+        continue;
+      }
+
+      results.add(
+        PastElectionResult(
+          id: scheduleIndex + 1,
+          electionName: schedule.electionName,
+          date: schedule.voteDate,
+          location: _scheduleLocationLabel(schedule),
+          dppCandidates: candidates,
+        ),
+      );
+    }
+    return results;
+  }
+
+  String _pastElectionResultKey(PastElectionResult result) {
+    final parsedDate = result.parsedDate;
+    final dateKey = parsedDate == null
+        ? result.date.trim()
+        : '${parsedDate.year.toString().padLeft(4, '0')}-'
+            '${parsedDate.month.toString().padLeft(2, '0')}-'
+            '${parsedDate.day.toString().padLeft(2, '0')}';
+    return '$dateKey|${result.location.trim()}|${result.electionName.trim()}';
+  }
+
+  String _scheduleLocationLabel(LocalElectionScheduleEntry schedule) {
+    final prefecture = schedule.prefecture.trim();
+    final municipality = schedule.municipality.trim();
+    if (municipality.isEmpty) {
+      return prefecture;
+    }
+    if (prefecture.isEmpty || municipality == prefecture) {
+      return municipality;
+    }
+    if (municipality.startsWith(prefecture)) {
+      return municipality;
+    }
+    return '$prefecture $municipality';
   }
 }
