@@ -64,8 +64,8 @@ async def research_topic(query: str, notebook_name: str = None) -> dict:
         nb = await client.notebooks.create(name)
         print(f"[NotebookLM] ノートブック作成: {name} (id: {nb.id[:8]}...)", file=sys.stderr)
 
-        print(f"[NotebookLM] Web リサーチ中: {query}", file=sys.stderr)
-        await client.sources.add_research(nb.id, query, mode="fast")
+        print(f"[NotebookLM] テキストソース追加中: {query[:50]}...", file=sys.stderr)
+        await client.sources.add_text(nb.id, f"Research: {name}", query, wait=True)
 
         print("[NotebookLM] 質問送信中...", file=sys.stderr)
         result = await client.chat.ask(nb.id, query)
