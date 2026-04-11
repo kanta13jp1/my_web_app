@@ -5675,3 +5675,24 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai_university_badges` バッジ発行 EF 🟡 高
 - T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
 - notebooklm login 再認証 (cookie期限切れ確認)
+
+## Windows版#33 継続セッション — Web/モバイル表示チェック (2026-04-12)
+
+### 実施内容
+
+- **プロバイダー数表記修正**: `ai_university_home_card.dart` のサブタイトル・シェア文言を「7社以上」→「9社以上」に修正 (Mistral/Perplexity追加を反映)
+- **モバイル幅溢れ修正**: `gemini_university_v2_page.dart` シェアカードダイアログ — `width:360` のカードが Mobile(375px)のDialog内でオーバーフローする問題を `FittedBox(fit: BoxFit.scaleDown)` で解決。キャプチャ解像度(360px)は維持
+- commit: `9cf60a78` (7→9社), `ce298782` (FittedBox) push済み
+
+### 確認内容
+
+- AI大学タブバー: `isScrollable: true` + `tabAlignment: TabAlignment.start` → 9タブ横スクロール対応済み ✅
+- LPページ: 固定width 400px以上なし ✅
+- ランキングページ: `TextOverflow.ellipsis` 適用済み ✅
+- Flutter preview (debug mode): Canvas未描画のためスクリーンショット不可 — Chrome extension接続時に再確認予定
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- Chrome extension 接続時に production URL スクリーンショットで最終確認
+- T-1 第3弾: Qiita トークン再設定 → notification-center.md 投稿
