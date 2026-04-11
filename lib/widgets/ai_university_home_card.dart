@@ -84,7 +84,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     await SharePlus.instance.share(
       ShareParams(
         text: '自分株式会社の AI 大学で学習中！\n'
-            'Google・OpenAI・Anthropic・DeepSeekなど7社以上のAIを総合的に学べます。\n'
+            'Google・OpenAI・Anthropic・DeepSeek・Mistral・Perplexityなど9社以上のAIを総合的に学べます。\n'
             'https://my-web-app-b67f4.web.app/#/gemini-university\n'
             '#AILearning #buildinpublic #FlutterWeb',
       ),
@@ -136,7 +136,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
               ),
               const SizedBox(height: 4),
               const Text(
-                '7社以上のAIを総合的に学ぶ — 毎週最新情報に自動更新',
+                '9社以上のAIを総合的に学ぶ — 毎週最新情報に自動更新',
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 14),
