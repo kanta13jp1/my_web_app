@@ -108,10 +108,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFF1a237e), Color(0xFF283593), Color(0xFF3949AB)],
+              colors: [Color(0xFF1A0A2E), Color(0xFF0D1B3E), Color(0xFF3949AB)],
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+          padding: const EdgeInsets.fromLTRB(20, 16, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -122,7 +122,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     '🎓 AI 大学',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -137,9 +137,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
               const SizedBox(height: 4),
               const Text(
                 '9社以上のAIを総合的に学ぶ — 毎週最新情報に自動更新',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(
+                  color: Color(0xFFB0B0B0),
+                  fontSize: 12,
+                  height: 1.6,
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
               // プロバイダー絵文字
               Row(
@@ -152,34 +156,34 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     )
                     .toList(),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // ストリーク・バッジ行 (ログイン済みかつデータあり時のみ表示)
               if (_currentStreak > 0 || _badgeCount > 0)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
                       if (_currentStreak > 0) ...[
                         const Text('🔥', style: TextStyle(fontSize: 14)),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 4),
                         Text(
                           '$_currentStreak 日連続',
                           style: const TextStyle(
-                            color: Colors.orange,
+                            color: Color(0xFFFF6B35),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                       ],
                       if (_badgeCount > 0) ...[
                         const Text('🏅', style: TextStyle(fontSize: 14)),
-                        const SizedBox(width: 3),
+                        const SizedBox(width: 4),
                         Text(
                           '$_badgeCount バッジ',
                           style: const TextStyle(
-                            color: Colors.amber,
+                            color: Color(0xFFFFC107),
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -200,16 +204,18 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           '📊 クイズ達成: $_answeredCount / $_totalQuizzes 問',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
+                            height: 1.6,
                           ),
                         ),
                         const SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: progress,
                           backgroundColor: Colors.white24,
-                          valueColor:
-                              const AlwaysStoppedAnimation<Color>(Colors.amber),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFFFFC107),
+                          ),
                           minHeight: 6,
                           borderRadius: BorderRadius.circular(3),
                         ),
@@ -219,10 +225,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF1a237e),
+                      backgroundColor: const Color(0xFFFF6B35),
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                     ),
                     onPressed: () =>

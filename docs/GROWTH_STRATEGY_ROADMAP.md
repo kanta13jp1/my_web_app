@@ -6432,3 +6432,24 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - Rule 19 実際の実行: design-skills + Figma MCP + AIDesigner MCP でホームUI改善 🟢 中
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
 - AI大学 Tier2 EF (content/streaks/badges) → Tier1 昇格 (PowerShell版・EFスロット空き次第) 🔵 低
+
+## VSCode版#58 継続 — 並行インスタンス完了確認 + wrap-up (2026-04-12)
+
+### 実施内容
+
+- **コンテキスト圧縮後の再開検証**: `git log --oneline -5` で圧縮サマリーの「pending tasks」が全て PS#40/PR#317 wrap-up インスタンスによりコミット済みを確認
+  - ai-university-badges テスト追加 → `0cd44eb2` (PS#40) ✅
+  - COMPRESSED_PROMPT_V3.md EF 完了マーク → `10329853` / `d23f63bd` (PS#40) ✅
+  - ROADMAP 整備 → `039e8b0f` (PR#317 wrap-up) ✅
+- **新パターン記録**: `memory/feedback_success_20260412_vscode58cont.md` — 圧縮後再開時は `git log -5` 先確認でダブルワーク防止
+
+### 技術的発見
+
+- 圧縮サマリーの「未完了タスク」は並行インスタンスが完了済みの場合あり → セッション再開の最初アクションとして `git log --oneline -5` を実行する習慣が重要
+
+### 次回優先
+
+- T-1 第3弾: Qiita `notification-center.md` 投稿結果確認 + 新規記事dispatch 🟡 高
+- Rule 19 継続: AIDesigner MCP でホームUI改善コンポーネント生成 🟡 高
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+- AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
