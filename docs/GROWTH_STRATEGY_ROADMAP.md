@@ -5433,3 +5433,40 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI + ストリーク表示 + シェア A/Bテスト
 - T-1 第6弾: 技術記事 Qiita/dev.to 投稿
 - `notebooklm login` 再認証 (cookie期限切れ)
+
+---
+
+## セッション: Windows版#33 (2026-04-12)
+
+### 実施内容
+
+- **CI バグ修正**: `ai_university_leaderboard` ビューが `public.profiles` 参照でエラー
+  - `profiles` JOIN を削除し `u.email` 直接使用に変更
+  - `GROUP BY` から `p.full_name` 除去
+  - commit `af180c98` push済み → Deploy キュー入り
+
+- **`ai-university-add-provider` スキル Creator ワークフロー完了**:
+  - SKILL.md 作成済み (発見モード + 追加モード の2モード)
+  - 3テストケース × 2エージェント = 6並行実行
+  - ベンチマーク: with-skill **100%** vs without-skill **80%** (+20%)
+  - 最大差分: 発見モード 5/5 vs 2/5 (3軸スコア形式・合計X/9・次ステップ案内が差別化点)
+  - 追加モード: 6/6 vs 6/6 (差なし — ベースラインもDeepSeek migrationをテンプレートとして自力発見)
+  - eval reviewer HTML 生成済み: `ai-university-add-provider-workspace/iteration-1/review.html`
+
+### 知見
+
+- スキルの価値は**発見モード**の構造化評価フレームワーク (3軸スコアリング・閾値判定・次ステップ案内)
+- 追加モードのSQL生成はスキルなしでもベースラインが同等品質を実現 (既存ファイル参照で自力テンプレート発見)
+- 次イテレーション候補: 発見モードのアサーションを強化 (Groqなどニッチプロバイダーへの評価精度向上)
+
+### Eval出力物 (実プロジェクト適用可能)
+
+- Mistral AI SQL: `.claude/skills/ai-university-add-provider-workspace/iteration-1/eval-add-mistral/with_skill/outputs/migration.sql`
+- Perplexity SQL: `.claude/skills/ai-university-add-provider-workspace/iteration-1/eval-add-perplexity/with_skill/outputs/migration.sql`
+
+### 次回優先
+
+- Web版: `ai-university-content` EF + スコア書き込み EF
+- VSCode版: ランキングUI + ストリーク表示
+- Windows版: eval生成済みの Mistral/Perplexity migration を実プロジェクトに適用
+- スキル iteration-2: 発見モードのアサーション精度向上 (より具体的な閾値テスト追加)

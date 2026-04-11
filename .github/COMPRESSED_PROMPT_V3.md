@@ -603,7 +603,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 最高 |
 | `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
-| ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
+| ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) | VSCode版 | ✅ 完了 |
 | `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
 | `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
 | シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
@@ -649,7 +649,8 @@ streak_updated_at timestamptz
 9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
 ```
 
-**次回追加候補**: Mistral AI (mistral) / Cohere (cohere) / Perplexity AI (perplexity) / Amazon Nova (amazon)
+**次回追加候補**: Groq (groq) / Cohere (cohere) / Amazon Nova (amazon)
+**eval SQL 適用待ち**: Mistral AI / Perplexity AI — SQL生成済み (eval-workspace) → 実プロジェクトに migration 適用するだけ (Windows版#33)
 
 #### `ai_university_content` テーブルスキーマ
 
