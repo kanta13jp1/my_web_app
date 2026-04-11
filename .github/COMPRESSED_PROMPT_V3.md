@@ -141,6 +141,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 102 | **AR ナビゲーション** (拡張現実でルートをスマホ画面に重畳表示 — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/ar_navigation_page.dart` (VSCode版) |
 | 103 | **資産管理** (不動産・株・仮想通貨・現金のポートフォリオ一元管理・AI最適化提案) | ✅ LP済 | `lib/pages/asset_management_page.dart` (VSCode版) |
 | 104 | **行動・習慣ログ詳細** (1分単位行動ログ・習慣連続記録・AI生活リズム分析) | ✅ LP済 | `lib/pages/behavior_log_page.dart` (VSCode版) |
+| 105 | **断捨離アシスト** (モノ・デジタル・人間関係の断捨離AI支援3ステップ) | ✅ LP済 | `lib/pages/danshari_page.dart` (VSCode版) |
+| 106 | **プリズンモード** (SNS/動画完全シャットアウトの超高集中モード — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/prison_mode_page.dart` (VSCode版) |
+| 107 | **ソーシャルフィード** (達成記録・習慣ストリーク・ノート共有タイムライン — Facebook/Discord対抗) | ✅ LP済 | `lib/pages/social_feed_page.dart` (VSCode版) |
+| 108 | **意思決定チェック** (認知バイアス診断・クリアな判断支援 — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/decision_check_page.dart` (VSCode版) |
+| 109 | **デジタルウォレット** (ポイント・ギフト券・仮想通貨・電子マネー一元管理) | ✅ LP済 | `lib/pages/digital_wallet_page.dart` (VSCode版) |
 
 ---
 
