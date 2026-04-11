@@ -1,7 +1,7 @@
 name: AI大学コンテンツ更新 (2時間毎)
 
 # 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
-# プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity/groq/cohere/amazon/stability/huggingface/nvidia/ibm/sakana)
+# プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity/groq/cohere/amazon/stability/huggingface/nvidia/ibm/sakana/baidu)
 # 2時間毎に自動実行。深いリサーチは Claude Code Schedule (ai-university-update タスク) が NotebookLM で担当
 on:
   schedule:
