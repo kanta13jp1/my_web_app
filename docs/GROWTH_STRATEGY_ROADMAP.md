@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-12 PS#40b (deno lint fix + COMPRESSED_PROMPT EF本数修正)
+最終更新: 2026-04-12 Windows版#42 (EF統合: agent-hub + schedule-manager完成, 98→94本)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -6938,3 +6938,68 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-pr 処理: `20260412_baidu_provider_ui.md` (Baidu ERNIE 18社目 UI追加) 🔴 最高 (VSCode版)
 - Rule 19 UI改善: design-skills サブエージェントで AI大学ページまたは新規4ページ改善 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学17社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+
+---
+
+## VSCode版#60 セッション記録 (2026-04-12)
+
+### タスク: EF統合 — `action`分岐パターンで99本→98本
+
+| # | 内容 | 結果 |
+| --- | --- | --- |
+| 1 | schedule-manager (統合EF) Tier1昇格: schedule-task-monitor/health-check/result-tracker/execution-logger 4本をaction分岐で統合 | ✅ deploy-prod.yml 更新 |
+| 2 | ai-university-streaks Tier1昇格 (解放されたスロットを使用) | ✅ deploy-prod.yml 更新 |
+| 3 | ai-university-badges Tier1昇格 (解放されたスロットを使用) | ✅ deploy-prod.yml 更新 |
+| 4 | Cleanup step: 降格4本の削除コマンド追加 | ✅ deploy-prod.yml 更新 |
+
+### 統合詳細 (action分岐パターン)
+
+```
+schedule-manager ?action=monitor  ← schedule-task-monitor  (実行ログ一覧)
+schedule-manager ?action=health   ← schedule-health-check  (健全性チェック)
+schedule-manager ?action=results  ← schedule-result-tracker(結果追跡)
+schedule-manager ?action=log_*    ← schedule-execution-logger (実行記録)
+```
+
+### 現状数値 (2026-04-12 VSCode版#60時点)
+
+- LP: 130のこと
+- ページ数: 215
+- EF deployed: 98本 (1スロット空き)
+- AI大学プロバイダー UI: 17社 (streaks/badges EF Tier1昇格)
+
+---
+
+## Windows版#42 セッション記録 (2026-04-12)
+
+### タスク: EF統合 — `action`分岐パターンで98本→94本
+
+| # | 内容 | 結果 |
+| --- | --- | --- |
+| 1 | `agent-hub` 新規作成: agent-runtime-cycle / agent-personality / agent-department-manager / agent-task-router / agent-performance-monitor の5本を1本に統合 | ✅ |
+| 2 | `schedule-manager` 完成: schedule-task-monitor / schedule-health-check / schedule-result-tracker / schedule-execution-logger の4本を統合 (schedule-managerはTier1済み) | ✅ |
+| 3 | deploy-prod.yml: 5 agent EF削除コマンド追加 + agent-hub deploy追加 + Tier1C更新 (13→9本) | ✅ |
+| 4 | COMPRESSED_PROMPT/ROADMAP 更新 | ✅ |
+
+### EF統合詳細
+
+```
+agent-hub ?action=departments     ← agent-department-manager
+agent-hub ?action=performance     ← agent-performance-monitor
+agent-hub ?action=personality     ← agent-personality
+agent-hub ?action=routing         ← agent-task-router
+agent-hub POST {action:runtime_cycle} ← agent-runtime-cycle
+```
+
+### 現状数値 (2026-04-12 Windows版#42時点)
+
+- EF deployed: 94本 (5スロット空き — 次回Tier1昇格候補: ai-university-streaks, ai-university-badges)
+- AI大学プロバイダー: 18社 (最新追加: Baidu)
+- LP: 126のこと
+- ページ数: 211
+
+### 次回優先タスク
+
+- 🔴 ai-university-streaks / ai-university-badges を Tier1昇格 (5スロット空き)
+- 🟡 AI大学19社目追加 (Oracle AI / Reka AI / Aleph Alpha 候補)
+- 🟢 Qiita再投稿 (blog-publish.yml tags/topics両対応済み)

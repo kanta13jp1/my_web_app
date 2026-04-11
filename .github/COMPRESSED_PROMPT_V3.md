@@ -248,7 +248,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: Tier1=99本 厳守 (`notify-feature-request`, `personal-dashboard` Tier1 / `audio-effects-processor`, `code-review-issues`, `user-growth-analytics` Tier2)
+- EF 管理: Tier1=94本 (5スロット空き) / `notify-feature-request`, `personal-dashboard` Tier1 / `audio-effects-processor`, `code-review-issues`, `user-growth-analytics` Tier2 / `agent-hub` (agent 5本統合) / `schedule-manager` (schedule 4本統合)
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
@@ -317,7 +317,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(151本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(94本) と Tier2コメント(156本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。Windows版#42: agent統合(-4) で94本。
 
 ---
 

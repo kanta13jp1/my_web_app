@@ -130,6 +130,17 @@ jobs:
           # --- 機能#13: growth-acquisition統合 (signal/report → growth-acquisition に統合) ---
           supabase functions delete growth-acquisition-signal || true
           supabase functions delete growth-acquisition-report || true
+          # --- schedule統合: 4本 → schedule-manager 1本 (ai-university-streaks/badges スロット確保) ---
+          supabase functions delete schedule-task-monitor || true
+          supabase functions delete schedule-health-check || true
+          supabase functions delete schedule-result-tracker || true
+          supabase functions delete schedule-execution-logger || true
+          # --- agent統合: 5本 → agent-hub 1本 (4スロット削減) ---
+          supabase functions delete agent-runtime-cycle || true
+          supabase functions delete agent-personality || true
+          supabase functions delete agent-department-manager || true
+          supabase functions delete agent-task-router || true
+          supabase functions delete agent-performance-monitor || true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -186,25 +197,20 @@ jobs:
           supabase functions deploy viral-growth-pipeline --no-verify-jwt
           supabase functions deploy viral-growth-engine --no-verify-jwt
 
-          # --- Tier 1C: AI & Agent System (13) ---
+          # --- Tier 1C: AI & Agent System (9) ---
           supabase functions deploy daily-judgment --no-verify-jwt
           supabase functions deploy ai-assistant --no-verify-jwt
           supabase functions deploy ai-search --no-verify-jwt
           supabase functions deploy ai-suggest-tags --no-verify-jwt
           supabase functions deploy ai-secretary --no-verify-jwt
           supabase functions deploy ai-summarizer --no-verify-jwt
-          supabase functions deploy agent-runtime-cycle --no-verify-jwt
-          supabase functions deploy agent-personality --no-verify-jwt
-          supabase functions deploy agent-department-manager --no-verify-jwt
-          supabase functions deploy agent-task-router --no-verify-jwt
-          supabase functions deploy agent-performance-monitor --no-verify-jwt
+          supabase functions deploy agent-hub --no-verify-jwt
           supabase functions deploy virtual-organization --no-verify-jwt
           supabase functions deploy my-ai-agent --no-verify-jwt
 
-          # --- Tier 1D: Schedule & Automation (10) ---
+          # --- Tier 1D: Schedule & Automation (9) ---
           supabase functions deploy schedule-daily-digest --no-verify-jwt
-          supabase functions deploy schedule-task-monitor --no-verify-jwt
-          supabase functions deploy schedule-health-check --no-verify-jwt
+          supabase functions deploy schedule-manager --no-verify-jwt
           supabase functions deploy post-x-update --no-verify-jwt
           supabase functions deploy blog-post-manager --no-verify-jwt
           supabase functions deploy blog-auto-publisher --no-verify-jwt
@@ -244,25 +250,28 @@ jobs:
           supabase functions deploy analyze-reality --no-verify-jwt
           supabase functions deploy trigger-analysis --no-verify-jwt
 
-          # --- Tier 1G: Guitar Studio + Monitoring (12) ---
+          # --- Tier 1G: Guitar Studio + AI大学 (12) ---
           supabase functions deploy guitar-recording-studio --no-verify-jwt
           supabase functions deploy music-collaboration --no-verify-jwt
           supabase functions deploy personal-dashboard --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
           supabase functions deploy generate-daily-challenges --no-verify-jwt
-          supabase functions deploy schedule-result-tracker --no-verify-jwt
-          supabase functions deploy schedule-execution-logger --no-verify-jwt
           supabase functions deploy ai-university-content --no-verify-jwt
+          supabase functions deploy ai-university-streaks --no-verify-jwt
+          supabase functions deploy ai-university-badges --no-verify-jwt
           supabase functions deploy admin-notification-hub --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
           supabase functions deploy issue-auto-resolver --no-verify-jwt
 
-          # Total: 99 functions deployed (100本目で402エラー — 絶対に超えないこと)
+          # Total: 94 functions deployed (Supabase上限99本 — 5スロット空き)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
           # edge-function-test-runner (2026-04-12 Tier2降格 → ai-university-content と入れ替え),
-          # ai-university-streaks, ai-university-badges (AI大学ストリーク・バッジ EF / EFスロット空き次第 Tier1昇格予定),
+          # schedule-task-monitor, schedule-health-check, schedule-result-tracker, schedule-execution-logger
+          #   (schedule-manager に統合 — action: monitor/health/results/log 分岐),
+          # agent-runtime-cycle, agent-personality, agent-department-manager, agent-task-router, agent-performance-monitor
+          #   (agent-hub に統合 — action: runtime_cycle/update_personality/create_department/auto_assign 等の分岐),
           # audio-effects-processor (2026-04-11 Tier2降格 → personal-dashboard と入れ替え),
           # growth-acquisition-signal, growth-acquisition-report (機能#13で growth-acquisition に統合),
           # user-growth-analytics, code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
