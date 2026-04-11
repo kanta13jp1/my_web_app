@@ -6546,3 +6546,26 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第6弾: AI大学関連記事 — 9社AIを1アプリで学ぶ仕組み
 - LP 126→130のこと: 4機能追加 (VSCode版)
 - AI大学 Tier2 EF Tier1 昇格検討
+
+## PS#41 — インスタンス役割分担 専任制リファクタリング (2026-04-12)
+
+### 実施内容
+
+- **COMPRESSED_PROMPT_V3.md インスタンス表更新**: write 権限と専任責務を明示
+  - VSCode版: lib/ + docs/DESIGN.md / Rule16(表示修正) + Rule19(UI改善) 専任
+  - Web版: supabase/functions/ + schema migration
+  - Windows版: docs/ + seed SQL / docs全件分析 主担当
+  - PowerShell版: .github/ + .mcp.json + MULTI_INSTANCE_COORDINATION.md + Schedule owner + CI監視
+- **Rule 16/17/19 専任化**: 「全インスタンス必須」→ 実行可能なインスタンスに専任
+- **MULTI_INSTANCE_COORDINATION.md 全面更新**: 変更禁止表 + 共有領域明文化
+  - `memory/` — 全インスタンス共有 / instance suffix で衝突回避
+  - `docs/GROWTH_STRATEGY_ROADMAP.md` — 末尾追記は全員可
+  - `docs/cross-instance-prs/` — 横断変更提案ボックス (新設概念)
+  - `.github/COMPRESSED_PROMPT_V3.md` — 数値更新は全員可、構造変更は PS版
+
+### 次回優先
+
+- NotebookLM 再認証: `! notebooklm login` → PS#41 memory 追加 🟡
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢
+- T-1 第6弾: `docs/blog-drafts/` 次記事 Qiita/dev.to 投稿 (PowerShell版) 🟢
+- AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵
