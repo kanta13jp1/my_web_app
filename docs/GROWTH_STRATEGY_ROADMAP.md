@@ -5682,6 +5682,118 @@ Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち。今�
 - Web版: `growth-import-preview` に Notion API 連携追加 (#44)
 - PowerShell版: 前回検出 4 件のワークフロー改善 (run-batch 重複削除 / cron-batch.yml 停止 / EF デプロイ並列化 / --no-tree-shake-icons 検討)
 - VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク/バッジ統合 + `record_score` 呼び出し組み込み
+
+## セッション: Web版#34 (2026-04-11)
+
+### 実装内容: AI大学 学習リマインダー通知 EF 完成 (🟢 中タスク)
+
+**課題**: 3日以上未学習のユーザーへの復帰促進通知が未実装。リテンション向上のために `notification-center` EF 経由で `app_notifications` テーブルへ一括インサートする必要があった。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+
+- 新規 EF を作らず、既存 `notification-center` EF に action を追加する設計を採用
+- 通知作成ロジックは既に `notification-center` EF にあるため、学習リマインダーは自然な拡張点
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `send_study_reminders` | service_role | `ai_university_streaks` から未学習ユーザーを抽出 → `app_notifications` に復帰促進通知を一括挿入。`dry_run` / `min_idle_days` / `max_idle_days` / スパム防止フィルタ対応 |
+
+**主要ロジック**:
+
+```typescript
+// 1. JST ベースで未学習期間ウィンドウを計算
+const minDate = now - maxIdleDays days; // 既定 30日前
+const maxDate = now - minIdleDays days; // 既定 3日前
+
+// 2. ai_university_streaks から該当ユーザー取得
+const candidates = select * from ai_university_streaks
+  where last_studied_date between minDate and maxDate;
+
+// 3. スパム防止: 直近 minIdleDays 日以内に同種通知を受け取った user_id を除外
+const recentlyReminded = select user_id from app_notifications
+  where type = 'system' and title like '[AI大学] 学習リマインダー%'
+  and created_at >= (now - minIdleDays days);
+
+// 4. 未リマインド対象のみ復帰メッセージを一括 INSERT
+const payload = targets.map(row => ({
+  user_id: row.user_id,
+  title: '[AI大学] 学習リマインダー — X日ぶりにAIを学ぼう',
+  message: bestStreak > 1
+    ? `前回から${idle}日経過。過去最長 ${best} 日連続を更新しよう！`
+    : `前回から${idle}日経過。AI大学で1分クイズに挑戦。`,
+  type: 'system',
+  link: '/ai-university',
+  is_read: false,
+}));
+```
+
+**呼び出しパターン**:
+
+```bash
+# 通常実行 (Schedule から 1日1回)
+curl -X POST .../functions/v1/notification-center \
+  -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+  -d '{"action": "send_study_reminders"}'
+
+# dry_run でターゲット数のみ確認
+curl ... -d '{"action": "send_study_reminders", "dry_run": true}'
+
+# 7日以上未学習に変更
+curl ... -d '{"action": "send_study_reminders", "min_idle_days": 7}'
+```
+
+**レスポンス**:
+
+```json
+{
+  "success": true,
+  "eligible": 42,               // ウィンドウ内の候補ユーザー数
+  "sent": 35,                   // 実際に通知を作成した人数
+  "skipped_recently_reminded": 7, // 直近に既にリマインド済みで除外
+  "dry_run": false,
+  "today": "2026-04-11",
+  "window": { "min_idle_days": 3, "max_idle_days": 30 }
+}
+```
+
+### PowerShell版 ハンドオフタスク
+
+🟢 中: Schedule/Cron から毎日 10:00 JST に `send_study_reminders` を呼び出す設定を追加
+- `.github/workflows/notification-reminder.yml` 新規 or 既存 cron に `curl` 呼び出し追加
+- service_role key を `secrets.SUPABASE_SERVICE_ROLE_KEY` から注入
+- 成功レスポンスの `sent` 数を step outputs に出力 → Slack 通知連携 (任意)
+
+### ファイル変更
+
+- `supabase/functions/notification-center/index.ts`: +155 行 (ヘッダーコメント更新 + `send_study_reminders` action 追加)
+
+### 品質確認
+
+- `deno lint supabase/functions/notification-center/` → **0エラー** (`Checked 1 file`)
+- JST 日付計算は `Date.now() + 9*60*60*1000` オフセット方式 (既存 CLAUDE.md パターン踏襲)
+- INSERT は `app_notifications` RLS `service_role_full_access_notifications` policy 経由
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち (PS#38 で部分対応済み: cron-batch.yml 停止 + ci.yml 無駄ビルド削除)。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件**
+
+### 次回優先
+
+- Web版: SNS シェア画像 OGP カード生成 EF (🟢 低、新規 EF 作成は Tier2 コード運用のみ可能)
+- Web版: `growth-import-preview` に Notion API 連携追加 (#44)
+- Web版: AI介入提案 (`ai-assistant` EF に slip パターン渡し) — 機能強化 #T2 🟢 低
+- PowerShell版: `notification-reminder` cron 追加 (毎日 10:00 JST → `send_study_reminders`)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 (Web版#31 検出、🟡 高)
+
 ## セッション: Windows版#33 (2026-04-12)
 
 ### 実施内容
