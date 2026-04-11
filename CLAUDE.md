@@ -58,6 +58,12 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 10. **毎セッション: `docs/` 戦略ドキュメント全件分析・開発計画反映** — 以下の常設ドキュメントを読み、(a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記する。
    - 対象: `docs/CICD_SETUP_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/MULTI_INSTANCE_COORDINATION.md`, `docs/README.md`, `docs/DESIGN_TOOLING_SETUP.md`, `docs/technical/*.md`, `docs/roadmaps/*.md`, `docs/user-docs/*.md`
    - 除外 (自動生成・アーカイブ): `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
+11. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（必須）** — `ai_university_content` テーブルの最新 `news` カテゴリ（または NotebookLM に蓄積した AI ニュース）を開発に活かす。以下の観点で評価し、有望なものは `GROWTH_STRATEGY_ROADMAP.md` の次回優先タスクに追記する:
+   - **モデルアップグレード**: 新モデル (例: Gemini 2.5 / Claude 4 / GPT-5) が利用可能になったら既存 EF (`ai-assistant`, `daily-judgment`, `gemini-election-analysis` など) のモデルパラメータを更新
+   - **新 API 機能の取り込み**: 音声生成 (Voxtral) / リアルタイム検索 (Perplexity Sonar) / 画像生成など新機能を既存機能に統合できないか検討
+   - **コスト最適化**: より安価・高速なモデルが登場したらバッチ処理 EF (`batch_analysis.py`, `competitor-monitoring` など) での採用を検討
+   - **差別化機能のヒント**: 競合 AI プロバイダーの新機能からユーザー価値を逆算し、未実装機能のアイデアとして追加
+   - **実施手順**: (1) `notebooklm ask "各プロバイダーの最新ニュースから開発に使えそうな機能・APIを抽出して"` → (2) 既存 EF・ページとの接続可能性を評価 → (3) 実装可能なものは即 ROADMAP へ追記 → (4) 今セッションで対応できるものは実装
 
 ---
 

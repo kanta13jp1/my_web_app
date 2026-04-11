@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・205ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・211ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 247本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (17本完備済み) | 他3範囲 |
@@ -168,6 +168,12 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 129 | **AI文章添削** (日本語誤字・文法・表現のリアルタイム添削・校正エンジン) | ✅ LP済 | VSCode版 |
 | 130 | **プレミアムコンテンツ販売** (ノート・テンプレート・スキル販売×収益化 — デジタル販売SaaS対抗) | ✅ LP済 | VSCode版 |
 | 131 | **オンラインコミュニティ** (テーマ別コミュニティ・勉強会・習慣チャレンジ — Discord対抗) | ✅ LP済 | VSCode版 |
+| 132 | **AIメンタルヘルスケア** (気分・ストレス・睡眠トラッキング＋AI改善提案 — Calm/Headspace対抗) | ✅ LP済 | `lib/pages/mental_health_tracker_page.dart` (VSCode版) |
+| 133 | **フリーランス管理** (案件・請求書・契約管理 — freee/MoneyForward対抗) | ✅ LP済 | `lib/pages/freelance_manager_page.dart` (VSCode版) |
+| 134 | **AIプレゼンビルダー** (スライド自動生成・テンプレート — Gamma/Canva対抗) | ✅ LP済 | `lib/pages/ai_presentation_builder_page.dart` (VSCode版) |
+| 135 | **データバックアップ** (全データ自動バックアップ・クラウド同期・ワンクリック復元 — Dropbox/iCloud対抗) | ✅ LP済 | `lib/pages/data_backup_page.dart` (VSCode版) |
+| 136 | **コンテンツカレンダー** (SNS投稿・ブログ・動画制作スケジュール管理) | ✅ LP済 | `lib/pages/content_calendar_page.dart` (VSCode版) |
+| 137 | **家計・予算プランナー** (月次予算設定・支出追跡・AI節約提案 — MoneyForward/Zaim対抗) | ✅ LP済 | `lib/pages/home_budget_planner_page.dart` (VSCode版) |
 
 ---
 
@@ -199,6 +205,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
+18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス・必須）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
 
 ---
 
@@ -274,7 +281,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 205ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
+lib/pages/               # 211ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 247本 (Tier1: 99デプロイ済 / Tier2: 148コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
