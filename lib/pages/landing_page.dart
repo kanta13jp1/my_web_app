@@ -1631,6 +1631,11 @@ $input
       (Icons.rss_feed, '0xFFEC4899', '技術ブログトラッカー', 'Zenn/Qiita/note/dev.toの投稿管理・PV分析・読者獲得トレンドを一元追跡。エンジニアの影響力成長を数値化。'),
       (Icons.calendar_view_day, '0xFF6366F1', '予約・アポイント管理', '来客予約・医療予約・会議調整をカレンダー連携で一元管理。Calendlyを超えるAI最適スケジューリングシステム。'),
       (Icons.terminal, '0xFF0F172A', 'API プレイグラウンド', 'REST API・Supabase EF・外部APIをブラウザから即テスト。Postmanを超えるアプリ内API開発環境で実装速度を10倍に。'),
+      (Icons.download, '0xFF0891B2', 'データ分析エクスポート', 'ノート・タスク・習慣・財務データをCSV/JSON/PDFで一括エクスポート。BIツールへの連携や外部分析が自由自在。'),
+      (Icons.local_parking, '0xFF374151', '駐車場予約管理', '駐車場の空き確認・予約・支払い管理をアプリ内で完結。物件・店舗・イベント会場の駐車枠を効率的に運用。'),
+      (Icons.view_in_ar, '0xFF6D28D9', 'AR ナビゲーション', '拡張現実(AR)で店舗・施設・商品へのルートをスマホ画面に重畳表示。競合21社に存在しない空間×AIナビゲーション機能。'),
+      (Icons.account_balance, '0xFF059669', '資産管理', '不動産・株・仮想通貨・現金など全資産をポートフォリオ形式で一元管理。AIが資産配分の最適化提案をリアルタイムに実行。'),
+      (Icons.trending_up, '0xFFF97316', '行動・習慣ログ詳細', '1分単位の行動ログ・習慣連続記録・パターン分析をAIが自動集計。自分の生活リズムを科学的に可視化して最適な時間設計を実現。'),
     ];
 
     return Container(
@@ -1648,7 +1653,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない88のこと',
+            '自分株式会社でしかできない93のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

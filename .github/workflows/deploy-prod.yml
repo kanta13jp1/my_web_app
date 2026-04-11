@@ -303,7 +303,8 @@ jobs:
           # task-dependency, gemini-election-analysis, poll-survey,
           # viral-video-ad-generator, viral-video-generator,
           # bookmark-manager, habit-tracker, invoice-generator,
-          # notification-preferences, revenue-forecaster, tag-manager, template-library
+          # notification-preferences, revenue-forecaster, tag-manager, template-library,
+          # discord-notifications, line-notifications, github-pr-manager
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

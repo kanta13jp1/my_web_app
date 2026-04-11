@@ -136,6 +136,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 97 | **技術ブログトラッカー** (Zenn/Qiita/note投稿管理・PV分析・読者獲得トレンド) | ✅ LP済 | `lib/pages/tech_blog_tracker_page.dart` (VSCode版) |
 | 98 | **予約・アポイント管理** (来客・医療・会議の予約カレンダー連携 — Calendly対抗) | ✅ LP済 | `lib/pages/appointment_scheduler_page.dart` (VSCode版) |
 | 99 | **API プレイグラウンド** (REST API・Supabase EFのブラウザテスト環境 — Postman対抗) | ✅ LP済 | `lib/pages/api_playground_page.dart` (VSCode版) |
+| 100 | **データ分析エクスポート** (ノート・タスク・習慣・財務データのCSV/JSON/PDF一括出力) | ✅ LP済 | `lib/pages/analytics_export_page.dart` (VSCode版) |
+| 101 | **駐車場予約管理** (空き確認・予約・支払い管理 — 施設・イベント会場運用) | ✅ LP済 | `lib/pages/parking_reservation_page.dart` (VSCode版) |
+| 102 | **AR ナビゲーション** (拡張現実でルートをスマホ画面に重畳表示 — 競合21社に存在しない独自機能) | ✅ LP済 | `lib/pages/ar_navigation_page.dart` (VSCode版) |
+| 103 | **資産管理** (不動産・株・仮想通貨・現金のポートフォリオ一元管理・AI最適化提案) | ✅ LP済 | `lib/pages/asset_management_page.dart` (VSCode版) |
+| 104 | **行動・習慣ログ詳細** (1分単位行動ログ・習慣連続記録・AI生活リズム分析) | ✅ LP済 | `lib/pages/behavior_log_page.dart` (VSCode版) |
 
 ---
 
