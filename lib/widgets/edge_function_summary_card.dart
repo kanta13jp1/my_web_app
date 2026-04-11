@@ -275,6 +275,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('discord-notifications', 'Discord 通知連携', true, '/discord-notifications', 'Discord 通知ページ'),
     _FnDef('line-notifications', 'LINE 通知連携', true, '/line-notifications', 'LINE 通知ページ'),
     _FnDef('github-pr-manager', 'GitHub PR 管理', true, '/github-pr', 'GitHub PR 管理ページ'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('ai-university-badges', 'AI大学 バッジ発行', true, '/ai-university', 'AI大学 > バッジ・実績'),
+    _FnDef('ai-university-content', 'AI大学 コンテンツ管理', true, '/ai-university', 'AI大学 > 学習コンテンツ'),
+    _FnDef('ai-university-streaks', 'AI大学 学習ストリーク', true, '/ai-university', 'AI大学 > 連続学習日数'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
