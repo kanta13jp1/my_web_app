@@ -33,6 +33,12 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+/** YAML フロントマター (---...---) を除去して本文のみ返す */
+function stripFrontmatter(content: string): string {
+  const fm = /^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/;
+  return content.replace(fm, "").trimStart();
+}
+
 // ── Qiita 投稿 ──────────────────────────────────────────────────────────────
 async function publishToQiita(
   title: string,
@@ -244,7 +250,7 @@ serve(async (req) => {
           try {
             const { url: postedUrl } = await publishToQiita(
               post.title,
-              content,
+              stripFrontmatter(content), // フロントマター除去
               articleTags,
             );
             await updateBlogPostStatus(supabase, id, "qiita", postedUrl);
@@ -266,7 +272,7 @@ serve(async (req) => {
           try {
             const { url: postedUrl } = await publishToDevTo(
               post.title,
-              content,
+              stripFrontmatter(content), // YAML Date パースエラー回避
               articleTags,
             );
             await updateBlogPostStatus(supabase, id, "devto", postedUrl);

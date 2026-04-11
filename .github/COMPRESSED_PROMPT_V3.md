@@ -168,7 +168,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: Tier1=99本 厳守 (`notify-feature-request` Tier1 / `code-review-issues`, `user-growth-analytics` Tier2)
+- EF 管理: Tier1=99本 厳守 (`notify-feature-request`, `personal-dashboard` Tier1 / `audio-effects-processor`, `code-review-issues`, `user-growth-analytics` Tier2)
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 

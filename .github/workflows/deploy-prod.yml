@@ -247,7 +247,7 @@ jobs:
           # --- Tier 1G: Guitar Studio + Monitoring (12) ---
           supabase functions deploy guitar-recording-studio --no-verify-jwt
           supabase functions deploy music-collaboration --no-verify-jwt
-          supabase functions deploy audio-effects-processor --no-verify-jwt
+          supabase functions deploy personal-dashboard --no-verify-jwt
           supabase functions deploy webhook-manager --no-verify-jwt
           supabase functions deploy api-rate-limiter --no-verify-jwt
           supabase functions deploy generate-daily-challenges --no-verify-jwt
@@ -261,6 +261,7 @@ jobs:
           # Total: 99 functions deployed (Supabase project limit: 100)
           # ---
           # Tier 2 (code-only, not deployed due to Supabase 100-function limit):
+          # audio-effects-processor (2026-04-11 Tier2降格 → personal-dashboard と入れ替え),
           # growth-acquisition-signal, growth-acquisition-report (機能#13で growth-acquisition に統合),
           # user-growth-analytics, code-review-issues, ab-testing-manager, search-analytics, social-proof-generator,
           # contact-manager, goal-tracker, reading-list, password-generator,
