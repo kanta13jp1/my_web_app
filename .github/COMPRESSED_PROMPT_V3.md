@@ -200,7 +200,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全16ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全17ワークフロー）
 
 **全17本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
@@ -222,6 +222,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
+| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (7プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -726,6 +727,12 @@ PYTHONUTF8=1 python notebooklm_research.py "テキスト"
 PYTHONUTF8=1 python notebooklm_research.py --files f1.dart --query "質問"
 PYTHONUTF8=1 python notebooklm_research.py --url "https://..." --query "要約して"
 PYTHONUTF8=1 python notebooklm_research.py --setup
+# Master Brain に保存 (wrap-up時)
+PYTHONUTF8=1 python notebooklm_research.py --add-to-master-brain memory/project_20260411.md
+# 成果物生成
+PYTHONUTF8=1 python notebooklm_research.py --generate slide-deck
+# リサーチ→生成→Master Brain 一括
+PYTHONUTF8=1 python notebooklm_research.py "Flutter最新動向" --generate flashcards --add-to-master-brain memory/project_today.md
 ```
 
 - **注意**: 非公式ライブラリ。undocumented Google API のため突然の仕様変更あり
