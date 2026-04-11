@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-12 VSCode版#57 (コア機能#132-#137追加・LP 120→126のこと・211ページ)
+最終更新: 2026-04-12 VSCode版#58 (Rule19 UI改善実行: LP hero/CTA/stats/guitarカード DESIGN.md準拠)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -5760,3 +5760,31 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
 - T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
 - Rule 19 実際の実行: design-skills + Figma MCP + AIDesigner MCP でLP/ホーム改善 🟢 中
+
+## VSCode版#58 — Rule19 UI改善 LP DESIGN.md準拠 (2026-04-12)
+
+### 実施内容
+
+- **Rule 19 初回実行**: `design-skills`サブエージェント × Figma MCP × AIDesigner MCP × `docs/DESIGN.md`
+- **LP UI 改善 (P1)**: ヒーロー見出し/サブコピーをライトテーマカラーから DESIGN.md 準拠色へ
+  - 見出し: `Color(0xFF0F172A)` → `Colors.white`, letterSpacing 0.96追加, height 1.4
+  - サブコピー: `Color(0xFF475569)` → `Color(0xFFB0B0B0)` (textSecondary)
+- **LP UI 改善 (P1 続き)**: ソーシャルプルーフ統計カードをダークテーマ化
+  - カード背景: `Colors.white` → `Color(0xFF1E1E1E)` (surface3)
+  - ボーダー: `Color(0xFFE2E8F0)` → `Colors.white.withValues(alpha: 0.08)`
+  - アイコン/値の色: ライトテーマ indigo/blue/green → ダーク対応色 (`0xFF7986CB`/`0xFF4FC3F7`/`0xFF81C784`)
+  - ラベル色: `Color(0xFF64748B)` → `Color(0xFFB0B0B0)`
+  - "リアルタイム実績" ラベル: `Color(0xFF0F172A)` → `Colors.white`
+- **LP UI 改善 (P2)**: 主要CTAボタンを orange に変更 (DESIGN.md: "Orange = primary CTA only")
+  - プライマリCTA: `Color(0xFF4F46E5)` → `Color(0xFFFF6B35)`, borderRadius 16→12
+  - セカンダリCTA: foreground/side `Color(0xFF4F46E5)`/`Color(0xFFC7D2FE)` → `Color(0xFFFF6B35)`
+- **LP UI 改善 (P3)**: ギタースタジオカードの不正カラー (`0xFFE94560`) と `withAlpha()` を修正
+  - ボーダー/アイコン/矢印: `Color(0xFFE94560)` → `Color(0xFFFF6B35)` (orange per DESIGN.md)
+  - `withAlpha(40)`/`withAlpha(25)` → `withValues(alpha: 0.15)` (禁止メソッド排除)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
+- T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
+- Rule 19 継続: Figma/AIDesigner MCPでコンポーネントデザイン取得 → ホーム画面改善 🟡 高

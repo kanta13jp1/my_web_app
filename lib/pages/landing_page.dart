@@ -692,12 +692,12 @@ $input
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFE94560),
+                color: const Color(0xFFFF6B35).withValues(alpha: 0.6),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE94560).withAlpha(40),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -709,12 +709,12 @@ $input
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE94560).withAlpha(25),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.music_note,
-                    color: Color(0xFFE94560),
+                    color: Color(0xFFFF6B35),
                     size: 24,
                   ),
                 ),
@@ -752,7 +752,7 @@ $input
                 ),
                 const Icon(
                   Icons.arrow_forward_ios,
-                  color: Color(0xFFE94560),
+                  color: Color(0xFFFF6B35),
                   size: 14,
                 ),
               ],
@@ -830,8 +830,9 @@ $input
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w800,
-            height: 1.25,
-            color: Color(0xFF0F172A),
+            height: 1.4,
+            letterSpacing: 0.96,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 14),
@@ -840,7 +841,7 @@ $input
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 16,
-            color: Color(0xFF475569),
+            color: Color(0xFFB0B0B0),
             height: 1.7,
           ),
         ),
@@ -885,12 +886,13 @@ $input
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
+              backgroundColor: const Color(0xFFFF6B35),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
+              shadowColor: const Color(0xFFFF6B35),
             ),
           ),
         ),
@@ -907,10 +909,10 @@ $input
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF4F46E5),
-              side: const BorderSide(color: Color(0xFFC7D2FE)),
+              foregroundColor: const Color(0xFFFF6B35),
+              side: const BorderSide(color: Color(0xFFFF6B35)),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           ),
@@ -1066,22 +1068,22 @@ $input
     final stats = [
       (
         icon: Icons.people_alt_outlined,
-        color: const Color(0xFF4F46E5),
-        bgColor: const Color(0xFFEEF2FF),
+        color: const Color(0xFF7986CB),
+        bgColor: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
         value: _totalUsers > 0 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
         icon: Icons.article_outlined,
-        color: const Color(0xFF0284C7),
-        bgColor: const Color(0xFFE0F2FE),
+        color: const Color(0xFF4FC3F7),
+        bgColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
         value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
         label: '公開メモ数',
       ),
       (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF16A34A),
-        bgColor: const Color(0xFFDCFCE7),
+        color: const Color(0xFF81C784),
+        bgColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
         value: _achievementCount > 0 ? '$_achievementCount' : '–',
         label: '実装済み機能数',
       ),
@@ -1091,12 +1093,12 @@ $input
       key: const Key('landing_social_proof_stats'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1107,14 +1109,14 @@ $input
         children: [
           Row(
             children: [
-              const Icon(Icons.bar_chart, color: Color(0xFF4F46E5), size: 18),
+              const Icon(Icons.bar_chart, color: Color(0xFF7986CB), size: 18),
               const SizedBox(width: 8),
               const Text(
                 'リアルタイム実績',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Colors.white,
                   height: 1.4,
                 ),
               ),
@@ -1168,7 +1170,7 @@ $input
                           s.label,
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF64748B),
+                            color: Color(0xFFB0B0B0),
                             height: 1.4,
                           ),
                           textAlign: TextAlign.center,
