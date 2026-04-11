@@ -6670,3 +6670,38 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Groq/Cohere/Amazon 追加 🟡 高
 - AI大学 次追加候補検討: Apple Intelligence / Baidu ERNIE / Samsung Gauss 🟢 中
 - docs/ 残件確認: IMPROVEMENTS.md 日付古い / GROWTH_FEATURES.md 未実装機能更新 🟢 中
+
+---
+
+## Windows版#36 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: LP=126/ページ=211/EF=99本/ユーザー=4人 → 全て正確
+   - `docs/user-docs/GROWTH_FEATURES.md`: 存在しないmigrationパスを修正
+     - `20251106_growth_features.sql` → `20251106120000_growth_features.sql` (2箇所)
+
+2. **AI大学 Stability AI 追加 (13社目)**: migration `20260412004000_seed_stability_ai_university.sql`
+   - 次候補評価: Apple Intelligence → API非公開のため見送り
+   - Stability AI 採用理由: Stable Diffusion 開発元・画像/動画/音楽/3D生成・OSS・日本高知名度
+   - overview: Stable Diffusion の歴史・OSS強み・モダリティの広さ
+   - models: SD3.5/SDXL/Stable Video/Stable Audio/Stable 3D + ControlNet/LoRA解説
+   - api: REST API (SD3.5)・SDXL API・diffusers ローカル実行・料金表
+   - cross-instance-pr: `20260412_stability_provider_ui.md` (emoji: '🎨', color: 0xFF6C35DE)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 12社 → 13社
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 13社 (Stability AI追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- T-1 第6弾: AI大学13社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Groq/Cohere/Amazon/Stability 追加 🟡 高 (VSCode版)
+- AI大学 次追加候補: Nvidia NIM / Hugging Face 🟢 中 (Windows版)

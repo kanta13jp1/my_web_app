@@ -206,7 +206,7 @@
 supabase db push
 
 # または、SQLファイルを直接実行
-psql -h [HOST] -U postgres -d postgres -f supabase/migrations/20251106_growth_features.sql
+psql -h [HOST] -U postgres -d postgres -f supabase/migrations/20251106120000_growth_features.sql
 ```
 
 ### 統計の初期化
@@ -328,5 +328,5 @@ SELECT cleanup_old_presence();
 
 ## 関連ドキュメント
 
-- [データベーススキーマ](/supabase/migrations/20251106_growth_features.sql)
+- [データベーススキーマ](/supabase/migrations/20251106120000_growth_features.sql)
 - [メインREADME](/README.md)
