@@ -580,10 +580,10 @@ web/sitemap.xml          # URL マップ
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#40 時点: 17社)
+#### 現在の登録プロバイダー (Windows版#41 時点: 18社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
@@ -670,7 +670,7 @@ streak_updated_at timestamptz
 9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
 ```
 
-**次回追加候補**: Baidu ERNIE (baidu) / Oracle AI (oracle) / Reka AI (reka)
+**次回追加候補**: Oracle AI (oracle) / Reka AI (reka) / Aleph Alpha (aleph)
 **Apple Intelligence: 見送り** (API非公開・統合OS機能のみ・開発者向け教材として不適)
 **追加完了 (Windows版#33)**: Mistral AI / Perplexity AI — migration適用済み (`20260412000100/000200_seed_*_ai_university.sql`)
 **追加完了 (Windows版#34)**: Groq — migration適用済み (`20260412001000_seed_groq_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
@@ -680,6 +680,7 @@ streak_updated_at timestamptz
 **追加完了 (Windows版#38)**: Nvidia NIM — migration適用済み (`20260412006000_seed_nvidia_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#39)**: IBM watsonx — migration適用済み (`20260412007000_seed_ibm_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#40)**: Sakana AI — migration適用済み (`20260412008000_seed_sakana_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
+**追加完了 (Windows版#41)**: Baidu ERNIE — migration適用済み (`20260412009000_seed_baidu_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 
 #### `ai_university_content` テーブルスキーマ
 

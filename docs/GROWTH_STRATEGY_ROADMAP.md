@@ -6878,3 +6878,36 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia/IBM/Sakana 追加 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学17社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - AI大学 次追加候補: Baidu ERNIE / Oracle AI 🟢 中 (Windows版)
+
+---
+
+## Windows版#41 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: EF=99/151/250本・ユーザー=4人・ワークフロー=17本 → 全て正確
+   - COMPRESSED_PROMPT: PS版が 16→17プロバイダー数を修正済み (正確を確認・取込み)
+
+2. **AI大学 Baidu ERNIE 追加 (18社目)**: migration `20260412009000_seed_baidu_ai_university.sql`
+   - 採用理由: 中国最大 AI・ERNIE Bot 数千万ユーザー・中国語精度世界最高水準・中国進出企業に必須
+   - overview: 知識グラフ統合 (5.5億エンティティ)・Wenxin API・千帆プラットフォーム
+   - models: ERNIE 4.0 Ultra/Turbo/Speed/Lite・ERNIE VL・ERNIE-ViLG 3.0 (画像生成)・中英語精度比較表
+   - api: REST API (access_token) ・ストリーミング・qianfan SDK・料金表 (ERNIE Lite 無料)
+   - cross-instance-pr: `20260412_baidu_provider_ui.md` (emoji: '🔴', color: 0xFF2932E1)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 17→18社
+
+### 現状数値 (2026-04-12)
+
+- LP: 130のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 18社 (Baidu ERNIE追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia/IBM/Sakana/Baidu 追加 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学18社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Oracle AI / Reka AI 🟢 中 (Windows版)
