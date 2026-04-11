@@ -131,6 +131,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 11. **セッション開始: Master Brain 参照（必須）** — `memory/MEMORY.md` を必ず読んで前回の成功パターン・禁止事項・発見を最初に把握する。「記憶が消える弱点」を永続メモリで補う
 12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `python notebooklm_research.py` で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。高負荷な分析を Google 側に無料で投げる
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
+14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 
 ---
 
