@@ -281,6 +281,15 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     // 追加 (cs-check 自動連携)
     _FnDef('agent-hub', 'エージェントハブ統合管理 (部署/実績/個性/ルーティング)', true, '/agents', 'ホーム > AI組織OS > エージェント管理'),
     _FnDef('schedule-manager', 'Schedule 統合管理 (実行ログ/ヘルスチェック/結果)', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('check-competitor-updates', '競合21社 Web 可用性チェック', true, '/admin', '管理者ダッシュボード > 競合モニタリング > 可用性チェック'),
+    _FnDef('reply-support-request', 'CS チケット返信・エスカレーション', true, '/admin', '管理者ダッシュボード > CS セクション > 返信'),
+    _FnDef('core-hub', 'コアハブ (ホームダッシュボード/チャット/AI/成長統合)', true, '/home', 'ホーム画面 (統合API経由)'),
+    _FnDef('enterprise-hub', 'エンタープライズハブ (業務管理/CRM/BI/コンプライアンス統合)', true, '/admin', '管理者ダッシュボード > エンタープライズ機能'),
+    _FnDef('lifestyle-hub', 'ライフスタイルハブ (健康/旅行/スマートホーム/通知統合)', true, '/home', 'ホーム > 生活管理カード'),
+    _FnDef('media-hub', 'メディアハブ (動画/音声/ドキュメント/会議統合)', true, '/admin', '管理者ダッシュボード > メディア管理'),
+    _FnDef('social-commerce-hub', 'ソーシャル・コマースハブ (SNS/EC/決済/学習統合)', true, '/social-feed', 'ソーシャルフィード > コマース機能'),
+    _FnDef('tools-hub', 'ツールハブ (生産性ツール/メモ/習慣/テンプレート統合)', true, '/home', 'ホーム > クイックアクセス > ツール'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
