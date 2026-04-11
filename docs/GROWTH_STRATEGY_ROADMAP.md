@@ -5622,3 +5622,18 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加 (TOTAL_PROVIDERS 7→9)
 - Web/モバイル表示チェック (Flutter preview 環境で確認)
+
+## PS#39 セッション記録 (2026-04-12)
+
+### ai-university-update.yml: Mistral/Perplexity 追加 (7→9社)
+
+- Windows版#33 で migration seed 作成済みだったが、ワークフローが7プロバイダーのままだった
+- `upsert_provider "mistral"` (mistral.ai/news/rss.xml) + `upsert_provider "perplexity"` (blog.perplexity.ai/rss.xml) 追加
+- TOTAL_PROVIDERS 7→9、Step3/Step4/Job Summary も9社対応に更新
+- commit `85e6d271`
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: `QIITA_ACCESS_TOKEN` 再設定 (write_qiita スコープ) → notification-center.md 投稿
+- VSCode版: `ai_university_badges` バッジ発行 EF + UI
