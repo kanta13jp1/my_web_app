@@ -193,7 +193,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
 11. **セッション開始: Master Brain 参照（必須）** — `memory/MEMORY.md` を必ず読んで前回の成功パターン・禁止事項・発見を最初に把握する。「記憶が消える弱点」を永続メモリで補う
-12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `python notebooklm_research.py` で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。高負荷な分析を Google 側に無料で投げる
+12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `notebooklm` CLI で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。`notebooklm source add-research` で Web Deep Research、`notebooklm generate` でスライド/フラッシュカード/音声等を無料生成
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
@@ -677,7 +677,7 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 
 ## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
 
-**目的**: 重いドキュメント分析を NotebookLM に委譲して Claude のトークンを節約し、セッション間で学習を蓄積する。
+**目的**: 重いドキュメント分析を NotebookLM に委譲して Claude のトークンを節約し、セッション間で学習を蓄積する。$20プランで$200相当の作業を実現。
 
 ### スラッシュコマンド
 
@@ -685,21 +685,64 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 | --- | --- | --- |
 | `/deep-research <トピック/ファイルパス>` | `.claude/commands/deep-research.md` | NotebookLM に分析委譲 → Claude が結果を整理 |
 | `/wrap-up` | `.claude/commands/wrap-up.md` | セッション末尾: 学習を `memory/` に永続保存 |
+| `/notebooklm` | `notebooklm skill` | NotebookLM 全機能へのダイレクトアクセス |
 
-### notebooklm_research.py
+### native CLI コマンド（推奨）
 
 ```bash
-python notebooklm_research.py "テキスト"
-python notebooklm_research.py --files file1.dart --query "質問"
-python notebooklm_research.py --url "https://..." --query "要約して"
-python notebooklm_research.py --setup
+# ノートブック操作
+notebooklm create "プロジェクト名"
+notebooklm list
+notebooklm use <notebook-id>     # 部分ID可 (例: "jibun")
+
+# ソース追加 (最大50本 free / 300本 pro)
+notebooklm source add "./file.md"               # ローカルファイル
+notebooklm source add "https://example.com"     # URL
+notebooklm source add --type youtube "https://youtube.com/watch?v=..."
+notebooklm source add-research "クエリ"         # Web Deep Research (自律調査)
+notebooklm research wait                        # 調査完了まで待機
+
+# 質問・応答
+notebooklm ask "主要テーマを3点まとめて"
+
+# 成果物生成 (Google インフラで無料処理)
+notebooklm generate slide-deck "要点をまとめて"
+notebooklm generate flashcards "重要用語中心に"
+notebooklm generate mind-map
+notebooklm generate data-table "概念を比較"
+notebooklm generate audio "deep dive" --wait
+notebooklm generate quiz / infographic / video
+notebooklm download <type>       # ローカルに保存
+
+# スキル管理
+notebooklm skill install         # ~/.claude/skills/ にインストール
+notebooklm skill status
 ```
 
-- **バックエンド**: Google NotebookLM (notebooklm-py 経由)
-- **認証**: notebooklm login でブラウザ Google 認証
-- **フロー**: 一時ノートブック作成 → ソース追加 → Q&A → ノートブック削除
-- **依存**: requirements.txt に notebooklm-py>=0.1.0 追記済み
-- **注意**: 非公式ライブラリ。undocumented Google API 使用のため突然の仕様変更あり
+### ラッパースクリプト（互換用）
+
+```bash
+PYTHONUTF8=1 python notebooklm_research.py "テキスト"
+PYTHONUTF8=1 python notebooklm_research.py --files f1.dart --query "質問"
+PYTHONUTF8=1 python notebooklm_research.py --url "https://..." --query "要約して"
+PYTHONUTF8=1 python notebooklm_research.py --setup
+```
+
+- **注意**: 非公式ライブラリ。undocumented Google API のため突然の仕様変更あり
+- **cookie 保護**: `~/.notebooklm/storage_state.json` は git commit 禁止 (= Google セッション情報)
+- **cookie 期限切れ時**: `notebooklm login` で再認証 (30秒)
+
+### DBS フレームワーク: エキスパートスキル構築
+
+Deep Research で収集した知識をカスタム Claude Code スキルに変換:
+
+```text
+D (Direction)  = 意思決定ロジック・手順 → SKILL.md のコア
+B (Blueprints) = テンプレート・ガイドライン → サポートファイル
+S (Solutions)  = API呼び出し・計算コード → スクリプト
+```
+
+→ DBS 分類後に `/skill-creator` を実行すると SKILL.md が自動生成・テストされる。
 
 ### Master Brain (memory/)
 
@@ -710,6 +753,8 @@ python notebooklm_research.py --setup
 | `feedback_success_YYYYMMDD.md` | 成功パターン・承認されたアプローチ |
 | `feedback_correction_YYYYMMDD.md` | 修正・禁止事項 |
 | `project_YYYYMMDD.md` | 新規発見・プロジェクト固有の仕様 |
+
+`/wrap-up` 時に `notebooklm source add <memory-file>` で Master Brain に蓄積 → `notebooklm ask` で全セッション横断検索可能。
 
 ---
 
