@@ -213,6 +213,10 @@ import 'package:my_web_app/pages/ai_presentation_builder_page.dart';
 import 'package:my_web_app/pages/data_backup_page.dart';
 import 'package:my_web_app/pages/content_calendar_page.dart';
 import 'package:my_web_app/pages/home_budget_planner_page.dart';
+import 'package:my_web_app/pages/brain_dump_page.dart';
+import 'package:my_web_app/pages/project_gantt_page.dart';
+import 'package:my_web_app/pages/business_card_manager_page.dart';
+import 'package:my_web_app/pages/family_calendar_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1200,6 +1204,22 @@ class MyApp extends StatelessWidget {
           case '/home-budget-planner':
             return MaterialPageRoute(
               builder: (_) => const HomeBudgetPlannerPage(),
+            );
+          case '/brain-dump':
+            return MaterialPageRoute(
+              builder: (_) => const BrainDumpPage(),
+            );
+          case '/project-gantt':
+            return MaterialPageRoute(
+              builder: (_) => const ProjectGanttPage(),
+            );
+          case '/business-card-manager':
+            return MaterialPageRoute(
+              builder: (_) => const BusinessCardManagerPage(),
+            );
+          case '/family-calendar':
+            return MaterialPageRoute(
+              builder: (_) => const FamilyCalendarPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

@@ -6771,3 +6771,37 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Hugging Face・Nvidia 追加 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学15社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - AI大学 次追加候補: Baidu ERNIE / IBM watsonx / Sakana AI 🟢 中 (Windows版)
+
+---
+
+## Windows版#39 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: EF=99/151/250本・ユーザー=4人・ワークフロー=17本 → 全て正確
+   - LP 数値更新: VSCode版#59 で 126→130のことに変更済み (ROADMAP反映)
+   - COMPRESSED_PROMPT_V3 修正: Windows版#38 の Nvidia 追加が未反映だったため修正
+
+2. **AI大学 IBM watsonx 追加 (16社目)**: migration `20260412007000_seed_ibm_ai_university.sql`
+   - 採用理由: エンタープライズ AI 最大手の一角・Granite OSS (Apache 2.0)・東京リージョン・HIPAA/GDPR対応
+   - overview: watsonx.ai/data/governance 3コンポーネント・金融医療公共機関での強み
+   - models: Granite 3.2 8B/2B・Granite Code 34B/8B/3B・Granite Guardian + サードパーティモデル
+   - api: ibm-watsonx-ai SDK・OpenAI互換エンドポイント・Granite Code・Hugging Face ローカル実行
+   - cross-instance-pr: `20260412_ibm_provider_ui.md` (emoji: '🔵', color: 0xFF0F62FE)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 15→16社 / LP=130のこと反映
+
+### 現状数値 (2026-04-12)
+
+- LP: 130のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 16社 (IBM watsonx追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia・IBM 追加 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学16社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Baidu ERNIE / Sakana AI 🟢 中 (Windows版)

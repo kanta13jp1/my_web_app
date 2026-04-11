@@ -1671,6 +1671,10 @@ $input
       (Icons.cloud_sync, '0xFF0F766E', 'データバックアップ', '全データを自動バックアップ・クラウド同期・ワンクリック復元。Dropbox/iCloudを超えるライフデータ保全インフラが自分株式会社に標準搭載。'),
       (Icons.calendar_view_week, '0xFFD97706', 'コンテンツカレンダー', 'SNS・ブログ・動画の制作スケジュールをカレンダーで一元管理。コンテンツ戦略・A/Bテスト計画・公開スケジュールを可視化するクリエイター向け投稿管理ツール。'),
       (Icons.savings, '0xFF10B981', '家計・予算プランナー', '月次予算設定・支出追跡・カテゴリ別分析・AI節約提案。MoneyForward/Zaimを超える家計管理とビジネス財務を同一アプリで完結させるスマート予算管理ツール。'),
+      (Icons.psychology_outlined, '0xFF8B5CF6', 'ブレインダンプ', '頭の中にある全てをGTD式に書き出し・AIが自動分類。タスク・アイデア・心配事を即座にキャプチャしマインドをクリアにするEvernoteを超える思考整理ツール。'),
+      (Icons.account_tree_outlined, '0xFF0891B2', 'プロジェクト管理', 'ガントチャート・スプリント計画・マイルストーン・依存関係を一元管理。Asana/Jira/GitHub Projectsを超えるライフマネジメント統合型プロジェクト管理ツール。'),
+      (Icons.contact_mail_outlined, '0xFFD97706', '名刺管理', 'OCR+AI連絡先自動抽出・タグ管理・人脈グラフ可視化。Eightを超えるAI名刺管理とビジネスネットワーキングを自分株式会社に標準搭載。'),
+      (Icons.family_restroom, '0xFFEC4899', '家族カレンダー', '家族のスケジュール共有・タスク割当・誕生日・記念日管理を一元化。Googleカレンダー家族共有を超えるプライバシー重視の家族専用スマートカレンダー。'),
     ];
 
     return Container(
@@ -1688,7 +1692,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない126のこと',
+            '自分株式会社でしかできない130のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
