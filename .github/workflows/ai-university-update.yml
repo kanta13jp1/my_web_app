@@ -1,0 +1,195 @@
+name: AI大学コンテンツ更新 (週次)
+
+# 6大AIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
+# 毎週月曜 11:00 JST (= UTC 02:00) に自動実行
+on:
+  schedule:
+    - cron: "0 2 * * 1"  # UTC 02:00 月曜 = JST 11:00 月曜
+  workflow_dispatch:
+
+concurrency:
+  group: ai-university-update
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: AI University Content Update
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Step 1: コード取得 ────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Step 2: 各プロバイダーの RSS から最新ニュースを取得・UPSERT ──────
+      - name: Step 2 - Fetch and upsert AI provider news
+        id: update
+        run: |
+          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
+          SUCCESS_COUNT=0
+          FAILED_PROVIDERS=""
+
+          upsert_provider() {
+            local provider="$1"
+            local rss_url="$2"
+            local provider_name="$3"
+
+            # RSS から最新記事タイトルを取得 (失敗時はフォールバックメッセージ)
+            local LATEST_TITLE
+            LATEST_TITLE=$(curl -s --max-time 10 "$rss_url" 2>/dev/null | \
+              grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | \
+              grep -v '^$' | tail -n +2 | head -1 | sed 's/^ *//;s/ *$//')
+
+            if [ -z "$LATEST_TITLE" ]; then
+              LATEST_TITLE="(RSS取得失敗 — 次回更新をお待ちください)"
+            fi
+
+            local CONTENT
+            CONTENT=$(printf '## %s 最新情報 (%s)\n\n最新記事: %s\n\n> 出典: %s' \
+              "$provider_name" "$TODAY" "$LATEST_TITLE" "$rss_url")
+
+            local HTTP_CODE
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -X POST \
+              "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_university_content" \
+              -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: resolution=merge-duplicates" \
+              -d "{
+                \"provider\": $(printf '%s' "$provider" | jq -R .),
+                \"category\": \"news\",
+                \"title\": $(printf '%s 最新ニュース (%s)' "$provider_name" "$TODAY" | jq -R .),
+                \"content\": $(printf '%s' "$CONTENT" | jq -R -s .),
+                \"published_at\": $(printf '%s' "$TODAY" | jq -R .),
+                \"sort_order\": 1,
+                \"is_active\": true
+              }" \
+              --max-time 15)
+
+            if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+              echo "✅ ${provider_name}: 更新完了 (${HTTP_CODE})"
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+              echo "⚠️ ${provider_name}: 更新失敗 (HTTP ${HTTP_CODE})"
+              FAILED_PROVIDERS="${FAILED_PROVIDERS} ${provider}"
+            fi
+          }
+
+          upsert_provider "google"     "https://blog.google/technology/ai/rss/"   "Google AI"
+          upsert_provider "openai"     "https://openai.com/news/rss.xml"          "OpenAI"
+          upsert_provider "anthropic"  "https://www.anthropic.com/rss/news.xml"   "Anthropic"
+          upsert_provider "microsoft"  "https://blogs.microsoft.com/ai/feed/"     "Microsoft AI"
+          upsert_provider "meta"       "https://ai.meta.com/blog/rss/"            "Meta AI"
+          upsert_provider "x"          "https://x.ai/blog/rss.xml"               "xAI"
+
+          echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
+          echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
+          echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
+          echo "📊 更新結果: ${SUCCESS_COUNT}/6 成功"
+
+      # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
+      - name: Step 3 - Append to daily report and commit via PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
+          BRANCH="ai-university-update/${TODAY}-$(date +%H%M%S)"
+          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
+          FAILED="${{ steps.update.outputs.failed_providers }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -b "$BRANCH" origin/main
+
+          # 日次レポートが存在しない場合は作成
+          REPORT="docs/daily-reports/${TODAY}.md"
+          if [ ! -f "$REPORT" ]; then
+            echo "# 自分株式会社 日次レポート ${TODAY}" > "$REPORT"
+          fi
+
+          {
+            echo ""
+            echo "## AI大学コンテンツ更新 (ai-university-update)"
+            echo ""
+            echo "- Google AI: RSS 取得・UPSERT"
+            echo "- OpenAI: RSS 取得・UPSERT"
+            echo "- Anthropic: RSS 取得・UPSERT"
+            echo "- Microsoft AI: RSS 取得・UPSERT"
+            echo "- Meta AI: RSS 取得・UPSERT"
+            echo "- X/xAI: RSS 取得・UPSERT"
+            echo "- 更新成功: ${SUCCESS_COUNT}/6"
+            if [ -n "$FAILED" ]; then
+              echo "- 失敗プロバイダー:${FAILED}"
+            fi
+          } >> "$REPORT"
+
+          git add "$REPORT"
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
+          fi
+
+          git commit -m "自動: AI大学コンテンツ更新 ${TODAY}"
+          git push origin "$BRANCH"
+
+          set +e
+          PR_URL=$(gh pr create \
+            --title "自動: AI大学コンテンツ更新 ${TODAY}" \
+            --body "ai-university-update ワークフローによる自動コンテンツ更新 (${SUCCESS_COUNT}/6 成功)" \
+            --base main \
+            --head "$BRANCH")
+          if [ -n "$PR_URL" ]; then
+            gh pr merge "$PR_URL" --squash --delete-branch --yes 2>&1 && \
+              echo "✅ マージ完了" || echo "⚠️ 手動マージが必要: $PR_URL"
+          fi
+          set -e
+
+      # ── Step 4: schedule_task_runs 記録 ─────────────────────────────────
+      - name: Step 4 - Record to schedule_task_runs
+        if: always()
+        run: |
+          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
+          FAILED="${{ steps.update.outputs.failed_providers }}"
+          STATUS="success"
+          [ "$SUCCESS_COUNT" -lt 6 ] 2>/dev/null && STATUS="partial"
+          SUMMARY="ai-university-update: ${SUCCESS_COUNT}/6 プロバイダー更新完了 failed=${FAILED}"
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"ai-university-update\",\"status\":\"$STATUS\",\"summary\":$(echo "$SUMMARY" | jq -R .)}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Job Summary
+        if: always()
+        run: |
+          TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')
+          SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
+          FAILED="${{ steps.update.outputs.failed_providers }}"
+          {
+            echo "## AI大学コンテンツ更新 ${TODAY}"
+            echo ""
+            echo "| プロバイダー | ステータス |"
+            echo "| --- | --- |"
+            echo "| Google AI | RSS取得・UPSERT |"
+            echo "| OpenAI | RSS取得・UPSERT |"
+            echo "| Anthropic | RSS取得・UPSERT |"
+            echo "| Microsoft AI | RSS取得・UPSERT |"
+            echo "| Meta AI | RSS取得・UPSERT |"
+            echo "| X/xAI | RSS取得・UPSERT |"
+            echo ""
+            echo "**更新成功**: ${SUCCESS_COUNT}/6"
+            if [ -n "$FAILED" ]; then
+              echo "**失敗**:${FAILED}"
+            fi
+          } >> $GITHUB_STEP_SUMMARY
