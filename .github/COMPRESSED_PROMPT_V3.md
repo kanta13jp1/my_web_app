@@ -238,7 +238,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
-| `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (14プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
+| `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (16プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -269,7 +269,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `infra-health-check` | 毎時 :30 | `health-check` EF + Firebase Hosting 確認 |
 | `dependency-audit` | 月 08:00 | `pub outdated` + Deno import バージョン検査 |
 | `blog-draft` | 08:00 JST | 直近7日コミット → ブログ下書き → `blog_posts` テーブル登録 |
-| `ai-university-update` | **4時間毎** | NotebookLM Deep Research → 14プロバイダー最新ニュースを Supabase UPSERT (GH Actions の RSS より深い情報で上書き) |
+| `ai-university-update` | **4時間毎** | NotebookLM Deep Research → 16プロバイダー最新ニュースを Supabase UPSERT (GH Actions の RSS より深い情報で上書き) |
 
 ---
 
@@ -580,10 +580,10 @@ web/sitemap.xml          # URL マップ
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#39 時点: 16社)
+#### 現在の登録プロバイダー (Windows版#40 時点: 17社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
@@ -670,7 +670,7 @@ streak_updated_at timestamptz
 9. CLAUDE.md Step 1 の検索クエリ・公式URLに追加
 ```
 
-**次回追加候補**: Baidu ERNIE (baidu) / Sakana AI (sakana) / Oracle AI (oracle)
+**次回追加候補**: Baidu ERNIE (baidu) / Oracle AI (oracle) / Reka AI (reka)
 **Apple Intelligence: 見送り** (API非公開・統合OS機能のみ・開発者向け教材として不適)
 **追加完了 (Windows版#33)**: Mistral AI / Perplexity AI — migration適用済み (`20260412000100/000200_seed_*_ai_university.sql`)
 **追加完了 (Windows版#34)**: Groq — migration適用済み (`20260412001000_seed_groq_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
@@ -679,6 +679,7 @@ streak_updated_at timestamptz
 **追加完了 (Windows版#37)**: Hugging Face — migration適用済み (`20260412005000_seed_huggingface_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#38)**: Nvidia NIM — migration適用済み (`20260412006000_seed_nvidia_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 **追加完了 (Windows版#39)**: IBM watsonx — migration適用済み (`20260412007000_seed_ibm_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
+**追加完了 (Windows版#40)**: Sakana AI — migration適用済み (`20260412008000_seed_sakana_ai_university.sql`) / VSCode版へ UI追加 cross-instance-pr 発行済み
 
 #### `ai_university_content` テーブルスキーマ
 
@@ -713,7 +714,7 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 | --- | --- | --- |
 | **Generator-Verifier** | 品質最重要・評価基準を明文化できる | `claude-agent-review.yml` / `ci-auto-fix.yml` / `/deep-research`(NLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確・短時間で完結するサブタスク | `cs-check.yml` / `github-issue-fix.yml` / Claude Code Schedule全般 |
-| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(14プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM) |
+| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(16プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM) |
 | **Message Bus** | イベント駆動・エコシステムが成長する | `workflow-failure-handler.yml` → Issue → `cs-check` / `feedback-issue-resolved.yml` |
 | **Shared State** | エージェントが互いの発見を活用・単一障害点を避けたい | `memory/` + NotebookLM Master Brain / Supabase DB / `COMPRESSED_PROMPT_V3.md` |
 

@@ -6805,3 +6805,76 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia・IBM 追加 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学16社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - AI大学 次追加候補: Baidu ERNIE / Sakana AI 🟢 中 (Windows版)
+
+---
+
+## PowerShell版#43 (2026-04-12)
+
+### 完了タスク
+
+1. **役割分担 C+ 提案実施 (PS#41〜#43)**:
+   - MULTI_INSTANCE_COORDINATION.md + COMPRESSED_PROMPT_V3.md の専任ルール化
+   - Rule 16 (Web/表示チェック) → VSCode版専任
+   - Rule 17 (GH Actionsチェック) → PowerShell版専任
+   - Rule 19 (UIツールチェーン) → VSCode版専任
+   - 緊急横断権限 (`docs/cross-instance-prs/`) 機構を新設
+
+2. **ci.yml `deno test` continue-on-error 廃止**: 74テスト安定稼働 (PR#317) を確認後に強制化
+
+3. **EF Tier入れ替え**: `edge-function-test-runner` → Tier2 / `ai-university-content` → Tier1 deploy
+
+4. **COMPRESSED_PROMPT_V3.md プロバイダー数修正**: 9 → 14 → 16社 (Nvidia/IBM追加後も追従)
+
+5. **ai-university-update.yml コメント修正**: 16社リスト (nvidia/ibm追加)
+
+6. **T-1 第6弾 dev.to リトライ**: personal-dashboard-notion-competitor.md → dev.to 再dispatch
+
+7. **T-1 第7弾 dispatch**: ai-writing-assistant-upgrade.md → Qiita + dev.to
+
+### 現状数値 (2026-04-12)
+
+- LP: 130のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 16社
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia・IBM 追加 🟡 高 (VSCode版)
+- T-1 第8弾: 次の技術記事候補 dispatch 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Baidu ERNIE / Sakana AI 🟢 中 (Windows版)
+- daily-report.yml 最終確認 + 不要ジョブ削除 🟢 中 (PowerShell版)
+
+---
+
+## Windows版#40 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: EF=99/151/250本・ユーザー=4人・ワークフロー=17本 → 全て正確
+   - COMPRESSED_PROMPT: PS版が 14→16プロバイダー数を修正済み (正確な更新を確認)
+
+2. **AI大学 Sakana AI 追加 (17社目)**: migration `20260412008000_seed_sakana_ai_university.sql`
+   - 採用理由: 東京発日本語AI最前線・進化的モデルマージング独自技術・Hugging Face 公開・日本人開発者必須
+   - overview: Transformer論文著者 Llion Jones 共同創業・SoftBank/NTT出資・国内ユニコーン候補
+   - models: EvoLLM-JP-7B・EvoVLM-JP-7B・Tanuki-8B/8x8B・AI Scientist・CTM
+   - api: transformers ローカル実行・EvoVLM-JP 画像理解・HF Inference API・利用条件表
+   - cross-instance-pr: `20260412_sakana_provider_ui.md` (emoji: '🐟', color: 0xFF00B4D8)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 16→17社
+
+### 現状数値 (2026-04-12)
+
+- LP: 130のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 17社 (Sakana AI追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Nvidia/IBM/Sakana 追加 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学17社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Baidu ERNIE / Oracle AI 🟢 中 (Windows版)
