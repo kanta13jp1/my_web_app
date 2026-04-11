@@ -158,6 +158,7 @@ import '../pages/ui_design_status_page.dart';
 import '../pages/ai_summarizer_page.dart';
 import '../pages/revenue_forecaster_page.dart';
 import '../pages/weather_widget_page.dart';
+import '../pages/personal_dashboard_page.dart';
 
 typedef HomeToolOpenCallback = Future<void> Function(BuildContext context);
 
@@ -1993,6 +1994,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
         '週間天気', 'ウェザー', '今日の天気',
       ],
       onOpen: (context) => _pushPage(context, const WeatherWidgetPage()),
+    ),
+    HomeToolEntry(
+      id: 'personal-dashboard',
+      sectionId: 'knowledge',
+      title: 'パーソナルダッシュボード',
+      subtitle: 'ノート・タスク・習慣・集中時間をKPIチャートで可視化。Notion 3.4対抗の個人ダッシュボード',
+      icon: Icons.bar_chart,
+      color: const Color(0xFF0891B2),
+      keywords: const <String>[
+        'ダッシュボード', 'KPI', 'チャート', '統計', '習慣', '集中', 'ノート',
+        'タスク', '可視化', 'Notion', '生産性', '分析', '週次',
+      ],
+      onOpen: (context) => _pushPage(context, const PersonalDashboardPage()),
     ),
   ];
 }

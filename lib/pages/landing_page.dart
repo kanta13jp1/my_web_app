@@ -1595,6 +1595,10 @@ $input
       (Icons.draw, '0xFF6D28D9', '仮想ホワイトボード', 'オンラインホワイトボードでアイデアをビジュアル整理。Miro/FigJamを超えるコラボ可能なキャンバス。'),
       (Icons.alt_route, '0xFF0891B2', 'ワークフロー自動化', 'タスク・メール・通知をトリガー&アクションで自動化。Zapierを超えるノーコード業務自動化エンジン。'),
       (Icons.qr_code, '0xFF374151', 'QRコード生成', 'URLやテキストを即座にQRコードに変換・保存・共有。業務・個人・イベント告知に対応した多用途QRジェネレーター。'),
+      (Icons.admin_panel_settings, '0xFF0F172A', 'アクセス制御・権限管理', 'ロール設定・ユーザー権限付与・アクセスログを一元管理。法人チームのセキュリティをジョブカンを超えるきめ細かさで実現。'),
+      (Icons.inventory, '0xFF059669', '在庫・バーコード管理', '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'),
+      (Icons.dashboard_customize, '0xFF7C3AED', 'テンプレート広場', 'ビジネス・学習・ライフスタイル・技術開発など6カテゴリ18種のテンプレートを即適用。Notionマーケットプレイスを超える日本語特化テンプレート集。'),
+      (Icons.bar_chart, '0xFF0891B2', 'パーソナルダッシュボード', 'ノート数・タスク達成率・習慣ストリーク・集中時間をチャートで可視化。Notion 3.4のダッシュボードビューを超えるAIパーソナルKPI分析。'),
     ];
 
     return Container(
@@ -1612,7 +1616,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない52のこと',
+            '自分株式会社でしかできない56のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
