@@ -98,9 +98,9 @@ final Map<String, _ProviderMeta> _providerMeta = {
   ),
   'cohere': _ProviderMeta(
     name: 'Cohere',
-    emoji: '🔮',
-    color: const Color(0xFF39594D),
-    officialUrl: 'https://docs.cohere.com/',
+    emoji: '🏢',
+    color: const Color(0xFF39B5F0),
+    officialUrl: 'https://dashboard.cohere.com/',
   ),
   'perplexity': _ProviderMeta(
     name: 'Perplexity',
@@ -119,6 +119,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     emoji: '🔥',
     color: const Color(0xFFF55036),
     officialUrl: 'https://console.groq.com/',
+  ),
+  'stability': _ProviderMeta(
+    name: 'Stability AI',
+    emoji: '🎨',
+    color: const Color(0xFF6C35DE),
+    officialUrl: 'https://platform.stability.ai/',
   ),
 };
 
@@ -182,6 +188,21 @@ final Map<String, _Quiz> _quizzes = {
   'groq': _Quiz(
     question: 'Groq が開発した独自 AI チップの名称は？',
     options: ['LPU', 'TPU', 'GPU', 'NPU'],
+    correct: 0,
+  ),
+  'cohere': _Quiz(
+    question: 'Cohere の RAG パイプラインで検索結果の精度を向上させるモデルは？',
+    options: ['Rerank', 'Embed', 'Command R', 'Aya'],
+    correct: 0,
+  ),
+  'amazon': _Quiz(
+    question: 'Amazon Bedrock の Converse API の主な利点は何ですか？',
+    options: ['全モデルを統一インターフェースで利用可能', '最高速度の推論', '最低コストの利用', '日本語専用最適化'],
+    correct: 0,
+  ),
+  'stability': _Quiz(
+    question: 'Stable Diffusion を開発した企業はどこですか？',
+    options: ['Stability AI', 'OpenAI', 'Midjourney', 'Adobe'],
     correct: 0,
   ),
 };
@@ -317,20 +338,46 @@ const Map<String, String> _fallback = {
 - Pro Search: 深い分析・比較が可能
 - API 提供あり (OpenAI互換)
 ''',
+  'cohere': '''
+# Cohere — エンタープライズ RAG 特化
+
+Cohere は企業向け RAG (検索拡張生成) パイプラインに特化した AI プラットフォームです。
+Embed + Rerank + Command R+ の組み合わせが業界最高水準のRAGを実現します。
+
+## 主要モデル
+- Command R+ (128K, RAG・エージェント特化)
+- Command A (256K, フラッグシップ)
+- Embed v4.0 (多言語セマンティック検索)
+- Rerank v3.5 (検索精度向上)
+- Aya Expanse (130言語対応オープンウェイト)
+
+## 特徴
+- エンタープライズ向け GDPR/HIPAA/SOC2 対応
+- プライベートデプロイ (AWS / Azure / GCP / オンプレ)
+- 無料トライアル枠あり
+
+[Cohere Dashboard](https://dashboard.cohere.com/)
+''',
   'amazon': '''
-## Amazon (Bedrock)
+# Amazon Bedrock / Nova — マルチモデル AI プラットフォーム
 
-AWS のマネージドAI基盤サービス。複数モデルをAPIで利用可能。
+Amazon Bedrock は 50+ モデルを単一 API で利用できる AWS のマネージドサービスです。
+Amazon Nova は AWS 独自の大規模言語モデルシリーズです。
 
-### 主要機能
-- **Amazon Bedrock** — Claude/LLaMA/Titan等をAPI提供
-- **Amazon Titan** — AWS独自モデル
-- **Nova** — 最新の Amazon 独自マルチモーダルモデル
+## Amazon Nova シリーズ
+- Nova Micro (テキスト特化・超低コスト)
+- Nova Lite (マルチモーダル・低コスト)
+- Nova Pro (高精度マルチモーダル)
+- Nova Premier (1M コンテキスト・最高精度)
+- Nova Canvas (画像生成)
+- Nova Reel (動画生成・最大2分)
 
-### 特徴
-- 複数ファウンデーションモデルを統一APIで切替可能
-- AWS IAM による細粒度アクセス制御
-- Knowledge Bases でRAG構築が容易
+## 特徴
+- AWS VPC/IAM/CloudTrail との完全統合
+- エンタープライズ SLA (HIPAA/SOC2/GDPR)
+- Converse API で全モデルを統一インターフェースで利用可能
+
+[AWS Console](https://console.aws.amazon.com/bedrock/)
 ''',
   'groq': '''
 # Groq — LPU 超高速推論
@@ -349,6 +396,25 @@ Groq は LPU (Language Processing Unit) という独自チップで
 - 無料枠あり
 
 [Groq Console](https://console.groq.com/)
+''',
+  'stability': '''
+# Stability AI — 画像・動画生成のパイオニア
+
+Stable Diffusion の開発元。テキストから画像・動画・音楽・3Dモデルを生成する
+オープンなAIモデルを提供しています。
+
+## 主要モデル
+- Stable Diffusion 3.5 Large/Medium (最高品質画像生成)
+- SDXL 1.0 (定番・エコシステム最大)
+- Stable Video Diffusion (画像→動画)
+- Stable Audio 2.0 (テキスト→音楽/SE)
+
+## 特徴
+- OSS: 商用利用可能なオープンウェイトモデル
+- ローカル実行対応 (VRAM 8GB+)
+- ComfyUI / Automatic1111 エコシステム
+
+[Stability AI Platform](https://platform.stability.ai/)
 ''',
 };
 

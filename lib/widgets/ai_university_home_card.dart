@@ -27,7 +27,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   static const String _prefsKey = 'ai_univ_answered_quizzes';
 
   static const List<String> _providerEmojis = [
-    '🔵', '⚫', '🟠', '🔷', '🟣', '⚡', '🐋', '💨', '🔍', '🔶', '🔥',
+    '🔵', '⚫', '🟠', '🔷', '🟣', '⚡', '🐋', '💨', '🔍', '🔶', '🔥', '🏢', '🎨',
   ];
 
   @override
