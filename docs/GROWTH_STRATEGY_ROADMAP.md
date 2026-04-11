@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 daily-development (パーソナルダッシュボード実装・LP 52→56のこと拡張)
+最終更新: 2026-04-12 VSCode版#57 (コア機能#132-#137追加・LP 120→126のこと・211ページ)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -5696,3 +5696,24 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 🔴 最高
 - Chrome extension 接続時に production URL スクリーンショットで最終確認
 - T-1 第3弾: Qiita トークン再設定 → notification-center.md 投稿
+
+---
+
+## VSCode版#57 — コア機能#132-#137追加 (2026-04-12)
+
+### 実施内容
+
+- **新ページ×6作成**: AIメンタルヘルスケア / フリーランス管理 / AIプレゼンビルダー / データバックアップ / コンテンツカレンダー / 家計・予算プランナー
+- **main.dart**: 6ルート追加 (`/mental-health-tracker`, `/freelance-manager`, `/ai-presentation-builder`, `/data-backup`, `/content-calendar`, `/home-budget-planner`)
+- **landing_page.dart**: LP タイトル「120のこと」→「126のこと」、6機能エントリ追加
+- **COMPRESSED_PROMPT_V3.md**: コア#132-#137追加、ページ数205→211
+- EF 99本制限遵守: 既存EF (`ai-assistant`, `data-export-manager`) を再利用
+- `DropdownButtonFormField(value:)` 非推奨対応: `InputDecorator + DropdownButton` パターン適用
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- Windows版: `ai_university_streaks` テーブル + ストリークUI 🟡 高
+- T-1 第3弾: Qiita トークン再設定 → 投稿 🟡 高
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
+- LP 126→130のこと: さらに4機能追加候補検討 🟢 中

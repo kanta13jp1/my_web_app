@@ -207,6 +207,12 @@ import 'package:my_web_app/pages/weather_widget_page.dart';
 import 'package:my_web_app/pages/team_chat_page.dart';
 import 'package:my_web_app/pages/health_coach_page.dart';
 import 'package:my_web_app/pages/thought_interrupt_diagnosis_page.dart';
+import 'package:my_web_app/pages/mental_health_tracker_page.dart';
+import 'package:my_web_app/pages/freelance_manager_page.dart';
+import 'package:my_web_app/pages/ai_presentation_builder_page.dart';
+import 'package:my_web_app/pages/data_backup_page.dart';
+import 'package:my_web_app/pages/content_calendar_page.dart';
+import 'package:my_web_app/pages/home_budget_planner_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1170,6 +1176,30 @@ class MyApp extends StatelessWidget {
           case '/thought-interrupt-diagnosis':
             return MaterialPageRoute(
               builder: (_) => const ThoughtInterruptDiagnosisPage(),
+            );
+          case '/mental-health-tracker':
+            return MaterialPageRoute(
+              builder: (_) => const MentalHealthTrackerPage(),
+            );
+          case '/freelance-manager':
+            return MaterialPageRoute(
+              builder: (_) => const FreelanceManagerPage(),
+            );
+          case '/ai-presentation-builder':
+            return MaterialPageRoute(
+              builder: (_) => const AiPresentationBuilderPage(),
+            );
+          case '/data-backup':
+            return MaterialPageRoute(
+              builder: (_) => const DataBackupPage(),
+            );
+          case '/content-calendar':
+            return MaterialPageRoute(
+              builder: (_) => const ContentCalendarPage(),
+            );
+          case '/home-budget-planner':
+            return MaterialPageRoute(
+              builder: (_) => const HomeBudgetPlannerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

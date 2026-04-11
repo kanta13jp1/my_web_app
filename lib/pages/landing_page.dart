@@ -1663,6 +1663,12 @@ $input
       (Icons.assistant, '0xFF10B981', 'AI文章添削', '日本語文章の誤字・文法・表現をAIがリアルタイム添削。ブログ・メール・報告書の品質を即座に向上させる自分株式会社内蔵の校正エンジン。'),
       (Icons.workspace_premium, '0xFFDC2626', 'プレミアムコンテンツ販売', 'ノート・テンプレート・スキルをコンテンツとして販売・収益化。Gumroadを超えるナレッジマーケットプレイスを自分株式会社に内蔵。'),
       (Icons.groups, '0xFF6D28D9', 'オンラインコミュニティ', 'テーマ別コミュニティ・勉強会・習慣チャレンジをアプリ内で開催。Discordを超える目的特化型コミュニティプラットフォーム。'),
+      (Icons.favorite_border, '0xFFEC4899', 'AIメンタルヘルスケア', '気分・ストレス・睡眠を毎日記録しAIが統合分析。Calm/Headspaceを超えるパーソナライズドメンタルウェルネスを自分株式会社に内蔵。'),
+      (Icons.work_outline, '0xFF0891B2', 'フリーランス管理', '案件・請求書・契約・稼働時間・確定申告を一元管理。freee/MoneyForwardを超える個人事業主向けオールインワン経営管理ツール。'),
+      (Icons.present_to_all, '0xFF7C3AED', 'AIプレゼンビルダー', 'テーマを入力するだけでAIがスライド構成を自動生成。Gamma/Canva/Beautiful.aiを超えるライフマネジメント統合型AIプレゼン作成エンジン。'),
+      (Icons.cloud_sync, '0xFF0F766E', 'データバックアップ', '全データを自動バックアップ・クラウド同期・ワンクリック復元。Dropbox/iCloudを超えるライフデータ保全インフラが自分株式会社に標準搭載。'),
+      (Icons.calendar_view_week, '0xFFD97706', 'コンテンツカレンダー', 'SNS・ブログ・動画の制作スケジュールをカレンダーで一元管理。コンテンツ戦略・A/Bテスト計画・公開スケジュールを可視化するクリエイター向け投稿管理ツール。'),
+      (Icons.savings, '0xFF10B981', '家計・予算プランナー', '月次予算設定・支出追跡・カテゴリ別分析・AI節約提案。MoneyForward/Zaimを超える家計管理とビジネス財務を同一アプリで完結させるスマート予算管理ツール。'),
     ];
 
     return Container(
@@ -1680,7 +1686,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない120のこと',
+            '自分株式会社でしかできない126のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
