@@ -782,15 +782,15 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 
 | 優先度 | 機能 | 担当インスタンス | 状態 |
 | --- | --- | --- | --- |
-| 🔴 最高 | ランキングUI (`ai_university_ranking_page.dart`) | VSCode版 | 未実装 |
-| 🔴 最高 | `ai-university-content` EF (GET/UPSERT) | Web版 | 未実装 |
-| 🔴 最高 | `ai_university_scores` スコア書込み (EF + Dart) | Web版+VSCode版 | 未実装 |
-| 🟡 高 | `ai_university_streaks` テーブル + ストリークUI | Windows版+VSCode版 | migration作成済み |
-| 🟡 高 | `ai_university_badges` バッジ発行 EF | Web版+VSCode版 | migration作成済み |
-| 🟡 高 | シェア文言 A/B テスト (3バリエーション) | VSCode版 | 未実装 |
-| 🟢 中 | ホームカード: ストリーク日数表示 | VSCode版 | 未実装 |
-| 🟢 中 | 学習リマインダー通知 | Web版 | 未実装 |
-| 🟢 中 | SNS シェア画像生成 (OGP カード) | VSCode版+Web版 | 未実装 |
+| ✅ | ランキングUI (`ai_university_ranking_page.dart`) | VSCode版 | ✅ 完了 (VSCode版#53) |
+| ✅ | `ai-university-content` EF (GET/UPSERT) | Web版 | ✅ 完了 (Web版#28, PR#317) |
+| ✅ | `ai_university_scores` スコア書込み (EF + Dart) | Web版+VSCode版 | ✅ 完了 (VSCode版#54 + Web版#33) |
+| ✅ | `ai_university_streaks` EF + ストリークUI | Web版+VSCode版 | ✅ 完了 (Web版#29, VSCode版#54) |
+| ✅ | `ai_university_badges` バッジ発行 EF | Web版 | ✅ 完了 (Web版#29/#33, PR#317) |
+| ✅ | シェア文言 A/B テスト (3バリエーション) | VSCode版 | ✅ 完了 (VSCode版#54) |
+| ✅ | ホームカード: ストリーク日数表示 | VSCode版 | ✅ 完了 (VSCode版#54) |
+| ✅ | SNS シェア画像生成 (OGP カード) | VSCode版 | ✅ 完了 (VSCode版#56) |
+| 🟢 中 | 学習リマインダー通知 (定期バッチ) | Web版 | EF action 実装済み (Web版#34) / バッチ未設定 |
 | 🔵 低 | 他ユーザー学習状況表示 | VSCode版 | 未実装 |
 
 #### 既存実装（改善のベースライン）

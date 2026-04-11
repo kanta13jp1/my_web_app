@@ -12,7 +12,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
 | **VSCode版** | `lib/` (Flutter UI・211ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 247本) | 他3範囲 |
+| **Web版** | `supabase/functions/` (Edge Functions 250本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (17本完備済み) | 他3範囲 |
 
@@ -614,11 +614,11 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
-| `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 最高 |
-| `ai_university_scores` にスコア書き込み (EF + Flutter) | ~~VSCode版完了 (VSCode版#54, 2026-04-12) / Web版EF未実装~~ | 🔴→🟡 |
+| ~~`ai-university-content` EF 新規作成~~ ✅ 完了 (Web版#28, 2026-04-12, PR#317 main マージ済み) | Web版 | ✅ |
+| ~~`ai_university_scores` にスコア書き込み (EF + Flutter)~~ ✅ 完了 (VSCode版#54 + Web版#33) | — | ✅ |
 | ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) | VSCode版 | ✅ 完了 |
-| `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
-| `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
+| ~~`ai_university_badges` バッジ発行 EF (達成条件判定・INSERT)~~ ✅ 完了 (Web版#29/#33, PR#317 main マージ済み) | Web版 | ✅ |
+| ~~`ai_university_streaks` ストリーク計算 EF~~  ✅ 完了 (Web版#29, PR#317 main マージ済み) / HomeCard 連続日数表示 ✅ 完了 (VSCode版#54) | — | ✅ |
 | ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
