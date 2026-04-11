@@ -4799,4 +4799,46 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 
 1. **タスク T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
 2. **ai-assistant EF**: マイスキル登録・再利用機能 (Slack対抗) 🟡
+
+---
+
+## セッション記録 — 2026-04-11 (PowerShell版 PS#28-#31)
+
+**担当インスタンス**: PowerShell版 (`.github/workflows/` 担当)
+
+### 実装内容
+
+**PS#28**: COMPRESSED_PROMPT #61 ファイルパス修正 (`lib/pages/` → `lib/pages/home_page.dart`)
+
+**PS#29**: `youtube-analysis.yml` 新規作成
+
+- `yt_dlp` を使った YouTube 競合分析 CI/CD パイプライン自動化
+- スケジュール: 毎日 11:00 JST (`0 2 * * *`)
+- `yt_results.json` は `.gitignore` 除外 (ランタイム出力のみ)、`updated_table.tsv` のみ git 追跡
+- PR → 自動マージパターンで main ブランチに反映
+
+**PS#30**: `ci-auto-fix.yml` 新規作成
+
+- CI Checks 失敗時に `dart fix --apply` + `deno fmt` を自動実行
+- main/staging/develop ブランチはスキップ (PR なし直接 push は対象外)
+- flutter analyze で修復確認後、PR にコメント投稿
+
+**PS#31**: `.github/workflows/README.md` v1.6.0 更新
+
+- 13本 → 15本体制 (youtube-analysis + ci-auto-fix 追加)
+- `schedule_task_runs` 記録: 6本 → 8本
+- markdownlint 0 エラー確認
+
+### コミット履歴
+
+| コミット | 内容 |
+| --- | --- |
+| `f134ee52` | PS#28: COMPRESSED_PROMPT #61 パス修正 |
+| `68c3bf72` | PS#29: youtube-analysis.yml CI/CD自動化 |
+| `5fa7f6fb` | PS#30: ci-auto-fix.yml CI失敗自動修復 |
+| `0fd66acd` | PS#31: workflows/README.md 15本体制更新 |
+
+### 次回優先 (PowerShell版)
+
+- 新規 COMPRESSED_PROMPT タスクに従い対応 (context refresh 待ち)
 3. **personal-dashboard EF**: Tier2→Tier1 デプロイ (94本制限内で削除1件が必要)
