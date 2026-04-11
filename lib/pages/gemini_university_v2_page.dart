@@ -441,10 +441,14 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // カードプレビュー
-              RepaintBoundary(
-                key: _shareCardKey,
-                child: _buildShareCard(),
+              // カードプレビュー — FittedBox でモバイル幅に収める (キャプチャは360px維持)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.topCenter,
+                child: RepaintBoundary(
+                  key: _shareCardKey,
+                  child: _buildShareCard(),
+                ),
               ),
               // ボタン行
               Padding(

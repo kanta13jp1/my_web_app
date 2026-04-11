@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-11 daily-development (パーソナルダッシュボード実装・LP 52→56のこと拡張)
+最終更新: 2026-04-12 VSCode版#57 (コア機能#132-#137追加・LP 120→126のこと・211ページ)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -6268,3 +6268,67 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - Web版: `ai_university_badges` バッジ発行 EF 🟡 高
 - T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
 - notebooklm login 再認証 (cookie期限切れ確認)
+
+## Windows版#33 継続セッション — Web/モバイル表示チェック (2026-04-12)
+
+### 実施内容
+
+- **プロバイダー数表記修正**: `ai_university_home_card.dart` のサブタイトル・シェア文言を「7社以上」→「9社以上」に修正 (Mistral/Perplexity追加を反映)
+- **モバイル幅溢れ修正**: `gemini_university_v2_page.dart` シェアカードダイアログ — `width:360` のカードが Mobile(375px)のDialog内でオーバーフローする問題を `FittedBox(fit: BoxFit.scaleDown)` で解決。キャプチャ解像度(360px)は維持
+- commit: `9cf60a78` (7→9社), `ce298782` (FittedBox) push済み
+
+### 確認内容
+
+- AI大学タブバー: `isScrollable: true` + `tabAlignment: TabAlignment.start` → 9タブ横スクロール対応済み ✅
+- LPページ: 固定width 400px以上なし ✅
+- ランキングページ: `TextOverflow.ellipsis` 適用済み ✅
+- Flutter preview (debug mode): Canvas未描画のためスクリーンショット不可 — Chrome extension接続時に再確認予定
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- Chrome extension 接続時に production URL スクリーンショットで最終確認
+- T-1 第3弾: Qiita トークン再設定 → notification-center.md 投稿
+
+---
+
+## VSCode版#57 — コア機能#132-#137追加 (2026-04-12)
+
+### 実施内容
+
+- **新ページ×6作成**: AIメンタルヘルスケア / フリーランス管理 / AIプレゼンビルダー / データバックアップ / コンテンツカレンダー / 家計・予算プランナー
+- **main.dart**: 6ルート追加 (`/mental-health-tracker`, `/freelance-manager`, `/ai-presentation-builder`, `/data-backup`, `/content-calendar`, `/home-budget-planner`)
+- **landing_page.dart**: LP タイトル「120のこと」→「126のこと」、6機能エントリ追加
+- **COMPRESSED_PROMPT_V3.md**: コア#132-#137追加、ページ数205→211
+- EF 99本制限遵守: 既存EF (`ai-assistant`, `data-export-manager`) を再利用
+- `DropdownButtonFormField(value:)` 非推奨対応: `InputDecorator + DropdownButton` パターン適用
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- Windows版: `ai_university_streaks` テーブル + ストリークUI 🟡 高
+- T-1 第3弾: Qiita トークン再設定 → 投稿 🟡 高
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
+- LP 126→130のこと: さらに4機能追加候補検討 🟢 中
+
+---
+
+## PowerShell版 PS#40 — Qiita 403修正 + UI改善ルール#19追加 (2026-04-12)
+
+### 実施内容
+
+- **blog-publish.yml Qiita 403 根本修正** (commit `08bc6c37`):
+  - 原因: Zenn形式 `topics:` フロントマターに対応していなかった → `TAGS=""` → `TAGS_JSON=[""]` → Qiita 403
+  - 修正: `grep -E '^(tags|topics):'` に変更 + 空タグ時デフォルト値 `Flutter,Supabase,buildinpublic`
+  - `notification-center.md` の Qiita 投稿ブロッカー解消
+- **UI改善ツールチェーン必須ルール追加** (commit `985201dc`):
+  - `COMPRESSED_PROMPT_V3.md` Rule #19 追加: 全インスタンス毎セッション Nanobanana API × Figma MCP × AIDesigner MCP × design-skills × DESIGN.md
+  - `CLAUDE.md` Rule 12 に詳細5ステップワークフロー追加
+  - Nanobanana API = Google Gemini 2.0 Flash Image Generation (`.claude/skills/nano-banana/SKILL.md`)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- T-1 第3弾: `notification-center.md` Qiita 投稿確認 → 第3弾下書き選定
+- Web版: `ai_university_badges` バッジ発行 EF 🟡 高
+- Web版: `ai_university_streaks` ストリーク計算 EF 🟡 高

@@ -24,6 +24,8 @@ google, microsoft, discord, line, facebook, liven, github
 
 ## デザインシステム参照 (UI生成時に必ず参照)
 
+**毎セッション必須ツールチェーン** (Rule 19): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて UI を改善する。詳細手順は `.github/COMPRESSED_PROMPT_V3.md` の Rule 19 および `docs/DESIGN_TOOLING_SETUP.md` 参照。
+
 UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
 
 - **自分株式会社デザイントークン**: `docs/DESIGN.md`
@@ -58,30 +60,23 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 10. **毎セッション: `docs/` 戦略ドキュメント全件分析・開発計画反映** — 以下の常設ドキュメントを読み、(a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記する。
    - 対象: `docs/CICD_SETUP_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/MULTI_INSTANCE_COORDINATION.md`, `docs/README.md`, `docs/DESIGN_TOOLING_SETUP.md`, `docs/technical/*.md`, `docs/roadmaps/*.md`, `docs/user-docs/*.md`
    - 除外 (自動生成・アーカイブ): `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
-8. **毎セッション: Web版 + モバイル版 UI 表示崩れチェック・修正（必須）** — Flutter Web はデスクトップ (≥1280px) とモバイル (≤480px) の両方で表示されるため、毎セッション以下を必ず実行する:
-   - **静的チェック**: 直近5セッションで触った `lib/pages/*.dart` / `lib/widgets/*.dart` をアンチパターンで `Grep` 走査
-     - `Row`/`Column` 内の `width: double.infinity` を `Expanded` なしで使用 → 広幅 overflow リスク
-     - `SizedBox(width: 300以上)` ハードコード → モバイル縦画面で横スクロール発生
-     - `Text(..., maxLines: 1)` に `TextOverflow.ellipsis` 未指定 → `RenderFlex overflowed` 発生
-     - `MediaQuery.of(context).size.width` 条件分岐なし → ブレークポイント未対応
-     - フルスクリーンダイアログに `LayoutBuilder` / `OrientationBuilder` 不在 → モバイルで切れる
-   - **実機チェック (VSCode版代表)**: `flutter run -d chrome --web-browser-flag="--window-size=390,844"` (iPhone14 相当) と `--window-size=1440,900` (デスクトップ) で、ランディング / ホーム / AI大学 / 比較ページ / ユーザーマニュアルを目視確認
-   - **修正**: 発見した問題は担当スコープで即修正 (`flutter analyze` 0エラー維持必須)。Web版/Windows版/PowerShell版 はスコープ外なら `COMPRESSED_PROMPT_V3.md` に「実装待ち」追記
-   - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
-9. **EF上限管理 — Supabase 99本ハードリミット** — **100本目でデプロイエラー**。新規EFを作る前に既存EFへの `action` 追加を最優先検討する。Tier1 は 99/99 で満杯のため、新規作成したEFは強制的に Tier2（コードのみ）運用となる。Tier1 に昇格したい場合は `deploy-prod.yml` の既存EFを1本降格してスロットを空けること
-10. **毎セッション: GitHub Actions ワークフロー改善検討（必須）** — デプロイ時間短縮と無駄なリソース消費削減のため、毎セッション以下を必ず実行する:
-    - **失敗ワークフロー特定**: 直近 7日間の連続失敗ワークフローを洗い出し、原因調査 or disable/削除する。「毎回失敗して通知だけ鳴らしている」ワークフローは正味コストだけのため即削除候補 (例: `cron-batch.yml` の `Run Python Analysis Batch` は毎回エラー中)
-    - **重複ワークフロー特定**: 複数ワークフローで同一ロジックが走っていないかチェック (例: `run-batch` ジョブが `deploy-prod.yml` L381 と `cron-batch.yml` の両方に存在 → 本番デプロイの度に失敗Pythonバッチが走り遅延要因)
-    - **デプロイ高速化**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップなど逐次実行されている重ステップを並列化 (`xargs -P8` / `matrix` strategy / 差分デプロイ `git diff --name-only` で変更EFのみ対象) で大幅短縮を検討する
-    - **スコープ別修正**: `.github/workflows/*.yml` の変更は PowerShell版スコープ。Web版/VSCode版/Windows版 は発見事項を `COMPRESSED_PROMPT_V3.md`「実装待ち」に追記し PowerShell版にハンドオフ
-    - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「ワークフロー改善」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
-11. **毎セッション: UI 改善ワークフロー実行（必須）** — Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md` を駆使して、毎セッション最低 1 コンポーネント / 1 ページの UI 改善を実施する。以下の 5 ステップを順番に実行する:
-    - **Step 1 (分析)**: `/design-review` スキルで直近セッションで触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査し、`docs/DESIGN.md` (Orange+Indigo ダークテーマ) のトークン違反・コントラスト不足・余白ミスを検出する
-    - **Step 2 (設計案生成)**: `/design-workflow` スキルで Figma MCP から既存デザインを読み取り、AIDesigner MCP で改善案を生成する。既存デザインがない場合は Nano Banana (`nano-banana` スキル) で参考ビジュアルを生成してムードボードに使う
-    - **Step 3 (コンポーネント実装)**: `/design-component` スキルで Flutter ウィジェットを生成し、`docs/DESIGN.md` のトークン (色・タイポ・スペーシング) を適用する。新規ウィジェットは `lib/widgets/` に配置、既存ウィジェットを改修する場合は Edit で変更する
-    - **Step 4 (品質チェック)**: `/design-check` スキルでデザイン品質を検証し、`flutter analyze` 0エラー・`deno lint` 0エラー・WCAG AA コントラスト 4.5:1 以上を満たすことを確認する
-    - **スコープ別対応**: `lib/` 変更は VSCode版スコープ。Web版は発見事項を `COMPRESSED_PROMPT_V3.md`「実装待ち」に追記し VSCode版にハンドオフ。Web版単独で実施する場合は Step 1・Step 2 の分析成果物 (改善提案) のみを生成し、`docs/design-reviews/YYYY-MM-DD-web-<session>.md` に記録する
-    - **記録**: 実施内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI改善ワークフロー」項目に必ず追記する (Step 1 のみでも「分析実施: 改善提案 N 件」と記録)
+11. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（必須）** — `ai_university_content` テーブルの最新 `news` カテゴリ（または NotebookLM に蓄積した AI ニュース）を開発に活かす。以下の観点で評価し、有望なものは `GROWTH_STRATEGY_ROADMAP.md` の次回優先タスクに追記する:
+   - **モデルアップグレード**: 新モデル (例: Gemini 2.5 / Claude 4 / GPT-5) が利用可能になったら既存 EF (`ai-assistant`, `daily-judgment`, `gemini-election-analysis` など) のモデルパラメータを更新
+   - **新 API 機能の取り込み**: 音声生成 (Voxtral) / リアルタイム検索 (Perplexity Sonar) / 画像生成など新機能を既存機能に統合できないか検討
+   - **コスト最適化**: より安価・高速なモデルが登場したらバッチ処理 EF (`batch_analysis.py`, `competitor-monitoring` など) での採用を検討
+   - **差別化機能のヒント**: 競合 AI プロバイダーの新機能からユーザー価値を逆算し、未実装機能のアイデアとして追加
+   - **実施手順**: (1) `notebooklm ask "各プロバイダーの最新ニュースから開発に使えそうな機能・APIを抽出して"` → (2) 既存 EF・ページとの接続可能性を評価 → (3) 実装可能なものは即 ROADMAP へ追記 → (4) 今セッションで対応できるものは実装
+
+12. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を毎セッション組み合わせて UI を 1ページ以上改善する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19 および `docs/DESIGN_TOOLING_SETUP.md`（正式手順書）参照。
+
+   **改善ワークフロー（既存画面改善時）**:
+   1. **`design-skills` サブエージェント起動**: 主要ページ (ホーム / AI大学 / LP / ランキング) を `docs/DESIGN.md` (Orange+Indigo ダークテーマ) と照合し、デザイントークン違反・改善点を列挙
+   2. **Figma MCP** (`/design-review`): 既存デザインの余白・タイポ・コンポーネント構造を読み「今あるものに合わせる」基準を取得
+   3. **AIDesigner MCP** (`/design-component`): Desktop/Mobile 両方で改善案 2〜3 案を生成
+   4. **Nanobanana API**: カラーパレット・コンポーネント案を生成してデザイン候補を拡張
+   5. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
+
+   **制約**: `docs/DESIGN.md` に反する提案は採用しない / `Theme.of(context)` + `ThemeService` を優先 / 日本語本文の `letter-spacing: 0`・`line-height: 1.7〜2.0` を維持
 
 ---
 
@@ -98,7 +93,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (7プロバイダー並行RSS取得) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (9プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
@@ -806,12 +801,16 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 | シェア機能 | `gemini_university_v2_page.dart` `_shareProgress()` | バリエーション追加 |
 | クイズ達成度 | SharedPreferences `ai_univ_answered_quizzes` | Supabase に移行してクロスデバイス対応 |
 | プロバイダー無制限 | DB 駆動タブ (9社対応済み) | 毎セッションで新プロバイダー検討 |
-| コンテンツ自動更新 | `ai-university-update.yml` (毎週月曜) | ai-university-content EF 完成後にフル稼働 |
+| コンテンツ自動更新 | `ai-university-update.yml` (2時間毎) + Claude Schedule (4時間毎・NotebookLM) | ai-university-content EF 完成後にフル稼働 |
 | DB スキーマ | `ai_university_scores` + `leaderboard` ビュー | EF とUI接続が未完了 |
 
 ---
 
-### Task: ai-university-update (毎週月曜 11:00 JST に実行)
+### Task: ai-university-update (毎4時間実行)
+
+> **アーキテクチャ**: GitHub Actions `ai-university-update.yml` が2時間毎に RSS ベースの軽量更新を行う。
+> Claude Schedule (毎4時間) は NotebookLM Deep Research で**より深い情報**を収集してリッチなコンテンツを上書きする。
+> 両者が同じ `ai_university_content.news` レコードを UPSERT するため、後から書いた方が最新版になる。
 
 AI大学コンテンツを最新情報に自動更新する。**プロバイダー数は固定せず**、重要性が高い新興AIプロバイダーを毎回検討して随時追加する。
 
@@ -854,12 +853,23 @@ Samsung       (samsung)   — Gauss、オンデバイスAI
 5. `ai-university-update.yml` の検索クエリリストにプロバイダーを追加
 6. COMPRESSED_PROMPT_V3.md の「現在の登録プロバイダー」リストを更新
 
-#### Step 1: 登録済み各プロバイダーの最新情報を WebSearch で取得
+#### Step 1: NotebookLM Deep Research で最新AIニュースを収集（必須）
 
-登録済みプロバイダーについて WebSearch を実行し、最新情報を収集する:
+GitHub Actions の RSS 更新より深い情報を取得するため、必ず NotebookLM を使う:
+
+```bash
+# 全プロバイダーを一括でリサーチ (専用ノートブック or Master Brain)
+notebooklm use jibun-master-brain
+notebooklm source add-research "Google Gemini OpenAI GPT Anthropic Claude Microsoft Copilot Meta LLaMA xAI Grok DeepSeek Mistral Perplexity latest AI news releases API changes 2026"
+notebooklm research wait
+notebooklm ask "各AIプロバイダー (Google/OpenAI/Anthropic/Microsoft/Meta/xAI/DeepSeek/Mistral/Perplexity) の最新ニュース・モデルリリース・API変更をプロバイダー別に日本語でまとめてください"
+```
+
+認証切れの場合: `notebooklm login` で再認証 (30秒)。
+NotebookLM が利用不可の場合は WebSearch にフォールバック:
 
 ```text
-検索クエリ (各プロバイダーごと):
+WebSearch フォールバック (各プロバイダーごと):
 - Google:    "Google Gemini AI latest news models 2026"
 - OpenAI:    "OpenAI GPT o1 o3 latest news 2026"
 - Anthropic: "Anthropic Claude latest news models 2026"
@@ -867,6 +877,8 @@ Samsung       (samsung)   — Gauss、オンデバイスAI
 - Meta:      "Meta AI LLaMA latest news 2026"
 - X/xAI:    "xAI Grok latest news models 2026"
 - DeepSeek: "DeepSeek AI latest news models 2026"
+- Mistral:  "Mistral AI latest news models 2026"
+- Perplexity: "Perplexity AI Sonar latest news 2026"
 ```
 
 各プロバイダーの公式ブログ・リリースノートも参照する:

@@ -11,8 +11,8 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・205ページ・ウィジェット) | 他3範囲 |
-| **Web版** | `supabase/functions/` (Edge Functions 248本) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・211ページ・ウィジェット) | 他3範囲 |
+| **Web版** | `supabase/functions/` (Edge Functions 247本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (17本完備済み) | 他3範囲 |
 
@@ -168,13 +168,19 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 129 | **AI文章添削** (日本語誤字・文法・表現のリアルタイム添削・校正エンジン) | ✅ LP済 | VSCode版 |
 | 130 | **プレミアムコンテンツ販売** (ノート・テンプレート・スキル販売×収益化 — デジタル販売SaaS対抗) | ✅ LP済 | VSCode版 |
 | 131 | **オンラインコミュニティ** (テーマ別コミュニティ・勉強会・習慣チャレンジ — Discord対抗) | ✅ LP済 | VSCode版 |
+| 132 | **AIメンタルヘルスケア** (気分・ストレス・睡眠トラッキング＋AI改善提案 — Calm/Headspace対抗) | ✅ LP済 | `lib/pages/mental_health_tracker_page.dart` (VSCode版) |
+| 133 | **フリーランス管理** (案件・請求書・契約管理 — freee/MoneyForward対抗) | ✅ LP済 | `lib/pages/freelance_manager_page.dart` (VSCode版) |
+| 134 | **AIプレゼンビルダー** (スライド自動生成・テンプレート — Gamma/Canva対抗) | ✅ LP済 | `lib/pages/ai_presentation_builder_page.dart` (VSCode版) |
+| 135 | **データバックアップ** (全データ自動バックアップ・クラウド同期・ワンクリック復元 — Dropbox/iCloud対抗) | ✅ LP済 | `lib/pages/data_backup_page.dart` (VSCode版) |
+| 136 | **コンテンツカレンダー** (SNS投稿・ブログ・動画制作スケジュール管理) | ✅ LP済 | `lib/pages/content_calendar_page.dart` (VSCode版) |
+| 137 | **家計・予算プランナー** (月次予算設定・支出追跡・AI節約提案 — MoneyForward/Zaim対抗) | ✅ LP済 | `lib/pages/home_budget_planner_page.dart` (VSCode版) |
 
 ---
 
 ## 🎨 デザインシステム
 
 - **`docs/DESIGN.md`** が唯一の真実ソース（Orange+Indigo ダークテーマ）
-- **Figma MCP** / **AIDesigner MCP** / **`design-skills` サブエージェント** を活用
+- **毎セッション必須ツールチェーン (Rule #19)**: `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × **`design-skills` サブエージェント** × `DESIGN.md` を組み合わせて UI 改善。詳細: `docs/DESIGN_TOOLING_SETUP.md`
 - 日本語本文: `letter-spacing: 0`, `line-height: 1.7〜2.0`, `palt` は見出しのみ
 - 参考デザインシステム: `docs/design-systems/` (note / freee / SmartHR / Apple JP / WIRED.jp)
 
@@ -199,13 +205,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
-18. **毎セッション: UI 改善ワークフロー実行（全インスタンス・必須）** — **Claude Code × Nano Banana API × Figma MCP × AIDesigner MCP × Design Skills × `docs/DESIGN.md`** を駆使して、毎セッション最低 1 コンポーネント / 1 ページの UI 改善を実施する。5 ステップで実行:
-    - **Step 1 (分析)**: `/design-review` で直近触った `lib/pages/*.dart` / `lib/widgets/*.dart` を走査し、`docs/DESIGN.md` (Orange+Indigo ダークテーマ) のトークン違反・コントラスト不足・余白ミスを検出
-    - **Step 2 (設計案生成)**: `/design-workflow` で Figma MCP 読み取り + AIDesigner MCP 生成、既存デザインがなければ `nano-banana` スキルで参考ビジュアル生成しムードボードに使う
-    - **Step 3 (実装)**: `/design-component` で Flutter ウィジェット生成 or 既存ウィジェットを Edit で改修。`docs/DESIGN.md` トークン (色・タイポ・スペーシング) を適用
-    - **Step 4 (品質チェック)**: `/design-check` でデザイン品質検証 + `flutter analyze` 0エラー + `deno lint` 0エラー + WCAG AA コントラスト 4.5:1 を確認
-    - **スコープ別対応**: `lib/` 変更は **VSCode版** スコープ。Web版/Windows版/PowerShell版 は Step 1・2 の分析成果物 (改善提案) のみ生成し `docs/design-reviews/YYYY-MM-DD-<instance>-<session>.md` に記録し VSCode版にハンドオフ
-    - **記録**: 実施内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI改善ワークフロー」項目に必ず追記 (Step 1 のみでも「分析実施: 改善提案 N 件」と記録)
+18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス・必須）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
+19. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページ(`lib/pages/` のいずれか)を `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙する、(2) **Figma MCP** (`mcp__figma__authenticate`) でデザインコンポーネントを参照・実装との差分を特定する、(3) **AIDesigner MCP** (`mcp__aidesigner__authenticate`) でDesktop/Mobile 両対応の改善案 2〜3 案を生成する、(4) **Nanobanana API** でカラーパレット・アイコン・グラデーションなどのデザインアセットを取得し Flutter コードに反映する、(5) 改善コードを `lib/` に実装 → `flutter analyze 0エラー` → commit → GROWTH_STRATEGY_ROADMAP に「UI改善: [ページ名] — [変更内容]」を記録する。**優先ページ順**: LP → ホーム画面 → AI大学 → 高トラフィックページ。**制約**: `docs/DESIGN.md` のトークン（色・フォント・間隔）違反案は採用禁止 / `ThemeService` カスタムテーマ優先 / 詳細手順は `docs/DESIGN_TOOLING_SETUP.md` 参照
 
 ---
 
@@ -231,7 +232,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
-| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
+| `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -262,6 +263,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `infra-health-check` | 毎時 :30 | `health-check` EF + Firebase Hosting 確認 |
 | `dependency-audit` | 月 08:00 | `pub outdated` + Deno import バージョン検査 |
 | `blog-draft` | 08:00 JST | 直近7日コミット → ブログ下書き → `blog_posts` テーブル登録 |
+| `ai-university-update` | **4時間毎** | NotebookLM Deep Research → 9プロバイダー最新ニュースを Supabase UPSERT (GH Actions の RSS より深い情報で上書き) |
 
 ---
 
@@ -280,9 +282,9 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 205ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
+lib/pages/               # 211ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 250本 (Tier1: 99デプロイ済 / Tier2: 151コードのみ / ai-university-content + ai-university-streaks + ai-university-badges は PowerShell版#36 で Tier1 昇格待ち)
+supabase/functions/      # Deno Edge Functions 247本 (Tier1: 99デプロイ済 / Tier2: 148コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 17本 (品質基準完備済み)
 docs/
@@ -309,7 +311,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本=**Supabase ハードリミット 99/99 満杯**) と Tier2コメント(151本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。**100本目でデプロイエラー**のため、AI大学キラー機能3本 (`ai-university-content` / `ai-university-streaks` / `ai-university-badges`) は全て Tier2 コード運用。Tier1 昇格には既存 EF を降格してスロットを空ける必要あり (PowerShell版#36 タスク)。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(148本) で全247本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。
 
 ---
 
@@ -436,7 +438,7 @@ web/sitemap.xml          # URL マップ
 
 **背景**: 2026-03-27/28 レポートで「Zenn/Qiita記事の即日公開がユーザー獲得の最優先施策」と複数回提言。パイプライン完成済み・下書き大量蓄積の今こそ実行フェーズ。
 
-**現状 (2026-04-12 PS#37 で第2弾完了)**:
+**現状 (2026-04-12 PS#40 で第2弾 Qiita 投稿ブロッカー解消)**:
 
 - **下書き合計 54本** (`docs/blog-drafts/` 全体 / 内 Zennフロントマター形式 17本)
 - `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` ✅ Supabase シークレット設定済み (Windows版#23)
@@ -445,14 +447,14 @@ web/sitemap.xml          # URL マップ
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
   - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
-- ⚠️ **Qiita**: トークンが 401 Unauthorized (無効トークン) — [Qiita設定ページ](https://qiita.com/settings/tokens/new) で新規トークン再発行 (`write_qiita` スコープ) → `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン>` → `blog-publish.yml` dispatch で `2026-03-31-notification-center.md` 再実行
+- ✅ **blog-publish.yml Qiita 403 修正済み** (PS#40, commit `08bc6c37`): Zenn形式 `topics:` フロントマターに対応していなかったバグを修正。`grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic` を追加。`notification-center.md` を dispatch 実行済み (結果確認要)
 
 **次回候補 (第3弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita(要トークン再設定)/dev.to |
-| 高 | `2026-03-31-notification-center.md` — Qiita 投稿 (dev.to は完了済み) | Qiita(要トークン再設定) |
+| 高 | `2026-03-31-notification-center.md` — Qiita (dispatch済み・結果確認要) | Qiita |
+| 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
 | 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
@@ -485,7 +487,6 @@ web/sitemap.xml          # URL マップ
 | `flutter test` の結果が Job Summary に未表示 | `id: flutter_test` / `id: deno_test` 追加、Job Summary にテスト結果行を追加 | ✅ 解決済み (PS#24) |
 
 > **Web版へ**: 主要EF (`notification-center` / `feature-request-manager` / `onboarding-flow`) に `*.test.ts` を追加すると CI で自動テストが走る体制が整った。
-> → ✅ **完了 (Web版#36, 2026-04-11)**: 3 EF に index.test.ts を追加 (合計33テスト / 全 pass / deno lint 0エラー)。外部 import を避け軽量アサーションをインライン定義しオフライン実行も担保。純粋ロジック (normalizeCategory / buildFeedbackTitle / ONBOARDING_STEPS 進捗計算 / JST 日付計算 / send_study_reminders スパム防止) を検証対象にした。
 
 ### CI/CD改善 #C6: docs/ 戦略ドキュメント分析からの反映 (PowerShell版#27, 2026-04-11)
 
@@ -550,7 +551,7 @@ web/sitemap.xml          # URL マップ
 | ~~思考妨害パターン診断UI (4質問形式)~~ ✅ 完了 (`thought_interrupt_diagnosis_page.dart` + LP#78 + route `/thought-interrupt-diagnosis`) | VSCode版 | ✅ 完了 |
 | ~~リアルタイム介入ウィジェット (ホーム画面衝動ボタン)~~ ✅ 完了 (`lib/widgets/thought_interrupt_quick_widget.dart` + ホーム禁欲ガードパネルに組込み) | VSCode版 | ✅ 完了 |
 | ~~週次パターンレポート (slip 分析・タイムスタンプ集計)~~ ✅ 完了 (`weekly_slip_report_page.dart` + LP#79 + route `/weekly-slip-report`, PS#33, 2026-04-11) | VSCode版 | ✅ 完了 |
-| ~~AI介入提案 (`ai-assistant` EF に slip パターン渡し)~~ ✅ 完了 (Web版#35, 2026-04-11) `ai-assistant` EF に `suggest_slip_intervention` action 追加。直近30日の `abstinence_slips` を曜日/時間帯/アイテム別に集計 → CBT/ACT 専門家プロンプトで LLM に介入提案生成。riskスコア・intervention_tips 3-5件・insights 200-300字を JSON で返却 | Web版 | ✅ 完了 |
+| AI介入提案 (`ai-assistant` EF に slip パターン渡し) | Web版 | 🟢 低 |
 
 ### ~~markdownlint 残件 (Windows版スコープ)~~ ✅ 解決済み (PS#33, 2026-04-11)
 
@@ -613,17 +614,15 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
-| ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版#28, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き | Web版 | ✅ 完了 |
-| ~~`ai_university_scores` にスコア書き込み (EF + Flutter)~~ ✅ 完了 (VSCode版#54-#55 + Web版#33, 2026-04-12) VSCode側は SharedPreferences→Supabase 移行済み。Web版は `ai-university-badges` EF に 3 action 追加: `record_score` (UPSERT + 新規正解時はバッジ審査連続実行) / `get_scores` (自分の全スコア降順) / `score_leaderboard` (`ai_university_leaderboard` view, email→ハンドルサニタイズ)。内部で `evaluateQuizMaster` ヘルパー抽出 (check_quiz_master と共有)。新規 EF 作成せずスロット節約 (99/99 維持) | Web版+VSCode版 | ✅ 完了 |
-| ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) / **追加検討**: `score_leaderboard` action を使ってクイズ正解数ランキングの2タブ目を追加 | VSCode版 | 🟢 中 |
-| ~~`ai_university_badges` バッジ発行 EF (達成条件判定・INSERT)~~ ✅ 完了 (Web版#30-#33, 2026-04-11〜04-12) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard`/`record_score`/`get_scores`/`score_leaderboard` の8 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング + スコア書き込み統合 | Web版 | ✅ 完了 |
-| ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action / ~~HomeCard 連続日数表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | Web版+VSCode版 | ✅ 完了 |
+| `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 最高 |
+| `ai_university_scores` にスコア書き込み (EF + Flutter) | ~~VSCode版完了 (VSCode版#54, 2026-04-12) / Web版EF未実装~~ | 🔴→🟡 |
+| ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) | VSCode版 | ✅ 完了 |
+| `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
+| `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
 | ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
 | ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
-| **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
-| **DESIGN.md 準拠化 — 4ファイル 54 違反修正**: `docs/design-reviews/2026-04-11-web-36.md` に行番号付き詳細あり。🔴 Priority 1: `lib/utils/design_tokens.dart` 新規作成し `AppColors` / `AppSpacing` / `AppTypography` 定数を DESIGN.md から転記 → 違反の 80% が一括解決。🟡 Priority 2: 日本語タイポ準拠 (`height: 1.7` 追加 / `letterSpacing` 本文から削除 / `fontFamily: 'Serif'` 削除)。🟡 Priority 3: Material テーマ参照 (`Theme.of(context).colorScheme.*` / `Colors.grey[900]` / `Colors.indigo.shade800`) を AppColors に置換。対象: `ai_university_ranking_page.dart` / `ai_university_home_card.dart` / `notifications_page.dart` / `onboarding_page.dart`。Web版#36 design-review Step 1 で検出 (2026-04-11) | VSCode版 | 🟡 高 |
-| ~~学習リマインダー通知 (3日未学習 → notification-center EF)~~ ✅ 完了 (Web版#34, 2026-04-11) `supabase/functions/notification-center/index.ts` に `send_study_reminders` action 追加。`ai_university_streaks` から 3〜30日未学習のユーザーを抽出、直近3日以内の同種通知をスパム防止で除外、`app_notifications` に復帰促進メッセージを一括挿入。`dry_run` / `min_idle_days` / `max_idle_days` パラメータ対応。新規EF 作成せずスロット維持 | Web版 | ✅ 完了 |
+| 学習リマインダー通知 (3日未学習 → notification-center EF) | Web版 | 🟢 中 |
 | ~~SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化)~~ ✅ 完了 (VSCode版#56, 2026-04-12) | VSCode版 | ✅ |
 
 #### `ai_university_badges` テーブルスキーマ
@@ -699,7 +698,7 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 | --- | --- | --- |
 | **Generator-Verifier** | 品質最重要・評価基準を明文化できる | `claude-agent-review.yml` / `ci-auto-fix.yml` / `/deep-research`(NLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確・短時間で完結するサブタスク | `cs-check.yml` / `github-issue-fix.yml` / Claude Code Schedule全般 |
-| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(7プロバイダー並行) |
+| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(9プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM) |
 | **Message Bus** | イベント駆動・エコシステムが成長する | `workflow-failure-handler.yml` → Issue → `cs-check` / `feedback-issue-resolved.yml` |
 | **Shared State** | エージェントが互いの発見を活用・単一障害点を避けたい | `memory/` + NotebookLM Master Brain / Supabase DB / `COMPRESSED_PROMPT_V3.md` |
 
