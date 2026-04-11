@@ -616,6 +616,83 @@ git push origin main
 
 ---
 
+### Task: ai-university-update (毎週月曜 11:00 JST に実行)
+
+AI大学コンテンツを最新情報に自動更新する。6大AIプロバイダー（Google/OpenAI/Anthropic/Microsoft/Meta/X）の最新ニュース・モデル情報を取得して `ai_university_content` テーブルを上書き更新する。
+
+#### Step 1: 各プロバイダーの最新情報を WebSearch で取得
+
+以下の6プロバイダーについて WebSearch を実行し、最新情報を収集する:
+
+```text
+検索クエリ (各プロバイダーごと):
+- Google:    "Google Gemini AI latest news models 2026"
+- OpenAI:    "OpenAI GPT o1 o3 latest news 2026"
+- Anthropic: "Anthropic Claude latest news models 2026"
+- Microsoft: "Microsoft Copilot Azure OpenAI latest 2026"
+- Meta:      "Meta AI LLaMA latest news 2026"
+- X/xAI:    "xAI Grok latest news models 2026"
+```
+
+各プロバイダーの公式ブログ・リリースノートも参照する:
+
+```text
+https://blog.google/technology/ai/
+https://openai.com/news/
+https://www.anthropic.com/news
+https://blogs.microsoft.com/ai/
+https://ai.meta.com/blog/
+https://x.ai/blog
+```
+
+#### Step 2: `ai_university_content` テーブルを UPSERT で更新
+
+`ai-university-content` EF (または Supabase REST API) で各プロバイダーの `news` カテゴリレコードを更新する:
+
+```http
+POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/ai-university-content
+Authorization: Bearer <SUPABASE_SERVICE_KEY>
+Content-Type: application/json
+{
+  "action": "upsert_news",
+  "provider": "google",
+  "title": "Google AI 最新ニュース (YYYY-MM-DD)",
+  "content": "## 今週の最新情報\n\n[取得した内容をMarkdown形式で]",
+  "published_at": "YYYY-MM-DD"
+}
+```
+
+または Supabase REST API を直接使用:
+
+```bash
+curl -X POST \
+  "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_university_content" \
+  -H "apikey: <SUPABASE_SERVICE_KEY>" \
+  -H "Authorization: Bearer <SUPABASE_SERVICE_KEY>" \
+  -H "Content-Type: application/json" \
+  -H "Prefer: resolution=merge-duplicates" \
+  -d '{"provider":"google","category":"news","title":"...","content":"...","published_at":"YYYY-MM-DD"}'
+```
+
+#### Step 3: 更新サマリーを記録してコミット
+
+変更内容を `docs/daily-reports/YYYY-MM-DD.md` の末尾に追記:
+
+```markdown
+## AI大学コンテンツ更新 (ai-university-update)
+- Google: Gemini 2.x 最新リリース情報を更新
+- OpenAI: o3 mini 料金改定情報を追加
+- ...（各プロバイダーの更新内容）
+```
+
+```bash
+git add docs/daily-reports/
+git commit -m "自動: AI大学コンテンツ更新 YYYY-MM-DD"
+git push origin main
+```
+
+---
+
 ## ディレクトリ構成 (主要)
 
 ```text
