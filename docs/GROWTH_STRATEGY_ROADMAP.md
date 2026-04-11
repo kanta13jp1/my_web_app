@@ -5035,3 +5035,35 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 | 🟡 | AI介入提案 (ai-assistant EF + slip パターン) | Web版 |
 | 🟡 | Notion API 連携強化 (growth-import-preview) | Web版 |
 | 🟢 | モバイルアプリ (iOS/Android) Flutter ビルド対応 | VSCode版 |
+
+---
+
+## セッション記録: PowerShell版 #34 (2026-04-11)
+
+### 実装内容
+
+- **markdownlint 残件修正**: `docs/GROWTH_STRATEGY_ROADMAP.md`
+  - MD029/MD032: 箇条書きと番号リストの混在を統一 (4843行)
+  - MD012: 連続空行2→1 (4949行)
+  - MD034: bare URL → markdown link (4996行)
+  - `npx markdownlint-cli` 0エラー達成
+- **機能 #79 週次Slipパターンレポート**: `lib/pages/weekly_slip_report_page.dart` 新規作成
+  - `abstinence_slips` テーブルを直接クエリ (過去30日)
+  - KPI行: 現在ストリーク・今週slip数 (前週比トレンド付き)・30日合計
+  - 曜日別棒グラフ (最悪曜日を赤ハイライト)
+  - 時間帯別水平バーチャート (4区間: 深夜/朝/昼/夜)
+  - 妨害要因ランキング (上位5件 + メダル絵文字)
+  - 最近のslip履歴リスト
+  - `/weekly-slip-report` ルート追加
+- **LP 更新**: 67→68のこと (週次Slipレポート追加)
+- **COMPRESSED_PROMPT_V3.md**: 204→205ページ, #79 コア機能リスト追加, markdownlint残件クローズ
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- `markdownlint` 0エラー
+
+### 発見事項
+
+- LP 思考妨害パターン診断 (#78) は別インスタンスが既に追加済み (67のこと) → 今回 68のこと に更新
+- COMPRESSED_PROMPT ページ数も別インスタンスが 204 に更新済み → 205 に更新
