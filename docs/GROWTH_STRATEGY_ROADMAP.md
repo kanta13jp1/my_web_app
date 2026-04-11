@@ -4970,3 +4970,45 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 ### 発見事項
 
 - `_DiagOption`/`_DiagQuestion` に `const` コンストラクタを付けると `static final` リストでも `prefer_const_constructors` lint が発生する → `const` を削除して対処
+
+---
+
+## セッション: VSCode#38 (2026-04-11)
+
+### 実施内容
+
+- **#T2 リアルタイム介入ウィジェット** (`thought_interrupt_quick_widget.dart` 新規作成):
+  - 6種の衝動ボタン (SNS/ゲーム/動画/タバコ/お酒/衝動) をタップで介入シート表示
+  - BottomSheet: 排除アクション + 代替行動 + 「排除した」ボタン
+  - ホーム画面の禁欲ガードパネル末尾に `ThoughtInterruptQuickWidget` として組込み
+  - 「診断 →」リンクで `/thought-interrupt-diagnosis` に遷移
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+
+---
+
+## セッション: daily-development#4 (2026-04-11)
+
+### 実施内容
+
+- **T-1 第4弾**: `2026-04-10.md` (Claude Code Schedule × Supabase 自動ブログ) を blog-auto-publisher EF 経由で投稿
+  - dev.to: 投稿成功 → https://dev.to/kanta13jp1/claude-code-schedule-x-supabase-edge-functions-...
+  - Qiita: 502 Down (Qiita 側の障害) → スキップ (post_id: 641a4d5c)
+- **abstinence_slips テーブル作成**: `20260411002400_create_abstinence_slips.sql`
+  - RLS (自分のデータのみ) / user_id + slipped_at / user_id + item_id インデックス
+- **既実装確認 (all done by VSCode#37-38)**:
+  - thought_interrupt_diagnosis_page.dart: 4問診断 + ローカル結果表示 ✅
+  - ThoughtInterruptQuickWidget: 衝動6ボタン + 介入BottomSheet ✅
+  - main.dart /thought-interrupt-diagnosis ルート ✅
+  - LP 思考妨害パターン診断 追加済み ✅
+
+### 品質確認
+
+- `flutter analyze` 0エラー (home_page.dart + widget + diagnosis page)
+
+### 発見事項
+
+- Qiita が 502 Down 中 → EF 側は blog_posts.status を "posted" に更新するため再投稿不可。blog-auto-publisher に Qiita-only retry が必要なケースあり
+- blog-post-manager EF は 502 を返したが DB 挿入は成功していた (auto_publish GET で確認)
