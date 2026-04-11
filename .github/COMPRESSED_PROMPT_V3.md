@@ -121,6 +121,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 82 | **収益予測** (過去データ×市場トレンドでAIが収益予測・キャッシュフロー可視化 — MoneyForward対抗) | ✅ LP済 | VSCode版 |
 | 83 | **ブックマーク同期** (ブラウザ↔アプリ双方向同期・AI自動タグ付け・検索 — Notion対抗) | ✅ LP済 | VSCode版 |
 | 84 | **天気・環境ウィジェット** (現在地天気・気温・紫外線をダッシュボード表示・AI活動提案) | ✅ LP済 | VSCode版 |
+| 85 | **アフィリエイト管理** (リンク管理・クリック追跡・報酬分析・AI収益最適化) | ✅ LP済 | `lib/pages/affiliate_marketing_page.dart` (VSCode版) |
+| 86 | **CRM・営業パイプライン** (リード管理・商談ステージ・成約予測 — Salesforce対抗) | ✅ LP済 | `lib/pages/crm_sales_pipeline_page.dart` (VSCode版) |
+| 87 | **スプレッドシートDB** (フィルタ・ソート・数式・API連携の多機能データ管理 — Notion対抗) | ✅ LP済 | `lib/pages/spreadsheet_database_page.dart` (VSCode版) |
+| 88 | **SNS投稿スケジューラー** (X/Instagram/Facebook最適時間自動予約・AI改善提案) | ✅ LP済 | `lib/pages/social_media_scheduler_page.dart` (VSCode版) |
+| 89 | **サブスク課金管理** (請求・顧客管理・解約防止分析の自動化 — Stripe対抗) | ✅ LP済 | `lib/pages/subscription_billing_page.dart` (VSCode版) |
 
 ---
 

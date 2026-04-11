@@ -1616,6 +1616,11 @@ $input
       (Icons.trending_up, '0xFF0EA5E9', '収益予測', '過去データと市場トレンドからAIが収益を予測。キャッシュフロー・売上推移を視覚化してビジネス計画を最適化。MoneyForwardを超えるAI財務分析。'),
       (Icons.bookmarks, '0xFFF59E0B', 'ブックマーク同期', 'ブラウザのブックマークをアプリと双方向同期。AI自動タグ付け・分類・検索で必要な情報を即座に発見。Notionリンクデータベースを超える知識管理。'),
       (Icons.wb_sunny_outlined, '0xFF06B6D4', '天気・環境ウィジェット', '現在地の天気・気温・紫外線をダッシュボードに常時表示。天気に合わせた活動提案・外出可否判断をAIが自動生成し、ライフマネジメントと環境情報を完全統合。'),
+      (Icons.monetization_on, '0xFFEF4444', 'アフィリエイト管理', 'アフィリエイトリンク管理・クリック追跡・報酬分析を一元化。収益源の多様化を自動最適化するAI収益化エンジン。'),
+      (Icons.business_center, '0xFF0F766E', 'CRM・営業パイプライン', 'リード管理・商談ステージ追跡・成約予測をAIが自動化。Salesforceを超えるパーソナルCRMを無料で実現。'),
+      (Icons.table_chart, '0xFF6366F1', 'スプレッドシートDB', 'Notionデータベースを超える多機能スプレッドシート。フィルタ・ソート・数式・API連携に対応した柔軟なデータ管理。'),
+      (Icons.schedule_send, '0xFFEC4899', 'SNS投稿スケジューラー', 'X/Instagram/FacebookへのSNS投稿を最適時間に自動予約・一括投稿。AIが投稿内容の改善案も提案するコンテンツマーケ自動化ツール。'),
+      (Icons.subscriptions, '0xFF7C3AED', 'サブスク課金管理', 'サブスクリプション請求・顧客管理・解約防止分析を自動化。Stripeを超える自分株式会社内蔵の課金エンジン。'),
     ];
 
     return Container(
@@ -1633,7 +1638,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない73のこと',
+            '自分株式会社でしかできない78のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
