@@ -5717,3 +5717,25 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - T-1 第3弾: Qiita トークン再設定 → 投稿 🟡 高
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 🔴 最高
 - LP 126→130のこと: さらに4機能追加候補検討 🟢 中
+
+---
+
+## PowerShell版 PS#40 — Qiita 403修正 + UI改善ルール#19追加 (2026-04-12)
+
+### 実施内容
+
+- **blog-publish.yml Qiita 403 根本修正** (commit `08bc6c37`):
+  - 原因: Zenn形式 `topics:` フロントマターに対応していなかった → `TAGS=""` → `TAGS_JSON=[""]` → Qiita 403
+  - 修正: `grep -E '^(tags|topics):'` に変更 + 空タグ時デフォルト値 `Flutter,Supabase,buildinpublic`
+  - `notification-center.md` の Qiita 投稿ブロッカー解消
+- **UI改善ツールチェーン必須ルール追加** (commit `985201dc`):
+  - `COMPRESSED_PROMPT_V3.md` Rule #19 追加: 全インスタンス毎セッション Nanobanana API × Figma MCP × AIDesigner MCP × design-skills × DESIGN.md
+  - `CLAUDE.md` Rule 12 に詳細5ステップワークフロー追加
+  - Nanobanana API = Google Gemini 2.0 Flash Image Generation (`.claude/skills/nano-banana/SKILL.md`)
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 🔴 最高
+- T-1 第3弾: `notification-center.md` Qiita 投稿確認 → 第3弾下書き選定
+- Web版: `ai_university_badges` バッジ発行 EF 🟡 高
+- Web版: `ai_university_streaks` ストリーク計算 EF 🟡 高
