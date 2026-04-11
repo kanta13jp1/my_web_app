@@ -5654,3 +5654,24 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
 - Web版: `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) 🟡 高
 - PowerShell/daily-dev: T-1 第3弾 技術記事投稿 (Qiita 403 要トークン再設定)
+
+## PS#39 wrap-up セッション記録 (2026-04-12)
+
+### Qiita 401 Unauthorized 確定診断
+
+- Supabase シークレット再設定後もトークン2本とも `GET /api/v2/authenticated_user` で Unauthorized
+- 結論: トークン自体が無効 — スコープ問題ではなく新規発行が必要
+- COMPRESSED_PROMPT T-1 Qiita status を「403 Forbidden」→「401 Unauthorized (無効トークン)」に更新
+- 次手: ユーザーが Qiita設定で新規トークン発行 → `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン>` → blog-publish.yml dispatch
+
+### context-compressed 継続セッション知見
+
+- セッションサマリーの pending tasks がファイル実態と乖離するケースを確認
+- 対策: 継続セッション開始時は `git diff HEAD` で実態確認後に編集
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- Web版: `ai_university_badges` バッジ発行 EF 🟡 高
+- T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
+- notebooklm login 再認証 (cookie期限切れ確認)
