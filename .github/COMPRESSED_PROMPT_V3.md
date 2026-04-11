@@ -481,7 +481,7 @@ web/sitemap.xml          # URL マップ
 | --- | --- | --- |
 | `abstinence_slips` テーブル作成 (マイグレーション) | Windows版 | 🟡 中 |
 | ~~思考妨害パターン診断UI (4質問形式)~~ ✅ 完了 (`thought_interrupt_diagnosis_page.dart` + LP#78 + route `/thought-interrupt-diagnosis`) | VSCode版 | ✅ 完了 |
-| リアルタイム介入ウィジェット (ホーム画面衝動ボタン) | VSCode版 | 🟡 中 |
+| ~~リアルタイム介入ウィジェット (ホーム画面衝動ボタン)~~ ✅ 完了 (`lib/widgets/thought_interrupt_quick_widget.dart` + ホーム禁欲ガードパネルに組込み) | VSCode版 | ✅ 完了 |
 | 週次パターンレポート (slip 分析・タイムスタンプ集計) | VSCode版 | 🟢 低 |
 | AI介入提案 (`ai-assistant` EF に slip パターン渡し) | Web版 | 🟢 低 |
 

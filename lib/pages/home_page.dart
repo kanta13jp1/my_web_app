@@ -42,6 +42,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/referral_share_card.dart';
+import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
@@ -2450,6 +2451,8 @@ abstinence_slip_details: $slipDetailsText
               ),
             ),
           ],
+          const SizedBox(height: 10),
+          const ThoughtInterruptQuickWidget(),
         ],
       ),
     );
