@@ -426,7 +426,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   _ProviderMeta _meta(String id) => _providerMeta[id] ?? _unknownMeta;
 
-  void _awardQuizPoints(String providerId) {
+  Future<void> _awardQuizPoints(String providerId) async {
     if (_answeredQuizzes.contains(providerId)) return;
     setState(() => _answeredQuizzes.add(providerId));
     _saveAnsweredQuizzes();
@@ -439,6 +439,23 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         duration: const Duration(seconds: 2),
       ),
     );
+    // Supabase にスコアを記録 (RLS: users_own_scores で直接書き込み可)
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      try {
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
+      } catch (_) {
+        // スコア保存失敗はサイレント — ローカルの SharedPreferences は保持済み
+      }
+    }
   }
 
   @override

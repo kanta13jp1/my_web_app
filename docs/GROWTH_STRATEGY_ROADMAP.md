@@ -5491,3 +5491,21 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Web版: `ai_university_scores` スコア書き込み EF
 - VSCode版: ホームカード ストリーク日数・バッジ数動的表示
+
+## VSCode版#54 セッション記録 (2026-04-12)
+
+### 実装内容
+
+- `lib/pages/gemini_university_v2_page.dart` — `_awardQuizPoints` を `async` 化、Supabase `ai_university_scores` upsert 追加
+  - クイズ正解時に `ai_university_scores(user_id, provider_id, quiz_correct, studied_at)` を upsert
+  - `onConflict: 'user_id,provider_id'` で重複登録防止
+  - RLS `users_own_scores` ポリシーにより EF 不要で直接書き込み
+  - upsert 失敗はサイレント — SharedPreferences ローカル保存は維持
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Web版: `ai_university_scores` スコア書き込み EF (Supabase側トリガー・バッジ発行連携)
+- VSCode版: ホームカード ストリーク日数・バッジ数動的表示
+- VSCode版: シェア文言 A/Bテスト (3バリエーション)

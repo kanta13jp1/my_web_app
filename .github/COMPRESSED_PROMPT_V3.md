@@ -602,7 +602,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 最高 |
-| `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
+| `ai_university_scores` にスコア書き込み (EF + Flutter) | ~~VSCode版完了 (VSCode版#54, 2026-04-12) / Web版EF未実装~~ | 🔴→🟡 |
 | ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) | VSCode版 | ✅ 完了 |
 | `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) | Web版 | 🟡 高 |
 | `ai_university_streaks` ストリーク計算 EF + HomeCard 連続日数表示 | Web版+VSCode版 | 🟡 高 |
