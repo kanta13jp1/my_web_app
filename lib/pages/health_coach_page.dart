@@ -1,0 +1,387 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// ヘルスコーチ — Liven 対抗
+/// fitness-health-tracker + recipe-meal-planner Edge Function 連携
+class HealthCoachPage extends StatefulWidget {
+  const HealthCoachPage({super.key});
+
+  @override
+  State<HealthCoachPage> createState() => _HealthCoachPageState();
+}
+
+class _HealthCoachPageState extends State<HealthCoachPage>
+    with SingleTickerProviderStateMixin {
+  final _supabase = Supabase.instance.client;
+
+  bool _isLoading = false;
+  String? _errorMessage;
+  late TabController _tabController;
+
+  // フィットネス
+  Map<String, dynamic>? _fitnessData;
+  // 食事
+  List<Map<String, dynamic>> _meals = [];
+  // AIアドバイス
+  String? _aiAdvice;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _fetchAll();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchAll() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final results = await Future.wait([
+        _supabase.functions.invoke(
+          'fitness-health-tracker',
+          body: {'action': 'get_summary'},
+        ),
+        _supabase.functions.invoke(
+          'recipe-meal-planner',
+          body: {'action': 'get_today_meals'},
+        ),
+      ]);
+      final fitnessData = results[0].data;
+      final mealData = results[1].data;
+
+      setState(() {
+        if (fitnessData is Map<String, dynamic>) {
+          _fitnessData = fitnessData;
+          _aiAdvice = fitnessData['ai_advice']?.toString();
+        }
+        if (mealData is Map && mealData['meals'] is List) {
+          _meals = List<Map<String, dynamic>>.from(
+            (mealData['meals'] as List).whereType<Map>(),
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'データ取得に失敗しました: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ヘルスコーチ'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'サマリー'),
+            Tab(text: '食事'),
+            Tab(text: 'AIアドバイス'),
+          ],
+        ),
+        actions: [
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(14),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: '更新',
+              onPressed: _fetchAll,
+            ),
+        ],
+      ),
+      body: Column(
+        children: [
+          if (_errorMessage != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              color: Colors.red.shade50,
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+              ),
+            ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _SummaryTab(data: _fitnessData),
+                _MealsTab(meals: _meals, supabase: _supabase),
+                _AdviceTab(advice: _aiAdvice),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryTab extends StatelessWidget {
+  const _SummaryTab({required this.data});
+  final Map<String, dynamic>? data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data == null) {
+      return const Center(child: Text('データがありません'));
+    }
+    final metrics = [
+      ('今日の歩数', data!['steps']?.toString() ?? '—', Icons.directions_walk,
+        Colors.green),
+      ('消費カロリー', '${data!['calories_burned'] ?? '—'} kcal',
+        Icons.local_fire_department, Colors.orange),
+      ('睡眠時間', '${data!['sleep_hours'] ?? '—'} 時間', Icons.bedtime,
+        Colors.indigo),
+      ('水分摂取', '${data!['water_ml'] ?? '—'} ml', Icons.water_drop,
+        Colors.blue),
+    ];
+    return RefreshIndicator(
+      onRefresh: () async {},
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.6,
+            children: metrics.map((m) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(m.$3, size: 16, color: m.$4),
+                          const SizedBox(width: 4),
+                          Text(
+                            m.$1,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      Text(
+                        m.$2,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          if (data!['goal_progress'] != null) ...[
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '今日の目標達成率',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: (data!['goal_progress'] as num?)?.toDouble() ??
+                          0.0,
+                      backgroundColor: Colors.grey.shade200,
+                      color: Colors.green,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${((data!['goal_progress'] as num?)?.toDouble() ?? 0.0) * 100 ~/ 1}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MealsTab extends StatelessWidget {
+  const _MealsTab({required this.meals, required this.supabase});
+  final List<Map<String, dynamic>> meals;
+  final SupabaseClient supabase;
+
+  @override
+  Widget build(BuildContext context) {
+    if (meals.isEmpty) {
+      return const Center(child: Text('今日の食事記録がありません'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: meals.length,
+      itemBuilder: (_, i) {
+        final meal = meals[i];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.orange.shade100,
+              child: Icon(
+                Icons.restaurant,
+                color: Colors.orange.shade700,
+                size: 20,
+              ),
+            ),
+            title: Text(meal['name']?.toString() ?? '食事'),
+            subtitle: Text(meal['time']?.toString() ?? ''),
+            trailing: Text(
+              '${meal['calories'] ?? '—'} kcal',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AdviceTab extends StatelessWidget {
+  const _AdviceTab({required this.advice});
+  final String? advice;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          color: Colors.green.shade50,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.psychology,
+                      color: Colors.green.shade700,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'AIヘルスアドバイス',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  advice ?? 'データが蓄積されるとAIがパーソナライズされたアドバイスを提供します。',
+                  style: const TextStyle(fontSize: 14, height: 1.7),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        const _HealthTipCard(
+          icon: Icons.directions_run,
+          color: Colors.orange,
+          title: '運動のヒント',
+          body: '1日30分の有酸素運動で代謝が10〜15%向上します。'
+              'ウォーキングから始めて徐々に強度を上げましょう。',
+        ),
+        const SizedBox(height: 8),
+        const _HealthTipCard(
+          icon: Icons.nights_stay,
+          color: Colors.indigo,
+          title: '睡眠のヒント',
+          body: '質の良い睡眠は免疫力・集中力・代謝を改善します。'
+              '就寝1時間前のスクリーンタイムを控えましょう。',
+        ),
+        const SizedBox(height: 8),
+        const _HealthTipCard(
+          icon: Icons.eco,
+          color: Colors.green,
+          title: '食事のヒント',
+          body: '野菜・タンパク質・炭水化物のバランスを意識し、'
+              '1日1.5〜2Lの水分補給を心がけましょう。',
+        ),
+      ],
+    );
+  }
+}
+
+class _HealthTipCard extends StatelessWidget {
+  const _HealthTipCard({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.body,
+  });
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: (color).withValues(alpha: 0.1),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          body,
+          style: const TextStyle(fontSize: 13, height: 1.6),
+        ),
+        isThreeLine: true,
+      ),
+    );
+  }
+}

@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 | 変更禁止 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・200ページ・ウィジェット) | 他3範囲 |
+| **VSCode版** | `lib/` (Flutter UI・203ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
 | **PowerShell版** | `.github/workflows/` + CI/CD (16本完備済み) | 他3範囲 |
@@ -107,6 +107,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 68 | **Google カレンダー同期** (アプリ予定 ↔ Google カレンダー双方向同期・複数カレンダー管理) | ✅ LP済 | `lib/pages/google_calendar_sync_page.dart` (VSCode版) |
 | 69 | **MoneyForward 連携** (銀行・証券・クレカ残高自動取り込み・総資産管理 — MoneyForward対抗) | ✅ LP済 | `lib/pages/money_forward_page.dart` (VSCode版) |
 | 70 | **Slack 通知連携** (タスク・習慣・リクエストをSlackチャンネルへリアルタイム通知 — Slack対抗) | ✅ LP済 | `lib/pages/slack_notification_page.dart` (VSCode版) |
+| 71 | **マイスキル (AIプロンプト再利用)** (よく使うプロンプトをスキル保存・1タップ再利用 — Slackワークフロービルダー対抗) | ✅ LP済 | `lib/pages/my_skills_page.dart` (VSCode版) |
+| 72 | **チームチャット** (チャンネル別リアルタイムメッセージング — Discord/LINE対抗) | ✅ LP済 | `lib/pages/team_chat_page.dart` (VSCode版) |
+| 73 | **ヘルスコーチ** (歩数・カロリー・睡眠・水分AI統合分析 — Liven対抗) | ✅ LP済 | `lib/pages/health_coach_page.dart` (VSCode版) |
+| 74 | **ショッピングリスト** (買い物リスト・価格管理・購入チェック — Amazon対抗) | ✅ LP済 | `lib/pages/shopping_list_page.dart` (VSCode版) |
+| 75 | **Discord 通知連携** (Webhook URLでタスク完了・習慣達成をDiscordチャンネルに自動通知 — Discord対抗) | ✅ LP済 | `lib/pages/discord_notification_page.dart` (VSCode版) |
+| 76 | **LINE 通知連携** (LINE Notifyトークンでタスク・習慣・ゴール達成をLINEに自動通知 — LINE対抗) | ✅ LP済 | `lib/pages/line_notification_page.dart` (VSCode版) |
+| 77 | **GitHub PR 管理** (GitHubリポジトリのPR一覧・レビュー状況・統計をアプリ内で一元管理 — GitHub対抗) | ✅ LP済 | `lib/pages/github_pr_page.dart` (VSCode版) |
 
 ---
 
@@ -208,7 +215,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 200ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
+lib/pages/               # 203ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
@@ -462,8 +469,20 @@ web/sitemap.xml          # URL マップ
 | タスク | 競合 | インスタンス | 優先度 |
 | --- | --- | --- | --- |
 | ~~`admin_analytics_page.dart` 拡張~~: `personal_dashboard_page.dart` 新規作成で対応済み (daily-dev 2026-04-11) | Notion 3.4 ダッシュボードビュー | VSCode版 | ✅ 完了 |
-| `ai-assistant` EF: マイスキル登録・再利用機能 | Slack AI 再利用スキル | Web版 | 🟡 中 |
+| ~~`ai-assistant` EF: マイスキル登録・再利用機能~~: `my_skills_page.dart` + EF 4アクション実装済み (daily-dev#2, PS#本セッション) | Slack AI 再利用スキル | Web版 | ✅ 完了 |
 | ~~`pr-auto-review` Schedule: CI失敗自動 fix コミット機能~~: `ci-auto-fix.yml` 新規作成で対応済み (PS#30) | GitHub Copilot Autopilot | PowerShell版 | ✅ 完了 |
+
+### 機能強化 #T2: THOUGHT_INTERRUPT_ELIMINATOR 拡張 (VSCode + Windows版スコープ)
+
+**背景**: `docs/technical/THOUGHT_INTERRUPT_ELIMINATOR_DESIGN.md` に未着手タスク5件を確認 (VSCode#36, 2026-04-11)
+
+| 作業内容 | インスタンス | 優先度 |
+| --- | --- | --- |
+| `abstinence_slips` テーブル作成 (マイグレーション) | Windows版 | 🟡 中 |
+| 思考妨害パターン診断UI (4質問形式) | VSCode版 | 🟡 中 |
+| リアルタイム介入ウィジェット (ホーム画面衝動ボタン) | VSCode版 | 🟡 中 |
+| 週次パターンレポート (slip 分析・タイムスタンプ集計) | VSCode版 | 🟢 低 |
+| AI介入提案 (`ai-assistant` EF に slip パターン渡し) | Web版 | 🟢 低 |
 
 ### markdownlint 残件 (Windows版スコープ)
 

@@ -1603,6 +1603,12 @@ $input
       (Icons.account_balance_wallet, '0xFF00B900', 'MoneyForward 連携', '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'),
       (Icons.webhook, '0xFF4A154B', 'Slack 通知連携', 'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。'),
       (Icons.psychology, '0xFF6366F1', 'マイスキル (AIプロンプト再利用)', 'よく使うAIプロンプトをスキルとして保存・1タップ再利用。Slackワークフロービルダーを超える個人AI自動化テンプレートを無制限登録。'),
+      (Icons.chat_bubble_outline, '0xFF5865F2', 'チームチャット', 'チャンネル別リアルタイムメッセージング。Discord/LINEを超える目的別チャンネル管理と検索可能なメッセージ履歴をセキュアに提供。'),
+      (Icons.favorite_outline, '0xFF22C55E', 'ヘルスコーチ', '歩数・カロリー・睡眠・水分をAIが統合分析し毎日パーソナルアドバイス。Livenを超える日本語完全対応の無料ヘルスケアコーチング。'),
+      (Icons.shopping_cart_outlined, '0xFFF97316', 'ショッピングリスト', '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの完全無料ショッピングアシスタント。'),
+      (Icons.notifications_active, '0xFF5865F2', 'Discord 通知連携', 'タスク完了・習慣達成・日次サマリーをリアルタイムでDiscordチャンネルに通知。Webhook URLを設定するだけで即稼働する自動通知ルーティング。'),
+      (Icons.notifications_active, '0xFF06C755', 'LINE 通知連携', 'タスク完了・習慣達成・ゴール達成をLINEにリアルタイム通知。LINE Notify トークン1枚で設定完了。LINEを超えるタスク×通知の完全統合。'),
+      (Icons.merge_type, '0xFF24292F', 'GitHub PR 管理', 'GitHubリポジトリのPull Request一覧・レビュー状況・マージ統計をアプリ内で一元管理。開発とライフマネジメントを自分株式会社に完全統合。'),
     ];
 
     return Container(
@@ -1620,7 +1626,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない60のこと',
+            '自分株式会社でしかできない66のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

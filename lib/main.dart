@@ -136,6 +136,9 @@ import 'package:my_web_app/pages/affiliate_marketing_page.dart';
 import 'package:my_web_app/pages/calendar_events_page.dart';
 import 'package:my_web_app/pages/google_calendar_sync_page.dart';
 import 'package:my_web_app/pages/money_forward_page.dart';
+import 'package:my_web_app/pages/discord_notification_page.dart';
+import 'package:my_web_app/pages/github_pr_page.dart';
+import 'package:my_web_app/pages/line_notification_page.dart';
 import 'package:my_web_app/pages/slack_notification_page.dart';
 import 'package:my_web_app/pages/expense_tracker_page.dart';
 import 'package:my_web_app/pages/reading_list_page.dart';
@@ -199,6 +202,8 @@ import 'package:my_web_app/pages/ui_design_status_page.dart';
 import 'package:my_web_app/pages/ai_summarizer_page.dart';
 import 'package:my_web_app/pages/revenue_forecaster_page.dart';
 import 'package:my_web_app/pages/weather_widget_page.dart';
+import 'package:my_web_app/pages/team_chat_page.dart';
+import 'package:my_web_app/pages/health_coach_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1127,9 +1132,29 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const MoneyForwardPage(),
             );
+          case '/discord-notifications':
+            return MaterialPageRoute(
+              builder: (_) => const DiscordNotificationPage(),
+            );
+          case '/line-notifications':
+            return MaterialPageRoute(
+              builder: (_) => const LineNotificationPage(),
+            );
+          case '/github-pr':
+            return MaterialPageRoute(
+              builder: (_) => const GithubPrPage(),
+            );
           case '/slack-notifications':
             return MaterialPageRoute(
               builder: (_) => const SlackNotificationPage(),
+            );
+          case '/team-chat':
+            return MaterialPageRoute(
+              builder: (_) => const TeamChatPage(),
+            );
+          case '/health-coach':
+            return MaterialPageRoute(
+              builder: (_) => const HealthCoachPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

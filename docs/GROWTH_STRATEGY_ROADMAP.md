@@ -4873,8 +4873,8 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 ### 実装内容
 
 - **T-1 第2弾**: `2026-03-28-note-comments.md` を Qiita/dev.to に投稿
-  - Qiita: https://qiita.com/kanta13jp1/items/76e5146fb5cadaba7779
-  - dev.to: https://dev.to/kanta13jp1/fluttertosupabasedenotionfeng-notokomentoji-neng-woshi-zhuang-sitahua-devto-1969
+  - Qiita: [kanta13jp1 記事](https://qiita.com/kanta13jp1/items/76e5146fb5cadaba7779)
+  - dev.to: [kanta13jp1 記事](https://dev.to/kanta13jp1/fluttertosupabasedenotionfeng-notokomentoji-neng-woshi-zhuang-sitahua-devto-1969)
   - `blog-auto-publisher` EF: YAML フロントマター除去ヘルパー `stripFrontmatter()` 追加 (dev.to Date parse エラー修正)
 - **EF Tier 入れ替え**: `audio-effects-processor` Tier2降格 / `personal-dashboard` Tier1昇格 (Supabase 100本制限内)
 - **機能 #71 マイスキル**: `my_skills_page.dart` 新規作成
@@ -4892,3 +4892,57 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 
 - Supabase 100本制限: EF update 時も 402 が返る場合がある → `delete` + `deploy` で対処
 - CI が audio-effects-processor を即再デプロイ → deploy-prod.yml 変更を先にコミット&プッシュして防ぐ
+
+---
+
+## セッション: VSCode#36 (2026-04-11)
+
+### 実施内容
+
+- **docs/ 戦略ドキュメント全件分析 (ルール#10)**: 22件横断分析
+  - 発見: `THOUGHT_INTERRUPT_ELIMINATOR_DESIGN.md` に5件未着手タスク (abstinence_slips テーブル / 週次レポート / AI介入提案 等)
+  - `MULTI_INSTANCE_COORDINATION.md`: "195ページ" の旧記載 (docs/スコープのため注記のみ)
+  - 大半のドキュメントは現状と整合済みを確認
+- **markdownlint**: .github/**/*.md + CLAUDE.md 0エラー確認
+- **T-1 第2弾**: SUPABASE_SERVICE_KEY 未設定のためスキップ (次回設定後に実施)
+- **新規ページ3本作成**:
+  - `lib/pages/team_chat_page.dart` — Discord/LINE 対抗チャンネルメッセージング (`chat-messaging` EF)
+  - `lib/pages/health_coach_page.dart` — Liven 対抗 AI ヘルスコーチ (`fitness-health-tracker` + `recipe-meal-planner` EF)
+  - `lib/pages/shopping_list_page.dart` — 既存ページをLP追加 (Amazon 対抗)
+- **main.dart**: `/team-chat`, `/health-coach` ルート追加
+- **LP 更新**: 60→63のこと (チームチャット・ヘルスコーチ・ショッピングリスト追加)
+- **COMPRESSED_PROMPT_V3.md**: コア機能 #71-#74 追加・200→202ページ更新
+
+### 品質確認
+
+- `flutter analyze` 0エラー
+- `deno lint` (未実行 / VSCode版スコープ外)
+
+### 発見事項
+
+- THOUGHT_INTERRUPT_ELIMINATOR_DESIGN.md の5未着手タスクは Windows/VSCode 両インスタンス対応が必要
+- `shopping_list_page.dart` は main.dart に既存だったが LP 未掲載だった → LP に追加完了
+
+---
+
+## セッション: daily-development#3 (2026-04-11)
+
+### 実施内容
+
+- **Notion インポート強化** (`growth-import-preview` EF + `import_page.dart`):
+  - EF: `buildNotionApiPreview()` にデータベースサポートを追加
+    - ページ: `/v1/search?filter=page` → source `"notion_page"`
+    - DB検索: `/v1/search?filter=database` → 最大3DB
+    - DBエントリ: `POST /v1/databases/{id}/query` → source `"notion_database"`
+    - プロパティ型別変換: `title / rich_text / select / multi_select / checkbox / number / date`
+  - Flutter UI: 取得件数セレクター (5/10/20件) + ソースタイプバッジ (Page / DB entry)
+
+### 品質確認
+
+- `deno lint` 0エラー
+- `flutter analyze` 0エラー
+- EF デプロイ済み (edge-function-test-runner Tier2降格でスロット確保)
+
+### 発見事項
+
+- Supabase 100本上限: 100本でのアップデートも402になる → 1本削除してから更新が必要なパターンが繰り返し発生

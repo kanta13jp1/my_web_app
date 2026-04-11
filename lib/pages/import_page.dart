@@ -94,39 +94,60 @@ class _ImportPageState extends State<ImportPage> {
 
   Future<void> _fetchNotionApi() async {
     _notionTokenController.clear();
+    int dialogPageLimit = 10;
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Notion API 連携'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Notion インテグレーションのトークンを入力してください。\n'
-              'Notion → Settings → Integrations から発行できます。',
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _notionTokenController,
-              decoration: const InputDecoration(
-                labelText: 'Integration Token (secret_xxx)',
-                border: OutlineInputBorder(),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx2, setDialogState) => AlertDialog(
+          title: const Text('Notion API 連携'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Notion インテグレーションのトークンを入力してください。\n'
+                'Notion → Settings → Integrations から発行できます。',
               ),
-              obscureText: true,
+              const SizedBox(height: 12),
+              TextField(
+                controller: _notionTokenController,
+                decoration: const InputDecoration(
+                  labelText: 'Integration Token (secret_xxx)',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Text('取得件数:'),
+                  const SizedBox(width: 12),
+                  DropdownButton<int>(
+                    value: dialogPageLimit,
+                    items: const [
+                      DropdownMenuItem(value: 5, child: Text('5件')),
+                      DropdownMenuItem(value: 10, child: Text('10件')),
+                      DropdownMenuItem(value: 20, child: Text('20件')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) setDialogState(() => dialogPageLimit = v);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('取得'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('取得'),
-          ),
-        ],
       ),
     );
     if (confirmed != true) return;
@@ -140,6 +161,7 @@ class _ImportPageState extends State<ImportPage> {
     try {
       final preview = await _importService.buildNotionApiPreview(
         notionToken: token,
+        pageLimit: dialogPageLimit,
       );
       if (!mounted) return;
       setState(() => _preview = preview);
@@ -372,11 +394,32 @@ class _ImportPageState extends State<ImportPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            note.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  note.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              if (note.source == 'notion_database' ||
+                                  note.source == 'notion_page') ...[
+                                const SizedBox(width: 8),
+                                Chip(
+                                  label: Text(
+                                    note.source == 'notion_database'
+                                        ? 'DB entry'
+                                        : 'Page',
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Text(
