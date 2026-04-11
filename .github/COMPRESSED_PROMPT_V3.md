@@ -273,7 +273,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ```text
 lib/pages/               # 205ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 247本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
+supabase/functions/      # Deno Edge Functions 247本 (Tier1: 99デプロイ済 / Tier2: 148コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 17本 (品質基準完備済み)
 docs/
