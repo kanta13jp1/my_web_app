@@ -803,4 +803,4 @@ S (Solutions)  = API呼び出し・計算コード → スクリプト
 
 ---
 
-> **インスタンス別注意**: `docs/` と `supabase/migrations/` は **Windows版スコープ**。`supabase/functions/` は **Web版スコープ**。`lib/` は **VSCode版スコープ**。`.github/workflows/` は **PowerShell版スコープ**。
+> **インスタンス別スコープ早見表**: `lib/` + `docs/DESIGN.md` → **VSCode版** / `supabase/functions/` + schema migration → **Web版** / `docs/` (DESIGN.md除く) + seed SQL → **Windows版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**

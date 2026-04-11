@@ -66,7 +66,7 @@ jobs:
           else
             echo "⚠️ deno test: *.test.ts が見つかりません — スキップ"
           fi
-        continue-on-error: true  # テスト追加前はスキップ想定。安定次第 continue-on-error 削除予定
+        # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
 
       - name: Check new Edge Functions not in deploy list
         run: |

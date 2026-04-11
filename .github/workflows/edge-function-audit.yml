@@ -19,7 +19,7 @@ jobs:
   audit:
     name: Check Edge Function UI Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # EF 240本 × grep -rl で余裕を持たせる
+    timeout-minutes: 10  # EF 250本 × grep -rl で余裕を持たせる
 
     steps:
       - name: Checkout
