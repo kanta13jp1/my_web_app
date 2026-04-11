@@ -5591,3 +5591,34 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - Qiita: QIITA_ACCESS_TOKEN 再設定 (write_qiita スコープ) → notification-center.md 再投稿
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`)
+
+## Windows版#33 追記 — GitHub Actions 最適化 (2026-04-12)
+
+### 問題
+
+- `deploy-prod.yml` の `run-batch` ジョブが毎回15分を占有し、常にエラー終了
+- `notify` ジョブが `run-batch.result == 'success'` を条件にしており、成功通知が一度も送られない状態
+- `ci.yml` が main への push でもトリガーされ、`deploy-prod.yml` の `workflow_call` と二重実行
+- `cron-batch.yml` が `batch_analysis.py` を毎日実行するもシークレット未設定でエラー継続
+
+### 対応
+
+1. `deploy-prod.yml` — `run-batch` ジョブ丸ごと削除
+2. `deploy-prod.yml` — `notify` ジョブ: `needs: [deploy]` のみに変更、成功/失敗条件を `deploy` 単体に修正
+3. `deploy-prod.yml` — EF制限コメント: "Supabase project limit: 100" → "100本目で402エラー — 絶対に超えないこと"
+4. `ci.yml` — push トリガーから `main` を削除 (staging/develop のみ)
+5. `cron-batch.yml` — `schedule` 削除 + `if: false` 追加 (workflow_dispatch のみ残存)
+6. CLAUDE.md ルール 7-9 追加: EF99本制限 / Web+モバイル表示チェック / workflow最適化チェック
+7. COMPRESSED_PROMPT_V3.md: ルール#16/#17 追加、CI/CDテーブル更新 (ci.yml/cron-batch.yml)
+
+### 効果
+
+- main への push 時の CI 実行時間: 約 **15分短縮** (run-batch 削除分)
+- 成功通知が正常に送信されるようになった
+- cron-batch.yml の毎日エラーが停止
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加 (TOTAL_PROVIDERS 7→9)
+- Web/モバイル表示チェック (Flutter preview 環境で確認)

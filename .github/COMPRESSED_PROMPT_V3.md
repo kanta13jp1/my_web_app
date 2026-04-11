@@ -208,7 +208,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
-| `ci.yml` | PR + push (main/staging/develop) | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
+| `ci.yml` | PR + push (staging/develop) ※main は deploy-prod が workflow_call で実行 | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
 | `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
@@ -216,7 +216,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `cs-check.yml` | 毎時 :07 | CS自動対応 + PR自動レビュー + ヘルスチェック |
 | `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
-| `cron-batch.yml` | 00:00 UTC 毎日 | Python分析バッチ (Gemini連携, `batch_analysis.py`) |
+| `cron-batch.yml` | ⛔ 無効化済み (if:false + schedule削除) | Python分析バッチ — シークレット未設定で毎回エラーのため無効化。手動dispatch のみ残存 |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import 固定チェック + **Deno std 古バージョン検出** + **pubspec.yaml 未固定パッケージ検出** |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
@@ -224,7 +224,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
-| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (7プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
+| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
