@@ -49,8 +49,15 @@ jobs:
 
           # frontmatter から title と tags を抽出
           # tr -d '\r' で CRLF 対応, ['\"] で引用符なし・シングル・ダブル全対応
+          # tags: (Qiita形式) と topics: (Zenn形式) 両方に対応
           TITLE=$(grep '^title:' "$DRAFT_PATH" | head -1 | tr -d '\r' | sed "s/^title: *//;s/^['\"]//;s/['\"]$//")
-          TAGS=$(grep '^tags:' "$DRAFT_PATH" | head -1 | sed 's/tags: *\[\(.*\)\]/\1/' | tr -d ' ')
+          TAGS=$(grep -E '^(tags|topics):' "$DRAFT_PATH" | head -1 | tr -d '\r' | \
+            sed 's/^tags: *//;s/^topics: *//' | \
+            tr -d '[]"'"'" | tr ',' '\n' | \
+            sed 's/^ *//;s/ *$//' | grep -v '^$' | \
+            tr '\n' ',' | sed 's/,$//')
+          # タグが空の場合はデフォルト値を設定 (Qiita は空タグを 403 で拒否するため)
+          [ -z "$TAGS" ] && TAGS="Flutter,Supabase,buildinpublic"
           PUBLISHED=$(grep '^published:' "$DRAFT_PATH" | head -1 | awk '{print $2}')
 
           echo "title=$TITLE" >> $GITHUB_OUTPUT
