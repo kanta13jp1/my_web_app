@@ -8,8 +8,7 @@ on:
       - develop
   push:
     branches:
-      - main
-      - staging
+      - staging   # main は deploy-prod.yml が workflow_call で CI を呼ぶため除外 (二重起動防止)
       - develop
   workflow_call:
 
