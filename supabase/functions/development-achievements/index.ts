@@ -10,6 +10,44 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 
+// -----------------------------------------------------------------------
+// development-achievements
+//
+// GET/POST action:"get"       → achievement list (default)
+// POST     action:"add"       → insert new achievement
+// GET/POST action:"get_stats" → dev stats (absorbed from development-stats)
+// -----------------------------------------------------------------------
+
+const PLANS = [
+  { key: "short_term", label: "短期計画", deadline: "2026-06-30", totalTasks: 50, description: "MVP 強化・ユーザー 100 人突破" },
+  { key: "mid_term", label: "中期計画", deadline: "2027-03-31", totalTasks: 150, description: "機能充実・ユーザー 10,000 人突破" },
+  { key: "long_term", label: "長期計画", deadline: "2028-12-31", totalTasks: 500, description: "エンタープライズ対応・グローバル展開" },
+];
+
+const COMPETITORS_STATS = [
+  { key: "notion", label: "Notion", deadline: "2028-12-31", totalFeatures: 80, category: "ナレッジ・生産性" },
+  { key: "evernote", label: "EverNote", deadline: "2028-06-30", totalFeatures: 60, category: "ノート・記録" },
+  { key: "moneyforward", label: "MoneyForward", deadline: "2028-12-31", totalFeatures: 50, category: "家計・資産管理" },
+  { key: "x", label: "X", deadline: "2029-06-30", totalFeatures: 70, category: "SNS・コンテンツ配信" },
+  { key: "animaworks", label: "Animaworks", deadline: "2027-12-31", totalFeatures: 40, category: "パーソナル生産性" },
+  { key: "claude_code", label: "Claude Code", deadline: "2028-06-30", totalFeatures: 45, category: "AI コーディング" },
+  { key: "codex", label: "Codex", deadline: "2028-06-30", totalFeatures: 40, category: "AI コーディング" },
+  { key: "netkeiba", label: "netkeiba", deadline: "2028-12-31", totalFeatures: 35, category: "競馬・データ分析" },
+  { key: "openclaw", label: "OpenClaw", deadline: "2028-06-30", totalFeatures: 35, category: "AI エージェント" },
+  { key: "claude_cowork", label: "Claude Cowork", deadline: "2028-12-31", totalFeatures: 45, category: "法人 AI ワークスペース" },
+  { key: "chatwork", label: "Chatwork", deadline: "2028-06-30", totalFeatures: 50, category: "ビジネスチャット" },
+  { key: "slack", label: "Slack", deadline: "2029-06-30", totalFeatures: 65, category: "ビジネスチャット" },
+  { key: "jobcan", label: "ジョブカン", deadline: "2028-12-31", totalFeatures: 45, category: "バックオフィス SaaS" },
+  { key: "amazon", label: "Amazon", deadline: "2030-12-31", totalFeatures: 100, category: "EC・AI・コンテンツ" },
+  { key: "google", label: "Google", deadline: "2030-12-31", totalFeatures: 120, category: "Workspace・Search・Cloud" },
+  { key: "microsoft", label: "Microsoft", deadline: "2030-12-31", totalFeatures: 110, category: "365・Azure・LinkedIn" },
+  { key: "discord", label: "Discord", deadline: "2029-06-30", totalFeatures: 55, category: "コミュニティ・ボイスチャット" },
+  { key: "line", label: "LINE", deadline: "2029-06-30", totalFeatures: 60, category: "メッセージング・決済" },
+  { key: "facebook", label: "Facebook", deadline: "2030-12-31", totalFeatures: 90, category: "SNS・広告プラットフォーム" },
+  { key: "liven", label: "Liven", deadline: "2028-06-30", totalFeatures: 30, category: "ライフスタイル" },
+  { key: "github", label: "GitHub", deadline: "2029-06-30", totalFeatures: 70, category: "ソースコード・DevOps" },
+];
+
 /** 期間文字列から since (ISO 8601) を計算して返す。全期間は null */
 function calcSince(period: string): string | null {
   const now = new Date();
@@ -107,6 +145,66 @@ serve(async (req) => {
     const periodParam = (body.period as string | undefined) ?? getParam("period");
     const limitParam = Number((body.limit as number | undefined) ?? getParam("limit") ?? 200);
     const offsetParam = Number((body.offset as number | undefined) ?? getParam("offset") ?? 0);
+
+    // ---- GET_STATS (absorbed from development-stats) ----
+    if (action === "get_stats") {
+      const { data: achievements, error: achError } = await admin
+        .from("development_achievements")
+        .select("id, title, completed_at")
+        .order("completed_at", { ascending: false });
+      if (achError) throw new Error(achError.message);
+
+      const achievementsList = achievements ?? [];
+      const totalAchievements = achievementsList.length;
+
+      const { data: growthPlans } = await admin
+        .from("growth_plans")
+        .select("competitor_key, completed_count, total_count");
+      const growthMap = new Map<string, { completed: number; total: number }>();
+      for (const plan of growthPlans ?? []) {
+        growthMap.set(plan.competitor_key, { completed: plan.completed_count ?? 0, total: plan.total_count ?? 0 });
+      }
+
+      const planProgress = PLANS.map((plan) => {
+        const completed = Math.min(totalAchievements, plan.totalTasks);
+        return { ...plan, completed, percent: Math.round((completed / plan.totalTasks) * 100) };
+      });
+
+      const competitorProgress = COMPETITORS_STATS.map((comp) => {
+        const growthData = growthMap.get(comp.key);
+        const completed = growthData?.completed ?? Math.min(Math.round(totalAchievements * (comp.totalFeatures / 500)), comp.totalFeatures);
+        const total = growthData?.total ?? comp.totalFeatures;
+        return { ...comp, completed, total, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+      });
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10);
+      const twoWeeksAgo = new Date(now.getTime() - 14 * 86400000).toISOString().slice(0, 10);
+      const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString().slice(0, 10);
+      const periodStats = {
+        today: achievementsList.filter((a) => a.completed_at?.slice(0, 10) === todayStr).length,
+        thisWeek: achievementsList.filter((a) => a.completed_at >= weekAgo).length,
+        twoWeeks: achievementsList.filter((a) => a.completed_at >= twoWeeksAgo).length,
+        thisMonth: achievementsList.filter((a) => a.completed_at >= monthAgo).length,
+        total: totalAchievements,
+      };
+
+      const { count: userCount } = await admin.from("user_profiles").select("*", { count: "exact", head: true });
+
+      return jsonResponse({
+        success: true,
+        plans: planProgress,
+        competitors: competitorProgress,
+        periodStats,
+        overview: {
+          totalAchievements,
+          totalUsers: userCount ?? 0,
+          totalEdgeFunctions: 89,
+          totalCompetitors: COMPETITORS_STATS.length,
+        },
+      });
+    }
 
     // ---- ADD ----
     if (action === "add") {

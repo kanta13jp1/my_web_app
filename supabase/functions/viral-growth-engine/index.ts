@@ -9,8 +9,9 @@
 // - A/Bテスト: 広告クリエイティブの効果測定
 // - グロース指標ダッシュボード用データ
 //
-// GET  ?view=leaderboard | stats | schedule | ab_results
-// POST { "action": "generate_invite" | "record_share" | "schedule_post" | "run_ab_test" | "auto_post_now" }
+// GET  ?view=leaderboard | stats | schedule | ab_results | pipeline_runs
+// POST { "action": "generate_invite" | "record_share" | "schedule_post" | "run_ab_test" | "auto_post_now" | "pipeline_run" | "pipeline_track" | "pipeline_stats" | "get_stats" | "run_campaign" }
+// (pipeline_* actions absorbed from viral-growth-pipeline)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -22,6 +23,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const SELF_URL = SUPABASE_URL.replace("supabase.co", "supabase.co/functions/v1");
 
 // 最適投稿時間帯 (JST) — SNS分析に基づく
 const OPTIMAL_POST_HOURS_JST = [7, 8, 12, 19, 21, 22];
@@ -66,10 +68,21 @@ serve(async (req) => {
         return await getAbTestResults(admin);
       }
 
+      if (view === "pipeline_runs") {
+        const limitVal = parseInt(new URL(req.url).searchParams.get("limit") ?? "20", 10);
+        const { data, error: runsErr } = await admin
+          .from("viral_pipeline_runs")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limitVal);
+        if (runsErr) return jsonRes({ success: false, error: runsErr.message }, 500);
+        return jsonRes({ success: true, runs: data ?? [] });
+      }
+
       return jsonRes({
         success: true,
-        actions: ["generate_invite", "record_share", "schedule_post", "run_ab_test", "auto_post_now"],
-        views: ["leaderboard", "stats", "schedule", "ab_results"],
+        actions: ["generate_invite", "record_share", "schedule_post", "run_ab_test", "auto_post_now", "pipeline_run", "pipeline_track", "pipeline_stats", "get_stats", "run_campaign"],
+        views: ["leaderboard", "stats", "schedule", "ab_results", "pipeline_runs"],
       });
     }
 
@@ -84,6 +97,13 @@ serve(async (req) => {
       templateKey?: string;
       lang?: string;
       variant?: string;
+      template?: string;
+      imageBase64?: string;
+      dryRun?: boolean;
+      runId?: string;
+      impressions?: number;
+      clicks?: number;
+      follows?: number;
     };
 
     const action = body.action;
@@ -106,6 +126,19 @@ serve(async (req) => {
 
     if (action === "schedule_post") {
       return await scheduleNextPost(admin, body.templateKey, body.lang);
+    }
+
+    // ---- Pipeline actions (absorbed from viral-growth-pipeline) ----
+    if (action === "pipeline_run" || action === "run_campaign") {
+      return await pipelineRunCampaign(admin, body);
+    }
+
+    if (action === "pipeline_track") {
+      return await pipelineTrackResult(admin, body);
+    }
+
+    if (action === "pipeline_stats" || action === "get_stats") {
+      return await pipelineGetStats(admin);
     }
 
     return jsonRes({ error: `Unknown action: ${action}` }, 400);
@@ -350,4 +383,82 @@ function jsonRes(data: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Pipeline functions (absorbed from viral-growth-pipeline)
+// ---------------------------------------------------------------------------
+
+async function pipelineRunCampaign(
+  supabase: ReturnType<typeof createClient>,
+  body: { template?: string; imageBase64?: string; dryRun?: boolean },
+): Promise<Response> {
+  const template = body.template ?? "growth_stats";
+  const dryRun = body.dryRun ?? false;
+
+  const [{ count: userCount }, { count: funcCount }] = await Promise.all([
+    supabase.from("user_profiles").select("*", { count: "exact", head: true }),
+    supabase.from("edge_function_ui_status").select("*", { count: "exact", head: true }),
+  ]);
+  const stats = { users: userCount ?? 4, functions: funcCount ?? 89, pages: 211 };
+
+  const adResp = await fetch(`${SELF_URL}/viral-ad-generator`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ template, stats }),
+  });
+
+  if (!adResp.ok) {
+    return jsonRes({ success: false, error: `Ad generation failed: ${await adResp.text()}` }, 500);
+  }
+
+  const adData = await adResp.json() as { success: boolean; tweetText?: string; svg?: string };
+  if (!adData.success) return jsonRes({ success: false, error: "Ad generator returned failure" }, 500);
+
+  const tweetText = adData.tweetText ?? "";
+  let tweetId: string | null = null;
+  let mediaId: string | null = null;
+  let postError: string | null = null;
+
+  if (!dryRun) {
+    const postBody: Record<string, unknown> = { text: tweetText };
+    if (body.imageBase64) { postBody.mediaBase64 = body.imageBase64; postBody.mediaType = "image/png"; }
+    const postResp = await fetch(`${SELF_URL}/x-media-post`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${SERVICE_ROLE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(postBody),
+    });
+    const postData = await postResp.json() as { success?: boolean; tweetId?: string; mediaId?: string; error?: string };
+    if (postData.success) { tweetId = postData.tweetId ?? null; mediaId = postData.mediaId ?? null; }
+    else { postError = postData.error ?? "X post failed"; }
+  }
+
+  const runRecord = { template, tweet_text: tweetText, tweet_id: tweetId, media_id: mediaId, dry_run: dryRun, status: postError ? "error" : dryRun ? "dry_run" : "success", error_message: postError, stats_snapshot: stats, svg_content: adData.svg ?? null };
+  const { data: runData, error: insertError } = await supabase.from("viral_pipeline_runs").insert(runRecord).select().single();
+  if (insertError) console.error("Failed to record run:", insertError);
+
+  return jsonRes({ success: !postError, dryRun, tweetId, mediaId, tweetText, template, stats, runId: runData?.id ?? null, error: postError, svgPreview: adData.svg ? `data:image/svg+xml;base64,${btoa(adData.svg)}` : null });
+}
+
+async function pipelineTrackResult(
+  supabase: ReturnType<typeof createClient>,
+  body: { runId?: string; impressions?: number; clicks?: number; follows?: number },
+): Promise<Response> {
+  if (!body.runId) return jsonRes({ success: false, error: "runId required" }, 400);
+  const { error } = await supabase.from("viral_pipeline_runs").update({ impressions: body.impressions ?? null, clicks: body.clicks ?? null, new_follows: body.follows ?? null }).eq("id", body.runId);
+  if (error) return jsonRes({ success: false, error: error.message }, 500);
+  return jsonRes({ success: true, runId: body.runId });
+}
+
+async function pipelineGetStats(supabase: ReturnType<typeof createClient>): Promise<Response> {
+  const { data, error } = await supabase.from("viral_pipeline_runs").select("status, template, created_at, tweet_id").order("created_at", { ascending: false }).limit(100);
+  if (error) return jsonRes({ success: false, error: error.message }, 500);
+  const runs = data ?? [];
+  const stats = {
+    total_campaigns: runs.length,
+    successful_tweets: runs.filter((r) => r.status === "success").length,
+    by_template: runs.reduce<Record<string, number>>((acc, r) => { acc[r.template ?? "unknown"] = (acc[r.template ?? "unknown"] ?? 0) + 1; return acc; }, {}),
+    last_campaign: runs.length > 0 ? runs[0].created_at : null,
+  };
+  return jsonRes({ success: true, stats, recent: runs.slice(0, 5) });
 }

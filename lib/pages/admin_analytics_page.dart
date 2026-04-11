@@ -735,7 +735,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (session == null) throw Exception('Not authenticated');
 
       final response = await _supabase.functions.invoke(
-        'reply-support-request',
+        'get-support-tickets',
         headers: _adminAuthHeaders(session.accessToken),
         body: {
           'id': id,

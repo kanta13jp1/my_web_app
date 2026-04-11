@@ -28,7 +28,8 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
     setState(() => _checking = true);
     try {
       await Supabase.instance.client.functions.invoke(
-        'check-competitor-updates',
+        'get-competitor-features',
+        body: {'action': 'check_updates'},
       );
     } catch (_) {}
     if (mounted) setState(() => _checking = false);

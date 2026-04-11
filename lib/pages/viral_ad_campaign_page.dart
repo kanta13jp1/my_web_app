@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// バイラル広告キャンペーンページ
-/// 直接呼び出し: viral-ad-generator (プレビュー), viral-growth-pipeline (実行)
-/// x-media-post は viral-growth-pipeline のサーバーサイド内部で呼び出される
+/// 直接呼び出し: viral-ad-generator (プレビュー), viral-growth-engine (実行)
+/// x-media-post は viral-growth-engine のサーバーサイド内部で呼び出される
 class ViralAdCampaignPage extends StatefulWidget {
   const ViralAdCampaignPage({super.key});
 
@@ -43,11 +43,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     try {
       final results = await Future.wait([
         _supabase.functions.invoke(
-          'viral-growth-pipeline',
+          'viral-growth-engine',
           method: HttpMethod.get,
         ),
         _supabase.functions.invoke(
-          'viral-growth-pipeline',
+          'viral-growth-engine',
           body: {'action': 'get_stats'},
         ),
       ]);
@@ -105,7 +105,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'viral-growth-pipeline',
+        'viral-growth-engine',
         body: {
           'action': 'run_campaign',
           'template': _selectedTemplate,

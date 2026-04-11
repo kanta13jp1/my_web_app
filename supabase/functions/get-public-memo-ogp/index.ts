@@ -9,6 +9,14 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const EXCERPT_LENGTH = 120;
+
+// -----------------------------------------------------------------------
+// get-public-memo-ogp
+//
+// GET ?id=N             → SVG OGP image for public memo
+// GET ?id=N&action=preview → JSON SEO metadata (absorbed from get-public-memo-preview)
+// -----------------------------------------------------------------------
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,6 +26,7 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const memoId = Number.parseInt(url.searchParams.get("id") ?? "", 10);
+    const action = url.searchParams.get("action");
 
     if (!Number.isFinite(memoId) || memoId <= 0) {
       return jsonResponse({ success: false, error: "Invalid memo id." }, 400);
@@ -44,6 +53,34 @@ serve(async (req) => {
       return jsonResponse({ success: false, error: "Memo not found." }, 404);
     }
 
+    // ---- ?action=preview: return JSON SEO metadata ----
+    if (action === "preview") {
+      const previewTitle = data["title"]?.toString() ?? "";
+      const rawContent = data["content"]?.toString() ?? "";
+      const previewCategory = data["category"]?.toString() ?? "";
+      const plainText = rawContent
+        .replace(/#{1,6}\s+/g, "")
+        .replace(/\*{1,2}(.+?)\*{1,2}/g, "$1")
+        .replace(/`{1,3}[^`]*`{1,3}/g, "")
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+        .replace(/\n+/g, " ")
+        .trim();
+      const excerpt = plainText.length > EXCERPT_LENGTH
+        ? plainText.slice(0, EXCERPT_LENGTH) + "..."
+        : plainText;
+      return jsonResponse({
+        success: true,
+        id: memoId,
+        title: previewTitle,
+        excerpt,
+        category: previewCategory,
+        pageTitle: `${previewTitle} - 自分株式会社`,
+        ogDescription: excerpt || `自分株式会社の公開メモ: ${previewTitle}`,
+        ogImageUrl: `${SUPABASE_URL}/functions/v1/get-public-memo-ogp?id=${memoId}`,
+      });
+    }
+
+    // ---- Default: return SVG OGP image ----
     const title = data["title"]?.toString() ?? "Public memo";
     const content = data["content"]?.toString() ?? "";
     const category = data["category"]?.toString() ?? "";
