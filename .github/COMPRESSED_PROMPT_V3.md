@@ -447,6 +447,14 @@ web/sitemap.xml          # URL マップ
 4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
 5. **Google カレンダー同期** — 予定・タスクの双方向同期
 
+### 競合脅威対応タスク (2026-04-11 Claude Schedule 競合モニタリングから追加)
+
+| タスク | 競合 | インスタンス | 優先度 |
+| --- | --- | --- | --- |
+| `admin_analytics_page.dart` 拡張 — KPI・チャートダッシュボード強化 | Notion 3.4 ダッシュボードビュー | VSCode版 | 🔴 高 |
+| `ai-assistant` EF: マイスキル登録・再利用機能 | Slack AI 再利用スキル | Web版 | 🟡 中 |
+| `pr-auto-review` Schedule: CI失敗自動 fix コミット機能 | GitHub Copilot Autopilot | PowerShell版 | 🟡 中 |
+
 ---
 
 ## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
