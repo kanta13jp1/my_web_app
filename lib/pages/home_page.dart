@@ -1291,7 +1291,7 @@ abstinence_slip_details: $slipDetailsText
         title: '逸脱が発生。禁欲ガードを最優先',
         detail: '今日の逸脱は${snapshot.abstinenceSlipCount}回。先に再設定して再発を止める。',
         icon: Icons.shield_moon,
-        color: Colors.redAccent,
+        color: const Color(0xFFE53935),
       );
     }
 
@@ -1301,7 +1301,7 @@ abstinence_slip_details: $slipDetailsText
         title: '今月の収支を先に把握する',
         detail: snapshot.monthlyCashflowSummary.summaryLine,
         icon: Icons.receipt_long,
-        color: Colors.green.shade700,
+        color: const Color(0xFF4CAF50),
       );
     }
 
@@ -1311,7 +1311,7 @@ abstinence_slip_details: $slipDetailsText
         title: 'モーニング・ブリーフィングを先に実施',
         detail: '朝の優先順位を確定してから他メニューへ進む。',
         icon: Icons.wb_sunny,
-        color: Colors.amber,
+        color: Color(0xFFFFC107),
       );
     }
 
@@ -1321,7 +1321,7 @@ abstinence_slip_details: $slipDetailsText
         title: '今日の口座残高を確認',
         detail: 'まず資金状態を把握して、日次の打ち手を決める。',
         icon: Icons.account_balance_wallet,
-        color: Colors.green,
+        color: Color(0xFF4CAF50),
       );
     }
 
@@ -1331,7 +1331,7 @@ abstinence_slip_details: $slipDetailsText
         title: '必須タスクを先に完了',
         detail: '思考停止ログの必須タスクが${snapshot.pendingCriticalTaskCount}件残っています。',
         icon: Icons.lock_clock,
-        color: Colors.redAccent,
+        color: const Color(0xFFE53935),
       );
     }
 
@@ -1342,7 +1342,7 @@ abstinence_slip_details: $slipDetailsText
         detail:
             '昨日 ${snapshot.completionGoalSnapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.completionGoalSnapshot.todayCompletedCount}件 / 目標 ${snapshot.completionGoalSnapshot.targetCount}件',
         icon: Icons.trending_up,
-        color: Colors.indigo,
+        color: const Color(0xFF3D5AFE),
       );
     }
 
@@ -1354,7 +1354,7 @@ abstinence_slip_details: $slipDetailsText
         title: '週末ストックを見直す',
         detail: '土曜リマインド: 未完了ストックが${snapshot.pendingStockTaskCount}件あります。',
         icon: Icons.inventory_2,
-        color: Colors.teal,
+        color: const Color(0xFFFFC107),
       );
     }
 
@@ -1363,7 +1363,7 @@ abstinence_slip_details: $slipDetailsText
       title: '今日の必須導線は完了済み',
       detail: '次は通常メニューを優先度順に実行。',
       icon: Icons.verified,
-      color: Colors.blueGrey,
+      color: Color(0xFF4CAF50),
     );
   }
 
@@ -1753,10 +1753,10 @@ abstinence_slip_details: $slipDetailsText
     final summary = snapshot.monthlyCashflowSummary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = summary.netTotal >= 0
-        ? Colors.green.shade700
-        : Colors.redAccent.shade200;
+        ? const Color(0xFF4CAF50)
+        : const Color(0xFFEF9A9A);
     final cardColor =
-        isDark ? const Color(0xFF111827) : Colors.white.withValues(alpha: 0.92);
+        isDark ? const Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
     final borderColor = isHighlighted
         ? accentColor.withValues(alpha: 0.7)
         : accentColor.withValues(alpha: 0.22);
@@ -3975,7 +3975,7 @@ abstinence_slip_details: $slipDetailsText
     return Scaffold(
       key: const Key('home_page_scaffold'),
       backgroundColor:
-          isDark ? const Color(0xFF0B1220) : const Color(0xFFF3F7FF),
+          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF3F7FF),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
@@ -4085,9 +4085,9 @@ abstinence_slip_details: $slipDetailsText
             end: Alignment.bottomCenter,
             colors: isDark
                 ? const [
-                    Color(0xFF0B1220),
-                    Color(0xFF111827),
-                    Color(0xFF0F172A),
+                    Color(0xFF0A0A0A),
+                    Color(0xFF121212),
+                    Color(0xFF0A0A0A),
                   ]
                 : const [
                     Color(0xFFF8FAFF),
@@ -4215,7 +4215,7 @@ abstinence_slip_details: $slipDetailsText
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 side: BorderSide(
-                                  color: Colors.indigo.withAlpha(60),
+                                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.24),
                                 ),
                               ),
                               child: InkWell(
@@ -4243,7 +4243,7 @@ abstinence_slip_details: $slipDetailsText
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          color: Colors.indigo.withAlpha(20),
+                                          color: const Color(0xFF3D5AFE).withValues(alpha: 0.08),
                                           borderRadius:
                                               BorderRadius.circular(10),
                                         ),
@@ -6873,7 +6873,7 @@ class _PersonalityTypeBanner extends StatelessWidget {
           return Card(
             elevation: 0,
             color: isDark
-                ? const Color(0xFF2E1065).withAlpha(120)
+                ? const Color(0xFF2E1065).withValues(alpha: 0.47)
                 : const Color(0xFFF3E8FF),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -6883,7 +6883,7 @@ class _PersonalityTypeBanner extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF4C1D95).withAlpha(140)
+                      ? const Color(0xFF4C1D95).withValues(alpha: 0.55)
                       : const Color(0xFFDDD6FE),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -6914,7 +6914,7 @@ class _PersonalityTypeBanner extends StatelessWidget {
         return Card(
           elevation: 0,
           color: isDark
-              ? const Color(0xFF2E1065).withAlpha(120)
+              ? const Color(0xFF2E1065).withValues(alpha: 0.47)
               : const Color(0xFFF3E8FF),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -6924,7 +6924,7 @@ class _PersonalityTypeBanner extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF4C1D95).withAlpha(140)
+                    ? const Color(0xFF4C1D95).withValues(alpha: 0.55)
                     : const Color(0xFFDDD6FE),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -6969,10 +6969,10 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
             colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE94560), width: 1.5),
+          border: Border.all(color: const Color(0xFFFF6B35), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE94560).withAlpha(60),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.24),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -6983,12 +6983,12 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFE94560).withAlpha(30),
+                color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
                 Icons.music_note,
-                color: Color(0xFFE94560),
+                color: Color(0xFFFF6B35),
                 size: 28,
               ),
             ),
@@ -7021,7 +7021,7 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
             ),
             const Icon(
               Icons.arrow_forward_ios,
-              color: Color(0xFFE94560),
+              color: Color(0xFFFF6B35),
               size: 16,
             ),
           ],
@@ -7039,7 +7039,7 @@ class _MainFeatureBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE94560),
+        color: const Color(0xFFFF6B35),
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Text(
