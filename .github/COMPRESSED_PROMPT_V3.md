@@ -116,6 +116,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 77 | **GitHub PR 管理** (GitHubリポジトリのPR一覧・レビュー状況・統計をアプリ内で一元管理 — GitHub対抗) | ✅ LP済 | `lib/pages/github_pr_page.dart` (VSCode版) |
 | 78 | **思考妨害パターン診断** (4質問で衝動・時間帯・前兆サインを特定し禁欲ガード自動設定 — THOUGHT_INTERRUPT_ELIMINATOR #T2) | ✅ LP済 | `lib/pages/thought_interrupt_diagnosis_page.dart` (VSCode版) |
 | 79 | **週次 Slip パターンレポート** (30日間のslipを曜日・時間帯・要因別に集計しストリーク・改善トレンドを可視化) | ✅ LP済 | `lib/pages/weekly_slip_report_page.dart` (VSCode版) |
+| 80 | **ゴール追跡** (OKR形式スモールゴール〜人生目標管理・進捗追跡・マイルストーン — Google/Notion対抗) | ✅ LP済 | VSCode版 |
+| 81 | **AIサマリー** (ノート・タスク・習慣データをAIが自動要約・1日/週/月インサイト生成) | ✅ LP済 | VSCode版 |
+| 82 | **収益予測** (過去データ×市場トレンドでAIが収益予測・キャッシュフロー可視化 — MoneyForward対抗) | ✅ LP済 | VSCode版 |
+| 83 | **ブックマーク同期** (ブラウザ↔アプリ双方向同期・AI自動タグ付け・検索 — Notion対抗) | ✅ LP済 | VSCode版 |
+| 84 | **天気・環境ウィジェット** (現在地天気・気温・紫外線をダッシュボード表示・AI活動提案) | ✅ LP済 | VSCode版 |
 
 ---
 
