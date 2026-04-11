@@ -1661,6 +1661,8 @@ $input
       (Icons.insert_chart, '0xFF6366F1', '利用統計ダッシュボード', 'アプリの全機能利用状況・ユーザー行動・機能別エンゲージメントをリアルタイム可視化。自分のライフデータを科学する管理者コックピット。'),
       (Icons.label, '0xFFF59E0B', 'タグ・カテゴリ管理', 'ノート・タスク・習慣・ファイルのタグ体系を一元設計。AI自動タグ付けと手動分類を組み合わせた最強の知識分類システム。'),
       (Icons.assistant, '0xFF10B981', 'AI文章添削', '日本語文章の誤字・文法・表現をAIがリアルタイム添削。ブログ・メール・報告書の品質を即座に向上させる自分株式会社内蔵の校正エンジン。'),
+      (Icons.workspace_premium, '0xFFDC2626', 'プレミアムコンテンツ販売', 'ノート・テンプレート・スキルをコンテンツとして販売・収益化。Gumroadを超えるナレッジマーケットプレイスを自分株式会社に内蔵。'),
+      (Icons.groups, '0xFF6D28D9', 'オンラインコミュニティ', 'テーマ別コミュニティ・勉強会・習慣チャレンジをアプリ内で開催。Discordを超える目的特化型コミュニティプラットフォーム。'),
     ];
 
     return Container(
@@ -1678,7 +1680,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない118のこと',
+            '自分株式会社でしかできない120のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

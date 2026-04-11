@@ -166,6 +166,8 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 127 | **利用統計ダッシュボード** (全機能利用状況・ユーザー行動・エンゲージメントのリアルタイム可視化) | ✅ LP済 | `lib/pages/stats_page.dart` (VSCode版) |
 | 128 | **タグ・カテゴリ管理** (AI自動タグ付け+手動分類の知識分類システム) | ✅ LP済 | `lib/pages/categories_page.dart` (VSCode版) |
 | 129 | **AI文章添削** (日本語誤字・文法・表現のリアルタイム添削・校正エンジン) | ✅ LP済 | VSCode版 |
+| 130 | **プレミアムコンテンツ販売** (ノート・テンプレート・スキル販売×収益化 — デジタル販売SaaS対抗) | ✅ LP済 | VSCode版 |
+| 131 | **オンラインコミュニティ** (テーマ別コミュニティ・勉強会・習慣チャレンジ — Discord対抗) | ✅ LP済 | VSCode版 |
 
 ---
 
@@ -550,6 +552,50 @@ web/sitemap.xml          # URL マップ
 | GH006 Step5 保護ブランチ直接 push | Step5 で `git push origin main` → ブランチ保護違反。C2改善と同じ問題 | Step5 を PR 作成→自動マージ方式に変更 (CS-check.yml の方式を参考) |
 
 **暫定対応 (Windows版#30)**: Zenn は `published: true` commit で直接公開可能なため、通知センター記事は Zenn のみ公開済み。Qiita/dev.to は #B5 修正後に blog-publish.yml で再実行。
+
+### 機能強化 #T3: AI大学 6プロバイダー対応 + 毎週自動更新 (Windows版#30, 2026-04-11)
+
+**背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。Google/OpenAI/Anthropic/Microsoft/Meta/X の6社を網羅し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
+
+#### 完了済み (Windows版#30)
+
+| 作業内容 | 状態 |
+| --- | --- |
+| `ai_university_content` テーブル作成 | ✅ `20260411003000_create_ai_university_content.sql` |
+| 6プロバイダー初期コンテンツ seed | ✅ `20260411003200_seed_ai_university_content.sql` |
+| `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 | ✅ 毎週月曜 11:00 JST |
+
+#### 未完了 (各インスタンスへ指示)
+
+| 作業内容 | インスタンス | 優先度 |
+| --- | --- | --- |
+| `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
+| `gemini_university_v2_page.dart` を `ai_university_page.dart` に改修: タブを6プロバイダー別に変更・EFからデータ取得 | VSCode版 | 🔴 高 |
+| Claude Code Schedule に `ai-university-update` タスクを登録 (週次月曜 11:00 JST) | PowerShell版 | 🟡 中 |
+| LP に「AI大学 (6大AI総合学習)」機能を更新 (Gemini限定→6プロバイダーに修正) | VSCode版 | 🟡 中 |
+
+#### `ai_university_content` テーブルスキーマ
+
+```sql
+provider    text  -- 'google' | 'openai' | 'anthropic' | 'microsoft' | 'meta' | 'x'
+category    text  -- 'models' | 'api' | 'pricing' | 'news' | 'tutorial' | 'overview'
+title       text
+content     text  -- Markdown形式
+source_url  text
+published_at date
+sort_order  int
+is_active   boolean
+updated_at  timestamptz  -- 自動更新トリガー付き
+```
+
+#### `ai-university-content` EF 仕様 (Web版)
+
+```typescript
+// action: 'get_all' → 全プロバイダーのコンテンツ一覧
+// action: 'get_by_provider' → provider 指定で絞り込み
+// action: 'upsert_news' → Claude Schedule が毎週呼び出してニュース更新
+// RLS: SELECT は全ユーザー / INSERT/UPDATE はサービスロールのみ
+```
 
 ---
 
