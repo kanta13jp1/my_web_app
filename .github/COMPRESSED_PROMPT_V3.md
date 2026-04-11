@@ -151,6 +151,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 112 | **思考アンカー** (雑念・不安・割り込みをキャプチャしアンカー変換する認知制御機能) | ✅ LP済 | `lib/pages/thought_anchor_page.dart` (VSCode版) |
 | 113 | **思考キャプチャ** (0.5秒でひらめきをInboxキャプチャ・AI自動分類GTD式思考管理) | ✅ LP済 | `lib/pages/thought_capture_page.dart` (VSCode版) |
 | 114 | **セマンティック検索** (意味・文脈で全データ横断検索するAI理解型検索エンジン — Notion対抗) | ✅ LP済 | `lib/pages/semantic_search_page.dart` (VSCode版) |
+| 115 | **購買ログ・支出記録** (全購入品記録・家計簿自動分類・AI節約インサイト — Amazon対抗) | ✅ LP済 | `lib/pages/purchase_log_page.dart` (VSCode版) |
+| 116 | **オーディオエフェクト** (ギター・楽器・音声エフェクト処理・ミキシング — GarageBand対抗) | ✅ LP済 | `lib/pages/audio_effects_processor_page.dart` (VSCode版) |
+| 117 | **AI画像生成** (テキスト→画像即時生成・プレゼン/SNS/ブログ素材AIクリエイティブ — Midjourney対抗) | ✅ LP済 | `lib/pages/ai_image_generator_page.dart` (VSCode版) |
+| 118 | **AI横断検索** (全データをAI横断検索するパーソナルナレッジ検索エンジン) | ✅ LP済 | `lib/pages/ai_search_page.dart` (VSCode版) |
+| 119 | **現実確認チェック** (目標・計画・実績を客観スコアリング・バイアス排除意思決定支援 — 独自機能) | ✅ LP済 | `lib/pages/reality_check_page.dart` (VSCode版) |
 
 ---
 

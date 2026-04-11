@@ -1646,6 +1646,11 @@ $input
       (Icons.anchor, '0xFF4338CA', '思考アンカー', '集中を乱す雑念・不安・タスク割り込みをその場でキャプチャしアンカーに変換。後で必ず戻ると約束することで今この瞬間の集中を守る認知制御機能。'),
       (Icons.flash_on, '0xFF8B5CF6', '思考キャプチャ', 'ひらめき・アイデア・メモを0.5秒でキャプチャ。Inboxに溜めてAIが後から自動分類・タグ付けするGTD式思考管理システム。'),
       (Icons.manage_search, '0xFF0EA5E9', 'セマンティック検索', 'キーワード一致ではなく意味・文脈で全ノート・タスク・習慣を横断検索。Notionの検索機能を超えるAI意味理解型の全文検索エンジン。'),
+      (Icons.receipt_long, '0xFF059669', '購買ログ・支出記録', '全購入品の記録・家計簿自動分類・支出トレンド分析。Amazonの購買履歴を超える節約インサイトをAIがリアルタイムで提供。'),
+      (Icons.audiotrack, '0xFF6D28D9', 'オーディオエフェクト', 'ギター・楽器・音声にエフェクト処理・音質補正・ミキシングをブラウザだけで実現。GarageBandを超えるポータブル音楽制作スタジオ。'),
+      (Icons.image, '0xFFF97316', 'AI画像生成', 'テキストから画像を即時生成。プレゼン・SNS・ブログ素材をAIが自動制作。Midjourneyを超えるライフマネジメント統合型AIクリエイティブツール。'),
+      (Icons.search, '0xFF0F766E', 'AI横断検索', '自分株式会社の全データ(ノート・タスク・習慣・財務)をAIが横断検索。Notionの検索・Googleを超えるパーソナルナレッジ検索エンジン。'),
+      (Icons.balance, '0xFF4338CA', '現実確認チェック', '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。'),
     ];
 
     return Container(
@@ -1663,7 +1668,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない103のこと',
+            '自分株式会社でしかできない108のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
