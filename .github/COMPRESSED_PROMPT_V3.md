@@ -161,6 +161,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 122 | **顧客フィードバック** (ユーザーの声一元収集・AI分析・優先度付け — Intercom対抗) | ✅ LP済 | `lib/pages/customer_feedback_page.dart` (VSCode版) |
 | 123 | **変更履歴管理** (コード・ドキュメント変更の自動追跡・Changelog自動生成) | ✅ LP済 | `lib/pages/changelog_manager_page.dart` (VSCode版) |
 | 124 | **支払いチャンネル台帳** (複数支払い手段・口座のAI自動仕訳・可視化台帳) | ✅ LP済 | `lib/pages/payment_channel_ledger_page.dart` (VSCode版) |
+| 125 | **AI自律エージェント** (ゴール→タスク自律分解・実行するAutoGPT超えの専用AI) | ✅ LP済 | `lib/pages/ai_agent_page.dart` (VSCode版) |
+| 126 | **AI仮想秘書** (スケジュール・タスク・メール全自動管理の専属デジタル秘書) | ✅ LP済 | `lib/pages/ai_secretary_page.dart` (VSCode版) |
+| 127 | **利用統計ダッシュボード** (全機能利用状況・ユーザー行動・エンゲージメントのリアルタイム可視化) | ✅ LP済 | `lib/pages/stats_page.dart` (VSCode版) |
+| 128 | **タグ・カテゴリ管理** (AI自動タグ付け+手動分類の知識分類システム) | ✅ LP済 | `lib/pages/categories_page.dart` (VSCode版) |
+| 129 | **AI文章添削** (日本語誤字・文法・表現のリアルタイム添削・校正エンジン) | ✅ LP済 | VSCode版 |
 
 ---
 
