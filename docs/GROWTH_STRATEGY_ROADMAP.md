@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-12 VSCode版#58 (Rule19 UI改善実行: LP hero/CTA/stats/guitarカード DESIGN.md準拠)
+最終更新: 2026-04-12 PS#40b (deno lint fix + COMPRESSED_PROMPT EF本数修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -6452,4 +6452,27 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第3弾: Qiita `notification-center.md` 投稿結果確認 + 新規記事dispatch 🟡 高
 - Rule 19 継続: AIDesigner MCP でホームUI改善コンポーネント生成 🟡 高
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+- AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
+
+## PS#40b — deno lint fix + COMPRESSED_PROMPT EF本数修正 (2026-04-12)
+
+### 実施内容
+
+- **deno lint `no-unused-vars` 修正**: `ai-university-streaks/index.test.ts` の未使用 `assertEquals` 関数を削除 (commit `b1d11bc0`)
+  - 原因: `assertEquals` (JSON比較) と `assertStrictEquals` (厳密等価) を両方定義したが後者のみ使用
+  - 修正: `assertEquals` ブロック10行を削除 → `deno lint 0エラー`
+- **COMPRESSED_PROMPT_V3.md EF本数不整合修正**: directories セクションが `247本 (Tier2: 148本)` のままになっていた (commit `54916777`)
+  - PR#317 で ai-university-content/streaks/badges (3 EF) 追加済みのため `250本 (Tier2: 151本)` に修正
+  - 2箇所 (ディレクトリ説明 + Tier管理コメント) を同期
+
+### 新パターン記録
+
+- `echo placeholder → Read → Write` で Write ツール "not read yet" エラー回避
+- `git log --stat HEAD -5` で並行セッションの完了作業を確認してから着手
+
+### 次回優先
+
+- T-1 第4弾: `docs/blog-drafts/2026-03-28-note-comments.md` → Qiita/dev.to 投稿 🟡 高
+- LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
+- `growth-acquisition-page.dart` 修正 (git statusに未コミット変更あり) 🟡 高
 - AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
