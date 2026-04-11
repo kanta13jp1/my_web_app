@@ -180,7 +180,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 ## 🎨 デザインシステム
 
 - **`docs/DESIGN.md`** が唯一の真実ソース（Orange+Indigo ダークテーマ）
-- **Figma MCP** / **AIDesigner MCP** / **`design-skills` サブエージェント** を活用
+- **毎セッション必須ツールチェーン (Rule #19)**: `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × **`design-skills` サブエージェント** × `DESIGN.md` を組み合わせて UI 改善。詳細: `docs/DESIGN_TOOLING_SETUP.md`
 - 日本語本文: `letter-spacing: 0`, `line-height: 1.7〜2.0`, `palt` は見出しのみ
 - 参考デザインシステム: `docs/design-systems/` (note / freee / SmartHR / Apple JP / WIRED.jp)
 
@@ -206,6 +206,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
 18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス・必須）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
+19. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページ(`lib/pages/` のいずれか)を `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙する、(2) **Figma MCP** (`mcp__figma__authenticate`) でデザインコンポーネントを参照・実装との差分を特定する、(3) **AIDesigner MCP** (`mcp__aidesigner__authenticate`) でDesktop/Mobile 両対応の改善案 2〜3 案を生成する、(4) **Nanobanana API** でカラーパレット・アイコン・グラデーションなどのデザインアセットを取得し Flutter コードに反映する、(5) 改善コードを `lib/` に実装 → `flutter analyze 0エラー` → commit → GROWTH_STRATEGY_ROADMAP に「UI改善: [ページ名] — [変更内容]」を記録する。**優先ページ順**: LP → ホーム画面 → AI大学 → 高トラフィックページ。**制約**: `docs/DESIGN.md` のトークン（色・フォント・間隔）違反案は採用禁止 / `ThemeService` カスタムテーマ優先 / 詳細手順は `docs/DESIGN_TOOLING_SETUP.md` 参照
 
 ---
 

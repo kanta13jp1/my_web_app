@@ -24,6 +24,8 @@ google, microsoft, discord, line, facebook, liven, github
 
 ## デザインシステム参照 (UI生成時に必ず参照)
 
+**毎セッション必須ツールチェーン** (Rule 12): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて UI を改善する。詳細手順は Rule 12 参照。
+
 UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
 
 - **自分株式会社デザイントークン**: `docs/DESIGN.md`
@@ -64,6 +66,16 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - **コスト最適化**: より安価・高速なモデルが登場したらバッチ処理 EF (`batch_analysis.py`, `competitor-monitoring` など) での採用を検討
    - **差別化機能のヒント**: 競合 AI プロバイダーの新機能からユーザー価値を逆算し、未実装機能のアイデアとして追加
    - **実施手順**: (1) `notebooklm ask "各プロバイダーの最新ニュースから開発に使えそうな機能・APIを抽出して"` → (2) 既存 EF・ページとの接続可能性を評価 → (3) 実装可能なものは即 ROADMAP へ追記 → (4) 今セッションで対応できるものは実装
+12. **毎セッション: UI改善ツールチェーン駆動 デザイン改善（VSCode版・必須）** — `Claude Code × Nanobanana API × Figma MCP × AIDesigner MCP × design-skills × DESIGN.md` を毎セッション組み合わせて UI を改善する。`docs/DESIGN_TOOLING_SETUP.md` が正式手順書。
+
+   **改善ワークフロー（既存画面改善時）**:
+   1. **`design-skills` サブエージェント起動**: 主要ページ (ホーム / AI大学 / LP / ランキング) を `docs/DESIGN.md` (Orange+Indigo ダークテーマ) と照合し、デザイントークン違反・改善点を列挙
+   2. **Figma MCP** (`/design-review`): 既存デザインの余白・タイポ・コンポーネント構造を読み「今あるものに合わせる」基準を取得
+   3. **AIDesigner MCP** (`/design-component`): Desktop/Mobile 両方で改善案 2〜3 案を生成
+   4. **Nanobanana API**: カラーパレット・コンポーネント案を生成してデザイン候補を拡張
+   5. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
+
+   **制約**: `docs/DESIGN.md` に反する提案は採用しない / `Theme.of(context)` + `ThemeService` を優先 / 日本語本文の `letter-spacing: 0`・`line-height: 1.7〜2.0` を維持
 
 ---
 
