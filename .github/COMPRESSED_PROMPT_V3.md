@@ -450,13 +450,14 @@ web/sitemap.xml          # URL マップ
 - ✅ **blog-publish.yml Qiita 403 修正済み** (PS#40, commit `08bc6c37`): Zenn形式 `topics:` フロントマターに対応していなかったバグを修正。`grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic` を追加。
 - ✅ **Qiita 投稿成功** (2026-04-12): `2026-03-31-notification-center.md` → [https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7](https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7)
 - ✅ **第4弾 投稿成功** (2026-04-12): `2026-03-28-note-comments.md` → Qiita: [https://qiita.com/kanta13jp1/items/d90cff103a6ce55c6192](https://qiita.com/kanta13jp1/items/d90cff103a6ce55c6192) / dev.to 投稿成功
+- ✅ **第5弾 投稿成功** (2026-04-12): `2026-04-01-workflow-automation-video-meeting.md` → Qiita: [https://qiita.com/kanta13jp1/items/0d55915a3553f85e495d](https://qiita.com/kanta13jp1/items/0d55915a3553f85e495d) / dev.to 投稿成功
 
-**次回候補 (第5弾)**:
+**次回候補 (第6弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
-| 中 | AI大学関連記事 — 9社AIを1アプリで学ぶ仕組みの技術解説 | Qiita/Zenn |
+| 高 | AI大学関連記事 — 9社AIを1アプリで学ぶ仕組みの技術解説 | Qiita/Zenn |
+| 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

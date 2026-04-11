@@ -6521,3 +6521,28 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第5弾: `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md` → Qiita/dev.to
 - LP 126→130のこと: 4機能追加 (VSCode版)
 - AI大学 Tier2 EF 昇格検討 (EFスロット確認後)
+
+## T-1 第5弾 — workflow-automation-video-meeting Qiita/dev.to 投稿 (2026-04-12)
+
+### 実施内容
+
+- frontmatter追加 → `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md`
+- **Qiita**: https://qiita.com/kanta13jp1/items/0d55915a3553f85e495d
+- **dev.to**: https://dev.to/kanta13jp1/fluttertosupabase-edge-functionsde3jing-he-saaswotong-shi-nigong-meru-aiwakuhurosnssukeziyurabideohui-yi-wo1ri-deshi-zhuang-sitahua-3lin
+- blog-publish.yml 12秒で完了
+
+### T-1 累積実績 (2026-04-12)
+
+| 弾 | 記事 | Qiita | dev.to |
+|---|---|---|---|
+| 第1弾 | CS自動化 | ✅ | ✅ |
+| 第2弾 | 通知センター | ✅ | ✅ |
+| 第3弾 | notification-center | ✅ | ✅ |
+| 第4弾 | note-comments | ✅ | ✅ |
+| 第5弾 | workflow-automation | ✅ | ✅ |
+
+### 次回優先
+
+- T-1 第6弾: AI大学関連記事 — 9社AIを1アプリで学ぶ仕組み
+- LP 126→130のこと: 4機能追加 (VSCode版)
+- AI大学 Tier2 EF Tier1 昇格検討
