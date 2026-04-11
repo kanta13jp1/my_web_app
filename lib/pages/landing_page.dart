@@ -1621,6 +1621,11 @@ $input
       (Icons.table_chart, '0xFF6366F1', 'スプレッドシートDB', 'Notionデータベースを超える多機能スプレッドシート。フィルタ・ソート・数式・API連携に対応した柔軟なデータ管理。'),
       (Icons.schedule_send, '0xFFEC4899', 'SNS投稿スケジューラー', 'X/Instagram/FacebookへのSNS投稿を最適時間に自動予約・一括投稿。AIが投稿内容の改善案も提案するコンテンツマーケ自動化ツール。'),
       (Icons.subscriptions, '0xFF7C3AED', 'サブスク課金管理', 'サブスクリプション請求・顧客管理・解約防止分析を自動化。Stripeを超える自分株式会社内蔵の課金エンジン。'),
+      (Icons.contacts, '0xFF0369A1', 'アドレス帳・人脈管理', '連絡先・誕生日・交流履歴・SNSリンクを一元管理。LinkedInを超えるパーソナルCRM×人脈グラフで関係性を見える化。'),
+      (Icons.book, '0xFF7E22CE', '読書リスト管理', '読みたい本・読了記録・メモ・評価を一元管理。AIが次に読むべき本を推薦するパーソナル書評プラットフォーム。'),
+      (Icons.checkroom, '0xFFF97316', 'ワードローブ管理', '所持服の登録・コーデ提案・購入計画をAIが管理。ファッションコストを削減しながらスタイルを最適化。'),
+      (Icons.eco, '0xFF22C55E', 'カーボンフットプリント', '日常行動のCO2排出量を自動計算・可視化。移動・食事・エネルギー消費から個人の環境負荷を数値化し持続可能な生活を設計。'),
+      (Icons.timer_outlined, '0xFF6366F1', 'タイムトラッキング', 'プロジェクト別・タスク別の作業時間を自動記録。Toggleを超えるAI分析付き時間管理で生産性の無駄を即特定。'),
     ];
 
     return Container(
@@ -1638,7 +1643,7 @@ $input
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '自分株式会社でしかできない78のこと',
+            '自分株式会社でしかできない83のこと',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,

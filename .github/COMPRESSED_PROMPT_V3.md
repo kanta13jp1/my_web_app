@@ -126,6 +126,11 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 87 | **スプレッドシートDB** (フィルタ・ソート・数式・API連携の多機能データ管理 — Notion対抗) | ✅ LP済 | `lib/pages/spreadsheet_database_page.dart` (VSCode版) |
 | 88 | **SNS投稿スケジューラー** (X/Instagram/Facebook最適時間自動予約・AI改善提案) | ✅ LP済 | `lib/pages/social_media_scheduler_page.dart` (VSCode版) |
 | 89 | **サブスク課金管理** (請求・顧客管理・解約防止分析の自動化 — Stripe対抗) | ✅ LP済 | `lib/pages/subscription_billing_page.dart` (VSCode版) |
+| 90 | **アドレス帳・人脈管理** (連絡先・交流履歴・SNSリンク・人脈グラフ — LinkedIn対抗) | ✅ LP済 | `lib/pages/address_book_page.dart` (VSCode版) |
+| 91 | **読書リスト管理** (読みたい本・読了記録・AI推薦 — 書評SNS対抗) | ✅ LP済 | `lib/pages/reading_list_page.dart` (VSCode版) |
+| 92 | **ワードローブ管理** (所持服登録・コーデ提案・購入計画のAI最適化) | ✅ LP済 | `lib/pages/wardrobe_page.dart` (VSCode版) |
+| 93 | **カーボンフットプリント** (CO2排出量自動計算・可視化・持続可能生活設計) | ✅ LP済 | `lib/pages/carbon_footprint_tracker_page.dart` (VSCode版) |
+| 94 | **タイムトラッキング** (プロジェクト別作業時間自動記録・AI分析 — Toggl対抗) | ✅ LP済 | `lib/pages/time_tracker_page.dart` (VSCode版) |
 
 ---
 
