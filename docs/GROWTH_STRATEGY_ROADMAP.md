@@ -6738,3 +6738,36 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - cross-instance-prs 処理: VSCode版 `_providerMeta` に Hugging Face 追加 🟡 高 (VSCode版)
 - T-1 第6弾: AI大学14社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
 - AI大学 次追加候補: Nvidia NIM / Baidu ERNIE 🟢 中 (Windows版)
+
+---
+
+## Windows版#38 (2026-04-12)
+
+### 完了タスク
+
+1. **Rule 10 docs全件分析**
+   - 3数値確認: EF=99/151/250本・ユーザー=4人・ワークフロー=17本 → 全て正確
+   - Hugging Face cross-instance-pr 処理済み確認 (VSCode版#59 対応済み)
+
+2. **AI大学 Nvidia NIM 追加 (15社目)**: migration `20260412006000_seed_nvidia_ai_university.sql`
+   - 採用理由: GPU AI インフラ最大手・NIM OpenAI互換API・build.nvidia.com 無料体験・TensorRT-LLM 3〜5倍高速化
+   - overview: H100/H200/B200 GPU インフラ・NIM コンテナ・TensorRT-LLM 強み
+   - models: Nemotron-70B/340B・Cosmos・主要 OSS モデル (LLaMA/Mistral/Phi-4) NIM最適化版・FLUX.1 NIM
+   - api: OpenAI 互換 Python コード・ストリーミング・ローカル Docker NIM・FLUX 画像生成・料金表
+   - cross-instance-pr: `20260412_nvidia_provider_ui.md` (emoji: '🟢', color: 0xFF76B900)
+
+3. **COMPRESSED_PROMPT_V3.md 更新**: プロバイダーリスト 14→15社
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 15社 (Nvidia追加)
+- ユーザー数: 4人
+
+### 次回優先
+
+- cross-instance-prs 処理: VSCode版 `_providerMeta` に Hugging Face・Nvidia 追加 🟡 高 (VSCode版)
+- T-1 第6弾: AI大学15社体制を技術記事化 → Qiita/Zenn 投稿 🟡 高 (PowerShell版)
+- AI大学 次追加候補: Baidu ERNIE / IBM watsonx / Sakana AI 🟢 中 (Windows版)
