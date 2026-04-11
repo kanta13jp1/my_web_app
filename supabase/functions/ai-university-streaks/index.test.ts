@@ -7,16 +7,6 @@
 // ──────────────────────────────────────────
 // 軽量アサーションヘルパー
 // ──────────────────────────────────────────
-function assertEquals<T>(actual: T, expected: T, msg?: string): void {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  if (a !== e) {
-    throw new Error(
-      `assertEquals failed: expected ${e}, got ${a}${msg ? ` — ${msg}` : ""}`,
-    );
-  }
-}
-
 function assertStrictEquals<T>(actual: T, expected: T, msg?: string): void {
   if (actual !== expected) {
     throw new Error(
