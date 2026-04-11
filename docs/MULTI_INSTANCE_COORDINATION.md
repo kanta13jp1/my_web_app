@@ -32,6 +32,17 @@
 | Windows版 | `lib/`, `supabase/functions/`, `.github/` |
 | PowerShell版 | `lib/`, `supabase/functions/`, `docs/` (MULTI_INSTANCE_COORDINATION.md は own) |
 
+### 全インスタンス共有領域（例外）
+
+以下のファイル・ディレクトリはインスタンスに関わらず全員が read/write 可:
+
+| パス | 理由 | 書き込みルール |
+| --- | --- | --- |
+| `memory/` (全ファイル) | `/wrap-up` で全インスタンスが学習を永続保存する共有メモリ領域 | ファイル名に session 識別子を付けて衝突回避 (例: `feedback_success_YYYYMMDD_ps.md`) |
+| `docs/GROWTH_STRATEGY_ROADMAP.md` | 全インスタンスがセッション記録を末尾追記する成長記録 | **追記のみ** (既存セクション編集は Windows版 に限定) / 末尾に `## <インスタンス名> YYYYMMDD` ヘッダーで追記 |
+| `docs/cross-instance-prs/` | 横断変更提案の投函ボックス (上記「緊急横断権限」で使用) | 任意のインスタンスが `YYYYMMDD_<内容>.md` を作成可 |
+| `.github/COMPRESSED_PROMPT_V3.md` | 全インスタンス共通のプロンプト辞書 | 数値更新・タスクステータス変更は全インスタンス可 / 構造変更は PowerShell版 が担当 |
+
 ---
 
 ## 競合防止ルール
