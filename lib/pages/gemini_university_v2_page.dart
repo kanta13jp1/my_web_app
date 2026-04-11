@@ -472,6 +472,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           },
           onConflict: 'user_id,provider_id',
         );
+        // ストリーク更新 (DB関数で連続学習日数を計算)
+        await _supabase.rpc(
+          'update_ai_university_streak',
+          params: {'p_user_id': user.id},
+        );
       } catch (_) {
         // スコア保存失敗はサイレント — ローカルの SharedPreferences は保持済み
       }

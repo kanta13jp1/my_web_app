@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -18,7 +19,10 @@ class AiUniversityHomeCard extends StatefulWidget {
 }
 
 class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
+  final _supabase = Supabase.instance.client;
   int _answeredCount = 0;
+  int _currentStreak = 0;
+  int _badgeCount = 0;
   static const int _totalQuizzes = 9; // google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity
   static const String _prefsKey = 'ai_univ_answered_quizzes';
 
@@ -38,6 +42,31 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     final answered = saved.isEmpty ? <String>[] : saved.split(',');
     if (mounted) {
       setState(() => _answeredCount = answered.length);
+    }
+
+    // Supabase からストリーク・バッジ数を取得 (ログイン済みの場合のみ)
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      final streakRow = await _supabase
+          .from('ai_university_streaks')
+          .select('current_streak')
+          .eq('user_id', user.id)
+          .maybeSingle();
+      final badgeRow = await _supabase
+          .from('ai_university_badges')
+          .select('id')
+          .eq('user_id', user.id)
+          .count(CountOption.exact);
+      if (mounted) {
+        setState(() {
+          _currentStreak =
+              (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
+          _badgeCount = badgeRow.count;
+        });
+      }
+    } catch (_) {
+      // ストリーク取得失敗はサイレント
     }
   }
 
@@ -113,7 +142,42 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     )
                     .toList(),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+
+              // ストリーク・バッジ行 (ログイン済みかつデータあり時のみ表示)
+              if (_currentStreak > 0 || _badgeCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      if (_currentStreak > 0) ...[
+                        const Text('🔥', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$_currentStreak 日連続',
+                          style: const TextStyle(
+                            color: Colors.orange,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                      ],
+                      if (_badgeCount > 0) ...[
+                        const Text('🏅', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 3),
+                        Text(
+                          '$_badgeCount バッジ',
+                          style: const TextStyle(
+                            color: Colors.amber,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
 
               // 達成度バー + ボタン
               Row(
