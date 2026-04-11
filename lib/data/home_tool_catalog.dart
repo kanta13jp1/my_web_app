@@ -5,6 +5,7 @@ import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
 import '../pages/ai_secretary_page.dart';
+import '../pages/my_skills_page.dart';
 import '../pages/ai_search_page.dart';
 import '../pages/ai_status_page.dart';
 import '../pages/behavior_log_page.dart';
@@ -2007,6 +2008,19 @@ List<HomeToolEntry> buildHomeToolCatalog({
         'タスク', '可視化', 'Notion', '生産性', '分析', '週次',
       ],
       onOpen: (context) => _pushPage(context, const PersonalDashboardPage()),
+    ),
+    HomeToolEntry(
+      id: 'my-skills',
+      sectionId: 'ai',
+      title: 'マイスキル',
+      subtitle: 'よく使うAIプロンプトをスキルとして登録・再利用。Slackワークフロービルダー対抗の個人AI自動化',
+      icon: Icons.psychology,
+      color: const Color(0xFF6366F1),
+      keywords: const <String>[
+        'スキル', 'AI', 'プロンプト', '自動化', 'ワークフロー', '登録', '再利用',
+        'Slack', 'テンプレート', 'アシスタント', 'ショートカット',
+      ],
+      onOpen: (context) => _pushPage(context, const MySkillsPage()),
     ),
   ];
 }
