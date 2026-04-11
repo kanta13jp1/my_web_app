@@ -1,20 +1,12 @@
-# ブログ下書き 2026-04-01
+---
+title: "FlutterとSupabase Edge Functionsで3競合SaaSを同時に攻める — AIワークフロー・SNSスケジューラー・ビデオ会議を1日で実装した話"
+date: 2026-04-01
+tags: [Flutter, Supabase, EdgeFunctions, buildinpublic]
+platforms: [Qiita, dev.to]
+published: false
+---
 
-## タイトル案
-
-1. 「FlutterとSupabase Edge Functionsで3競合SaaSを同時に攻める — AIワークフロー・SNSスケジューラー・ビデオ会議を1日で実装した話」
-2. 「Zapier / Zoom / Hootsuite 競合をFlutter Webで手作りしてみた — 215 Edge Functions体制への道」
-3. 「自分株式会社215 Edge Functions達成 — ワークフロー自動化・SNS投稿管理・ビデオ会議を自前実装した理由」
-
-## 投稿先候補
-
-- [x] Zenn (技術詳細)
-- [x] Qiita (実装解説)
-- [ ] note (エッセイ)
-- [ ] dev.to (英語版)
-- [ ] Hashnode
-
-## 本文下書き (1800字)
+# FlutterとSupabase Edge Functionsで3競合SaaSを同時に攻める — AIワークフロー・SNSスケジューラー・ビデオ会議を1日で実装した話
 
 ### はじめに
 
