@@ -271,6 +271,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('my-ai-agent', 'マイAIエージェント フロー実行エンジン', true, '/my-ai-agent', 'マイAIエージェントページ'),
     // 追加 (cs-check 自動連携)
     _FnDef('personal-dashboard', 'パーソナルダッシュボード (個人統合ビュー)', true, '/personal-dashboard', 'パーソナルダッシュボードページ'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('discord-notifications', 'Discord 通知連携', true, '/discord-notifications', 'Discord 通知ページ'),
+    _FnDef('line-notifications', 'LINE 通知連携', true, '/line-notifications', 'LINE 通知ページ'),
+    _FnDef('github-pr-manager', 'GitHub PR 管理', true, '/github-pr', 'GitHub PR 管理ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
