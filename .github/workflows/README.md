@@ -21,27 +21,29 @@
 | **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | ワークフロー失敗時に GitHub Issue 自動生成 (重複スキップ) |
 | **YouTube Analysis** | `youtube-analysis.yml` | 毎日 11:00 JST / 手動 | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` PR自動マージ |
 | **CI Auto-Fix** | `ci-auto-fix.yml` | workflow_run: CI失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
+| **Blog Publish** | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力。投稿後 frontmatter `published:true` 更新 |
 
-## 品質保証指標 (全15ワークフロー)
+## 品質保証指標 (全16ワークフロー)
 
 | 指標 | 状態 |
 | --- | --- |
 | `flutter analyze` 0エラー強制ゲート | ✅ ci.yml |
 | `deno lint` 0エラー強制ゲート | ✅ ci.yml |
 | EF未分類チェック (Tier1/2カバレッジ) | ✅ ci.yml (未分類0本達成) |
-| `concurrency` 制御 (並列実行防止) | ✅ 全15本 |
-| `timeout-minutes` (ハング防止) | ✅ 全15本 |
-| `permissions` 最小権限原則 | ✅ 全15本 (全ジョブ) |
+| `concurrency` 制御 (並列実行防止) | ✅ 全16本 |
+| `timeout-minutes` (ハング防止) | ✅ 全16本 |
+| `permissions` 最小権限原則 | ✅ 全16本 (全ジョブ) |
 | `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 4本 (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) |
 | Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
-| アクションバージョン固定 (floating tag なし) | ✅ 全15本 |
+| アクションバージョン固定 (floating tag なし) | ✅ 全16本 |
 | `schedule_task_runs` DB記録 | ✅ スケジュール8本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit/youtube-analysis/ci-auto-fix) |
-| `$GITHUB_STEP_SUMMARY` | ✅ 全15本 |
+| `$GITHUB_STEP_SUMMARY` | ✅ 全16本 |
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
 | **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
 | **ユーザーフィードバックパイプライン** | ✅ feedback-issue-resolved.yml (`SUPABASE_SERVICE_ROLE_KEY` 使用) |
 | **CI失敗自動修復** | ✅ ci-auto-fix.yml (`dart fix --apply` + `deno fmt` → PR自動コミット) |
 | **YouTube競合分析自動化** | ✅ youtube-analysis.yml (`yt-dlp` 毎日スナップショット → TSV更新) |
+| **技術記事手動投稿** | ✅ blog-publish.yml (Qiita/dev.to `workflow_dispatch` + dry_run対応) |
 
 ## ワークフロー詳細
 
@@ -439,3 +441,4 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 | 2026-04-10 | 1.4.0 | ワークフロー失敗Issue自動生成: `workflow-failure-handler.yml` 新設 (13本体制) |
 | 2026-04-11 | 1.5.0 | YouTube競合分析自動化: `youtube-analysis.yml` 新設 + `requirements.txt` yt-dlp追加 (14本体制) |
 | 2026-04-11 | 1.6.0 | CI失敗自動修復: `ci-auto-fix.yml` 新設 — dart fix + deno fmt → PR自動コミット (15本体制) |
+| 2026-04-11 | 1.7.0 | 技術記事投稿ワークフロー: `blog-publish.yml` 新設 — Qiita/dev.to 手動投稿 + dry_run対応 (16本体制) |
