@@ -26,6 +26,13 @@ class _ImportPageState extends State<ImportPage> {
   ImportPreviewResult? _preview;
   ImportExecutionResult? _lastImportResult;
   String? _selectedSource;
+  final TextEditingController _notionTokenController = TextEditingController();
+
+  @override
+  void dispose() {
+    _notionTokenController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -82,6 +89,66 @@ class _ImportPageState extends State<ImportPage> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _fetchNotionApi() async {
+    _notionTokenController.clear();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Notion API 連携'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Notion インテグレーションのトークンを入力してください。\n'
+              'Notion → Settings → Integrations から発行できます。',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notionTokenController,
+              decoration: const InputDecoration(
+                labelText: 'Integration Token (secret_xxx)',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('取得'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final token = _notionTokenController.text.trim();
+    if (token.isEmpty) return;
+
+    setState(() {
+      _isLoading = true;
+      _selectedSource = 'notion_api';
+    });
+    try {
+      final preview = await _importService.buildNotionApiPreview(
+        notionToken: token,
+      );
+      if (!mounted) return;
+      setState(() => _preview = preview);
+      unawaited(_acquisitionService.recordImportPreview('notion_api'));
+    } catch (error) {
+      if (!mounted) return;
+      _showMessage('Notion API preview failed: $error');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -182,6 +249,7 @@ class _ImportPageState extends State<ImportPage> {
             spacing: 12,
             runSpacing: 12,
             children: [
+              _notionApiCard(),
               _sourceCard(
                 sourceType: 'notion',
                 title: 'Notion (CSV)',
@@ -344,6 +412,53 @@ class _ImportPageState extends State<ImportPage> {
     );
   }
 
+  Widget _notionApiCard() {
+    final isSelected = _selectedSource == 'notion_api';
+    return SizedBox(
+      width: 280,
+      child: Card(
+        shape: isSelected
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
+              )
+            : null,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _isLoading ? null : _fetchNotionApi,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.api),
+                    const Spacer(),
+                    if (isSelected)
+                      const Icon(Icons.check_circle, color: Colors.green),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Notion (API直接連携)',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'インテグレーショントークンでNotion ページを直接取得します。ファイルエクスポート不要。',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _sourceCard({
     required String sourceType,
     required String title,
@@ -395,7 +510,7 @@ class _ImportPageState extends State<ImportPage> {
     String? sourceType,
   }) {
     final sourceName = switch (sourceType) {
-      'notion' => 'Notion',
+      'notion' || 'notion_api' => 'Notion',
       'evernote' => 'Evernote',
       'markdown' => 'Markdown',
       _ => '競合ツール',

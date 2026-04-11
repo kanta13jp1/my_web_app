@@ -8,8 +8,11 @@ const corsHeaders = {
 
 interface ImportPreviewRequest {
   sourceType: string;
-  fileName: string;
-  contentBase64: string;
+  fileName?: string;
+  contentBase64?: string;
+  // Notion API 直接連携用
+  notionToken?: string;
+  pageLimit?: number;
 }
 
 interface ImportedNoteDraft {
@@ -36,13 +39,25 @@ serve(async (req) => {
   try {
     const body = (await req.json().catch(() => ({}))) as ImportPreviewRequest;
     const sourceType = body.sourceType?.trim().toLowerCase();
+
+    if (!sourceType) {
+      throw new Error("sourceType is required.");
+    }
+
+    // Notion API 直接連携ルート
+    if (sourceType === "notion_api") {
+      const notionToken = body.notionToken?.trim();
+      if (!notionToken) throw new Error("notionToken is required for notion_api.");
+      const pageLimit = Math.min(body.pageLimit ?? 10, 20);
+      const preview = await buildNotionApiPreview(notionToken, pageLimit);
+      return jsonResponse({ success: true, preview });
+    }
+
+    // ファイルベースルート (従来)
     const fileName = body.fileName?.trim();
     const contentBase64 = body.contentBase64?.trim();
-
-    if (!sourceType || !fileName || !contentBase64) {
-      throw new Error(
-        "sourceType, fileName, and contentBase64 are required.",
-      );
+    if (!fileName || !contentBase64) {
+      throw new Error("fileName and contentBase64 are required for file-based import.");
     }
 
     const bytes = decodeBase64(contentBase64);
@@ -77,6 +92,112 @@ function jsonResponse(payload: unknown, status = 200): Response {
     },
   });
 }
+
+// ── Notion API 直接連携 ─────────────────────────────────────────────────────
+
+interface NotionRichText {
+  plain_text?: string;
+}
+
+interface NotionBlock {
+  type: string;
+  [key: string]: unknown;
+}
+
+interface NotionPage {
+  id: string;
+  properties?: Record<string, {
+    title?: NotionRichText[];
+    rich_text?: NotionRichText[];
+    [key: string]: unknown;
+  }>;
+}
+
+function extractNotionTitle(page: NotionPage): string {
+  for (const prop of Object.values(page.properties ?? {})) {
+    const texts = prop.title ?? prop.rich_text ?? [];
+    const text = texts.map((t: NotionRichText) => t.plain_text ?? "").join("").trim();
+    if (text) return text;
+  }
+  return "Notion Page";
+}
+
+function notionBlocksToText(blocks: NotionBlock[]): string {
+  return blocks
+    .map((b) => {
+      const inner = b[b.type] as { rich_text?: NotionRichText[] } | undefined;
+      const texts = inner?.rich_text ?? [];
+      return texts.map((t: NotionRichText) => t.plain_text ?? "").join("");
+    })
+    .filter((line) => line.trim().length > 0)
+    .join("\n");
+}
+
+async function buildNotionApiPreview(
+  token: string,
+  pageLimit: number,
+): Promise<ImportPreviewResult> {
+  const headers = {
+    "Authorization": `Bearer ${token}`,
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json",
+  };
+
+  // ページ一覧を取得
+  const searchRes = await fetch("https://api.notion.com/v1/search", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      filter: { property: "object", value: "page" },
+      page_size: pageLimit,
+    }),
+  });
+  if (!searchRes.ok) {
+    const err = await searchRes.text();
+    throw new Error(`Notion API error (${searchRes.status}): ${err}`);
+  }
+  const searchData = (await searchRes.json()) as { results: NotionPage[] };
+  const pages = searchData.results ?? [];
+
+  const warnings: string[] = [];
+  const notes: ImportedNoteDraft[] = [];
+
+  for (const page of pages) {
+    const title = extractNotionTitle(page);
+
+    // ブロック取得 (タイムアウト対策: 並列ではなく逐次)
+    let content = "";
+    try {
+      const blocksRes = await fetch(
+        `https://api.notion.com/v1/blocks/${page.id}/children?page_size=50`,
+        { headers },
+      );
+      if (blocksRes.ok) {
+        const blocksData = (await blocksRes.json()) as { results: NotionBlock[] };
+        content = notionBlocksToText(blocksData.results ?? []);
+      }
+    } catch {
+      warnings.push(`Failed to fetch content for "${title}"`);
+    }
+
+    notes.push({ title, content, source: "notion_api", tags: [] });
+  }
+
+  if (pages.length === 0) {
+    warnings.push("No pages found. Check your integration token and page access permissions.");
+  }
+
+  return {
+    sourceType: "notion_api",
+    sourceLabel: "Notion (API連携)",
+    fileName: "notion_api",
+    notes,
+    warnings,
+    previewMode: "edge-function",
+  };
+}
+
+// ── ファイルベース import ────────────────────────────────────────────────────
 
 function buildPreview({
   sourceType,

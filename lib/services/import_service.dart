@@ -151,6 +151,26 @@ class ImportService {
     }
   }
 
+  /// Notion API トークンを使って直接ページ一覧をプレビュー取得する。
+  Future<ImportPreviewResult> buildNotionApiPreview({
+    required String notionToken,
+    int pageLimit = 10,
+  }) async {
+    final response = await _client.functions.invoke(
+      'growth-import-preview',
+      body: <String, dynamic>{
+        'sourceType': 'notion_api',
+        'notionToken': notionToken,
+        'pageLimit': pageLimit,
+      },
+    );
+    final data = _asMap(response.data);
+    if (data['success'] != true) {
+      throw Exception(data['error']?.toString() ?? 'Notion API preview failed.');
+    }
+    return ImportPreviewResult.fromJson(_asMap(data['preview']));
+  }
+
   Future<ImportPreviewResult> _buildPreviewViaEdgeFunction({
     required String sourceType,
     required String fileName,
