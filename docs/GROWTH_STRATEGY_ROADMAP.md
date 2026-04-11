@@ -5565,3 +5565,29 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: `ai_university_scores` EF + バッジ発行ロジック
 - VSCode版: SNS シェア画像生成 (OGP カード) 🟢 低
 - LP残りページ掲載化 (#132以降)
+
+## PS#38 セッション記録 (2026-04-12)
+
+### CI/CD 最適化 — ci.yml 無駄ビルド削除
+
+**問題**: `git push main` → deploy-prod + CI が合計4回Flutter buildを実行していた
+- `lint-and-test` production build (~15分)
+- `lint-and-test` WASM build (~10分)
+- `build-matrix` (単一バージョン, ~15分 — 完全に冗長)
+- deploy-prod の本番ビルド (必要)
+
+**対応**:
+1. `build-matrix` ジョブ丸ごと削除 (単一バージョンマトリクスは冗長)
+2. WASM build ステップ削除 (`continue-on-error: true` で毎回失敗 or 不要な10分)
+3. production build / check build output に `if: github.event_name != 'workflow_call'` 追加 — deploy-prod経由の場合はスキップ
+4. `pr-comment` の `needs:` から `build-matrix` 除去
+5. `lint-and-test` timeout-minutes 30→20 に短縮
+6. COMPRESSED_PROMPT_V3 ルール#17 を「全インスタンス・必須」に更新し具体的チェック項目 (e)(f) 追加
+
+**効果**: mainへのpush時のCI実行時間を推定 **約25〜30分短縮**
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: QIITA_ACCESS_TOKEN 再設定 (write_qiita スコープ) → notification-center.md 再投稿
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`)

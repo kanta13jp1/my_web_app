@@ -198,7 +198,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 16. **毎セッション: Web/モバイル表示チェック（全インスタンス・必須）** — セッション開始時または実装後に、本番 `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。重点確認ページ: ホーム画面 / AI大学 / LP / ランキングページ。VSCode版は `flutter analyze 0エラー` 確認後に必ず実施
-17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか。改善後は ROADMAP に記録する
+17. **毎セッション: GitHub Actions ワークフロー最適化チェック（全インスタンス・必須）** — `.github/workflows/` を見直す: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) push + workflow_call 二重起動を防ぐ (`ci.yml` の push トリガーから main を除外など)、(c) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか確認、(d) timeout-minutes が実態と合っているか、(e) 単一バージョン `build-matrix` は冗長 — `lint-and-test` のビルドで代替可能なので削除対象、(f) `workflow_call` 経由（deploy-prod から CI 呼び出し）の場合は CI 側の production build をスキップ (`if: github.event_name != 'workflow_call'`) してdeploy-prod の二重ビルドを防ぐ。改善後は ROADMAP に記録する
 
 ---
 
