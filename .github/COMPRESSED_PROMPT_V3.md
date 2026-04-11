@@ -447,15 +447,16 @@ web/sitemap.xml          # URL マップ
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
   - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
-- ✅ **blog-publish.yml Qiita 403 修正済み** (PS#40, commit `08bc6c37`): Zenn形式 `topics:` フロントマターに対応していなかったバグを修正。`grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic` を追加。`notification-center.md` を dispatch 実行済み (結果確認要)
+- ✅ **blog-publish.yml Qiita 403 修正済み** (PS#40, commit `08bc6c37`): Zenn形式 `topics:` フロントマターに対応していなかったバグを修正。`grep -E '^(tags|topics):'` + 空タグデフォルト値 `Flutter,Supabase,buildinpublic` を追加。
+- ✅ **Qiita 投稿成功** (2026-04-12): `2026-03-31-notification-center.md` → [https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7](https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7)
 
-**次回候補 (第3弾)**:
+**次回候補 (第4弾)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-03-31-notification-center.md` — Qiita (dispatch済み・結果確認要) | Qiita |
 | 高 | `2026-03-28-note-comments.md` — ノートコメント Flutter BottomSheet + RLS | Qiita/dev.to |
 | 中 | `2026-04-01-workflow-automation-video-meeting.md` — 3競合SaaS同時実装 | Qiita/dev.to |
+| 中 | AI大学関連記事 — 9社AIを1アプリで学ぶ仕組みの技術解説 | Qiita/Zenn |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
@@ -566,7 +567,7 @@ web/sitemap.xml          # URL マップ
 | title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d '\r'` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
 | GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
-**dev.to 投稿済み (PS#37)**: `2026-03-31-notification-center.md` → [dev.to投稿完了](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3)。Qiita は `QIITA_ACCESS_TOKEN` 再設定後に再実行。
+**dev.to 投稿済み (PS#37)**: `2026-03-31-notification-center.md` → [dev.to投稿完了](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3)。**Qiita ✅ 投稿完了 (2026-04-12)**: [https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7](https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7)
 
 ### 機能強化 #T3: AI大学 マルチプロバイダー対応 + 毎週自動更新 (Windows版#30〜#31, 2026-04-11)
 
