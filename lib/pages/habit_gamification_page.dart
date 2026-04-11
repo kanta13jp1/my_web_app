@@ -43,10 +43,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('habit-gamification', queryParameters: {'view': 'profile'}),
-        _supabase.functions.invoke('habit-gamification', queryParameters: {'view': 'badges'}),
-        _supabase.functions.invoke('habit-gamification', queryParameters: {'view': 'challenges'}),
-        _supabase.functions.invoke('habit-gamification', queryParameters: {'view': 'leaderboard'}),
+        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.profile'}),
+        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.badges'}),
+        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.challenges'}),
+        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.leaderboard'}),
       ]);
       setState(() {
         final profileData = results[0].data;
@@ -79,8 +79,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
   Future<void> _completeChallenge(String type) async {
     try {
       final res = await _supabase.functions.invoke(
-        'habit-gamification',
-        body: {'action': 'complete_challenge', 'type': type},
+        'tools-hub',
+        body: {'action': 'habit.gamification.award', 'badge_type': type},
       );
       final data = res.data;
       if (data is Map<String, dynamic> && data['success'] == true) {

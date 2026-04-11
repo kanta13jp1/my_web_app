@@ -299,6 +299,47 @@ serve(async (req) => {
         return json({ success: true, total_checkins: checkins.length, checkins: checkins.slice(0, 30) });
       }
 
+      // ── Habit Gamification (merged from habit-gamification EF) ───────────────
+      case "habit.gamification.profile": {
+        const habits = await listItems(admin, "habit_definition", userId, 20);
+        const checkins = await listItems(admin, "habit_checkin", userId, 200);
+        const points = checkins.length * 10;
+        const level = Math.floor(points / 100) + 1;
+        return json({ success: true, profile: { user_id: userId, points, level, habit_count: habits.length, checkin_count: checkins.length } });
+      }
+      case "habit.gamification.badges": {
+        const badges = await listItems(admin, "habit_badge", userId);
+        return json({ success: true, badges });
+      }
+      case "habit.gamification.challenges": {
+        const challenges = await listItems(admin, "habit_challenge", userId, 10);
+        return json({ success: true, challenges });
+      }
+      case "habit.gamification.leaderboard": {
+        const { data, error: lbErr } = await admin.from("app_analytics")
+          .select("metadata")
+          .eq("source", "habit_checkin")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if (lbErr) throw new Error(lbErr.message);
+        const counts: Record<string, number> = {};
+        for (const row of data ?? []) {
+          const uid = (row.metadata as Record<string, unknown>)?.user_id as string;
+          if (uid) counts[uid] = (counts[uid] ?? 0) + 1;
+        }
+        const leaderboard = Object.entries(counts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 20)
+          .map(([uid, count], i) => ({ rank: i + 1, user_id: uid, checkins: count }));
+        return json({ success: true, leaderboard });
+      }
+      case "habit.gamification.award": {
+        const badge = await addItem(admin, "habit_badge", userId, {
+          badge_type: body.badge_type ?? "streak", title: body.title ?? "バッジ", earned_at: new Date().toISOString(),
+        });
+        return json({ success: true, badge });
+      }
+
       // ── Pomodoro / Focus Timer ───────────────────────────────────────────────
       case "pomodoro.start": {
         const item = await addItem(admin, "pomodoro", userId, {

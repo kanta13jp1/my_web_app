@@ -31,8 +31,8 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'subscription-billing',
-        body: {'action': 'get'},
+        'app-hub',
+        body: {'action': 'billing.status'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {

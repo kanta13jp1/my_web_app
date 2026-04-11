@@ -94,12 +94,103 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD_PROD }}
 
-      - name: Cleanup demoted Edge Functions (free slots for new Tier 1 functions)
+      - name: Cleanup consolidated Edge Functions
         run: |
-          # CRITICAL: Supabase has a ~100 function limit per project.
-          # Delete all functions demoted from Tier 1 to Tier 2 to free deployment slots.
+          # EFハードキャップ: 50本以下。Tier1/Tier2廃止。
+          # 旧スタンドアロンEFを全削除 — 6つのmacro-hubに統合済み。
           # Using || true so deleting a non-existent function never fails the CI.
-          # --- Original Tier 2 demotions ---
+          # --- core-hub に統合 ---
+          supabase functions delete public-memo-share || true
+          supabase functions delete memo-reactions || true
+          supabase functions delete get-ogp || true
+          supabase functions delete get-public-memo-ogp || true
+          supabase functions delete note-comments || true
+          supabase functions delete notification-center || true
+          supabase functions delete user-profile-manager || true
+          supabase functions delete onboarding-flow || true
+          supabase functions delete feature-request-manager || true
+          supabase functions delete app-analytics-dashboard || true
+          supabase functions delete development-achievements || true
+          supabase functions delete system-status || true
+          supabase functions delete personal-dashboard || true
+          supabase functions delete notify-feature-request || true
+          supabase functions delete user-feedback-collector || true
+          # --- growth-hub に統合 ---
+          supabase functions delete growth-acquisition || true
+          supabase functions delete growth-command-center || true
+          supabase functions delete growth-referral || true
+          supabase functions delete growth-share-signal || true
+          supabase functions delete growth-achievement-summary || true
+          supabase functions delete growth-import-preview || true
+          supabase functions delete growth-import-commit || true
+          supabase functions delete get-growth-roadmap-progress || true
+          supabase functions delete video-ad-generator || true
+          supabase functions delete viral-share-engine || true
+          supabase functions delete x-media-post || true
+          supabase functions delete growth-automation-controller || true
+          supabase functions delete landing-ab-test || true
+          supabase functions delete referral-program || true
+          supabase functions delete share-quote || true
+          supabase functions delete generate-quote-image || true
+          supabase functions delete seo-optimizer || true
+          supabase functions delete send-waitlist-notification || true
+          supabase functions delete viral-ad-generator || true
+          supabase functions delete viral-growth-engine || true
+          # --- ai-hub に統合 ---
+          supabase functions delete daily-judgment || true
+          supabase functions delete ai-search || true
+          supabase functions delete ai-suggest-tags || true
+          supabase functions delete ai-secretary || true
+          supabase functions delete ai-summarizer || true
+          supabase functions delete agent-hub || true
+          supabase functions delete virtual-organization || true
+          supabase functions delete my-ai-agent || true
+          supabase functions delete generate-daily-challenges || true
+          supabase functions delete trigger-analysis || true
+          supabase functions delete analyze-reality || true
+          supabase functions delete local-election-intelligence || true
+          supabase functions delete ai-university-content || true
+          supabase functions delete ai-university-streaks || true
+          supabase functions delete ai-university-badges || true
+          # --- admin-hub に統合 ---
+          supabase functions delete get-admin-users || true
+          supabase functions delete submit-feedback || true
+          supabase functions delete get-support-tickets || true
+          supabase functions delete get-competitor-features || true
+          supabase functions delete import-from-competitors || true
+          supabase functions delete health-check || true
+          supabase functions delete get-competitor-monitoring || true
+          supabase functions delete edge-function-coverage || true
+          supabase functions delete content-moderation || true
+          supabase functions delete user-activity-tracker || true
+          supabase functions delete department-reporting || true
+          supabase functions delete admin-notification-hub || true
+          supabase functions delete issue-auto-resolver || true
+          # --- app-hub に統合 ---
+          supabase functions delete subscription-management || true
+          supabase functions delete subscription-billing || true
+          supabase functions delete email-service || true
+          supabase functions delete gamification-engine || true
+          supabase functions delete calendar-events || true
+          supabase functions delete kanban-board || true
+          supabase functions delete chat-messaging || true
+          supabase functions delete team-task-manager || true
+          supabase functions delete team-collaboration-sync || true
+          supabase functions delete file-storage-manager || true
+          supabase functions delete expense-tracker || true
+          supabase functions delete time-tracker || true
+          supabase functions delete automation-workflows || true
+          supabase functions delete data-export-manager || true
+          supabase functions delete webhook-manager || true
+          supabase functions delete api-rate-limiter || true
+          supabase functions delete music-collaboration || true
+          # --- schedule-hub に統合 ---
+          supabase functions delete schedule-daily-digest || true
+          supabase functions delete schedule-manager || true
+          supabase functions delete post-x-update || true
+          supabase functions delete blog-post-manager || true
+          supabase functions delete blog-auto-publisher || true
+          # --- 旧Tier2整理 ---
           supabase functions delete poll-survey || true
           supabase functions delete reading-list || true
           supabase functions delete password-generator || true
@@ -120,28 +211,21 @@ jobs:
           supabase functions delete invoice-generator || true
           supabase functions delete notification-preferences || true
           supabase functions delete revenue-forecaster || true
-          # --- Session 432z demotions (moved to Tier 2 to make room for guitar studio) ---
           supabase functions delete ab-testing-manager || true
           supabase functions delete search-analytics || true
-          # --- submit-feedback slot確保 (competitor-feature-sync を Tier 2 に降格) ---
           supabase functions delete competitor-feature-sync || true
-          # --- issue-auto-resolver slot確保 (user-growth-analytics を Tier 2 に降格) ---
           supabase functions delete user-growth-analytics || true
-          # --- 機能#13: growth-acquisition統合 (signal/report → growth-acquisition に統合) ---
           supabase functions delete growth-acquisition-signal || true
           supabase functions delete growth-acquisition-report || true
-          # --- schedule統合: 4本 → schedule-manager 1本 (ai-university-streaks/badges スロット確保) ---
           supabase functions delete schedule-task-monitor || true
           supabase functions delete schedule-health-check || true
           supabase functions delete schedule-result-tracker || true
           supabase functions delete schedule-execution-logger || true
-          # --- agent統合: 5本 → agent-hub 1本 (4スロット削減) ---
           supabase functions delete agent-runtime-cycle || true
           supabase functions delete agent-personality || true
           supabase functions delete agent-department-manager || true
           supabase functions delete agent-task-router || true
           supabase functions delete agent-performance-monitor || true
-          # --- action分岐統合: 5本削減 (94→89本) ---
           supabase functions delete reply-support-request || true
           supabase functions delete get-public-memo-preview || true
           supabase functions delete development-stats || true
@@ -152,212 +236,68 @@ jobs:
 
       - name: Deploy Supabase Edge Functions
         run: |
-          # Supabase project has a max ~100 function limit.
-          # Deploy the 99 most critical functions (Tier 1).
-          # Remaining 142 functions exist in code but are not deployed.
-          # To deploy overflow functions, swap them with lower-priority Tier 1 entries.
+          # EFハードキャップ: 50本以下 (Tier1/Tier2廃止 — 2026-04-12 VSCode版#61)
+          # 全250本を15のhubにaction分岐統合。新規機能は既存hubへのaction追加のみ。
+          # 新しいEFを作成する場合は必ず既存hubの数を減らして50本以下を維持すること。
           #
           # All browser-facing functions use --no-verify-jwt so that CORS OPTIONS
           # preflight requests (which carry no Authorization header) are not
           # rejected by Supabase's platform-level JWT check.
-          # Auth is enforced inside each function via the Authorization header.
 
-          # --- Tier 1A: Core Frontend & Dashboard (15) ---
-          # get-public-memo-preview merged into get-public-memo-ogp (?action=preview)
-          supabase functions deploy public-memo-share --no-verify-jwt
-          supabase functions deploy memo-reactions --no-verify-jwt
-          supabase functions deploy get-ogp --no-verify-jwt
-          supabase functions deploy get-public-memo-ogp --no-verify-jwt
+          # --- Standalone (3本: 複雑すぎてhub統合困難) ---
           supabase functions deploy get-home-dashboard --no-verify-jwt
-          supabase functions deploy note-comments
-          supabase functions deploy notification-center --no-verify-jwt
-          supabase functions deploy user-profile-manager --no-verify-jwt
-          supabase functions deploy onboarding-flow --no-verify-jwt
-          supabase functions deploy feature-request-manager --no-verify-jwt
-          supabase functions deploy app-analytics-dashboard --no-verify-jwt
-          supabase functions deploy development-achievements --no-verify-jwt
-          # development-stats merged into development-achievements (action:get_stats)
-          supabase functions deploy system-status --no-verify-jwt
-
-          # --- Tier 1B: Growth & Viral Engine (22) ---
-          supabase functions deploy growth-weekly-digest --no-verify-jwt
-          supabase functions deploy growth-acquisition --no-verify-jwt
-          supabase functions deploy growth-command-center --no-verify-jwt
-          supabase functions deploy growth-referral --no-verify-jwt
-          supabase functions deploy growth-share-signal --no-verify-jwt
-          supabase functions deploy growth-achievement-summary --no-verify-jwt
-          supabase functions deploy growth-import-preview --no-verify-jwt
-          supabase functions deploy growth-import-commit --no-verify-jwt
-          supabase functions deploy get-growth-roadmap-progress --no-verify-jwt
-          supabase functions deploy video-ad-generator --no-verify-jwt
-          supabase functions deploy viral-share-engine --no-verify-jwt
-          supabase functions deploy x-media-post --no-verify-jwt
-          supabase functions deploy growth-automation-controller --no-verify-jwt
-          supabase functions deploy landing-ab-test --no-verify-jwt
-          supabase functions deploy referral-program --no-verify-jwt
-          supabase functions deploy share-quote --no-verify-jwt
-          supabase functions deploy generate-quote-image --no-verify-jwt
-          supabase functions deploy seo-optimizer --no-verify-jwt
-          supabase functions deploy send-waitlist-notification --no-verify-jwt
-          supabase functions deploy viral-ad-generator --no-verify-jwt
-          # viral-growth-pipeline merged into viral-growth-engine (action:pipeline_run|pipeline_track|pipeline_stats)
-          supabase functions deploy viral-growth-engine --no-verify-jwt
-
-          # --- Tier 1C: AI & Agent System (9) ---
-          supabase functions deploy daily-judgment --no-verify-jwt
           supabase functions deploy ai-assistant --no-verify-jwt
-          supabase functions deploy ai-search --no-verify-jwt
-          supabase functions deploy ai-suggest-tags --no-verify-jwt
-          supabase functions deploy ai-secretary --no-verify-jwt
-          supabase functions deploy ai-summarizer --no-verify-jwt
-          supabase functions deploy agent-hub --no-verify-jwt
-          supabase functions deploy virtual-organization --no-verify-jwt
-          supabase functions deploy my-ai-agent --no-verify-jwt
-
-          # --- Tier 1D: Schedule & Automation (9) ---
-          supabase functions deploy schedule-daily-digest --no-verify-jwt
-          supabase functions deploy schedule-manager --no-verify-jwt
-          supabase functions deploy post-x-update --no-verify-jwt
-          supabase functions deploy blog-post-manager --no-verify-jwt
-          supabase functions deploy blog-auto-publisher --no-verify-jwt
-          supabase functions deploy health-check --no-verify-jwt
-          # check-competitor-updates merged into get-competitor-features (POST action:check_updates)
-          supabase functions deploy get-competitor-monitoring --no-verify-jwt
-          supabase functions deploy edge-function-coverage --no-verify-jwt
-
-          # --- Tier 1E: Admin & Support (7) ---
-          supabase functions deploy get-admin-users --no-verify-jwt
-          supabase functions deploy submit-feedback --no-verify-jwt
-          supabase functions deploy get-support-tickets --no-verify-jwt
-          # reply-support-request merged into get-support-tickets (POST body: id+reply)
-          supabase functions deploy get-competitor-features --no-verify-jwt
-          supabase functions deploy import-from-competitors --no-verify-jwt
-          supabase functions deploy notify-feature-request --no-verify-jwt
-
-          # --- Tier 1F: Core App Features (20) ---
-          supabase functions deploy subscription-management --no-verify-jwt
-          supabase functions deploy subscription-billing --no-verify-jwt
-          supabase functions deploy email-service --no-verify-jwt
-          supabase functions deploy gamification-engine --no-verify-jwt
-          supabase functions deploy calendar-events --no-verify-jwt
-          supabase functions deploy kanban-board --no-verify-jwt
-          supabase functions deploy chat-messaging --no-verify-jwt
-          supabase functions deploy team-task-manager --no-verify-jwt
-          supabase functions deploy team-collaboration-sync --no-verify-jwt
-          supabase functions deploy file-storage-manager --no-verify-jwt
-          supabase functions deploy expense-tracker --no-verify-jwt
-          supabase functions deploy time-tracker --no-verify-jwt
-          supabase functions deploy automation-workflows --no-verify-jwt
-          supabase functions deploy content-moderation --no-verify-jwt
-          supabase functions deploy user-activity-tracker --no-verify-jwt
-          supabase functions deploy data-export-manager --no-verify-jwt
-          supabase functions deploy user-feedback-collector --no-verify-jwt
-          supabase functions deploy department-reporting --no-verify-jwt
-          supabase functions deploy analyze-reality --no-verify-jwt
-          supabase functions deploy trigger-analysis --no-verify-jwt
-
-          # --- Tier 1G: Guitar Studio + AI大学 (12) ---
+          supabase functions deploy growth-weekly-digest --no-verify-jwt
           supabase functions deploy guitar-recording-studio --no-verify-jwt
-          supabase functions deploy music-collaboration --no-verify-jwt
-          supabase functions deploy personal-dashboard --no-verify-jwt
-          supabase functions deploy webhook-manager --no-verify-jwt
-          supabase functions deploy api-rate-limiter --no-verify-jwt
-          supabase functions deploy generate-daily-challenges --no-verify-jwt
-          supabase functions deploy ai-university-content --no-verify-jwt
-          supabase functions deploy ai-university-streaks --no-verify-jwt
-          supabase functions deploy ai-university-badges --no-verify-jwt
-          supabase functions deploy admin-notification-hub --no-verify-jwt
-          supabase functions deploy local-election-intelligence --no-verify-jwt
-          supabase functions deploy issue-auto-resolver --no-verify-jwt
 
-          # --- Tier 1H: Mega-Hub EFs — Tier2全統合 (5) ---
+          # --- Macro-Hub (6本: 旧Tier1全統合) ---
+          supabase functions deploy core-hub --no-verify-jwt
+          supabase functions deploy growth-hub --no-verify-jwt
+          supabase functions deploy ai-hub --no-verify-jwt
+          supabase functions deploy admin-hub --no-verify-jwt
+          supabase functions deploy app-hub --no-verify-jwt
+          supabase functions deploy schedule-hub --no-verify-jwt
+
+          # --- Mega-Hub (5本: 旧Tier2全統合) ---
           supabase functions deploy tools-hub --no-verify-jwt
           supabase functions deploy media-hub --no-verify-jwt
           supabase functions deploy enterprise-hub --no-verify-jwt
           supabase functions deploy social-commerce-hub --no-verify-jwt
           supabase functions deploy lifestyle-hub --no-verify-jwt
 
-          # Total: 94 functions deployed (Supabase上限99本 — 余裕5本: action分岐統合で5本削減 + hub EF5本昇格)
-          # 旧Tier2 EFは全て5つのhubに統合済み。個別ディレクトリはコード参照用に保持。
-          # ---
-          # 統合済みEF (hub経由でアクセス可能 — 個別デプロイ不要):
-          # tools-hub:         password-generator, password-vault, currency-converter, weather-widget,
-          #   qr-code-generator, markdown-renderer, pomodoro-timer, focus-timer, clipboard-history,
-          #   quick-note, goal-tracker, contact-manager, reading-list, bookmark-manager, bookmark-sync,
-          #   tag-manager, template-library, address-book, emergency-contacts, news-rss-aggregator,
-          #   changelog-manager, multi-language, habit-tracker, habit-gamification, virtual-pet,
-          #   poll-survey, form-builder, note-sharing-enhanced, content-versioning, mindmap-diagram
-          # media-hub:         video-audio-manager, voice-memo-transcriber, screen-recorder, live-streaming,
-          #   video-meeting-manager, music-playlist-manager, photo-gallery-manager, podcast-manager,
-          #   ai-image-generator, viral-video-generator, viral-video-ad-generator, ocr-document-scanner,
-          #   virtual-whiteboard, whiteboard-canvas, document-collaboration, document-esignature,
-          #   meeting-manager, audio-effects-processor
-          # enterprise-hub:    leave-management, performance-review, compensation-manager, recruitment-job-board,
-          #   compliance-checker, legal-compliance-manager, audit-trail, ci-cd-pipeline, code-playground,
-          #   api-docs-generator, api-key-manager, dns-domain-manager, code-review-issues, ab-testing-manager,
-          #   feature-flags, custom-dashboard-builder, data-pipeline, data-visualization, analytics-export,
-          #   search-analytics, cohort-analysis, revenue-forecaster, sitemap-analytics, user-onboarding,
-          #   crm-sales-pipeline, github-pr-manager, user-growth-analytics, gantt-timeline-manager,
-          #   task-dependency, workflow-templates, spreadsheet-database, wiki-database, knowledge-base,
-          #   integration-connector, email-template-builder, edge-function-test-runner, edge-function-ui-checker,
-          #   ai-writing-assistant, ai-workflow-automation, gemini-election-analysis, competitor-feature-sync
-          # social-commerce-hub: social-feed, social-stories, social-media-scheduler, social-proof-generator,
-          #   marketplace, marketplace-reviews, auction-marketplace, donation-crowdfunding, gift-registry,
-          #   loyalty-points, digital-wallet, payment-processor, financial-report, budget-financial-planner,
-          #   invoice-generator, affiliate-marketing, order-tracker, event-ticketing, appointment-scheduler,
-          #   customer-feedback, elearning-course-manager, language-learning, horse-racing-predictor,
-          #   real-estate-tracker, inventory-manager, inventory-barcode
-          # lifestyle-hub:     fitness-health-tracker, recipe-meal-planner, carbon-footprint-tracker,
-          #   pet-care-manager, travel-itinerary-planner, vehicle-fleet-manager, parking-reservation,
-          #   geo-checkin, ar-navigation, smart-home-automation, home-iot-manager, two-factor-auth,
-          #   encrypted-messaging, oauth-sso-provider, backup-restore, cloud-storage-sync, realtime-presence,
-          #   notification-preferences, notification-digest, scheduled-notifications, push-notification-manager,
-          #   discord-notifications, line-notifications, status-page, smart-inbox-triage, smart-search,
-          #   family-sharing-manager, access-control, rate-limiter-enhanced
-          # schedule-manager:  schedule-task-monitor, schedule-health-check, schedule-result-tracker, schedule-execution-logger
-          # agent-hub:         agent-runtime-cycle, agent-personality, agent-department-manager, agent-task-router, agent-performance-monitor
-          # growth-acquisition: growth-acquisition-signal, growth-acquisition-report
-          # code-review-issues (enterprise-hub に統合),
-          # clipboard-history, quick-note, pomodoro-timer, weather-widget,
-          # currency-converter, markdown-renderer, social-feed, document-collaboration,
-          # leave-management, knowledge-base, payment-processor, marketplace,
-          # video-audio-manager, semantic-search, performance-review, wiki-database,
-          # api-key-manager, scheduled-notifications, cohort-analysis,
-          # integration-connector, push-notification-manager, realtime-presence,
-          # voice-memo-transcriber, ocr-document-scanner, oauth-sso-provider,
-          # inventory-manager, order-tracker, ci-cd-pipeline, compensation-manager,
-          # financial-report, spreadsheet-database, gantt-timeline-manager,
-          # whiteboard-canvas, form-builder, meeting-manager,
-          # competitor-feature-sync, edge-function-ui-checker, horse-racing-predictor,
-          # recruitment-job-board, legal-compliance-manager, elearning-course-manager,
-          # crm-sales-pipeline, photo-gallery-manager, music-playlist-manager,
-          # recipe-meal-planner, fitness-health-tracker, travel-itinerary-planner,
-          # event-ticketing, pet-care-manager, language-learning, home-iot-manager,
-          # news-rss-aggregator, ai-workflow-automation, document-esignature,
-          # social-media-scheduler, smart-inbox-triage, video-meeting-manager,
-          # family-sharing-manager, donation-crowdfunding, real-estate-tracker,
-          # podcast-manager, mindmap-diagram, parking-reservation,
-          # carbon-footprint-tracker, gift-registry, vehicle-fleet-manager,
-          # emergency-contacts, auction-marketplace, budget-financial-planner,
-          # code-playground, screen-recorder, qr-code-generator,
-          # appointment-scheduler, password-vault, habit-gamification,
-          # inventory-barcode, customer-feedback, email-template-builder,
-          # sitemap-analytics, two-factor-auth, changelog-manager, access-control,
-          # data-visualization, api-docs-generator, backup-restore,
-          # notification-digest, smart-search, analytics-export, workflow-templates,
-          # status-page, address-book, multi-language, data-pipeline, feature-flags,
-          # audit-trail, compliance-checker, user-onboarding, rate-limiter-enhanced,
-          # content-versioning, custom-dashboard-builder, loyalty-points,
-          # live-streaming, geo-checkin, social-stories, encrypted-messaging,
-          # cloud-storage-sync, virtual-whiteboard, marketplace-reviews,
-          # smart-home-automation, digital-wallet, dns-domain-manager,
-          # affiliate-marketing, virtual-pet, ar-navigation, ai-image-generator,
-          # ai-writing-assistant, bookmark-sync, focus-timer, note-sharing-enhanced,
-          # task-dependency, gemini-election-analysis, poll-survey,
-          # viral-video-ad-generator, viral-video-generator,
-          # bookmark-manager, habit-tracker, invoice-generator,
-          # notification-preferences, revenue-forecaster, tag-manager, template-library,
-          # discord-notifications, line-notifications, github-pr-manager
+          # Total: 15 functions deployed (ハードキャップ50本に対し15本 — 余裕35本)
+          #
+          # Hub対応表:
+          # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
+          #   note-comments, notification-center, user-profile-manager, onboarding-flow,
+          #   feature-request-manager, user-feedback-collector, notify-feature-request,
+          #   personal-dashboard, system-status, development-achievements, app-analytics-dashboard
+          # growth-hub:       growth-acquisition, growth-command-center, growth-referral,
+          #   growth-share-signal, growth-achievement-summary, growth-import-preview,
+          #   growth-import-commit, get-growth-roadmap-progress, video-ad-generator,
+          #   viral-share-engine, x-media-post, growth-automation-controller, landing-ab-test,
+          #   referral-program, share-quote, generate-quote-image, seo-optimizer,
+          #   send-waitlist-notification, viral-ad-generator, viral-growth-engine
+          # ai-hub:           daily-judgment, ai-search, ai-suggest-tags, ai-secretary,
+          #   ai-summarizer, agent-hub, virtual-organization, my-ai-agent, generate-daily-challenges,
+          #   trigger-analysis, analyze-reality, local-election-intelligence,
+          #   ai-university-content, ai-university-streaks, ai-university-badges
+          # admin-hub:        get-admin-users, submit-feedback, get-support-tickets,
+          #   get-competitor-features, import-from-competitors, health-check,
+          #   get-competitor-monitoring, edge-function-coverage, content-moderation,
+          #   user-activity-tracker, department-reporting, admin-notification-hub, issue-auto-resolver
+          # app-hub:          subscription-management, subscription-billing, email-service,
+          #   gamification-engine, calendar-events, kanban-board, chat-messaging, team-task-manager,
+          #   team-collaboration-sync, file-storage-manager, expense-tracker, time-tracker,
+          #   automation-workflows, data-export-manager, webhook-manager, api-rate-limiter,
+          #   music-collaboration
+          # schedule-hub:     schedule-daily-digest, schedule-manager, post-x-update,
+          #   blog-post-manager, blog-auto-publisher
+          # tools-hub:        30本 (password/qr/weather/bookmark/habit/pomodoro等)
+          # media-hub:        18本 (video/audio/whiteboard/esign等) + music-collaboration
+          # enterprise-hub:   42本 (HR/analytics/CI/AI-writing/CRM等)
+          # social-commerce-hub: 26本 (SNS/EC/payment/loyalty等)
+          # lifestyle-hub:    29本 (health/travel/IoT/notification等)
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
@@ -428,7 +368,7 @@ jobs:
             echo "| コミット | \`${SHA}\` |"
             echo "| Actor | ${{ github.actor }} |"
             echo "| 本番URL | https://my-web-app-b67f4.web.app/ |"
-            echo "| Edge Functions | Tier 1: 99本デプロイ済み |"
+            echo "| Edge Functions | 15本デプロイ済み (ハードキャップ50本以下) |"
           } >> $GITHUB_STEP_SUMMARY
 
   # -----------------------------------------------------------------

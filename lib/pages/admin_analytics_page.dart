@@ -651,9 +651,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           body: const {'source': 'admin_manual_check'},
         ),
         _supabase.functions.invoke(
-          'get-support-tickets',
+          'admin-hub',
           headers: headers,
-          body: const {'source': 'admin_manual_check'},
+          body: const {'action': 'support.list', 'source': 'admin_manual_check'},
         ),
       ]);
 
@@ -735,9 +735,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (session == null) throw Exception('Not authenticated');
 
       final response = await _supabase.functions.invoke(
-        'get-support-tickets',
+        'admin-hub',
         headers: _adminAuthHeaders(session.accessToken),
         body: {
+          'action': 'support.reply',
           'id': id,
           'reply': reply,
           'escalate': escalate,

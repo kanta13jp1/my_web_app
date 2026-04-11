@@ -31,8 +31,8 @@ class _GrowthAutomationControllerPageState
     });
     try {
       final response = await _supabase.functions.invoke(
-        'growth-automation-controller',
-        body: {'action': 'status'},
+        'growth-hub',
+        body: {'action': 'automation.analyze'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['campaigns'] is List) {

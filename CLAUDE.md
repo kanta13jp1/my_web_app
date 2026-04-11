@@ -54,7 +54,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 4. **ダミーデータ禁止** — 必ずSupabaseのリアルデータを使用
 5. **Edge Functionファースト** — 複雑なロジックはバックエンドに移動
 6. **シンプルさ優先** — 明示的に依頼されていない機能は追加しない
-7. **EF上限: 99本厳守** — Supabaseは99本まで。100本目のデプロイで402エラー。新規EF追加前に既存EFへの `action` 追加を優先し、超える場合はTier2（コードのみ）に降格して `deploy-prod.yml` のTier2コメントに記載
+7. **EFハードキャップ: 50本以下 (Tier1/Tier2廃止)** — `deploy-prod.yml` にデプロイするEFは常に50本以下に維持する。Tier1/Tier2の分類は廃止。全てのEFはデプロイ済みとして管理する。新規機能追加時は必ず以下のいずれかの方法で対応すること: (a) **既存hubへのaction追加** (最優先 — EF数が増えない), (b) **既存EFのaction統合** (2本以上をhubに合流してスロット確保), (c) 新規EF作成は既存EFを統合して50本以下を維持した場合のみ許可。現在のhub構成: `core-hub`・`growth-hub`・`ai-hub`・`admin-hub`・`app-hub`・`schedule-hub`・`tools-hub`・`media-hub`・`enterprise-hub`・`social-commerce-hub`・`lifestyle-hub` + standalone 4本 = 計15本
 8. **毎セッション: Web/モバイル表示チェック（必須）** — セッション開始時または実装後に、本番URL `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方の表示で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。特にホーム画面・AI大学・LP・ランキングページを重点確認する
 9. **毎セッション: GitHub Actions ワークフロー最適化チェック（必須）** — `.github/workflows/` を見直し、以下を確認・修正する: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) 同一ジョブの二重起動（push + workflow_call 競合など）を防ぐ、(c) timeout-minutes が実態と合っているか、(d) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか。修正後は `docs/GROWTH_STRATEGY_ROADMAP.md` にセッション記録として追記する
 10. **毎セッション: `docs/` 戦略ドキュメント全件分析・開発計画反映** — 以下の常設ドキュメントを読み、(a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記する。

@@ -43,7 +43,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
     });
     try {
       final res = await Supabase.instance.client.functions
-          .invoke('get-competitor-monitoring', queryParameters: {'days': '7'});
+          .invoke('admin-hub', body: {'action': 'monitoring.get'}, queryParameters: {'days': '7'});
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final raw = data['competitors'];

@@ -153,7 +153,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   Future<void> _triggerBatchAnalysis() async {
     setState(() => _isBusy = true);
     try {
-      final response = await _supabase.functions.invoke('trigger-analysis');
+      final response = await _supabase.functions.invoke('ai-hub', body: {'action': 'trigger.analyze'});
 
       if (mounted) {
         if (response.status == 200) {

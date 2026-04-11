@@ -29,8 +29,8 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'expense-tracker',
-        body: {'action': 'list'},
+        'app-hub',
+        body: {'action': 'expense.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['expenses'] is List) {
@@ -150,10 +150,10 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
               Navigator.pop(ctx);
               try {
                 await _supabase.functions.invoke(
-                  'expense-tracker',
+                  'app-hub',
                   body: {
-                    'action': 'add',
-                    'title': titleController.text.trim(),
+                    'action': 'expense.add',
+                    'description': titleController.text.trim(),
                     'amount': int.tryParse(amountController.text.trim()) ?? 0,
                   },
                 );

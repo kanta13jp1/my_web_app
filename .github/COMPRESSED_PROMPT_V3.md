@@ -248,7 +248,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: Tier1=99本 (上限到達 / Tier2=0本 / 全統合完了) / mega-hub 5本追加: `tools-hub`(30本統合) `media-hub`(18本統合) `enterprise-hub`(42本統合) `social-commerce-hub`(26本統合) `lifestyle-hub`(29本統合) / `agent-hub` (agent 5本統合) / `schedule-manager` (schedule 4本統合)
+- EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在15本デプロイ済み) / 15本構成: standalone 4本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
@@ -290,7 +290,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ```text
 lib/pages/               # 215ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
-supabase/functions/      # Deno Edge Functions 250本 (Tier1: 99本全デプロイ済 / Tier2: 0本 — mega-hub 5本で全統合)
+supabase/functions/      # Deno Edge Functions 250本 (デプロイ済み: 15本 / ハードキャップ50本以下 / Tier1/Tier2廃止)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
 .github/workflows/       # 17本 (品質基準完備済み)
 docs/
@@ -317,7 +317,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) で全250本を追跡。Tier2=0本（VSCode版#60: mega-hub 5本追加で全統合）。CIの「EF未分類チェック」が漏れを検出（警告のみ）。新規EF追加時は既存hubの `action` 追加を優先（上限99本到達）。
+> **EFハードキャップ50本** (Tier1/Tier2廃止 / VSCode版#61): `deploy-prod.yml` のデプロイリスト15本のみ管理。新機能は既存hubのaction追加のみ。新規EF作成時は既存EFを統合して50本以下を維持すること。Hub構成: standalone 4本 + macro-hub 6本 + mega-hub 5本 = 15本。
 
 ---
 

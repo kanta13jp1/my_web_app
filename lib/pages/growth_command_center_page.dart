@@ -26,7 +26,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
 
     try {
       final response =
-          await _supabase.functions.invoke('growth-command-center');
+          await _supabase.functions.invoke('growth-hub', body: {'action': 'command.analyze'});
 
       final data = response.data;
       if (data is Map<String, dynamic>) {

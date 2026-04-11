@@ -40,8 +40,8 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
     });
     try {
       final res = await _supabase.functions.invoke(
-        'ai-workflow-automation',
-        body: {'action': 'list'},
+        'enterprise-hub',
+        body: {'action': 'ai_workflow.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -61,8 +61,8 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Future<void> _toggleWorkflow(String id, bool enabled) async {
     try {
       await _supabase.functions.invoke(
-        'ai-workflow-automation',
-        body: {'action': enabled ? 'enable' : 'disable', 'id': id},
+        'enterprise-hub',
+        body: {'action': 'ai_workflow.run', 'workflow_id': id, 'enabled': enabled},
       );
       await _fetchData();
     } catch (e) {
@@ -77,8 +77,8 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Future<void> _createFromTemplate(Map<String, dynamic> template) async {
     try {
       await _supabase.functions.invoke(
-        'ai-workflow-automation',
-        body: {'action': 'create', 'template_key': template['key']},
+        'enterprise-hub',
+        body: {'action': 'ai_workflow.create', 'template_key': template['key']},
       );
       await _fetchData();
       if (mounted) {

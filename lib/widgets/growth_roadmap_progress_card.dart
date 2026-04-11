@@ -2451,7 +2451,7 @@ class _CompetitorFeatureComparisonCardState
     try {
       final client = Supabase.instance.client;
       final response =
-          await client.functions.invoke('get-competitor-features');
+          await client.functions.invoke('admin-hub', body: {'action': 'competitor.list'});
       final data = response.data;
       if (data is! Map || data['success'] != true) return;
       final competitors = data['competitors'];

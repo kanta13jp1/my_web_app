@@ -37,7 +37,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
       _errorMessage = null;
     });
     try {
-      final response = await _supabase.functions.invoke('ai-summarizer');
+      final response = await _supabase.functions.invoke('ai-hub', body: {'action': 'secretary.history'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['summaries'] is List) {
         setState(
@@ -64,7 +64,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
     });
     try {
       final response = await _supabase.functions
-          .invoke('ai-summarizer', body: {'text': text, 'action': 'summarize'});
+          .invoke('ai-hub', body: {'action': 'summarize.text', 'text': text});
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() => _summary = data['summary']?.toString() ?? '要約を生成できませんでした');
