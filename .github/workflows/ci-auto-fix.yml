@@ -61,7 +61,7 @@ jobs:
       # ── Step 2: コード取得 ───────────────────────────────────────────────
       - name: Step 2 - Checkout PR branch
         if: steps.pr_info.outputs.has_pr == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.pr_info.outputs.branch }}
           token: ${{ secrets.GITHUB_TOKEN }}

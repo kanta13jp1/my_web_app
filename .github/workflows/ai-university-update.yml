@@ -25,7 +25,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ── Step 2: 各プロバイダーの RSS から最新ニュースを取得・UPSERT ──────
       - name: Step 2 - Fetch and upsert AI provider news

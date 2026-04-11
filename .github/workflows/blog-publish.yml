@@ -35,7 +35,7 @@ jobs:
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
