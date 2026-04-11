@@ -5980,3 +5980,56 @@ Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち (PS#38
 - Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
 - PowerShell版: `ai-university-update.yml` に mistral/perplexity の upsert_provider 追加 (TOTAL_PROVIDERS 7→9)
 - Web/モバイル表示チェック (Flutter preview 環境で確認)
+
+## PS#39 セッション記録 (2026-04-12)
+
+### ai-university-update.yml: Mistral/Perplexity 追加 (7→9社)
+
+- Windows版#33 で migration seed 作成済みだったが、ワークフローが7プロバイダーのままだった
+- `upsert_provider "mistral"` (mistral.ai/news/rss.xml) + `upsert_provider "perplexity"` (blog.perplexity.ai/rss.xml) 追加
+- TOTAL_PROVIDERS 7→9、Step3/Step4/Job Summary も9社対応に更新
+- commit `85e6d271`
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all)
+- Qiita: `QIITA_ACCESS_TOKEN` 再設定 (write_qiita スコープ) → notification-center.md 投稿
+- VSCode版: `ai_university_badges` バッジ発行 EF + UI
+
+## VSCode版#56 セッション記録 (2026-04-12)
+
+### SNS シェアカード実装 (OGP スタイル画像生成)
+
+- `gemini_university_v2_page.dart` に `_showShareCardDialog()` / `_buildShareCard()` / `_captureAndDownload()` 追加
+- シェアカードデザイン: インジゴグラデーション背景 + プロバイダーバッジ (学習済みはカラー/未学習はグレー) + クイズ達成数
+- `RepaintBoundary` + `RenderRepaintBoundary.toImage()` でウィジェットをPNG化
+- `package:web/web.dart` の `HTMLAnchorElement` 経由でブラウザダウンロード
+- AppBar シェアボタン: `_shareProgress()` → `_showShareCardDialog()` に更新 (テキストシェアはダイアログ内ボタンで維持)
+- `flutter analyze` 0エラー確認
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- Web版: `ai_university_badges` バッジ発行 EF (達成条件判定・INSERT) 🟡 高
+- PowerShell/daily-dev: T-1 第3弾 技術記事投稿 (Qiita 403 要トークン再設定)
+
+## PS#39 wrap-up セッション記録 (2026-04-12)
+
+### Qiita 401 Unauthorized 確定診断
+
+- Supabase シークレット再設定後もトークン2本とも `GET /api/v2/authenticated_user` で Unauthorized
+- 結論: トークン自体が無効 — スコープ問題ではなく新規発行が必要
+- COMPRESSED_PROMPT T-1 Qiita status を「403 Forbidden」→「401 Unauthorized (無効トークン)」に更新
+- 次手: ユーザーが Qiita設定で新規トークン発行 → `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン>` → blog-publish.yml dispatch
+
+### context-compressed 継続セッション知見
+
+- セッションサマリーの pending tasks がファイル実態と乖離するケースを確認
+- 対策: 継続セッション開始時は `git diff HEAD` で実態確認後に編集
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider / get_all) 🔴 最高
+- Web版: `ai_university_badges` バッジ発行 EF 🟡 高
+- T-1 第3弾: 新規 Qiita トークン発行 → notification-center.md 投稿 🟡 高
+- notebooklm login 再認証 (cookie期限切れ確認)

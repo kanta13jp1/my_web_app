@@ -1,7 +1,7 @@
 name: AI大学コンテンツ更新 (週次)
 
 # 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
-# プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek)
+# プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity)
 # 毎週月曜 11:00 JST (= UTC 02:00) に自動実行
 on:
   schedule:
@@ -89,13 +89,14 @@ jobs:
           upsert_provider "meta"       "https://ai.meta.com/blog/rss/"            "Meta AI"
           upsert_provider "x"          "https://x.ai/blog/rss.xml"               "xAI"
           upsert_provider "deepseek"   "https://api-docs.deepseek.com/rss.xml"    "DeepSeek"
+          upsert_provider "mistral"    "https://mistral.ai/news/rss.xml"          "Mistral AI"
+          upsert_provider "perplexity" "https://blog.perplexity.ai/rss.xml"       "Perplexity AI"
           # 新規プロバイダーを追加する場合はここに upsert_provider 行を追記する
-          # 例: upsert_provider "mistral" "https://mistral.ai/news/rss.xml" "Mistral AI"
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=7  # プロバイダー追加時はここも更新
+          TOTAL_PROVIDERS=9  # プロバイダー追加時はここも更新
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
@@ -130,7 +131,10 @@ jobs:
             echo "- Microsoft AI: RSS 取得・UPSERT"
             echo "- Meta AI: RSS 取得・UPSERT"
             echo "- X/xAI: RSS 取得・UPSERT"
-            echo "- 更新成功: ${SUCCESS_COUNT}/6"
+            echo "- DeepSeek: RSS 取得・UPSERT"
+            echo "- Mistral AI: RSS 取得・UPSERT"
+            echo "- Perplexity AI: RSS 取得・UPSERT"
+            echo "- 更新成功: ${SUCCESS_COUNT}/9"
             if [ -n "$FAILED" ]; then
               echo "- 失敗プロバイダー:${FAILED}"
             fi
@@ -164,8 +168,8 @@ jobs:
           SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
           FAILED="${{ steps.update.outputs.failed_providers }}"
           STATUS="success"
-          [ "$SUCCESS_COUNT" -lt 6 ] 2>/dev/null && STATUS="partial"
-          SUMMARY="ai-university-update: ${SUCCESS_COUNT}/6 プロバイダー更新完了 failed=${FAILED}"
+          [ "$SUCCESS_COUNT" -lt 7 ] 2>/dev/null && STATUS="partial"
+          SUMMARY="ai-university-update: ${SUCCESS_COUNT}/9 プロバイダー更新完了 failed=${FAILED}"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -194,6 +198,8 @@ jobs:
             echo "| Meta AI | RSS取得・UPSERT |"
             echo "| X/xAI | RSS取得・UPSERT |"
             echo "| DeepSeek | RSS取得・UPSERT |"
+            echo "| Mistral AI | RSS取得・UPSERT |"
+            echo "| Perplexity AI | RSS取得・UPSERT |"
             echo ""
             TOTAL="${{ steps.update.outputs.total_providers }}"
           echo "**更新成功**: ${SUCCESS_COUNT}/${TOTAL}"

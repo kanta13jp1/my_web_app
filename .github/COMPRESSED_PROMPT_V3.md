@@ -438,7 +438,7 @@ web/sitemap.xml          # URL マップ
   - dev.to: [How I Automated CS with Claude Code Schedule](https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-18a6)
   - Zenn: `2026-03-28-zenn-database-view.md` `published: true` でデプロイ済み
   - dev.to ✅ [Flutter WebでSupabaseを使ったアプリ内通知センター](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3) (PS#37)
-- ⚠️ **Qiita**: `QIITA_ACCESS_TOKEN` が 403 Forbidden — Supabase シークレット再設定が必要 (`write_qiita` スコープ)
+- ⚠️ **Qiita**: トークンが 401 Unauthorized (無効トークン) — [Qiita設定ページ](https://qiita.com/settings/tokens/new) で新規トークン再発行 (`write_qiita` スコープ) → `supabase secrets set QIITA_ACCESS_TOKEN=<新トークン>` → `blog-publish.yml` dispatch で `2026-03-31-notification-center.md` 再実行
 
 **次回候補 (第3弾)**:
 
@@ -615,7 +615,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity
 | ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
 | **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
 | ~~学習リマインダー通知 (3日未学習 → notification-center EF)~~ ✅ 完了 (Web版#34, 2026-04-11) `supabase/functions/notification-center/index.ts` に `send_study_reminders` action 追加。`ai_university_streaks` から 3〜30日未学習のユーザーを抽出、直近3日以内の同種通知をスパム防止で除外、`app_notifications` に復帰促進メッセージを一括挿入。`dry_run` / `min_idle_days` / `max_idle_days` パラメータ対応。新規EF 作成せずスロット維持 | Web版 | ✅ 完了 |
-| SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化) | VSCode版+Web版 | 🟢 低 |
+| ~~SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化)~~ ✅ 完了 (VSCode版#56, 2026-04-12) | VSCode版 | ✅ |
 
 #### `ai_university_badges` テーブルスキーマ
 

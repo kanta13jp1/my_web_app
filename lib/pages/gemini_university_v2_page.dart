@@ -1,11 +1,15 @@
+import 'dart:convert';
 import 'dart:math' show Random;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:web/web.dart' as web_api;
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import 'ai_university_ranking_page.dart';
@@ -341,6 +345,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   TabController? _tabController;
   final Set<String> _answeredQuizzes = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
+  final _shareCardKey = GlobalKey();
 
   @override
   void initState() {
@@ -421,6 +426,196 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     }
 
     await SharePlus.instance.share(ShareParams(text: text));
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SNS シェアカード — OGP スタイル画像プレビュー + ダウンロード
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> _showShareCardDialog() async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // カードプレビュー
+              RepaintBoundary(
+                key: _shareCardKey,
+                child: _buildShareCard(),
+              ),
+              // ボタン行
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.download),
+                        label: const Text('画像を保存'),
+                        onPressed: _captureAndDownload,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.share),
+                        label: const Text('テキストでシェア'),
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _shareProgress();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareCard() {
+    final count = _answeredQuizzes.length;
+    final total = _providers.isNotEmpty ? _providers.length : _quizzes.length;
+
+    return Container(
+      width: 360,
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1a237e), Color(0xFF283593), Color(0xFF3949AB)],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ヘッダー
+          const Row(
+            children: [
+              Text('🎓', style: TextStyle(fontSize: 32)),
+              SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'AI 大学',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '自分株式会社',
+                    style: TextStyle(color: Colors.white60, fontSize: 11),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: Colors.white24),
+          const SizedBox(height: 14),
+          // 達成数メッセージ
+          Text(
+            '$count 社のAIを\n学習しました！',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // プロバイダーバッジ行
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _providers.map((id) {
+              final m = _meta(id);
+              final learned = _answeredQuizzes.contains(id);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: learned
+                      ? m.color.withAlpha(180)
+                      : Colors.white.withAlpha(20),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${m.emoji} ${m.name}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: learned ? Colors.white : Colors.white38,
+                    fontWeight:
+                        learned ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          // クイズ達成バー
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.amber.withAlpha(40),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.amber.withAlpha(80)),
+            ),
+            child: Row(
+              children: [
+                const Text('📊', style: TextStyle(fontSize: 14)),
+                const SizedBox(width: 8),
+                Text(
+                  'クイズ正解: $count / $total 問',
+                  style: const TextStyle(
+                    color: Colors.amber,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'my-web-app-b67f4.web.app',
+            style: TextStyle(color: Colors.white60, fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _captureAndDownload() async {
+    try {
+      final boundary = _shareCardKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) return;
+      final image = await boundary.toImage(pixelRatio: 2.0);
+      final byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+      final pngBytes = byteData.buffer.asUint8List();
+      final b64 = base64Encode(pngBytes);
+      final a = web_api.HTMLAnchorElement()
+        ..href = 'data:image/png;base64,$b64'
+        ..download = 'ai-university-card.png';
+      web_api.document.body?.append(a);
+      a.click();
+      a.remove();
+    } catch (_) {
+      // キャプチャ失敗はサイレント
+    }
   }
 
   @override
@@ -551,8 +746,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           ),
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: '進捗をシェア',
-            onPressed: _shareProgress,
+            tooltip: 'シェアカード',
+            onPressed: _showShareCardDialog,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
