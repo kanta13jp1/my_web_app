@@ -463,6 +463,10 @@ GitHub PRの自動コードレビュー。
 2. 各PRの差分を取得し、セキュリティ・パフォーマンス・ロジックバグの観点でレビュー
 3. 指摘があれば `gh pr review` でコメント投稿
 4. 問題なければ approve
+5. **CI失敗PR対応**: `ci-auto-fix.yml` が `dart fix --apply` + `deno fmt` を自動適用済みの場合は
+   その結果コメントを確認し、残存エラーがあれば追加コメントで手動修正を促す。
+   `ci-auto-fix.yml` 未実行の場合は `gh run list --branch <branch>` で CI ログを確認して
+   修正可能なエラー (deprecated API / import typo 等) があればコードを直接修正してコミット。
 
 ---
 

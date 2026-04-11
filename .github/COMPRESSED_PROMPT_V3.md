@@ -14,7 +14,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **VSCode版** | `lib/` (Flutter UI・196ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 241本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (14本完備済み) | 他3範囲 |
+| **PowerShell版** | `.github/workflows/` + CI/CD (15本完備済み) | 他3範囲 |
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -134,9 +134,9 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全14ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全15ワークフロー）
 
-**全14本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全15本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -154,6 +154,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |
 | `workflow-failure-handler.yml` | workflow_run: [completed] | 主要11ワークフロー失敗時 → GitHub Issue自動生成 (`workflow-failure` ラベル) → `cs-check` が自動修復 |
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
+| `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -206,7 +207,7 @@ lib/pages/               # 196ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 241本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 14本 (品質基準完備済み)
+.github/workflows/       # 15本 (品質基準完備済み)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)
@@ -457,7 +458,7 @@ web/sitemap.xml          # URL マップ
 | --- | --- | --- | --- |
 | ~~`admin_analytics_page.dart` 拡張~~: `personal_dashboard_page.dart` 新規作成で対応済み (daily-dev 2026-04-11) | Notion 3.4 ダッシュボードビュー | VSCode版 | ✅ 完了 |
 | `ai-assistant` EF: マイスキル登録・再利用機能 | Slack AI 再利用スキル | Web版 | 🟡 中 |
-| `pr-auto-review` Schedule: CI失敗自動 fix コミット機能 | GitHub Copilot Autopilot | PowerShell版 | 🟡 中 |
+| ~~`pr-auto-review` Schedule: CI失敗自動 fix コミット機能~~: `ci-auto-fix.yml` 新規作成で対応済み (PS#30) | GitHub Copilot Autopilot | PowerShell版 | ✅ 完了 |
 
 ---
 
