@@ -5433,3 +5433,38 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: ランキングUI + ストリーク表示 + シェア A/Bテスト
 - T-1 第6弾: 技術記事 Qiita/dev.to 投稿
 - `notebooklm login` 再認証 (cookie期限切れ)
+
+---
+
+## セッション: Web版#29 (2026-04-11)
+
+### 実施内容
+
+- **AI大学キラーコンテンツ基盤: `ai-university-content` EF 新規作成** (COMPRESSED_PROMPT_V3.md #T3 🔴 最高):
+  - `supabase/functions/ai-university-content/index.ts` 実装
+  - 3アクション対応: `get_all` / `get_by_provider` / `upsert_news`
+  - `get_all`: プロバイダー別グルーピング付きで全アクティブコンテンツ返却 (Flutter クライアント向け)
+  - `get_by_provider`: `provider` + 任意の `category` 絞り込み (最大 limit=200)
+  - `upsert_news`: service-role 認可必須 (`Authorization: Bearer SERVICE_ROLE_KEY`)。既存 `(provider, category, title)` を探索して update / insert 判定
+  - カテゴリ検証: `overview/models/api/pricing/news/tutorial` 以外は 400 エラー
+  - `published_at` は YYYY-MM-DD パターン検証付き (不正なら今日付にフォールバック)
+  - GET / POST 両対応でクエリ・JSON body どちらからも呼び出し可能
+
+### 品質確認
+
+- `deno lint` 0エラー確認 (`/tmp/deno lint supabase/functions/ai-university-content/` → `Checked 1 file`)
+- 既存 EF 3本 (blog-post-manager / growth-acquisition / my-ai-agent) も同時 lint し回帰なし確認
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ**: `deploy-prod.yml` Tier 1D (Schedule & Automation) に `supabase functions deploy ai-university-content --no-verify-jwt` を追加 (Tier 1: 99→100、Supabase上限到達)
+- **VSCode版へ**: `gemini_university_v2_page.dart` の `_fallback` マップを削除し、新EF経由で `ai_university_content` テーブルからコンテンツ取得する実装に切り替え可能
+- **Windows版へ**: 新規プロバイダー (Mistral/Cohere 等) の seed migration 作成時は本EF経由で UPSERT 推奨
+
+### 次回優先
+
+- Web版: `ai-university-streaks` 計算 EF (`update_ai_university_streak` RPC ラッパー) → HomeCard 連続日数表示
+- Web版: `ai-university-badges` 発行 EF (達成条件判定 + `award_ai_university_badge` RPC)
+- VSCode版: `gemini_university_v2_page.dart` を `ai-university-content` EF 経由に切り替え
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`)
+- T-1 第6弾: 技術記事 Qiita/dev.to 投稿
