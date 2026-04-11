@@ -6476,3 +6476,33 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - LP 126→130のこと: 4機能追加 (VSCode版) 🟢 中
 - `growth-acquisition-page.dart` 修正 (git statusに未コミット変更あり) 🟡 高
 - AI大学 Tier2 EF Tier1 昇格検討 (EFスロット確認後) 🔵 低
+
+## VSCode版#58継続 — Rule19 home_page.dart DESIGN.md準拠 (2026-04-12)
+
+### 実施内容
+
+- **Rule 19 UI改善: ai_university_home_card.dart** (commit `9153d6d4`)
+  - グラデーション → DESIGN.md aiGradient (`[0xFF1A0A2E, 0xFF0D1B3E, 0xFF3949AB]`)
+  - テキスト: `Colors.white70` → `Color(0xFFB0B0B0)` (textSecondary), fontSize 12, height 1.6
+  - CTAボタン: white/indigo → orange/white (`Color(0xFFFF6B35)` / radiusXL=24)
+  - ストリーク/バッジ色: `Colors.orange/amber` → explicit tokens
+  
+- **Rule 19 UI改善: home_page.dart** (commit `758fecef`)
+  - Material色定数 → 明示的HEXトークン全置換
+  - `Colors.redAccent` → `0xFFE53935`, `Colors.green` → `0xFF4CAF50`, `Colors.amber` → `0xFFFFC107`, `Colors.indigo` → `0xFF3D5AFE`
+  - ギター機能バナー: `0xFFE94560` → `0xFFFF6B35` (DESIGN.md Primary Orange)
+  - ダークbg: `0xFF0B1220` → `0xFF0A0A0A` (深黒統一)
+  - `withAlpha()` → `withValues(alpha:)` (Flutter最新API)
+
+### 現状数値 (2026-04-12)
+
+- LP: 126のこと
+- ページ数: 211
+- EF deployed: 99本 (Tier1上限)
+- AI大学プロバイダー: 9社
+
+### 次回優先
+
+- T-1 第4弾: `docs/blog-drafts/2026-03-28-note-comments.md` → Qiita/dev.to 投稿 🟡 高
+- LP 126→130のこと: 4機能追加 🟢 中
+- AI大学 Tier2 EF Tier1 昇格検討 🔵 低
