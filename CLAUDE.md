@@ -55,6 +55,17 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 7. **毎セッション: `docs/` 戦略ドキュメント全件分析・開発計画反映** — 以下の常設ドキュメントを読み、(a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記する。
    - 対象: `docs/CICD_SETUP_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/MULTI_INSTANCE_COORDINATION.md`, `docs/README.md`, `docs/DESIGN_TOOLING_SETUP.md`, `docs/technical/*.md`, `docs/roadmaps/*.md`, `docs/user-docs/*.md`
    - 除外 (自動生成・アーカイブ): `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
+8. **毎セッション: Web版 + モバイル版 UI 表示崩れチェック・修正（必須）** — Flutter Web はデスクトップ (≥1280px) とモバイル (≤480px) の両方で表示されるため、毎セッション以下を必ず実行する:
+   - **静的チェック**: 直近5セッションで触った `lib/pages/*.dart` / `lib/widgets/*.dart` をアンチパターンで `Grep` 走査
+     - `Row`/`Column` 内の `width: double.infinity` を `Expanded` なしで使用 → 広幅 overflow リスク
+     - `SizedBox(width: 300以上)` ハードコード → モバイル縦画面で横スクロール発生
+     - `Text(..., maxLines: 1)` に `TextOverflow.ellipsis` 未指定 → `RenderFlex overflowed` 発生
+     - `MediaQuery.of(context).size.width` 条件分岐なし → ブレークポイント未対応
+     - フルスクリーンダイアログに `LayoutBuilder` / `OrientationBuilder` 不在 → モバイルで切れる
+   - **実機チェック (VSCode版代表)**: `flutter run -d chrome --web-browser-flag="--window-size=390,844"` (iPhone14 相当) と `--window-size=1440,900` (デスクトップ) で、ランディング / ホーム / AI大学 / 比較ページ / ユーザーマニュアルを目視確認
+   - **修正**: 発見した問題は担当スコープで即修正 (`flutter analyze` 0エラー維持必須)。Web版/Windows版/PowerShell版 はスコープ外なら `COMPRESSED_PROMPT_V3.md` に「実装待ち」追記
+   - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
+9. **EF上限管理 — Supabase 99本ハードリミット** — **100本目でデプロイエラー**。新規EFを作る前に既存EFへの `action` 追加を最優先検討する。Tier1 は 99/99 で満杯のため、新規作成したEFは強制的に Tier2（コードのみ）運用となる。Tier1 に昇格したい場合は `deploy-prod.yml` の既存EFを1本降格してスロットを空けること
 
 ---
 

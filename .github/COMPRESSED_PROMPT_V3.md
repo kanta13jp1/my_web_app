@@ -188,7 +188,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 4. **ダミーデータ禁止** — Supabase 実データ必須
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
-7. **EF上限管理** — Supabase 100本デプロイ上限 → 新規作成より既存EFへの `action` 追加優先。超える場合は Tier 2（コードのみ）に降格し `deploy-prod.yml` の Tier 2 コメントに記載
+7. **EF上限管理** — **Supabase 99本がハードリミット (100本でデプロイエラー)** → 新規作成より既存EFへの `action` 追加を最優先。既に Tier 1 は 99/99 で満杯のため、新規EFは強制的に Tier 2（コードのみ）運用。昇格したい場合は既存EFを降格してスロットを空ける必要あり。`deploy-prod.yml` の Tier 2 コメントに全件記載
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
@@ -197,6 +197,21 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
+16. **毎セッション: Web版 + モバイル版 UI 表示崩れチェック・修正（全インスタンス必須）** — 以下のフローを毎セッション必ず実行する:
+    1. **静的チェック (全インスタンス)**: 直近5セッションで触った `lib/pages/*.dart` と `lib/widgets/*.dart` を対象に、以下のアンチパターンを `Grep` で走査する
+       - `Row` / `Column` 内で `width: double.infinity` を `Expanded` なしで使用 → Web広幅で overflow リスク
+       - `SizedBox(width: 数値)` の 300 以上ハードコード → モバイル縦画面で横スクロール発生
+       - `Text(..., maxLines: 1)` + `TextOverflow.ellipsis` 未指定 → 狭幅で `RenderFlex overflowed` 発生
+       - `MediaQuery.of(context).size.width` を条件分岐なしで使用 → ブレークポイント未対応
+       - `FittedBox` / `LayoutBuilder` / `OrientationBuilder` 不在のフルスクリーンダイアログ → モバイルで切れる
+    2. **実機チェック (VSCode版が代表実施)**: `flutter run -d chrome --web-browser-flag="--window-size=390,844"` (iPhone 14 サイズ) と `--window-size=1440,900` (デスクトップ) で起動し、以下のキー画面を目視確認する
+       - ランディングページ (`landing_page.dart`) — ヒーロー・比較リンク・FAB CTA
+       - ホーム (`home_page.dart`) — 進捗バー21本・`AiUniversityHomeCard`・機能タイル
+       - AI大学 (`gemini_university_v2_page.dart`) — タブバー・プロバイダータブスクロール
+       - 比較ページ (`comparison_page.dart`) — 21社×機能マトリクス (横スクロール必須)
+       - ユーザーマニュアル (`user_manual_page.dart`) — 見出し・画像・リスト
+    3. **修正 (スコープ別)**: 発見した問題は担当インスタンスで即修正する (Web版は UI を持たないので検出のみ → 他インスタンスへ `COMPRESSED_PROMPT_V3.md` 「実装待ち」追記 or 本ファイルで直接担当指定)。`flutter analyze` 0エラー維持必須
+    4. **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
 
 ---
 
@@ -300,7 +315,7 @@ web/sitemap.xml          # URL マップ
 **主要機能 EF**:
 `guitar-recording-studio` / `local-election-intelligence` / `gemini-election-analysis` / `blog-post-manager` / `blog-auto-publisher` / `ai-assistant` / `daily-judgment` / `viral-video-generator` / `viral-growth-pipeline` / `development-achievements` / `edge-function-coverage` / `app-analytics-dashboard` / `submit-feedback` / `notify-feature-request` / `notification-center` / `onboarding-flow` / `seo-optimizer` / `ab-testing-manager` / `competitor-feature-sync` / `user-activity-tracker` / `webhook-manager` / `data-export-manager` / `viral-video-ad-generator` / `x-media-post` / `viral-growth-engine` / `viral-share-engine`
 
-> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本) と Tier2コメント(151本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。AI大学キラー機能3本 (`ai-university-content` / `ai-university-streaks` / `ai-university-badges`) は PowerShell版#36 で Tier1 昇格待ち (99→100でSupabase上限、残り2本はTier2運用 or 既存EFの降格が必要)。
+> **Tier 1/2 管理**: `deploy-prod.yml` のデプロイリスト(99本=**Supabase ハードリミット 99/99 満杯**) と Tier2コメント(151本) で全250本を追跡。CIの「EF未分類チェック」が漏れを検出（警告のみ / 未分類0本達成済み）。**100本目でデプロイエラー**のため、AI大学キラー機能3本 (`ai-university-content` / `ai-university-streaks` / `ai-university-badges`) は全て Tier2 コード運用。Tier1 昇格には既存 EF を降格してスロットを空ける必要あり (PowerShell版#36 タスク)。
 
 ---
 
@@ -601,10 +616,11 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
-| ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き。**PowerShell版へ**: `deploy-prod.yml` Tier 1D (Schedule & Automation) に `supabase functions deploy ai-university-content --no-verify-jwt` を追加 (Tier 1: 99→100、Supabase上限到達) | Web版 | ✅ 完了 |
+| ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き。**PowerShell版へ**: Tier1 は 99/99 満杯 (100本でデプロイエラー) のため、本EFは Tier2 コード運用にする or 既存 EF を1本降格して `supabase functions deploy ai-university-content --no-verify-jwt` を追加 | Web版 | ✅ 完了 |
 | `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
 | ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
 | ~~`ai_university_badges` バッジ発行 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard` の5 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング | Web版 | ✅ 完了 |
+| **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
 | ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action。`update_ai_university_streak` RPC ラッパー + JWT認可 + public leaderboard (service_role) / **VSCode版へ**: HomeCard連続日数表示UI残タスク | Web版 | ✅ 完了 |
 | シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
 | ホームカード: ストリーク日数・バッジ数を動的表示 | VSCode版 | 🟡 中 |

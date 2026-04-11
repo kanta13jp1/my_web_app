@@ -5514,3 +5514,39 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: SNS シェア画像 OGP カード生成 EF
 - Web版: Feature #44 — `growth-import-preview` に Notion API 連携追加
 - VSCode版: HomeCard にストリーク・バッジ表示統合 + ランキングUI
+
+## セッション: Web版#31 (2026-04-11)
+
+### 実施内容
+
+- **プロンプト重要修正 — EF上限の誤り訂正**: COMPRESSED_PROMPT_V3.md と CLAUDE.md で「Supabase 100本」と誤記していたのを **「99本がハードリミット (100本目でデプロイエラー)」** に全面修正 (3箇所)。Tier1 は既に 99/99 で満杯。新規EFは強制的に Tier2 コード運用、Tier1 昇格には既存EF降格が必須。Web版#29/#30 の「Tier1: 99→100」ハンドオフ記述も訂正
+- **プロンプト新ルール追加 — 毎セッション Web/モバイル UI 表示チェック**:
+  - COMPRESSED_PROMPT_V3.md 開発ルール #16 追加 (静的 Grep 走査 + 実機チェック + スコープ別修正 + 記録の4ステップ)
+  - CLAUDE.md 開発ルール #8 として同等内容を追加、#9 に EF上限99本のルールも追加
+  - 走査対象アンチパターン: `Row` 内の `width: double.infinity`、ハードコード 300px+ の `SizedBox`、`TextOverflow.ellipsis` 未指定の `maxLines:1`、`MediaQuery` 条件分岐なし、フルスクリーンダイアログの `LayoutBuilder` 不在
+  - 実機チェック対象: ランディング / ホーム / AI大学 / 比較ページ / ユーザーマニュアル (`iPhone 14` 390×844 + デスクトップ 1440×900)
+- **今セッションの UI 表示チェック実施**:
+  - `landing_page.dart` (2745 LOC): `Center > SingleChildScrollView > ConstrainedBox(maxWidth: 760) > Column(stretch)` で全セクションをラップ → Web/モバイル両対応 ✅
+  - `home_page.dart` (長大): `maxLines: 1` 全 6箇所すべて `TextOverflow.ellipsis` とセット確認済み ✅
+  - `comparison_page.dart`: `ConstrainedBox(maxWidth: 720)` + `FlexColumnWidth` Table (3列設計) → モバイルでも Table 内要素が比率計算で収まる ✅
+  - `gemini_university_v2_page.dart`: `TabBar(isScrollable: true, tabAlignment: TabAlignment.start)` → プロバイダー増加時も自動横スクロール ✅
+  - **⚠️ `ai_university_home_card.dart` L106-115: 9 プロバイダー絵文字の `Row` が `Wrap`/`SingleChildScrollView` 未使用** — iPhone SE (320px幅) では外周 padding 36px を引いた 284px に 9絵文字 (20pt × 右 padding 6px) で約 270px、境界線ギリギリ。10プロバイダー目追加で overflow 確実 → **VSCode版タスクとして「実装待ち」に追記** (修正方針: `Row` → `Wrap(spacing: 6, runSpacing: 4)`)
+
+### 品質確認
+
+- COMPRESSED_PROMPT_V3.md / CLAUDE.md は markdown 編集のみ、Edge Function コード変更なし → `deno lint` 不要
+- UI 静的チェックは Python ベースの正規表現スキャン (`maxLines` + ellipsis / `SizedBox` 300px+ / `width: double.infinity` × 親 Row 判定) で実施。誤検出 1件 (home_page.dart:3602 の Column 子 Container を Row 子と誤検出) は手動レビューで除外
+
+### 他インスタンスへのハンドオフ
+
+- **VSCode版へ**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。`flutter analyze` 0エラー維持後コミット。COMPRESSED_PROMPT_V3.md 実装待ちテーブルに 🟡 高 で追記済み
+- **全インスタンスへ**: 以降のセッションでは CLAUDE.md #8 の UI 表示チェックを毎回実施し、`docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録に「UI 表示チェック」項目を必ず追記すること (0件でも「実施: 問題なし」と明記)
+- **全インスタンスへ**: CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7 を再確認すること — Tier1 は 99/99 満杯、新規EF作成前に既存EFへの action 追加を最優先検討する
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録、`award_ai_university_badge` trigger 連動済み)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- VSCode版: 絵文字 Wrap 修正 + HomeCard にストリーク・バッジ表示統合
+- VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 新規
+- PowerShell版: Tier1 から使用頻度低EFを1本以上降格し、AI大学キラー3本のうち最重要 (`ai-university-content`) を Tier1 昇格
