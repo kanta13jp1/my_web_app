@@ -5598,3 +5598,87 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - Web版: SNS シェア画像 OGP カード生成 EF
 - PowerShell版: 上記 4件のワークフロー修正 (デプロイ時間 40分 → 6分を目標)
 - VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク表示統合
+
+## セッション: Web版#33 (2026-04-11)
+
+### 実装内容: AI大学 クイズスコア書き込み EF 完成 (🔴 最高タスク)
+
+**課題**: AI大学キラーコンテンツ化の 🔴 最高タスク `ai_university_scores` スコア書き込み EF が未実装だった。
+クイズ正解を DB に保存しないとクロスデバイス学習記録・バッジ自動付与・ランキング反映ができない。
+
+**EF 99本ハードリミット対応** (CLAUDE.md #9 / COMPRESSED_PROMPT_V3.md #7):
+- 新規 EF を作らず、既存 `ai-university-badges` EF に 3 アクション追加する設計を採用
+- 既に `check_quiz_master` で `ai_university_scores` を読んでいたため、書き込みも同じ EF に集約するのが自然
+- Tier1 スロット維持 (99/99 → そのまま)
+
+**追加アクション**:
+
+| Action | 認証 | 役割 |
+| --- | --- | --- |
+| `record_score` | ユーザー JWT | `ai_university_scores` に UPSERT。正解を一度記録したら不正解で上書きしない。新規正解時は `evaluateQuizMaster` を連続実行してバッジ審査 |
+| `get_scores` | ユーザー JWT | 自分の全プロバイダースコアを `studied_at` 降順で取得 |
+| `score_leaderboard` | service_role | `ai_university_leaderboard` ビューを `rank` 昇順で読み出し、`email` → ハンドル (@ 前のみ) にサニタイズ |
+
+**内部リファクタリング**:
+- `check_quiz_master` ロジックを `evaluateQuizMaster(client, userId)` ヘルパー関数として抽出
+- `check_quiz_master` と `record_score` (新規正解時) の両方から呼び出し可能に
+- 重複コード削除: `ai_university_scores` 読み込み + `ai_university_content` プロバイダー数カウント + 2 バッジ審査を一箇所に集約
+
+**record_score のキー設計**:
+```typescript
+const wasCorrect = existing && existing.quiz_correct;       // 既に正解済み?
+const isNewProvider = existing === null;                     // 初めてのプロバイダー?
+const newlyCorrect = !wasCorrect && quizCorrect;             // 今回が初正解?
+// UPDATE 時: nextCorrect = wasCorrect || quizCorrect (一度正解したら永続)
+// newlyCorrect なら evaluateQuizMaster を呼び出しバッジ自動付与
+```
+
+**シェア誘導ロジック**: `record_score` のレスポンスに `awarded_badges: string[]` を含めるため、
+VSCode版のクイズページで `result.awarded_badges.length > 0` ならバッジ獲得モーダル→シェア CTA を出せる。
+
+### VSCode版 ハンドオフタスク (ai-university-badges EF スコア系 活用)
+
+🔴 最高: クイズ正解時に `record_score` 呼び出しを追加
+- `lib/pages/gemini_university_v2_page.dart` のクイズ正解ハンドラで以下を実行
+  ```dart
+  final res = await Supabase.instance.client.functions.invoke(
+    'ai-university-badges',
+    body: {'action': 'record_score', 'provider_id': providerId, 'quiz_correct': true},
+  );
+  final awarded = (res.data?['awarded_badges'] as List?)?.cast<String>() ?? [];
+  if (awarded.isNotEmpty) {
+    // バッジ獲得モーダル → シェアCTA
+  }
+  ```
+- SharedPreferences `ai_univ_answered_quizzes` との並行保存 (DB 優先、prefs はフォールバック)
+
+🟡 高: ランキングページ (`ai_university_ranking_page.dart`) で `score_leaderboard` 使用
+- バッジ保有数ランキング (`leaderboard`) と クイズ正解ランキング (`score_leaderboard`) の2タブ
+- 未ログインでも閲覧可能 (service_role 読み出し)
+
+🟡 高: HomeCard に `get_scores` で正解数表示
+- `ai_university_home_card.dart` の `_answeredCount` を DB 由来に置き換え
+- SharedPreferences はオフライン/未ログイン時のフォールバック
+
+### ファイル変更
+
+- `supabase/functions/ai-university-badges/index.ts`: +149 行 / -78 行 (ヘッダーコメント拡充 + 3 アクション追加 + `evaluateQuizMaster` ヘルパー)
+
+### UI 表示チェック (CLAUDE.md #8 / COMPRESSED_PROMPT_V3.md #16)
+
+Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
+アンチパターン Grep スキャン: 直近5セッションの `lib/pages/*.dart` / `lib/widgets/*.dart` はWeb版スコープ外のため実施せず (VSCode版担当)。
+**チェック実施: Web版スコープ外**
+
+### ワークフロー改善 (CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17)
+
+Web版#32 で検出済みの 4 件は PowerShell版 ハンドオフ待ち。今セッションの新規検出なし。
+**チェック実施: 新規検出 0 件 (前回検出分のハンドオフ進行中)**
+
+### 次回優先
+
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` EF 連携、新規 action 追加方式)
+- Web版: SNS シェア画像 OGP カード生成 EF (新規 EF は Tier2 のみ可能)
+- Web版: `growth-import-preview` に Notion API 連携追加 (#44)
+- PowerShell版: 前回検出 4 件のワークフロー改善 (run-batch 重複削除 / cron-batch.yml 停止 / EF デプロイ並列化 / --no-tree-shake-icons 検討)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク/バッジ統合 + `record_score` 呼び出し組み込み

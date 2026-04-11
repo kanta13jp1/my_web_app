@@ -1,8 +1,9 @@
 /**
- * ai-university-badges — AI大学 達成バッジ管理EF
+ * ai-university-badges — AI大学 達成バッジ + スコア管理EF
  *
- * `award_ai_university_badge` RPC のラッパー + 条件評価ロジック。
+ * `award_ai_university_badge` RPC のラッパー + 条件評価ロジック + クイズスコア書き込み。
  *
+ * ── バッジ系 ─────────────────────────────────────────────────────────────
  * POST { action: "list", user_id? }
  *   → 認証ユーザーのバッジ一覧を取得 (user_id 省略時は自分)。
  *   → user_id 指定時は is_public=true のバッジのみ返す (他人のプロフィール表示用)
@@ -23,9 +24,23 @@
  * POST { action: "leaderboard", limit? } / GET ?action=leaderboard&limit=20
  *   → 公開バッジ保有数上位の user_id ランキング (service_role 読み出し)
  *
+ * ── スコア系 (ai_university_scores UPSERT ラッパー) ──────────────────────
+ * POST { action: "record_score", provider_id, quiz_correct }
+ *   → クイズ結果を ai_university_scores に UPSERT (user_id, provider_id の複合ユニーク)
+ *   → quiz_correct が初めて true になった場合、check_quiz_master を連続呼び出し
+ *   返り値: { success, is_new_provider, newly_correct, awarded_badges: string[] }
+ *
+ * POST { action: "get_scores" } / GET ?action=get_scores
+ *   → 認証ユーザー自身の全プロバイダースコアを返す
+ *   返り値: { success, scores: [{provider_id, quiz_correct, studied_at}], correct_count }
+ *
+ * POST { action: "score_leaderboard", limit? } / GET ?action=score_leaderboard&limit=20
+ *   → ai_university_leaderboard ビュー (total_correct 降順) 読み出し
+ *   返り値: { success, leaderboard: [{rank, user_id, total_correct, providers_studied}] }
+ *
  * 認証:
- *   - list (自分) / award / check_* : Supabase JWT 必須
- *   - list (他人) / leaderboard       : 認証不要 (RLS で is_public=true に絞られる)
+ *   - list (自分) / award / check_* / record_score / get_scores : Supabase JWT 必須
+ *   - list (他人) / leaderboard / score_leaderboard             : 認証不要 (public 読み出し)
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -107,6 +122,92 @@ const QUIZ_MASTER_ALL = {
   condition: "全登録プロバイダーでクイズ正解",
 };
 
+// 共通: クイズマスターバッジ審査ロジック
+// check_quiz_master action と record_score action で共有
+async function evaluateQuizMaster(
+  // deno-lint-ignore no-explicit-any
+  client: any,
+  userId: string,
+): Promise<{
+  correct_count: number;
+  total_providers: number;
+  awarded: string[];
+}> {
+  if (SERVICE_ROLE_KEY === "") {
+    throw new Error("service_role key missing for quiz master evaluation");
+  }
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // ユーザーの正解プロバイダー集合
+  const { data: scoreRows, error: scoreErr } = await admin
+    .from("ai_university_scores")
+    .select("provider_id")
+    .eq("user_id", userId)
+    .eq("quiz_correct", true);
+  if (scoreErr) throw scoreErr;
+
+  const correctSet = new Set<string>();
+  for (const row of scoreRows ?? []) {
+    const pid = asString((row as { provider_id: unknown }).provider_id);
+    if (pid !== "") correctSet.add(pid);
+  }
+  const correctCount = correctSet.size;
+
+  // 全登録プロバイダー数 (is_active=true)
+  const { data: providerRows, error: providerErr } = await admin
+    .from("ai_university_content")
+    .select("provider")
+    .eq("is_active", true);
+  if (providerErr) throw providerErr;
+
+  const providerSet = new Set<string>();
+  for (const row of providerRows ?? []) {
+    const p = asString((row as { provider: unknown }).provider);
+    if (p !== "") providerSet.add(p);
+  }
+  const totalProviders = providerSet.size;
+
+  const awarded: string[] = [];
+
+  if (correctCount >= 3) {
+    const { data: r, error: e } = await client.rpc(
+      "award_ai_university_badge",
+      {
+        p_user_id: userId,
+        p_badge_id: QUIZ_MASTER_3.badge_id,
+        p_badge_name: QUIZ_MASTER_3.badge_name,
+        p_icon_emoji: QUIZ_MASTER_3.icon_emoji,
+        p_condition: QUIZ_MASTER_3.condition,
+      },
+    );
+    if (e) throw e;
+    if (r === true) awarded.push(QUIZ_MASTER_3.badge_id);
+  }
+
+  if (totalProviders > 0 && correctCount >= totalProviders) {
+    const { data: r, error: e } = await client.rpc(
+      "award_ai_university_badge",
+      {
+        p_user_id: userId,
+        p_badge_id: QUIZ_MASTER_ALL.badge_id,
+        p_badge_name: QUIZ_MASTER_ALL.badge_name,
+        p_icon_emoji: QUIZ_MASTER_ALL.icon_emoji,
+        p_condition: QUIZ_MASTER_ALL.condition,
+      },
+    );
+    if (e) throw e;
+    if (r === true) awarded.push(QUIZ_MASTER_ALL.badge_id);
+  }
+
+  return {
+    correct_count: correctCount,
+    total_providers: totalProviders,
+    awarded,
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS });
@@ -183,6 +284,60 @@ serve(async (req) => {
         success: true,
         leaderboard: ranking,
         count: ranking.length,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return json({ success: false, error: message }, 500);
+    }
+  }
+
+  // ── score_leaderboard: クイズ正解数ランキング (public 読み出し) ───────────
+  if (action === "score_leaderboard") {
+    if (SERVICE_ROLE_KEY === "") {
+      return json(
+        {
+          success: false,
+          error: "score_leaderboard unavailable: service_role missing",
+        },
+        500,
+      );
+    }
+
+    const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const limit = Math.max(1, Math.min(100, asNumber(params.limit, 20)));
+
+    try {
+      const { data, error } = await admin
+        .from("ai_university_leaderboard")
+        .select(
+          "user_id, display_name, total_correct, providers_studied, last_studied_at, rank",
+        )
+        .order("rank", { ascending: true })
+        .limit(limit);
+      if (error) throw error;
+
+      // email を直接返したくないので、display_name は @ 以前のみを返す
+      const sanitized = (data ?? []).map((row) => {
+        const r = row as Record<string, unknown>;
+        const raw = asString(r.display_name);
+        const handle = raw.includes("@") ? raw.split("@")[0] : raw;
+        return {
+          rank: asNumber(r.rank, 0),
+          user_id: asString(r.user_id),
+          display_name: handle,
+          total_correct: asNumber(r.total_correct, 0),
+          providers_studied: asNumber(r.providers_studied, 0),
+          last_studied_at: r.last_studied_at ?? null,
+        };
+      });
+
+      return json({
+        success: true,
+        leaderboard: sanitized,
+        count: sanitized.length,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -328,79 +483,102 @@ serve(async (req) => {
 
     // ── action: check_quiz_master ──────────────────────────────────────────
     if (action === "check_quiz_master") {
-      if (SERVICE_ROLE_KEY === "") {
-        return json({ success: false, error: "misconfigured" }, 500);
-      }
-      const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      });
+      const result = await evaluateQuizMaster(client, userId);
+      return json({ success: true, ...result });
+    }
 
-      // ユーザーの正解プロバイダー集合
-      const { data: scoreRows, error: scoreErr } = await admin
+    // ── action: record_score ──────────────────────────────────────────────
+    // クイズ結果を ai_university_scores に UPSERT し、
+    // 正解が新しく記録されたらバッジ審査まで連続実行する
+    if (action === "record_score") {
+      const providerId = asString(params.provider_id);
+      if (providerId === "") {
+        return json(
+          { success: false, error: "provider_id is required" },
+          400,
+        );
+      }
+      const quizCorrect = Boolean(params.quiz_correct);
+
+      // 既存行を取得 (RLS: auth.uid() = user_id で自動絞り込み)
+      const { data: existing, error: selectErr } = await client
         .from("ai_university_scores")
-        .select("provider_id")
+        .select("id, quiz_correct")
         .eq("user_id", userId)
-        .eq("quiz_correct", true);
-      if (scoreErr) throw scoreErr;
+        .eq("provider_id", providerId)
+        .maybeSingle();
+      if (selectErr) throw selectErr;
 
-      const correctSet = new Set<string>();
-      for (const row of scoreRows ?? []) {
-        const pid = asString((row as { provider_id: unknown }).provider_id);
-        if (pid !== "") correctSet.add(pid);
-      }
-      const correctCount = correctSet.size;
+      const wasCorrect = Boolean(
+        existing && (existing as Record<string, unknown>).quiz_correct,
+      );
+      const isNewProvider = existing === null;
+      const newlyCorrect = !wasCorrect && quizCorrect;
 
-      // 全登録プロバイダー数 (is_active=true)
-      const { data: providerRows, error: providerErr } = await admin
-        .from("ai_university_content")
-        .select("provider")
-        .eq("is_active", true);
-      if (providerErr) throw providerErr;
-
-      const providerSet = new Set<string>();
-      for (const row of providerRows ?? []) {
-        const p = asString((row as { provider: unknown }).provider);
-        if (p !== "") providerSet.add(p);
-      }
-      const totalProviders = providerSet.size;
-
-      const awarded: string[] = [];
-
-      if (correctCount >= 3) {
-        const { data: r, error: e } = await client.rpc(
-          "award_ai_university_badge",
-          {
-            p_user_id: userId,
-            p_badge_id: QUIZ_MASTER_3.badge_id,
-            p_badge_name: QUIZ_MASTER_3.badge_name,
-            p_icon_emoji: QUIZ_MASTER_3.icon_emoji,
-            p_condition: QUIZ_MASTER_3.condition,
-          },
-        );
-        if (e) throw e;
-        if (r === true) awarded.push(QUIZ_MASTER_3.badge_id);
+      if (existing && typeof existing === "object" && "id" in existing) {
+        // UPDATE: 既に正解済みなら quiz_correct は true のまま維持する
+        // (一度正解したものを不正解で上書きしない)
+        const nextCorrect = wasCorrect || quizCorrect;
+        const { error: updateErr } = await client
+          .from("ai_university_scores")
+          .update({
+            quiz_correct: nextCorrect,
+            studied_at: new Date().toISOString(),
+          })
+          .eq("id", (existing as { id: string }).id);
+        if (updateErr) throw updateErr;
+      } else {
+        const { error: insertErr } = await client
+          .from("ai_university_scores")
+          .insert({
+            user_id: userId,
+            provider_id: providerId,
+            quiz_correct: quizCorrect,
+            studied_at: new Date().toISOString(),
+          });
+        if (insertErr) throw insertErr;
       }
 
-      if (totalProviders > 0 && correctCount >= totalProviders) {
-        const { data: r, error: e } = await client.rpc(
-          "award_ai_university_badge",
-          {
-            p_user_id: userId,
-            p_badge_id: QUIZ_MASTER_ALL.badge_id,
-            p_badge_name: QUIZ_MASTER_ALL.badge_name,
-            p_icon_emoji: QUIZ_MASTER_ALL.icon_emoji,
-            p_condition: QUIZ_MASTER_ALL.condition,
-          },
-        );
-        if (e) throw e;
-        if (r === true) awarded.push(QUIZ_MASTER_ALL.badge_id);
+      // 新規に正解した場合のみバッジ審査を実施
+      let awardedBadges: string[] = [];
+      let correctCount = 0;
+      let totalProviders = 0;
+      if (newlyCorrect) {
+        const evalResult = await evaluateQuizMaster(client, userId);
+        awardedBadges = evalResult.awarded;
+        correctCount = evalResult.correct_count;
+        totalProviders = evalResult.total_providers;
       }
 
       return json({
         success: true,
+        is_new_provider: isNewProvider,
+        newly_correct: newlyCorrect,
+        awarded_badges: awardedBadges,
         correct_count: correctCount,
         total_providers: totalProviders,
-        awarded,
+      });
+    }
+
+    // ── action: get_scores ────────────────────────────────────────────────
+    if (action === "get_scores") {
+      const { data, error } = await client
+        .from("ai_university_scores")
+        .select("provider_id, quiz_correct, studied_at")
+        .eq("user_id", userId)
+        .order("studied_at", { ascending: false });
+      if (error) throw error;
+
+      const scores = data ?? [];
+      const correctCount = scores.filter(
+        (row) => (row as { quiz_correct: boolean }).quiz_correct,
+      ).length;
+
+      return json({
+        success: true,
+        scores,
+        correct_count: correctCount,
+        providers_studied: scores.length,
       });
     }
 

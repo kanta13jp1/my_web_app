@@ -624,8 +624,8 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | ~~`ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action)~~ ✅ 完了 (Web版, 2026-04-11) `supabase/functions/ai-university-content/index.ts` — service-role 認可・カテゴリ検証・既存タイトル update/insert 判定付き。**PowerShell版へ**: Tier1 は 99/99 満杯 (100本でデプロイエラー) のため、本EFは Tier2 コード運用にする or 既存 EF を1本降格して `supabase functions deploy ai-university-content --no-verify-jwt` を追加 | Web版 | ✅ 完了 |
-| `ai_university_scores` にスコア書き込み (EF + Flutter) | Web版+VSCode版 | 🔴 最高 |
-| ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
+| `ai_university_scores` にスコア書き込み (EF + Flutter) ✅ **EF 完了** (Web版#33, 2026-04-11) `ai-university-badges` EF に 3 action 追加: `record_score` (UPSERT + 新規正解時はバッジ審査連続実行) / `get_scores` (自分の全スコア降順) / `score_leaderboard` (`ai_university_leaderboard` view, email→ハンドルサニタイズ)。内部で `evaluateQuizMaster` ヘルパー抽出 (check_quiz_master と共有)。新規 EF 作成せずスロット節約 (99/99 維持)。**VSCode版へ**: クイズ正解時 `record_score` 呼び出し、`awarded_badges` が空でなければバッジ獲得モーダル→シェアCTA | Web版+VSCode版 | 🟡 Flutter 側残 |
+| ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 — 2タブ構成推奨 (バッジ数 `leaderboard` / クイズ正解数 `score_leaderboard`)。両方とも service_role 読み出しで未ログインでも閲覧可能 | VSCode版 | 🔴 高 |
 | ~~`ai_university_badges` バッジ発行 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard` の5 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング | Web版 | ✅ 完了 |
 | **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
 | **ワークフロー無駄削除 #1**: `deploy-prod.yml` L381 `run-batch` ジョブを**完全削除** — `cron-batch.yml` と完全重複。失敗 Python バッチが本番 push のたびに走って `notify` ジョブ開始を遅延。削除後は `notify:` の `needs: [deploy, run-batch]` → `needs: [deploy]` に修正、`run-batch.result` 参照も除去 | PowerShell版 | 🔴 最高 |
