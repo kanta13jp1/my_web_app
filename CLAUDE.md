@@ -74,7 +74,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (7プロバイダー並行RSS取得) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (9プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
@@ -782,12 +782,16 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 | シェア機能 | `gemini_university_v2_page.dart` `_shareProgress()` | バリエーション追加 |
 | クイズ達成度 | SharedPreferences `ai_univ_answered_quizzes` | Supabase に移行してクロスデバイス対応 |
 | プロバイダー無制限 | DB 駆動タブ (9社対応済み) | 毎セッションで新プロバイダー検討 |
-| コンテンツ自動更新 | `ai-university-update.yml` (毎週月曜) | ai-university-content EF 完成後にフル稼働 |
+| コンテンツ自動更新 | `ai-university-update.yml` (2時間毎) + Claude Schedule (4時間毎・NotebookLM) | ai-university-content EF 完成後にフル稼働 |
 | DB スキーマ | `ai_university_scores` + `leaderboard` ビュー | EF とUI接続が未完了 |
 
 ---
 
-### Task: ai-university-update (毎週月曜 11:00 JST に実行)
+### Task: ai-university-update (毎4時間実行)
+
+> **アーキテクチャ**: GitHub Actions `ai-university-update.yml` が2時間毎に RSS ベースの軽量更新を行う。
+> Claude Schedule (毎4時間) は NotebookLM Deep Research で**より深い情報**を収集してリッチなコンテンツを上書きする。
+> 両者が同じ `ai_university_content.news` レコードを UPSERT するため、後から書いた方が最新版になる。
 
 AI大学コンテンツを最新情報に自動更新する。**プロバイダー数は固定せず**、重要性が高い新興AIプロバイダーを毎回検討して随時追加する。
 
@@ -830,12 +834,23 @@ Samsung       (samsung)   — Gauss、オンデバイスAI
 5. `ai-university-update.yml` の検索クエリリストにプロバイダーを追加
 6. COMPRESSED_PROMPT_V3.md の「現在の登録プロバイダー」リストを更新
 
-#### Step 1: 登録済み各プロバイダーの最新情報を WebSearch で取得
+#### Step 1: NotebookLM Deep Research で最新AIニュースを収集（必須）
 
-登録済みプロバイダーについて WebSearch を実行し、最新情報を収集する:
+GitHub Actions の RSS 更新より深い情報を取得するため、必ず NotebookLM を使う:
+
+```bash
+# 全プロバイダーを一括でリサーチ (専用ノートブック or Master Brain)
+notebooklm use jibun-master-brain
+notebooklm source add-research "Google Gemini OpenAI GPT Anthropic Claude Microsoft Copilot Meta LLaMA xAI Grok DeepSeek Mistral Perplexity latest AI news releases API changes 2026"
+notebooklm research wait
+notebooklm ask "各AIプロバイダー (Google/OpenAI/Anthropic/Microsoft/Meta/xAI/DeepSeek/Mistral/Perplexity) の最新ニュース・モデルリリース・API変更をプロバイダー別に日本語でまとめてください"
+```
+
+認証切れの場合: `notebooklm login` で再認証 (30秒)。
+NotebookLM が利用不可の場合は WebSearch にフォールバック:
 
 ```text
-検索クエリ (各プロバイダーごと):
+WebSearch フォールバック (各プロバイダーごと):
 - Google:    "Google Gemini AI latest news models 2026"
 - OpenAI:    "OpenAI GPT o1 o3 latest news 2026"
 - Anthropic: "Anthropic Claude latest news models 2026"
@@ -843,6 +858,8 @@ Samsung       (samsung)   — Gauss、オンデバイスAI
 - Meta:      "Meta AI LLaMA latest news 2026"
 - X/xAI:    "xAI Grok latest news models 2026"
 - DeepSeek: "DeepSeek AI latest news models 2026"
+- Mistral:  "Mistral AI latest news models 2026"
+- Perplexity: "Perplexity AI Sonar latest news 2026"
 ```
 
 各プロバイダーの公式ブログ・リリースノートも参照する:

@@ -224,7 +224,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `youtube-analysis.yml` | 毎日 11:00 JST | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` 更新・PR自動マージ |
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
-| `ai-university-update.yml` | 月曜 11:00 JST + dispatch | AI大学コンテンツ週次自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge) |
+| `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (9プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -255,6 +255,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | `infra-health-check` | 毎時 :30 | `health-check` EF + Firebase Hosting 確認 |
 | `dependency-audit` | 月 08:00 | `pub outdated` + Deno import バージョン検査 |
 | `blog-draft` | 08:00 JST | 直近7日コミット → ブログ下書き → `blog_posts` テーブル登録 |
+| `ai-university-update` | **4時間毎** | NotebookLM Deep Research → 9プロバイダー最新ニュースを Supabase UPSERT (GH Actions の RSS より深い情報で上書き) |
 
 ---
 
@@ -689,7 +690,7 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 | --- | --- | --- |
 | **Generator-Verifier** | 品質最重要・評価基準を明文化できる | `claude-agent-review.yml` / `ci-auto-fix.yml` / `/deep-research`(NLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確・短時間で完結するサブタスク | `cs-check.yml` / `github-issue-fix.yml` / Claude Code Schedule全般 |
-| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(7プロバイダー並行) |
+| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(9プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM) |
 | **Message Bus** | イベント駆動・エコシステムが成長する | `workflow-failure-handler.yml` → Issue → `cs-check` / `feedback-issue-resolved.yml` |
 | **Shared State** | エージェントが互いの発見を活用・単一障害点を避けたい | `memory/` + NotebookLM Master Brain / Supabase DB / `COMPRESSED_PROMPT_V3.md` |
 

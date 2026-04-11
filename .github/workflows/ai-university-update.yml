@@ -1,16 +1,16 @@
-name: AI大学コンテンツ更新 (週次)
+name: AI大学コンテンツ更新 (2時間毎)
 
 # 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
 # プロバイダーは固定せず随時追加可能 (現在: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity)
-# 毎週月曜 11:00 JST (= UTC 02:00) に自動実行
+# 2時間毎に自動実行。深いリサーチは Claude Code Schedule (ai-university-update タスク) が NotebookLM で担当
 on:
   schedule:
-    - cron: "0 2 * * 1"  # UTC 02:00 月曜 = JST 11:00 月曜
+    - cron: "0 */2 * * *"  # 2時間毎 (UTC)
   workflow_dispatch:
 
 concurrency:
   group: ai-university-update
-  cancel-in-progress: false
+  cancel-in-progress: true  # 2時間毎のため前回実行中なら新しい実行を優先
 
 permissions:
   contents: write
