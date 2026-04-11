@@ -69,26 +69,31 @@ MEMORY.md インデックスにも1行追加する。
 
 ## Step 3: NotebookLM Master Brain に蓄積 (認証済みの場合)
 
-NotebookLM のセットアップが完了している場合のみ実行:
+`notebooklm status` で認証状態を確認してから実行:
 
 ```bash
-PYTHONUTF8=1 python notebooklm_research.py --setup 2>&1 | grep -q "セットアップ完了"
+notebooklm status
 ```
 
-完了している場合、セッション要約を `jibun-master-brain` ノートブックに送信:
+認証済みの場合、Step 2 で保存したメモリファイルを Master Brain ノートブックにソースとして追加する:
 
 ```bash
-PYTHONUTF8=1 python notebooklm_research.py \
-  --notebook "jibun-master-brain" \
-  "[セッション要約: 実装した機能、学んだこと、次回の優先事項を300字でまとめたテキスト]"
+# Master Brain ノートブックに切り替え（部分ID可）
+notebooklm use jibun-master-brain
+
+# 今セッションで作成したメモリファイルをすべてソース追加
+# (該当ファイルのみ実行。存在しないファイルはスキップ)
+notebooklm source add "C:/Users/kanta/.claude/projects/C--Users-kanta-GitHub-my-web-app/memory/feedback_success_YYYYMMDD.md"
+notebooklm source add "C:/Users/kanta/.claude/projects/C--Users-kanta-GitHub-my-web-app/memory/feedback_correction_YYYYMMDD.md"
+notebooklm source add "C:/Users/kanta/.claude/projects/C--Users-kanta-GitHub-my-web-app/memory/project_YYYYMMDD.md"
 ```
 
 これにより:
-- 複数セッションにまたがる学習が蓄積される
-- 次回 /deep-research で `jibun-master-brain` を参照すれば過去の知見を活用できる
-- NotebookLM の Gemini が全履歴から関連情報を自動抽出してくれる
+- 複数セッションにまたがる学習がファイル単位で蓄積される
+- 次回 `/deep-research` で `notebooklm use jibun-master-brain && notebooklm ask "..."` で過去の知見を横断検索できる
+- NotebookLM の Gemini が全セッション履歴から関連情報を自動抽出する
 
-**認証未完了の場合はこのステップをスキップ**する（ローカルの memory/ 保存は必ず実行）。
+**認証未完了・cookie 期限切れの場合はスキップ**し、`notebooklm login` で再認証を促す（ローカルの memory/ 保存は必ず実行）。
 
 ---
 

@@ -74,9 +74,9 @@ C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.m
 前回の成功パターン・禁止事項・新規発見を読んで、セッションの出発点とする。
 記憶が消える弱点を「永続メモリ + NotebookLM Master Brain」で補う。
 
-### 重い分析: `/deep-research` で NotebookLM に委譲（必須）
+### ゼロトークンリサーチ: `/deep-research` で NotebookLM に委譲（必須）
 
-以下のいずれかに該当する場合は **必ず** `python notebooklm_research.py` を呼ぶ:
+以下のいずれかに該当する場合は **必ず** `notebooklm` CLI を使う:
 
 | 条件 | Claude 消費 | NotebookLM 委譲後 |
 | --- | --- | --- |
@@ -85,23 +85,45 @@ C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.m
 | 競合21社のリサーチ | ~80K tokens | ~3K tokens |
 | ドキュメント全体を俯瞰する | ~100K tokens | ~4K tokens |
 
-**コマンド**:
+**native CLI コマンド（推奨）**:
 
 ```bash
-# セットアップ確認（初回のみ）
+# ノートブック作成 → ソース追加 → 質問 → 成果物生成
+notebooklm create "My Research Project"
+notebooklm source add "./transcript.md"          # ファイル
+notebooklm source add "https://example.com/doc"  # URL
+notebooklm source add --type youtube "https://youtube.com/watch?v=..." # YouTube
+notebooklm ask "3つの主要テーマは？"
+
+# 成果物を自動生成（Google インフラで無料処理）
+notebooklm generate slide-deck "要点をスライドにまとめて"
+notebooklm generate flashcards "重要用語を中心に"
+notebooklm generate mind-map
+notebooklm generate data-table "主要概念を比較"
+notebooklm generate audio "deep dive focusing on key findings" --wait
+notebooklm generate quiz "難易度中程度"
+notebooklm generate infographic
+notebooklm download slide-deck  # ローカルに保存
+
+# Web Deep Research（自律的にWebを調査してレポート生成）
+notebooklm source add-research "advanced Flutter Web performance optimization 2026"
+notebooklm research wait  # 調査完了まで待機
+notebooklm ask "調査結果のサマリーを教えて"
+```
+
+**ラッパースクリプト（互換用）**:
+
+```bash
+# セットアップ確認
 PYTHONUTF8=1 python notebooklm_research.py --setup
 
-# トピック検索
+# トピック検索（旧方式・互換維持）
 PYTHONUTF8=1 python notebooklm_research.py "競合21社の最新動向"
-
-# ファイル分析（3ファイル以上は必須）
 PYTHONUTF8=1 python notebooklm_research.py --files lib/pages/landing_page.dart docs/DESIGN.md --query "UIと設計の整合性"
-
-# URL調査
 PYTHONUTF8=1 python notebooklm_research.py --url "https://..." --query "要約して"
 ```
 
-スクリプトがない or 認証未完了の場合は以下を案内して処理を止める:
+認証未完了の場合:
 
 ```text
 notebooklm login が必要です:
@@ -109,6 +131,29 @@ notebooklm login が必要です:
   playwright install chromium
   notebooklm login
 ```
+
+### エキスパートAIエージェント構築: DBS フレームワーク
+
+NotebookLM の Deep Research で収集した知識をカスタムスキルに変換する手順:
+
+1. **Deep Research 実行**: `notebooklm source add-research "対象ドメインの専門的なクエリ"` で数百ページを自律調査
+2. **DBS フレームワークで分類**:
+   - **D (Direction)** = 意思決定ツリー・手順・エラー回復ロジック → `SKILL.md` のコア
+   - **B (Blueprints)** = テンプレート・ガイドライン・分類ルール → サポートファイル
+   - **S (Solutions)** = API呼び出し・データ処理・計算など確定的コード → スクリプト
+3. **`/skill-creator` でスキル化**: DBS 出力を貼り付けて `/skill-creator` を実行 → SKILL.md 自動生成・テスト
+
+### スキル管理
+
+```bash
+notebooklm skill install   # NotebookLM スキルを ~/.claude/skills/ にインストール
+notebooklm skill status    # インストール状況確認
+notebooklm skill show      # スキル内容表示
+notebooklm skill uninstall # アンインストール
+```
+
+プロジェクトスキル: `.claude/skills/<name>/SKILL.md` (このリポジトリで共有可)
+個人スキル: `~/.claude/skills/<name>/SKILL.md` (全プロジェクトで使用可)
 
 ### セッション終了: `/wrap-up` で学習を永続保存（必須）
 
@@ -118,11 +163,16 @@ notebooklm login が必要です:
    - 成功パターン → `memory/feedback_success_YYYYMMDD.md`
    - 失敗・禁止事項 → `memory/feedback_correction_YYYYMMDD.md`
    - 新規発見 → `memory/project_YYYYMMDD.md`
-2. NotebookLM Master Brain に蓄積（認証済みの場合のみ）:
+2. **NotebookLM Master Brain にソースとして蓄積**（認証済みの場合のみ）:
 
    ```bash
-   PYTHONUTF8=1 python notebooklm_research.py --notebook "jibun-master-brain" "[セッション要約300字]"
+   # セッション要約をファイルに保存してからソース追加（テキスト直送より確実）
+   notebooklm use <jibun-master-brain-notebook-id>
+   notebooklm source add "./memory/feedback_success_YYYYMMDD.md"
+   notebooklm source add "./memory/project_YYYYMMDD.md"
    ```
+
+   Master Brain が蓄積されれば `notebooklm ask "過去の成功パターンは？"` で横断検索可能。
 
 3. 未完了タスク → `MEMORY.md` 末尾にコメント記録
 4. **次回タスク候補を必ず提案** — **特に未完了タスクが 0 件の場合は必須**。セッション終了時に次回実施タスク候補 3〜5件を優先度付き表で提示する（詳細フォーマットは `.claude/commands/wrap-up.md` の Step 6 参照）
@@ -133,8 +183,11 @@ notebooklm login が必要です:
 
 - **インストール**: `pip install "notebooklm-py[browser]"` + `playwright install chromium`
 - **認証**: `notebooklm login` (ブラウザで Google ログイン、一度だけ必要)
-- **確認**: `PYTHONUTF8=1 python notebooklm_research.py --setup`
-- **注意**: Windows では必ず `PYTHONUTF8=1` を付けて実行すること (CP932 エンコードエラー回避)
+- **スキルインストール**: `notebooklm skill install` (Claude Code と統合)
+- **確認**: `notebooklm status` または `PYTHONUTF8=1 python notebooklm_research.py --setup`
+- **注意**: Windows では `PYTHONUTF8=1` を付けて実行 (CP932 エンコードエラー回避)
+- **cookie 期限切れ時**: `notebooklm login` で再認証 (30秒)
+- **cookie ファイル保護**: `~/.notebooklm/storage_state.json` は絶対に git commit しないこと（= Google セッション情報）
 
 ---
 
