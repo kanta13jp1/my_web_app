@@ -676,6 +676,24 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 
 ---
 
+## 🤖 マルチエージェント協調パターン (新機能設計時に参照)
+
+新しい自動化・AI機能を設計するとき、以下の5パターンから選ぶ。**最も単純なパターンから始めて行き詰まったら進化させる**。
+
+| パターン | 採用基準 | このプロジェクトでの実例 |
+| --- | --- | --- |
+| **Generator-Verifier** | 品質最重要・評価基準を明文化できる | `claude-agent-review.yml` / `ci-auto-fix.yml` / `/deep-research`(NLM生成→Claude統合) |
+| **Orchestrator-Subagent** | タスク分解が明確・短時間で完結するサブタスク | `cs-check.yml` / `github-issue-fix.yml` / Claude Code Schedule全般 |
+| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(7プロバイダー並行) |
+| **Message Bus** | イベント駆動・エコシステムが成長する | `workflow-failure-handler.yml` → Issue → `cs-check` / `feedback-issue-resolved.yml` |
+| **Shared State** | エージェントが互いの発見を活用・単一障害点を避けたい | `memory/` + NotebookLM Master Brain / Supabase DB / `COMPRESSED_PROMPT_V3.md` |
+
+**選択フロー**: 品質ゲート必要→Generator-Verifier / ステップ確定→Orchestrator-Subagent / 長時間独立→Agent Teams / イベント駆動→Message Bus / リアルタイム共有→Shared State
+
+**推奨スタート**: 大半のユースケースは **Orchestrator-Subagent** から始め、行き詰まったら進化させる。
+
+---
+
 ## 🤖 ゼロトークンリサーチ + Master Brain ワークフロー
 
 **目的**: 重いドキュメント分析を NotebookLM に委譲して Claude のトークンを節約し、セッション間で学習を蓄積する。$20プランで$200相当の作業を実現。
