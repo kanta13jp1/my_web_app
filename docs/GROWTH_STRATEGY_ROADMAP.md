@@ -5550,3 +5550,51 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - VSCode版: 絵文字 Wrap 修正 + HomeCard にストリーク・バッジ表示統合
 - VSCode版: ランキングUI (`ai_university_ranking_page.dart`) 新規
 - PowerShell版: Tier1 から使用頻度低EFを1本以上降格し、AI大学キラー3本のうち最重要 (`ai-university-content`) を Tier1 昇格
+
+## セッション: Web版#32 (2026-04-11)
+
+### 実施内容
+
+- **プロンプト新ルール追加 — 毎セッション GitHub Actions ワークフロー改善・無駄検出必須**:
+  - CLAUDE.md 開発ルール #10 追加 (失敗ワークフロー特定 / 重複ワークフロー特定 / デプロイ高速化 / スコープ別修正 / 記録必須 の5ステップ)
+  - COMPRESSED_PROMPT_V3.md 開発ルール #17 として同等内容を追加
+  - 「毎回エラーで通知だけ鳴らしているワークフローは純コスト → 即削除候補」と明記
+- **今セッション ワークフロー改善チェック実施 — 3件の重大な無駄を発見**:
+  1. **🔴 `deploy-prod.yml` L381 `run-batch` ジョブが `cron-batch.yml` と完全重複**
+     - `cron-batch.yml` が毎日 0:00 UTC に `Run Python Analysis Batch` を実行 (毎回失敗)
+     - 更に `deploy-prod.yml` の中でも `run-batch:` ジョブが `needs: deploy` で定義されており、**本番 push の度に同じ Python バッチ (同じ batch_analysis.py) が再実行**されている
+     - `continue-on-error: true` なので deploy は成功扱いだが、`notify:` ジョブが `needs: [deploy, run-batch]` で待機するため本番デプロイの完了通知が数分遅延
+     - **解決策**: `deploy-prod.yml` から `run-batch` ジョブを完全削除し、`notify.needs` を `[deploy]` に変更、本文中の `run-batch.result` 参照も除去
+  2. **🔴 `cron-batch.yml` 自体が毎回失敗中 (Python batch_analysis.py)**
+     - `batch_analysis.py` (213行、`google-genai` + `supabase` 依存) が daily で失敗
+     - 原因特定せず放置されている → GitHub Actions 分数の純粋な浪費
+     - **解決策**: batch_analysis.py のエラー原因特定 → 復旧困難なら cron を止め `workflow_dispatch` 専用化 or ワークフロー削除
+  3. **🔴 `deploy-prod.yml` `Deploy Supabase Edge Functions` ステップが 99本 EF を逐次デプロイ**
+     - L148-259 で `supabase functions deploy` を **99回シリアル実行** (Tier1A ~ Tier1G)
+     - 1本あたり 20-30秒 × 99本 = **30-40分の逐次処理**。これがデプロイ遅延の主因
+     - **解決策 (2段階)**:
+       - (a) 変更検知: `git diff --name-only HEAD~1 HEAD -- supabase/functions/` で変更されたディレクトリを抽出、該当EFのみデプロイ → 多くのセッションで 1-3 本のみが対象になる
+       - (b) 並列化: 変更が多い場合は `printf "%s\n" "${CHANGED[@]}" | xargs -P8 -I{} supabase functions deploy {} --no-verify-jwt` で 8並列。40分 → 約6分に短縮可能
+  4. **🟡 `deploy-prod.yml` Flutter Web build に `--no-tree-shake-icons` が有効** (L315) — アセット肥大・ビルド時間増の原因の可能性。削除を検討 (ただし `Icons.xxx` 動的参照箇所でビルドエラーの可能性あり、検証必須)
+
+### 品質確認
+
+- CLAUDE.md / COMPRESSED_PROMPT_V3.md / GROWTH_STRATEGY_ROADMAP.md の markdown 編集のみ → `deno lint` 不要、`flutter analyze` 不要
+- `.github/workflows/*.yml` は Web版スコープ外のため本セッションでは**変更せず**、発見事項は `COMPRESSED_PROMPT_V3.md`「実装待ち」にハンドオフ (4件追加)
+
+### 他インスタンスへのハンドオフ
+
+- **PowerShell版へ (🔴 最高 × 3 + 🟡 高 × 1)**: COMPRESSED_PROMPT_V3.md 実装待ちテーブルに追加済み
+  - 🔴 最高: `deploy-prod.yml` L381 `run-batch` ジョブ削除 + `notify.needs` 修正
+  - 🔴 最高: `cron-batch.yml` の batch_analysis.py エラー調査 → 復旧困難なら cron 停止
+  - 🔴 最高: `deploy-prod.yml` EF デプロイの差分検知 + 並列化 (xargs -P8)
+  - 🟡 高: Flutter Web build の `--no-tree-shake-icons` 削除検討
+- **全インスタンスへ**: 以降のセッションでは CLAUDE.md #10 / COMPRESSED_PROMPT_V3.md #17 に従い、毎回ワークフロー改善チェックを実施して `GROWTH_STRATEGY_ROADMAP.md` に「ワークフロー改善」項目として記録する
+
+### 次回優先
+
+- Web版: `ai_university_scores` スコア書き込み EF (クロスデバイス学習記録)
+- Web版: 学習リマインダー通知 EF (3日未学習 → `notification-center` 連携)
+- Web版: SNS シェア画像 OGP カード生成 EF
+- PowerShell版: 上記 4件のワークフロー修正 (デプロイ時間 40分 → 6分を目標)
+- VSCode版: HomeCard 絵文字 `Wrap` 化 + ストリーク表示統合

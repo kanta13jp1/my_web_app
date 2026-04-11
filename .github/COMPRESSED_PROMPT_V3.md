@@ -212,6 +212,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
        - ユーザーマニュアル (`user_manual_page.dart`) — 見出し・画像・リスト
     3. **修正 (スコープ別)**: 発見した問題は担当インスタンスで即修正する (Web版は UI を持たないので検出のみ → 他インスタンスへ `COMPRESSED_PROMPT_V3.md` 「実装待ち」追記 or 本ファイルで直接担当指定)。`flutter analyze` 0エラー維持必須
     4. **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
+17. **毎セッション: GitHub Actions ワークフロー改善・無駄検出（全インスタンス必須）** — デプロイが遅すぎる / 毎回失敗しているワークフローがある場合、コスト (実行時間・GitHub Actions 分数消費) が純粋な無駄となる。毎セッション以下を必ず実行する:
+    1. **失敗ワークフロー特定**: 直近 7 日間で連続失敗しているワークフローを洗い出し、原因調査 or disable / 削除する。「毎回エラーで通知だけ鳴る」ワークフローは純コスト → 即削除候補
+       - 既知: `cron-batch.yml` の `Run Python Analysis Batch` は毎回失敗中 (Web版#32 発見、2026-04-11)。同ジョブは `deploy-prod.yml` L381 にも重複配置されているため **本番 push のたびに同じ失敗が再発している**
+    2. **重複ワークフロー特定**: 2本以上のワークフローで同一ロジックが走っていないか確認。例: `run-batch` ジョブが `cron-batch.yml` + `deploy-prod.yml` の両方にあり、`deploy-prod.yml` では `needs: [deploy, run-batch]` により `notify` ジョブの開始を遅延させている
+    3. **デプロイ高速化**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップは 99本を逐次実行 (≈40分)。並列化 (`xargs -P8` / `matrix` strategy) と差分デプロイ (`git diff --name-only supabase/functions/` で変更EFのみ) の両方で所要時間を大幅短縮できる
+    4. **スコープ別修正**: `.github/workflows/*.yml` の変更は PowerShell版 スコープ。Web版/VSCode版/Windows版 で発見した事項は本ファイル「実装待ち」に追記し PowerShell版 にハンドオフ
+    5. **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「ワークフロー改善」項目に必ず追記 (0件でも「チェック実施: 問題なし」と記録)
 
 ---
 
@@ -621,6 +628,10 @@ google, openai, anthropic, microsoft, meta, x, deepseek
 | ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示 | VSCode版 | 🔴 高 |
 | ~~`ai_university_badges` バッジ発行 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-badges/index.ts` — `list`/`award`/`check_streaks`/`check_quiz_master`/`leaderboard` の5 action。`award_ai_university_badge` RPC ラッパー + 条件自動判定 (streak_3d/7d/30d, quiz_master_3/all) + 公開バッジカウントランキング | Web版 | ✅ 完了 |
 | **UI表示崩れ修正**: `lib/widgets/ai_university_home_card.dart` L106-115 の provider emoji `Row` を `Wrap(spacing: 6, runSpacing: 4)` に変更。現状9絵文字で iPhone SE (320px 幅) は境界線ギリギリ、10 プロバイダー目追加で overflow 確実。Web版#31 UI 静的チェックで検出 (2026-04-11) | VSCode版 | 🟡 高 |
+| **ワークフロー無駄削除 #1**: `deploy-prod.yml` L381 `run-batch` ジョブを**完全削除** — `cron-batch.yml` と完全重複。失敗 Python バッチが本番 push のたびに走って `notify` ジョブ開始を遅延。削除後は `notify:` の `needs: [deploy, run-batch]` → `needs: [deploy]` に修正、`run-batch.result` 参照も除去 | PowerShell版 | 🔴 最高 |
+| **ワークフロー無駄削除 #2**: `cron-batch.yml` を `workflow_dispatch` のみに変更 (schedule 削除) or 完全削除 — `batch_analysis.py` が毎回失敗中。まず batch_analysis.py のエラー原因を特定し、復旧困難なら cron を停止して GitHub Actions 分数消費を止める | PowerShell版 | 🔴 最高 |
+| **デプロイ高速化 #1**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップ (L148-259) で 99本を逐次 `supabase functions deploy` → 実測 30-40分。以下の2段階で大幅短縮可能: (a) 変更検知: `git diff --name-only HEAD~1 HEAD supabase/functions/` で変更された関数のみデプロイ、(b) 並列化: 変更が多い場合は `printf "%s\n" "${FUNCS[@]}" \| xargs -P8 -I{} supabase functions deploy {} --no-verify-jwt` | PowerShell版 | 🔴 最高 |
+| **デプロイ高速化 #2**: `deploy-prod.yml` の Flutter Web build ステップで `--no-tree-shake-icons` が有効化されている (L315)。アセット肥大・ビルド時間増の原因になり得るので削除を検討 (削除すると `Icons.xxx` の動的参照箇所でビルドエラーの可能性あり、`flutter analyze` で検証が必要) | PowerShell版 | 🟡 高 |
 | ~~`ai_university_streaks` ストリーク計算 EF~~ ✅ 完了 (Web版#30, 2026-04-11) `supabase/functions/ai-university-streaks/index.ts` — `update`/`get`/`leaderboard` の3 action。`update_ai_university_streak` RPC ラッパー + JWT認可 + public leaderboard (service_role) / **VSCode版へ**: HomeCard連続日数表示UI残タスク | Web版 | ✅ 完了 |
 | シェア文言 A/Bテスト (3バリエーション実装) | VSCode版 | 🟡 中 |
 | ホームカード: ストリーク日数・バッジ数を動的表示 | VSCode版 | 🟡 中 |

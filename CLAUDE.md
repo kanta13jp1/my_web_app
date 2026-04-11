@@ -66,6 +66,12 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - **修正**: 発見した問題は担当スコープで即修正 (`flutter analyze` 0エラー維持必須)。Web版/Windows版/PowerShell版 はスコープ外なら `COMPRESSED_PROMPT_V3.md` に「実装待ち」追記
    - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「UI 表示チェック」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
 9. **EF上限管理 — Supabase 99本ハードリミット** — **100本目でデプロイエラー**。新規EFを作る前に既存EFへの `action` 追加を最優先検討する。Tier1 は 99/99 で満杯のため、新規作成したEFは強制的に Tier2（コードのみ）運用となる。Tier1 に昇格したい場合は `deploy-prod.yml` の既存EFを1本降格してスロットを空けること
+10. **毎セッション: GitHub Actions ワークフロー改善検討（必須）** — デプロイ時間短縮と無駄なリソース消費削減のため、毎セッション以下を必ず実行する:
+    - **失敗ワークフロー特定**: 直近 7日間の連続失敗ワークフローを洗い出し、原因調査 or disable/削除する。「毎回失敗して通知だけ鳴らしている」ワークフローは正味コストだけのため即削除候補 (例: `cron-batch.yml` の `Run Python Analysis Batch` は毎回エラー中)
+    - **重複ワークフロー特定**: 複数ワークフローで同一ロジックが走っていないかチェック (例: `run-batch` ジョブが `deploy-prod.yml` L381 と `cron-batch.yml` の両方に存在 → 本番デプロイの度に失敗Pythonバッチが走り遅延要因)
+    - **デプロイ高速化**: `deploy-prod.yml` の `Deploy Supabase Edge Functions` ステップなど逐次実行されている重ステップを並列化 (`xargs -P8` / `matrix` strategy / 差分デプロイ `git diff --name-only` で変更EFのみ対象) で大幅短縮を検討する
+    - **スコープ別修正**: `.github/workflows/*.yml` の変更は PowerShell版スコープ。Web版/VSCode版/Windows版 は発見事項を `COMPRESSED_PROMPT_V3.md`「実装待ち」に追記し PowerShell版にハンドオフ
+    - **記録**: 検出・修正内容を `docs/GROWTH_STRATEGY_ROADMAP.md` のセッション記録「ワークフロー改善」項目に必ず追記する (0件でも「チェック実施: 問題なし」と記録)
 
 ---
 
