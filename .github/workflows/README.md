@@ -19,25 +19,29 @@
 | **Claude Agent PR Review** | `claude-agent-review.yml` | PR (main/staging/develop) / 手動 | **Claude Managed Agents** — PR即時AIレビュー (ルール違反・EF上限・アーキテクチャ観点) |
 | **User Feedback Resolved** | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベルIssueクローズ → `notify-feature-request` EF でリリース通知メール |
 | **Workflow Failure Handler** | `workflow-failure-handler.yml` | workflow_run: [completed] | ワークフロー失敗時に GitHub Issue 自動生成 (重複スキップ) |
+| **YouTube Analysis** | `youtube-analysis.yml` | 毎日 11:00 JST / 手動 | YouTube競合分析スナップショット (`fetch_yt.py` + `update_tsv.py`) → `updated_table.tsv` PR自動マージ |
+| **CI Auto-Fix** | `ci-auto-fix.yml` | workflow_run: CI失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 
-## 品質保証指標 (全13ワークフロー)
+## 品質保証指標 (全15ワークフロー)
 
 | 指標 | 状態 |
 | --- | --- |
 | `flutter analyze` 0エラー強制ゲート | ✅ ci.yml |
 | `deno lint` 0エラー強制ゲート | ✅ ci.yml |
 | EF未分類チェック (Tier1/2カバレッジ) | ✅ ci.yml (未分類0本達成) |
-| `concurrency` 制御 (並列実行防止) | ✅ 全13本 |
-| `timeout-minutes` (ハング防止) | ✅ 全13本 |
-| `permissions` 最小権限原則 | ✅ 全13本 (全ジョブ) |
+| `concurrency` 制御 (並列実行防止) | ✅ 全15本 |
+| `timeout-minutes` (ハング防止) | ✅ 全15本 |
+| `permissions` 最小権限原則 | ✅ 全15本 (全ジョブ) |
 | `persist-credentials: false` (読み取り専用ワークフロー) | ✅ 4本 (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) |
 | Slack webhook `--max-time 10 \|\| true` (障害耐性) | ✅ deploy-prod / cron-batch |
-| アクションバージョン固定 (floating tag なし) | ✅ 全13本 |
-| `schedule_task_runs` DB記録 | ✅ スケジュール6本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit) |
-| `$GITHUB_STEP_SUMMARY` | ✅ 全13本 |
+| アクションバージョン固定 (floating tag なし) | ✅ 全15本 |
+| `schedule_task_runs` DB記録 | ✅ スケジュール8本 (daily-report/cs-check/ef-audit/infra-health/cron-batch/dep-audit/youtube-analysis/ci-auto-fix) |
+| `$GITHUB_STEP_SUMMARY` | ✅ 全15本 |
 | `dependabot` 自動更新 | ✅ Actions + pub + pip (毎週月曜) |
 | **Claude Managed Agents 統合** | ✅ claude-agent-review.yml (`ANTHROPIC_API_KEY` 要設定) |
 | **ユーザーフィードバックパイプライン** | ✅ feedback-issue-resolved.yml (`SUPABASE_SERVICE_ROLE_KEY` 使用) |
+| **CI失敗自動修復** | ✅ ci-auto-fix.yml (`dart fix --apply` + `deno fmt` → PR自動コミット) |
+| **YouTube競合分析自動化** | ✅ youtube-analysis.yml (`yt-dlp` 毎日スナップショット → TSV更新) |
 
 ## ワークフロー詳細
 
@@ -433,3 +437,5 @@ README.mdにステータスバッジを追加して、ワークフローの状�
 | 2026-04-10 | 1.2.0 | Claude Managed Agents 統合: `claude-agent-review.yml` 新設 (11本体制) / EF総数238→240反映 |
 | 2026-04-10 | 1.3.0 | ユーザーフィードバックパイプライン: `feedback-issue-resolved.yml` 新設 (12本体制) |
 | 2026-04-10 | 1.4.0 | ワークフロー失敗Issue自動生成: `workflow-failure-handler.yml` 新設 (13本体制) |
+| 2026-04-11 | 1.5.0 | YouTube競合分析自動化: `youtube-analysis.yml` 新設 + `requirements.txt` yt-dlp追加 (14本体制) |
+| 2026-04-11 | 1.6.0 | CI失敗自動修復: `ci-auto-fix.yml` 新設 — dart fix + deno fmt → PR自動コミット (15本体制) |
