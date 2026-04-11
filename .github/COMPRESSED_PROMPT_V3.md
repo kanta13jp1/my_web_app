@@ -14,7 +14,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **VSCode版** | `lib/` (Flutter UI・205ページ・ウィジェット) | 他3範囲 |
 | **Web版** | `supabase/functions/` (Edge Functions 247本) | 他3範囲 |
 | **Windows版** | `docs/` + `supabase/migrations/` + seed SQL | 他3範囲 |
-| **PowerShell版** | `.github/workflows/` + CI/CD (16本完備済み) | 他3範囲 |
+| **PowerShell版** | `.github/workflows/` + CI/CD (17本完備済み) | 他3範囲 |
 
 **競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
 衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
@@ -201,7 +201,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ## ⚙️ GitHub Actions CI/CD（全16ワークフロー）
 
-**全16本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全17本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -273,7 +273,7 @@ lib/pages/               # 205ページ (landing / comparison / user_manual / ad
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 247本 (Tier1: 99デプロイ済 / Tier2: 142コードのみ)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
-.github/workflows/       # 16本 (品質基準完備済み)
+.github/workflows/       # 17本 (品質基準完備済み)
 docs/
   GROWTH_STRATEGY_ROADMAP.md  # 全戦略・セッション記録 (毎回更新)
   DESIGN.md                   # デザイントークン (唯一の真実ソース)
@@ -548,7 +548,7 @@ web/sitemap.xml          # URL マップ
 
 | 問題 | 詳細 | 対応 |
 | --- | --- | --- |
-| title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d ''` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
+| title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d '\r'` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
 | GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
 **次回 Qiita/dev.to 再実行可能**: `2026-03-31-notification-center.md` を blog-publish.yml で再実行すること。
