@@ -279,6 +279,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('ai-university-badges', 'AI大学 バッジ発行', true, '/ai-university', 'AI大学 > バッジ・実績'),
     _FnDef('ai-university-content', 'AI大学 コンテンツ管理', true, '/ai-university', 'AI大学 > 学習コンテンツ'),
     _FnDef('ai-university-streaks', 'AI大学 学習ストリーク', true, '/ai-university', 'AI大学 > 連続学習日数'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('agent-hub', 'エージェントハブ統合管理 (部署/実績/個性/ルーティング)', true, '/agents', 'ホーム > AI組織OS > エージェント管理'),
+    _FnDef('schedule-manager', 'Schedule 統合管理 (実行ログ/ヘルスチェック/結果)', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
