@@ -24,6 +24,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   publish:
@@ -47,7 +48,8 @@ jobs:
           fi
 
           # frontmatter から title と tags を抽出
-          TITLE=$(grep '^title:' "$DRAFT_PATH" | head -1 | sed 's/title: *//;s/^"//;s/"$//')
+          # tr -d '\r' で CRLF 対応, ['\"] で引用符なし・シングル・ダブル全対応
+          TITLE=$(grep '^title:' "$DRAFT_PATH" | head -1 | tr -d '\r' | sed "s/^title: *//;s/^['\"]//;s/['\"]$//")
           TAGS=$(grep '^tags:' "$DRAFT_PATH" | head -1 | sed 's/tags: *\[\(.*\)\]/\1/' | tr -d ' ')
           PUBLISHED=$(grep '^published:' "$DRAFT_PATH" | head -1 | awk '{print $2}')
 
@@ -159,15 +161,38 @@ jobs:
       # ── Step 5: frontmatter を published: true に更新 ───────────────────
       - name: Step 5 - Mark draft as published
         if: steps.meta.outputs.already_published != 'true' && github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
+          BRANCH="blog-publish/$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -b "$BRANCH" origin/main
+
+          sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
           git add "$DRAFT_PATH"
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
+          fi
+
           git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
-          git push origin main
+          git push origin "$BRANCH"
+
+          set +e
+          PR_URL=$(gh pr create \
+            --title "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)" \
+            --body "blog-publish ワークフローによる自動投稿マーク" \
+            --base main \
+            --head "$BRANCH")
+          if [ -n "$PR_URL" ]; then
+            gh pr merge "$PR_URL" --squash --delete-branch --yes 2>&1 && \
+              echo "✅ マージ完了" || echo "⚠️ 手動マージが必要: $PR_URL"
+          fi
+          set -e
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
