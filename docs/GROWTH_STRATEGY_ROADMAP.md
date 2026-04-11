@@ -6506,3 +6506,18 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - T-1 第4弾: `docs/blog-drafts/2026-03-28-note-comments.md` → Qiita/dev.to 投稿 🟡 高
 - LP 126→130のこと: 4機能追加 🟢 中
 - AI大学 Tier2 EF Tier1 昇格検討 🔵 低
+
+## T-1 第4弾 — note-comments Qiita/dev.to 投稿 (2026-04-12)
+
+### 実施内容
+
+- `docs/blog-drafts/2026-03-28-note-comments.md` → Qiita + dev.to 同時投稿
+- **Qiita**: https://qiita.com/kanta13jp1/items/d90cff103a6ce55c6192
+- **dev.to**: https://dev.to/kanta13jp1/fluttertosupabasedenotionfeng-notokomentoji-neng-woshi-zhuang-sitahua-352a
+- blog-publish.yml 15秒で完了 / `published: true` PR自動マージ済み
+
+### 次回優先
+
+- T-1 第5弾: `docs/blog-drafts/2026-04-01-workflow-automation-video-meeting.md` → Qiita/dev.to
+- LP 126→130のこと: 4機能追加 (VSCode版)
+- AI大学 Tier2 EF 昇格検討 (EFスロット確認後)
