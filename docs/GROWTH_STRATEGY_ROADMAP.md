@@ -5283,3 +5283,30 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 
 - `flutter analyze` 0エラー
 - LP機能数 **120のこと** 達成 / ページ数 205
+
+---
+
+## VSCode版#50 (2026-04-11) — AI大学 6プロバイダー対応 UI 完成
+
+### 実装内容
+
+- `lib/pages/gemini_university_v2_page.dart` 完全書き換え (旧: Gemini特化1276行 → 新: 6プロバイダー対応)
+  - 6タブ: Google/OpenAI/Anthropic/Microsoft/Meta/xAI
+  - Supabase `ai_university_content` テーブルから動的コンテンツ取得
+  - カテゴリ別展開セクション (概要/モデル/API/料金/ニュース/チュートリアル)
+  - プロバイダー別クイズ (6問×50pt)
+  - DBが空の場合の静的フォールバックコンテンツ
+  - `updated_at` 表示でコンテンツ鮮度を明示
+- COMPRESSED_PROMPT_V3: #T3 未完了欄を更新 (VSCode#50完了分をマーク)
+- flutter analyze 0エラー確認済み
+
+### 品質確認
+
+- flutter analyze 0エラー
+- LP: 120のこと / ページ数: 205
+
+### 次回優先
+
+- Web版: `ai-university-content` EF 実装 (upsert_news / get_by_provider)
+- PowerShell版: blog-publish.yml #B5 修正 (Zenn topics: 対応)
+- VSCode版: LP残りページ掲載化 (#132以降 約60本残存)

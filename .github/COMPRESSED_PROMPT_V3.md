@@ -542,16 +542,16 @@ web/sitemap.xml          # URL マップ
 
 `docs/GROWTH_STRATEGY_ROADMAP.md` の MD029/MD032/MD012/MD034 を修正済み。
 
-### ~~CI/CD バグ #B5~~: ✅ 解決済み (PowerShell版#35, 2026-04-11)
+### CI/CD バグ #B5: `blog-publish.yml` 2問題 (PowerShell版スコープ)
 
 **背景**: Windows版#30 (2026-04-11) で `blog-publish.yml` 経由の Qiita/dev.to 投稿を試みた際に2問題を確認。
 
-| 問題 | 詳細 | 対応 |
+| 問題 | 詳細 | 対応方針 |
 | --- | --- | --- |
-| title 抽出失敗 (Zenn フォーマット) | CRLF 行末 + 引用符パターン | `tr -d '\r'` + `sed "s/^['\"]//;s/['\"]$//"` で修正 (PS#35) |
-| GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
+| title 抽出失敗 (Zenn フォーマット) | Step2 の `grep '^title:'` + sed が Zenn フォーマットの引用符付きタイトルで空文字を返す → blog-post-manager に `HTTP 400 "title is required"` | `python3 -c "import re,sys; ..."` か `sed` の引用符除去ロジックを修正 |
+| GH006 Step5 保護ブランチ直接 push | Step5 で `git push origin main` → ブランチ保護違反。C2改善と同じ問題 | Step5 を PR 作成→自動マージ方式に変更 (CS-check.yml の方式を参考) |
 
-**次回 Qiita/dev.to 再実行可能**: `2026-03-31-notification-center.md` を blog-publish.yml で再実行すること。
+**暫定対応 (Windows版#30)**: Zenn は `published: true` commit で直接公開可能なため、通知センター記事は Zenn のみ公開済み。Qiita/dev.to は #B5 修正後に blog-publish.yml で再実行。
 
 ### 機能強化 #T3: AI大学 6プロバイダー対応 + 毎週自動更新 (Windows版#30, 2026-04-11)
 
@@ -565,19 +565,14 @@ web/sitemap.xml          # URL マップ
 | 6プロバイダー初期コンテンツ seed | ✅ `20260411003200_seed_ai_university_content.sql` |
 | `CLAUDE.md` に `ai-university-update` スケジュールタスク追加 | ✅ 毎週月曜 11:00 JST |
 
-#### 完了 (VSCode版#50, 2026-04-11)
-
-| 作業内容 | 状態 |
-| --- | --- |
-| `gemini_university_v2_page.dart` 完全書き換え: 6プロバイダータブ + Supabase DB連携 + フォールバック | ✅ VSCode版#50 |
-| LP「AI大学」説明文を6プロバイダー対応に更新 | ✅ VSCode版#50 |
-
 #### 未完了 (各インスタンスへ指示)
 
 | 作業内容 | インスタンス | 優先度 |
 | --- | --- | --- |
 | `ai-university-content` EF 新規作成 (`upsert_news` / `get_by_provider` / `get_all` action) | Web版 | 🔴 高 |
-| ~~Claude Code Schedule に `ai-university-update` タスクを登録 (週次月曜 11:00 JST)~~ ✅ 完了 (PS#35) | PowerShell版 | ✅ |
+| `gemini_university_v2_page.dart` を `ai_university_page.dart` に改修: タブを6プロバイダー別に変更・EFからデータ取得 | VSCode版 | 🔴 高 |
+| Claude Code Schedule に `ai-university-update` タスクを登録 (週次月曜 11:00 JST) | PowerShell版 | 🟡 中 |
+| LP に「AI大学 (6大AI総合学習)」機能を更新 (Gemini限定→6プロバイダーに修正) | VSCode版 | 🟡 中 |
 
 #### `ai_university_content` テーブルスキーマ
 
