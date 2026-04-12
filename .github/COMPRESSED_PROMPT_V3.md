@@ -200,7 +200,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 4. **ダミーデータ禁止** — Supabase 実データ必須
 5. **Edge Function ファースト** — 複雑ロジックはバックエンドに移動
 6. **シンプルさ優先** — 依頼外機能の追加禁止
-7. **EF上限: 99本厳守** — Supabase は **99本まで（100本目で402エラー）**。新規EF追加前に既存EFへの `action` 追加を優先。超える場合は Tier2（コードのみ）に降格し `deploy-prod.yml` の Tier2コメントに記載
+7. **EFハードキャップ: 50本以下 (Tier1/Tier2廃止)** — `deploy-prod.yml` にデプロイするEFは常に50本以下 (現在15本)。新規機能は必ず既存hubのaction追加で対応。新規EF作成は既存EFを統合して50本以下を維持した場合のみ許可。Hub構成: standalone 4本 + macro-hub 6本 + mega-hub 5本 = 15本
 8. **毎セッション: 矛盾チェック（全インスタンス）** — 実装 (`lib/` / `supabase/functions/`) / 設計書 (`docs/DESIGN.md` / `docs/GROWTH_STRATEGY_ROADMAP.md`) / ユーザーマニュアル (`lib/pages/user_manual_page.dart`) を照合し、矛盾があれば修正する
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
