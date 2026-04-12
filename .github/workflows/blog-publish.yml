@@ -74,21 +74,13 @@ jobs:
           echo "ℹ️ このドラフトは Zenn で published: true です。"
           echo "Zenn はすでに公開済みですが、Qiita / dev.to への投稿は続行します。"
 
-      # ── Step 3: blog-post-manager EF に登録 ─────────────────────────────
+      # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
         id: register
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
           TITLE="${{ steps.meta.outputs.title }}"
-          TAGS="${{ steps.meta.outputs.tags }}"
           DRY_RUN="${{ github.event.inputs.dry_run }}"
-
-          # 本文 (frontmatter 除く)
-          CONTENT=$(awk '/^---/{if(++c==2){found=1;next}} found{print}' "$DRAFT_PATH")
-          CONTENT_PREVIEW=$(echo "$CONTENT" | head -c 200)
-
-          PLATFORMS="${{ github.event.inputs.platforms }}"
-          PLATFORM_JSON=$(echo "$PLATFORMS" | tr ',' '\n' | jq -R . | jq -s .)
 
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 [DRY RUN] 登録をスキップ"
@@ -96,42 +88,42 @@ jobs:
             exit 0
           fi
 
-          # jq -n --arg でJSONを安全に構築 (日本語/特殊文字のエンコード問題を回避)
+          # schedule-hub blog.create でメタデータを記録
           PAYLOAD=$(jq -n \
+            --arg action "blog.create" \
             --arg title "$TITLE" \
-            --arg draft_path "$DRAFT_PATH" \
-            --argjson target_platforms "$PLATFORM_JSON" \
-            --arg content_preview "$CONTENT_PREVIEW" \
-            '{title: $title, draft_path: $draft_path, target_platforms: $target_platforms, content_preview: $content_preview}')
+            --arg platform "${{ github.event.inputs.platforms }}" \
+            '{action: $action, title: $title, platform: $platform}')
 
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-post-manager" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             --max-time 15)
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
           BODY=$(echo "$RESPONSE" | head -n -1)
 
           echo "HTTP: $HTTP_CODE"
-          echo "$BODY" | jq .
+          echo "$BODY" | jq . || echo "$BODY"
 
-          POST_ID=$(echo "$BODY" | jq -r '.post.id // ""')
+          POST_ID=$(echo "$BODY" | jq -r '.item.id // ""')
           echo "post_id=$POST_ID" >> $GITHUB_OUTPUT
-          echo "✅ blog_posts ID: $POST_ID"
+          echo "✅ blog record ID: $POST_ID"
 
-      # ── Step 4: blog-auto-publisher EF で実投稿 ─────────────────────────
+      # ── Step 4: schedule-hub blog.auto_publish で実投稿 ─────────────────
       - name: Step 4 - Publish to platforms
         id: publish
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          POST_ID="${{ steps.register.outputs.post_id }}"
+          TITLE="${{ steps.meta.outputs.title }}"
           TAGS="${{ steps.meta.outputs.tags }}"
           DRY_RUN="${{ github.event.inputs.dry_run }}"
 
-          CONTENT=$(awk '/^---/{if(++c==2){found=1;next}} found{print}' "$DRAFT_PATH")
+          # frontmatter ごと渡して schedule-hub 側でstripFrontmatter処理
+          CONTENT=$(cat "$DRAFT_PATH")
           TAGS_JSON=$(echo "$TAGS" | tr ',' '\n' | jq -R . | jq -s .)
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -140,20 +132,21 @@ jobs:
             exit 0
           fi
 
-          # jq -n --arg でJSONを安全に構築 (日本語/大容量コンテンツのエンコード問題を回避)
+          # jq -n --arg でJSONを安全に構築
           PAYLOAD=$(jq -n \
-            --arg action "auto_publish" \
-            --arg id "$POST_ID" \
+            --arg action "blog.auto_publish" \
+            --arg title "$TITLE" \
             --arg content "$CONTENT" \
+            --arg platforms "${{ github.event.inputs.platforms }}" \
             --argjson tags "$TAGS_JSON" \
-            '{action: $action, id: $id, content: $content, tags: $tags}')
+            '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
 
           RESPONSE=$(curl -s -w "\n%{http_code}" \
             -X POST \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/blog-auto-publisher" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             --max-time 30)
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)

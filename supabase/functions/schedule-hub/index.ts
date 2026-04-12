@@ -96,7 +96,7 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check"];
+    const publicActions = ["digest.run", "health.check", "blog.auto_publish"];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -249,6 +249,89 @@ serve(async (req: Request) => {
       case "blog.delete": {
         await deleteItem(admin, "blog_post", userId!, String(body.id));
         return json({ success: true });
+      }
+
+      // blog-auto-publisher 互換: Qiita / dev.to への一括投稿 (SERVICE_ROLE_KEY 認証)
+      case "blog.auto_publish": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        const title = String(body.title ?? "");
+        const rawContent = String(body.content ?? "");
+        // YAML frontmatter (---...---) を除去
+        const content = rawContent.replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "").trimStart();
+        const rawTags = (body.tags as string[]) ?? [];
+        const platformsRaw = String(body.platforms ?? "qiita,devto");
+        const platforms = platformsRaw.split(",").map((p: string) => p.trim());
+        const results: Record<string, unknown> = {};
+
+        if (platforms.includes("qiita") && qiitaToken) {
+          try {
+            const tagObjects = rawTags.slice(0, 5).map((t: string) => ({
+              name: t.slice(0, 20),
+            }));
+            const qr = await fetch("https://qiita.com/api/v2/items", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${qiitaToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                title,
+                body: content,
+                tags: tagObjects.length > 0 ? tagObjects : [{ name: "Flutter" }],
+                private: false,
+                tweet: false,
+              }),
+            });
+            if (qr.ok) {
+              const qd = await qr.json() as { url: string; id: string };
+              results.qiita = { ok: true, url: qd.url };
+            } else {
+              const errText = await qr.text();
+              results.qiita = { ok: false, error: `${qr.status}: ${errText}` };
+            }
+          } catch (e) {
+            results.qiita = { ok: false, error: String(e) };
+          }
+        } else if (platforms.includes("qiita")) {
+          results.qiita = { ok: false, error: "QIITA_ACCESS_TOKEN not set" };
+        }
+
+        if (platforms.includes("devto") && devtoKey) {
+          try {
+            const cleanTags = rawTags.slice(0, 4).map((t: string) =>
+              t.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 30)
+            ).filter((t: string) => t.length > 0);
+            const dr = await fetch("https://dev.to/api/articles", {
+              method: "POST",
+              headers: {
+                "api-key": devtoKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                article: {
+                  title,
+                  body_markdown: content,
+                  published: true,
+                  tags: cleanTags.length > 0 ? cleanTags : ["flutter"],
+                },
+              }),
+            });
+            if (dr.ok) {
+              const dd = await dr.json() as { url: string; id: number };
+              results.devto = { ok: true, url: dd.url };
+            } else {
+              const errText = await dr.text();
+              results.devto = { ok: false, error: `${dr.status}: ${errText}` };
+            }
+          } catch (e) {
+            results.devto = { ok: false, error: String(e) };
+          }
+        } else if (platforms.includes("devto")) {
+          results.devto = { ok: false, error: "DEVTO_API_KEY not set" };
+        }
+
+        return json({ success: true, results });
       }
 
       // ─── Health Check ─────────────────────────────────────────────────────────
