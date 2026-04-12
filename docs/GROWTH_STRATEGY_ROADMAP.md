@@ -7743,3 +7743,33 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 T-1 新記事執筆: AI大学34社達成記念記事 / 4インスタンス並列開発解説
 - 🟡 BLOG_PAT シークレット設定 → blog-publish Step5完全自動化
 - 🟢 growth-hub roadmap.progress 実データ対応 (Web版スコープ)
+
+---
+
+## セッション VSCode版#64 (2026-04-12)
+
+### 完了: 競馬AI自動予想パイプライン実装
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | DB migration: horse_races/horse_entries/horse_predictions/horse_results/horse_accuracy_stats | ✅ |
+| 2 | tools-hub EF: horseracing.today/predict_all/predictions/store_results/accuracy (8 actions更新) | ✅ |
+| 3 | scripts/fetch_horse_racing.py: netkeiba.com スクレイパー (stdlib only) | ✅ |
+| 4 | .github/workflows/horse-racing-update.yml: 毎朝07:30 JST出走表 + 17:30/21:00 JST結果取得 | ✅ |
+| 5 | lib/pages/horse_racing_predictor_page.dart: 完全自動化UI (3タブ: 今日のレース/予想履歴/的中率) | ✅ |
+| 6 | CORS修正・廃止EF hub移行 (VSCode版#63から継続) | ✅ |
+
+### 現状数値 (2026-04-12 VSCode版#64完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / AI大学: 34社
+- 競馬自動化: JRA/NAR 全レース 3連単AI予想 + 的中率蓄積
+- netkeiba.com → horse_races/horse_entries → Gemini 2.5 Flash → horse_predictions → 結果自動照合
+
+### 次回優先タスク
+
+- 🔴 競馬: GEMINI_API_KEY シークレット設定 → 本番運用開始
+- 🔴 T-1 新記事: 競馬AI自動化パイプライン解説記事
+- 🟡 AI大学学習リマインダー通知 (notification-center EF連携バッチ)
+- 🟡 BLOG_PAT シークレット設定 → blog-publish Step5完全自動化
+- 🟢 growth-hub roadmap.progress 実データ対応 (Web版スコープ)
