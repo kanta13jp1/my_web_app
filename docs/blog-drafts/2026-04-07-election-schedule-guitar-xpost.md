@@ -3,7 +3,7 @@ title: 地方選挙±1年スケジュール表示とギタースタジオX自動
 emoji: 🎸
 type: tech
 topics: [Flutter, Supabase, FlutterWeb, BuildInPublic]
-published: false
+published: true
 ---
 
 # 地方選挙±1年スケジュール表示とギタースタジオX自動投稿の完成
