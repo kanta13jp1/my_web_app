@@ -3,7 +3,7 @@ title: FlutterとSupabase Edge Functionでギター録音をXに自動投稿す�
 emoji: 🎸
 type: tech
 topics: [Flutter, Supabase, X, Twitter, OAuth]
-published: false
+published: true
 ---
 
 # FlutterとSupabase Edge Functionでギター録音をXに自動投稿するパイプラインを作った
