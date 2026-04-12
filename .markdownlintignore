@@ -22,3 +22,9 @@ docs/email-templates/
 
 # Third-party design system references
 docs/design-systems/
+
+# Append-only session log (historical entries not editable)
+docs/GROWTH_STRATEGY_ROADMAP.md
+
+# Cross-instance coordination files (internal, not user-facing docs)
+docs/cross-instance-prs/
