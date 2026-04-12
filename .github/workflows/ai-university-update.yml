@@ -82,21 +82,30 @@ jobs:
             fi
           }
 
-          upsert_provider "google"     "https://blog.google/technology/ai/rss/"   "Google AI"
-          upsert_provider "openai"     "https://openai.com/news/rss.xml"          "OpenAI"
-          upsert_provider "anthropic"  "https://www.anthropic.com/rss/news.xml"   "Anthropic"
-          upsert_provider "microsoft"  "https://blogs.microsoft.com/ai/feed/"     "Microsoft AI"
-          upsert_provider "meta"       "https://ai.meta.com/blog/rss/"            "Meta AI"
-          upsert_provider "x"          "https://x.ai/blog/rss.xml"               "xAI"
-          upsert_provider "deepseek"   "https://api-docs.deepseek.com/rss.xml"    "DeepSeek"
-          upsert_provider "mistral"    "https://mistral.ai/news/rss.xml"          "Mistral AI"
-          upsert_provider "perplexity" "https://blog.perplexity.ai/rss.xml"       "Perplexity AI"
+          upsert_provider "google"      "https://blog.google/technology/ai/rss/"             "Google AI"
+          upsert_provider "openai"      "https://openai.com/news/rss.xml"                    "OpenAI"
+          upsert_provider "anthropic"   "https://www.anthropic.com/rss/news.xml"             "Anthropic"
+          upsert_provider "microsoft"   "https://blogs.microsoft.com/ai/feed/"               "Microsoft AI"
+          upsert_provider "meta"        "https://ai.meta.com/blog/rss/"                      "Meta AI"
+          upsert_provider "x"           "https://x.ai/blog/rss.xml"                         "xAI"
+          upsert_provider "deepseek"    "https://api-docs.deepseek.com/rss.xml"              "DeepSeek"
+          upsert_provider "mistral"     "https://mistral.ai/news/rss.xml"                    "Mistral AI"
+          upsert_provider "perplexity"  "https://blog.perplexity.ai/rss.xml"                "Perplexity AI"
+          upsert_provider "groq"        "https://wow.groq.com/feed/"                        "Groq"
+          upsert_provider "cohere"      "https://cohere.com/blog/rss.xml"                   "Cohere"
+          upsert_provider "amazon"      "https://aws.amazon.com/blogs/machine-learning/feed/" "Amazon Bedrock"
+          upsert_provider "stability"   "https://stability.ai/blog/rss.xml"                 "Stability AI"
+          upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"               "Hugging Face"
+          upsert_provider "nvidia"      "https://developer.nvidia.com/blog/tag/ai/feed/"     "NVIDIA"
+          upsert_provider "ibm"         "https://research.ibm.com/blog/rss"                  "IBM watsonx"
+          upsert_provider "sakana"      "https://sakana.ai/blog/index.xml"                   "Sakana AI"
+          upsert_provider "baidu"       "https://yiyan.baidu.com/blog/rss"                   "Baidu ERNIE"
           # 新規プロバイダーを追加する場合はここに upsert_provider 行を追記する
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=9  # プロバイダー追加時はここも更新
+          TOTAL_PROVIDERS=18  # プロバイダー追加時はここも更新
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
@@ -200,6 +209,15 @@ jobs:
             echo "| DeepSeek | RSS取得・UPSERT |"
             echo "| Mistral AI | RSS取得・UPSERT |"
             echo "| Perplexity AI | RSS取得・UPSERT |"
+            echo "| Groq | RSS取得・UPSERT |"
+            echo "| Cohere | RSS取得・UPSERT |"
+            echo "| Amazon Bedrock | RSS取得・UPSERT |"
+            echo "| Stability AI | RSS取得・UPSERT |"
+            echo "| Hugging Face | RSS取得・UPSERT |"
+            echo "| NVIDIA | RSS取得・UPSERT |"
+            echo "| IBM watsonx | RSS取得・UPSERT |"
+            echo "| Sakana AI | RSS取得・UPSERT |"
+            echo "| Baidu ERNIE | RSS取得・UPSERT |"
             echo ""
             TOTAL="${{ steps.update.outputs.total_providers }}"
           echo "**更新成功**: ${SUCCESS_COUNT}/${TOTAL}"

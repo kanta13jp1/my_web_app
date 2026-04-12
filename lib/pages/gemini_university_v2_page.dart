@@ -1106,6 +1106,38 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     );
   }
 
+  // MarkdownBody 共通スタイル (ダーク専用)
+  static final MarkdownStyleSheet _mdStyle = MarkdownStyleSheet(
+    p: const TextStyle(color: Colors.white, height: 1.6),
+    h1: const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+    ),
+    h2: const TextStyle(
+      color: Color(0xFFE0E0E0),
+      fontSize: 17,
+      fontWeight: FontWeight.bold,
+    ),
+    h3: const TextStyle(
+      color: Color(0xFFBDBDBD),
+      fontSize: 15,
+      fontWeight: FontWeight.w600,
+    ),
+    strong: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    em: const TextStyle(
+      color: Color(0xFFB0B0B0),
+      fontStyle: FontStyle.italic,
+    ),
+    listBullet: const TextStyle(color: Color(0xFFB0B0B0)),
+    code: const TextStyle(
+      color: Color(0xFF81C784),
+      fontFamily: 'monospace',
+      fontSize: 13,
+    ),
+    blockquote: const TextStyle(color: Color(0xFFB0B0B0)),
+  );
+
   Widget _buildContentCard(
     Map<String, dynamic> row,
     bool isDark,
@@ -1120,10 +1152,16 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
         subtitle: Text(
           _categoryLabel(category),
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
         ),
         children: [
           Padding(
@@ -1133,6 +1171,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               children: [
                 MarkdownBody(
                   data: content,
+                  styleSheet: _mdStyle,
                   onTapLink: (_, href, __) {
                     if (href != null) _launchUrl(href);
                   },
@@ -1162,6 +1201,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         padding: const EdgeInsets.all(16),
         child: MarkdownBody(
           data: markdown,
+          styleSheet: _mdStyle,
           onTapLink: (_, href, __) {
             if (href != null) _launchUrl(href);
           },

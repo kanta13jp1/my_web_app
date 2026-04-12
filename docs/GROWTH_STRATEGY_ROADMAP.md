@@ -7117,3 +7117,29 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 ai-university新社 (Baidu/IBM/Sakana以降の19社目候補検討)
 - 🟡 tools-hub/admin-hub に不足アクション追加 (Dart側で必要になったもの)
 - 🟢 ROADMAP更新・wrap-up
+
+## セッション記録: PS版#44 (2026-04-12)
+
+### 作業内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | get-support-tickets: reply-support-request の POST ロジックを吸収 | ✅ |
+| 2 | get-public-memo-ogp: get-public-memo-preview の JSON SEO メタデータを吸収 (?action=preview) | ✅ |
+| 3 | development-achievements: development-stats の get_stats アクションを吸収 | ✅ |
+| 4 | get-competitor-features: check-competitor-updates の POST を吸収 | ✅ |
+| 5 | viral-growth-engine: viral-growth-pipeline のパイプライン実行を吸収 | ✅ |
+| 6 | deno lint 0エラー / flutter analyze 0エラー確認 | ✅ |
+
+### 現状数値 (2026-04-12 PS版#44完了時点)
+
+- EF deployed: **15本** (VSCode版#61がハードキャップ15本達成: 94本→15本)
+- PS版は deploy-prod.yml と EF source code merge の両方を実施
+- Dart 呼び出し更新: admin_analytics_page / viral_ad_campaign_page / competitor_monitoring_card
+- LP: 126のこと / ページ数: 211 / AI大学: 18社
+
+### 次回優先タスク
+
+- 🔴 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
+- 🟡 hub EF内アクション追加 (admin-hub/core-hub への欠損アクション補完)
+- 🟢 T-1 第8弾 技術記事ディスパッチ
