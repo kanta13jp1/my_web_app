@@ -3,7 +3,7 @@ title: Flutter WebでNotionを超えるガントチャート・タイムライ�
 emoji: 📊
 type: tech
 topics: [flutter, supabase, gantt, project_management, dart]
-published: false
+published: true
 ---
 
 # Flutter WebでNotionを超えるガントチャート・タイムライン機能を実装した
