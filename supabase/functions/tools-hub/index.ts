@@ -573,11 +573,23 @@ serve(async (req) => {
         return json({ success: true, predictions: results, count: results.length });
       }
       case "horseracing.predictions": {
+        // horse_predictions と horse_results に直接FKがないため個別クエリで結合
         const { data: preds, error: pe } = await admin.from("horse_predictions")
-          .select("*, horse_races(race_name,race_date,venue,grade,course_type,distance), horse_results(first_place,second_place,third_place,trifecta_paid,is_prediction_correct)")
+          .select("*, horse_races(race_name,race_date,venue,grade,course_type,distance)")
           .order("created_at", { ascending: false }).limit(Number(body.limit ?? 50));
         if (pe) throw new Error(pe.message);
-        return json({ success: true, predictions: preds ?? [] });
+        const raceIds = (preds ?? []).map((p: Record<string, unknown>) => p.race_id as string).filter(Boolean);
+        const resultsMap: Record<string, unknown> = {};
+        if (raceIds.length > 0) {
+          const { data: hrs } = await admin.from("horse_results")
+            .select("race_id,first_place,second_place,third_place,trifecta_paid,is_prediction_correct")
+            .in("race_id", raceIds);
+          (hrs ?? []).forEach((r: Record<string, unknown>) => { resultsMap[r.race_id as string] = r; });
+        }
+        const enriched = (preds ?? []).map((p: Record<string, unknown>) => ({
+          ...p, horse_results: resultsMap[p.race_id as string] ?? null,
+        }));
+        return json({ success: true, predictions: enriched });
       }
       case "horseracing.store_results": {
         const raceId = String(body.race_id ?? "");
