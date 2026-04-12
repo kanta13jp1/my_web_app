@@ -96,7 +96,7 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check", "blog.auto_publish"];
+    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create"];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -184,7 +184,8 @@ serve(async (req: Request) => {
       }
 
       case "blog.create": {
-        const item = await addItem(admin, "blog_post", userId!, {
+        const effectiveUserId = userId ?? "system";
+        const item = await addItem(admin, "blog_post", effectiveUserId, {
           title: body.title,
           content: body.content ?? "",
           status: "draft",
