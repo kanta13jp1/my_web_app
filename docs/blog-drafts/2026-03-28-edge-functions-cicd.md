@@ -1,7 +1,7 @@
 ---
 title: "Claude Code 4インスタンス並列開発 + Edge Functions全量CI/CDデプロイを整備した話"
 tags: Flutter,Supabase,ClaudeCode,EdgeFunction,buildinpublic
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-03-28 (Edge Functions CI/CD)
