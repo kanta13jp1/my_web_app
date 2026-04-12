@@ -535,9 +535,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (newStatus == 'implemented') {
       try {
         await _supabase.functions.invoke(
-          'submit-feedback',
-          queryParameters: {'action': 'notify'},
-          body: {'feedback_id': id},
+          'admin-hub',
+          body: {'action': 'admin.notify', 'feedback_id': id},
         );
       } catch (_) {}
     }
@@ -607,8 +606,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     setState(() => _adminUsersLoading = true);
     try {
       final res = await _supabase.functions.invoke(
-        'get-admin-users',
-        body: {'page': 1, 'perPage': 100},
+        'admin-hub',
+        body: {'action': 'users.list', 'page': 1, 'perPage': 100},
       );
       final data = res.data as Map<String, dynamic>?;
       if (mounted && data != null && data['success'] == true) {
@@ -646,9 +645,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final headers = _adminAuthHeaders(session.accessToken);
       final results = await Future.wait<FunctionResponse>([
         _supabase.functions.invoke(
-          'schedule-daily-digest',
+          'schedule-hub',
           headers: headers,
-          body: const {'source': 'admin_manual_check'},
+          body: const {'action': 'digest.run', 'source': 'admin_manual_check'},
         ),
         _supabase.functions.invoke(
           'admin-hub',
@@ -908,9 +907,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (session == null) throw Exception('Not authenticated');
 
       final response = await _supabase.functions.invoke(
-        'post-x-update',
+        'schedule-hub',
         headers: _adminAuthHeaders(session.accessToken),
         body: {
+          'action': 'x.post',
           'text': text,
           'dryRun': dryRun,
         },
@@ -1029,8 +1029,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final session = _supabase.auth.currentSession;
       if (session == null) throw Exception('Not authenticated');
       final resp = await _supabase.functions.invoke(
-        'notify-feature-request',
-        body: {'id': id, 'status': status},
+        'core-hub',
+        body: {'action': 'notify.feature', 'id': id, 'status': status},
         headers: {'Authorization': 'Bearer ${session.accessToken}'},
       );
       if (resp.status != 200) {
@@ -1062,10 +1062,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (session == null) throw Exception('Not authenticated');
 
       final res = await _supabase.functions.invoke(
-        'send-waitlist-notification',
-        body: {'subject': subject, 'bodyHtml': bodyHtml},
+        'growth-hub',
+        body: {'action': 'waitlist.notify', 'subject': subject, 'bodyHtml': bodyHtml},
       );
-      debugPrint('send-waitlist-notification result: ${res.data}');
+      debugPrint('waitlist.notify result: ${res.data}');
       if (mounted) {
         final data = res.data as Map<String, dynamic>?;
         final sent = data?['sent'] ?? 0;
@@ -3459,9 +3459,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   ) async {
     final body = <String, dynamic>{'userId': userId, ...updates};
     await _supabase.functions.invoke(
-      'user-profile-manager',
-      method: HttpMethod.patch,
-      body: body,
+      'core-hub',
+      body: <String, dynamic>{'action': 'user.update', ...body},
     );
   }
 
@@ -4939,8 +4938,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     setState(() => _growthSummaryLoading = true);
     try {
       final resp = await _supabase.functions.invoke(
-        'growth-achievement-summary',
+        'growth-hub',
         body: {
+          'action': 'achievement.list',
           'since': since ?? '2020-01-01T00:00:00Z',
           'label': label ?? 'すべて',
         },

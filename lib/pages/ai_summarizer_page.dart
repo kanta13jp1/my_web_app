@@ -79,10 +79,20 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AI サマリー'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -99,16 +109,35 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
             Text(
               'テキストを入力してAIが自動要約します',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: const Color(0xFFB0B0B0),
                   ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _textCtrl,
               maxLines: 5,
-              decoration: const InputDecoration(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
                 hintText: '要約したいテキストを入力...',
-                border: OutlineInputBorder(),
+                hintStyle: const TextStyle(color: Color(0xFF707070)),
+                filled: true,
+                fillColor: const Color(0xFF2A2A2A),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.12),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF3D5AFE)),
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -120,17 +149,28 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.auto_awesome),
                 label: Text(_isSummarizing ? '要約中...' : 'AI要約する'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B35),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Color(0xFFE53935)),
               ),
             ],
             if (_summary != null) ...[
@@ -139,11 +179,18 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.indigo[900] : Colors.indigo[50],
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isDark ? Colors.indigo[700]! : Colors.indigo[200]!,
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,10 +200,13 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                       style: Theme.of(context)
                           .textTheme
                           .labelSmall
-                          ?.copyWith(color: Colors.indigo),
+                          ?.copyWith(color: const Color(0xFF7986CB)),
                     ),
                     const SizedBox(height: 4),
-                    Text(_summary!),
+                    Text(
+                      _summary!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
@@ -168,23 +218,51 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _summaries.isEmpty
-                      ? const Center(child: Text('要約履歴がありません'))
+                      ? const Center(
+                          child: Text(
+                            '要約履歴がありません',
+                            style: TextStyle(color: Color(0xFF707070)),
+                          ),
+                        )
                       : ListView.builder(
                           itemCount: _summaries.length,
                           itemBuilder: (context, index) {
                             final item = _summaries[index];
-                            return Card(
+                            return Container(
                               margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E1E1E),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
                               child: ListTile(
-                                leading: const Icon(Icons.summarize),
+                                leading: const Icon(
+                                  Icons.summarize,
+                                  color: Color(0xFF3D5AFE),
+                                ),
                                 title: Text(
                                   item['summary']?.toString() ?? '-',
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                                 subtitle: Text(
                                   item['created_at']?.toString() ?? '',
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF707070),
+                                      ),
                                 ),
                               ),
                             );

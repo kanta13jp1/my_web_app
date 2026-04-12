@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// バイラル広告キャンペーンページ
-/// 直接呼び出し: viral-ad-generator (プレビュー), viral-growth-engine (実行)
-/// x-media-post は viral-growth-engine のサーバーサイド内部で呼び出される
+/// 直接呼び出し: growth-hub (プレビュー・実行)
+/// viral-ad-generator, viral-growth-engine は growth-hub に統合済み
 class ViralAdCampaignPage extends StatefulWidget {
   const ViralAdCampaignPage({super.key});
 
@@ -43,12 +43,12 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     try {
       final results = await Future.wait([
         _supabase.functions.invoke(
-          'viral-growth-engine',
-          method: HttpMethod.get,
+          'growth-hub',
+          body: {'action': 'viral.list'},
         ),
         _supabase.functions.invoke(
-          'viral-growth-engine',
-          body: {'action': 'get_stats'},
+          'growth-hub',
+          body: {'action': 'engine.stats'},
         ),
       ]);
       final runsData = results[0].data;
@@ -78,8 +78,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'viral-ad-generator',
-        body: {'template': _selectedTemplate},
+        'growth-hub',
+        body: {'action': 'viral_ad.create', 'template': _selectedTemplate},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['success'] == true) {
@@ -105,9 +105,9 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'viral-growth-engine',
+        'growth-hub',
         body: {
-          'action': 'run_campaign',
+          'action': 'engine.run',
           'template': _selectedTemplate,
           'dryRun': _isDryRun,
         },

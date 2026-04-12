@@ -47,14 +47,26 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
 
   Widget _buildBriefCard(Map<String, dynamic> brief) {
     final priorityColor = switch (brief['priority']?.toString()) {
-      'critical' => Colors.red,
-      'high' => Colors.orange,
-      'medium' => Colors.yellow.shade700,
-      _ => Colors.grey,
+      'critical' => const Color(0xFFE53935),
+      'high'     => const Color(0xFFFF6B35),
+      'medium'   => const Color(0xFFFFC107),
+      _          => const Color(0xFF707070),
     };
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -74,26 +86,32 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                 Expanded(
                   child: Text(
                     brief['label']?.toString() ?? '',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 Text(
                   brief['owner']?.toString() ?? '',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: Color(0xFF707070),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text(brief['objective']?.toString() ?? ''),
+            Text(
+              brief['objective']?.toString() ?? '',
+              style: const TextStyle(color: Color(0xFFB0B0B0)),
+            ),
             if (brief['nextAction'] != null) ...[
               const SizedBox(height: 4),
               Text(
                 '→ ${brief['nextAction']}',
-                style: TextStyle(
-                  color: Colors.blue.shade700,
+                style: const TextStyle(
+                  color: Color(0xFF7986CB),
                   fontSize: 13,
                 ),
               ),
@@ -114,10 +132,19 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
         : <Map<String, dynamic>>[];
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('グロース司令部'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            height: 1,
+            color: Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
         ],
@@ -129,11 +156,15 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                 icon: const Icon(Icons.rocket_launch),
                 label: const Text('コマンドセンターを起動'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: const Color(0xFFFF6B35),
                   foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -144,7 +175,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                   ? Center(
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Color(0xFFE53935)),
                       ),
                     )
                   : SingleChildScrollView(
@@ -158,6 +189,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -166,9 +198,10 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                             const Text(
                               '部門ブリーフィング',
                               style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.indigo,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFFF6B35),
+                                letterSpacing: 1.2,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -176,7 +209,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                           ] else
                             const Text(
                               'データがありません',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: Color(0xFF707070)),
                             ),
                         ],
                       ),
