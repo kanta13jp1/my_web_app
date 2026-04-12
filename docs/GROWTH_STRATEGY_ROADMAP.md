@@ -7471,3 +7471,38 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 VSCode版: cross-instance-prs 処理 (4〜6件ずつ処理推奨)
 - 🟡 AI大学33・34社目候補: Midjourney (画像生成) / Pika (動画) / Udio (音楽)
 - 🟢 T-1: 32社達成記念「テキスト→動画・音楽まで！AI大学32プロバイダー完全ガイド」
+
+---
+
+## PowerShell版#47 セッション記録 (2026-04-12)
+
+### 完了: T-1 第9・10弾投稿 + blog-publish.yml Step5修正
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | T-1第9弾: `docs/blog-drafts/2026-04-12-cors-fix-ef-hub-migration.md` 作成 | ✅ |
+| 2 | T-1第9弾: Qiita/dev.to 投稿成功 | ✅ |
+| 3 | T-1第10弾: `docs/blog-drafts/2026-04-09-pomodoro-focus-timer.md` Qiita/dev.to 投稿成功 | ✅ |
+| 4 | blog-publish.yml Step5: PR作成→GitHub API merge試験→限界の文書化 | ✅ |
+| 5 | Rule17: 全ワークフロー健全性確認 (infra/daily/ai-university/edge-audit 全て成功) | ✅ |
+| 6 | COMPRESSED_PROMPT_V3 T-1セクション更新 (第8〜10弾投稿済み記録) | ✅ |
+
+### 投稿URL
+
+- 第9弾 Qiita: https://qiita.com/kanta13jp1/items/03bd942f926b2b215daf
+- 第9弾 dev.to: https://dev.to/kanta13jp1/supabase-edge-function-wo-94ben-15ben-nitong-he-...
+- 第10弾 Qiita: https://qiita.com/kanta13jp1/items/344f2a9ab557dc240c81
+- 第10弾 dev.to: https://dev.to/kanta13jp1/flutter-webdeforestjing-he-nopomodorotaimawoshi-...
+
+### 現状数値 (2026-04-12 PowerShell版#47完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: 30社 (Windows版#49で更新中)
+- T-1投稿済み: 10弾
+- blog-publish.yml Step5: BLOG_PAT シークレット設定で完全自動化可能
+
+### 次回優先タスク
+
+- 🔴 T-1 第11弾: `2026-04-11-personal-dashboard-notion-competitor.md` 投稿 + published:true手動マージ
+- 🟡 growth-hub roadmap.progress 実データ取得 (userCount/plans)
+- 🟢 BLOG_PAT シークレット設定 → blog-publish.yml Step5 完全自動化
