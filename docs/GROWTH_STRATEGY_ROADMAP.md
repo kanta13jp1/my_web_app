@@ -7300,3 +7300,34 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学27社目候補: Voyage AI (embedding特化) migration seed
 - 🟡 T-1 第8弾: AI大学26社達成記事 Qiita/Zenn 投稿 (PowerShell/daily-dev)
 - 🟢 VSCode版: cross-instance-pr 8件処理 (oracle〜ai21 UI追加)
+
+---
+
+## VSCode版#63 セッション記録 (2026-04-12)
+
+### 完了: CORS全解消 — 廃止EF 10本→hub移行
+
+| 廃止EF | 移行先 | アクション |
+|--------|--------|-----------|
+| weather-widget | tools-hub | get_weather |
+| wiki-database | enterprise-hub | wiki.* |
+| voice-memo-transcriber | media-hub | transcribe.* |
+| gantt-timeline-manager | enterprise-hub | gantt.* |
+| code-playground | enterprise-hub | playground.* |
+| spreadsheet-database | enterprise-hub | sheet.* |
+| crm-sales-pipeline | enterprise-hub | crm.* |
+| revenue-forecaster | enterprise-hub | forecast.list |
+| real-estate-tracker | lifestyle-hub | realestate.* (新規5アクション) |
+| growth-acquisition-report | growth-hub | acquisition.report |
+
+### 現状数値 (2026-04-12 VSCode版#63完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: 26社
+- CORS エラー: **全解消** (廃止EF呼び出し 0本)
+
+### 次回優先タスク
+
+- 🔴 AI大学27社目候補: Voyage AI / Writer / cross-instance-pr UI実装
+- 🟡 T-1 第9弾: CORS全解消 + hub統合アーキテクチャ記事
+- 🟢 deploy-prod確認: 全hub EFが正常稼働しているか動作検証
