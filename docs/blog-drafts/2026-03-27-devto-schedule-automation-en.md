@@ -1,7 +1,7 @@
 ---
 title: "How I Automated CS, Bug Fixes, and Competitor Monitoring with Claude Code Schedule"
 tags: ClaudeCode,Supabase,GitHubActions,buildinpublic
-published: false
+published: true
 ---
 
 # How I Automated CS, Bug Fixes, and Competitor Monitoring with Claude Code Schedule — Zero Servers, Zero API Cost
