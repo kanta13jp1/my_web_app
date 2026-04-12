@@ -7170,3 +7170,26 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
 - 🟡 hub EF内アクション追加 (growth-hub roadmap.progressの実データ対応)
 - 🟢 T-1 第8弾 技術記事ディスパッチ
+
+## セッション記録: VSCode版#62 継続セッション (2026-04-12)
+
+### 作業内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | PS版#45完了確認: 廃止EF→hub Dart移行12ファイル既コミット済み | ✅ |
+| 2 | referral_page.dart / growth_mission_service.dart 既修正確認 | ✅ |
+| 3 | flutter analyze 0エラー確認 | ✅ |
+
+### 現状数値 (2026-04-12 VSCode版#62完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- 本番CORS修正: 廃止EF 7本 完全移行済み (12ファイル)
+- LP: 126のこと / ページ数: 211 / AI大学: 18社
+
+### 次回優先タスク
+
+- 🔴 T-1第8弾: AI大学技術記事 (18社AIを1アプリで学ぶ仕組み) Qiita/Zenn投稿
+- 🟡 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
+- 🟡 growth-hub roadmap.progress 実データ対応
+- 🟢 edge_function_summary_card.dart 旧EF名→hub名に更新
