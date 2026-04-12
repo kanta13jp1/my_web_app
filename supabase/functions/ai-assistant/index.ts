@@ -18,7 +18,7 @@ const KEYS = {
 
 const FALLBACK_MODELS = [
     { provider: 'openai', model: 'gpt-4o-mini' },
-    { provider: 'anthropic', model: 'claude-3-haiku-20240307' },
+    { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' },
     { provider: 'gemini', model: 'gemini-2.5-flash' },
     { provider: 'deepseek', model: 'deepseek-chat' },
 ];
@@ -43,10 +43,10 @@ const MODEL_CATALOG = [
         score: 910,
     },
     {
-        name: 'claude-3-haiku-20240307',
+        name: 'claude-haiku-4-5-20251001',
         provider: 'Anthropic',
         description: '速度重視の推奨モデル',
-        score: 890,
+        score: 900,
     },
     {
         name: 'gemini-2.5-flash',

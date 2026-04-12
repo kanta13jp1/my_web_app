@@ -83,6 +83,18 @@ async function _deleteItem(
   if (error) throw new Error(error.message);
 }
 
+function _applyAchievements<T extends { label: string; features_done: number; features_total: number }>(
+  plans: T[],
+  achievementsCount: number,
+): T[] {
+  return plans.map((p) => {
+    if (p.label === "短期計画") return { ...p, features_done: Math.min(achievementsCount, 50), features_total: 50 };
+    if (p.label === "中期計画") return { ...p, features_done: Math.min(achievementsCount, 200), features_total: 200 };
+    if (p.label === "長期計画") return { ...p, features_done: Math.min(achievementsCount, 500), features_total: 500 };
+    return p;
+  });
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -262,18 +274,34 @@ serve(async (req: Request) => {
         return json({ success: true, item });
       }
 
-      // ─── Roadmap Progress ─────────────────────────────────────────────────────
+      // ─── Roadmap Progress (実データ: growth_plans テーブル) ───────────────────
       case "roadmap.progress": {
-        const { data: rp } = await admin
-          .from("hub_data")
-          .select("metadata")
-          .eq("source", "roadmap_progress")
-          .filter("metadata->>user_id", "eq", userId!)
-          .order("created_at", { ascending: false })
-          .limit(1);
+        const [
+          authListResult,
+          { data: plansData },
+          { count: achievementsCount },
+        ] = await Promise.all([
+          admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
+          admin
+            .from("growth_plans")
+            .select("label, deadline, target, features_done, features_total, sort_order")
+            .order("sort_order", { ascending: true })
+            .order("target", { ascending: true }),
+          admin
+            .from("development_achievements")
+            .select("id", { count: "exact", head: true }),
+        ]);
+        const totalUsers = ((authListResult.data as { total?: number } | null)?.total) ?? 0;
+        const totalAchievements = achievementsCount ?? 0;
+        const plans = _applyAchievements(
+          (plansData ?? []) as Array<{ label: string; deadline: string; target: number; features_done: number; features_total: number; sort_order?: number }>,
+          totalAchievements,
+        );
         return json({
           success: true,
-          progress: (rp?.[0]?.metadata as Record<string, unknown>) ?? {},
+          userCount: totalUsers,
+          achievementsCount: totalAchievements,
+          plans,
         });
       }
 
