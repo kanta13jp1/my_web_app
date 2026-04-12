@@ -185,19 +185,14 @@ jobs:
           git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
           git push origin "$BRANCH"
 
-          # GitHub API でブランチを main にマージ (PR作成不要・ブランチ保護バイパス不要)
-          MERGE_MSG="docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
-          MERGE_RESULT=$(gh api repos/${{ github.repository }}/merges \
-            --method POST \
-            --field base=main \
-            --field head="$BRANCH" \
-            --field commit_message="$MERGE_MSG" \
-            --jq '.sha // "null"' 2>&1 || true)
-          if [ "$MERGE_RESULT" = "null" ] || [ -z "$MERGE_RESULT" ]; then
-            echo "📝 マージ不要 (already up to date) or 失敗: $MERGE_RESULT"
-          else
-            echo "✅ API マージ完了: $MERGE_RESULT"
-          fi
+          # NOTE: GITHUB_TOKEN はブランチ保護 (require PR) をバイパスできないため
+          # main への直接マージは手動で実施する必要がある。
+          # 解決策: BLOG_PAT シークレット (bypass 権限付き PAT) を設定して
+          # git push origin HEAD:main か gh api merges で自動化する。
+          # 現状は branch を push してジョブを成功扱いにする (published:true更新は手動)。
+          echo "ℹ️ ブランチ '$BRANCH' を push しました。"
+          echo "   published:true マーク: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+          echo "   (BLOG_PAT シークレット設定で自動化可能)"
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
