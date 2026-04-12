@@ -7276,3 +7276,27 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学25社目: Writer (エンタープライズ向けビジネスAI) migration seed
 - 🟡 T-1 第8弾: AI大学24社達成記事 Qiita/Zenn 投稿 (PowerShell/daily-dev)
 - 🟢 VSCode版: cross-instance-pr 6件処理 (oracle〜replicate UI追加)
+
+## セッション記録: Windows版#47 (2026-04-12)
+
+### 作業内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | AI大学25社目: Writer (Palmyra LLM・Knowledge Graph・ビジネスAI特化) migration seed | ✅ |
+| 2 | AI大学26社目: AI21 Labs (Jamba 256K・SSM+Transformer・MoE) migration seed | ✅ |
+| 3 | cross-instance-pr 2件: writer_provider_ui / ai21_provider_ui (VSCode版待ち) | ✅ |
+| 4 | COMPRESSED_PROMPT_V3.md: プロバイダー数 24→26社更新 | ✅ |
+| 5 | docs Rule #10: 主要docファイル鮮度確認 (異常なし) | ✅ |
+
+### 現状数値 (2026-04-12 Windows版#47完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: **26社**
+- 次回候補: Cohere standalone API / Voyage AI / Mistral standalone
+
+### 次回優先タスク
+
+- 🔴 AI大学27社目候補: Voyage AI (embedding特化) migration seed
+- 🟡 T-1 第8弾: AI大学26社達成記事 Qiita/Zenn 投稿 (PowerShell/daily-dev)
+- 🟢 VSCode版: cross-instance-pr 8件処理 (oracle〜ai21 UI追加)
