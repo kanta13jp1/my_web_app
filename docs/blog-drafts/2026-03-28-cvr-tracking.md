@@ -1,4 +1,10 @@
-# ブログ下書き 2026-03-28 (CVR トラッキング)
+---
+title: "Flutter Webで比較ページからの流入をSupabase Edge Functionで計測するCVRトラッキング実装"
+tags: Flutter,Supabase,EdgeFunction,buildinpublic,個人開発
+published: false
+---
+
+# Flutter Webで比較ページからの流入をSupabase Edge Functionで計測するCVRトラッキング実装
 
 ## タイトル案
 1. Flutter Webで「どの比較ページから登録したか」を追跡するCVRトラッキングを実装した話

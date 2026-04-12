@@ -1,12 +1,7 @@
 ---
-date: 2026-03-28
-session: session10 (Web instance)
-title_options:
-  - "Claude Code 4インスタンス並列開発 + Edge Functions全量CI/CDデプロイを整備した話"
-  - "自分株式会社 開発日記 #10: Web/VSCode/Windows/PowerShell 4インスタンス協調開発"
-  - "FlutterWeb×Supabase: Edge Functions 36本を全てCI/CDに乗せた話"
-status: draft
-target_platforms: [zenn, qiita, note, dev.to]
+title: "Claude Code 4インスタンス並列開発 + Edge Functions全量CI/CDデプロイを整備した話"
+tags: Flutter,Supabase,ClaudeCode,EdgeFunction,buildinpublic
+published: false
 ---
 
 # ブログ下書き 2026-03-28 (Edge Functions CI/CD)
