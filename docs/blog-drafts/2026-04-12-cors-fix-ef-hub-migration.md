@@ -2,7 +2,7 @@
 title: "Supabase Edge Function を 94本→15本に統合 + 廃止EF17本のCORS修正を一括解消した話"
 tags: Flutter,Supabase,EdgeFunction,buildinpublic
 topics: ["Flutter", "Supabase", "個人開発", "アーキテクチャ"]
-published: false
+published: true
 ---
 
 # Supabase Edge Function を 94本→15本に統合 + 廃止EF17本のCORS修正を一括解消した話
