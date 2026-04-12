@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions × Supabase で技術記事投稿を自動化した話 — 1日に21本をQiita/dev.toへ"
 tags: GitHub,Supabase,GitHubActions,buildinpublic,Flutter
-published: false
+published: true
 ---
 
 # GitHub Actions × Supabase で技術記事投稿を自動化した話 — 1日に21本をQiita/dev.toへ
