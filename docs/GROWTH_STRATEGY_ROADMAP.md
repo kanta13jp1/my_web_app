@@ -7358,3 +7358,43 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 T-1第8弾dispatch: deploy-prod完了後にblog-publish.ymlを再dispatch
 - 🟡 growth-hub roadmap.progress: 実データ取得ロジック追加 (userCount/plans)
 - 🟢 wrap-up: memory保存・NotebookLM蓄積
+
+---
+
+## Windows版#48 セッション記録 (2026-04-12)
+
+### 完了: AI大学 Voyage AI・ElevenLabs 追加 (27・28社目)
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | Voyage AI (voyage) migration: `20260412018000_seed_voyage_ai_university.sql` | ✅ |
+| 2 | ElevenLabs (elevenlabs) migration: `20260412019000_seed_elevenlabs_ai_university.sql` | ✅ |
+| 3 | cross-instance-pr: `20260412_voyage_provider_ui.md` (VSCode版向けUI追加依頼) | ✅ |
+| 4 | cross-instance-pr: `20260412_elevenlabs_provider_ui.md` (VSCode版向けUI追加依頼) | ✅ |
+| 5 | COMPRESSED_PROMPT_V3.md: 26社→28社に更新 | ✅ |
+| 6 | docs Rule #10: 主要ドキュメント数値確認 (問題なし) | ✅ |
+
+### 今回追加プロバイダー詳細
+
+**Voyage AI (voyage) — 27社目**
+- Embedding専門企業 (元Meta/Google/Stanford研究者)
+- MTEB Retrieval nDCG@10=65.1 (OpenAI 62.9、Cohere 63.8を上回る)
+- voyage-3-large/code-3/finance-2/law-2/multilingual-2 + rerank-2 (Reranker)
+- Supabase pgvector + 2段階RAG完全統合例収録
+
+**ElevenLabs (elevenlabs) — 28社目**
+- 音声AI最大手 (100万人以上の開発者利用)
+- Eleven Multilingual v2 (32言語) / Turbo v2.5 (<250ms) / Flash v2.5 (<75ms)
+- 音声クローン (Instant/Professional) / リアルタイム音声変換
+- Claude + ElevenLabs 音声AIエージェント統合例収録
+
+### 現状数値 (2026-04-12 Windows版#48完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: **28社**
+
+### 次回優先タスク
+
+- 🔴 VSCode版: voyage/elevenlabs UI追加 (cross-instance-prs 2件処理)
+- 🟡 AI大学29・30社目候補: OpenRouter (openrouter) / Ollama (ollama) / Runway (runway)
+- 🟢 docs Rule #10: 次回も各数値確認継続
