@@ -48,16 +48,16 @@ jobs:
 
       - name: 出走表取得
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           python scripts/fetch_horse_racing.py --mode entries --date "$TARGET_DATE"
 
       - name: AI 3連単予想実行
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL }}/functions/v1/tools-hub
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
           python scripts/fetch_horse_racing.py --mode predict --date "$TARGET_DATE"
 
@@ -101,9 +101,9 @@ jobs:
 
       - name: レース結果取得
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL }}/functions/v1/tools-hub
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
           python scripts/fetch_horse_racing.py --mode results --date "$TARGET_DATE"
 
