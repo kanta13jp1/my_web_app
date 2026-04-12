@@ -1,7 +1,7 @@
 ---
 title: "Flutter×Supabaseで「AI大学」を34社対応に拡張した話 — 毎日自動更新するAI学習プラットフォーム"
 tags: Flutter,Supabase,AI,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # Flutter×Supabaseで「AI大学」を34社対応に拡張した話 — 毎日自動更新するAI学習プラットフォーム
