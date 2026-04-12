@@ -7934,3 +7934,34 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 T-1 新記事執筆: 競合21社を超えるというコンセプト記事 / Flutter Web SEO対策
 - 🟡 BLOG_PAT シークレット設定 → Step5完全自動化
 - 🟢 2026-03-29 系の日付ベースドラフト整理 (コンテンツ品質確認)
+
+---
+
+## Windows版#59 セッション記録 (2026-04-12)
+
+### 完了: AI大学 twelve_labs 追加 (39社目) + cohere 既存コンテンツ更新
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | cross-instance-prs 1件 (pika+assemblyai) 確認 → migration続行判断 | ✅ |
+| 2 | `twelve_labs` (Twelve Labs) seed migration 作成 (034000) | ✅ |
+| 3 | `cohere` 既登録確認 → ON CONFLICT DO UPDATE で既存コンテンツ更新 (035000) | ✅ |
+| 4 | cross-instance-pr → VSCode版に twelve_labs+cohere UI追加依頼 | ✅ |
+| 5 | COMPRESSED_PROMPT プロバイダーリスト 38社→39社 更新 (cohere既登録のため) | ✅ |
+
+### 発見・学習
+
+- `cohere` は元々9社の登録プロバイダー (#11) に含まれており、新規追加ではなくコンテンツ更新扱い
+- ON CONFLICT DO UPDATE により重複migrationは安全に上書きされる (実害なし)
+- AI大学39社で新しい節目: 動画AI特化 (Twelve Labs) がラインナップに加わった
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: 215 / AI大学: **39社**
+- cross-instance-prs: **2件 pending** (pika+assemblyai UI + twelve_labs+cohere UI)
+
+### 次回優先タスク
+
+- 🔴 VSCode版: pika+assemblyai UI + twelve_labs+cohere UI 追加 (cross-instance-prs)
+- 🟡 Windows版: 40社目候補評価 — Hailuo AI / Portkey / Mistral (特化型)
+- 🟢 Windows版: cross-instance-prs が解消されたら migration再開
