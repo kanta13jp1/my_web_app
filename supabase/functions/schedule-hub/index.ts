@@ -1,5 +1,5 @@
 // schedule-hub — スケジュール・ブログ・X投稿・自動化統合EF
-// Merges (5 EFs): schedule-daily-digest, schedule-manager,
+// Merges (6 EFs): schedule-daily-digest, schedule-manager, notification-center(reminders),
 //   post-x-update, blog-post-manager, blog-auto-publisher
 //
 // Note: schedule-daily-digest and post-x-update have their own standalone files
@@ -96,7 +96,7 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create"];
+    const publicActions = ["digest.run", "health.check", "blog.auto_publish", "blog.create", "reminders.study"];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -333,6 +333,139 @@ serve(async (req: Request) => {
         }
 
         return json({ success: true, results });
+      }
+
+
+      // ─── Study Reminders (AI大学 学習リマインダー) ────────────────────────────
+      case "reminders.study": {
+        // service_role authorization check
+        const authHeader = req.headers.get("Authorization");
+        const svcToken = authHeader?.replace("Bearer ", "") ?? "";
+        if (svcToken !== SERVICE_ROLE_KEY) {
+          return json({ error: "Service role required" }, 403);
+        }
+
+        const minIdleDays = typeof body.min_idle_days === "number"
+          ? Math.max(1, Math.min(30, body.min_idle_days as number))
+          : 3;
+        const maxIdleDays = typeof body.max_idle_days === "number"
+          ? Math.max(minIdleDays, Math.min(90, body.max_idle_days as number))
+          : 30;
+        const dryRun = Boolean(body.dry_run);
+
+        const nowJst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+        const todayStr = nowJst.toISOString().slice(0, 10);
+        const minDate = new Date(nowJst.getTime() - maxIdleDays * 86_400_000)
+          .toISOString().slice(0, 10);
+        const maxDate = new Date(nowJst.getTime() - minIdleDays * 86_400_000)
+          .toISOString().slice(0, 10);
+
+        const { data: streakRows, error: streakErr } = await admin
+          .from("ai_university_streaks")
+          .select("user_id, current_streak, longest_streak, last_studied_date")
+          .gte("last_studied_date", minDate)
+          .lte("last_studied_date", maxDate);
+
+        if (streakErr) throw streakErr;
+
+        const candidates = streakRows ?? [];
+        if (candidates.length === 0) {
+          return json({
+            success: true, eligible: 0, sent: 0,
+            skipped_recently_reminded: 0, dry_run: dryRun,
+            today: todayStr,
+            window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+          });
+        }
+
+        const REMINDER_PREFIX = "[AI大学] 学習リマインダー";
+        const reminderSinceIso = new Date(
+          Date.now() - minIdleDays * 86_400_000,
+        ).toISOString();
+
+        const userIds = candidates.map((r) =>
+          (r as { user_id: string }).user_id
+        );
+
+        const { data: recentRows, error: recentErr } = await admin
+          .from("app_notifications")
+          .select("user_id")
+          .in("user_id", userIds)
+          .eq("type", "system")
+          .ilike("title", `${REMINDER_PREFIX}%`)
+          .gte("created_at", reminderSinceIso);
+
+        if (recentErr) throw recentErr;
+
+        const recentlyReminded = new Set<string>();
+        for (const row of recentRows ?? []) {
+          const uid = (row as { user_id: string | null }).user_id;
+          if (typeof uid === "string") recentlyReminded.add(uid);
+        }
+
+        const targets = candidates.filter((r) => {
+          const uid = (r as { user_id: string }).user_id;
+          return !recentlyReminded.has(uid);
+        });
+
+        if (targets.length === 0 || dryRun) {
+          return json({
+            success: true,
+            eligible: candidates.length,
+            sent: 0,
+            skipped_recently_reminded: recentlyReminded.size,
+            targets: dryRun ? targets.length : undefined,
+            dry_run: dryRun,
+            today: todayStr,
+            window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+          });
+        }
+
+        const createdAt = new Date().toISOString();
+        const payload = targets.map((row) => {
+          const r = row as {
+            user_id: string;
+            current_streak: number;
+            longest_streak: number;
+            last_studied_date: string;
+          };
+          const idleDays = Math.max(
+            0,
+            Math.floor(
+              (Date.parse(todayStr) - Date.parse(r.last_studied_date)) / 86_400_000,
+            ),
+          );
+          const bestStreak = Math.max(r.current_streak, r.longest_streak);
+          const title = `${REMINDER_PREFIX} — ${idleDays}日ぶりにAIを学ぼう`;
+          const message = bestStreak > 1
+            ? `前回の学習から${idleDays}日経過。過去最長 ${bestStreak} 日連続を更新しよう！１分クイズでストリーク復活。`
+            : `前回の学習から${idleDays}日経過。AI大学で１分クイズに挑戦して知識をアップデート。`;
+          return {
+            user_id: r.user_id,
+            title,
+            message,
+            type: "system",
+            link: "/ai-university",
+            is_read: false,
+            created_at: createdAt,
+          };
+        });
+
+        const { error: insertErr } = await admin
+          .from("app_notifications")
+          .insert(payload);
+
+        if (insertErr) throw insertErr;
+
+        return json({
+          success: true,
+          eligible: candidates.length,
+          sent: payload.length,
+          skipped_recently_reminded: recentlyReminded.size,
+          dry_run: false,
+          today: todayStr,
+          window: { min_idle_days: minIdleDays, max_idle_days: maxIdleDays },
+        });
       }
 
       // ─── Health Check ─────────────────────────────────────────────────────────
