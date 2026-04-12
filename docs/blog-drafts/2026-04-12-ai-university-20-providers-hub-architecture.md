@@ -2,7 +2,7 @@
 title: "Flutter × Supabase で「AI大学」を20社対応に拡張 + Edge Function 94本→15本 hub統合アーキテクチャ"
 tags: Flutter,Supabase,EdgeFunction,buildinpublic
 topics: ["Flutter", "Supabase", "個人開発", "アーキテクチャ"]
-published: false
+published: true
 ---
 
 # Flutter × Supabase で「AI大学」を20社対応に拡張 + Edge Function 94本→15本 hub統合アーキテクチャ
