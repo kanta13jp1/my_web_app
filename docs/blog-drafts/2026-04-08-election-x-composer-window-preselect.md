@@ -3,7 +3,7 @@ title: Flutter×地方選挙アプリ — スケジュールフィルターとX�
 emoji: 🗳️
 type: tech
 topics: [flutter, dart, ux, election]
-published: false
+published: true
 ---
 
 ## はじめに
