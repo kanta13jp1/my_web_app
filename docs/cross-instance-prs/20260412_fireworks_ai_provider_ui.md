@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Fireworks AI プロバイダー UI 追加依頼
@@ -77,4 +77,4 @@ LLaMA 3.3 70B で業界最高水準の 150+ tokens/秒を実現します。
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

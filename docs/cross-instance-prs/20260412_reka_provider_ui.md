@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Reka AI プロバイダー UI 追加依頼
@@ -75,4 +75,4 @@ Reka は DeepMind・Google Brain 出身のチームが2022年に設立したAI�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

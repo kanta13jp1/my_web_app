@@ -71,4 +71,4 @@ NIM (Inference Microservices) で OpenAI 互換の高速推論 API を提供。
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

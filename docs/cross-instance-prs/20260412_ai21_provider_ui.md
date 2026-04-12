@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # AI21 Labs プロバイダー UI 追加依頼
@@ -76,4 +76,4 @@ AI21 Labs はイスラエル発の AI 企業。Jamba シリーズは SSM (Mamba)
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

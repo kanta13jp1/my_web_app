@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # ElevenLabs プロバイダー UI 追加依頼
@@ -79,4 +79,4 @@ ElevenLabs は2022年創業の音声AI企業。テキスト読み上げ・音声
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

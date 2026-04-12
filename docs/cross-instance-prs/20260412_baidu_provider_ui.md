@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Baidu ERNIE プロバイダー UI 追加依頼
@@ -76,4 +76,4 @@ migration 適用済み: `supabase/migrations/20260412009000_seed_baidu_ai_univer
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # OpenRouter プロバイダー UI 追加依頼
@@ -78,4 +78,4 @@ Claude・GPT・Gemini・LLaMA・DeepSeekなど200以上のLLMにアクセスで�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

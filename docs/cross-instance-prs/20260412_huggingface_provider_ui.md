@@ -72,4 +72,4 @@ LLaMA / Mistral / FLUX / Whisper など主要 OSS モデルが全て入手可能
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

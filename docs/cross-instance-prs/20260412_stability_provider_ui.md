@@ -76,4 +76,4 @@ Stable Diffusion の開発元。テキストから画像・動画・音楽・3D�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

@@ -75,4 +75,4 @@ Transformer 論文著者の一人 Llion Jones が共同創業した東京の AI 
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

@@ -78,4 +78,4 @@ Amazon Bedrock は 50+ モデルを単一 API で利用できる AWS のマネ�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

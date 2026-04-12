@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Together AI プロバイダー UI 追加依頼
@@ -78,4 +78,4 @@ OpenAI SDK と互換性があり、base_url を変更するだけで既存コー
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

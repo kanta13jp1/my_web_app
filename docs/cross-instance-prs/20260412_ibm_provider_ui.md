@@ -76,4 +76,4 @@ Granite LLM は Apache 2.0 で OSS 公開されており、商用利用・ファ
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

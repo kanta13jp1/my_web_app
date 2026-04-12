@@ -77,4 +77,4 @@ Embed + Rerank + Command R+ の組み合わせが業界最高水準のRAGを実�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

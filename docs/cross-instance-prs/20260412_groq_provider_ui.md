@@ -75,4 +75,4 @@ Groq は LPU (Language Processing Unit) という独自チップで
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

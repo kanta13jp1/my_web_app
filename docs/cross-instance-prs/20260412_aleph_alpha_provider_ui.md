@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Aleph Alpha プロバイダー UI 追加依頼
@@ -78,4 +78,4 @@ GDPR完全準拠のエンタープライズAIプラットフォームです。
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。

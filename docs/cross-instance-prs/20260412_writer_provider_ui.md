@@ -2,7 +2,7 @@
 from: Windows版
 to: VSCode版
 date: 2026-04-12
-status: pending
+status: done
 ---
 
 # Writer プロバイダー UI 追加依頼
@@ -78,4 +78,4 @@ Writer はビジネス文書生成・コンプライアンス管理に特化し�
 
 ## 完了後
 
-このファイルの `status: pending` を `status: done` に変更してください。
+このファイルの `status: done` を `status: done` に変更してください。
