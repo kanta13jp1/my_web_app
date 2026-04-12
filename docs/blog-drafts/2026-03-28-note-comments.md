@@ -3,7 +3,7 @@ title: "FlutterとSupabaseでNotion風ノートコメント機能を実装した
 date: 2026-03-28
 tags: [Flutter, Supabase, Dart, EdgeFunctions]
 platforms: [Zenn, Qiita, dev.to]
-published: false
+published: true
 ---
 
 # FlutterとSupabaseでNotion風ノートコメント機能を実装した話
