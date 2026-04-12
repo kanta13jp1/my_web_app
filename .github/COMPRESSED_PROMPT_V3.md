@@ -457,12 +457,17 @@ web/sitemap.xml          # URL マップ
 - ✅ **Qiita 投稿成功** (2026-04-12): `2026-03-31-notification-center.md` → [https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7](https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7)
 - ✅ **第4弾 投稿成功** (2026-04-12): `2026-03-28-note-comments.md` → Qiita: [https://qiita.com/kanta13jp1/items/d90cff103a6ce55c6192](https://qiita.com/kanta13jp1/items/d90cff103a6ce55c6192) / dev.to 投稿成功
 - ✅ **第5弾 投稿成功** (2026-04-12): `2026-04-01-workflow-automation-video-meeting.md` → Qiita: [https://qiita.com/kanta13jp1/items/0d55915a3553f85e495d](https://qiita.com/kanta13jp1/items/0d55915a3553f85e495d) / dev.to 投稿成功
+- ✅ **第8弾 投稿成功** (PS#46, 2026-04-12): `2026-04-12-ai-university-20-providers-hub-architecture.md` → Qiita: [https://qiita.com/kanta13jp1/items/acb09db86b8be8b02819](https://qiita.com/kanta13jp1/items/acb09db86b8be8b02819) / dev.to 投稿成功
+- ✅ **第9弾 投稿成功** (PS#47, 2026-04-12): `2026-04-12-cors-fix-ef-hub-migration.md` → Qiita: [https://qiita.com/kanta13jp1/items/03bd942f926b2b215daf](https://qiita.com/kanta13jp1/items/03bd942f926b2b215daf) / dev.to 投稿成功
+- ✅ **第10弾 投稿成功** (PS#47, 2026-04-12): `2026-04-09-pomodoro-focus-timer.md` → Qiita: [https://qiita.com/kanta13jp1/items/344f2a9ab557dc240c81](https://qiita.com/kanta13jp1/items/344f2a9ab557dc240c81) / dev.to 投稿成功
+- ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第6弾)**:
+**次回候補 (第11弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | AI大学関連記事 — 9社AIを1アプリで学ぶ仕組みの技術解説 | Qiita/Zenn |
+| 高 | `2026-04-11-personal-dashboard-notion-competitor.md` — Notion競合 KPI実装 | Qiita/dev.to |
+| 中 | `2026-04-10-dns-domain-manager.md` / `2026-04-08-guitar-x-auto-post.md` | Qiita/dev.to |
 | 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
@@ -580,10 +585,10 @@ web/sitemap.xml          # URL マップ
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#49 時点: 30社)
+#### 現在の登録プロバイダー (Windows版#50 時点: 32社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
