@@ -7637,6 +7637,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 
 ---
 
+## Windows版#54 セッション記録 (2026-04-12)
+
+### 完了: AI大学次候補評価 (discovery mode) + docs全件鮮度確認
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | cross-instance-prs 25件 pending 確認 → migration追加一時停止継続 | ✅ |
+| 2 | ai-university-add-provider discovery mode: 新候補6社を3軸評価 | ✅ |
+| 3 | Luma AI(9/9) → Kling AI(8/9) → Pika(7/9) を次回追加推奨候補として確定 | ✅ |
+| 4 | docs 5ファイル全件鮮度確認 (CICD/CONTRIBUTING/README/DESIGN_TOOLING/COMPRESSED) → 全クリーン | ✅ |
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: 215 / AI大学: 34社
+- cross-instance-prs: **25件 pending** (VSCode版処理待ち継続)
+
+### 次回優先タスク
+
+- 🔴 VSCode版: cross-instance-prs 25件一括処理 (最優先)
+- 🟡 Windows版: pending 20件以下になれば `luma` migration 追加
+- 🟢 Windows版: `kling` → `pika` の順で追加 (API可用性高・話題性高)
+
+---
+
 ## Windows版#53 セッション記録 (2026-04-12)
 
 ### 完了: docs全件鮮度確認 (migration一時停止継続)
