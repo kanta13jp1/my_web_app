@@ -3,7 +3,7 @@ title: FlutterアプリのノートAI検索をOpenAIなしでも動くように�
 emoji: 🔍
 type: tech
 topics: [flutter, supabase, deno, ai, search]
-published: false
+published: true
 ---
 
 ## はじめに
