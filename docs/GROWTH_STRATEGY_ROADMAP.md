@@ -7398,3 +7398,43 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 VSCode版: voyage/elevenlabs UI追加 (cross-instance-prs 2件処理)
 - 🟡 AI大学29・30社目候補: OpenRouter (openrouter) / Ollama (ollama) / Runway (runway)
 - 🟢 docs Rule #10: 次回も各数値確認継続
+
+---
+
+## Windows版#49 セッション記録 (2026-04-12)
+
+### 完了: AI大学 OpenRouter・Ollama 追加 (29・30社目)
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | OpenRouter (openrouter) migration: `20260412020000_seed_openrouter_ai_university.sql` | ✅ |
+| 2 | Ollama (ollama) migration: `20260412021000_seed_ollama_ai_university.sql` | ✅ |
+| 3 | cross-instance-pr: `20260412_openrouter_provider_ui.md` | ✅ |
+| 4 | cross-instance-pr: `20260412_ollama_provider_ui.md` | ✅ |
+| 5 | COMPRESSED_PROMPT_V3.md: 28社→30社更新 | ✅ |
+| 6 | docs Rule #10: 数値確認 (問題なし) | ✅ |
+
+### 今回追加プロバイダー詳細
+
+**OpenRouter (openrouter) — 29社目**
+- 200+LLMをOpenAI互換単一エンドポイントで統合
+- 自動フォールバック・コスト比較・A/Bテスト
+- Claude/GPT/Gemini/LLaMA/DeepSeekを1つのAPIで
+- Supabase Edge Function統合・フォールバックパターン収録
+
+**Ollama (ollama) — 30社目**
+- ローカルLLM実行・完全プライバシー保護
+- LLaMA/Gemma/Mistral/Qwen/DeepSeek対応
+- OpenAI互換localhost API
+- pgvector+LangChainローカルRAG構築例収録
+
+### 現状数値 (2026-04-12 Windows版#49完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: **30社**
+
+### 次回優先タスク
+
+- 🔴 VSCode版: cross-instance-prs処理 (voyage/elevenlabs/openrouter/ollama) 4件 → UI追加
+- 🟡 AI大学31・32社目候補: Runway (runway) 動画AI / Cohere Embed v3 特化 / Inflection AI
+- 🟢 docs: 数値確認継続
