@@ -585,10 +585,10 @@ web/sitemap.xml          # URL マップ
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#57 時点: 36社)
+#### 現在の登録プロバイダー (Windows版#58 時点: 38社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
