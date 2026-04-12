@@ -3,7 +3,7 @@ title: 21競合の比較ページCVRをFlutter+Supabaseで計測・可視化し�
 emoji: 📊
 type: tech
 topics: [flutter, supabase, analytics, growth, dart]
-published: false
+published: true
 ---
 
 # 21競合の比較ページCVRをFlutter+Supabaseで計測・可視化した話
