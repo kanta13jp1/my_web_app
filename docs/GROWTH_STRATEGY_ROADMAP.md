@@ -7331,3 +7331,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学27社目候補: Voyage AI / Writer / cross-instance-pr UI実装
 - 🟡 T-1 第9弾: CORS全解消 + hub統合アーキテクチャ記事
 - 🟢 deploy-prod確認: 全hub EFが正常稼働しているか動作検証
+
+---
+
+## PowerShell版#46 セッション記録 (2026-04-12)
+
+### 完了: Rule17 CI/CDビルド最適化 + T-1第8弾記事作成 + blog-publish.yml修復
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | ci.yml: Tier1/Tier2廃止→ハードキャップ50本チェック (continue-on-error: false) | ✅ |
+| 2 | T-1第8弾: `docs/blog-drafts/2026-04-12-ai-university-20-providers-hub-architecture.md` 作成 | ✅ |
+| 3 | schedule-hub: `blog.auto_publish` action追加 + publicActions認証バイパス修正 | ✅ |
+| 4 | blog-publish.yml: blog-post-manager/blog-auto-publisher(削除済み)→schedule-hub移行 | ✅ |
+| 5 | blog-publish.yml: Step4でfrontmatter付き全文送信→schedule-hub側でstrip処理 | ✅ |
+| 6 | T-1第8弾投稿dispatch: deploy完了後に blog-publish.yml実行予定 | 🟡 |
+
+### 現状数値 (2026-04-12 PowerShell版#46完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: 26社
+- blog-publish.yml: schedule-hub経由に修復済み
+
+### 次回優先タスク
+
+- 🔴 T-1第8弾dispatch: deploy-prod完了後にblog-publish.ymlを再dispatch
+- 🟡 growth-hub roadmap.progress: 実データ取得ロジック追加 (userCount/plans)
+- 🟢 wrap-up: memory保存・NotebookLM蓄積
