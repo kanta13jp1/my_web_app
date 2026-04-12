@@ -217,6 +217,7 @@ import 'package:my_web_app/pages/brain_dump_page.dart';
 import 'package:my_web_app/pages/project_gantt_page.dart';
 import 'package:my_web_app/pages/business_card_manager_page.dart';
 import 'package:my_web_app/pages/family_calendar_page.dart';
+import 'package:my_web_app/pages/app_hub_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1220,6 +1221,10 @@ class MyApp extends StatelessWidget {
           case '/family-calendar':
             return MaterialPageRoute(
               builder: (_) => const FamilyCalendarPage(),
+            );
+          case '/app-hub':
+            return MaterialPageRoute(
+              builder: (_) => const AppHubPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

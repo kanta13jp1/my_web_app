@@ -295,6 +295,8 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('ai-hub', 'AIハブ統合 (要約/選挙分析/トリガー)', true, '/ai-summarizer', 'AI要約ページ / 選挙戦略ページ > AIアシスタント'),
     _FnDef('growth-hub', '成長ハブ統合 (グロース指令/自動化/週次)', true, '/growth-mission', '成長ミッションページ > グロース指令センター'),
     _FnDef('schedule-hub', 'スケジュールハブ統合 (実行ログ/ヘルスチェック/結果/モニター)', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
+    // 追加 (cs-check 自動連携)
+    _FnDef('app-hub', 'アプリハブ統合 (サブスクリプション/カレンダー/タスク/チャット統合)', true, '/app-hub', 'アプリハブページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
