@@ -21,9 +21,12 @@ Edge Functions の一覧・UI 接続状況・操作手順は以下で確認:
 
 ---
 
-## 概要統計 (2026-04-10 時点)
+## 概要統計 (2026-04-12 時点)
 
-- **合計関数数**: 250 件 (Tier1: 99本デプロイ済 / Tier2: 151本コードのみ)
+- **デプロイ済み関数数**: **15本** (ハードキャップ50本以下 / Tier1/Tier2分類は廃止済み)
+  - standalone 4本: get-home-dashboard / ai-assistant / growth-weekly-digest / guitar-recording-studio
+  - macro-hub 6本: core-hub / growth-hub / ai-hub / admin-hub / app-hub / schedule-hub
+  - mega-hub 5本: tools-hub / media-hub / enterprise-hub / social-commerce-hub / lifestyle-hub
 - **UI カバレッジ**: **100%** (UI 実装が必要なものはすべて対応済み)
 
 ---

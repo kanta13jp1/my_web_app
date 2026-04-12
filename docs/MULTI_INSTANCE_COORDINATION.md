@@ -11,7 +11,7 @@
 | インスタンス | 担当領域 (write) | 専任責務 |
 | --- | --- | --- |
 | **VSCode版** | `lib/` (Dart/Flutter UI・211ページ) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` |
-| **Web版** | `supabase/functions/` (EF 250本) + `supabase/migrations/*_schema_*.sql` | deno lint 0エラー / EF テスト維持 |
+| **Web版** | `supabase/functions/` (EF 15本デプロイ済 / hub action追加) + `supabase/migrations/*_schema_*.sql` | deno lint 0エラー / EF テスト維持 |
 | **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | docs 全件分析・鮮度管理 / seed データ管理 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 / 全ブランチ CI 監視 |
 
