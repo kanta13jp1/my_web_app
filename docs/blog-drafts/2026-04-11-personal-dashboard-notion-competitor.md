@@ -2,7 +2,7 @@
 title: "Flutter Web でNotion 3.4対抗「パーソナルダッシュボード」を実装した話 — KPIチャートをゼロから作る"
 tags: Flutter,Supabase,buildinpublic,Notion
 topics: ["Flutter", "Supabase", "buildinpublic", "個人開発"]
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-11
