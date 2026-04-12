@@ -3,7 +3,7 @@ title: FlutterとSupabaseでカテゴリ管理・医療メモ機能を実装し�
 emoji: 🗂️
 type: tech
 topics: [Flutter, Supabase, Flutter Web, PostgreSQL]
-published: false
+published: true
 ---
 
 # FlutterとSupabaseでカテゴリ管理・医療メモ機能を実装した話
