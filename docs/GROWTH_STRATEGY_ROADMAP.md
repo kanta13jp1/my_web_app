@@ -7143,3 +7143,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
 - 🟡 hub EF内アクション追加 (admin-hub/core-hub への欠損アクション補完)
 - 🟢 T-1 第8弾 技術記事ディスパッチ
+
+## セッション記録: PS版#45 (2026-04-12)
+
+### 作業内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | CORS修正: growth-referral → growth-hub (referral.list) × 4ファイル | ✅ |
+| 2 | CORS修正: growth-acquisition-signal → growth-hub (acquisition.track) × 2ファイル | ✅ |
+| 3 | CORS修正: feature-request-manager → core-hub (feedback.submit) | ✅ |
+| 4 | CORS修正: notification-center → core-hub (notification.list/mark_read/mark_all) | ✅ |
+| 5 | CORS修正: development-achievements → core-hub (achievements.list/add) | ✅ |
+| 6 | CORS修正: submit-feedback → core-hub (feedback.submit) | ✅ |
+| 7 | CORS修正: get-growth-roadmap-progress → growth-hub (roadmap.progress) | ✅ |
+| 8 | flutter analyze 0エラー確認 → commit/push | ✅ |
+
+### 現状数値 (2026-04-12 PS版#45完了時点)
+
+- EF deployed: **15本** (VSCode版#61確立のmacro-hub体制)
+- 本番CORS修正: 廃止EF 7本 → hub呼び出しに移行完了 (12ファイル)
+- LP: 126のこと / ページ数: 211 / AI大学: 18社
+
+### 次回優先タスク
+
+- 🔴 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
+- 🟡 hub EF内アクション追加 (growth-hub roadmap.progressの実データ対応)
+- 🟢 T-1 第8弾 技術記事ディスパッチ
