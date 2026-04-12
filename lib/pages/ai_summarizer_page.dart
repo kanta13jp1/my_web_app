@@ -212,7 +212,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
               ),
             ],
             const SizedBox(height: 16),
-            Text('要約履歴', style: Theme.of(context).textTheme.titleMedium),
+            Text('要約履歴', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
             const SizedBox(height: 8),
             Expanded(
               child: _isLoading
