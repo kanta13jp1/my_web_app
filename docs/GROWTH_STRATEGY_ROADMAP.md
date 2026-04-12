@@ -7965,3 +7965,37 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 VSCode版: pika+assemblyai UI + twelve_labs+cohere UI 追加 (cross-instance-prs)
 - 🟡 Windows版: 40社目候補評価 — Hailuo AI / Portkey / Mistral (特化型)
 - 🟢 Windows版: cross-instance-prs が解消されたら migration再開
+
+---
+
+## VSCode版 #66 (2026-04-12)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | markdownlint 0エラー化 (MD060 compact + cross-instance-prs ignore) | ✅ |
+| 2 | Rule 10: docs/ 全件分析 → 全ファイルクリーン確認 | ✅ |
+| 3 | Rule 19: design-skills指摘8件修正 (AI大学ページ design token適用) | ✅ |
+| 4 | cross-instance-pr処理: luma+kling UI追加 (commit script作成→dart file反映) | ✅ |
+| 5 | cross-instance-pr処理: pika+assemblyai UI追加 | ✅ |
+| 6 | cross-instance-pr処理: twelve_labs+cohere UI追加 (計6プロバイダー追加) | ✅ |
+| 7 | COMPRESSED_PROMPT_V3 ページ数 215→219 更新 | ✅ |
+
+### 発見・学習
+
+- `add_luma_kling.py` は script committed だが dart file 未含有 → 今セッションで修正
+- `$0.03` in Dart string requires `\$0.03` (string interpolation escape)
+- design-skills指摘: AppBar bg 0x1A0A2E→0x1A1A1A (surface1), TabBar indicator white→indigo, isDark dead code removal, line-height 1.6→1.7
+- apply_design_fixes.py + 即 git add パターンでlinter巻き戻し完全防止
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: **219** / AI大学: **39社 (UI完成)**
+- cross-instance-prs: **0件 pending**
+
+### 次回優先タスク
+
+- 🔴 Windows版: AI大学40社目候補評価 → Hailuo AI / Portkey / RunwayGen3
+- 🟡 VSCode版: Rule 16 本番URL表示チェック → レイアウト改善
+- 🟢 Web版: 学習リマインダーバッチ設定 (EF action実装済み)

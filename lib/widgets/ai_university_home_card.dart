@@ -99,8 +99,8 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
         : _answeredCount / _totalQuizzes;
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => Navigator.of(context).pushNamed('/gemini-university'),
@@ -213,7 +213,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         const SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: progress,
-                          backgroundColor: Colors.white24,
+                          backgroundColor: Colors.white.withValues(alpha: 0.24),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             Color(0xFFFFC107),
                           ),

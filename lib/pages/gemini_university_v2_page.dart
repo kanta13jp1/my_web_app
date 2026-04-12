@@ -11,7 +11,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
 import '../services/gamification_service.dart';
-import '../services/theme_service.dart';
 import 'ai_university_ranking_page.dart';
 import 'api_playground_page.dart';
 
@@ -252,6 +251,36 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7C3AED),
     officialUrl: 'https://dev.writer.com/docs',
   ),
+  'luma': _ProviderMeta(
+    name: 'Luma AI',
+    emoji: '🎬',
+    color: const Color(0xFF00D4FF),
+    officialUrl: 'https://api.lumalabs.ai',
+  ),
+  'kling': _ProviderMeta(
+    name: 'Kling AI',
+    emoji: '🎥',
+    color: const Color(0xFFFF6B35),
+    officialUrl: 'https://api.kling.kuaishou.com',
+  ),
+  'pika': _ProviderMeta(
+    name: 'Pika Labs',
+    emoji: '⚡',
+    color: const Color(0xFF6C63FF),
+    officialUrl: 'https://api.pika.art',
+  ),
+  'assemblyai': _ProviderMeta(
+    name: 'AssemblyAI',
+    emoji: '🎙️',
+    color: const Color(0xFF00BFA5),
+    officialUrl: 'https://www.assemblyai.com/docs',
+  ),
+  'twelve_labs': _ProviderMeta(
+    name: 'Twelve Labs',
+    emoji: '🎞️',
+    color: const Color(0xFF4A90D9),
+    officialUrl: 'https://docs.twelvelabs.io',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -434,6 +463,31 @@ final Map<String, _Quiz> _quizzes = {
   'writer': _Quiz(
     question: 'Writer の Palmyra Med / Palmyra Fin はどのような特化モデルですか？',
     options: ['医療・金融ドメインに特化したビジネス文書生成モデル', '音声認識専用', '画像生成専用', 'コード生成専用'],
+    correct: 0,
+  ),
+  'luma': _Quiz(
+    question: 'Luma AI の Dream Machine が他の動画生成AIと差別化される最大の特徴は？',
+    options: ['3D空間を理解した物理ベースの動画生成', 'テキストのみ対応', '音声生成特化', 'コード生成に特化'],
+    correct: 0,
+  ),
+  'kling': _Quiz(
+    question: 'Kling AI が生成できる動画の最大長さは？',
+    options: ['最大3分 (180秒)', '最大30秒', '最大10秒', '最大1分'],
+    correct: 0,
+  ),
+  'pika': _Quiz(
+    question: 'Pika Labs の主な競争優位は何ですか？',
+    options: ['\$0.03/生成の低コスト高速動画生成', '最長動画生成', '音声認識精度', 'コード生成速度'],
+    correct: 0,
+  ),
+  'assemblyai': _Quiz(
+    question: 'AssemblyAI の LeMUR は何のための機能ですか？',
+    options: ['音声コンテンツにLLMを適用して理解・分析する', '画像生成を行う', 'テキスト翻訳を行う', 'コードを生成する'],
+    correct: 0,
+  ),
+  'twelve_labs': _Quiz(
+    question: 'Twelve Labs の Marengo と Pegasus はそれぞれ何のモデルですか？',
+    options: ['Marengo=動画埋め込み・Pegasus=動画生成', 'どちらも音声認識', 'どちらも画像生成', 'Marengo=テキスト・Pegasus=音声'],
     correct: 0,
   ),
 };
@@ -966,6 +1020,35 @@ Writer はビジネス文書生成・コンプライアンス管理に特化し�
 
 [Writer Docs](https://dev.writer.com/docs)
 ''',
+  'luma': '''
+## Luma AI (Dream Machine)
+3D空間を理解した動画生成AIのパイオニア。
+テキスト・画像から映画品質の動画を生成。
+公式API: api.lumalabs.ai
+''',
+  'kling': '''
+## Kling AI
+快手 (Kuaishou) 開発のシネマティック動画生成AI。
+最大3分・1080p・物理ベースモーション。
+Kling Open Platform APIで統合可能。
+''',
+  'pika': '''
+## Pika Labs
+消費者向け動画生成AI。\$0.03/生成の低コストが強み。
+Pika 2.2で1080p・最大10秒の動画生成が可能。
+公式API: api.pika.art
+''',
+  'assemblyai': '''
+## AssemblyAI
+音声認識・転写・音声理解のリーディングAPI。
+Universal-2モデル・99言語対応・LeMURでLLM連携。
+Claude (Anthropic) をデフォルトで採用している。
+''',
+  'twelve_labs': '''
+## Twelve Labs
+動画理解・検索に特化したAI。Marengo埋め込み+Pegasus生成の2モデル構成。
+動画Q&A・セマンティック検索・要約・ハイライト抽出が可能。
+''',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1180,7 +1263,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
@@ -1360,8 +1443,6 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   @override
   Widget build(BuildContext context) {
-    final themeService = Provider.of<ThemeService>(context);
-    final isDark = themeService.isDarkMode;
     final tc = _tabController;
 
     if (_loading || tc == null) {
@@ -1374,7 +1455,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 大学'),
-        backgroundColor: const Color(0xFF1A0A2E),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -1413,7 +1494,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           controller: tc,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          indicatorColor: Colors.white,
+          indicatorColor: const Color(0xFF3D5AFE),
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white60,
           tabs: _providers.map((id) {
@@ -1452,7 +1533,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
             child: TabBarView(
               controller: tc,
               children: _providers
-                  .map((id) => _buildProviderTab(id, isDark))
+                  .map((id) => _buildProviderTab(id))
                   .toList(),
             ),
           ),
@@ -1461,10 +1542,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     );
   }
 
-  Widget _buildProviderTab(String providerId, bool isDark) {
+  Widget _buildProviderTab(String providerId) {
     final m = _meta(providerId);
     final rows = _content[providerId];
-    final surface = isDark ? const Color(0xFF1E1E1E) : const Color(0xFF1E1E1E);
+    const surface = Color(0xFF1E1E1E);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -1472,7 +1553,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
         _buildProviderHeader(providerId, m, rows),
         const SizedBox(height: 12),
         if (rows != null && rows.isNotEmpty)
-          ...rows.map((row) => _buildContentCard(row, isDark, surface))
+          ...rows.map((row) => _buildContentCard(row, surface))
         else
           _buildFallbackCard(providerId, surface),
         const SizedBox(height: 16),
@@ -1549,16 +1630,20 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   // MarkdownBody 共通スタイル (ダーク専用)
   static final MarkdownStyleSheet _mdStyle = MarkdownStyleSheet(
-    p: const TextStyle(color: Colors.white, height: 1.6),
+    p: const TextStyle(color: Colors.white, height: 1.7),
     h1: const TextStyle(
       color: Colors.white,
       fontSize: 20,
       fontWeight: FontWeight.bold,
+      height: 1.4,
+      letterSpacing: 0.72,
     ),
     h2: const TextStyle(
       color: Color(0xFFE0E0E0),
       fontSize: 17,
       fontWeight: FontWeight.bold,
+      height: 1.4,
+      letterSpacing: 0.68,
     ),
     h3: const TextStyle(
       color: Color(0xFFBDBDBD),
@@ -1581,7 +1666,6 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
   Widget _buildContentCard(
     Map<String, dynamic> row,
-    bool isDark,
     Color surface,
   ) {
     final category = row['category'] as String? ?? '';
@@ -1692,7 +1776,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
             const SizedBox(height: 12),
             Text(
               quiz.question,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: const TextStyle(fontWeight: FontWeight.w500, height: 1.7, fontSize: 14),
             ),
             const SizedBox(height: 8),
             ...List.generate(quiz.options.length, (i) {

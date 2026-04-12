@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・215ページ) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
+| **VSCode版** | `lib/` (Flutter UI・219ページ) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
 | **Web版** | `supabase/functions/` (EF 250本) + `supabase/migrations/*_schema_*.sql` | — |
 | **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | Rule 10 (docs全件分析) 主担当 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
@@ -288,7 +288,7 @@ X投稿先: **@kanta13jp1** (`post-x-update` EF, OAuth 1.0a 署名済み)
 ## 📁 主要ディレクトリ
 
 ```text
-lib/pages/               # 215ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
+lib/pages/               # 219ページ (landing / comparison / user_manual / admin_analytics / personal_dashboard / my_skills 等)
 lib/widgets/             # 共通ウィジェット (edge_function_summary_card.dart 等)
 supabase/functions/      # Deno Edge Functions 250本 (デプロイ済み: 15本 / ハードキャップ50本以下 / Tier1/Tier2廃止)
 supabase/migrations/     # YYYYMMDDXXXXXX_descriptive_name.sql
