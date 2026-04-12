@@ -7220,3 +7220,13 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学20社目: Reka AI (reka) migration seed + cross-instance-pr
 - 🟡 docs/ 全件分析・鮮度切れ修正 (Rule #10)
 - 🟢 T-1 第8弾技術記事ディスパッチ
+
+### 追記: Reka AI 20社目追加完了 (同セッション)
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 9 | AI大学20社目: Reka AI (動画理解・OpenAI互換API) migration seed | ✅ |
+| 10 | cross-instance-pr: VSCode版向けReka UI追加依頼 | ✅ |
+| 11 | docs Rule #10: 3件数値修正 (EF 250本→15本/Tier廃止/workflow 17→18本) | ✅ |
+
+**最終数値**: EF 15本 / LP 126のこと / 211ページ / AI大学 **20社**
