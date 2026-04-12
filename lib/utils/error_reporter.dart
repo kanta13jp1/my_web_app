@@ -97,10 +97,11 @@ class ErrorReporter {
     Future.microtask(() async {
       try {
         await supabase.functions.invoke(
-          'submit-feedback',
+          'core-hub',
           body: {
+            'action': 'feedback.submit',
             'category': 'bug',
-            'content': content.substring(0, min(2000, content.length)),
+            'message': content.substring(0, min(2000, content.length)),
           },
         );
       } catch (_) {

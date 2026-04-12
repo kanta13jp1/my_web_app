@@ -56,8 +56,8 @@ class _DevelopmentAchievementsCardState
     });
     try {
       final response = await Supabase.instance.client.functions.invoke(
-        'development-achievements',
-        body: {'action': 'get', 'period': period},
+        'core-hub',
+        body: {'action': 'achievements.list', 'period': period},
       );
 
       final data = response.data as Map<String, dynamic>? ?? {};
@@ -149,8 +149,8 @@ class _DevelopmentAchievementsCardState
                           setStateDialog(() => isSubmitting = true);
                           try {
                             await Supabase.instance.client.functions.invoke(
-                              'development-achievements',
-                              body: {'action': 'add', 'title': text},
+                              'core-hub',
+                              body: {'action': 'achievements.add', 'title': text},
                             );
                             if (ctx.mounted) {
                               Navigator.of(ctx).pop(true);

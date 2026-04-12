@@ -41,12 +41,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
       _error = null;
     });
     try {
-      final params = <String, String>{'mode': 'user'};
-      if (_filter != 'all') params['filter'] = _filter;
-
       final response = await _supabase.functions.invoke(
-        'notification-center',
-        queryParameters: params,
+        'core-hub',
+        body: {'action': 'notification.list', 'filter': _filter},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -67,9 +64,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _markRead(String id) async {
     try {
       await _supabase.functions.invoke(
-        'notification-center',
-        method: HttpMethod.post,
-        body: {'action': 'mark_read', 'notification_id': id},
+        'core-hub',
+        body: {'action': 'notification.mark_read', 'id': id},
       );
       setState(() {
         final idx = _notifications.indexWhere((n) => n['id'] == id);
@@ -86,9 +82,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Future<void> _markAllRead() async {
     try {
       await _supabase.functions.invoke(
-        'notification-center',
-        method: HttpMethod.post,
-        body: {'action': 'mark_read', 'mark_all': true},
+        'core-hub',
+        body: {'action': 'notification.mark_all'},
       );
       setState(() {
         _notifications = _notifications

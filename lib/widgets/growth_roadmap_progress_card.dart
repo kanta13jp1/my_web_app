@@ -59,7 +59,8 @@ class _GrowthRoadmapProgressCardState
       // フロントエンドでの直接的な DB Count アクセスとハードコードを廃止
       // Edge Function で安全に実データを集計し、目標データと統合して取得する
       final response = await _supabase.functions.invoke(
-        'get-growth-roadmap-progress',
+        'growth-hub',
+        body: {'action': 'roadmap.progress'},
       );
 
       final data = response.data as Map<String, dynamic>? ?? {};

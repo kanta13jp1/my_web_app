@@ -668,9 +668,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-referral',
+        'growth-hub',
         body: const <String, dynamic>{
-          'action': 'ensure_code',
+          'action': 'referral.list',
         },
       );
       final data = _toMapValue(response.data);
@@ -738,10 +738,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-referral',
+        'growth-hub',
         body: <String, dynamic>{
-          'action': 'apply_pending',
-          'pendingCode': pendingCode,
+          'action': 'referral.list',
         },
       );
       final data = _toMapValue(response.data);
@@ -812,9 +811,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-referral',
+        'growth-hub',
         body: const <String, dynamic>{
-          'action': 'load_snapshot',
+          'action': 'referral.list',
         },
       );
       final data = _toMapValue(response.data);

@@ -197,8 +197,27 @@ serve(async (req: Request) => {
 
       // ---- Notifications ----
       case "notification.list": {
-        const items = await listItems(admin, "notification", userId);
-        return json({ success: true, items });
+        const rawItems = await listItems(admin, "notification", userId, 50);
+        // metadata をフラット化して旧 notification-center 互換フォーマットに変換
+        const notifications = rawItems.map((row) => {
+          const meta = (row.metadata as Record<string, unknown>) ?? {};
+          return {
+            id: row.id,
+            title: meta["title"] ?? "",
+            message: meta["message"] ?? "",
+            type: meta["type"] ?? "info",
+            is_read: !!(meta["read"] as boolean),
+            created_at: row.created_at,
+          };
+        });
+        const filter = (body.filter as string) ?? "all";
+        const limit = Number(body.limit ?? 50);
+        const filtered = filter === "unread"
+          ? notifications.filter((n) => !n.is_read)
+          : notifications;
+        const result = filtered.slice(0, limit);
+        const unreadCount = notifications.filter((n) => !n.is_read).length;
+        return json({ success: true, notifications: result, unreadCount });
       }
 
       case "notification.create": {
@@ -228,6 +247,21 @@ serve(async (req: Request) => {
           .eq("source", "notification");
         if (updateErr) return json({ error: updateErr.message }, 400);
         return json({ success: true });
+      }
+
+      case "notification.mark_all": {
+        // ユーザーの全通知を既読にする
+        const { data: rows, error: listErr } = await admin
+          .from("app_analytics")
+          .select("id, metadata")
+          .eq("source", "notification")
+          .filter("metadata->>user_id", "eq", userId);
+        if (listErr) return json({ error: listErr.message }, 400);
+        for (const row of rows ?? []) {
+          const meta = { ...(row.metadata as Record<string, unknown>), read: true };
+          await admin.from("app_analytics").update({ metadata: meta }).eq("id", row.id);
+        }
+        return json({ success: true, updated: (rows ?? []).length });
       }
 
       // ---- User profile ----
@@ -318,12 +352,29 @@ serve(async (req: Request) => {
 
       // ---- Development achievements ----
       case "achievements.list": {
-        const { data: ach } = await admin
+        const period = (body.period as string) ?? "";
+        let query = admin
           .from("development_achievements")
           .select("*")
-          .order("completed_at", { ascending: false })
-          .limit(20);
+          .order("completed_at", { ascending: false });
+        if (period === "今週の実績") {
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          query = query.gte("completed_at", weekAgo.toISOString());
+        }
+        const { data: ach } = await query.limit(20);
         return json({ success: true, achievements: ach ?? [] });
+      }
+
+      case "achievements.add": {
+        if (!body.title) return json({ error: "title required" }, 400);
+        const { data, error: insertErr } = await admin
+          .from("development_achievements")
+          .insert({ title: String(body.title), description: body.description ?? "", completed_at: new Date().toISOString() })
+          .select()
+          .single();
+        if (insertErr) return json({ error: insertErr.message }, 400);
+        return json({ success: true, achievement: data });
       }
 
       // ---- Analytics summary ----

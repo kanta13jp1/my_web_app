@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 紹介プログラムページ
 ///
 /// ユーザーの紹介コードを表示し、SNS シェアで友達を誘う導線を提供する。
-/// `growth-referral` Edge Function でコードを取得・生成する。
+/// `growth-hub` Edge Function (action: referral.list/create) でコードを取得・生成する。
 class ReferralPage extends StatefulWidget {
   const ReferralPage({super.key});
 
@@ -35,15 +35,28 @@ class _ReferralPageState extends State<ReferralPage> {
     });
     try {
       final resp = await _supabase.functions.invoke(
-        'growth-referral',
-        body: {'action': 'get_code'},
+        'growth-hub',
+        body: {'action': 'referral.list'},
       );
       final data = resp.data as Map<String, dynamic>?;
-      if (data != null) {
-        setState(() {
-          _referralCode = data['code']?.toString();
-          _referralCount = (data['referral_count'] as num?)?.toInt() ?? 0;
-        });
+      if (data != null && data['success'] == true) {
+        final items = (data['items'] as List<dynamic>?) ?? [];
+        if (items.isNotEmpty) {
+          final meta =
+              (items.first as Map<String, dynamic>)['metadata']
+                  as Map<String, dynamic>? ??
+              {};
+          setState(() {
+            _referralCode = meta['code']?.toString();
+            _referralCount = items.length;
+          });
+        } else {
+          // コードなし → ユーザーIDから生成
+          final uid = _supabase.auth.currentUser?.id;
+          if (uid != null) {
+            setState(() => _referralCode = uid.substring(0, 8).toUpperCase());
+          }
+        }
       }
     } catch (e) {
       // Edge Function が未実装 or 失敗の場合はユーザーIDからコードを生成

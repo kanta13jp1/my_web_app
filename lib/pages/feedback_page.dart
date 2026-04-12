@@ -33,43 +33,25 @@ class _FeedbackPageState extends State<FeedbackPage> {
       }
 
       final response = await supabase.functions.invoke(
-        'feature-request-manager',
-        headers: <String, String>{
-          'Authorization': 'Bearer ${session.accessToken}',
-        },
+        'core-hub',
         body: <String, dynamic>{
-          'action': 'submit_feedback_ticket',
+          'action': 'feedback.submit',
           'category': _selectedCategory,
-          'content': _contentController.text.trim(),
+          'message': _contentController.text.trim(),
         },
       );
 
       final data = response.data as Map<String, dynamic>?;
-      if (response.status != 201 || data?['success'] != true) {
+      if (data?['success'] != true) {
         throw Exception(
           data?['error']?.toString() ?? '投稿に失敗しました',
         );
       }
 
-      final thankYouEmailSent = data?['thankYouEmailSent'] == true;
-      final githubIssueCreated = data?['githubIssueCreated'] == true;
-      final githubIssueNumber = data?['githubIssueNumber']?.toString();
-      final warnings = data?['warnings'] is List
-          ? List<String>.from(data!['warnings'] as List)
-          : const <String>[];
-
-      final lines = <String>[
-        'フィードバックを受け付けました。ありがとうございます。',
-        if (thankYouEmailSent) '投稿ありがとうメールを送信しました。',
-        if (githubIssueCreated && githubIssueNumber != null)
-          'GitHub Issue #$githubIssueNumber に登録しました。',
-        if (warnings.isNotEmpty) '一部の自動処理はバックグラウンドで再実行されます。',
-      ];
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(lines.join('\n')),
+        const SnackBar(
+          content: Text('フィードバックを受け付けました。ありがとうございます。'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),

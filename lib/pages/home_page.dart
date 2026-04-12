@@ -94,8 +94,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> _fetchNotifUnreadCount() async {
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'notification-center',
-        queryParameters: {'mode': 'user', 'filter': 'unread', 'limit': '1'},
+        'core-hub',
+        body: {'action': 'notification.list', 'filter': 'unread', 'limit': 1},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {

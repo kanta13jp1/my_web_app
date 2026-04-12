@@ -128,8 +128,8 @@ class _LandingPageState extends State<LandingPage> {
     if (client == null) return;
     try {
       final response = await client.functions.invoke(
-        'development-achievements',
-        body: {'action': 'get', 'period': '今週の実績'},
+        'core-hub',
+        body: {'action': 'achievements.list', 'period': '今週の実績'},
       );
       final data = response.data as Map<String, dynamic>? ?? {};
       final list = (data['achievements'] as List<dynamic>?) ?? [];
@@ -149,8 +149,8 @@ class _LandingPageState extends State<LandingPage> {
 
       // 全件カウントは別で取得
       final allResponse = await client.functions.invoke(
-        'development-achievements',
-        body: {'action': 'get', 'period': 'すべての実績'},
+        'core-hub',
+        body: {'action': 'achievements.list'},
       );
       final allData = allResponse.data as Map<String, dynamic>? ?? {};
       final count = (allData['achievements'] as List<dynamic>?)?.length ?? 0;
