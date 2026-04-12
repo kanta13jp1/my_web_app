@@ -7537,3 +7537,28 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 T-1 第12弾: `2026-04-10-dns-domain-manager.md` または `2026-04-10-budget-ai-advisor.md` 投稿
 - 🟡 growth-hub roadmap.progress 実データ取得 (userCount/plans)
 - 🟢 BLOG_PAT シークレット設定 → blog-publish.yml Step5 完全自動化
+
+---
+
+## Windows版#51 セッション記録 (2026-04-12)
+
+### 完了: AI大学 Ideogram・Udio 追加 (33・34社目)
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | Ideogram (ideogram) migration: `20260412026000_seed_ideogram_ai_university.sql` | ✅ |
+| 2 | Udio (udio) migration: `20260412027000_seed_udio_ai_university.sql` | ✅ |
+| 3 | cross-instance-pr: `20260412_ideogram_provider_ui.md` | ✅ |
+| 4 | cross-instance-pr: `20260412_udio_provider_ui.md` | ✅ |
+| 5 | COMPRESSED_PROMPT_V3.md: 32社→34社更新 | ✅ |
+
+### 現状数値
+
+- EF: **15本** / LP: 126のこと / ページ数: 211 / AI大学: **34社**
+- cross-instance-prs: 累計25件 pending → VSCode版処理が急務
+
+### 次回優先タスク
+
+- 🔴 VSCode版: cross-instance-prs 25件一括処理
+- 🟡 AI大学35・36社目: Character.AI (キャラクター会話) / Pika (動画)
+- 🟢 Windows版: cross-instance-prs 25件超 → 一時休止して処理待ち推奨
