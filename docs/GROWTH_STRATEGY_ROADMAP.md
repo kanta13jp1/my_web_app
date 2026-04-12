@@ -7844,3 +7844,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 AI大学学習リマインダー通知 (notification-center EF連携バッチ)
 - 🟡 BLOG_PAT シークレット設定 → blog-publish Step5完全自動化
 - 🟢 growth-hub roadmap.progress 実データ対応 (Web版スコープ)
+
+---
+
+## Web版#38 セッション記録 (2026-04-12)
+
+### 完了: Rule18 モデル確認 + growth-hub 実データ対応 + docs全件分析
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | Rule18: ai-assistant EF claude-haiku-4-5-20251001 確認 (HEAD済み) | ✅ |
+| 2 | growth-hub roadmap.progress 実データ対応 (_applyAchievements + growth_plans テーブル) | ✅ |
+| 3 | deno lint 272ファイル 0エラー確認 | ✅ |
+| 4 | docs/ 戦略ドキュメント全件分析 (Rule10) — 鮮度OK・矛盾なし | ✅ |
+| 5 | 並行インスタンス確認: growth-hub変更はcommit 781dfb38 (PS版#50) に取込済み | ✅ |
+
+### 現状数値 (2026-04-12 Web版#38完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / AI大学: 34社 / ページ数: 215
+- ai-assistant fallback model: claude-haiku-4-5-20251001 (最新)
+- growth-hub roadmap.progress: growth_plans 実データ対応済み
+
+### 次回優先タスク
+
+- 🔴 AI大学学習リマインダー通知バッチ設定 (Web版スコープ: notification-center EF連携)
+- 🟡 T-1 新記事: AI大学34社達成・4インスタンス並列開発解説
+- 🟢 growth-import-preview Notion DB対応 強化 (既実装確認済み・必要なら拡張)
