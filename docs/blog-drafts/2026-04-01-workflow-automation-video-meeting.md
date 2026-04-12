@@ -3,7 +3,7 @@ title: "FlutterとSupabase Edge Functionsで3競合SaaSを同時に攻める —
 date: 2026-04-01
 tags: [Flutter, Supabase, EdgeFunctions, buildinpublic]
 platforms: [Qiita, dev.to]
-published: false
+published: true
 ---
 
 # FlutterとSupabase Edge Functionsで3競合SaaSを同時に攻める — AIワークフロー・SNSスケジューラー・ビデオ会議を1日で実装した話
