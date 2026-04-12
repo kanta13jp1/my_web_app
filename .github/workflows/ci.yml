@@ -68,31 +68,34 @@ jobs:
           fi
         # 74テスト安定稼働中 (2026-04-12 PR#317) — continue-on-error 廃止
 
-      - name: Check new Edge Functions not in deploy list
+      - name: Check Edge Function deploy count (ハードキャップ50本以下)
         run: |
-          # deploy-prod.yml のデプロイリストを抽出
+          # deploy-prod.yml のデプロイリストを抽出 (macro-hub体制 — Tier1/Tier2廃止)
           DEPLOYED=$(grep "supabase functions deploy" .github/workflows/deploy-prod.yml \
             | grep -v "^#\|#" | awk '{print $4}' | sort)
-          # supabase/functions/ の実EFディレクトリのみ抽出 (_shared・設定ファイル除く)
+          DEPLOY_COUNT=$(echo "$DEPLOYED" | grep -c . || true)
+          # supabase/functions/ の実EFディレクトリ数 (_shared除く)
           EXISTING=$(find supabase/functions -maxdepth 1 -mindepth 1 -type d \
             | xargs -I{} basename {} | grep -v "^_" | sort)
-          # deploy-prod.yml の Tier2コメントから全EF名を抽出 (カンマ区切りも対応)
-          TIER2=$(sed -n '/Tier 2 (code-only/,/^\s*env:/p' \
-            .github/workflows/deploy-prod.yml \
-            | grep -E '^\s+#\s+[a-z]' \
-            | sed 's/.*#\s*//' | tr ',' '\n' | tr -d ' ' \
-            | grep -E '^[a-z][a-z0-9-]+$' | sort -u || true)
-          # Tier1にもTier2にも記載がない「未分類EF」を検出
-          UNCATEGORIZED=$(comm -23 <(echo "$EXISTING") \
-            <(echo -e "$DEPLOYED\n$TIER2" | sort -u) || true)
-          if [ -n "$UNCATEGORIZED" ]; then
-            echo "⚠️ 以下のEFがTier1/Tier2いずれにも未登録です:"
-            echo "$UNCATEGORIZED"
-            echo "deploy-prod.yml のTier1またはTier2コメントへの追記を検討してください。"
+          EXISTING_COUNT=$(echo "$EXISTING" | grep -c . || true)
+          # hub に吸収済みEF = ソースあり・デプロイなし (正常)
+          HUB_ABSORBED=$(comm -23 <(echo "$EXISTING") <(echo "$DEPLOYED") || true)
+          HUB_ABSORBED_COUNT=$(echo "$HUB_ABSORBED" | grep -c . || true)
+          echo "=== EF カウント ==="
+          echo "デプロイ中: ${DEPLOY_COUNT}本 (ハードキャップ: 50本以下)"
+          echo "ソースあり: ${EXISTING_COUNT}本"
+          echo "hub吸収済み(ソースのみ): ${HUB_ABSORBED_COUNT}本"
+          echo ""
+          echo "=== デプロイ中EF一覧 ==="
+          echo "$DEPLOYED"
+          # ハードキャップ超過チェック
+          if [ "$DEPLOY_COUNT" -gt 50 ]; then
+            echo "❌ EFハードキャップ超過: ${DEPLOY_COUNT}本 > 50本"
+            exit 1
           else
-            echo "✅ 全EFがTier1/Tier2に分類済み"
+            echo "✅ EFハードキャップ内: ${DEPLOY_COUNT}本 <= 50本"
           fi
-        continue-on-error: true  # 未分類でもCIはブロックしない (警告のみ)
+        continue-on-error: false  # 50本超過はCIブロック
 
       - name: Check formatting
         run: dart format --set-exit-if-changed .

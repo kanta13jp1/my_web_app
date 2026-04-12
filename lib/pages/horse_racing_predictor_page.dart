@@ -70,14 +70,17 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('horse-racing-predictor'),
         _supabase.functions.invoke(
-          'horse-racing-predictor',
-          queryParameters: {'view': 'predictions'},
+          'tools-hub',
+          body: {'action': 'horseracing.list_races'},
         ),
         _supabase.functions.invoke(
-          'horse-racing-predictor',
-          queryParameters: {'view': 'stats'},
+          'tools-hub',
+          body: {'action': 'horseracing.list_predictions'},
+        ),
+        _supabase.functions.invoke(
+          'tools-hub',
+          body: {'action': 'horseracing.stats'},
         ),
       ]);
 
@@ -120,9 +123,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'horse-racing-predictor',
+        'tools-hub',
         body: {
-          'action': 'register_race',
+          'action': 'horseracing.register_race',
           'name': name,
           'date': date,
           'venue': _venueCtrl.text.trim().isEmpty
@@ -171,9 +174,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'horse-racing-predictor',
+        'tools-hub',
         body: {
-          'action': 'predict',
+          'action': 'horseracing.predict',
           'race_id': _selectedRaceId,
           'horse_name': horseName,
           'bet_type': _betType,

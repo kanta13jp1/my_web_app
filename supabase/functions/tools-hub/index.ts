@@ -511,6 +511,46 @@ serve(async (req) => {
         return json({ success: true, message: "Pet fed!" });
       }
 
+      // ── Horse Racing Predictor ───────────────────────────────────────────────
+      case "horseracing.list_races": {
+        const items = await listItems(admin, "horse_racing_race", userId, 100);
+        const races = items.map(i => ({ race_id: i.id, ...i.metadata as Record<string, unknown> }));
+        return json({ success: true, races });
+      }
+      case "horseracing.register_race": {
+        await addItem(admin, "horse_racing_race", userId, {
+          name: body.name, date: body.date, venue: body.venue ?? null,
+          race_type: body.race_type ?? "芝", grade: body.grade ?? "未勝利",
+          distance: body.distance ?? null,
+        });
+        return json({ success: true });
+      }
+      case "horseracing.list_predictions": {
+        const items = await listItems(admin, "horse_racing_prediction", userId, 100);
+        const predictions = items.map(i => ({ ...i.metadata as Record<string, unknown> }));
+        return json({ success: true, predictions });
+      }
+      case "horseracing.predict": {
+        await addItem(admin, "horse_racing_prediction", userId, {
+          race_id: body.race_id, horse_name: body.horse_name,
+          bet_type: body.bet_type ?? "単勝", stake: body.stake ?? 100,
+          confidence: body.confidence ?? 50, result: "pending", payout: 0,
+        });
+        return json({ success: true });
+      }
+      case "horseracing.stats": {
+        const items = await listItems(admin, "horse_racing_prediction", userId, 1000);
+        const preds = items.map(i => i.metadata as Record<string, unknown>);
+        const totalBets = preds.length;
+        const wins = preds.filter(p => p.result === "win").length;
+        const winRate = totalBets > 0 ? Math.round((wins / totalBets) * 100) : 0;
+        const totalStake = preds.reduce((s, p) => s + Number(p.stake ?? 0), 0);
+        const totalReturn = preds.filter(p => p.result === "win")
+          .reduce((s, p) => s + Number(p.payout ?? 0), 0);
+        const roi = totalStake > 0 ? Math.round(((totalReturn - totalStake) / totalStake) * 100) : 0;
+        return json({ success: true, stats: { totalBets, wins, winRate, roi, totalStake, totalReturn } });
+      }
+
       default:
         return json({
           error: `Unknown action: ${action}`,
@@ -537,6 +577,8 @@ serve(async (req) => {
             "version.list", "version.create",
             "vault.list", "vault.add", "vault.delete",
             "pet.status", "pet.feed",
+            "horseracing.list_races", "horseracing.register_race",
+            "horseracing.list_predictions", "horseracing.predict", "horseracing.stats",
           ],
         }, 400);
     }
