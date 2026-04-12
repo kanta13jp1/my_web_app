@@ -3,7 +3,7 @@ title: "Flutter WebでMoneyForwardを超える家計AIアドバイザーを実�
 emoji: "💰"
 type: "tech"
 topics: ["flutter", "supabase", "ai", "dart", "moneyforward"]
-published: false
+published: true
 ---
 
 # Flutter WebでMoneyForwardを超える家計AIアドバイザーを実装した話
