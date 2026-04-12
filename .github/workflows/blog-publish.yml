@@ -183,16 +183,20 @@ jobs:
           fi
 
           git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
+          git push origin "$BRANCH"
 
-          # main に直接 push (GITHUB_TOKEN は contents: write でブランチ保護をバイパス可)
-          # PR 作成は "GitHub Actions is not permitted to create pull requests" で失敗するため廃止
-          if git push origin HEAD:main 2>&1 | tee /tmp/push_out.txt | grep -q "main -> main\|Bypassed"; then
-            echo "✅ main への直接 push 完了"
+          # GitHub API でブランチを main にマージ (PR作成不要・ブランチ保護バイパス不要)
+          MERGE_MSG="docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
+          MERGE_RESULT=$(gh api repos/${{ github.repository }}/merges \
+            --method POST \
+            --field base=main \
+            --field head="$BRANCH" \
+            --field commit_message="$MERGE_MSG" \
+            --jq '.sha // "null"' 2>&1 || true)
+          if [ "$MERGE_RESULT" = "null" ] || [ -z "$MERGE_RESULT" ]; then
+            echo "📝 マージ不要 (already up to date) or 失敗: $MERGE_RESULT"
           else
-            # fallback: 元のブランチ push → 手動マージ促進
-            git push origin "$BRANCH"
-            echo "⚠️ main push 失敗。ブランチ '$BRANCH' を push しました。手動マージをお願いします。"
-            cat /tmp/push_out.txt || true
+            echo "✅ API マージ完了: $MERGE_RESULT"
           fi
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
