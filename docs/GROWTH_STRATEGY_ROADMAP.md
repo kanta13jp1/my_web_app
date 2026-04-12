@@ -7683,3 +7683,38 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 VSCode版: cross-instance-prs 25件一括処理 (最優先)
 - 🟡 Windows版: pending 10件以下になれば migration 再開 (Character.AI/Pika候補)
 - 🟢 Windows版: docs 全件チェック完了 → 次回は migration 再開判断を優先
+
+---
+
+## PowerShell版 PS#50 (2026-04-12)
+
+### 完了: T-1残り全投稿 + 新記事執筆 + actions/checkout v6対応 + blog-publish競合修正
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | Rule17: 全ワークフロー健全性確認 | ✅ |
+| 2 | T-1残り6本バッチdispatch (2026-03-28/31系) | ✅ |
+| 3 | T-1新記事執筆: blog-publish自動化記事 (GitHub Actions × Supabase) | ✅ |
+| 4 | 新記事Qiita/dev.to投稿成功 | ✅ |
+| 5 | actions/checkout v4→v6 全15ワークフロー更新 (Node.js 24対応) | ✅ |
+| 6 | blog-publish.yml Step5: ブランチ名にrun_id追加 (並行dispatch競合修正) | ✅ |
+| 7 | app-feedback.md published:true 手動マーク | ✅ |
+
+### 投稿URL (新規)
+
+- T-1新記事 Qiita: https://qiita.com/kanta13jp1/items/1edd051d8acf552b700d
+- T-1新記事 dev.to: https://dev.to/kanta13jp1/github-actions-x-supabase-deji-shu-ji-shi-tou-gao-wozi-dong-hua-sitahua-1ri-ni21ben-woqiitadevtohe-4fb3
+
+### 現状数値 (2026-04-12 PowerShell版#50完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / AI大学: 34社
+- T-1投稿済み: **28弾** (本日だけで+17本)
+- Qiita記事: 28本+
+- GitHub Actions: actions/checkout v6 (Node.js 24対応済み)
+
+### 次回優先タスク
+
+- 🔴 T-1 新記事執筆: AI大学34社達成記念記事 / 4インスタンス並列開発解説
+- 🟡 BLOG_PAT シークレット設定 → blog-publish Step5完全自動化
+- 🟢 growth-hub roadmap.progress 実データ対応 (Web版スコープ)
