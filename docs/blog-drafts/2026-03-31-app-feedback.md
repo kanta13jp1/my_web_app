@@ -1,6 +1,6 @@
 ---
 title: FlutterアプリにSupabaseでユーザーフィードバック収集機能を実装した
-published: false
+published: true
 emoji: 📬
 type: tech
 topics: [flutter, supabase, dart, rls]
