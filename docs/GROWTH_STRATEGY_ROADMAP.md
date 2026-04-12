@@ -7193,3 +7193,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 AI大学19社目候補検討 (Qwen/Apple/Samsung等)
 - 🟡 growth-hub roadmap.progress 実データ対応
 - 🟢 edge_function_summary_card.dart 旧EF名→hub名に更新
+
+## セッション記録: Windows版#44 (2026-04-12)
+
+### 作業内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | Dart EF移行: viral_ad_campaign_page.dart (growth-hub対応) | ✅ |
+| 2 | Dart EF移行: admin_analytics_page.dart (8箇所hub対応) | ✅ |
+| 3 | Dart EF移行: competitor_monitoring_card.dart (admin-hub対応) | ✅ |
+| 4 | news_rss_aggregator_page.dart: tools-hub rss.list_feeds + Feed管理UI実装 | ✅ |
+| 5 | ai_summarizer_page.dart: 黒背景黒文字バグ修正 | ✅ |
+| 6 | AI大学19社目: Oracle AI (OCI Generative AI) migration seed | ✅ |
+| 7 | cross-instance-pr作成: VSCode版向けOracle UI追加依頼 | ✅ |
+| 8 | COMPRESSED_PROMPT_V3.md: プロバイダー数 18→19社更新 | ✅ |
+
+### 現状数値 (2026-04-12 Windows版#44完了時点)
+
+- EF deployed: **15本** (macro-hub体制)
+- LP: 126のこと / ページ数: 211 / AI大学: **19社**
+- 次回候補: Reka AI / Aleph Alpha / Together AI
+
+### 次回優先タスク
+
+- 🔴 AI大学20社目: Reka AI (reka) migration seed + cross-instance-pr
+- 🟡 docs/ 全件分析・鮮度切れ修正 (Rule #10)
+- 🟢 T-1 第8弾技術記事ディスパッチ
