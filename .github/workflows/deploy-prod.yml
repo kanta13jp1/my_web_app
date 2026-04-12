@@ -148,7 +148,7 @@ jobs:
           supabase functions delete generate-daily-challenges || true
           supabase functions delete trigger-analysis || true
           supabase functions delete analyze-reality || true
-          supabase functions delete local-election-intelligence || true
+          # local-election-intelligence: standalone (complex scraping logic, kept separate)
           supabase functions delete ai-university-content || true
           supabase functions delete ai-university-streaks || true
           supabase functions delete ai-university-badges || true
@@ -264,8 +264,9 @@ jobs:
           supabase functions deploy enterprise-hub --no-verify-jwt
           supabase functions deploy social-commerce-hub --no-verify-jwt
           supabase functions deploy lifestyle-hub --no-verify-jwt
+          supabase functions deploy local-election-intelligence --no-verify-jwt
 
-          # Total: 15 functions deployed (ハードキャップ50本に対し15本 — 余裕35本)
+          # Total: 16 functions deployed (ハードキャップ50本に対し16本 — 余裕34本)
           #
           # Hub対応表:
           # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
