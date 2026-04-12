@@ -168,7 +168,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          BRANCH="blog-publish/$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+          BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
