@@ -1,7 +1,7 @@
 ---
 title: "Claude Code Schedule で CS・バグ修正・競合モニタリングを完全自動化した話"
 tags: ClaudeCode,Flutter,Supabase,GitHubActions,buildinpublic
-published: false
+published: true
 ---
 
 # Claude Code Schedule で CS・バグ修正・競合モニタリングを完全自動化した話
