@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-12 Windows版#42 (EF統合: agent-hub + schedule-manager完成, 98→94本)
+最終更新: 2026-04-12 Claude Schedule daily-report (競合: Notion 4/10タブカスタマイズ, Slack MCP公開, GitHub Copilot Autopilot Public Preview)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -7068,3 +7068,24 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 Rule19 UI改善: design-skills + FigmaMCP + AIDesignerMCP で1ページ改善
 - 🟡 GROWTH_ROADMAP セッション記録更新
 - 🟢 新機能はhub action追加形式で実装 (EFハードキャップ維持)
+
+---
+
+## セッション記録: daily-report (2026-04-12) — Claude Schedule
+
+**実施内容**:
+- 日次レポート生成: `docs/daily-reports/2026-04-12.md` (git log フォールバック / Supabase API プロキシブロック継続)
+- 競合モニタリング: `docs/competitor-reports/2026-04-12.md` 生成
+- スケジュールヘルス: ✅ 正常 (24時間で7コミット確認)
+
+**競合動向サマリー**:
+| 競合 | 更新内容 | 自分株式会社への影響 |
+|-----|---------|-------------------|
+| Notion | 4/10タブカスタマイズ・4/9カバーアート・4/6デスクトップ音声入力・3.4ダッシュボードビュー | パーソナルダッシュボード機能の実装を検討 |
+| Slack | MCP サーバー公開 (Claude/Cursor 対応)・Semantic Search Pro 拡張 | tools-hub に send-to-slack アクション追加の好機 |
+| GitHub | Copilot Autopilot Public Preview・ネスト型サブエージェント・Rubber Duck (+75%推論) | ai-assistant EF の品質向上で対抗 |
+
+**次回アクションアイテム**:
+- 🟡 `tools-hub` に `send-to-slack` アクション追加検討 (Slack MCP サーバー対応)
+- 🟡 一般ユーザー向けパーソナルダッシュボード実装検討 (Notion ダッシュボードビュー対抗)
+- 🔵 `ai-university-content` の GitHub/Slack プロバイダー `news` カテゴリ更新
