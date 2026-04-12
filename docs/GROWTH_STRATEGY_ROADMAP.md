@@ -7637,6 +7637,31 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 
 ---
 
+## Windows版#57 セッション記録 (2026-04-12)
+
+### 完了: AI大学 luma + kling 追加 (35-36社目) — migration再開
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | cross-instance-prs 0件確認 → migration再開判断 | ✅ |
+| 2 | `luma` (Luma AI) seed migration 作成 (030000) | ✅ |
+| 3 | `kling` (Kling AI) seed migration 作成 (031000) | ✅ |
+| 4 | cross-instance-pr → VSCode版に UI追加依頼 | ✅ |
+| 5 | COMPRESSED_PROMPT プロバイダーリスト 34社→36社 更新 | ✅ |
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: 215 / AI大学: **36社**
+- cross-instance-prs: **1件 pending** (luma+kling UI)
+
+### 次回優先タスク
+
+- 🟡 Windows版: `pika` migration 追加 (37社目・次の動画AI)
+- 🟢 Windows版: discovery mode で次候補評価 (AssemblyAI/Twelve Labs等)
+- 🔴 VSCode版: luma+kling UI 追加 (cross-instance-pr処理)
+
+---
+
 ## Windows版#56 セッション記録 (2026-04-12)
 
 ### 完了: docs Rule#10 全件クリーン (technical 4件 + user-docs 1件アーカイブ化)
