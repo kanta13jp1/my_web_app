@@ -36,7 +36,7 @@ async function listItems(
   limit = 50,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -53,7 +53,7 @@ async function addItem(
   meta: Record<string, unknown>,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at")
     .single();
@@ -88,7 +88,7 @@ serve(async (req: Request) => {
       // ---- Support tickets ----
       case "support.list": {
         const { data, error } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("id, metadata, created_at")
           .eq("source", "support_ticket")
           .filter("metadata->>status", "neq", "closed")
@@ -110,7 +110,7 @@ serve(async (req: Request) => {
       case "support.reply": {
         if (!body.id) return json({ error: "id required" }, 400);
         await admin
-          .from("app_analytics")
+          .from("hub_data")
           .update({
             metadata: {
               user_id: body.original_user_id ?? userId,
@@ -178,7 +178,7 @@ serve(async (req: Request) => {
       // ---- Health check ----
       case "health.check": {
         const checks = await Promise.allSettled([
-          admin.from("app_analytics").select("id").limit(1),
+          admin.from("hub_data").select("id").limit(1),
           admin.from("development_achievements").select("id").limit(1),
         ]);
         return json({
@@ -206,7 +206,7 @@ serve(async (req: Request) => {
       // ---- Edge function coverage ----
       case "ef.coverage": {
         const { data } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("source")
           .eq("source", "ef_coverage")
           .order("created_at", { ascending: false })

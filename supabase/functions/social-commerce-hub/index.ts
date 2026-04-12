@@ -39,7 +39,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -50,7 +50,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -58,7 +58,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source)
     .filter("metadata->>user_id", "eq", userId);
   if (error) throw new Error(error.message);
@@ -131,7 +131,7 @@ serve(async (req) => {
 
       // ── Social Proof Generator ───────────────────────────────────────────────
       case "social_proof.generate": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata->user_id, created_at")
           .eq("source", "social_post")
           .order("created_at", { ascending: false })
@@ -142,7 +142,7 @@ serve(async (req) => {
 
       // ── Marketplace ──────────────────────────────────────────────────────────
       case "market.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "marketplace_item")
           .filter("metadata->>status", "eq", "active")
           .order("created_at", { ascending: false }).limit(50);
@@ -170,7 +170,7 @@ serve(async (req) => {
 
       // ── Auction ───────────────────────────────────────────────────────────────
       case "auction.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "auction_item")
           .filter("metadata->>status", "eq", "active")
           .order("created_at", { ascending: false }).limit(20);
@@ -192,7 +192,7 @@ serve(async (req) => {
 
       // ── Crowdfunding ──────────────────────────────────────────────────────────
       case "crowdfund.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "crowdfund_campaign")
           .order("created_at", { ascending: false }).limit(20);
         return json({ success: true, campaigns: data ?? [] });
@@ -221,7 +221,7 @@ serve(async (req) => {
         return json({ success: true, item });
       }
       case "gift.mark_purchased": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, purchased: true, purchased_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "gift_item");
         if (error) throw new Error(error.message);
@@ -309,7 +309,7 @@ serve(async (req) => {
       }
       case "invoice.list": return json({ success: true, invoices: await listItems(admin, "invoice", userId) });
       case "invoice.mark_paid": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "paid", paid_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "invoice");
         if (error) throw new Error(error.message);
@@ -344,7 +344,7 @@ serve(async (req) => {
         return json({ success: true, order: item, order_id: orderId });
       }
       case "order.update_status": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: body.status, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "order");
         if (error) throw new Error(error.message);
@@ -353,7 +353,7 @@ serve(async (req) => {
 
       // ── Event Ticketing ───────────────────────────────────────────────────────
       case "event.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "event")
           .order("created_at", { ascending: false }).limit(20);
         return json({ success: true, events: data ?? [] });
@@ -383,7 +383,7 @@ serve(async (req) => {
         return json({ success: true, appointment: item });
       }
       case "appointment.cancel": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "cancelled", cancelled_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "appointment");
         if (error) throw new Error(error.message);
@@ -402,7 +402,7 @@ serve(async (req) => {
 
       // ── E-Learning ────────────────────────────────────────────────────────────
       case "course.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "course")
           .order("created_at", { ascending: false }).limit(20);
         return json({ success: true, courses: data ?? [] });
@@ -435,7 +435,7 @@ serve(async (req) => {
         return json({ success: true, card: item });
       }
       case "lang.review_card": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, last_reviewed: new Date().toISOString(), result: body.result } })
           .eq("id", String(body.id ?? "")).eq("source", "flashcard");
         if (error) throw new Error(error.message);
@@ -473,7 +473,7 @@ serve(async (req) => {
         return json({ success: true, item });
       }
       case "inventory.update_qty": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, quantity: body.quantity, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "inventory_item");
         if (error) throw new Error(error.message);

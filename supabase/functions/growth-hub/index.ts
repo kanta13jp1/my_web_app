@@ -43,7 +43,7 @@ async function listItems(
   limit = 50,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -60,7 +60,7 @@ async function addItem(
   meta: Record<string, unknown>,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at")
     .single();
@@ -75,7 +75,7 @@ async function _deleteItem(
   id: string,
 ) {
   const { error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .delete()
     .eq("id", id)
     .eq("source", source)
@@ -120,7 +120,7 @@ serve(async (req: Request) => {
 
       case "acquisition.report": {
         const { data, error } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("source, metadata")
           .in("source", ["growth_signal", "referral_complete"])
           .filter("metadata->>user_id", "eq", userId!);
@@ -195,7 +195,7 @@ serve(async (req: Request) => {
 
       case "referral.complete": {
         const { error } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .update({
             metadata: {
               user_id: userId!,
@@ -265,7 +265,7 @@ serve(async (req: Request) => {
       // ─── Roadmap Progress ─────────────────────────────────────────────────────
       case "roadmap.progress": {
         const { data: rp } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("metadata")
           .eq("source", "roadmap_progress")
           .filter("metadata->>user_id", "eq", userId!)
@@ -385,7 +385,7 @@ serve(async (req: Request) => {
       }
 
       case "quote.image": {
-        // Return a placeholder image generation request stored in app_analytics
+        // Return a placeholder image generation request stored in hub_data
         const item = await addItem(admin, "quote_image", userId!, {
           text: body.text,
           style: body.style ?? "minimal",

@@ -44,7 +44,7 @@ async function listItems(
   limit = 50,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -61,7 +61,7 @@ async function addItem(
   meta: Record<string, unknown>,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at")
     .single();
@@ -76,7 +76,7 @@ async function deleteItem(
   id: string,
 ) {
   const { error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .delete()
     .eq("id", id)
     .eq("source", source)
@@ -110,7 +110,7 @@ serve(async (req: Request) => {
         const [usersRes, analyticsRes] = await Promise.all([
           admin.auth.admin.listUsers({ page: 1, perPage: 1 }),
           admin
-            .from("app_analytics")
+            .from("hub_data")
             .select("metadata")
             .eq("date", today)
             .limit(1),
@@ -147,7 +147,7 @@ serve(async (req: Request) => {
 
       case "manager.update": {
         const { error } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .update({ metadata: { ...body, user_id: userId! } })
           .eq("id", String(body.id))
           .eq("source", "scheduled_task");
@@ -338,7 +338,7 @@ serve(async (req: Request) => {
       // ─── Health Check ─────────────────────────────────────────────────────────
       case "health.check": {
         const start = Date.now();
-        const dbCheck = await admin.from("app_analytics").select("id").limit(1);
+        const dbCheck = await admin.from("hub_data").select("id").limit(1);
         return json({
           success: true,
           db_ok: !dbCheck.error,

@@ -36,7 +36,7 @@ async function listItems(
   limit = 50,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -53,7 +53,7 @@ async function addItem(
   meta: Record<string, unknown>,
 ) {
   const { data, error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at")
     .single();
@@ -68,7 +68,7 @@ async function deleteItem(
   id: string,
 ) {
   const { error } = await admin
-    .from("app_analytics")
+    .from("hub_data")
     .delete()
     .eq("id", id)
     .eq("source", source)
@@ -233,7 +233,7 @@ serve(async (req: Request) => {
       case "notification.mark_read": {
         if (!body.id) return json({ error: "id required" }, 400);
         const { data: existing, error: fetchErr } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("metadata")
           .eq("id", String(body.id))
           .eq("source", "notification")
@@ -241,7 +241,7 @@ serve(async (req: Request) => {
         if (fetchErr) return json({ error: fetchErr.message }, 400);
         const updatedMeta = { ...(existing?.metadata ?? {}), read: true };
         const { error: updateErr } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .update({ metadata: updatedMeta })
           .eq("id", String(body.id))
           .eq("source", "notification");
@@ -252,14 +252,14 @@ serve(async (req: Request) => {
       case "notification.mark_all": {
         // ユーザーの全通知を既読にする
         const { data: rows, error: listErr } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("id, metadata")
           .eq("source", "notification")
           .filter("metadata->>user_id", "eq", userId);
         if (listErr) return json({ error: listErr.message }, 400);
         for (const row of rows ?? []) {
           const meta = { ...(row.metadata as Record<string, unknown>), read: true };
-          await admin.from("app_analytics").update({ metadata: meta }).eq("id", row.id);
+          await admin.from("hub_data").update({ metadata: meta }).eq("id", row.id);
         }
         return json({ success: true, updated: (rows ?? []).length });
       }
@@ -267,7 +267,7 @@ serve(async (req: Request) => {
       // ---- User profile ----
       case "user.profile": {
         const { data } = await admin
-          .from("app_analytics")
+          .from("hub_data")
           .select("metadata")
           .eq("source", "user_profile")
           .filter("metadata->>user_id", "eq", userId)

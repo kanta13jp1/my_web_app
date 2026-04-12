@@ -27,7 +27,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics").select("id, metadata, created_at")
+  const { data, error } = await admin.from("hub_data").select("id, metadata, created_at")
     .eq("source", source).filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
@@ -35,7 +35,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -43,7 +43,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function _deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source).filter("metadata->>user_id", "eq", userId);
   if (error) throw new Error(error.message);
 }

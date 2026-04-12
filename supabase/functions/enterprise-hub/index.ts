@@ -43,7 +43,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -54,7 +54,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -62,7 +62,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source)
     .filter("metadata->>user_id", "eq", userId);
   if (error) throw new Error(error.message);
@@ -92,7 +92,7 @@ serve(async (req) => {
         return json({ success: true, request: item });
       }
       case "leave.approve": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "approved", approved_by: userId, approved_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "leave_request");
         if (error) throw new Error(error.message);
@@ -241,7 +241,7 @@ serve(async (req) => {
 
       // ── Feature Flags ────────────────────────────────────────────────────────
       case "flags.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "feature_flag")
           .order("created_at", { ascending: false });
         return json({ success: true, flags: data ?? [] });
@@ -254,7 +254,7 @@ serve(async (req) => {
         return json({ success: true, flag: item });
       }
       case "flags.check": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata").eq("source", "feature_flag")
           .filter("metadata->>name", "eq", String(body.name ?? ""))
           .order("created_at", { ascending: false }).limit(1).single();
@@ -271,7 +271,7 @@ serve(async (req) => {
         return json({ success: true, dashboard: item });
       }
       case "dashboard.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId } })
           .eq("id", String(body.id ?? "")).eq("source", "custom_dashboard");
         if (error) throw new Error(error.message);
@@ -297,7 +297,7 @@ serve(async (req) => {
 
       // ── Analytics & Cohorts ──────────────────────────────────────────────────
       case "analytics.export": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("*").gte("created_at", String(body.from ?? "2020-01-01")).limit(1000);
         return json({ success: true, rows: data?.length ?? 0, data: data ?? [] });
       }
@@ -356,7 +356,7 @@ serve(async (req) => {
         return json({ success: true, lead: item });
       }
       case "crm.update_stage": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, stage: body.stage, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "crm_lead");
         if (error) throw new Error(error.message);
@@ -404,7 +404,7 @@ serve(async (req) => {
         return json({ success: true, task: item });
       }
       case "gantt.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId } })
           .eq("id", String(body.id ?? "")).eq("source", "gantt_task");
         if (error) throw new Error(error.message);
@@ -434,7 +434,7 @@ serve(async (req) => {
 
       // ── Wiki / Knowledge Base ─────────────────────────────────────────────────
       case "wiki.list": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "wiki_page")
           .order("created_at", { ascending: false }).limit(50);
         return json({ success: true, pages: data ?? [] });
@@ -447,7 +447,7 @@ serve(async (req) => {
         return json({ success: true, page: item });
       }
       case "wiki.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "wiki_page");
         if (error) throw new Error(error.message);
@@ -455,7 +455,7 @@ serve(async (req) => {
       }
       case "kb.search": {
         const query = String(body.query ?? "");
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at")
           .eq("source", "wiki_page")
           .ilike("metadata->>title", `%${query}%`)
@@ -552,7 +552,7 @@ serve(async (req) => {
 
       // ── Competitor Feature Sync ────────────────────────────────────────────────
       case "competitor.sync": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata, created_at")
           .eq("source", "competitor_feature")
           .order("created_at", { ascending: false })
@@ -569,7 +569,7 @@ serve(async (req) => {
 
       // ── Edge Function Utilities ─────────────────────────────────────────────────
       case "ef.list_deployed": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata, created_at").eq("source", "ef_deployment")
           .order("created_at", { ascending: false }).limit(100);
         return json({ success: true, deployments: data ?? [] });

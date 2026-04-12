@@ -37,7 +37,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -48,7 +48,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -56,7 +56,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source)
     .filter("metadata->>user_id", "eq", userId);
   if (error) throw new Error(error.message);
@@ -100,7 +100,7 @@ serve(async (req) => {
       }
       case "transcribe.list": return json({ success: true, memos: await listItems(admin, "voice_memo", userId) });
       case "transcribe.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId, status: "done" } })
           .eq("id", String(body.id ?? "")).eq("source", "voice_memo");
         if (error) throw new Error(error.message);
@@ -115,7 +115,7 @@ serve(async (req) => {
         return json({ success: true, session: item });
       }
       case "recording.stop": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "saved", stopped_at: new Date().toISOString(), url: body.url } })
           .eq("id", String(body.id ?? "")).eq("source", "screen_recording");
         if (error) throw new Error(error.message);
@@ -133,14 +133,14 @@ serve(async (req) => {
         return json({ success: true, stream: item, stream_key: streamKey });
       }
       case "stream.start": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "live", started_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "live_stream");
         if (error) throw new Error(error.message);
         return json({ success: true });
       }
       case "stream.end": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "ended", ended_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "live_stream");
         if (error) throw new Error(error.message);
@@ -180,7 +180,7 @@ serve(async (req) => {
         const meta = pl.metadata as Record<string, unknown>;
         const tracks = (meta.tracks as unknown[]) ?? [];
         tracks.push(body.track);
-        await admin.from("app_analytics").update({ metadata: { ...meta, tracks } }).eq("id", pl.id);
+        await admin.from("hub_data").update({ metadata: { ...meta, tracks } }).eq("id", pl.id);
         return json({ success: true, track_count: tracks.length });
       }
       case "playlist.delete": {
@@ -261,7 +261,7 @@ serve(async (req) => {
         return json({ success: true, board: item, board_id: boardId });
       }
       case "whiteboard.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "whiteboard");
         if (error) throw new Error(error.message);
@@ -283,7 +283,7 @@ serve(async (req) => {
         return json({ success: true, doc: item, doc_id: docId });
       }
       case "doc.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId, updated_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "collab_doc");
         if (error) throw new Error(error.message);

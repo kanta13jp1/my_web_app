@@ -40,7 +40,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -51,7 +51,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -314,7 +314,7 @@ serve(async (req) => {
       }
       case "presence.list_room": {
         const cutoff = new Date(Date.now() - 5 * 60000).toISOString();
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata, created_at")
           .eq("source", "presence")
           .filter("metadata->>room", "eq", String(body.room ?? ""))
@@ -357,7 +357,7 @@ serve(async (req) => {
         return json({ success: true, notification: item });
       }
       case "scheduled_notif.cancel": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "cancelled" } })
           .eq("id", String(body.id ?? "")).eq("source", "scheduled_notif");
         if (error) throw new Error(error.message);
@@ -446,7 +446,7 @@ serve(async (req) => {
       // ── Smart Search ──────────────────────────────────────────────────────────
       case "search.query": {
         const q = String(body.query ?? "");
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, source, metadata, created_at")
           .ilike("metadata->>title", `%${q}%`)
           .limit(30);
@@ -505,7 +505,7 @@ serve(async (req) => {
       }
       case "realestate.finances": {
         const propertyId = String(body.property_id ?? "");
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("id, metadata, created_at").eq("source", "realestate_txn")
           .filter("metadata->>property_id", "eq", propertyId)
           .order("created_at", { ascending: false }).limit(100);
@@ -543,7 +543,7 @@ serve(async (req) => {
         const window_sec = Number(body.window_sec ?? 60);
         const limit = Number(body.limit ?? 100);
         const since = new Date(Date.now() - window_sec * 1000).toISOString();
-        const { count } = await admin.from("app_analytics")
+        const { count } = await admin.from("hub_data")
           .select("*", { count: "exact", head: true })
           .eq("source", "rate_limit_hit")
           .filter("metadata->>key", "eq", key)

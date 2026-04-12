@@ -8,7 +8,7 @@
 //   form-builder, note-sharing-enhanced, content-versioning, mindmap-diagram
 //
 // GET/POST ?action=<action> or body { action: "..." }
-// All data stored in app_analytics table (source column = feature name)
+// All data stored in hub_data table (source column = feature name)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -39,9 +39,9 @@ async function getUserId(req: Request): Promise<string | null> {
   return user?.id ?? null;
 }
 
-// Generic CRUD on app_analytics by source
+// Generic CRUD on hub_data by source
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .select("id, metadata, created_at")
     .eq("source", source)
     .filter("metadata->>user_id", "eq", userId)
@@ -52,7 +52,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -60,7 +60,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete()
     .eq("id", id)
     .eq("source", source)
@@ -182,7 +182,7 @@ serve(async (req) => {
         return json({ success: true, goal: item });
       }
       case "goal.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId } })
           .eq("id", String(body.id ?? "")).eq("source", "goal");
         if (error) throw new Error(error.message);
@@ -216,7 +216,7 @@ serve(async (req) => {
         return json({ success: true, item });
       }
       case "reading.mark_read": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "read", read_at: new Date().toISOString() } })
           .eq("id", String(body.id ?? "")).eq("source", "reading");
         if (error) throw new Error(error.message);
@@ -316,7 +316,7 @@ serve(async (req) => {
         return json({ success: true, challenges });
       }
       case "habit.gamification.leaderboard": {
-        const { data, error: lbErr } = await admin.from("app_analytics")
+        const { data, error: lbErr } = await admin.from("hub_data")
           .select("metadata")
           .eq("source", "habit_checkin")
           .order("created_at", { ascending: false })
@@ -369,7 +369,7 @@ serve(async (req) => {
         return json({ success: true, item });
       }
       case "clipboard.clear": {
-        await admin.from("app_analytics")
+        await admin.from("hub_data")
           .delete().eq("source", "clipboard").filter("metadata->>user_id", "eq", userId);
         return json({ success: true });
       }
@@ -406,7 +406,7 @@ serve(async (req) => {
         return json({ success: true, map: item });
       }
       case "mindmap.update": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId } })
           .eq("id", String(body.id ?? "")).eq("source", "mindmap");
         if (error) throw new Error(error.message);
@@ -431,7 +431,7 @@ serve(async (req) => {
         const meta = poll.metadata as Record<string, unknown>;
         const votes = (meta.votes as Record<string, number>) ?? {};
         votes[String(body.option ?? "")] = (votes[String(body.option ?? "")] ?? 0) + 1;
-        await admin.from("app_analytics").update({ metadata: { ...meta, votes } }).eq("id", poll.id);
+        await admin.from("hub_data").update({ metadata: { ...meta, votes } }).eq("id", poll.id);
         return json({ success: true, votes });
       }
       case "form.create": {
@@ -457,7 +457,7 @@ serve(async (req) => {
         return json({ success: true, share_id: shareId, share: item });
       }
       case "note_share.get": {
-        const { data } = await admin.from("app_analytics")
+        const { data } = await admin.from("hub_data")
           .select("metadata, created_at")
           .eq("source", "note_share")
           .filter("metadata->>share_id", "eq", String(body.share_id ?? ""))
@@ -500,12 +500,12 @@ serve(async (req) => {
         return json({ success: true, pet: pets[0] });
       }
       case "pet.feed": {
-        const { data: latest } = await admin.from("app_analytics")
+        const { data: latest } = await admin.from("hub_data")
           .select("id, metadata").eq("source", "virtual_pet")
           .filter("metadata->>user_id", "eq", userId).order("created_at", { ascending: false }).limit(1).single();
         if (!latest) return json({ error: "No pet found" }, 404);
         const meta = latest.metadata as Record<string, unknown>;
-        await admin.from("app_analytics").update({
+        await admin.from("hub_data").update({
           metadata: { ...meta, hunger: Math.min(100, Number(meta.hunger ?? 50) + 20), last_fed: new Date().toISOString() },
         }).eq("id", latest.id);
         return json({ success: true, message: "Pet fed!" });

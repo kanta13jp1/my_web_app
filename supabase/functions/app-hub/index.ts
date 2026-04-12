@@ -27,7 +27,7 @@ async function getUserId(req: Request): Promise<string | null> {
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
-  const { data, error } = await admin.from("app_analytics").select("id, metadata, created_at")
+  const { data, error } = await admin.from("hub_data").select("id, metadata, created_at")
     .eq("source", source).filter("metadata->>user_id", "eq", userId)
     .order("created_at", { ascending: false }).limit(limit);
   if (error) throw new Error(error.message);
@@ -35,7 +35,7 @@ async function listItems(admin: SupabaseClient, source: string, userId: string, 
 }
 
 async function addItem(admin: SupabaseClient, source: string, userId: string, meta: Record<string, unknown>) {
-  const { data, error } = await admin.from("app_analytics")
+  const { data, error } = await admin.from("hub_data")
     .insert({ source, metadata: { ...meta, user_id: userId } })
     .select("id, metadata, created_at").single();
   if (error) throw new Error(error.message);
@@ -43,7 +43,7 @@ async function addItem(admin: SupabaseClient, source: string, userId: string, me
 }
 
 async function deleteItem(admin: SupabaseClient, source: string, userId: string, id: string) {
-  const { error } = await admin.from("app_analytics")
+  const { error } = await admin.from("hub_data")
     .delete().eq("id", id).eq("source", source).filter("metadata->>user_id", "eq", userId);
   if (error) throw new Error(error.message);
 }
@@ -76,7 +76,7 @@ serve(async (req: Request) => {
       }
 
       case "subscription.cancel": {
-        const { error } = await admin.from("app_analytics")
+        const { error } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "cancelled", cancelled_at: new Date().toISOString() } })
           .eq("id", String(body.id))
           .eq("source", "subscription");
@@ -156,7 +156,7 @@ serve(async (req: Request) => {
 
       // --- Kanban ---
       case "kanban.list": {
-        const { data: boards } = await admin.from("app_analytics")
+        const { data: boards } = await admin.from("hub_data")
           .select("id,metadata,created_at")
           .eq("source", "kanban_board")
           .filter("metadata->>user_id", "eq", userId)
@@ -186,7 +186,7 @@ serve(async (req: Request) => {
           column: body.column ?? "Todo",
           created_at: new Date().toISOString(),
         });
-        await admin.from("app_analytics").update({ metadata: { ...meta, cards } }).eq("id", board.id);
+        await admin.from("hub_data").update({ metadata: { ...meta, cards } }).eq("id", board.id);
         return json({ success: true, card_count: cards.length });
       }
 
@@ -223,7 +223,7 @@ serve(async (req: Request) => {
       }
 
       case "team.task_update": {
-        const { error: te } = await admin.from("app_analytics")
+        const { error: te } = await admin.from("hub_data")
           .update({ metadata: { ...body, user_id: userId } })
           .eq("id", String(body.id))
           .eq("source", "team_task");
@@ -308,7 +308,7 @@ serve(async (req: Request) => {
       }
 
       case "time.stop": {
-        const { error: ste } = await admin.from("app_analytics")
+        const { error: ste } = await admin.from("hub_data")
           .update({ metadata: { user_id: userId, status: "done", stopped_at: new Date().toISOString() } })
           .eq("id", String(body.id))
           .eq("source", "time_entry");
@@ -350,7 +350,7 @@ serve(async (req: Request) => {
       case "export.create": {
         const job = await addItem(admin, "export_job", userId, {
           format: body.format ?? "csv",
-          table: body.table ?? "app_analytics",
+          table: body.table ?? "hub_data",
           status: "pending",
           created_at: new Date().toISOString(),
         });
@@ -388,7 +388,7 @@ serve(async (req: Request) => {
         const windowMs = Number(body.window_ms ?? 60000);
         const limit = Number(body.limit ?? 100);
         const since = new Date(Date.now() - windowMs).toISOString();
-        const { data: hits } = await admin.from("app_analytics")
+        const { data: hits } = await admin.from("hub_data")
           .select("id")
           .eq("source", "rate_hit")
           .filter("metadata->>user_id", "eq", userId)
