@@ -29,14 +29,21 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
       _errorMessage = null;
     });
     try {
-      final response = await _supabase.functions.invoke('weather-widget');
+      final response = await _supabase.functions.invoke(
+        'tools-hub',
+        body: {'action': 'get_weather', 'city': 'Tokyo'},
+      );
       final data = response.data;
       if (data is Map<String, dynamic>) {
+        final weatherData = data['weather'] as Map<String, dynamic>?;
+        final currentConditions = weatherData?['current_condition'];
         setState(() {
-          _weather = data['current'] as Map<String, dynamic>?;
-          _forecast = data['forecast'] is List
-              ? (data['forecast'] as List)
-                  .cast<Map<String, dynamic>>()
+          _weather = currentConditions is List && currentConditions.isNotEmpty
+              ? currentConditions.first as Map<String, dynamic>
+              : null;
+          final hourly = weatherData?['weather'];
+          _forecast = hourly is List
+              ? hourly.cast<Map<String, dynamic>>()
               : [];
         });
       }

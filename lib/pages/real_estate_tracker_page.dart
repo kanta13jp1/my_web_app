@@ -80,7 +80,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('real-estate-tracker');
+      final res = await _supabase.functions.invoke('lifestyle-hub', body: {'action': 'realestate.list'});
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final list = data['properties'];
@@ -100,8 +100,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
   Future<void> _fetchStats() async {
     try {
       final res = await _supabase.functions.invoke(
-        'real-estate-tracker',
-        queryParameters: {'view': 'stats'},
+        'lifestyle-hub',
+        body: {'action': 'realestate.stats'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -116,8 +116,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
   Future<void> _fetchFinances(String propertyId) async {
     try {
       final res = await _supabase.functions.invoke(
-        'real-estate-tracker',
-        queryParameters: {'view': 'finances', 'property_id': propertyId},
+        'lifestyle-hub',
+        body: {'action': 'realestate.finances', 'property_id': propertyId},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -145,9 +145,9 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
       final price = double.tryParse(_priceCtrl.text.trim()) ?? 0;
       final area = double.tryParse(_areaCtrl.text.trim());
       final res = await _supabase.functions.invoke(
-        'real-estate-tracker',
+        'lifestyle-hub',
         body: {
-          'action': 'register_property',
+          'action': 'realestate.register',
           'name': name,
           'property_type': _selectedType,
           'address': _addressCtrl.text.trim(),
@@ -185,9 +185,9 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
     final amount = double.tryParse(amountStr) ?? 0;
     try {
       await _supabase.functions.invoke(
-        'real-estate-tracker',
+        'lifestyle-hub',
         body: {
-          'action': 'record_transaction',
+          'action': 'realestate.record_txn',
           'property_id': propertyId,
           'type': _selectedTxnType,
           'amount': amount,

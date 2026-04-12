@@ -48,7 +48,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       _errorMessage = null;
     });
     try {
-      final response = await _supabase.functions.invoke('wiki-database');
+      final response = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'wiki.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
         setState(() => _pages = (data['pages'] as List).cast<Map<String, dynamic>>());
@@ -66,28 +66,21 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
     setState(() => _isLoading = true);
     try {
       final response = await _supabase.functions.invoke(
-        'wiki-database',
-        queryParameters: {'view': 'page', 'page_id': pageId},
+        'enterprise-hub',
+        body: {'action': 'wiki.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['success'] == true) {
+      if (data is Map<String, dynamic> && data['pages'] is List) {
+        final allPages = (data['pages'] as List).cast<Map<String, dynamic>>();
+        final page = allPages.where((p) {
+          final meta = p['metadata'] as Map<String, dynamic>? ?? p;
+          return (meta['id'] ?? p['id'])?.toString() == pageId;
+        }).firstOrNull;
         setState(() {
-          _selectedPage = data['page'] as Map<String, dynamic>?;
-          _children = data['children'] is List
-              ? (data['children'] as List).cast<Map<String, dynamic>>()
-              : [];
+          _selectedPage = page;
+          _children = [];
+          _tableRows = [];
         });
-      }
-      // Load table rows
-      final tableResp = await _supabase.functions.invoke(
-        'wiki-database',
-        queryParameters: {'view': 'table', 'page_id': pageId},
-      );
-      final tableData = tableResp.data;
-      if (tableData is Map<String, dynamic> && tableData['rows'] is List) {
-        setState(() => _tableRows = (tableData['rows'] as List).cast<Map<String, dynamic>>());
-      } else {
-        setState(() => _tableRows = []);
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'ページ詳細の取得に失敗しました: $e');
@@ -127,15 +120,13 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
     );
     if (confirmed != true || _titleCtrl.text.trim().isEmpty) return;
     try {
-      final pageId = DateTime.now().millisecondsSinceEpoch.toString();
       await _supabase.functions.invoke(
-        'wiki-database',
+        'enterprise-hub',
         body: {
-          'action': 'create_page',
-          'page_id': pageId,
+          'action': 'wiki.create',
           'title': _titleCtrl.text.trim(),
           'content': _contentCtrl.text.trim(),
-          if (parentId != null) 'parent_id': parentId,
+          if (parentId != null) 'category': parentId,
         },
       );
       if (mounted) {
@@ -174,10 +165,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
     if (confirmed != true) return;
     try {
       await _supabase.functions.invoke(
-        'wiki-database',
+        'enterprise-hub',
         body: {
-          'action': 'add_row',
-          'table_id': pageId,
+          'action': 'sheet.add_row',
+          'sheet_id': pageId,
           'data': {'content': ctrl.text.trim()},
         },
       );

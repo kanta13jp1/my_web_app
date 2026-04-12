@@ -473,6 +473,53 @@ serve(async (req) => {
         return json({ success: true, share: item });
       }
 
+      // ── Real Estate Tracker ───────────────────────────────────────────────────
+      case "realestate.list": {
+        const items = await listItems(admin, "realestate_property", userId, 100);
+        const properties = items.map((i) => ({ property_id: i.id, ...(i.metadata as Record<string, unknown>) }));
+        return json({ success: true, properties });
+      }
+      case "realestate.register": {
+        const item = await addItem(admin, "realestate_property", userId, {
+          name: body.name, property_type: body.property_type ?? "apartment",
+          address: body.address ?? "", purchase_price: body.purchase_price ?? 0,
+          area_sqm: body.area_sqm ?? null, registered_at: new Date().toISOString(),
+        });
+        return json({ success: true, property: item });
+      }
+      case "realestate.stats": {
+        const props = await listItems(admin, "realestate_property", userId, 100);
+        const txns = await listItems(admin, "realestate_txn", userId, 1000);
+        const totalProperties = props.length;
+        const totalIncome = txns.reduce((s, t) => {
+          const meta = t.metadata as Record<string, unknown>;
+          const type = String(meta?.type ?? "");
+          return type === "rent_income" || type === "other_income" ? s + Number(meta?.amount ?? 0) : s;
+        }, 0);
+        const totalExpense = txns.reduce((s, t) => {
+          const meta = t.metadata as Record<string, unknown>;
+          const type = String(meta?.type ?? "");
+          return type !== "rent_income" && type !== "other_income" ? s + Number(meta?.amount ?? 0) : s;
+        }, 0);
+        return json({ success: true, stats: { totalProperties, totalIncome, totalExpense, netIncome: totalIncome - totalExpense } });
+      }
+      case "realestate.finances": {
+        const propertyId = String(body.property_id ?? "");
+        const { data } = await admin.from("app_analytics")
+          .select("id, metadata, created_at").eq("source", "realestate_txn")
+          .filter("metadata->>property_id", "eq", propertyId)
+          .order("created_at", { ascending: false }).limit(100);
+        return json({ success: true, transactions: (data ?? []).map((t) => ({ ...(t.metadata as Record<string, unknown>), id: t.id })) });
+      }
+      case "realestate.record_txn": {
+        const item = await addItem(admin, "realestate_txn", userId, {
+          property_id: body.property_id, type: body.type ?? "other_expense",
+          amount: body.amount ?? 0, description: body.description ?? "",
+          date: body.date ?? new Date().toISOString().slice(0, 10),
+        });
+        return json({ success: true, transaction: item });
+      }
+
       // ── Access Control ─────────────────────────────────────────────────────────
       case "access.list_roles": return json({ success: true, roles: await listItems(admin, "access_role", userId) });
       case "access.create_role": {

@@ -29,7 +29,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
     });
     try {
       final response =
-          await _supabase.functions.invoke('revenue-forecaster');
+          await _supabase.functions.invoke('enterprise-hub', body: {'action': 'forecast.list'});
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() => _forecast = data);

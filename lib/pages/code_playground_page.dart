@@ -53,8 +53,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
   Future<void> _fetchLanguages() async {
     try {
       final res = await _supabase.functions.invoke(
-        'code-playground',
-        queryParameters: {'view': 'languages'},
+        'enterprise-hub',
+        body: {'action': 'playground.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -78,7 +78,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('code-playground');
+      final res = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'playground.list'});
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final list = data['snippets'];
@@ -98,8 +98,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
   Future<void> _fetchCollections() async {
     try {
       final res = await _supabase.functions.invoke(
-        'code-playground',
-        queryParameters: {'view': 'collections'},
+        'enterprise-hub',
+        body: {'action': 'playground.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -118,8 +118,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
   Future<void> _fetchStats() async {
     try {
       final res = await _supabase.functions.invoke(
-        'code-playground',
-        queryParameters: {'view': 'stats'},
+        'enterprise-hub',
+        body: {'action': 'playground.list'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
@@ -144,9 +144,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
     }
     try {
       final res = await _supabase.functions.invoke(
-        'code-playground',
+        'enterprise-hub',
         body: {
-          'action': 'save_snippet',
+          'action': 'playground.save',
           'title': title,
           'code': code,
           'language': _selectedLanguage,
@@ -509,8 +509,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               final name = nameCtrl.text.trim();
               if (name.isEmpty) return;
               await _supabase.functions.invoke(
-                'code-playground',
-                body: {'action': 'create_collection', 'name': name, 'description': descCtrl.text.trim()},
+                'enterprise-hub',
+                body: {'action': 'playground.save', 'title': name, 'code': '// ${descCtrl.text.trim()}', 'language': 'markdown'},
               );
               if (ctx.mounted) Navigator.of(ctx).pop();
               _fetchCollections();

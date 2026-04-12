@@ -45,7 +45,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       _isSearching = false;
     });
     try {
-      final response = await _supabase.functions.invoke('voice-memo-transcriber');
+      final response = await _supabase.functions.invoke('media-hub', body: {'action': 'transcribe.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
         setState(() => _memos = (data['memos'] as List).cast<Map<String, dynamic>>());
@@ -70,8 +70,8 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'voice-memo-transcriber',
-        queryParameters: {'view': 'search', 'q': q.trim()},
+        'media-hub',
+        body: {'action': 'transcribe.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
@@ -129,16 +129,15 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
     );
     if (confirmed != true || _titleCtrl.text.trim().isEmpty) return;
     try {
-      final memoId = DateTime.now().millisecondsSinceEpoch.toString();
       await _supabase.functions.invoke(
-        'voice-memo-transcriber',
+        'media-hub',
         body: {
-          'action': 'add_memo',
-          'memo_id': memoId,
+          'action': 'transcribe.create',
           'title': _titleCtrl.text.trim(),
           'transcript': _transcriptCtrl.text.trim(),
           'summary': _summaryCtrl.text.trim(),
           'duration_sec': 0,
+          'source': 'manual',
         },
       );
       if (mounted) {
@@ -163,14 +162,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
     final content = summary.isNotEmpty
         ? '## 要約\n$summary\n\n## 文字起こし\n$transcript'
         : transcript;
-    final memoId = memo['memo_id']?.toString() ?? '';
-    if (memoId.isEmpty) return;
     try {
       await _supabase.functions.invoke(
-        'voice-memo-transcriber',
+        'tools-hub',
         body: {
-          'action': 'convert_to_note',
-          'memo_id': memoId,
+          'action': 'note.add',
           'title': title,
           'content': content,
         },

@@ -20,7 +20,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   String? _error;
 
   List<Map<String, dynamic>> _deals = [];
-  Map<String, Map<String, dynamic>> _pipeline = {};
+  final Map<String, Map<String, dynamic>> _pipeline = {};
   Map<String, dynamic>? _stats;
 
   // New lead form
@@ -83,30 +83,16 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('crm-sales-pipeline'),
-        _supabase.functions
-            .invoke('crm-sales-pipeline', queryParameters: {'view': 'pipeline'}),
-        _supabase.functions
-            .invoke('crm-sales-pipeline', queryParameters: {'view': 'stats'}),
+        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
+        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
+        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
       ]);
 
       final dealsData = results[0].data;
-      if (dealsData is Map && dealsData['deals'] is List) {
-        _deals = (dealsData['deals'] as List).cast<Map<String, dynamic>>();
+      if (dealsData is Map && dealsData['leads'] is List) {
+        _deals = (dealsData['leads'] as List).cast<Map<String, dynamic>>();
       } else {
         _deals = [];
-      }
-
-      final pipelineData = results[1].data;
-      if (pipelineData is Map && pipelineData['pipeline'] is Map) {
-        _pipeline = (pipelineData['pipeline'] as Map).map(
-          (k, v) => MapEntry(k as String, v as Map<String, dynamic>),
-        );
-      }
-
-      final statsData = results[2].data;
-      if (statsData is Map && statsData['stats'] is Map) {
-        _stats = statsData['stats'] as Map<String, dynamic>;
       }
     } catch (e) {
       if (mounted) setState(() => _error = 'データの取得に失敗しました: $e');
@@ -126,9 +112,9 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'crm-sales-pipeline',
+        'enterprise-hub',
         body: {
-          'action': 'create_lead',
+          'action': 'crm.add_lead',
           'name': name,
           'email': _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
           'company':
@@ -161,8 +147,8 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   Future<void> _updateStage(String dealId, String newStage) async {
     try {
       await _supabase.functions.invoke(
-        'crm-sales-pipeline',
-        body: {'action': 'update_stage', 'deal_id': dealId, 'stage': newStage},
+        'enterprise-hub',
+        body: {'action': 'crm.update_stage', 'id': dealId, 'stage': newStage},
       );
       await _loadAll();
     } catch (e) {

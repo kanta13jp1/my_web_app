@@ -31,8 +31,8 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('spreadsheet-database',
-          body: {'action': 'list_sheets'},);
+      final res = await _supabase.functions.invoke('enterprise-hub',
+          body: {'action': 'sheet.list'},);
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {
@@ -54,8 +54,8 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('spreadsheet-database',
-          body: {'action': 'get_rows', 'sheet_id': sheetId},);
+      final res = await _supabase.functions.invoke('enterprise-hub',
+          body: {'action': 'sheet.list'},);
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {

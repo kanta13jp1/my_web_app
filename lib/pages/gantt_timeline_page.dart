@@ -43,10 +43,10 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('gantt-timeline-manager');
+      final res = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'gantt.list'});
       final data = res.data;
-      if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(() => _projects = data['projects'] as List);
+      if (data is Map<String, dynamic> && data['tasks'] is List) {
+        setState(() => _projects = data['tasks'] as List);
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'プロジェクト取得に失敗しました: $e');
@@ -62,24 +62,15 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
     });
     try {
       final taskRes = await _supabase.functions.invoke(
-        'gantt-timeline-manager',
-        body: {'view': 'tasks', 'project_id': projectId},
-      );
-      final msRes = await _supabase.functions.invoke(
-        'gantt-timeline-manager',
-        body: {'view': 'milestones', 'project_id': projectId},
-      );
-      final cpRes = await _supabase.functions.invoke(
-        'gantt-timeline-manager',
-        body: {'view': 'critical_path', 'project_id': projectId},
+        'enterprise-hub',
+        body: {'action': 'gantt.list'},
       );
       if (mounted) {
         final taskData = taskRes.data as Map<String, dynamic>?;
-        final msData = msRes.data as Map<String, dynamic>?;
         setState(() {
           _tasks = (taskData?['tasks'] as List?) ?? [];
-          _milestones = (msData?['milestones'] as List?) ?? [];
-          _criticalPath = cpRes.data as Map<String, dynamic>?;
+          _milestones = [];
+          _criticalPath = null;
         });
       }
     } catch (e) {
@@ -171,13 +162,14 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 if (nameCtrl.text.trim().isEmpty) return;
                 Navigator.pop(ctx);
                 await _supabase.functions.invoke(
-                  'gantt-timeline-manager',
+                  'enterprise-hub',
                   body: {
-                    'action': 'create_project',
+                    'action': 'gantt.create_task',
                     'name': nameCtrl.text.trim(),
                     'description': descCtrl.text.trim(),
                     'start_date': startDate?.toIso8601String(),
                     'end_date': endDate?.toIso8601String(),
+                    'is_project': true,
                   },
                 );
                 await _fetchProjects();
@@ -249,9 +241,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 if (nameCtrl.text.trim().isEmpty) return;
                 Navigator.pop(ctx);
                 await _supabase.functions.invoke(
-                  'gantt-timeline-manager',
+                  'enterprise-hub',
                   body: {
-                    'action': 'add_task',
+                    'action': 'gantt.create_task',
                     'project_id': _selectedProjectId,
                     'name': nameCtrl.text.trim(),
                     'duration_days': int.tryParse(durationCtrl.text) ?? 3,
@@ -318,10 +310,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 if (nameCtrl.text.trim().isEmpty) return;
                 Navigator.pop(ctx);
                 await _supabase.functions.invoke(
-                  'gantt-timeline-manager',
+                  'enterprise-hub',
                   body: {
-                    'action': 'add_milestone',
+                    'action': 'gantt.create_task',
                     'project_id': _selectedProjectId,
+                    'is_milestone': true,
                     'name': nameCtrl.text.trim(),
                     'due_date':
                         (dueDate ?? DateTime.now().add(const Duration(days: 14)))

@@ -32,7 +32,7 @@ class _GrowthAcquisitionReportPageState
 
     try {
       final response =
-          await _supabase.functions.invoke('growth-acquisition-report');
+          await _supabase.functions.invoke('growth-hub', body: {'action': 'acquisition.report'});
 
       final data = response.data;
       if (data is Map<String, dynamic>) {
