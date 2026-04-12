@@ -297,6 +297,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     _FnDef('schedule-hub', 'スケジュールハブ統合 (実行ログ/ヘルスチェック/結果/モニター)', true, '/admin', '管理者ダッシュボード > Schedule モニター'),
     // 追加 (cs-check 自動連携)
     _FnDef('app-hub', 'アプリハブ統合 (サブスクリプション/カレンダー/タスク/チャット統合)', true, '/app-hub', 'アプリハブページ'),
+    // 追加 (cs-check 自動連携 2026-04-12)
+    _FnDef('financial-report', '財務レポート (収支・予算管理)', true, '/financial-report', '財務レポートページ'),
+    _FnDef('social-feed', 'ソーシャルフィード (SNS投稿・タイムライン)', true, '/social-feed', 'ソーシャルフィードページ'),
+    _FnDef('ai-summarizer', 'AI要約エンジン (テキスト/URL要約)', true, '/ai-summarizer', 'AI要約ページ'),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
