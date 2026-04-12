@@ -1,9 +1,8 @@
 ---
 title: Flutter WebでDNS・ドメイン管理ツールを実装してCloudflare/Google Domainsと戦う話
 date: 2026-04-10
-tags: [Flutter, Supabase, DNS, ドメイン管理, EdgeFunction]
-status: draft
-target_platforms: [zenn, qiita, dev.to, note]
+tags: Flutter,Supabase,DNS,EdgeFunction,buildinpublic
+published: false
 ---
 
 # Flutter WebでDNS・ドメイン管理ツールを実装してCloudflare/Google Domainsと戦う話
