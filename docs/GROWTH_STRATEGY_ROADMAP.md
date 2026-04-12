@@ -7089,3 +7089,31 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 `tools-hub` に `send-to-slack` アクション追加検討 (Slack MCP サーバー対応)
 - 🟡 一般ユーザー向けパーソナルダッシュボード実装検討 (Notion ダッシュボードビュー対抗)
 - 🔵 `ai-university-content` の GitHub/Slack プロバイダー `news` カテゴリ更新
+
+---
+
+## セッション記録: Windows版#43 (2026-04-12)
+
+**担当**: Windows版 (EF backend / docs / seed SQL)
+
+### 実施内容
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | lifestyle-hub/index.ts 実装 (29本Tier2統合: fitness/recipe/travel/IoT/notification等) | ✅ |
+| 2 | PS版#44 rebase + hub endpoint へのDart呼び出し修正 | ✅ |
+| 3 | viral_ad_campaign_page: viral-growth-engine/viral-ad-generator → growth-hub | ✅ |
+| 4 | admin_analytics_page: 8箇所のEF呼び出しを各hubに更新 | ✅ |
+| 5 | competitor_monitoring_card: get-competitor-features → admin-hub | ✅ |
+
+### 現状数値 (2026-04-12 Windows版#43時点)
+
+- EF deployed: **15本** (ハードキャップ50本以下)
+- Dart EF呼び出し: hub endpoint移行完了 (admin/growth/core/schedule-hub対応)
+- LP: 126のこと / ページ数: 211 / AI大学: 18社
+
+### 次回優先タスク
+
+- 🔴 ai-university新社 (Baidu/IBM/Sakana以降の19社目候補検討)
+- 🟡 tools-hub/admin-hub に不足アクション追加 (Dart側で必要になったもの)
+- 🟢 ROADMAP更新・wrap-up
