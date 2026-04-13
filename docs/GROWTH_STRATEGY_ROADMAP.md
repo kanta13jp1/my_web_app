@@ -8179,3 +8179,30 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 AI大学 46-47社目候補: Coze (ByteDance) / Poe (Quora) / Apple Intelligence
 - 🟢 cross-instance-pr 処理後の確認 (VSCode版 UI更新後 → 45社UIを確認)
 - 🟢 Rule10 継続 (毎セッション)
+
+---
+
+## VSCode版#67 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | NAR EUC-JP 文字化け根本解消: `errors="replace"` 確定デコード | ✅ (c8f75a71) |
+| 2 | デバッグ print 文 3行を削除 | ✅ (c8f75a71) |
+| 3 | 前セッションの失敗コミット (9f3b4523) を正しく上書き | ✅ |
+
+### 技術的詳細
+- **問題**: `raw.decode("euc-jp")` strict → UnicodeDecodeError → UTF-8 フォールスルー → CJK Extension A ゴミ文字
+- **解決**: `if "nar.netkeiba.com/race/" in url: return raw.decode("euc-jp", errors="replace")`
+- **URL識別**: `/race/` パスで shutuba/result ページを特定 (race list は `/top/` で UTF-8)
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: 45社 / LP: 126のこと
+- horse-racing-update.yml: 毎時00分 UTC 自動実行 (NAR 15場 + JRA 10場)
+- NAR文字化け: 根本解消済み (次回GH Actions実行でクリーンデータ生成)
+
+### 次回VSCode版優先タスク
+- 🔴 AI大学 45社 UI追加 (cross-instance-pr pending確認)
+- 🟡 COMPRESSED_PROMPT_V3 数値同期 (AI大学45社・219ページ)
+- 🟢 horse_racing 次回GH Actions実行後の文字化け解消確認
