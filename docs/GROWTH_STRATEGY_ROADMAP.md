@@ -5625,6 +5625,7 @@ LP タイトル「52のこと」→「**56のこと**」に更新。
 - 重複コード削除: `ai_university_scores` 読み込み + `ai_university_content` プロバイダー数カウント + 2 バッジ審査を一箇所に集約
 
 **record_score のキー設計**:
+
 ```typescript
 const wasCorrect = existing && existing.quiz_correct;       // 既に正解済み?
 const isNewProvider = existing === null;                     // 初めてのプロバイダー?
