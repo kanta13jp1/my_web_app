@@ -638,6 +638,46 @@ serve(async (req) => {
         return json({ success: true, message: "Pet fed!" });
       }
 
+      // ── Slack Integration ─────────────────────────────────────────────────────
+      case "slack.post": {
+        const webhookUrl = Deno.env.get("SLACK_WEBHOOK_URL") ?? "";
+        if (!webhookUrl) return json({ error: "SLACK_WEBHOOK_URL not configured" }, 503);
+        const text = String(body.text ?? "");
+        if (!text) return json({ error: "text is required" }, 400);
+        const payload: Record<string, unknown> = { text };
+        if (body.channel) payload.channel = body.channel;
+        if (body.username) payload.username = body.username;
+        const resp = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!resp.ok) return json({ error: `Slack API error: ${resp.status}` }, 502);
+        return json({ success: true, message: "Posted to Slack" });
+      }
+
+      case "slack.search": {
+        const token = Deno.env.get("SLACK_BOT_TOKEN") ?? "";
+        if (!token) return json({ error: "SLACK_BOT_TOKEN not configured" }, 503);
+        const query = String(body.query ?? "");
+        if (!query) return json({ error: "query is required" }, 400);
+        const count = Math.min(Number(body.count ?? 10), 50);
+        const params = new URLSearchParams({ query, count: String(count) });
+        const resp = await fetch(`https://slack.com/api/search.messages?${params}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!resp.ok) return json({ error: `Slack API error: ${resp.status}` }, 502);
+        const data = await resp.json() as Record<string, unknown>;
+        if (!data.ok) return json({ error: String(data.error ?? "Slack API error") }, 502);
+        const msgData = data.messages as Record<string, unknown> | undefined;
+        const matches = (msgData?.matches as Record<string, unknown>[] | undefined) ?? [];
+        const messages = matches.map((m) => ({
+          text: m.text, user: m.username,
+          channel: (m.channel as Record<string, unknown> | undefined)?.name,
+          ts: m.ts,
+        }));
+        return json({ success: true, total: msgData?.total ?? 0, messages });
+      }
 
       default:
         return json({
@@ -668,6 +708,7 @@ serve(async (req) => {
             "horseracing.today", "horseracing.list_races", "horseracing.predict_all",
             "horseracing.predictions", "horseracing.store_results", "horseracing.accuracy",
             "horseracing.register_race", "horseracing.stats",
+            "slack.post", "slack.search",
           ],
         }, 400);
     }

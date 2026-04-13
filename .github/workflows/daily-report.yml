@@ -222,6 +222,32 @@ jobs:
             echo "- ステータス: ⚠️ 投稿失敗 (リトライ後も HTTP $POST_CODE)" >> "${{ steps.report.outputs.filepath }}"
           fi
 
+      # ── Step 5.5: AI大学 学習リマインダー送信 ──────────────────────────────────
+      - name: Step 5.5 - AI大学 学習リマインダー (3日以上未学習ユーザー)
+        id: reminder
+        run: |
+          HTTP_CODE=$(curl -s -o /tmp/reminder_resp.json -w "%{http_code}" \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            --max-time 30 \
+            -d '{"action":"reminders.study","min_idle_days":3,"max_idle_days":30}' \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            SENT=$(cat /tmp/reminder_resp.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('sent',0))" 2>/dev/null || echo "?")
+            ELIGIBLE=$(cat /tmp/reminder_resp.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('eligible',0))" 2>/dev/null || echo "?")
+            echo "reminder_ok=true" >> $GITHUB_OUTPUT
+            echo "reminder_sent=$SENT" >> $GITHUB_OUTPUT
+            echo "reminder_eligible=$ELIGIBLE" >> $GITHUB_OUTPUT
+            echo "✅ リマインダー送信: ${SENT}件送信 / ${ELIGIBLE}件対象"
+          else
+            echo "reminder_ok=false" >> $GITHUB_OUTPUT
+            echo "reminder_sent=0" >> $GITHUB_OUTPUT
+            echo "⚠️ リマインダー送信失敗 (HTTP $HTTP_CODE)"
+          fi
+
       # ── Step 6: schedule_task_runs 記録 ────────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
         run: |
