@@ -147,13 +147,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
               const SizedBox(height: 12),
 
               // プロバイダー絵文字
-              Row(
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
                 children: _providerEmojis
                     .map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Text(e, style: const TextStyle(fontSize: 20)),
-                      ),
+                      (e) => Text(e, style: const TextStyle(fontSize: 20)),
                     )
                     .toList(),
               ),

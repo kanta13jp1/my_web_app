@@ -10,7 +10,6 @@ interface ImportPreviewRequest {
   sourceType: string;
   fileName?: string;
   contentBase64?: string;
-  // Notion API 直接連携用
   notionToken?: string;
   pageLimit?: number;
 }
@@ -31,6 +30,64 @@ interface ImportPreviewResult {
   previewMode: "edge-function";
 }
 
+interface NotionRichText {
+  plain_text?: string;
+}
+
+interface NotionBlock {
+  id?: string;
+  type: string;
+  has_children?: boolean;
+  children?: NotionBlock[];
+  [key: string]: unknown;
+}
+
+interface NotionPage {
+  id: string;
+  properties?: Record<string, {
+    title?: NotionRichText[];
+    rich_text?: NotionRichText[];
+    [key: string]: unknown;
+  }>;
+}
+
+interface NotionSelectOption {
+  name: string;
+}
+
+interface NotionProperty {
+  type: string;
+  title?: NotionRichText[];
+  rich_text?: NotionRichText[];
+  select?: NotionSelectOption | null;
+  multi_select?: NotionSelectOption[];
+  checkbox?: boolean;
+  number?: number | null;
+  date?: { start: string } | null;
+}
+
+interface NotionDatabase {
+  id: string;
+}
+
+interface NotionDatabaseEntry {
+  id: string;
+  properties?: Record<string, NotionProperty>;
+}
+
+interface NotionPaginatedResponse<T> {
+  results?: T[];
+  has_more?: boolean;
+  next_cursor?: string | null;
+}
+
+const NOTION_BLOCK_PAGE_SIZE = 50;
+const NOTION_DATABASE_LIMIT = 3;
+const NOTION_MAX_BLOCK_DEPTH = 4;
+const NOTION_MAX_BLOCKS_PER_PAGE = 250;
+const NOTION_RETRY_LIMIT = 3;
+const NOTION_RETRY_BASE_MS = 600;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -44,20 +101,23 @@ serve(async (req) => {
       throw new Error("sourceType is required.");
     }
 
-    // Notion API 直接連携ルート
     if (sourceType === "notion_api") {
       const notionToken = body.notionToken?.trim();
-      if (!notionToken) throw new Error("notionToken is required for notion_api.");
-      const pageLimit = Math.min(body.pageLimit ?? 10, 20);
+      if (!notionToken) {
+        throw new Error("notionToken is required for notion_api.");
+      }
+
+      const pageLimit = Math.max(1, Math.min(body.pageLimit ?? 10, 20));
       const preview = await buildNotionApiPreview(notionToken, pageLimit);
       return jsonResponse({ success: true, preview });
     }
 
-    // ファイルベースルート (従来)
     const fileName = body.fileName?.trim();
     const contentBase64 = body.contentBase64?.trim();
     if (!fileName || !contentBase64) {
-      throw new Error("fileName and contentBase64 are required for file-based import.");
+      throw new Error(
+        "fileName and contentBase64 are required for file-based import.",
+      );
     }
 
     const bytes = decodeBase64(contentBase64);
@@ -93,81 +153,136 @@ function jsonResponse(payload: unknown, status = 200): Response {
   });
 }
 
-// ── Notion API 直接連携 ─────────────────────────────────────────────────────
-
-interface NotionRichText {
-  plain_text?: string;
-}
-
-interface NotionBlock {
-  type: string;
-  [key: string]: unknown;
-}
-
-interface NotionPage {
-  id: string;
-  properties?: Record<string, {
-    title?: NotionRichText[];
-    rich_text?: NotionRichText[];
-    [key: string]: unknown;
-  }>;
-}
-
-// ── データベース型 ────────────────────────────────────────────────────────────
-
-interface NotionSelectOption {
-  name: string;
-}
-
-interface NotionProperty {
-  type: string;
-  title?: NotionRichText[];
-  rich_text?: NotionRichText[];
-  select?: NotionSelectOption | null;
-  multi_select?: NotionSelectOption[];
-  checkbox?: boolean;
-  number?: number | null;
-  date?: { start: string } | null;
-}
-
-interface NotionDatabase {
-  id: string;
-}
-
-interface NotionDatabaseEntry {
-  id: string;
-  properties?: Record<string, NotionProperty>;
-}
-
-// ── ページ ────────────────────────────────────────────────────────────────────
-
 function extractNotionTitle(page: NotionPage): string {
   for (const prop of Object.values(page.properties ?? {})) {
     const texts = prop.title ?? prop.rich_text ?? [];
-    const text = texts.map((t: NotionRichText) => t.plain_text ?? "").join("").trim();
-    if (text) return text;
+    const text = texts.map((t) => t.plain_text ?? "").join("").trim();
+    if (text) {
+      return text;
+    }
   }
   return "Notion Page";
 }
 
-function notionBlocksToText(blocks: NotionBlock[]): string {
-  return blocks
-    .map((b) => {
-      const inner = b[b.type] as { rich_text?: NotionRichText[] } | undefined;
-      const texts = inner?.rich_text ?? [];
-      return texts.map((t: NotionRichText) => t.plain_text ?? "").join("");
-    })
-    .filter((line) => line.trim().length > 0)
-    .join("\n");
+function pushWarningOnce(warnings: string[], message: string): void {
+  if (!warnings.includes(message)) {
+    warnings.push(message);
+  }
 }
 
-// ── データベースエントリ ──────────────────────────────────────────────────────
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseRetryAfterMs(value: string | null, attempt: number): number {
+  if (value) {
+    const seconds = Number(value);
+    if (!Number.isNaN(seconds)) {
+      return Math.max(seconds * 1000, NOTION_RETRY_BASE_MS);
+    }
+
+    const retryAt = Date.parse(value);
+    if (!Number.isNaN(retryAt)) {
+      return Math.max(retryAt - Date.now(), NOTION_RETRY_BASE_MS);
+    }
+  }
+
+  return NOTION_RETRY_BASE_MS * (attempt + 1);
+}
+
+async function fetchNotionJson<T>(
+  url: string,
+  headers: HeadersInit,
+  init?: RequestInit,
+  attempt = 0,
+): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers,
+  });
+
+  if (
+    (response.status === 408 || response.status === 409 ||
+      response.status === 429 || response.status >= 500) &&
+    attempt < NOTION_RETRY_LIMIT - 1
+  ) {
+    await sleep(
+      parseRetryAfterMs(response.headers.get("Retry-After"), attempt),
+    );
+    return await fetchNotionJson<T>(url, headers, init, attempt + 1);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Notion API error (${response.status}): ${errorText}`);
+  }
+
+  const json = await response.json();
+  return json as T;
+}
+
+function extractBlockText(block: NotionBlock): string {
+  const inner = block[block.type] as Record<string, unknown> | undefined;
+  const richText = (inner?.rich_text as NotionRichText[] | undefined) ?? [];
+  const text = richText.map((item) => item.plain_text ?? "").join("").trim();
+
+  switch (block.type) {
+    case "bulleted_list_item":
+      return text ? `- ${text}` : "";
+    case "numbered_list_item":
+      return text ? `1. ${text}` : "";
+    case "to_do": {
+      const checked = Boolean(inner?.checked);
+      return text ? `${checked ? "[x]" : "[ ]"} ${text}` : "";
+    }
+    case "quote":
+      return text ? `> ${text}` : "";
+    case "code": {
+      const language = typeof inner?.language === "string"
+        ? inner.language
+        : "";
+      return text ? `${language ? `[${language}] ` : ""}${text}` : "";
+    }
+    case "divider":
+      return "---";
+    case "bookmark":
+      return typeof inner?.url === "string" ? inner.url : "";
+    case "child_page":
+    case "child_database":
+      return typeof inner?.title === "string" ? inner.title : "";
+    default:
+      return text;
+  }
+}
+
+function notionBlocksToText(blocks: NotionBlock[], depth = 0): string {
+  const indent = "  ".repeat(depth);
+  const lines: string[] = [];
+
+  for (const block of blocks) {
+    const line = extractBlockText(block);
+    if (line) {
+      lines.push(`${indent}${line}`);
+    }
+
+    if (block.children?.length) {
+      const nested = notionBlocksToText(block.children, depth + 1);
+      if (nested) {
+        lines.push(nested);
+      }
+    }
+  }
+
+  return lines.join("\n").trim();
+}
 
 function extractDbEntryTitle(entry: NotionDatabaseEntry): string {
   for (const prop of Object.values(entry.properties ?? {})) {
     if (prop.type === "title" && prop.title) {
       const text = prop.title.map((t) => t.plain_text ?? "").join("").trim();
-      if (text) return text;
+      if (text) {
+        return text;
+      }
     }
   }
   return "Database Entry";
@@ -177,8 +292,10 @@ function extractDbEntryTags(entry: NotionDatabaseEntry): string[] {
   const tags: string[] = [];
   for (const prop of Object.values(entry.properties ?? {})) {
     if (prop.type === "multi_select" && prop.multi_select) {
-      for (const s of prop.multi_select) {
-        if (s.name) tags.push(s.name);
+      for (const tag of prop.multi_select) {
+        if (tag.name) {
+          tags.push(tag.name);
+        }
       }
     } else if (prop.type === "select" && prop.select?.name) {
       tags.push(prop.select.name);
@@ -189,11 +306,16 @@ function extractDbEntryTags(entry: NotionDatabaseEntry): string[] {
 
 function extractDbEntryContent(entry: NotionDatabaseEntry): string {
   const lines: string[] = [];
+
   for (const [key, prop] of Object.entries(entry.properties ?? {})) {
-    if (prop.type === "title") continue; // タイトルは別で使用
+    if (prop.type === "title") continue;
+
     if (prop.type === "rich_text" && prop.rich_text?.length) {
-      const text = prop.rich_text.map((t) => t.plain_text ?? "").join("").trim();
-      if (text) lines.push(`${key}: ${text}`);
+      const text = prop.rich_text.map((t) => t.plain_text ?? "").join("")
+        .trim();
+      if (text) {
+        lines.push(`${key}: ${text}`);
+      }
     } else if (
       prop.type === "number" &&
       prop.number !== null &&
@@ -201,12 +323,95 @@ function extractDbEntryContent(entry: NotionDatabaseEntry): string {
     ) {
       lines.push(`${key}: ${prop.number}`);
     } else if (prop.type === "checkbox" && prop.checkbox !== undefined) {
-      lines.push(`${key}: ${prop.checkbox ? "✓" : "✗"}`);
+      lines.push(`${key}: ${prop.checkbox ? "Yes" : "No"}`);
     } else if (prop.type === "date" && prop.date?.start) {
       lines.push(`${key}: ${prop.date.start}`);
     }
   }
+
   return lines.join("\n");
+}
+
+async function fetchNotionBlockTree(
+  blockId: string,
+  headers: HeadersInit,
+  warnings: string[],
+  contextLabel: string,
+  depth = 0,
+  budget = { remaining: NOTION_MAX_BLOCKS_PER_PAGE },
+): Promise<NotionBlock[]> {
+  if (depth >= NOTION_MAX_BLOCK_DEPTH) {
+    pushWarningOnce(
+      warnings,
+      `Nested Notion blocks were truncated for "${contextLabel}" after depth ${NOTION_MAX_BLOCK_DEPTH}.`,
+    );
+    return [];
+  }
+
+  if (budget.remaining <= 0) {
+    pushWarningOnce(
+      warnings,
+      `Notion preview for "${contextLabel}" was truncated after ${NOTION_MAX_BLOCKS_PER_PAGE} blocks.`,
+    );
+    return [];
+  }
+
+  const blocks: NotionBlock[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const url = new URL(`https://api.notion.com/v1/blocks/${blockId}/children`);
+    url.searchParams.set(
+      "page_size",
+      String(Math.min(NOTION_BLOCK_PAGE_SIZE, budget.remaining)),
+    );
+    if (cursor) {
+      url.searchParams.set("start_cursor", cursor);
+    }
+
+    const response = await fetchNotionJson<
+      NotionPaginatedResponse<NotionBlock>
+    >(
+      url.toString(),
+      headers,
+    );
+
+    for (const block of response.results ?? []) {
+      if (budget.remaining <= 0) {
+        pushWarningOnce(
+          warnings,
+          `Notion preview for "${contextLabel}" was truncated after ${NOTION_MAX_BLOCKS_PER_PAGE} blocks.`,
+        );
+        return blocks;
+      }
+
+      budget.remaining -= 1;
+
+      if (block.has_children && block.id) {
+        try {
+          block.children = await fetchNotionBlockTree(
+            block.id,
+            headers,
+            warnings,
+            contextLabel,
+            depth + 1,
+            budget,
+          );
+        } catch {
+          pushWarningOnce(
+            warnings,
+            `Failed to fetch nested blocks for "${contextLabel}".`,
+          );
+        }
+      }
+
+      blocks.push(block);
+    }
+
+    cursor = response.has_more ? response.next_cursor ?? null : null;
+  } while (cursor && budget.remaining > 0);
+
+  return blocks;
 }
 
 async function buildNotionApiPreview(
@@ -222,89 +427,111 @@ async function buildNotionApiPreview(
   const warnings: string[] = [];
   const notes: ImportedNoteDraft[] = [];
 
-  // ── ページ一覧を取得 ──────────────────────────────────────────────────────
-  const searchRes = await fetch("https://api.notion.com/v1/search", {
-    method: "POST",
+  const pageSearchData = await fetchNotionJson<
+    NotionPaginatedResponse<NotionPage>
+  >(
+    "https://api.notion.com/v1/search",
     headers,
-    body: JSON.stringify({
-      filter: { property: "object", value: "page" },
-      page_size: pageLimit,
-    }),
-  });
-  if (!searchRes.ok) {
-    const err = await searchRes.text();
-    throw new Error(`Notion API error (${searchRes.status}): ${err}`);
-  }
-  const searchData = (await searchRes.json()) as { results: NotionPage[] };
-  const pages = searchData.results ?? [];
+    {
+      method: "POST",
+      body: JSON.stringify({
+        filter: { property: "object", value: "page" },
+        page_size: pageLimit,
+      }),
+    },
+  );
+  const pages = pageSearchData.results ?? [];
 
   for (const page of pages) {
     const title = extractNotionTitle(page);
-
-    // ブロック取得 (タイムアウト対策: 逐次実行)
     let content = "";
+
     try {
-      const blocksRes = await fetch(
-        `https://api.notion.com/v1/blocks/${page.id}/children?page_size=50`,
-        { headers },
+      const blockTree = await fetchNotionBlockTree(
+        page.id,
+        headers,
+        warnings,
+        title,
       );
-      if (blocksRes.ok) {
-        const blocksData = (await blocksRes.json()) as {
-          results: NotionBlock[];
-        };
-        content = notionBlocksToText(blocksData.results ?? []);
-      }
+      content = notionBlocksToText(blockTree);
     } catch {
-      warnings.push(`Failed to fetch content for "${title}"`);
+      pushWarningOnce(warnings, `Failed to fetch content for "${title}".`);
     }
 
-    notes.push({ title, content, source: "notion_page", tags: [] });
+    notes.push({
+      title,
+      content,
+      source: "notion_page",
+      tags: [],
+    });
   }
 
-  // ── データベース一覧を取得してエントリを追加 ──────────────────────────────
   try {
-    const dbSearchRes = await fetch("https://api.notion.com/v1/search", {
-      method: "POST",
+    const dbSearchData = await fetchNotionJson<
+      NotionPaginatedResponse<NotionDatabase>
+    >(
+      "https://api.notion.com/v1/search",
       headers,
-      body: JSON.stringify({
-        filter: { property: "object", value: "database" },
-        page_size: 5,
-      }),
-    });
-    if (dbSearchRes.ok) {
-      const dbSearchData = (await dbSearchRes.json()) as {
-        results: NotionDatabase[];
-      };
-      const databases = (dbSearchData.results ?? []).slice(0, 3);
+      {
+        method: "POST",
+        body: JSON.stringify({
+          filter: { property: "object", value: "database" },
+          page_size: 5,
+        }),
+      },
+    );
+    const databases = (dbSearchData.results ?? []).slice(
+      0,
+      NOTION_DATABASE_LIMIT,
+    );
 
-      for (const db of databases) {
-        const entriesPerDb = Math.min(5, pageLimit);
-        try {
-          const queryRes = await fetch(
+    for (const db of databases) {
+      try {
+        let dbCursor: string | null = null;
+        let fetchedEntries = 0;
+
+        do {
+          const pageSize = Math.min(100, pageLimit - fetchedEntries);
+          if (pageSize <= 0) break;
+
+          const queryData = await fetchNotionJson<
+            NotionPaginatedResponse<NotionDatabaseEntry>
+          >(
             `https://api.notion.com/v1/databases/${db.id}/query`,
+            headers,
             {
               method: "POST",
-              headers,
-              body: JSON.stringify({ page_size: entriesPerDb }),
+              body: JSON.stringify({
+                page_size: pageSize,
+                ...(dbCursor ? { start_cursor: dbCursor } : {}),
+              }),
             },
           );
-          if (!queryRes.ok) continue;
-          const queryData = (await queryRes.json()) as {
-            results: NotionDatabaseEntry[];
-          };
+
           for (const entry of queryData.results ?? []) {
             const title = extractDbEntryTitle(entry);
             const tags = extractDbEntryTags(entry);
             const content = extractDbEntryContent(entry);
-            notes.push({ title, content, source: "notion_database", tags });
+            notes.push({
+              title,
+              content,
+              source: "notion_database",
+              tags,
+            });
+            fetchedEntries++;
           }
-        } catch {
-          warnings.push(`Failed to fetch entries for database ${db.id}`);
-        }
+
+          dbCursor = queryData.has_more ? queryData.next_cursor ?? null : null;
+        } while (dbCursor && fetchedEntries < pageLimit);
+      } catch {
+        pushWarningOnce(
+          warnings,
+          `Failed to fetch entries for database ${db.id}.`,
+        );
       }
     }
   } catch {
-    warnings.push("Failed to search for Notion databases.");
+    pushWarningOnce(warnings, "Failed to search for Notion databases.");
   }
 
   if (notes.length === 0) {
@@ -322,8 +549,6 @@ async function buildNotionApiPreview(
     previewMode: "edge-function",
   };
 }
-
-// ── ファイルベース import ────────────────────────────────────────────────────
 
 function buildPreview({
   sourceType,
@@ -391,8 +616,14 @@ function parseNotionCsvText(csvText: string): ImportedNoteDraft[] {
     "body",
     "plain text",
     "本文",
+    "内容",
   ]);
-  const tagsIndex = findColumnIndex(header, ["tags", "tag", "labels"]);
+  const tagsIndex = findColumnIndex(header, [
+    "tags",
+    "tag",
+    "labels",
+    "タグ",
+  ]);
 
   const drafts: ImportedNoteDraft[] = [];
   for (const row of rows.slice(1)) {

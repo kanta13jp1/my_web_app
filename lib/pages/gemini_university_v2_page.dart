@@ -372,6 +372,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6B48FF),
     officialUrl: 'https://pi.ai',
   ),
+  'adept': _ProviderMeta(
+    name: 'Adept AI',
+    emoji: '🖥️',
+    color: const Color(0xFF2B5CE6),
+    officialUrl: 'https://www.adept.ai',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -654,6 +660,11 @@ final Map<String, _Quiz> _quizzes = {
   'inflection': _Quiz(
     question: 'Inflection AI の Pi が最も特化している領域は？',
     options: ['感情的知性・共感的対話', '数学・推論', 'コード生成', '画像生成'],
+    correct: 0,
+  ),
+  'adept': _Quiz(
+    question: 'Adept AI の ACT モデルが特化している能力は？',
+    options: ['ブラウザ・PC操作の自律エージェント', 'テキスト要約', '画像生成', '音声認識'],
     correct: 0,
   ),
 };
@@ -1537,6 +1548,24 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 - Microsoftとの提携 (Copilot for Enterprises に技術提供)
 
 [公式サイト](https://pi.ai)
+''',
+  'adept': '''
+## Adept AI
+ブラウザ・PCを自律操作するAIエージェントのパイオニア。
+ACT-1/ACT-2でWeb上のあらゆる操作を自然言語から実行可能にした先駆者。Amazon連携・\$415M調達。
+
+## 主要モデル
+- **ACT-1**: 最初の大規模アクションモデル・Web操作特化
+- **ACT-2**: 改良版エージェントモデル・より複雑なタスク対応
+- **Fuyu-8B**: 任意解像度の画像処理に対応したオープンソースマルチモーダルLLM
+
+## 特徴
+- Computer Use（PC操作）分野の先駆者
+- Amazonとの戦略的提携・Alexa次世代AI技術提供
+- エンタープライズ向けワークフロー自動化に特化
+- Fuyu-8BはHugging Face公開・スクリーンショット理解に強み
+
+[公式サイト](https://www.adept.ai)
 ''',
 };
 
