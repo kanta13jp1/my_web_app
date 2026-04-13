@@ -1,7 +1,7 @@
 ---
 title: "How I Published 21 Technical Articles in One Day Using GitHub Actions + Supabase"
 tags: GitHubActions,Supabase,automation,buildinpublic
-published: false
+published: true
 ---
 
 # How I Published 21 Technical Articles in One Day Using GitHub Actions + Supabase
