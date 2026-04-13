@@ -48,14 +48,16 @@ NAR_RACE_LIST_URL = "https://nar.netkeiba.com/top/race_list_sub.html?kaisai_date
 NAR_SHUTUBA_URL   = "https://nar.netkeiba.com/race/shutuba.html?race_id={race_id}"
 NAR_RESULT_URL    = "https://nar.netkeiba.com/race/result.html?race_id={race_id}"
 
-# JRA 競馬場コード (race_id の 8-9 桁目)
+# JRA 競馬場コード (race_id の 9-10 桁目 = positions [8:10])
+# JRA race_id 構造: YYYY(4) + kai(2) + day(2) + venue(2) + race(2) = 14桁
 JRA_VENUE_MAP = {
     "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
     "05": "東京", "06": "中山", "07": "中京", "08": "京都",
     "09": "阪神", "10": "小倉",
 }
 
-# NAR 競馬場コード (race_id の 8-9 桁目)
+# NAR 競馬場コード (race_id の 5-6 桁目 = positions [4:6])
+# NAR race_id 構造: YYYY(4) + venue(2) + MM(2) + DD(2) + race(2) = 12桁
 NAR_VENUE_MAP = {
     "30": "門別", "35": "盛岡", "36": "水沢", "42": "浦和",
     "43": "船橋", "44": "大井", "45": "川崎", "46": "金沢",
@@ -73,17 +75,39 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
+# U+FFFD 置換文字 (文字化け検出用)
+_REPLACEMENT_CHAR = chr(0xFFFD)
+
 
 # ─── HTTP ヘルパー ─────────────────────────────────────────────────────────────
 def http_get(url: str, timeout: int = 15) -> Optional[str]:
+    """HTML を取得して正しいエンコーディングで文字列に変換する。
+    nar.netkeiba.com は EUC-JP を使うため多段フォールバックで検出する。"""
     req = urllib.request.Request(url, headers=HEADERS)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            charset = "utf-8"
-            ct = resp.headers.get_content_charset()
-            if ct:
-                charset = ct
-            return resp.read().decode(charset, errors="replace")
+            raw = resp.read()
+            # 1. Content-Type ヘッダーの charset
+            charset = resp.headers.get_content_charset()
+            # 2. HTML の <meta charset=...> タグを先頭 4KB から検索
+            if not charset:
+                m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
+                if m:
+                    charset = m.group(1).decode("ascii", errors="ignore")
+            # 3. 検出 charset -> UTF-8 -> EUC-JP -> Shift-JIS の順で試す
+            candidates: list[str] = []
+            if charset:
+                candidates.append(charset)
+            for enc in ("utf-8", "euc-jp", "shift-jis", "cp932"):
+                normalized = enc.replace("-", "").lower()
+                if not any(normalized == c.replace("-", "").lower() for c in candidates):
+                    candidates.append(enc)
+            for enc in candidates:
+                try:
+                    return raw.decode(enc)
+                except (UnicodeDecodeError, LookupError):
+                    continue
+            return raw.decode("utf-8", errors="replace")
     except Exception as e:
         print(f"[WARN] GET {url} failed: {e}", file=sys.stderr)
         return None
@@ -95,16 +119,22 @@ def supabase_rest(method: str, table: str, data=None, params: dict = None):
     if params:
         url += "?" + urllib.parse.urlencode(params)
     body = json.dumps(data).encode("utf-8") if data else None
+    prefer = (
+        "return=representation"
+        if method == "DELETE"
+        else "return=representation,resolution=merge-duplicates"
+    )
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "return=representation,resolution=merge-duplicates",
+        "Prefer": prefer,
     }
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            body_bytes = resp.read()
+            return json.loads(body_bytes.decode("utf-8")) if body_bytes else []
     except urllib.error.HTTPError as e:
         err = e.read().decode("utf-8", errors="replace")
         print(f"[ERROR] {method} {table}: {e.code} {err[:200]}", file=sys.stderr)
@@ -294,17 +324,55 @@ class ResultParser(html.parser.HTMLParser):
 
 # ─── race_id パーサー ─────────────────────────────────────────────────────────
 def parse_race_id(race_id: str, source: str) -> dict:
-    """netkeiba race_id から開催場・レース番号等を解析"""
-    venue_map = NAR_VENUE_MAP if source == "nar" else JRA_VENUE_MAP
-    if len(race_id) >= 12:
+    """netkeiba race_id から開催場・レース番号等を解析
+
+    JRA: YYYY(4) + kai(2) + day(2) + venue(2) + race(2) = 14桁  venue=[8:10]
+    NAR: YYYY(4) + venue(2) + MM(2) + DD(2) + race(2)   = 12桁  venue=[4:6]
+    """
+    if source == "nar":
+        if len(race_id) < 12:
+            return {}
+        venue_code = race_id[4:6]
+        race_num = race_id[10:12]
+        venue = NAR_VENUE_MAP.get(venue_code, "不明")
+    else:
+        if len(race_id) < 12:
+            return {}
         venue_code = race_id[8:10]
         race_num = race_id[12:14] if len(race_id) >= 14 else ""
-        venue = venue_map.get(venue_code, "不明")
-        return {
-            "venue": venue,
-            "race_number": int(race_num) if race_num.isdigit() else None,
-        }
-    return {}
+        venue = JRA_VENUE_MAP.get(venue_code, "不明")
+    return {
+        "venue": venue,
+        "race_number": int(race_num) if race_num.isdigit() else None,
+    }
+
+
+# ─── 文字化けレコード削除 ────────────────────────────────────────────────────
+def _clean_garbled_races(target_date: str, source: str) -> int:
+    """文字化けしている horse_races レコードを削除してリフェッチを可能にする。
+    NAR サイトが EUC-JP で配信するため、エンコーディング修正前に保存されたレコードを
+    U+FFFD 置換文字の有無で検出して削除する。"""
+    races = supabase_rest("GET", "horse_races", params={
+        "race_date": f"eq.{target_date}",
+        "source": f"eq.{source}",
+        "select": "id,race_name",
+    })
+    if not races:
+        return 0
+
+    deleted = 0
+    for race in races:
+        race_name = race.get("race_name", "") or ""
+        if _REPLACEMENT_CHAR in race_name:
+            race_db_id = race["id"]
+            supabase_rest("DELETE", f"horse_entries?race_id=eq.{race_db_id}")
+            supabase_rest("DELETE", f"horse_predictions?race_id=eq.{race_db_id}")
+            supabase_rest("DELETE", f"horse_results?race_id=eq.{race_db_id}")
+            supabase_rest("DELETE", f"horse_races?id=eq.{race_db_id}")
+            print(f"    [CLEAN] 文字化けレコード削除: {race_name!r} (id={race_db_id})")
+            deleted += 1
+
+    return deleted
 
 
 # ─── 出走表取得 (JRA / NAR 共通ロジック) ──────────────────────────────────────
@@ -316,6 +384,12 @@ def _fetch_entries_for_source(
 ) -> tuple[int, int]:
     """指定ソースの出走表を取得して Supabase に保存。(saved_races, saved_entries) を返す"""
     date_nodash = target_date.replace("-", "")
+
+    # エンコーディング修正前に保存された文字化けレコードを削除してリフェッチを可能にする
+    cleaned = _clean_garbled_races(target_date, source)
+    if cleaned > 0:
+        print(f"  [{source.upper()}] {cleaned}件の文字化けレコードを削除しました")
+
     url = race_list_url.format(date=date_nodash)
     html_text = http_get(url)
     if not html_text:
@@ -419,7 +493,11 @@ def fetch_entries(target_date: str):
 
     total_races = jra_races + nar_races
     total_entries = jra_entries + nar_entries
-    print(f"[DONE] JRA: {jra_races}レース/{jra_entries}頭  NAR: {nar_races}レース/{nar_entries}頭  合計: {total_races}レース/{total_entries}頭 を登録")
+    print(
+        f"[DONE] JRA: {jra_races}レース/{jra_entries}頭  "
+        f"NAR: {nar_races}レース/{nar_entries}頭  "
+        f"合計: {total_races}レース/{total_entries}頭 を登録"
+    )
 
 
 def fetch_results(target_date: str):
@@ -481,8 +559,12 @@ def fetch_results(target_date: str):
 
         mark = "○ 的中" if is_correct else "× 外れ"
         src_label = f"[{source.upper()}]"
-        print(f"  [OK] {src_label} {race['race_name']}: {mark} "
-              f"1着={parser.results.get('1')} 2着={parser.results.get('2')} 3着={parser.results.get('3')}")
+        print(
+            f"  [OK] {src_label} {race['race_name']}: {mark} "
+            f"1着={parser.results.get('1')} "
+            f"2着={parser.results.get('2')} "
+            f"3着={parser.results.get('3')}"
+        )
         if is_correct:
             hits += 1
 
@@ -497,7 +579,11 @@ def trigger_ai_predictions(target_date: str):
     msg = result.get("message", "")
     print(f"[DONE] {count}件の予想完了 {msg}")
     for pred in result.get("predictions", []):
-        print(f"  {pred.get('race_name', '?')}: {pred.get('first', '?')}-{pred.get('second', '?')}-{pred.get('third', '?')} (信頼度:{pred.get('confidence', 0):.0%})")
+        print(
+            f"  {pred.get('race_name', '?')}: "
+            f"{pred.get('first', '?')}-{pred.get('second', '?')}-{pred.get('third', '?')} "
+            f"(信頼度:{pred.get('confidence', 0):.0%})"
+        )
 
 
 # ─── CLI エントリーポイント ────────────────────────────────────────────────────
