@@ -40,20 +40,45 @@ jobs:
             local rss_url="$2"
             local provider_name="$3"
 
-            # RSS から最新記事タイトルを取得 (CDATA対応 / 失敗時はフォールバック)
-            local LATEST_TITLE
-            LATEST_TITLE=$(curl -s --max-time 10 "$rss_url" 2>/dev/null | \
-              sed 's/<!\[CDATA\[//g;s/\]\]>//g' | \
-              grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | \
-              grep -v '^$' | tail -n +2 | head -1 | sed 's/^ *//;s/ *$//')
+            # RSS全体を取得 (CDATA除去・HTMLタグ除去)
+            local RSS_RAW
+            RSS_RAW=$(curl -s --max-time 10 "$rss_url" 2>/dev/null | \
+              sed 's/<!\[CDATA\[//g;s/\]\]>//g')
 
-            if [ -z "$LATEST_TITLE" ]; then
-              LATEST_TITLE="(RSS取得失敗 — 次回更新をお待ちください)"
+            # 最新5記事のタイトルを取得 (1行目はフィードタイトルなのでskip)
+            local T1 T2 T3 T4 T5
+            T1=$(echo "$RSS_RAW" | grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | grep -v '^$' | sed 's/^ *//;s/ *$//' | sed -n '2p')
+            T2=$(echo "$RSS_RAW" | grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | grep -v '^$' | sed 's/^ *//;s/ *$//' | sed -n '3p')
+            T3=$(echo "$RSS_RAW" | grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | grep -v '^$' | sed 's/^ *//;s/ *$//' | sed -n '4p')
+            T4=$(echo "$RSS_RAW" | grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | grep -v '^$' | sed 's/^ *//;s/ *$//' | sed -n '5p')
+            T5=$(echo "$RSS_RAW" | grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | grep -v '^$' | sed 's/^ *//;s/ *$//' | sed -n '6p')
+
+            # description/summary から最初の記事概要を取得 (HTMLタグ除去・300文字)
+            local DESC
+            DESC=$(echo "$RSS_RAW" | \
+              grep -o '<description>[^<]*</description>\|<summary>[^<]*</summary>' | \
+              sed 's/<description>//;s/<\/description>//;s/<summary>//;s/<\/summary>//' | \
+              sed 's/<[^>]*>//g' | grep -v '^$' | sed 's/^ *//;s/ *$//' | \
+              head -2 | tail -1 | cut -c1-300)
+
+            if [ -z "$T1" ]; then
+              T1="(RSS取得失敗 — 次回更新をお待ちください)"
             fi
 
+            # コンテンツ組み立て: 最新記事リスト + 概要
             local CONTENT
-            CONTENT=$(printf '## %s 最新情報 (%s)\n\n最新記事: %s\n\n> 出典: %s' \
-              "$provider_name" "$TODAY" "$LATEST_TITLE" "$rss_url")
+            CONTENT="## ${provider_name} 最新情報 (${TODAY})"$'\n\n'
+            CONTENT="${CONTENT}### 最新記事"$'\n\n'
+            CONTENT="${CONTENT}- ${T1}"$'\n'
+            [ -n "$T2" ] && CONTENT="${CONTENT}- ${T2}"$'\n'
+            [ -n "$T3" ] && CONTENT="${CONTENT}- ${T3}"$'\n'
+            [ -n "$T4" ] && CONTENT="${CONTENT}- ${T4}"$'\n'
+            [ -n "$T5" ] && CONTENT="${CONTENT}- ${T5}"$'\n'
+            if [ -n "$DESC" ]; then
+              CONTENT="${CONTENT}"$'\n'"### 最新記事の概要"$'\n\n'
+              CONTENT="${CONTENT}${DESC}..."$'\n\n'
+            fi
+            CONTENT="${CONTENT}"$'\n'"> 出典: ${rss_url}"
 
             local HTTP_CODE
             HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
