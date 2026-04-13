@@ -7,13 +7,12 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ---
 
-## 🔀 4インスタンス並行開発スコープ
+## 🔀 3インスタンス並行開発スコープ
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・219ページ) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
-| **Web版** | `supabase/functions/` (EF 250本) + `supabase/migrations/*_schema_*.sql` | — |
-| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | Rule 10 (docs全件分析) 主担当 |
+| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
+| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
 
 **緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
@@ -60,7 +59,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 19 | **友達招待 / 紹介コード** (ReferralShareCard — ホーム画面常設) | ✅ LP済 | `lib/widgets/` (VSCode版) |
 | 20 | **ノートコメント + 絵文字リアクション + OGP シェア** (Notion/Evernote 対抗ソーシャル連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 21 | **通知センター** (NotificationsPage — `notification-center` EF 連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
-| 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅ LP済 | EF: `e-signature` 系 (Web版) |
+| 22 | **電子署名** (法人・フリーランス向け — GitHub DocuSign 連携と直接競合) | ✅ LP済 | EF: `e-signature` 系 (VSCode版) |
 | 23 | **集中タイマー** (ポモドーロ/ディープフォーカス — 思考妨害排除ガードと連携) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 24 | **AI文章アシスタント** (文章作成・推敲・要約) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 25 | **浪費耐性トレーニング** (浪費トラッキングと連携した行動変容トレーニング) | ✅ LP済 | `lib/pages/` (VSCode版) |
@@ -69,7 +68,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 28 | **旅行計画** (行程管理・現地情報・費用管理) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 29 | **ペット管理** (健康記録・ワクチン管理・日記) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 30 | **フォトギャラリー** (AI分類・思い出管理・共有) | ✅ LP済 | `lib/pages/` (VSCode版) |
-| 31 | **マイAIエージェント** (ユーザー定義タスク自動化フロー — Notion Custom Agents 対抗) | ✅ LP済 | `lib/pages/ai_agent_page.dart` (VSCode版) + `my-ai-agent` EF (Web版) |
+| 31 | **マイAIエージェント** (ユーザー定義タスク自動化フロー — Notion Custom Agents 対抗) | ✅ LP済 | `lib/pages/ai_agent_page.dart` + `my-ai-agent` EF (VSCode版) |
 | 32 | **習慣ゲーミフィケーション** (ポイント・バッジ・ストリーク — Habitica 競合) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 33 | **コードプレイグラウンド** (ブラウザ内コード実行・学習環境) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 34 | **不動産管理** (物件管理・賃料追跡・投資分析) | ✅ LP済 | `lib/pages/` (VSCode版) |
@@ -82,7 +81,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 | 41 | **2FA セキュリティ** (多要素認証強化 — セキュリティ差別化) | ✅ LP済 | `lib/pages/` (VSCode版) |
 | 42 | **公開ギターギャラリー** (録音UGC公開共有 — sitemap/OGP済) | ✅ LP済 | `guitar-recording-studio` `public_gallery` action (VSCode版) |
 | 43 | **月次カレンダービュー** (TableCalendar — スケジュール管理強化) | ✅ LP済 | `lib/pages/` (VSCode版) |
-| 44 | **SaaSデータインポート** (Notion/Evernote/Markdown → 一括インポートUI+EF) | ✅ LP済 | `lib/pages/import_page.dart` (VSCode版) + `growth-import-preview`, `growth-import-commit` (Web版) |
+| 44 | **SaaSデータインポート** (Notion/Evernote/Markdown → 一括インポートUI+EF) | ✅ LP済 | `lib/pages/import_page.dart` + `growth-import-preview`, `growth-import-commit` (VSCode版) |
 | 45 | **アクティビティフィード** (行動ログ・達成記録タイムライン — Discord/Slack対抗) | ✅ LP済 | `lib/pages/activity_feed_page.dart` (VSCode版) |
 | 46 | **報酬・達成バッジ** (ポイント・バッジ獲得ゲーミフィケーション) | ✅ LP済 | `lib/pages/rewards_page.dart` (VSCode版) |
 | 47 | **支払いリマインダー** (月次サブスク・公共料金・ローン返済 — MoneyForward対抗) | ✅ LP済 | `lib/pages/payment_reminder_page.dart` (VSCode版) |
@@ -209,10 +208,10 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
-16. **毎セッション: Web/モバイル表示チェック（VSCode版 専任・修正）** — VSCode版は `flutter analyze 0エラー` 確認後、本番 `https://my-web-app-b67f4.web.app/` の主要ページ(ホーム/AI大学/LP/ランキング)をWeb・モバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を修正する。**他3インスタンスは確認のみ可・修正は VSCode版 に cross-instance-pr で依頼**
+16. **毎セッション: Web/モバイル表示チェック（VSCode版 専任・修正）** — VSCode版は `flutter analyze 0エラー` 確認後、本番 `https://my-web-app-b67f4.web.app/` の主要ページ(ホーム/AI大学/LP/ランキング)をWeb・モバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を修正する。**他2インスタンスは確認のみ可・修正は VSCode版 に cross-instance-pr で依頼**
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版 専任）** — PowerShell版が `.github/workflows/` を毎セッション見直す: (a) 常にエラーになるステップを無効化、(b) push + workflow_call 二重起動防止、(c) `continue-on-error: true` 乱用排除、(d) timeout-minutes 実態確認。**加えて全ブランチの CI 失敗を監視し `.github/ci-failures/<sha>.json` に記録する（他インスタンスは次セッション冒頭で確認）**。改善後は ROADMAP に記録する
 18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
-19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他3インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
+19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他2インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
 
 ---
 
@@ -423,7 +422,7 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
-| **Web版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
+| **VSCode版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 
@@ -705,7 +704,7 @@ is_active   boolean
 updated_at  timestamptz  -- 自動更新トリガー付き
 ```
 
-#### `ai-university-content` EF 仕様 (Web版)
+#### `ai-university-content` EF 仕様 (VSCode版)
 
 ```typescript
 // action: 'get_all' → 全プロバイダーのコンテンツ一覧
@@ -724,7 +723,7 @@ updated_at  timestamptz  -- 自動更新トリガー付き
 | --- | --- | --- |
 | **Generator-Verifier** | 品質最重要・評価基準を明文化できる | `claude-agent-review.yml` / `ci-auto-fix.yml` / `/deep-research`(NLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確・短時間で完結するサブタスク | `cs-check.yml` / `github-issue-fix.yml` / Claude Code Schedule全般 |
-| **Agent Teams** | 並行独立した長時間タスク | **4インスタンス並行開発** / `ai-university-update.yml`(18プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM) |
+| **Agent Teams** | 並行独立した長時間タスク | **3インスタンス並行開発** / `ai-university-update.yml`(6プロバイダー RSS有効) + Claude Schedule (4時間毎 NotebookLM) |
 | **Message Bus** | イベント駆動・エコシステムが成長する | `workflow-failure-handler.yml` → Issue → `cs-check` / `feedback-issue-resolved.yml` |
 | **Shared State** | エージェントが互いの発見を活用・単一障害点を避けたい | `memory/` + NotebookLM Master Brain / Supabase DB / `COMPRESSED_PROMPT_V3.md` |
 
@@ -823,4 +822,4 @@ S (Solutions)  = API呼び出し・計算コード → スクリプト
 
 ---
 
-> **インスタンス別スコープ早見表**: `lib/` + `docs/DESIGN.md` → **VSCode版** / `supabase/functions/` + schema migration → **Web版** / `docs/` (DESIGN.md除く) + seed SQL → **Windows版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**
+> **インスタンス別スコープ早見表**: `lib/` + `supabase/functions/` + `docs/DESIGN.md` → **VSCode版** / `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema) → **Windows版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**
