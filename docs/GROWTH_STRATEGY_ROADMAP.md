@@ -8228,3 +8228,27 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 次回Windows版優先タスク
 - 🟡 AI大学 48-49社目候補: Samsung Galaxy AI / Inflection Pi / Databricks DBRX
 - 🟢 cross-instance-pr 処理確認
+
+## PowerShell版#54 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | 01AI・Coze migration の bash quoting artifact 修正 (2箇所+6箇所→`''`) | ✅ (8677971d) |
+| 2 | blog-publish.yml Step3/4/6/JobSummary のシェルクォーティング根本修正 | ✅ (c6c6d5d5) |
+| 3 | T-1第34弾 再dispatch・dev.to公開完了 | ✅ published |
+| 4 | Step5 blog-publish branch マージ (published:true) | ✅ |
+| 5 | deploy-prod migration artifact 全件クリーン確認 | ✅ ALL CLEAN |
+
+### 技術メモ
+- blog-publish.yml: `${{ steps.meta.outputs.title }}` を `run:` 内の bash 文字列に直接展開すると title 内の `"` が bash 構文エラーを引き起こす → `env:` ブロック経由で安全に渡す
+- SQL migration: bash quoting pattern `'"'"'` は PostgreSQL で SQLSTATE 42601 → `''` に置換
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: 47社 / LP: 126のこと
+
+### 次回PowerShell版優先タスク
+- 🔴 deploy-prod in_progress 完了確認 → 失敗なら追加調査
+- 🟡 Rule 17 継続監視: ai-university-update.yml qwen/moonshot RSS追加検討
+- 🟢 T-1 第35弾記事候補: blog-publish.yml クォーティング修正の技術記事
