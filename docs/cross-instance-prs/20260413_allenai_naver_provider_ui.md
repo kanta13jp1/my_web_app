@@ -2,7 +2,7 @@
 
 作成: Windows版#67 (2026-04-13)
 宛先: VSCode版 + PowerShell版
-状態: pending
+状態: done
 
 ## VSCode版: `_providerMeta` 追加
 

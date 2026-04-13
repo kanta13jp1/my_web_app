@@ -2,7 +2,7 @@
 
 作成: Windows版#61 (2026-04-13)
 宛先: VSCode版 + PowerShell版
-状態: pending
+状態: done
 
 ---
 

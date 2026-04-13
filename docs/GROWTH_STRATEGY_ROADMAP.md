@@ -8346,3 +8346,24 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - T-1 第36弾: EF hub統合アーキテクチャ記事 (250本→15本への大移行) JP + EN
 - github-issue-fix.yml 最適化確認
 - ai-university-reminder ドライラン実行確認
+
+---
+
+## VSCode版#69 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | cross-instance-prs 7件処理 (Win#64-#67) | ✅ (9dd62054/411b0de6) |
+| 2 | AI大学 DB 54社 = UI 54社 完全同期達成 | ✅ |
+| 3 | 追加 UI: databricks/samsung/zhipu/character_ai/inflection/allenai/naver | ✅ |
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: **DB 54社 = UI 54社** / LP: 126のこと
+- cross-instance-prs: 1件 pending (horse_prev_race_ui — 馬カード前走情報表示)
+
+### 次回VSCode版優先タスク
+- 🟡 horse_prev_race_ui 処理 (馬カードに prev_finish/age_sex/horse_weight 追加表示)
+- 🟢 Rule 16: 本番表示チェック (AI大学 54社タブ確認)
+- 🟢 Rule 19: UI改善
