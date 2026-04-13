@@ -8030,3 +8030,35 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 学習リマインダーバッチ設定 — schedule-hub `reminders.study` action の定期実行化
 - 🟢 AI大学40社目評価 (Hailuo AI / Portkey / RunwayGen3)
 - 🟢 本番URL表示チェック (Rule 16) — レイアウト改善
+
+---
+
+## Windows版#60 セッション記録 (2026-04-13)
+
+### 完了: AI大学 qwen + moonshot 追加 (40-41社目)
+
+| # | 作業内容 | 状態 |
+|---|---------|------|
+| 1 | cross-instance-prs 28件確認 → 全件 `done` → pending 0件 → migration続行 | ✅ |
+| 2 | `qwen` (Alibaba Cloud) seed migration 作成 (036000) | ✅ |
+| 3 | `moonshot` (Moonshot AI / Kimi) seed migration 作成 (037000) | ✅ |
+| 4 | cross-instance-pr → VSCode版に UI追加依頼 (qwen+moonshot) | ✅ |
+| 5 | COMPRESSED_PROMPT プロバイダーリスト 39社→41社 更新 | ✅ |
+
+### 今セッションの追加プロバイダー
+
+| # | provider | 評価 | 特徴 |
+|---|---------|------|------|
+| 40 | `qwen` (Alibaba Cloud) | 7/9 | Qwen2.5-72B OSS最強クラス・DashScope API・29言語 |
+| 41 | `moonshot` (Moonshot AI) | 6/9 | Kimi 128K超長文・PDF直接処理・OpenAI互換 |
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: 219 / AI大学: **41社**
+- cross-instance-prs: **1件 pending** (qwen+moonshot UI → VSCode版)
+
+### 次回優先タスク
+
+- 🔴 VSCode版: qwen+moonshot UI 追加 (cross-instance-pr)
+- 🟡 Windows版#61: 42・43社目候補評価 — Hailuo AI / 01.AI / Zhipu AI 等
+- 🟢 Windows版: docs Rule#10 全件クリーン確認
