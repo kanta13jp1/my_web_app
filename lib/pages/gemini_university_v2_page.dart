@@ -276,6 +276,60 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6366F1),
     officialUrl: 'https://www.moonshot.cn',
   ),
+  'pika': _ProviderMeta(
+    name: 'Pika Labs',
+    emoji: '⚡',
+    color: const Color(0xFF6C63FF),
+    officialUrl: 'https://pika.art',
+  ),
+  'assemblyai': _ProviderMeta(
+    name: 'AssemblyAI',
+    emoji: '🎙️',
+    color: const Color(0xFF00BFA5),
+    officialUrl: 'https://www.assemblyai.com',
+  ),
+  'twelve_labs': _ProviderMeta(
+    name: 'Twelve Labs',
+    emoji: '🎞️',
+    color: const Color(0xFF4A90D9),
+    officialUrl: 'https://twelvelabs.io',
+  ),
+  'midjourney': _ProviderMeta(
+    name: 'Midjourney',
+    emoji: '🎨',
+    color: const Color(0xFF000000),
+    officialUrl: 'https://www.midjourney.com',
+  ),
+  'hailuo': _ProviderMeta(
+    name: 'Hailuo AI',
+    emoji: '🎬',
+    color: const Color(0xFF0066FF),
+    officialUrl: 'https://hailuoai.com',
+  ),
+  'adobe_firefly': _ProviderMeta(
+    name: 'Adobe Firefly',
+    emoji: '🔥',
+    color: const Color(0xFFFF0000),
+    officialUrl: 'https://firefly.adobe.com',
+  ),
+  '01ai': _ProviderMeta(
+    name: '01.AI (Yi)',
+    emoji: '🀄',
+    color: const Color(0xFF1A73E8),
+    officialUrl: 'https://www.01.ai',
+  ),
+  'coze': _ProviderMeta(
+    name: 'Coze',
+    emoji: '🤖',
+    color: const Color(0xFF5B61FF),
+    officialUrl: 'https://www.coze.com',
+  ),
+  'apple': _ProviderMeta(
+    name: 'Apple Intelligence',
+    emoji: '🍎',
+    color: const Color(0xFF1D1D1F),
+    officialUrl: 'https://apple.com/apple-intelligence',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -479,6 +533,51 @@ final Map<String, _Quiz> _quizzes = {
     question: 'Moonshot AI (Kimi) の最大コンテキスト長は？',
     options: ['8K', '32K', '128K', '4K'],
     correct: 2,
+  ),
+  'pika': _Quiz(
+    question: 'Pika Labs の動画生成コストとして知られる金額は？',
+    options: [r'$0.03/生成', r'$0.30/生成', r'$3.00/生成', r'$0.003/生成'],
+    correct: 0,
+  ),
+  'assemblyai': _Quiz(
+    question: 'AssemblyAI の LeMUR が使うデフォルト LLM は？',
+    options: ['Claude (Anthropic)', 'GPT-4', 'Gemini', 'Llama'],
+    correct: 0,
+  ),
+  'twelve_labs': _Quiz(
+    question: 'Twelve Labs の動画理解エンジンの名前は？',
+    options: ['Marengo', 'Pegasus', 'Apollo', 'Titan'],
+    correct: 0,
+  ),
+  'midjourney': _Quiz(
+    question: 'Midjourney が主に利用するプラットフォームはどれですか？',
+    options: ['Discord', 'Slack', 'Twitter', 'Reddit'],
+    correct: 0,
+  ),
+  'hailuo': _Quiz(
+    question: 'Hailuo AI (MiniMax) の LLM が対応する最大コンテキスト長は？',
+    options: ['100万トークン', '20万トークン', '32Kトークン', '128Kトークン'],
+    correct: 0,
+  ),
+  'adobe_firefly': _Quiz(
+    question: 'Adobe Firefly の最大の差別化ポイントは何ですか？',
+    options: ['商業利用安全な学習データ', '最高の画質', '無料で使える', '最速の生成速度'],
+    correct: 0,
+  ),
+  '01ai': _Quiz(
+    question: '01.AI を創業した著名人は誰ですか？',
+    options: ['李開復 (Kai-Fu Lee)', '李飛飛 (Fei-Fei Li)', 'Andrew Ng', 'Yann LeCun'],
+    correct: 0,
+  ),
+  'coze': _Quiz(
+    question: 'Coze を開発した企業はどこですか？',
+    options: ['ByteDance', 'Alibaba', 'Tencent', 'Baidu'],
+    correct: 0,
+  ),
+  'apple': _Quiz(
+    question: 'Apple Intelligence のプライバシー保護技術の名称は？',
+    options: ['Private Cloud Compute', 'Secure Enclave AI', 'Neural Guard', 'On-Device Shield'],
+    correct: 0,
   ),
 };
 
@@ -1083,6 +1182,158 @@ OpenAI SDK互換。PDF/Wordファイルを直接アップロードして処理�
 - 研究版: Kimi-VL (ビジョン対応版も公開)
 
 [Moonshot AI API](https://www.moonshot.cn)
+''',
+  'pika': '''
+## Pika Labs
+消費者向け動画生成AI。Pika 2.2で1080p・最大10秒の動画生成が可能。
+\$0.03/生成の低コストが強み。動画AI 4強 (Runway/Luma/Kling/Pika) の一つ。
+
+## 主要機能
+- **テキスト→動画**: プロンプトから即座に動画生成
+- **画像→動画**: 静止画に動きを付与するアニメーション化
+- **リップシンク**: 音声に合わせた口の動き生成
+- **SFX**: 動画に合わせたサウンドエフェクト自動生成
+
+[公式サイト](https://pika.art)
+''',
+  'assemblyai': '''
+## AssemblyAI
+音声認識・転写・音声理解のリーディングAPI。Universal-2モデルで99言語対応。
+Claude (Anthropic) をデフォルトで採用したLeMURで音声×LLM連携が可能。
+
+## 主要機能
+- **Universal-2**: 高精度音声認識・転写モデル
+- **LeMUR**: 音声コンテンツに対してLLMで質問・要約・分析
+- **Auto Chapters**: 動画・音声を自動チャプター分割
+- **Sentiment Analysis**: 話者の感情分析
+- **PII Redaction**: 個人情報の自動マスキング
+
+[公式サイト](https://www.assemblyai.com)
+''',
+  'twelve_labs': '''
+## Twelve Labs
+動画理解・検索に特化したAI。Marengo埋め込み+Pegasus生成の2モデル構成。
+動画Q&A・セマンティック検索・要約・ハイライト抽出が可能。
+
+## 主要モデル
+- **Marengo 2.7**: 動画埋め込み・セマンティック検索
+- **Pegasus 1.2**: 動画理解・テキスト生成・要約
+
+## 主要機能
+- **Video Search**: 動画内容をテキストでセマンティック検索
+- **Video Q&A**: 動画に対する自然言語での質問応答
+- **Highlight Detection**: 重要シーンの自動検出・抽出
+- **Video Summary**: 動画全体の自動要約生成
+
+[公式サイト](https://twelvelabs.io)
+''',
+  'midjourney': '''
+## Midjourney
+画像生成AIの代名詞。Discordボット/Web版でテキストから高品質画像を生成。
+1,600万人超の有料ユーザーを持つ。
+
+## 主要モデル
+- **V7**: 最新フラッグシップモデル・高品質
+- **V6.1**: 安定版・フォトリアルな画像生成
+- **Niji 6**: アニメ・マンガ・イラスト特化
+
+## 主要機能
+- **テキスト→画像**: 自然言語プロンプトから高品質画像
+- **Vary (Subtle/Strong)**: バリエーション生成
+- **Zoom Out**: 画像を拡張・キャンバス拡大
+- **Omni Reference**: キャラクター・スタイル参照生成
+
+[公式サイト](https://www.midjourney.com)
+''',
+  'hailuo': '''
+## Hailuo AI (MiniMax)
+MiniMaxが開発するマルチモーダルAI。動画・音声・テキストをAPI提供。
+Director Model (カメラワーク制御) と Subject Reference (キャラクター維持) が特徴。
+
+## 主要モデル
+- **MiniMax-Text-01**: 100万トークンコンテキスト対応LLM
+- **Video-01**: 動画生成モデル (Director Model搭載)
+- **Speech-02**: 音声合成・多言語TTS
+
+## 主要機能
+- **動画生成**: Subject Referenceでキャラクター一貫性を維持
+- **Director Model**: カメラズーム・パン・回転などの映像制作技法を制御
+- **音声合成**: 自然な多言語TTSと音声クローン
+
+[公式サイト](https://hailuoai.com)
+''',
+  'adobe_firefly': '''
+## Adobe Firefly
+Adobeが開発するクリエイター向け生成AI。商業利用安全な学習データで差別化。
+Photoshop・Illustratorと深く統合。Creative Cloud 1億人ユーザー基盤。
+
+## 主要機能
+- **Generative Fill**: 選択範囲をプロンプトで自動生成・置換
+- **Generative Expand**: 画像の外側をAIで自動拡張
+- **Text to Image**: テキストプロンプトから画像生成
+- **Text Effects**: テキストにスタイリッシュな素材テクスチャを適用
+
+## 特徴
+- Adobe Stockのライセンス取得コンテンツで学習 → 商業利用が安全
+- Photoshop/Illustrator/Expressへの深い統合
+- Firefly API: 開発者向けAPI提供済み
+
+[公式サイト](https://firefly.adobe.com)
+''',
+  '01ai': '''
+## 01.AI (Yi)
+李開復 (Kai-Fu Lee) が率いる中国AIスタートアップ。
+Yi-LightningはGPT-4o同等の性能を激安で提供。OpenAI互換APIで移行が容易。
+
+## 主要モデル
+- **Yi-Lightning**: GPT-4o同等・\$0.14/100万token (超低コスト)
+- **Yi-Large**: 高性能フラッグシップモデル
+- **Yi-34B/6B**: Apache 2.0ライセンスのオープンソースモデル
+
+## 特徴
+- OpenAI API完全互換 (base_url変更のみで移行可)
+- Yi-34BはHugging Faceで公開・商用利用可
+- 中国語・英語の双語処理に強み
+- 元Google中国社長・李開復が2023年創業
+
+[公式サイト](https://www.01.ai)
+''',
+  'coze': '''
+## Coze (ByteDance)
+ByteDanceが開発するAIエージェントプラットフォーム。
+ノーコードでAIボット・ワークフロー・プラグインを構築できる。
+
+## 主要機能
+- **ボット作成**: ノーコードでAIエージェントを設計・公開
+- **600+プラグイン**: Web検索・画像生成・コード実行など
+- **ワークフロー**: 複数ステップのタスク自動化フロー構築
+- **マルチモデル**: GPT-4o/Claude/Geminiなど複数LLMを切り替え
+
+## 特徴
+- LINE/Discord/Slack等への多チャンネルデプロイ
+- Knowledge Base: ドキュメントをRAG検索
+- Coze Studio: ビジュアルなエージェント設計UI
+
+[公式サイト](https://www.coze.com)
+''',
+  'apple': '''
+## Apple Intelligence
+Appleが開発するオンデバイスAI。iPhone/iPad/MacのA17 Pro/M1以降で動作。
+プライバシー最優先設計でデバイス内処理とPrivate Cloud Computeを使い分ける。
+
+## 主要機能
+- **Writing Tools**: 文章の書き直し・要約・校正
+- **Image Playground**: テキストからの画像生成 (オンデバイス)
+- **Genmoji**: カスタム絵文字のAI生成
+- **Siri強化**: 画面コンテキスト理解・アプリ間連携
+- **Clean Up**: 写真の不要物を自動除去
+
+## 特徴
+- **Private Cloud Compute**: 高度な処理はAppleサーバーで安全処理
+- 20億台以上のAppleデバイスに展開予定
+- ChatGPT統合: Siriからオプトイン連携
+
+[公式サイト](https://apple.com/apple-intelligence)
 ''',
 };
 
