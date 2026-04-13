@@ -77,9 +77,12 @@ jobs:
       # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
         id: register
+        env:
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
         run: |
-          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          TITLE="${{ steps.meta.outputs.title }}"
+          DRAFT_PATH="$DRAFT_PATH_VAR"
+          TITLE="$ARTICLE_TITLE"
           DRY_RUN="${{ github.event.inputs.dry_run }}"
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -116,10 +119,14 @@ jobs:
       # ── Step 4: schedule-hub blog.auto_publish で実投稿 ─────────────────
       - name: Step 4 - Publish to platforms
         id: publish
+        env:
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
+          TAGS_VAR: ${{ steps.meta.outputs.tags }}
         run: |
-          DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          TITLE="${{ steps.meta.outputs.title }}"
-          TAGS="${{ steps.meta.outputs.tags }}"
+          DRAFT_PATH="$DRAFT_PATH_VAR"
+          TITLE="$ARTICLE_TITLE"
+          TAGS="$TAGS_VAR"
           DRY_RUN="${{ github.event.inputs.dry_run }}"
 
           # frontmatter ごと渡して schedule-hub 側でstripFrontmatter処理
