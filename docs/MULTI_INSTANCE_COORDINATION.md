@@ -1,7 +1,7 @@
-# 4インスタンス並列開発 — 競合防止ガイド
+# 3インスタンス並列開発 — 競合防止ガイド
 
 作成日: 2026-03-30
-最終更新: 2026-04-12 (PS#40b — 役割分担見直し)
+最終更新: 2026-04-13 (PS#52 — Web版廃止・Windowsアプリ版移行)
 管理: PowerShell インスタンス (全体管理)
 
 ---
@@ -10,9 +10,8 @@
 
 | インスタンス | 担当領域 (write) | 専任責務 |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Dart/Flutter UI・215ページ) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` |
-| **Web版** | `supabase/functions/` (EF 15本デプロイ済 / hub action追加) + `supabase/migrations/*_schema_*.sql` | deno lint 0エラー / EF テスト維持 |
-| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/*_seed_*.sql` | docs 全件分析・鮮度管理 / seed データ管理 |
+| **VSCode版** | `lib/` (Dart/Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` / `deno lint 0エラー` |
+| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 / 全ブランチ CI 監視 |
 
 ### 緊急横断権限（Blocking 解消）
@@ -27,9 +26,8 @@
 
 | インスタンス | 変更禁止 |
 | --- | --- |
-| VSCode版 | `supabase/functions/`, `docs/` (DESIGN.md は own), `.github/` |
-| Web版 | `lib/`, `docs/`, `.github/` |
-| Windows版 | `lib/`, `supabase/functions/`, `.github/` |
+| VSCode版 | `docs/` (DESIGN.md は own), `.github/` |
+| Windowsアプリ版 | `lib/`, `supabase/functions/`, `.github/` |
 | PowerShell版 | `lib/`, `supabase/functions/`, `docs/` (MULTI_INSTANCE_COORDINATION.md は own) |
 
 ### 全インスタンス共有領域（例外）
@@ -39,7 +37,7 @@
 | パス | 理由 | 書き込みルール |
 | --- | --- | --- |
 | `memory/` (全ファイル) | `/wrap-up` で全インスタンスが学習を永続保存する共有メモリ領域 | ファイル名に session 識別子を付けて衝突回避 (例: `feedback_success_YYYYMMDD_ps.md`) |
-| `docs/GROWTH_STRATEGY_ROADMAP.md` | 全インスタンスがセッション記録を末尾追記する成長記録 | **追記のみ** (既存セクション編集は Windows版 に限定) / 末尾に `## <インスタンス名> YYYYMMDD` ヘッダーで追記 |
+| `docs/GROWTH_STRATEGY_ROADMAP.md` | 全インスタンスがセッション記録を末尾追記する成長記録 | **追記のみ** (既存セクション編集は Windowsアプリ版 に限定) / 末尾に `## <インスタンス名> YYYYMMDD` ヘッダーで追記 |
 | `docs/cross-instance-prs/` | 横断変更提案の投函ボックス (上記「緊急横断権限」で使用) | 任意のインスタンスが `YYYYMMDD_<内容>.md` を作成可 |
 | `.github/COMPRESSED_PROMPT_V3.md` | 全インスタンス共通のプロンプト辞書 | 数値更新・タスクステータス変更は全インスタンス可 / 構造変更は PowerShell版 が担当 |
 
@@ -68,9 +66,9 @@ git stash pop
 
 | インスタンス | 番号帯 | 例 |
 | --- | --- | --- |
-| **Web / Schedule (自動)** | `000010` ~ `000499` | `20260401000040_seed_session432j.sql` |
+| **Schedule (自動)** | `000010` ~ `000499` | `20260401000040_seed_session432j.sql` |
 | **VSCode** | `000500` ~ `000699` | `20260401000500_seed_vscode.sql` |
-| **Windows** | `000700` ~ `000899` | `20260401000700_seed_windows.sql` |
+| **Windowsアプリ** | `000700` ~ `000899` | `20260401000700_seed_windows.sql` |
 | **PowerShell (全体管理)** | `000900` ~ `000999` | `20260401000900_seed_ps8_ps9.sql` |
 
 > **注意**: `supabase/migrations/` の version は `schema_migrations` テーブルの PK。
@@ -116,10 +114,10 @@ git rebase --abort      # リベースをやめて元に戻す場合
 | `user_profiles` | ユーザープロフィール (is_admin含む) | PowerShell (スキーマ管理) |
 | `schedule_task_runs` | Schedule実行ログ | PowerShell (スキーマ管理) |
 | `blog_posts` | ブログ投稿管理 | PowerShell (スキーマ管理) |
-| `development_achievements` | 開発実績 | Windows/PowerShell |
+| `development_achievements` | 開発実績 | Windowsアプリ/PowerShell |
 | `agents` / `agent_tasks` | 仮想AI組織 | PowerShell (スキーマ管理) |
 | `teams` / `team_memberships` | チームワークスペース | PowerShell (スキーマ管理) |
-| `growth_plans` | 競合比較進捗データ | Windows (データ更新) |
+| `growth_plans` | 競合比較進捗データ | Windowsアプリ (データ更新) |
 
 ### RLS ポリシー設計原則
 

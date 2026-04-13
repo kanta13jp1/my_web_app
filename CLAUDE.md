@@ -93,7 +93,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Web/Windows/PowerShell) / `ai-university-update.yml` (9プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **3インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell) / `ai-university-update.yml` (41プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
@@ -760,7 +760,7 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 - タップ時のCTA文言・ボタン色を改善できるか？
 - 新規ユーザーと復帰ユーザーで表示を出し分けられるか？
 
-**Step B: バイラル機能強化 (VSCode版 + Web版)**
+**Step B: バイラル機能強化 (VSCode版)**
 
 シェア・ランキング・バッジで口コミ拡散を加速する:
 
@@ -769,7 +769,7 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 - **バッジシステム** (`ai_university_badges` テーブル): 達成条件別バッジ発行・シェア誘導
 - **SNSカード生成**: シェア時にOGP画像で「何社学習済み」を視覚化
 
-**Step C: リテンション強化 (Windows版 migration + Web版 EF)**
+**Step C: リテンション強化 (Windowsアプリ版 migration + VSCode版 EF)**
 
 一度使ったユーザーが戻ってくる仕掛けを入れる:
 
@@ -790,7 +790,7 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 | ✅ | シェア文言 A/B テスト (3バリエーション) | VSCode版 | ✅ 完了 (VSCode版#54) |
 | ✅ | ホームカード: ストリーク日数表示 | VSCode版 | ✅ 完了 (VSCode版#54) |
 | ✅ | SNS シェア画像生成 (OGP カード) | VSCode版 | ✅ 完了 (VSCode版#56) |
-| 🟢 中 | 学習リマインダー通知 (定期バッチ) | Web版 | EF action 実装済み (Web版#34) / バッチ未設定 |
+| 🟢 中 | 学習リマインダー通知 (定期バッチ) | VSCode版 | EF action 実装済み / バッチ未設定 |
 | 🔵 低 | 他ユーザー学習状況表示 | VSCode版 | 未実装 |
 
 #### 既存実装（改善のベースライン）

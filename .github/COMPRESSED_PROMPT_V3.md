@@ -11,8 +11,8 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 |
-| **Windows版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 |
+| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
+| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
 
 **緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
@@ -822,4 +822,4 @@ S (Solutions)  = API呼び出し・計算コード → スクリプト
 
 ---
 
-> **インスタンス別スコープ早見表**: `lib/` + `supabase/functions/` + `docs/DESIGN.md` → **VSCode版** / `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema) → **Windows版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**
+> **インスタンス別スコープ早見表**: `lib/` + `supabase/functions/` + `docs/DESIGN.md` → **VSCode版** / `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema) → **Windowsアプリ版** / `.github/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` → **PowerShell版** / `memory/` + `docs/GROWTH_STRATEGY_ROADMAP.md` (末尾追記) + `docs/cross-instance-prs/` + `COMPRESSED_PROMPT_V3.md` (数値更新) → **全インスタンス共有**
