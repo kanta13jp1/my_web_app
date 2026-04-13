@@ -6,9 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       draft_path:
-        description: '投稿するブログドラフトのパス (例: docs/blog-drafts/2026-03-31-notification-center.md)'
+        description: '日本語ドラフトのパス → Qiita に投稿'
         required: true
         default: 'docs/blog-drafts/2026-03-31-notification-center.md'
+      draft_path_en:
+        description: '英語ドラフトのパス → dev.to に投稿 (省略時は dev.to をスキップ)'
+        required: false
+        default: ''
       platforms:
         description: '投稿先プラットフォーム (qiita, devto, 両方: qiita,devto)'
         required: false
@@ -117,20 +121,23 @@ jobs:
           echo "✅ blog record ID: $POST_ID"
 
       # ── Step 4: schedule-hub blog.auto_publish で実投稿 ─────────────────
+      # Qiita: 日本語ドラフト (draft_path) を投稿
+      # dev.to: 英語ドラフト (draft_path_en) を投稿 — 省略時はスキップ
       - name: Step 4 - Publish to platforms
         id: publish
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
           DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
           TAGS_VAR: ${{ steps.meta.outputs.tags }}
+          DRAFT_PATH_EN: ${{ github.event.inputs.draft_path_en }}
         run: |
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
           TAGS="$TAGS_VAR"
           DRY_RUN="${{ github.event.inputs.dry_run }}"
+          PLATFORMS="${{ github.event.inputs.platforms }}"
 
-          # frontmatter ごと渡して schedule-hub 側でstripFrontmatter処理
-          CONTENT=$(cat "$DRAFT_PATH")
+          CONTENT_JP=$(cat "$DRAFT_PATH")
           TAGS_JSON=$(echo "$TAGS" | tr ',' '\n' | jq -R . | jq -s .)
 
           if [ "$DRY_RUN" = "true" ]; then
@@ -139,32 +146,70 @@ jobs:
             exit 0
           fi
 
-          # jq -n --arg でJSONを安全に構築
-          PAYLOAD=$(jq -n \
-            --arg action "blog.auto_publish" \
-            --arg title "$TITLE" \
-            --arg content "$CONTENT" \
-            --arg platforms "${{ github.event.inputs.platforms }}" \
-            --argjson tags "$TAGS_JSON" \
-            '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+          QIITA_URL=""
+          DEVTO_URL=""
 
-          RESPONSE=$(curl -s -w "\n%{http_code}" \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
-            --max-time 30)
+          # Qiita: 日本語コンテンツ
+          if echo "$PLATFORMS" | grep -q "qiita"; then
+            echo "📤 Qiita に日本語記事を投稿..."
+            PAYLOAD=$(jq -n \
+              --arg action "blog.auto_publish" \
+              --arg title "$TITLE" \
+              --arg content "$CONTENT_JP" \
+              --arg platforms "qiita" \
+              --argjson tags "$TAGS_JSON" \
+              '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" \
+              "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+              --max-time 30)
+            HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+            BODY=$(echo "$RESPONSE" | head -n -1)
+            echo "Qiita HTTP: $HTTP_CODE"
+            echo "$BODY" | jq . || echo "$BODY"
+            QIITA_URL=$(echo "$BODY" | jq -r '.results.qiita.url // ""')
+          fi
 
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -n -1)
+          # dev.to: 英語コンテンツ (draft_path_en が指定されている場合のみ)
+          if echo "$PLATFORMS" | grep -q "devto"; then
+            if [ -n "$DRAFT_PATH_EN" ] && [ -f "$DRAFT_PATH_EN" ]; then
+              echo "📤 dev.to に英語記事を投稿..."
+              CONTENT_EN=$(cat "$DRAFT_PATH_EN")
+              # 英語ドラフトのタイトルを抽出
+              TITLE_EN=$(grep '^title:' "$DRAFT_PATH_EN" | head -1 | tr -d '\r' | sed "s/^title: *//;s/^['\"]//;s/['\"]$//")
+              [ -z "$TITLE_EN" ] && TITLE_EN="$TITLE"
+              # 英語タグを抽出 (tags: 形式)
+              TAGS_EN=$(grep -E '^(tags|topics):' "$DRAFT_PATH_EN" | head -1 | tr -d '\r' | \
+                sed 's/^tags: *//;s/^topics: *//' | \
+                tr -d '[]' | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' | \
+                tr '\n' ',' | sed 's/,$//')
+              [ -z "$TAGS_EN" ] && TAGS_EN="$TAGS"
+              TAGS_EN_JSON=$(echo "$TAGS_EN" | tr ',' '\n' | jq -R . | jq -s .)
+              PAYLOAD_EN=$(jq -n \
+                --arg action "blog.auto_publish" \
+                --arg title "$TITLE_EN" \
+                --arg content "$CONTENT_EN" \
+                --arg platforms "devto" \
+                --argjson tags "$TAGS_EN_JSON" \
+                '{action: $action, title: $title, content: $content, platforms: $platforms, tags: $tags}')
+              RESPONSE_EN=$(curl -s -w "\n%{http_code}" -X POST \
+                -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD_EN" \
+                "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
+                --max-time 30)
+              HTTP_EN=$(echo "$RESPONSE_EN" | tail -1)
+              BODY_EN=$(echo "$RESPONSE_EN" | head -n -1)
+              echo "dev.to HTTP: $HTTP_EN"
+              echo "$BODY_EN" | jq . || echo "$BODY_EN"
+              DEVTO_URL=$(echo "$BODY_EN" | jq -r '.results.devto.url // ""')
+            else
+              echo "ℹ️ draft_path_en が未指定 — dev.to への投稿をスキップ"
+            fi
+          fi
 
-          echo "HTTP: $HTTP_CODE"
-          echo "$BODY" | jq . || echo "$BODY"
-
-          # Qiita / dev.to の結果を出力
-          QIITA_URL=$(echo "$BODY" | jq -r '.results.qiita.url // ""')
-          DEVTO_URL=$(echo "$BODY" | jq -r '.results.devto.url // ""')
           echo "qiita_url=$QIITA_URL" >> $GITHUB_OUTPUT
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 

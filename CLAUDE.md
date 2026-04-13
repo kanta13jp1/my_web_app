@@ -645,42 +645,65 @@ git log --oneline --since="7 days ago"
 
 直近7日間のコミット一覧を取得する。
 
-#### Step 2: ブログ下書きを生成・保存
+#### Step 2: ブログ下書きを生成・保存 (日本語 + 英語の2ファイル)
 
-ファイルパス: `docs/blog-drafts/YYYY-MM-DD.md`
+**日本語版** (Qiita 投稿用): `docs/blog-drafts/YYYY-MM-DD.md`
 
 ```markdown
-# ブログ下書き YYYY-MM-DD
+---
+title: "{実装内容を技術的に面白く表現したタイトル}"
+tags: Flutter,Supabase,buildinpublic,個人開発
+published: false
+---
 
-## タイトル案
-{実装内容を技術的に面白く表現したタイトル (3案)}
+# {タイトル}
 
-## 投稿先候補
-- [ ] Zenn
-- [ ] Qiita
-- [ ] note
-- [ ] はてなブログ
-- [ ] X Article
-
-## 本文下書き (1500〜3000字)
-{以下の構成で書く}
-
-### はじめに
+## はじめに
 {なぜこの機能を作ったか、どんな課題を解決するか}
 
-### 実装方法
+## 実装方法
 {Flutter/Supabase での具体的な実装手順、コードスニペット付き}
 
-### 詰まったポイント
+## 詰まったポイント
 {実際にハマった部分と解決策}
 
-### まとめ
+## まとめ
 {今後の展望、リポジトリ/サービスへのリンク}
 
 ---
-URL: https://my-web-app-b67f4.web.app/
+自分株式会社: https://my-web-app-b67f4.web.app/
+#FlutterWeb #Supabase #buildinpublic #個人開発
+```
+
+**英語版** (dev.to 投稿用): `docs/blog-drafts/YYYY-MM-DD-en.md`
+
+```markdown
+---
+title: "{English title — same technical content}"
+tags: Flutter,Supabase,buildinpublic,webdev
+published: false
+---
+
+# {English Title}
+
+## Introduction
+{Why this feature was built, what problem it solves}
+
+## Implementation
+{Flutter/Supabase step-by-step, with code snippets}
+
+## Challenges
+{What was tricky and how it was solved}
+
+## Conclusion
+{Next steps, links}
+
+---
+Building in public: https://my-web-app-b67f4.web.app/
 #FlutterWeb #Supabase #buildinpublic
 ```
+
+> **注意**: 日本語版と英語版は同じ技術内容を扱うが、それぞれの文化・読者に合わせた表現で書くこと。英語版は dev.to の読者向けに direct/concise なスタイルで。
 
 #### Step 3: 投稿記録をSupabaseに保存 (`blog-post-manager` EF)
 
@@ -737,12 +760,25 @@ Content-Type: application/json
 #### Step 5: コミット
 
 ```bash
-git add docs/blog-drafts/
-git commit -m "自動: ブログ下書き YYYY-MM-DD"
+git add docs/blog-drafts/YYYY-MM-DD.md docs/blog-drafts/YYYY-MM-DD-en.md
+git commit -m "自動: ブログ下書き YYYY-MM-DD (日本語+英語)"
 git push origin main
 ```
 
 開発活動がない日 (コミット0件) はスキップ可。
+
+#### Step 6: blog-publish.yml をディスパッチ (両言語を投稿)
+
+```bash
+# Qiita (日本語) + dev.to (英語) を同時投稿
+gh workflow run blog-publish.yml \
+  -f draft_path="docs/blog-drafts/YYYY-MM-DD.md" \
+  -f draft_path_en="docs/blog-drafts/YYYY-MM-DD-en.md" \
+  -f platforms="qiita,devto" \
+  -f dry_run="false"
+```
+
+`draft_path_en` を省略した場合は Qiita のみ投稿 (dev.to スキップ)。
 
 ---
 
