@@ -40,9 +40,10 @@ jobs:
             local rss_url="$2"
             local provider_name="$3"
 
-            # RSS から最新記事タイトルを取得 (失敗時はフォールバックメッセージ)
+            # RSS から最新記事タイトルを取得 (CDATA対応 / 失敗時はフォールバック)
             local LATEST_TITLE
             LATEST_TITLE=$(curl -s --max-time 10 "$rss_url" 2>/dev/null | \
+              sed 's/<!\[CDATA\[//g;s/\]\]>//g' | \
               grep -o '<title>[^<]*</title>' | sed 's/<title>//;s/<\/title>//' | \
               grep -v '^$' | tail -n +2 | head -1 | sed 's/^ *//;s/ *$//')
 
@@ -82,30 +83,21 @@ jobs:
             fi
           }
 
-          upsert_provider "google"      "https://blog.google/technology/ai/rss/"             "Google AI"
-          upsert_provider "openai"      "https://openai.com/news/rss.xml"                    "OpenAI"
-          upsert_provider "anthropic"   "https://www.anthropic.com/rss/news.xml"             "Anthropic"
-          upsert_provider "microsoft"   "https://blogs.microsoft.com/ai/feed/"               "Microsoft AI"
-          upsert_provider "meta"        "https://ai.meta.com/blog/rss/"                      "Meta AI"
-          upsert_provider "x"           "https://x.ai/blog/rss.xml"                         "xAI"
-          upsert_provider "deepseek"    "https://api-docs.deepseek.com/rss.xml"              "DeepSeek"
-          upsert_provider "mistral"     "https://mistral.ai/news/rss.xml"                    "Mistral AI"
-          upsert_provider "perplexity"  "https://blog.perplexity.ai/rss.xml"                "Perplexity AI"
-          upsert_provider "groq"        "https://wow.groq.com/feed/"                        "Groq"
-          upsert_provider "cohere"      "https://cohere.com/blog/rss.xml"                   "Cohere"
+          # RSS有効プロバイダーのみ更新 (無効URLは静的seedコンテンツを維持)
+          upsert_provider "google"      "https://blog.google/technology/ai/rss/"              "Google AI"
+          upsert_provider "openai"      "https://openai.com/news/rss.xml"                     "OpenAI"
+          upsert_provider "microsoft"   "https://blogs.microsoft.com/ai/feed/"                "Microsoft AI"
           upsert_provider "amazon"      "https://aws.amazon.com/blogs/machine-learning/feed/" "Amazon Bedrock"
-          # stability: RSS廃止済みのため除外 — 静的seedコンテンツを維持
-          upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"               "Hugging Face"
-          upsert_provider "nvidia"      "https://developer.nvidia.com/blog/tag/ai/feed/"     "NVIDIA"
-          upsert_provider "ibm"         "https://research.ibm.com/blog/rss"                  "IBM watsonx"
-          upsert_provider "sakana"      "https://sakana.ai/blog/index.xml"                   "Sakana AI"
-          upsert_provider "baidu"       "https://yiyan.baidu.com/blog/rss"                   "Baidu ERNIE"
-          # 新規プロバイダーを追加する場合はここに upsert_provider 行を追記する
+          upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"                "Hugging Face"
+          upsert_provider "nvidia"      "https://blogs.nvidia.com/feed/"                      "NVIDIA"
+          # RSS廃止/URL無効 (静的seedコンテンツを維持):
+          # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability
+          # 新規追加時は upsert_provider 行を追加する
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=17  # stability はRSS廃止のため除外 (静的seed維持)
+          TOTAL_PROVIDERS=6  # RSS有効プロバイダー数
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
