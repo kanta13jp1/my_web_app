@@ -8062,3 +8062,31 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 VSCode版: qwen+moonshot UI 追加 (cross-instance-pr)
 - 🟡 Windows版#61: 42・43社目候補評価 — Hailuo AI / 01.AI / Zhipu AI 等
 - 🟢 Windows版: docs Rule#10 全件クリーン確認
+
+---
+
+## daily-development セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | ノートエディタ `/tabs` コマンド追加 (Notion 3.4 パリティ) | ✅ (af20e484) |
+| 2 | AI大学 Qwen + Moonshot UI 追加 (40-41社目) | ✅ (af20e484) |
+| 3 | tools-hub `slack.post` / `slack.search` アクション追加 | ✅ |
+| 4 | daily-report.yml Step5.5: AI大学 学習リマインダーバッチ定期実行 | ✅ |
+| 5 | blog draft dispatch to dev.to (AI大学41社 + /tabs 記事) | ✅ (in progress) |
+| 6 | migration seed 2026-04-13 作成 | ✅ |
+
+### 現状数値
+
+- EF: 15本 / LP: 126のこと / ページ数: 219 / AI大学: **41社**
+- tools-hub actions: **slack.post + slack.search 追加**
+- 学習リマインダー: **daily-report 毎日07:30 JST 自動実行**
+
+### 次回優先タスク
+
+- 🔴 Windows版 / VSCode版: AI大学 42-43社目追加候補 (Hailuo AI / 01.AI / Zhipu AI 等)
+- 🟡 Rule 16: 本番URL表示チェック → レイアウト改善
+- 🟡 tools-hub: SLACK_BOT_TOKEN シークレット設定 → slack.search 動作確認
+- 🟢 LP 126→130のこと (4機能追加)
