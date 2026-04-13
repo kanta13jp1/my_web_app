@@ -1,0 +1,109 @@
+name: AI大学 学習リマインダー (毎日09:00 JST)
+
+# 3〜30日間未学習ユーザーに学習リマインダーを送信する
+# notification-center EF の send_study_reminders action を利用
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # 毎日 00:00 UTC = 09:00 JST
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true=対象確認のみ(DB書込なし), false=実送信'
+        required: false
+        default: 'false'
+      min_idle_days:
+        description: '何日未学習からリマインド対象 (1-30, 既定3)'
+        required: false
+        default: '3'
+
+concurrency:
+  group: ai-university-reminder
+  cancel-in-progress: false
+
+jobs:
+  send-reminders:
+    name: Send Study Reminders
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Send study reminders via notification-center EF
+        id: remind
+        env:
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          MIN_IDLE_DAYS: ${{ github.event.inputs.min_idle_days || '3' }}
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg action "send_study_reminders" \
+            --argjson dry_run "$([ "$DRY_RUN" = "true" ] && echo true || echo false)" \
+            --argjson min_idle_days "$MIN_IDLE_DAYS" \
+            '{action: $action, dry_run: $dry_run, min_idle_days: $min_idle_days, max_idle_days: 30}')
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/notification-center" \
+            --max-time 30)
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP: $HTTP_CODE"
+          echo "$BODY" | jq . || echo "$BODY"
+
+          ELIGIBLE=$(echo "$BODY" | jq -r '.eligible // 0')
+          SENT=$(echo "$BODY" | jq -r '.sent // 0')
+          SKIPPED=$(echo "$BODY" | jq -r '.skipped_recently_reminded // 0')
+
+          echo "eligible=$ELIGIBLE" >> $GITHUB_OUTPUT
+          echo "sent=$SENT" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ EF呼び出し失敗: HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Record to schedule_task_runs
+        if: always()
+        env:
+          SENT_COUNT: ${{ steps.remind.outputs.sent }}
+          ELIGIBLE_COUNT: ${{ steps.remind.outputs.eligible }}
+        run: |
+          STATUS="${{ job.status }}"
+          [ "$STATUS" = "success" ] && STATUS_KEY="success" || STATUS_KEY="error"
+          SUMMARY="ai-university-reminder: eligible=$ELIGIBLE_COUNT sent=$SENT_COUNT dry_run=${{ github.event.inputs.dry_run || 'false' }}"
+          curl -s -o /dev/null \
+            -X POST \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d "{\"task_id\":\"ai-university-reminder\",\"status\":\"$STATUS_KEY\",\"summary\":$(echo "$SUMMARY" | jq -R .)}" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/schedule_task_runs" \
+            --max-time 10 || true
+
+      - name: Job Summary
+        if: always()
+        env:
+          SENT_COUNT: ${{ steps.remind.outputs.sent }}
+          ELIGIBLE_COUNT: ${{ steps.remind.outputs.eligible }}
+          SKIPPED_COUNT: ${{ steps.remind.outputs.skipped }}
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          STATUS="${{ job.status }}"
+          ICON=$([ "$STATUS" = "success" ] && echo "✅" || echo "❌")
+          {
+            echo "## AI大学 学習リマインダー $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')"
+            echo ""
+            echo "| 項目 | 値 |"
+            echo "| --- | --- |"
+            echo "| ドライラン | $DRY_RUN |"
+            echo "| 対象ユーザー | $ELIGIBLE_COUNT 人 |"
+            echo "| 送信済み | $SENT_COUNT 件 |"
+            echo "| スキップ (最近通知済み) | $SKIPPED_COUNT 件 |"
+            echo "| ステータス | $ICON $STATUS |"
+          } >> $GITHUB_STEP_SUMMARY
