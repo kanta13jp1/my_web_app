@@ -2,7 +2,7 @@
 
 作成: Windows版#68 (2026-04-13)
 宛先: VSCode版
-状態: pending
+状態: done
 
 ## 概要
 horse_entries テーブルに前走情報カラムを追加。Flutter UIで出走馬カードに表示してほしい。
