@@ -25,7 +25,7 @@ google, microsoft, discord, line, facebook, liven, github
 
 ## デザインシステム参照 (UI生成時に必ず参照)
 
-**毎セッション必須ツールチェーン** (Rule 19): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて UI を改善する。詳細手順は `.github/COMPRESSED_PROMPT_V3.md` の Rule 19 および `docs/DESIGN_TOOLING_SETUP.md` 参照。
+**毎セッション必須ツールチェーン** (Rule 19+20): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて UI を改善する。加えて (Rule 20) **Playwright / Context7 / GitHub MCP / Magic / Code Review / Superpowers** の6MCPを積極活用する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19/20 参照。
 
 UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
 
@@ -78,6 +78,24 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    5. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
 
    **制約**: `docs/DESIGN.md` に反する提案は採用しない / `Theme.of(context)` + `ThemeService` を優先 / 日本語本文の `letter-spacing: 0`・`line-height: 1.7〜2.0` を維持
+
+13. **毎セッション: 6 MCPプラグイン活用（Rule 20・必須）** — `.mcp.json` に設定済みの以下6プラグインを積極的に使う。APIキーはローカル設定済み (`.mcp.json` は `.gitignore` 管理、gitに含めない)。
+
+   | プラグイン | 使用タイミング | 主なツール/コマンド |
+   | --- | --- | --- |
+   | **Playwright** | UI変更後の動作確認・E2Eテスト (Rule 8 自動化) | `playwright_navigate` / `playwright_click` / `playwright_screenshot` |
+   | **Context7** | 外部ライブラリ・API使用時 | プロンプトに `use context7` を付けると最新ドキュメント参照・ハルシネーション抑制 |
+   | **GitHub MCP** | PR作成・Issue操作 (Rule 9 補完) | `create_pull_request` / `list_issues` / `create_issue` |
+   | **Magic (21st.dev)** | UIコンポーネント新規生成 (Rule 12 補完) | `/ui <説明>` でデザイン品質の高いコンポーネントを生成 |
+   | **Code Review** | 実装後の自動レビュー | `code_review` ツールでセキュリティ・パフォーマンスを自動チェック |
+   | **Superpowers** | 構造化ワークフロー強化 | `superpowers:tdd` / `superpowers:debug` / `superpowers:plan` スキル |
+
+   **活用方針**:
+   - Rule 8 (Web/モバイル確認) → **まず Playwright でスクリーンショット自動取得** してから手動確認を補完
+   - 外部ライブラリの使い方を調べるとき → `use context7` を先頭に付けて最新仕様を参照
+   - PR を作るとき → `gh` CLI の代わりに **GitHub MCP** を使うと会話の流れで直接作成可能
+   - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
+   - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
 ---
 
