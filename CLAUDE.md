@@ -863,7 +863,7 @@ AI大学コンテンツを最新情報に自動更新する。**プロバイダ�
 #### 現在の登録プロバイダー
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver
 ```
 
 登録済みプロバイダーは `ai_university_content` テーブルの `provider` カラム個別値で確認できる。
