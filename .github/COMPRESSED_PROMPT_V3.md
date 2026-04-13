@@ -11,7 +11,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー / **Claude/Codex制限時の代替としてGemini Codeアシストを活用** |
+| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
 | **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
 
@@ -204,17 +204,14 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 9. **毎セッション: markdownlint（全インスタンス）** — `npx markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` を実行し指摘があれば修正する（自動生成・アーカイブは `.markdownlintignore` で除外済み）
 10. **毎セッション: docs/ 戦略ドキュメント全件分析・開発計画反映（全インスタンス）** — `docs/` 配下の常設ドキュメント（自動生成・アーカイブを除く）を全件読み、以下を実施する: (a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記。対象: `docs/CICD_SETUP_GUIDE.md` / `docs/CONTRIBUTING.md` / `docs/MULTI_INSTANCE_COORDINATION.md` / `docs/README.md` / `docs/DESIGN_TOOLING_SETUP.md` / `docs/technical/*.md` / `docs/roadmaps/*.md` / `docs/user-docs/*.md`。除外: `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
 11. **セッション開始: Master Brain 参照（必須）** — `memory/MEMORY.md` を必ず読んで前回の成功パターン・禁止事項・発見を最初に把握する。「記憶が消える弱点」を永続メモリで補う
-12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `notebooklm` CLI で NotebookLM に委譲。Claude / Codex は「判断・編集・統合」にこそトークンを使う。`notebooklm source add-research` で Web Deep Research、`notebooklm generate` でスライド/フラッシュカード/音声等を無料生成
+12. **重い分析は `/deep-research` 必須** — 3ファイル以上の同時分析・URL調査・競合リサーチ・大量ドキュメント俯瞰 → `notebooklm` CLI で NotebookLM に委譲。Claude は「判断・編集・統合」にこそトークンを使う。`notebooklm source add-research` で Web Deep Research、`notebooklm generate` でスライド/フラッシュカード/音声等を無料生成
 13. **セッション終了: `/wrap-up` 必須** — 作業完了後は必ず `/wrap-up` を実行して学習を `memory/` に永続保存。怠るとセッション間の記憶が消え、同じ失敗を繰り返す
 14. **`/wrap-up` 内: 次回タスク候補の提案（必須）** — 未完了タスクの有無に関わらず、セッション終了時に必ず次回実施タスク候補 3〜5件を優先度付きで提案する。提案元: ①未完了タスク ②COMPRESSED_PROMPT_V3「実装待ち」 ③GROWTH_STRATEGY_ROADMAP「次回優先」 ④競合脅威タスク ⑤タスク T-1 技術記事投稿。フォーマットは `wrap-up.md` の Step 6 に従う
 15. **毎セッション: AI大学キラーコンテンツ改善検討（全インスタンス）** — AI大学はユーザー獲得最重要機能。毎セッションで以下を必ず検討する: (a) 新規AIプロバイダー追加候補 (WebSearch → 技術革新性・API公開・話題性で評価)、(b) ランキング・達成バッジ・学習連続日数など未実装機能を1件以上進める、(c) ホームバナー (`AiUniversityHomeCard`) のクリック率向上策 (文言・デザイン改善)。詳細は `CLAUDE.md` の「AI大学 キラーコンテンツ化方針」セクションおよび本ファイルの「機能強化 #T3」を参照
 16. **毎セッション: Web/モバイル表示チェック（VSCode版 専任・修正）** — VSCode版は `flutter analyze 0エラー` 確認後、本番 `https://my-web-app-b67f4.web.app/` の主要ページ(ホーム/AI大学/LP/ランキング)をWeb・モバイル両方で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を修正する。**他2インスタンスは確認のみ可・修正は VSCode版 に cross-instance-pr で依頼**
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版 専任）** — PowerShell版が `.github/workflows/` を毎セッション見直す: (a) 常にエラーになるステップを無効化、(b) push + workflow_call 二重起動防止、(c) `continue-on-error: true` 乱用排除、(d) timeout-minutes 実態確認。**加えて全ブランチの CI 失敗を監視し `.github/ci-failures/<sha>.json` に記録する（他インスタンスは次セッション冒頭で確認）**。改善後は ROADMAP に記録する
 18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
-19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Codex` × `Claude Code` × `Gemini Code Assist` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) **Gemini Code Assist** で IDE 文脈付きの補完・小規模リファクタ候補・ null 安全性の違和感を先に洗い出し、(6) **Codex が `lib/` 実装・差分最適化・重複除去を担当**し、必要に応じて Claude Code が方針調整、(7) `flutter analyze 0エラー` → commit → ROADMAP 記録。**他2インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
-20. **毎セッション: 6 MCPプラグイン積極活用（全インスタンス・必須）** — `.mcp.json` に設定済みの以下6プラグインをAPIキー設定済みで積極活用する。**活用タイミング**: (a) UI変更後 → **Playwright** でスクショ自動取得 (`browser_navigate` → `browser_take_screenshot`) して Rule 16 確認を自動化、(b) 外部ライブラリ使用時 → **Context7** でプロンプトに `use context7` を付けて最新仕様参照・ハルシネーション抑制、(c) PR作成時 → **GitHub MCP** (`create_pull_request`) で会話内直接作成、(d) 新UIウィジェット作成時 → **Magic MCP** (`/ui <説明>`) でベース生成 → `docs/DESIGN.md` トークン適用、(e) 実装一段落後 → **Code Review MCP** でセキュリティ・品質チェック自動実行、(f) 構造化ワークフロー → **Superpowers MCP** (`superpowers:tdd` / `superpowers:debug` / `superpowers:plan`)。**APIキー管理**: `.mcp.json` はローカルのみ (`.gitignore` 管理)。GitHub MCP: `GITHUB_PERSONAL_ACCESS_TOKEN` 設定済み、Magic: `TWENTY_FIRST_API_KEY` 設定済み、Code Review: `ANTHROPIC_API_KEY` 設定済み
-21. **毎セッション: Codex 実装ループを標準化（全インスタンス）** — Codex を日常の実装担当として組み込む。**目的**: Claude がトークン制限・レート制限・セッション終了に達しても開発を止めず、Codex が代替レーンとして継続実装できる状態を常に保つ。**役割分担**: (a) **Codex** = `lib/` / `supabase/functions/` / `.github/` の局所実装、差分レビュー、重複定義検出、命名整理、UIの小刻み改善、(b) **Claude Code** = 長文設計、複数案比較、リサーチ統合、スケジュール自動化方針、(c) **NotebookLM** = 重い調査・ニュース抽出。**標準フロー**: 1. Claude または NotebookLM で方針決定 → 2. Codex が実装（IDE 内では Gemini Code Assist を補助利用可） → 3. Codex が `git diff` で自己レビュー → 4. Playwright/MCP で表示確認 → 5. 必要時のみ Claude Managed Agents / Code Review MCP で二次レビュー → 6. commit / PR。**引き継ぎパケット**: Claude 側が上限に近づいた時点で `現在ブランチ` / `変更ファイル` / `未完了タスク` / `直近エラー` / `実行済み検証` / `次の1手` を `COMPRESSED_PROMPT_V3.md`・ROADMAP・PR本文・session note のいずれかに残し、Codex は開始時に `git status` / `git diff` / そのメモを確認して未コミット差分を壊さず続行する。**analyze不能時の代替**: Codex は `dart format` / 静的diff確認 / 主要画面スクショ比較 / 変更箇所の危険点列挙まで必ず実施し、未検証点を明記する
-22. **毎セッション: Gemini Code Assist の活用（VSCode版）** — ClaudeやCodexがトークン制限・レート制限に達した際の**代替（フォールバック）レーン**として、IDE内（VS Code）の Gemini Code Assist (Gemini 3.1 Pro) を活用し開発を継続する。VSCodeのチャットペインからモデルを直接切り替えて使用し、プレビュー機能が有効（`.gemini/settings.json` の `previewFeatures` など）であることを確認して利用する。制限到達時でも開発を止めず、コンテキストを保ったまま実装や自己レビューを引き継ぐこと。
+19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他2インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
 
 ---
 
@@ -252,15 +249,13 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
 - EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在15本デプロイ済み) / 15本構成: standalone 4本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
-- **Codex 組み込み方針**: ローカル実装・差分最適化・UIの局所修正・重複除去は Codex を一次担当とし、PR前に `git diff` ベース自己レビューを必須化する。Claude のトークン制限・レート制限到達時は Codex が継続実装レーンとしてそのまま引き継ぐ
-- **Gemini Code Assist 併用方針**: VS Code 内の補完・軽量レビュー・小規模リファクタ候補抽出は Gemini Code Assist に寄せ、Codex / Claude のトークンは設計・統合・高難度実装へ優先配分する
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
 ---
 
 ## ⏰ Claude Code Schedule タスク（9本）
 
-> GitHub Actions と **並行・補完**する関係。Actions がデータ収集・投稿を担当し、Claude Schedule が AI分析を担当、**Codex が日中の実装・局所修正・差分レビューを担当し、Claude 停止時の継続開発も担う**。
+> GitHub Actions と **並行・補完**する関係。Actions がデータ収集・投稿を担当し、Claude Schedule が AI分析・コード修正を担当。
 
 | Task | 時刻 | 内容 |
 | --- | --- | --- |
@@ -427,7 +422,7 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
-| ~~**VSCode版**~~ | ✅ 拡張完了 (VSCode#65, 2026-04-14) — `growth-import-preview` の Notion API 連携を実運用向けに強化。再帰 block 取得・429/一時エラー retry・block 上限 warning を追加 |
+| **VSCode版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 

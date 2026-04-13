@@ -118,10 +118,6 @@ class _AiStatusPageState extends State<AiStatusPage> {
 
   // モデル一覧の取得（API レスポンスを UI 用に整形）
   Future<void> _fetchAvailableModels() async {
-    if (_supabase.auth.currentUser == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
     try {
       setState(() => _isLoading = true);
 
