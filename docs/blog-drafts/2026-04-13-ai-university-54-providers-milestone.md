@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で「AI大学」54社対応 — 個人開発で作るAIプロバイダー学習プラットフォーム"
 tags: Flutter,Supabase,個人開発,buildinpublic,AI
-published: false
+published: true
 ---
 
 # Flutter × Supabase で「AI大学」54社対応 — 個人開発で作るAIプロバイダー学習プラットフォーム
