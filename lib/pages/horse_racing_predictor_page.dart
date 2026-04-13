@@ -417,22 +417,60 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     final n = (en['horse_number'] as num?)?.toInt();
                     final nm = en['horse_name'] as String? ?? '?';
                     final od = (en['win_odds'] as num?)?.toStringAsFixed(1);
+                    final ageSex = en['age_sex'] as String?;
+                    final hw = (en['horse_weight'] as num?)?.toInt();
+                    final hwc = (en['horse_weight_change'] as num?)?.toInt();
+                    final prevFinish = (en['prev_finish'] as num?)?.toInt();
+                    final prevRace = en['prev_race_name'] as String?;
+                    final prevDays = (en['prev_days_ago'] as num?)?.toInt();
+
+                    Color prevColor = Colors.grey;
+                    if (prevFinish == 1) {
+                      prevColor = const Color(0xFFFFD700);
+                    } else if (prevFinish != null && prevFinish <= 3) {
+                      prevColor = Colors.green;
+                    } else if (prevFinish != null && prevFinish <= 5) {
+                      prevColor = Colors.white70;
+                    }
+
+                    final weightStr = hw != null
+                        ? '$hw kg${hwc != null ? '(${hwc >= 0 ? '+' : ''}$hwc)' : ''}'
+                        : null;
+                    final prevStr = prevFinish != null
+                        ? '前走$prevFinish着${prevRace != null ? ' / $prevRace' : ''}${prevDays != null ? ' / $prevDays日前' : ''}'
+                        : null;
+
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 3,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text(
-                        '${n != null ? '$n.' : ''}$nm'
-                        '${od != null ? ' ($od倍)' : ''}',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${n != null ? '$n.' : ''}$nm'
+                            '${ageSex != null ? '  $ageSex' : ''}'
+                            '${weightStr != null ? '  $weightStr' : ''}'
+                            '${od != null ? '  $od倍' : ''}',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 11,
+                            ),
+                          ),
+                          if (prevStr != null)
+                            Text(
+                              prevStr,
+                              style: TextStyle(
+                                color: prevColor,
+                                fontSize: 10,
+                              ),
+                            ),
+                        ],
                       ),
                     );
                   }),
