@@ -2,12 +2,8 @@ name: Horse Racing Auto Update
 
 on:
   schedule:
-    # 07:30 JST (22:30 UTC) — 出走表取得 + AI予想 (当日レース前)
-    - cron: "30 22 * * *"
-    # 17:30 JST (08:30 UTC) — レース結果取得 (夕方レース終了後)
-    - cron: "30 8 * * *"
-    # 21:00 JST (12:00 UTC) — 夜間レース結果取得
-    - cron: "0 12 * * *"
+    # 毎時00分 (UTC) = 毎時09分 JST — 出走表+AI予想+結果を1時間毎に更新
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -20,20 +16,16 @@ on:
         default: ""
 
 jobs:
-  horse-racing-entries:
-    name: 出走表取得 + AI予想
+  horse-racing-update:
+    name: 競馬情報更新 (出走表+AI予想+結果)
     runs-on: ubuntu-latest
-    # 07:30 JST (22:30 UTC) のみ、または手動で entries/all
-    if: |
-      (github.event_name == 'schedule' && github.event.schedule == '30 22 * * *') ||
-      (github.event_name == 'workflow_dispatch' && (inputs.mode == 'entries' || inputs.mode == 'all'))
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -46,68 +38,18 @@ jobs:
             echo "TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)" >> "$GITHUB_ENV"
           fi
 
-      - name: 出走表取得
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: |
-          python scripts/fetch_horse_racing.py --mode entries --date "$TARGET_DATE"
-
-      - name: AI 3連単予想実行
+      - name: 競馬情報更新 (all mode)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
         run: |
-          python scripts/fetch_horse_racing.py --mode predict --date "$TARGET_DATE"
+          MODE="${{ inputs.mode }}"
+          python scripts/fetch_horse_racing.py --mode "${MODE:-all}" --date "$TARGET_DATE"
 
       - name: 完了サマリー
         run: |
-          echo "### 競馬出走表取得 + AI予想完了" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 競馬情報更新完了" >> "$GITHUB_STEP_SUMMARY"
           echo "- 対象日: $TARGET_DATE" >> "$GITHUB_STEP_SUMMARY"
-
-  horse-racing-results:
-    name: レース結果取得
-    runs-on: ubuntu-latest
-    # 17:30 JST (08:30 UTC) または 21:00 JST (12:00 UTC)、または手動で results/all
-    if: |
-      (github.event_name == 'schedule' && (github.event.schedule == '30 8 * * *' || github.event.schedule == '0 12 * * *')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.mode == 'results' || inputs.mode == 'all'))
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: 対象日付を設定
-        id: date
-        run: |
-          if [ -n "${{ inputs.date }}" ]; then
-            echo "TARGET_DATE=${{ inputs.date }}" >> "$GITHUB_ENV"
-          else
-            # 17:30 JST は当日のレース結果 / 07:30 JST は前日の夜間レース結果
-            HOUR=$(TZ=Asia/Tokyo date +%H)
-            if [ "$HOUR" -lt 10 ]; then
-              # UTC 08:30 = JST 17:30 なので当日
-              echo "TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)" >> "$GITHUB_ENV"
-            else
-              echo "TARGET_DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)" >> "$GITHUB_ENV"
-            fi
-          fi
-
-      - name: レース結果取得
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TOOLS_HUB_URL: ${{ secrets.SUPABASE_URL_PROD }}/functions/v1/tools-hub
-        run: |
-          python scripts/fetch_horse_racing.py --mode results --date "$TARGET_DATE"
-
-      - name: 完了サマリー
-        run: |
-          echo "### 競馬結果取得完了" >> "$GITHUB_STEP_SUMMARY"
-          echo "- 対象日: $TARGET_DATE" >> "$GITHUB_STEP_SUMMARY"
+          echo "- モード: ${{ inputs.mode || 'all' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 実行時刻: $(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M JST')" >> "$GITHUB_STEP_SUMMARY"

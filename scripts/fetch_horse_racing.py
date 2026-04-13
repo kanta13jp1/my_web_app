@@ -475,9 +475,9 @@ def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト")
     parser.add_argument(
         "--mode",
-        choices=["entries", "results", "predict"],
+        choices=["entries", "results", "predict", "all"],
         required=True,
-        help="実行モード: entries=出走表, results=結果, predict=AI予想",
+        help="実行モード: entries=出走表, results=結果, predict=AI予想, all=全て実行",
     )
     parser.add_argument(
         "--date",
@@ -498,6 +498,10 @@ def main():
         fetch_results(target_date)
     elif args.mode == "predict":
         trigger_ai_predictions(target_date)
+    elif args.mode == "all":
+        fetch_entries(target_date)
+        trigger_ai_predictions(target_date)
+        fetch_results(target_date)
 
 
 if __name__ == "__main__":
