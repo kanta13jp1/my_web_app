@@ -3,7 +3,7 @@ title: "Bash の '"'"' がSQLファイルに混入して本番デプロイを破
 emoji: "🐚"
 type: "tech"
 topics: ["PostgreSQL", "Supabase", "GitHubActions", "bash", "個人開発"]
-published: false
+published: true
 ---
 
 # Bash の `'"'"'` が SQL ファイルに混入して本番デプロイを破壊した話
