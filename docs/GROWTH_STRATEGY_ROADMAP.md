@@ -8119,3 +8119,33 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 T-1 第34弾: `docs/blog-drafts/2026-04-12-blog-publish-automation-github-actions.md` dispatch
 - 🟢 ai-university-update.yml に qwen/moonshot/twelve_labs 検索クエリ追加 (Windows版#60対応)
 - 🟢 Rule17 継続モニタリング (weekly)
+
+---
+
+## Windowsアプリ版#61 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | Rule10 docs全件分析 (Explore委譲) — 3件の修正点を検出 | ✅ |
+| 2 | docs/README.md: 4インスタンス→3インスタンス修正 | ✅ (c7ecdd59) |
+| 3 | docs/CICD_SETUP_GUIDE.md: 18本→17本修正 | ✅ (c7ecdd59) |
+| 4 | AI大学42社目: Midjourney seed migration 追加 (画像生成の代名詞) | ✅ (ae1ab25b) |
+| 5 | AI大学43社目: Hailuo AI (MiniMax) seed migration 追加 (動画/音声/LLM) | ✅ (ae1ab25b) |
+| 6 | cross-instance-pr: VSCode版(UI追加)・PS版(yml更新) へ依頼 | ✅ |
+| 7 | COMPRESSED_PROMPT_V3: プロバイダー数 41→43社 更新 | ✅ |
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: **43社** / LP: 126のこと
+- GitHub Actions ワークフロー: **17本** (3インスタンス体制)
+- 次回migration番号帯: 040000〜
+
+### 追加プロバイダー詳細
+- **Midjourney**: 画像生成AIの代名詞。V6/V7・Niji(アニメ)・Omni Reference機能。1600万人超の有料ユーザー
+- **Hailuo AI (MiniMax)**: 動画(Director Model/Subject Reference)+音声TTS+100万tokenLLM。国際API提供済み
+
+### 次回Windows版優先タスク
+- 🟡 AI大学 44-45社目候補: 01.AI (Yi-series) / Adobe Firefly / Character.ai
+- 🟢 cross-instance-pr 処理後の確認 (VSCode版 UI更新後)
+- 🟢 Rule10 継続 (docs/cross-instance-prs/ 整理)
