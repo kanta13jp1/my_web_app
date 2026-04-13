@@ -1,7 +1,7 @@
 name: AI大学コンテンツ更新 (2時間毎)
 
 # 登録済みAIプロバイダーの最新ニュースを RSS 取得し ai_university_content テーブルを更新する
-# プロバイダーは固定せず随時追加可能 (現在41社: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity/groq/cohere/amazon/stability/huggingface/nvidia/ibm/sakana/baidu/oracle/reka/aleph_alpha/together_ai/fireworks_ai/replicate/writer/ai21/voyage/elevenlabs/openrouter/ollama/runway/suno/ideogram/udio/luma/kling/pika/assemblyai/twelve_labs/qwen/moonshot)
+# プロバイダーは固定せず随時追加可能 (現在54社: google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity/groq/cohere/amazon/stability/huggingface/nvidia/ibm/sakana/baidu/oracle/reka/aleph_alpha/together_ai/fireworks_ai/replicate/writer/ai21/voyage/elevenlabs/openrouter/ollama/runway/suno/ideogram/udio/luma/kling/pika/assemblyai/twelve_labs/qwen/moonshot/midjourney/hailuo/adobe_firefly/01ai/coze/apple/databricks/samsung/zhipu/character_ai/inflection_ai/allen_ai/naver)
 # 2時間毎に自動実行。深いリサーチは Claude Code Schedule (ai-university-update タスク) が NotebookLM で担当
 on:
   schedule:
