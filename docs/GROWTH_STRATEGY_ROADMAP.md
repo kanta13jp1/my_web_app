@@ -8206,3 +8206,25 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🔴 AI大学 45社 UI追加 (cross-instance-pr pending確認)
 - 🟡 COMPRESSED_PROMPT_V3 数値同期 (AI大学45社・219ページ)
 - 🟢 horse_racing 次回GH Actions実行後の文字化け解消確認
+
+---
+
+## Windowsアプリ版#63 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | Rule10 docs全件クリーン確認 | ✅ |
+| 2 | AI大学46社目: Coze (ByteDance) seed migration | ✅ (05df3b35) |
+| 3 | AI大学47社目: Apple Intelligence seed migration | ✅ (05df3b35) |
+| 4 | CLAUDE.md + COMPRESSED_PROMPT_V3: 45→47社 | ✅ (05df3b35) |
+| 5 | cross-instance-pr: VSCode版+PS版へ依頼 | ✅ |
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: **47社** / LP: 126のこと
+- 次回migration番号帯: 044000〜
+
+### 次回Windows版優先タスク
+- 🟡 AI大学 48-49社目候補: Samsung Galaxy AI / Inflection Pi / Databricks DBRX
+- 🟢 cross-instance-pr 処理確認
