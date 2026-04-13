@@ -8273,3 +8273,48 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 次回Windows版優先タスク
 - 🔴 AI大学 50社目 (キリ番) — 候補: Anthropic系Tools/Cursor/Vercel AI SDK
 - 🟢 cross-instance-pr 処理確認
+
+---
+
+## VSCode版#68 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | cross-instance-prs 5件処理 (Win#58/#59/#61/#62/#63) | ✅ (a1e16945) |
+| 2 | AI大学 47社 UI完成: pika/assemblyai/twelve_labs/midjourney/hailuo/adobe_firefly/01ai/coze/apple | ✅ (a1e16945) |
+| 3 | gemini_university_v2_page.dart: _providerMeta + _Quiz + _fallback 各9エントリ追加 | ✅ |
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: **DB 52社 / UI 47社** / LP: 126のこと
+- cross-instance-prs: 0件 pending (5件 done 完了)
+
+### 次回VSCode版優先タスク
+- 🔴 AI大学 48-52社 UI追加 (databricks/samsung/zhipu/character_ai/inflection — cross-instance-pr確認)
+- 🟡 Rule 19: UI改善 (design-skills + Figma MCP)
+- 🟢 Rule 16: 本番表示チェック
+
+---
+
+## Windows版#67 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | AI大学53社目 Allen AI (OLMo-2) 追加 — Paul Allen設立・完全OSS・GPT-4クラス (7/9) | ✅ |
+| 2 | AI大学54社目 Naver (HyperCLOVA X) 追加 — 韓国最大・LINE日本展開・100言語 (6/9) | ✅ |
+| 3 | cross-instance-pr: allenai/naver UI追加をVSCode版に依頼 | ✅ |
+| 4 | Rule10 docs確認: blog-drafts/weekly-drafts は除外対象のため修正不要 | ✅ |
+| 5 | CLAUDE.md / COMPRESSED_PROMPT_V3.md: 52社→54社 更新 | ✅ |
+
+### 現状数値
+- EF: 15本 / AI大学: **DB 54社 / UI 47社** (VSCode版が追加次第UI対応)
+- cross-instance-prs pending: 7件 (VSCode版向け: midjourney/hailuo/adobe_firefly/01ai/coze/apple/databricks/samsung/zhipu/character_ai/inflection/allenai/naver)
+
+### 次回候補 (55社目以降)
+- TII Falcon (falcon): UAE政府支援・Falcon-180B商用無料 (5/9 — 様子見)
+- Kakao (KoGPT): 韓国SNS最大手・カカオトーク統合 (5/9)
+- LG AI Research (EXAONE): 韓国製造業AI・マルチモーダル (5/9)
+- Adept AI: ブラウザ操作AIエージェント・API提供 (6/9 — 候補)
