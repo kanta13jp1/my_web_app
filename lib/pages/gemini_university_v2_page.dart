@@ -330,6 +330,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF1D1D1F),
     officialUrl: 'https://apple.com/apple-intelligence',
   ),
+  'allenai': _ProviderMeta(
+    name: 'Allen AI (OLMo)',
+    emoji: '🔬',
+    color: const Color(0xFF2196F3),
+    officialUrl: 'https://allenai.org',
+  ),
+  'naver': _ProviderMeta(
+    name: 'Naver (HyperCLOVA X)',
+    emoji: '🟩',
+    color: const Color(0xFF03C75A),
+    officialUrl: 'https://clova.ai',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -577,6 +589,16 @@ final Map<String, _Quiz> _quizzes = {
   'apple': _Quiz(
     question: 'Apple Intelligence のプライバシー保護技術の名称は？',
     options: ['Private Cloud Compute', 'Secure Enclave AI', 'Neural Guard', 'On-Device Shield'],
+    correct: 0,
+  ),
+  'allenai': _Quiz(
+    question: 'Allen AI (AI2) の OLMo の特徴として正しいのは？',
+    options: ['完全オープンソース (重み+コード+データ+評価)', 'クローズドAPIのみ', '画像生成特化', '音声認識特化'],
+    correct: 0,
+  ),
+  'naver': _Quiz(
+    question: 'Naver の HyperCLOVA X が得意とする言語は？',
+    options: ['韓国語 (世界最高水準)', '英語のみ', '中国語', '日本語のみ'],
     correct: 0,
   ),
 };
@@ -1334,6 +1356,40 @@ Appleが開発するオンデバイスAI。iPhone/iPad/MacのA17 Pro/M1以降で
 - ChatGPT統合: Siriからオプトイン連携
 
 [公式サイト](https://apple.com/apple-intelligence)
+''',
+  'allenai': '''
+## Allen AI (AI2 / OLMo)
+Paul Allenが設立した非営利AI研究機関。OLMo-2はGPT-4クラスの完全オープンソースLLM。
+重み・コード・学習データ・評価パイプラインをすべて公開。
+
+## 主要モデル
+- **OLMo-2-72B**: GPT-4クラス・完全オープンソース
+- **OLMo-2-7B/13B**: 軽量版・商用利用可
+- **Tulu 3**: 指示チューニング版 (RLVR採用)
+
+## 特徴
+- Dolma: 3兆トークンのオープン学習データセット
+- 完全な研究再現性 (データ→モデル→評価)
+- 非営利・研究コミュニティへの貢献重視
+
+[公式サイト](https://allenai.org)
+''',
+  'naver': '''
+## Naver (HyperCLOVA X)
+韓国最大テック企業が開発する超大規模LLM。韓国語処理で世界最高水準。
+LINE (日本展開) との統合でアジア市場をカバー。
+
+## 主要モデル
+- **HyperCLOVA X**: 82Bパラメータ・韓国語特化超大規模LLM
+- **CLOVA X**: エンドユーザー向けAIアシスタント
+- **HCX-005**: 最新エンタープライズAPI版
+
+## 特徴
+- 韓国語データ6,500億トークンで学習 (GPT-3の韓国語の6,500倍)
+- 100言語対応・アジア言語に強み
+- CLOVA Studio: ノーコードAIアプリ構築プラットフォーム
+
+[公式サイト](https://clova.ai)
 ''',
 };
 
