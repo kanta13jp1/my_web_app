@@ -264,6 +264,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFFF6B35),
     officialUrl: 'https://klingai.com',
   ),
+  'qwen': _ProviderMeta(
+    name: 'Qwen (Alibaba)',
+    emoji: '🌐',
+    color: const Color(0xFFFF6A00),
+    officialUrl: 'https://dashscope.aliyuncs.com',
+  ),
+  'moonshot': _ProviderMeta(
+    name: 'Moonshot AI',
+    emoji: '🌙',
+    color: const Color(0xFF6366F1),
+    officialUrl: 'https://www.moonshot.cn',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -457,6 +469,16 @@ final Map<String, _Quiz> _quizzes = {
     question: 'Kling AI が生成できる動画の最大長は？',
     options: ['最大3分 (180秒)', '最大10秒', '最大60秒', '最大30秒'],
     correct: 0,
+  ),
+  'qwen': _Quiz(
+    question: 'Alibaba Cloud の Qwen2.5-72B の特徴として正しいのは？',
+    options: ['クローズドソースのみ', 'OpenAIのみ互換', 'HuggingFaceで公開・29言語対応', '音声生成特化'],
+    correct: 2,
+  ),
+  'moonshot': _Quiz(
+    question: 'Moonshot AI (Kimi) の最大コンテキスト長は？',
+    options: ['8K', '32K', '128K', '4K'],
+    correct: 2,
   ),
 };
 
@@ -1024,6 +1046,43 @@ Kling AI は中国の動画プラットフォーム大手・快手 (Kuaishou) �
 - Kling: 3分長尺・ストーリー動画に最適
 
 [Kling Open Platform](https://klingai.com)
+''',
+  'qwen': '''
+## Qwen (Alibaba Cloud)
+Alibaba製多言語LLM。Qwen2.5-72BはオープンソースLLM最強クラス。
+DashScope APIはOpenAI互換。日本語・中国語・英語29言語対応。無料枠あり。
+
+## 主要モデル
+- **Qwen2.5-72B** — HuggingFace公開・OSS最強クラス
+- **Qwen2.5-Coder** — コーディング特化
+- **Qwen-VL** — ビジョン言語モデル
+- **QwQ-32B** — 推論特化 (DeepSeek-R1対抗)
+
+## 特徴
+- DashScope API: OpenAI SDK互換で移行コスト最小
+- 29言語ネイティブ対応 (日本語強い)
+- 商用利用可能なApache 2.0ライセンス
+- Alibaba Cloud上での完全マネージドサービス
+
+[DashScope API](https://dashscope.aliyuncs.com)
+''',
+  'moonshot': '''
+## Moonshot AI (Kimi)
+超長文処理特化。Kimi v1-128kは128Kトークン対応でコスト最安値クラス。
+OpenAI SDK互換。PDF/Wordファイルを直接アップロードして処理可能。
+
+## 主要モデル
+- **moonshot-v1-128k** — 128Kコンテキスト・標準
+- **moonshot-v1-32k** — 32Kコンテキスト・低コスト
+- **moonshot-v1-8k** — 8Kコンテキスト・高速
+
+## 特徴
+- 超長文書処理: PDF・Word・テキストファイル直接対応
+- OpenAI API完全互換 (base_url切り替えのみで移行可)
+- 中国本土からも利用可能なAPIサービス
+- 研究版: Kimi-VL (ビジョン対応版も公開)
+
+[Moonshot AI API](https://www.moonshot.cn)
 ''',
 };
 

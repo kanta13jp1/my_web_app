@@ -167,6 +167,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     '/translate en',
     '/favorite',
     '/stamp',
+    '/tabs',
   ];
   static final List<NotePromptTemplate> _builtInPromptTemplates =
       <NotePromptTemplate>[
@@ -961,6 +962,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _setContentText(nextContent);
   }
 
+  void _appendTabsBlock() {
+    const tabsTemplate = '## タブ 1\n\n（ここに内容を書く）\n\n---\n\n'
+        '## タブ 2\n\n（ここに内容を書く）\n\n---\n\n'
+        '## タブ 3\n\n（ここに内容を書く）';
+    final current = _contentController.text.trimRight();
+    final nextContent =
+        current.isEmpty ? tabsTemplate : '$current\n\n$tabsTemplate';
+    _setContentText(nextContent);
+  }
+
   Future<void> _showSlashCommandHelp() async {
     if (!mounted) return;
 
@@ -987,6 +998,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             Text('/favorite Toggle favorite for this note'),
             SizedBox(height: 8),
             Text('/stamp Insert the current timestamp'),
+            SizedBox(height: 8),
+            Text('/tabs Insert a 3-tab block template'),
           ],
         ),
         actions: [
@@ -1056,6 +1069,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         _appendTimestampBlock();
         _slashCommandController.clear();
         _showMessage('タイムスタンプを追加しました');
+        return;
+      case 'tabs':
+      case 'tab':
+        _appendTabsBlock();
+        _slashCommandController.clear();
+        _showMessage('タブブロックを追加しました');
         return;
       case 'prompt':
       case 'template':

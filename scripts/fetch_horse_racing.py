@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 競馬情報自動取得スクリプト
-JRA/NAR の出走表と結果を netkeiba.com からスクレイピングして Supabase に保存する。
+JRA / NAR (地方競馬) の出走表と結果を netkeiba.com からスクレイピングして Supabase に保存する。
 
 使用方法:
   python fetch_horse_racing.py --mode entries [--date YYYY-MM-DD]   # 出走表取得
   python fetch_horse_racing.py --mode results [--date YYYY-MM-DD]   # 結果取得
   python fetch_horse_racing.py --mode predict                        # AI予想実行 (EF呼び出し)
+  python fetch_horse_racing.py --mode all                            # 全て実行
 
 必須環境変数:
   SUPABASE_URL          (例: https://xxxx.supabase.co)
@@ -37,10 +38,30 @@ TOOLS_HUB_URL = os.environ.get(
     "TOOLS_HUB_URL", f"{SUPABASE_URL}/functions/v1/tools-hub"
 )
 
-# netkeiba URL テンプレート
-RACE_LIST_URL = "https://race.netkeiba.com/top/race_list_sub.html?kaisai_date={date}"
-SHUTUBA_URL   = "https://race.netkeiba.com/race/shutuba.html?race_id={race_id}"
-RESULT_URL    = "https://race.netkeiba.com/race/result.html?race_id={race_id}"
+# JRA (中央競馬) URL テンプレート
+JRA_RACE_LIST_URL = "https://race.netkeiba.com/top/race_list_sub.html?kaisai_date={date}"
+JRA_SHUTUBA_URL   = "https://race.netkeiba.com/race/shutuba.html?race_id={race_id}"
+JRA_RESULT_URL    = "https://race.netkeiba.com/race/result.html?race_id={race_id}"
+
+# NAR (地方競馬) URL テンプレート
+NAR_RACE_LIST_URL = "https://nar.netkeiba.com/top/race_list_sub.html?kaisai_date={date}"
+NAR_SHUTUBA_URL   = "https://nar.netkeiba.com/race/shutuba.html?race_id={race_id}"
+NAR_RESULT_URL    = "https://nar.netkeiba.com/race/result.html?race_id={race_id}"
+
+# JRA 競馬場コード (race_id の 8-9 桁目)
+JRA_VENUE_MAP = {
+    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
+    "05": "東京", "06": "中山", "07": "中京", "08": "京都",
+    "09": "阪神", "10": "小倉",
+}
+
+# NAR 競馬場コード (race_id の 8-9 桁目)
+NAR_VENUE_MAP = {
+    "30": "門別", "35": "盛岡", "36": "水沢", "42": "浦和",
+    "43": "船橋", "44": "大井", "45": "川崎", "46": "金沢",
+    "48": "笠松", "50": "名古屋", "54": "園田", "55": "姫路",
+    "61": "高知", "63": "佐賀", "68": "帯広",
+}
 
 HEADERS = {
     "User-Agent": (
@@ -143,7 +164,6 @@ class RaceListParser(html.parser.HTMLParser):
             t = data.strip()
             if t:
                 self._text_buf += t + " "
-                # レース名の候補として収集
                 if not self._cur.get("race_name") and len(t) > 1:
                     self._cur["race_name"] = t
 
@@ -172,17 +192,15 @@ class ShutubaParser(html.parser.HTMLParser):
             self._in_td = True
             self._td_text = ""
             self._col_idx += 1
-        # レース情報
         if tag == "div" and cls in ("RaceData01", "RaceData02"):
-            pass  # テキスト取得は handle_data で
+            pass
 
     def handle_endtag(self, tag):
         if tag == "td" and self._in_td:
             self._in_td = False
             t = self._td_text.strip()
             col = self._col_idx
-            # 列マッピング (netkeiba shutuba.html の標準列順)
-            # 1:枠 2:馬番 3:印 4:馬名 5:性齢 6:斤量 7:騎手 8:厩舎 9:馬体重 10:単勝 11:人気
+            # 列マッピング: 1:枠 2:馬番 3:印 4:馬名 5:性齢 6:斤量 7:騎手 8:厩舎 9:馬体重 10:単勝 11:人気
             if col == 2:
                 self._cur_horse["horse_number"] = int(t) if t.isdigit() else None
             elif col == 4:
@@ -228,8 +246,6 @@ class ResultParser(html.parser.HTMLParser):
         self._col_idx = 0
         self._in_td = False
         self._td_text = ""
-        self._in_pay_row = False
-        self._pay_col = 0
         self._pay_type = ""
 
     def handle_starttag(self, tag, attrs):
@@ -244,8 +260,7 @@ class ResultParser(html.parser.HTMLParser):
             self._td_text = ""
             self._col_idx += 1
         if tag == "tr" and "Payout" in cls:
-            self._in_pay_row = True
-            self._pay_col = 0
+            self._pay_type = ""
 
     def handle_endtag(self, tag):
         if tag == "td" and self._in_td:
@@ -267,7 +282,6 @@ class ResultParser(html.parser.HTMLParser):
     def handle_data(self, data):
         if self._in_td:
             self._td_text += data
-        # 3連単配当を検出
         t = data.strip()
         if "三連単" in t:
             self._pay_type = "trifecta"
@@ -278,15 +292,10 @@ class ResultParser(html.parser.HTMLParser):
                 self._pay_type = ""
 
 
-# ─── netkeiba レース ID から情報取得 ──────────────────────────────────────────
-def parse_race_id(race_id: str, race_date: str) -> dict:
-    """netkeiba race_id から開催場・ラウンド等を解析"""
-    # 形式: YYYYMMDDAABBCC  AA=競馬場コード BB=回 CC=レース番号
-    venue_map = {
-        "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
-        "05": "東京", "06": "中山", "07": "中京", "08": "京都",
-        "09": "阪神", "10": "小倉",
-    }
+# ─── race_id パーサー ─────────────────────────────────────────────────────────
+def parse_race_id(race_id: str, source: str) -> dict:
+    """netkeiba race_id から開催場・レース番号等を解析"""
+    venue_map = NAR_VENUE_MAP if source == "nar" else JRA_VENUE_MAP
     if len(race_id) >= 12:
         venue_code = race_id[8:10]
         race_num = race_id[12:14] if len(race_id) >= 14 else ""
@@ -298,113 +307,129 @@ def parse_race_id(race_id: str, race_date: str) -> dict:
     return {}
 
 
-# ─── メイン処理 ───────────────────────────────────────────────────────────────
-def fetch_entries(target_date: str):
-    """指定日の出走表を取得して Supabase に保存"""
-    print(f"[INFO] {target_date} の出走表を取得中...")
+# ─── 出走表取得 (JRA / NAR 共通ロジック) ──────────────────────────────────────
+def _fetch_entries_for_source(
+    target_date: str,
+    source: str,
+    race_list_url: str,
+    shutuba_url: str,
+) -> tuple[int, int]:
+    """指定ソースの出走表を取得して Supabase に保存。(saved_races, saved_entries) を返す"""
     date_nodash = target_date.replace("-", "")
-    url = RACE_LIST_URL.format(date=date_nodash)
+    url = race_list_url.format(date=date_nodash)
     html_text = http_get(url)
     if not html_text:
-        print("[WARN] レース一覧の取得に失敗しました。")
-        return
+        print(f"  [WARN] {source.upper()} レース一覧の取得に失敗")
+        return 0, 0
 
-    # レース ID リストを抽出
     race_id_pattern = re.compile(r'race_id=(\d{12,})')
     race_ids = list(dict.fromkeys(race_id_pattern.findall(html_text)))
-    print(f"[INFO] {len(race_ids)} レースを検出")
+    print(f"  [{source.upper()}] {len(race_ids)} レースを検出")
 
     saved_races = 0
     saved_entries = 0
 
     for race_id_ext in race_ids:
-        # レースが既に登録済みか確認
-        existing = supabase_rest("GET", "horse_races", params={"race_id_ext": f"eq.{race_id_ext}", "select": "id"})
+        existing = supabase_rest("GET", "horse_races", params={
+            "race_id_ext": f"eq.{race_id_ext}", "select": "id",
+        })
         if existing:
-            race_db_id = existing[0]["id"]
-            print(f"  [SKIP] {race_id_ext} は既存 (id={race_db_id})")
-        else:
-            # 出走表ページを取得
-            shutuba_html = http_get(SHUTUBA_URL.format(race_id=race_id_ext))
-            time.sleep(1)  # サーバー負荷軽減
+            print(f"    [SKIP] {race_id_ext} は既存")
+            continue
 
-            venue_info = parse_race_id(race_id_ext, target_date)
-            race_name = f"第{venue_info.get('race_number', '?')}レース" if venue_info.get("race_number") else f"レース {race_id_ext[-4:]}"
+        shutuba_html = http_get(shutuba_url.format(race_id=race_id_ext))
+        time.sleep(1)
 
-            # HTML からレース名を抽出
-            if shutuba_html:
-                m = re.search(r'<title>([^<]+)</title>', shutuba_html)
-                if m:
-                    title = m.group(1).strip()
-                    # "東京1R 新馬 | race.netkeiba.com" のような形式
-                    race_name_match = re.search(r'\d+R\s+([^\s|]+)', title)
-                    if race_name_match:
-                        race_name = race_name_match.group(1)
+        venue_info = parse_race_id(race_id_ext, source)
+        race_name = (
+            f"第{venue_info.get('race_number', '?')}レース"
+            if venue_info.get("race_number")
+            else f"レース {race_id_ext[-4:]}"
+        )
 
-                # 距離・コース種別を抽出
-                dist_match = re.search(r'(芝|ダート|障害)\s*(\d+)m', shutuba_html)
-                course_type = dist_match.group(1) if dist_match else "芝"
-                distance = int(dist_match.group(2)) if dist_match else None
+        course_type = "芝"
+        distance = None
+        grade = "未勝利"
+        post_time = None
 
-                # グレードを抽出
-                grade_match = re.search(r'(G1|G2|G3|リステッド|オープン|3勝|2勝|1勝|未勝利|新馬)', shutuba_html)
-                grade = grade_match.group(1) if grade_match else "未勝利"
+        if shutuba_html:
+            m = re.search(r'<title>([^<]+)</title>', shutuba_html)
+            if m:
+                title = m.group(1).strip()
+                race_name_match = re.search(r'\d+R\s+([^\s|]+)', title)
+                if race_name_match:
+                    race_name = race_name_match.group(1)
 
-                # 発走時刻を抽出
-                time_match = re.search(r'(\d{1,2}:\d{2})発走', shutuba_html)
-                post_time = time_match.group(1) if time_match else None
-            else:
-                course_type = "芝"
-                distance = None
-                grade = "未勝利"
-                post_time = None
+            dist_match = re.search(r'(芝|ダート|障害|ばんえい)\s*(\d+)m?', shutuba_html)
+            if dist_match:
+                course_type = dist_match.group(1)
+                if dist_match.group(2):
+                    distance = int(dist_match.group(2))
+            grade_match = re.search(r'(G1|G2|G3|リステッド|オープン|3勝|2勝|1勝|未勝利|新馬|重賞)', shutuba_html)
+            grade = grade_match.group(1) if grade_match else "一般"
+            time_match = re.search(r'(\d{1,2}:\d{2})発走', shutuba_html)
+            post_time = time_match.group(1) if time_match else None
 
-            # レース登録
-            race_row = {
-                "source": "jra",
-                "race_id_ext": race_id_ext,
-                "race_name": race_name,
-                "race_date": target_date,
-                "venue": venue_info.get("venue"),
-                "post_time": post_time,
-                "course_type": course_type,
-                "distance": distance,
-                "grade": grade,
-                "status": "scheduled",
-            }
-            result = supabase_rest("POST", "horse_races", race_row)
-            if not result:
-                print(f"  [ERROR] {race_id_ext} のレース登録失敗")
-                continue
-            race_db_id = result[0]["id"]
-            saved_races += 1
-            print(f"  [OK] レース登録: {race_name} ({race_id_ext}) id={race_db_id}")
+        race_row = {
+            "source": source,
+            "race_id_ext": race_id_ext,
+            "race_name": race_name,
+            "race_date": target_date,
+            "venue": venue_info.get("venue"),
+            "post_time": post_time,
+            "course_type": course_type,
+            "distance": distance,
+            "grade": grade,
+            "status": "scheduled",
+        }
+        result = supabase_rest("POST", "horse_races", race_row)
+        if not result:
+            print(f"    [ERROR] {race_id_ext} のレース登録失敗")
+            continue
+        race_db_id = result[0]["id"]
+        saved_races += 1
+        print(f"    [OK] {source.upper()} レース登録: {race_name} ({race_id_ext})")
 
-            # 出走馬を登録
-            if shutuba_html:
-                parser = ShutubaParser()
-                parser.feed(shutuba_html)
-                for entry in parser.entries:
-                    entry["race_id"] = race_db_id
-                    supabase_rest("POST", "horse_entries", entry)
-                    saved_entries += 1
-                if parser.entries:
-                    print(f"    {len(parser.entries)} 頭の出走馬を登録")
-                # 出走頭数を更新
-                supabase_rest("PATCH", f"horse_races?id=eq.{race_db_id}",
-                              {"num_horses": len(parser.entries)})
+        if shutuba_html:
+            parser = ShutubaParser()
+            parser.feed(shutuba_html)
+            for entry in parser.entries:
+                entry["race_id"] = race_db_id
+                supabase_rest("POST", "horse_entries", entry)
+                saved_entries += 1
+            if parser.entries:
+                print(f"      {len(parser.entries)} 頭の出走馬を登録")
+            supabase_rest("PATCH", f"horse_races?id=eq.{race_db_id}",
+                          {"num_horses": len(parser.entries)})
 
-    print(f"[DONE] レース {saved_races}件, 出走馬 {saved_entries}件 を登録")
+    return saved_races, saved_entries
+
+
+# ─── メイン処理 ───────────────────────────────────────────────────────────────
+def fetch_entries(target_date: str):
+    """JRA + NAR (地方競馬) の出走表を取得して Supabase に保存"""
+    print(f"[INFO] {target_date} の出走表を取得中...")
+
+    jra_races, jra_entries = _fetch_entries_for_source(
+        target_date, "jra", JRA_RACE_LIST_URL, JRA_SHUTUBA_URL,
+    )
+    nar_races, nar_entries = _fetch_entries_for_source(
+        target_date, "nar", NAR_RACE_LIST_URL, NAR_SHUTUBA_URL,
+    )
+
+    total_races = jra_races + nar_races
+    total_entries = jra_entries + nar_entries
+    print(f"[DONE] JRA: {jra_races}レース/{jra_entries}頭  NAR: {nar_races}レース/{nar_entries}頭  合計: {total_races}レース/{total_entries}頭 を登録")
 
 
 def fetch_results(target_date: str):
-    """指定日の completed でないレースの結果を取得して Supabase に保存"""
+    """JRA + NAR の scheduled レースの結果を取得して Supabase に保存"""
     print(f"[INFO] {target_date} のレース結果を取得中...")
     races = supabase_rest("GET", "horse_races", params={
         "race_date": f"eq.{target_date}",
         "status": "eq.scheduled",
         "race_id_ext": "not.is.null",
-        "select": "id,race_id_ext,race_name",
+        "select": "id,race_id_ext,race_name,source",
     })
     if not races:
         print("[INFO] 対象レースなし")
@@ -414,7 +439,11 @@ def fetch_results(target_date: str):
     for race in races:
         race_id_ext = race["race_id_ext"]
         race_db_id = race["id"]
-        result_html = http_get(RESULT_URL.format(race_id=race_id_ext))
+        source = race.get("source", "jra")
+
+        # ソースに応じて正しいURLを選択
+        result_url_template = NAR_RESULT_URL if source == "nar" else JRA_RESULT_URL
+        result_html = http_get(result_url_template.format(race_id=race_id_ext))
         time.sleep(1)
         if not result_html:
             continue
@@ -423,10 +452,9 @@ def fetch_results(target_date: str):
         parser.feed(result_html)
 
         if not (parser.results.get("1") and parser.results.get("2") and parser.results.get("3")):
-            print(f"  [SKIP] {race['race_name']}: 結果未確定")
+            print(f"  [SKIP] [{source.upper()}] {race['race_name']}: 結果未確定")
             continue
 
-        # 予想との照合
         pred = supabase_rest("GET", "horse_predictions", params={
             "race_id": f"eq.{race_db_id}",
             "select": "first_pick,second_pick,third_pick",
@@ -452,7 +480,9 @@ def fetch_results(target_date: str):
         supabase_rest("PATCH", f"horse_races?id=eq.{race_db_id}", {"status": "completed"})
 
         mark = "○ 的中" if is_correct else "× 外れ"
-        print(f"  [OK] {race['race_name']}: {mark} 1着={parser.results.get('1')} 2着={parser.results.get('2')} 3着={parser.results.get('3')}")
+        src_label = f"[{source.upper()}]"
+        print(f"  [OK] {src_label} {race['race_name']}: {mark} "
+              f"1着={parser.results.get('1')} 2着={parser.results.get('2')} 3着={parser.results.get('3')}")
         if is_correct:
             hits += 1
 
@@ -472,7 +502,7 @@ def trigger_ai_predictions(target_date: str):
 
 # ─── CLI エントリーポイント ────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト")
+    parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
     parser.add_argument(
         "--mode",
         choices=["entries", "results", "predict", "all"],
