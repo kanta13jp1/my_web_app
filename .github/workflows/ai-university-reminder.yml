@@ -28,14 +28,15 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Send study reminders via notification-center EF
+      - name: Send study reminders via schedule-hub EF
         id: remind
         env:
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MIN_IDLE_DAYS: ${{ github.event.inputs.min_idle_days || '3' }}
         run: |
+          # notification-center は削除済み → schedule-hub の reminders.study action を使用
           PAYLOAD=$(jq -n \
-            --arg action "send_study_reminders" \
+            --arg action "reminders.study" \
             --argjson dry_run "$([ "$DRY_RUN" = "true" ] && echo true || echo false)" \
             --argjson min_idle_days "$MIN_IDLE_DAYS" \
             '{action: $action, dry_run: $dry_run, min_idle_days: $min_idle_days, max_idle_days: 30}')
@@ -45,7 +46,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/notification-center" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/schedule-hub" \
             --max-time 30)
 
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
