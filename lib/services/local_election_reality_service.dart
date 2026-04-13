@@ -13,7 +13,7 @@ class LocalElectionRealityService {
       'local_election_reality_snapshot_history_v1';
   static const String _memberProfileStoragePrefix =
       'local_election_member_profile_v1_';
-  static const Duration _freshSnapshotWindow = Duration(minutes: 30);
+  static const Duration _freshSnapshotWindow = Duration(hours: 2);
   static LocalElectionRealitySnapshot? _memorySnapshot;
   static Future<LocalElectionRealitySnapshot>? _latestSnapshotInFlight;
 
@@ -262,7 +262,7 @@ class LocalElectionRealityService {
             'includeAiSummary': includeAiSummary,
           },
         )
-        .timeout(const Duration(seconds: 20));
+        .timeout(const Duration(seconds: 50));
     final data = _toMap(response.data);
     if (data['success'] != true) {
       throw Exception(

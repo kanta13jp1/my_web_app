@@ -17,10 +17,10 @@ const OFFICIAL_2023_SECOND_HALF_URL =
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
-const SCHEDULE_PAST_DAYS = 365;
-const SCHEDULE_WINDOW_DAYS = 365;
-const SCHEDULE_DETAIL_WINDOW_DAYS = 90;
-const SCHEDULE_MAX_ENTRIES = 5000;
+const SCHEDULE_PAST_DAYS = 14;
+const SCHEDULE_WINDOW_DAYS = 60;
+const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
+const SCHEDULE_MAX_ENTRIES = 100;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -406,7 +406,7 @@ serve(async (req) => {
 
     const prefectureResults = await mapWithConcurrency(
       prefectureDirectoryEntries,
-      6,
+      12,
       async (entry) =>
         await fetchPrefectureReality(entry.prefecture, entry.sourceUrl),
     );
@@ -889,7 +889,7 @@ async function fetchUpcomingLocalElectionSchedules(
     .slice(0, SCHEDULE_MAX_ENTRIES);
   const detailed = await mapWithConcurrency(
     upcomingEntries,
-    8,
+    16,
     async (entry) => {
       const voteDate = parseIsoDate(entry.voteDate);
       const shouldFetchDetail = voteDate != null &&
