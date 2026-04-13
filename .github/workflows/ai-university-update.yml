@@ -94,7 +94,7 @@ jobs:
           upsert_provider "groq"        "https://wow.groq.com/feed/"                        "Groq"
           upsert_provider "cohere"      "https://cohere.com/blog/rss.xml"                   "Cohere"
           upsert_provider "amazon"      "https://aws.amazon.com/blogs/machine-learning/feed/" "Amazon Bedrock"
-          upsert_provider "stability"   "https://stability.ai/blog/rss.xml"                 "Stability AI"
+          # stability: RSS廃止済みのため除外 — 静的seedコンテンツを維持
           upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"               "Hugging Face"
           upsert_provider "nvidia"      "https://developer.nvidia.com/blog/tag/ai/feed/"     "NVIDIA"
           upsert_provider "ibm"         "https://research.ibm.com/blog/rss"                  "IBM watsonx"
@@ -105,7 +105,7 @@ jobs:
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=18  # プロバイダー追加時はここも更新
+          TOTAL_PROVIDERS=17  # stability はRSS廃止のため除外 (静的seed維持)
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
