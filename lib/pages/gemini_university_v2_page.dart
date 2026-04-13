@@ -2165,6 +2165,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       margin: const EdgeInsets.only(bottom: 8),
       color: surface,
       child: ExpansionTile(
+        backgroundColor: surface,
+        collapsedBackgroundColor: surface,
         title: Text(
           title,
           style: const TextStyle(
