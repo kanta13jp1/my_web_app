@@ -24,6 +24,13 @@ class _MySkillsPageState extends State<MySkillsPage> {
   // ── EF 呼び出し ──────────────────────────────────────────────────────────
 
   Future<void> _loadSkills() async {
+    if (supabase.auth.currentUser == null) {
+      setState(() {
+        _isLoading = false;
+        _error = 'スキルを使用するにはログインが必要です。';
+      });
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;

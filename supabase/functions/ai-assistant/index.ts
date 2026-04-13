@@ -761,10 +761,11 @@ ${entryData}`;
 
     } catch (error: unknown) {
         const msg = error instanceof Error ? error.message : String(error);
-        
-        // Check for quota/rate limit errors
+
+        // Map error messages to appropriate HTTP status codes
         const isQuotaError = /quota|rate limit/i.test(msg);
-        const status = isQuotaError ? 429 : 400;
+        const isAuthError = /unauthorized|missing authorization/i.test(msg);
+        const status = isQuotaError ? 429 : isAuthError ? 401 : 400;
 
         return new Response(JSON.stringify({ success: false, error: msg }), { headers: corsHeaders, status });
     }
