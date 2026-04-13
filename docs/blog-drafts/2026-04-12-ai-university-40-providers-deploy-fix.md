@@ -3,7 +3,7 @@ title: "AI大学40社体制完成 + Supabase ON CONFLICT本番デプロイ障害
 emoji: "🎓"
 type: "tech"
 topics: ["Flutter", "Supabase", "PostgreSQL", "個人開発", "buildinpublic"]
-published: false
+published: true
 ---
 
 # AI大学40社体制完成 + Supabase ON CONFLICT本番デプロイ障害を修正した話
