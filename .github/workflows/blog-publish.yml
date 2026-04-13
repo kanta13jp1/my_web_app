@@ -197,10 +197,14 @@ jobs:
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
         if: always()
+        env:
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          QIITA_URL: ${{ steps.publish.outputs.qiita_url }}
+          DEVTO_URL: ${{ steps.publish.outputs.devto_url }}
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
           STATUS="success"
-          SUMMARY="blog-publish: ${{ steps.meta.outputs.title }} | dry_run=$DRY_RUN | qiita=${{ steps.publish.outputs.qiita_url }} | devto=${{ steps.publish.outputs.devto_url }}"
+          SUMMARY="blog-publish: $ARTICLE_TITLE | dry_run=$DRY_RUN | qiita=$QIITA_URL | devto=$DEVTO_URL"
           curl -s -o /dev/null \
             -X POST \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -213,6 +217,9 @@ jobs:
 
       - name: Job Summary
         if: always()
+        env:
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path }}
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
           QIITA="${{ steps.publish.outputs.qiita_url }}"
@@ -222,8 +229,8 @@ jobs:
             echo ""
             echo "| 項目 | 値 |"
             echo "| --- | --- |"
-            echo "| ドラフト | \`${{ steps.meta.outputs.draft_path }}\` |"
-            echo "| タイトル | ${{ steps.meta.outputs.title }} |"
+            echo "| ドラフト | \`$DRAFT_PATH_OUT\` |"
+            echo "| タイトル | $ARTICLE_TITLE |"
             echo "| ドライラン | $DRY_RUN |"
             if [ -n "$QIITA" ]; then
               echo "| Qiita | [投稿済み]($QIITA) |"
