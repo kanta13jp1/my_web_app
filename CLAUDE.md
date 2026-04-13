@@ -13,6 +13,7 @@ Notion・Evernote・MoneyForward・Slack・X・Amazon など21競合の機能を
 - **ホスティング**: Firebase Hosting
 - **CI/CD**: GitHub Actions (push to main → 自動デプロイ)
 - **メール**: Resend API
+- **永続メモリ**: claude-mem (SQLite + Gemini圧縮) + 自作auto-capture hooks
 
 ### 競合21社
 
@@ -114,7 +115,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 **推奨スタート**: ほとんどのユースケースは **Orchestrator-Subagent** から始める。
 行き詰まった箇所を観察してから他パターンに進化させる。
 
-### セッション開始: Master Brain 参照
+### セッション開始: Master Brain + claude-mem 参照
 
 セッション開始時に必ず以下を確認する:
 
@@ -123,7 +124,16 @@ C:\Users\kanta\.claude\projects\C--Users-kanta-GitHub-my-web-app\memory\MEMORY.m
 ```
 
 前回の成功パターン・禁止事項・新規発見を読んで、セッションの出発点とする。
-記憶が消える弱点を「永続メモリ + NotebookLM Master Brain」で補う。
+記憶が消える弱点を「3層メモリシステム」で補う:
+
+| 層 | ツール | 用途 |
+| --- | --- | --- |
+| **L1: セッション内** | claude-mem (SQLite + Gemini圧縮) | 全ツール使用を自動記録・ベクター検索 |
+| **L2: セッション間** | 自作auto-capture hooks (mdファイル) | git commit履歴・インスタンス間共有 |
+| **L3: プロジェクト横断** | NotebookLM Master Brain | 深い調査・長期アーキテクチャ知識 |
+
+**claude-mem Worker 起動**: セッション開始前に `npx claude-mem start` を実行すること (Bun必須)。
+Worker が起動していない場合は hook がスキップされるだけで、エラーにはならない。
 
 **アーキテクチャ・意思決定・好みの質問には必ず Master Brain に問い合わせる**:
 
