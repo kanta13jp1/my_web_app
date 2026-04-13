@@ -75,8 +75,12 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
-# U+FFFD 置換文字 (文字化け検出用)
+# U+FFFD 置換文字 と CJK Extension A 先頭 (文字化け検出用)
+# nar.netkeiba.com の EUC-JP バイト列が UTF-8 として偶然デコードされると
+# CJK Extension A (U+3400-U+4DBF) の文字になる
 _REPLACEMENT_CHAR = chr(0xFFFD)
+_CJK_EXT_A_START = 0x3400
+_CJK_EXT_A_END = 0x4DBF
 
 
 # ─── HTTP ヘルパー ─────────────────────────────────────────────────────────────
@@ -87,14 +91,18 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
-            # 1. Content-Type ヘッダーの charset
-            charset = resp.headers.get_content_charset()
-            # 2. HTML の <meta charset=...> タグを先頭 4KB から検索
-            if not charset:
-                m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
-                if m:
-                    charset = m.group(1).decode("ascii", errors="ignore")
-            # 3. 検出 charset -> UTF-8 -> EUC-JP -> Shift-JIS の順で試す
+            # 1. nar.netkeiba.com は EUC-JP 固定 (meta charset が UTF-8 と誤申告しても上書き)
+            if "nar.netkeiba.com" in url:
+                charset = "euc-jp"
+            else:
+                # Content-Type ヘッダーの charset
+                charset = resp.headers.get_content_charset()
+                # HTML の <meta charset=...> タグを先頭 4KB から検索
+                if not charset:
+                    m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
+                    if m:
+                        charset = m.group(1).decode("ascii", errors="ignore")
+            # 2. 検出 charset -> UTF-8 -> EUC-JP -> Shift-JIS の順で試す
             candidates: list[str] = []
             if charset:
                 candidates.append(charset)
@@ -363,7 +371,10 @@ def _clean_garbled_races(target_date: str, source: str) -> int:
     deleted = 0
     for race in races:
         race_name = race.get("race_name", "") or ""
-        if _REPLACEMENT_CHAR in race_name:
+        is_garbled = _REPLACEMENT_CHAR in race_name or any(
+            _CJK_EXT_A_START <= ord(c) <= _CJK_EXT_A_END for c in race_name
+        )
+        if is_garbled:
             race_db_id = race["id"]
             supabase_rest("DELETE", f"horse_entries?race_id=eq.{race_db_id}")
             supabase_rest("DELETE", f"horse_predictions?race_id=eq.{race_db_id}")
