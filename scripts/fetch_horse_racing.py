@@ -110,6 +110,7 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
                 normalized = enc.replace("-", "").lower()
                 if not any(normalized == c.replace("-", "").lower() for c in candidates):
                     candidates.append(enc)
+            print(f"    [DEBUG] {url[-60:]} → charset={charset!r} raw[0:4]={raw[:4].hex()}", file=sys.stderr)
             for enc in candidates:
                 try:
                     return raw.decode(enc)
