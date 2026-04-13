@@ -97,6 +97,36 @@ jobs:
           fi
         continue-on-error: false  # 50本超過はCIブロック
 
+      - name: Check SQL migration shell quoting artifacts
+        run: |
+          # bash quoting pattern '"'"' が SQL ファイルに混入すると SQLSTATE 42601 で deploy-prod が失敗する
+          FOUND=$(grep -rl "'\"\\'\"'" supabase/migrations/ 2>/dev/null || true)
+          # シングルクォートのアーティファクトパターン: ' + " + ' + " + '
+          FOUND2=$(python3 -c "
+          import os, sys
+          found = []
+          mig_dir = 'supabase/migrations'
+          if os.path.isdir(mig_dir):
+              for f in os.listdir(mig_dir):
+                  if f.endswith('.sql'):
+                      path = os.path.join(mig_dir, f)
+                      content = open(path, encoding='utf-8', errors='replace').read()
+                      if \"'\\\"'\\\"'\" in content:
+                          found.append(path)
+          if found:
+              print('FOUND: ' + ', '.join(found))
+              sys.exit(1)
+          else:
+              print('OK: no shell quoting artifacts in migrations')
+          " 2>&1)
+          echo "$FOUND2"
+          if echo "$FOUND2" | grep -q "^FOUND:"; then
+            echo "❌ bash quoting artifact '\"'\"' detected in SQL migration files"
+            echo "   Fix: replace with '' (SQL escape for single quote)"
+            exit 1
+          fi
+        continue-on-error: false  # migration 構文エラーはCIブロック
+
       - name: Check formatting
         run: dart format --set-exit-if-changed .
         continue-on-error: true # エラーでも続行
