@@ -86,23 +86,20 @@ _CJK_EXT_A_END = 0x4DBF
 # ─── HTTP ヘルパー ─────────────────────────────────────────────────────────────
 def http_get(url: str, timeout: int = 15) -> Optional[str]:
     """HTML を取得して正しいエンコーディングで文字列に変換する。
-    nar.netkeiba.com は EUC-JP を使うため多段フォールバックで検出する。"""
+    NAR shutuba/result ページは EUC-JP を errors=replace で確定デコードする。"""
     req = urllib.request.Request(url, headers=HEADERS)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
-            # 1. nar.netkeiba.com は EUC-JP 固定 (meta charset が UTF-8 と誤申告しても上書き)
-            if "nar.netkeiba.com" in url:
-                charset = "euc-jp"
-            else:
-                # Content-Type ヘッダーの charset
-                charset = resp.headers.get_content_charset()
-                # HTML の <meta charset=...> タグを先頭 4KB から検索
-                if not charset:
-                    m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
-                    if m:
-                        charset = m.group(1).decode("ascii", errors="ignore")
-            # 2. 検出 charset -> UTF-8 -> EUC-JP -> Shift-JIS の順で試す
+            # NAR shutuba/result ページ: EUC-JP 確定デコード (UTF-8 へのフォールスルーを防ぐ)
+            if "nar.netkeiba.com/race/" in url:
+                return raw.decode("euc-jp", errors="replace")
+            # その他のページ: Content-Type → meta charset → フォールバック
+            charset = resp.headers.get_content_charset()
+            if not charset:
+                m = re.search(rb"charset=[\"']?\s*([A-Za-z0-9_-]+)", raw[:4096])
+                if m:
+                    charset = m.group(1).decode("ascii", errors="ignore")
             candidates: list[str] = []
             if charset:
                 candidates.append(charset)
@@ -110,10 +107,6 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
                 normalized = enc.replace("-", "").lower()
                 if not any(normalized == c.replace("-", "").lower() for c in candidates):
                     candidates.append(enc)
-            meta_pos = raw.find(b'charset')
-            meta_ctx = raw[max(0, meta_pos - 5):meta_pos + 25] if meta_pos >= 0 else b""
-            ct_hdr = resp.headers.get_content_charset()
-            print(f"    [DEBUG] {url[-55:]} ct={ct_hdr!r} forced={charset!r} meta_raw={meta_ctx!r}", file=sys.stderr)
             for enc in candidates:
                 try:
                     return raw.decode(enc)
