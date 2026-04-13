@@ -47,6 +47,20 @@ jobs:
           MODE="${{ inputs.mode }}"
           python scripts/fetch_horse_racing.py --mode "${MODE:-all}" --date "$TARGET_DATE"
 
+      - name: 前走情報取得 (JST 9時台 or history/all モード時のみ)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ inputs.mode }}"
+          HOUR=$(TZ=Asia/Tokyo date +%H)
+          if [ "$HOUR" = "09" ] || [ "$MODE" = "history" ] || [ "$MODE" = "all" ]; then
+            echo "前走情報取得を実行 (時刻: ${HOUR}時, モード: ${MODE:-all})"
+            python scripts/fetch_horse_racing.py --mode history --date "$TARGET_DATE"
+          else
+            echo "前走情報取得はスキップ (時刻: ${HOUR}時)"
+          fi
+
       - name: 完了サマリー
         run: |
           echo "### 競馬情報更新完了" >> "$GITHUB_STEP_SUMMARY"
