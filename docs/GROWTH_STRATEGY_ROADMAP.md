@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-12 Claude Schedule daily-report (競合: Notion 4/10タブカスタマイズ, Slack MCP公開, GitHub Copilot Autopilot Public Preview)
+最終更新: 2026-04-13 PowerShell版#52 (deploy-prod UNIQUE制約修正, Rule17全チェック, T-1第33弾投稿)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -8090,3 +8090,32 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 Rule 16: 本番URL表示チェック → レイアウト改善
 - 🟡 tools-hub: SLACK_BOT_TOKEN シークレット設定 → slack.search 動作確認
 - 🟢 LP 126→130のこと (4機能追加)
+
+---
+
+## PowerShell版#52 セッション記録 (2026-04-13)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | deploy-prod SQLSTATE 42P10 修正 (UNIQUE制約追加 migration) | ✅ (eaf7f673) |
+| 2 | setup-python v5→v6 Node.js 24対応 (3ワークフロー) | ✅ (d9d16835) |
+| 3 | T-1第33弾: AI大学40社+deployfix記事 Qiita/dev.to 投稿 | ✅ 投稿完了 |
+| 4 | Rule17 全ワークフロー健全チェック → 全18本 OK | ✅ |
+| 5 | docs Rule10 全件クリーン確認 (CICD_SETUP_GUIDE等) | ✅ |
+
+### T-1 第33弾 投稿URL
+- Qiita: https://qiita.com/kanta13jp1/items/3c22818934c7f1beae25
+- dev.to: https://dev.to/kanta13jp1/aida-xue-40she-ti-zhi-wan-cheng-supabase-on-conflictben-fan-depuroizhang-hai-woxiu-zheng-sitahua-3ddh
+
+### 現状数値
+- EF: 15本 / ページ数: 219 / AI大学: **41社** / LP: 126のこと
+- GitHub Actions ワークフロー: **18本** (全て正常稼働)
+- deploy-prod: **成功** (UNIQUE制約修正後)
+
+### 次回PS版優先タスク
+
+- 🟡 T-1 第34弾: `docs/blog-drafts/2026-04-12-blog-publish-automation-github-actions.md` dispatch
+- 🟢 ai-university-update.yml に qwen/moonshot/twelve_labs 検索クエリ追加 (Windows版#60対応)
+- 🟢 Rule17 継続モニタリング (weekly)
