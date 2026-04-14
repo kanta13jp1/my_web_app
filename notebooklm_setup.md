@@ -28,7 +28,7 @@ python notebooklm_research.py --setup
 
 Claude Code で:
 
-```
+```text
 /deep-research 競合21社の最新機能比較
 /deep-research docs/DESIGN.md の改善点を教えて
 /deep-research --files lib/pages/landing_page.dart lib/pages/home_page.dart --query パフォーマンス改善点
@@ -44,7 +44,7 @@ Claude Code で:
 
 セッション終了前に必ず実行:
 
-```
+```text
 /wrap-up
 ```
 
@@ -52,7 +52,7 @@ Claude Code で:
 
 ## 仕組み
 
-```
+```text
 あなた → Claude Code → notebooklm_research.py → NotebookLM (Gemini)
                 ↑                                        ↓
           軽い編集・統合                         重い分析・要約 (無料)

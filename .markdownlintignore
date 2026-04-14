@@ -28,3 +28,14 @@ docs/GROWTH_STRATEGY_ROADMAP.md
 
 # Cross-instance coordination files (internal, not user-facing docs)
 docs/cross-instance-prs/
+
+# Dependencies
+node_modules/
+**/node_modules/
+functions/node_modules/
+
+# Build artifacts
+build/
+.build/
+build/flutter_assets/
+build/unit_test_assets/

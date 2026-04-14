@@ -4,7 +4,7 @@
 
 The application is receiving a **406 (Not Acceptable)** error when trying to access the `user_stats` table:
 
-```
+```text
 smmkxxavexumewbfaqpy.supabase.co/rest/v1/user_stats?select=total_points&user_id=eq.927f8dd2-3918-4bca-82ea-1619cb4810ef
 ```
 
@@ -76,7 +76,8 @@ User stats are intentionally public for competitive/social features like leaderb
 ## Migration File
 
 The migration has been saved to:
-```
+
+```text
 supabase/migrations/20251109120000_fix_user_stats_leaderboard_rls.sql
 ```
 

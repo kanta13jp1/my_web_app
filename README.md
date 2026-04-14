@@ -1,29 +1,34 @@
 ﻿# AI開発コンテキスト設計書 (AI_DEV_HANDOVER)
 
 ## 1. プロジェクト概要
+
 * **プロジェクト名**: 自分株式会社 (Me Inc.)
 * **コンセプト**: ユーザーはCEO。実務は全てAI（CXO）が担当する経営シミュレーション型生産性アプリ。
 * **技術スタック**: Flutter (Web), Supabase (Auth, DB, Edge Functions), AI (Gemini/OpenAI/Anthropic).
 
 ## 2. 組織構造 (AI Agents) & 機能マップ
+
 ユーザー（CEO）を支えるAI役員たちの構造図については、以下のファイルを参照してください。
 
-- **[詳細設計書](DETAILED_DESIGN.md)**
-- **[プロジェクトファイル一覧](project_tree.txt)**
-- **[テスト仕様書カバレッジ](TEST_COVERAGE.md)**
+* **[詳細設計書](DETAILED_DESIGN.md)**
+* **[プロジェクトファイル一覧](project_tree.txt)**
+* **[テスト仕様書カバレッジ](TEST_COVERAGE.md)**
 
 ## 3. コアアーキテクチャ: "The Five Emperors"
+
 `supabase/functions/ai-assistant/index.ts` に実装された統合AI機能。
 * **Board Meeting**: `hold_board_meeting` で各CXO（Steve, Linus, Gary, Warren）が議論を行う。
 * **Analysis**: `analyze_note_text` でメモ（案件）を分析。
 * **Benchmark**: 6段階のVisionテストでモデル性能を監視。
 
 ## 4. UI/UXの変更点
+
 * **HomePage**: 従来のリスト形式から、各Office（役職）へのアクセスを行う「経営コックピット」へ刷新。
 * **DanshariPage**: CSOが古いメモを提示し、CEOが即座に「維持/廃棄」を決定するTinderライクなUIへ復旧。
 * **NoteEditorPage**: AIアシスタントメニューを実装し、取締役会や分析機能を呼び出し可能に。
 
 ## 5. 次回セッションへの引継ぎ
+
 * **完了**:
     * 経営コックピット(HomePage)の実装。
     * 断捨離クエストの復旧。
@@ -35,6 +40,7 @@
     ~~* **リアル断捨離クエスト**: 物理的なモノの写真を撮ってAIに判定させる機能の実装。~~ (完了)
 
 ## 6. 変更履歴 (Change Log)
+
 **運用ルール**:
 1. 軽微なバグ修正やリファクタリングを含め、すべての変更内容を本セクションに記録すること。
 2. **重要**: ソースコードを修正した後は、必ず `dart format .` コマンドを実行してフォーマット修正を行うこと。
@@ -45,7 +51,6 @@
         * DB: `board_meetings`, `board_messages` テーブル追加。
         * UI: `EmergencyMeetingPage` 追加。AI役員によるチャット形式の議論とDB保存。
     * **Fix**: `lib/pages/home_page.dart` のCEOカード遷移先を `EmergencyMeetingPage` に接続。
-
 
 * **2026-01-08**:
     * **Feature**: リアル断捨離クエスト (Real World Danshari) の実装。
@@ -60,13 +65,12 @@
         * StatsPage, ImportService 等の呼び出し元コードを修正。
         * Achievement モデルの定義を拡張。
 
-
 * **2026-01-09**:
     * **Doc**: 詳細設計書 (DETAILED_DESIGN.md) を策定し、10個目の管理インプットとして追加。
     * **Maint**: 次回セッションへの引き継ぎ準備として、全管理ファイル (LINT_REPORT, BUILD_LOG 等) を最新化。
     * **Feature**: CHO (最高健康責任者) 機能の実装。
         * UI: ChoOfficePage および HealthPage を追加。
-        * Logic: 健康ログを 
+        * Logic: 健康ログを
 otes テーブルの特定タイトル形式([Health])で管理する簡易実装。
     * **Feature**: CMO (最高マーケティング責任者) 機能の実装。
         * UI: CmoOfficePage を追加。ユーザーのエンゲージメント（継続日数）やLTV（ポイント）を可視化。
@@ -86,7 +90,8 @@ otes テーブルの特定タイトル形式([Health])で管理する簡易実�
         * EmergencyMeetingPage: AIレスポンスの型チェック (Map vs List) を強化し、実行時エラー (TypeError) を回避。
 ---
 
-##  次回Geminiへのプロンプト（Start Prompt）
+## 次回Geminiへのプロンプト（Start Prompt）
+
 次回の開発を始める際は、以下のプロンプトを使用してください。
 
 > あなたは「自分株式会社」プロジェクトの専属シニアエンジニアです。
@@ -100,7 +105,9 @@ otes テーブルの特定タイトル形式([Health])で管理する簡易実�
 > **タスク**:
 > 前回の開発内容を踏まえ、次のステップ（緊急役員会議の実装や、未実装オフィスの開発）に進みたいと思います。
 > まずは現状のコードベースについて不明点があれば質問してください。なければ、具体的な実装タスクを指示します。
+>
 ## 7. 開発時の必須インプット (Required Inputs)
+
 **Geminiへのコンテキスト提供ルール**:
 開発を開始する際は、**必ず以下の6個のファイルの内容**をプロンプトに含めてください。これにより、仕様、設計、DB構造、テスト状況、コード品質、ビルド状態、そしてユーザー操作手順を網羅的に把握できます。
 

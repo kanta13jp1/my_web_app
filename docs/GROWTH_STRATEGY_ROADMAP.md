@@ -8670,3 +8670,36 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟢 Rule 16: import ページを含む本番表示チェック
 - 🟡 AI大学ランキング画面にもホームカードと同じデザイントークンを反映
 - 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
+
+## VSCode版#76 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|---|---|
+| 1 | `.github/COMPRESSED_PROMPT_V3.md` と ROADMAP 末尾を再確認し、VSCode 直近優先を `AI大学ランキング` UI 改善と判断 | ✅ |
+| 2 | `lib/pages/ai_university_ranking_page.dart` をホームカード準拠の Orange + Indigo ダークトークンへ全面刷新 | ✅ |
+| 3 | ヒーロー要約、メトリクスタイル、空状態、エラー状態、ランキングカードをモバイルでも崩れにくい構成へ再設計 | ✅ |
+| 4 | `あなた` 強調表示、TOP10 要約、学習導線文言を追加し、ランキング参加インセンティブを強めた | ✅ |
+| 5 | `git diff --check` は通過。`dart format` / `dart analyze` / `flutter analyze` は Codex 環境でタイムアウトし、手動確認ベースで補完 | ⚠️ |
+
+### Rule 15 / Rule 19 メモ
+
+- ランキング画面の背景・サーフェス・アクセント色を `AiUniversityHomeCard` と同系統に揃え、旧来の紫寄り配色を整理した
+- ヒーロー部に `TOP10 表示中`、首位スコア、最多学習社数、本人順位の要約を載せ、ホームカードの KPI タイル設計を横展開した
+- ランキングカードは `Wrap` ベースの情報ピルに変更し、狭い横幅でも学習社数・最終学習時刻・本人バッジが潰れにくい形へ寄せた
+
+### 品質確認
+
+- `git diff --check -- lib/pages/ai_university_ranking_page.dart` (pass)
+- `dart format lib/pages/ai_university_ranking_page.dart` (60秒 timeout)
+- `dart analyze lib/pages/ai_university_ranking_page.dart` (60秒 timeout)
+- `flutter analyze --no-pub lib/pages/ai_university_ranking_page.dart` (60秒 timeout)
+- `notebooklm list` で `jibun-master-brain` notebook の存在を確認
+- `memory/MEMORY.md` はリポジトリ内に見当たらず、Prompt の Master Brain 参照手順は NotebookLM 側確認で代替
+
+### 次回VSCode版優先タスク
+
+- 🟢 Rule 16: import ページを含む本番表示チェックを Web / モバイル両方で実施
+- 🟡 AI大学ランキング画面の実データ表示を本番で確認し、必要なら余白・折返し・点数列の視認性を微調整
+- 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開

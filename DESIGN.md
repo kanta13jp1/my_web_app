@@ -125,7 +125,7 @@ font-family: "Open Sans", sans-serif;
 **記事ページ**
 
 | Role | Size | Weight | Line Height | Letter Spacing | palt |
-|------|------|--------|-------------|----------------|------|
+| --- | --- | --- | --- | --- | --- |
 | Article Title (h1) | 32px | 700 | 48px (×1.5) | 1.28px (0.04em) | あり |
 | Heading 2 | 28px | 700 | 36px (×1.286) | 1.12px (0.04em) | あり |
 | Body (p) | 18px | 400 | 36px (×**2.0**) | normal | なし |
@@ -134,7 +134,7 @@ font-family: "Open Sans", sans-serif;
 **トップページ**
 
 | Role | Size | Weight | Line Height | Letter Spacing | palt |
-|------|------|--------|-------------|----------------|------|
+| --- | --- | --- | --- | --- | --- |
 | Heading 2 | 16px | 600 | 24px (×1.5) | normal | なし |
 | Heading 3 | 16px | 600 | 24px (×1.5) | 0.64px (0.04em) | あり |
 | Caption (p) | 12px | 600 | 18px (×1.5) | normal | なし |
@@ -197,7 +197,7 @@ font-feature-settings: normal;
 ## 5. Layout Principles
 
 | Area | Width | 用途 |
-|------|-------|------|
+| --- | --- | --- |
 | Main Content | 940px | メインコンテンツ幅 |
 | Article (Small) | 620px | 記事本文、読み物コンテンツ |
 | Timeline | 580px | タイムラインフィード |
@@ -209,7 +209,7 @@ font-feature-settings: normal;
 ## 6. Depth & Elevation
 
 | Level | Shadow | 用途 |
-|-------|--------|------|
+| --- | --- | --- |
 | `--elevation-1` | `0px 1px 3px 1px rgba(0,0,0,0.14), 0px 1px 2px 0px rgba(0,0,0,0.22)` | カード |
 | `--elevation-4` | `0px 4px 8px 3px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.22)` | ドロップダウン |
 | `--elevation-6` | `0px 6px 10px 4px rgba(0,0,0,0.14), 0px 2px 3px 0px rgba(0,0,0,0.22)` | モーダル |
@@ -241,7 +241,7 @@ font-feature-settings: normal;
 ### Breakpoints
 
 | Name | Width |
-|------|-------|
+| --- | --- |
 | XS | 361px |
 | SM | 481px |
 | MD | 769px |
@@ -258,7 +258,7 @@ font-feature-settings: normal;
 
 ### クイックリファレンス
 
-```
+```text
 Brand Color: #5ac8b8（ロゴ・アクセント用）
 CTA Background: #08131a（ライトモード）
 Text Primary: #08131a
