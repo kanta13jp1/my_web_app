@@ -1,3 +1,5 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,12 +25,16 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   int _answeredCount = 0;
   int _currentStreak = 0;
   int _badgeCount = 0;
-  static const int _totalQuizzes = 9; // google/openai/anthropic/microsoft/meta/x/deepseek/mistral/perplexity
+  int _providerCount = 0;
   static const String _prefsKey = 'ai_univ_answered_quizzes';
 
-  static const List<String> _providerEmojis = [
-    '🔵', '⚫', '🟠', '🔷', '🟣', '⚡', '🐋', '💨', '🔍', '🔶', '🔥', '🏢', '🎨', '🤗', '🟢', '🐟',
-    '🧬', '🇩🇪', '🔴', '🎙️', '🎆', '🖼️', '🦙', '🔀', '🔄', '🎬', '🎵', '🤝', '🎸', '⚓', '✍️',
+  static const List<String> _featuredProviders = [
+    '🔵 Google',
+    '⚫ OpenAI',
+    '🟠 Anthropic',
+    '⚡ xAI',
+    '🐋 DeepSeek',
+    '💨 Mistral',
   ];
 
   @override
@@ -43,6 +49,25 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     final answered = saved.isEmpty ? <String>[] : saved.split(',');
     if (mounted) {
       setState(() => _answeredCount = answered.length);
+    }
+
+    try {
+      final providerRows = await _supabase
+          .from('ai_university_content')
+          .select('provider')
+          .eq('is_active', true)
+          .timeout(const Duration(seconds: 5));
+      final providerCount = (providerRows as List)
+          .cast<Map<String, dynamic>>()
+          .map((row) => row['provider'] as String?)
+          .whereType<String>()
+          .toSet()
+          .length;
+      if (mounted && providerCount > 0) {
+        setState(() => _providerCount = providerCount);
+      }
+    } catch (_) {
+      // 取得失敗はサイレント — 静的コピーで継続
     }
 
     // Supabase からクロスデバイス学習記録・ストリーク・バッジ数を取得
@@ -82,21 +107,46 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   }
 
   Future<void> _share() async {
+    final providerCountText = _providerCount > 0 ? '$_providerCount社' : '多数の';
     await SharePlus.instance.share(
       ShareParams(
         text: '自分株式会社の AI 大学で学習中！\n'
-            'Google・OpenAI・Anthropic・DeepSeek・Mistral・Perplexityなど9社以上のAIを総合的に学べます。\n'
+            '$providerCountTextのAIを1か所で横断しながら学べます。\n'
             'https://my-web-app-b67f4.web.app/#/gemini-university\n'
             '#AILearning #buildinpublic #FlutterWeb',
       ),
     );
   }
 
+  Widget _buildProviderChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0x1FFFFFFF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0x33FFFFFF)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final progress = _totalQuizzes == 0
+    final providerCountText = _providerCount > 0 ? '$_providerCount社' : '多数の';
+    final learnedTotalLabel = _providerCount > 0 ? '$_providerCount' : '—';
+    final progress = _providerCount <= 0
         ? 0.0
-        : _answeredCount / _totalQuizzes;
+        : min(1.0, _answeredCount / _providerCount);
+    final extraProviders = _providerCount > _featuredProviders.length
+        ? _providerCount - _featuredProviders.length
+        : 0;
 
     return Card(
       elevation: 0,
@@ -136,9 +186,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
-                '9社以上のAIを総合的に学ぶ — 毎週最新情報に自動更新',
-                style: TextStyle(
+              Text(
+                '$providerCountTextのAIを1か所で学ぶ - 毎週最新情報に自動更新',
+                style: const TextStyle(
                   color: Color(0xFFB0B0B0),
                   fontSize: 12,
                   height: 1.6,
@@ -146,16 +196,15 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
               ),
               const SizedBox(height: 12),
 
-              // プロバイダー絵文字
-              Row(
-                children: _providerEmojis
-                    .map(
-                      (e) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: Text(e, style: const TextStyle(fontSize: 20)),
-                      ),
-                    )
-                    .toList(),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final provider in _featuredProviders)
+                    _buildProviderChip(provider),
+                  if (extraProviders > 0)
+                    _buildProviderChip('+$extraProviders'),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -202,7 +251,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '📊 クイズ達成: $_answeredCount / $_totalQuizzes 問',
+                          '📊 学習済み: $_answeredCount / $learnedTotalLabel 社',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -229,13 +278,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       backgroundColor: const Color(0xFFFF6B35),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: () =>
                         Navigator.of(context).pushNamed('/gemini-university'),
                     child: const Text(
-                      '今すぐ学ぶ →',
+                      'AI大学を開く',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

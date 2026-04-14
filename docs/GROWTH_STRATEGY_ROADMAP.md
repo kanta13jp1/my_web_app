@@ -5641,6 +5641,7 @@ VSCode版のクイズページで `result.awarded_badges.length > 0` ならバ�
 
 🔴 最高: クイズ正解時に `record_score` 呼び出しを追加
 - `lib/pages/gemini_university_v2_page.dart` のクイズ正解ハンドラで以下を実行
+
   ```dart
   final res = await Supabase.instance.client.functions.invoke(
     'ai-university-badges',
@@ -5651,6 +5652,7 @@ VSCode版のクイズページで `result.awarded_badges.length > 0` ならバ�
     // バッジ獲得モーダル → シェアCTA
   }
   ```
+
 - SharedPreferences `ai_univ_answered_quizzes` との並行保存 (DB 優先、prefs はフォールバック)
 
 🟡 高: ランキングページ (`ai_university_ranking_page.dart`) で `score_leaderboard` 使用
@@ -8494,3 +8496,27 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - T-1 第39弾: GitHub Actions CI最適化記事 (25分→効率化) JP+EN
 - blog-publish 残ブランチ バッチマージ
 - Rule 17 継続監視
+
+---
+
+## VSCode版#71 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | AI大学55社目 Adept AI の UI表示設定・クイズ・フォールバック追加 | ✅ |
+| 2 | `AiUniversityHomeCard` を DB件数ベース表示へ更新し、旧「9社以上」表記を解消 | ✅ |
+| 3 | `user_manual_page.dart` のホーム最上部導線を AI大学バナー基準へ更新 | ✅ |
+| 4 | cross-instance-pr `20260413_adept_provider_ui.md` を `done` に更新 | ✅ |
+| 5 | Rule 18: NotebookLM で最新AIニュース取得を試行 | ⚠️ `notebooklm login` 期限切れで未実施 |
+
+### 現状数値
+- ページ数: 219
+- AI大学: DB 55社 / UI 55社
+- ホーム AI大学バナー: DB登録件数に追従する表示へ更新
+
+### 次回VSCode版優先タスク
+- 🟢 Rule 16: 本番表示チェック (ホーム / AI大学 / ランキング)
+- 🟡 Rule 19: ホーム / AI大学バナーのモバイル余白と文言AB改善
+- 🟡 Rule 18: `notebooklm login` 後に最新AIニュース3件を ROADMAP へ反映

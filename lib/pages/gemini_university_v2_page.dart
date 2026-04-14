@@ -372,6 +372,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6B48FF),
     officialUrl: 'https://pi.ai',
   ),
+  'adept': _ProviderMeta(
+    name: 'Adept AI',
+    emoji: '🖥️',
+    color: const Color(0xFF2B5CE6),
+    officialUrl: 'https://www.adept.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -654,6 +660,11 @@ final Map<String, _Quiz> _quizzes = {
   'inflection': _Quiz(
     question: 'Inflection AI の Pi が最も特化している領域は？',
     options: ['感情的知性・共感的対話', '数学・推論', 'コード生成', '画像生成'],
+    correct: 0,
+  ),
+  'adept': _Quiz(
+    question: 'Adept AI の ACT-1 / ACT-2 が得意とする領域は？',
+    options: ['ブラウザや業務ソフトの操作自動化', '画像生成', '音声合成', '半導体設計'],
     correct: 0,
   ),
 };
@@ -1538,6 +1549,23 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 
 [公式サイト](https://pi.ai)
 ''',
+  'adept': '''
+## Adept AI
+ブラウザや業務SaaSを自然言語で実際に操作する実行型AI。Fuyu-8B のOSS公開でも知られる。
+
+## 主要機能
+- **ACT-1 / ACT-2**: ブラウザ・業務SaaSの操作自動化
+- **Fuyu-8B**: 画像理解を含むマルチモーダルOSSモデル
+- **Adept Agent Platform**: エンタープライズ向け業務自動化基盤
+
+## 特徴
+- クリック・入力・検索まで含めて「実際に操作するAI」
+- ブラウザと業務SaaSをまたぐ反復作業の自動化に強い
+- Amazon連携を含む企業向けエージェント展開
+- 「回答するAI」より「実行するAI」に重心がある
+
+[公式サイト](https://www.adept.ai/)
+''',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1631,7 +1659,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       case 1:
         // B: プロバイダー制覇フォーカス
         text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
-            'Google・OpenAI・DeepSeek・Mistral... 9社を比較学習できます。\n'
+            'Google・OpenAI・DeepSeek・Mistral など $total 社を比較学習できます。\n'
             '$url\n'
             '#AIUniversity #buildinpublic';
       default:
