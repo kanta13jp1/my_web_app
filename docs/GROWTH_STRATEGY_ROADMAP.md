@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-14 VSCode版#74 (Gemini 旧既定値を gemini-2.5 系へ整理)
+最終更新: 2026-04-14 VSCode版#75 (AI大学ホームカードのCTAと進捗表示を改善)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -8638,3 +8638,35 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟢 Rule 16: import ページを含む本番表示チェック
 - 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
 - 🟡 Gemini 系モデル更新後の UI 文言と Supabase Edge Function 呼び出しを継続監査
+
+## VSCode版#75 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|---|---|
+| 1 | `.github/COMPRESSED_PROMPT_V3.md` を再読し、Rule 15 / Rule 16 / Rule 19 の今回優先事項を整理 | ✅ |
+| 2 | Master Brain memory と ROADMAP 末尾を確認し、前回の Gemini 更新後に続けるべき VSCode スコープ作業を確認 | ✅ |
+| 3 | `AiUniversityHomeCard` を新規ユーザー / 継続ユーザーで出し分ける CTA に再設計 | ✅ |
+| 4 | AI大学の掲載AI数・学習済み数・連続学習日数・バッジ数を KPI タイル化し、更新鮮度表示とランキング導線を追加 | ✅ |
+| 5 | シェア文言を学習進捗反映型に更新し、ホーム上の AI大学導線をよりバイラル寄りに調整 | ✅ |
+
+### Rule 15 / Rule 19 メモ
+
+- `lib/widgets/ai_university_home_card.dart` を改善し、初回訪問時は「最初の1社を始める」、継続ユーザーには「続きから学ぶ」を主 CTA として出し分けるようにした
+- `ai_university_content.updated_at` を使って「今日更新 / 昨日更新 / X日前更新」を表示し、AI大学コンテンツの鮮度をホームで即座に伝えるようにした
+- `/ai-university-ranking` への導線をホームカードに追加し、ランキング参加率 KPI 向上を狙う構成に寄せた
+- デザイン改善は `docs/DESIGN.md` の Orange + Indigo ダークテーマに合わせて、紫寄りだった旧グラデーションをダーク基調 + Orange/Indigo アクセントへ再調整した
+
+### 品質確認
+
+- `dart format lib/widgets/ai_university_home_card.dart` は Codex 環境で 120 秒タイムアウトし完走できず、差分を手動確認
+- `git diff --check` (pass)
+- `markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` (pass)
+- `flutter analyze` は Codex 環境で固まるため、ユーザー指示どおりスキップ
+
+### 次回VSCode版優先タスク
+
+- 🟢 Rule 16: import ページを含む本番表示チェック
+- 🟡 AI大学ランキング画面にもホームカードと同じデザイントークンを反映
+- 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
