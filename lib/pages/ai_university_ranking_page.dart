@@ -1,6 +1,7 @@
 import 'dart:math' show max;
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// AI大学ランキングページ
@@ -19,6 +20,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
   String? _error;
   List<_LeaderboardEntry> _entries = [];
   Map<String, List<_BadgeEntry>> _badgesByUser = const {};
+  int _localAnsweredCount = 0;
   _MyLearningSnapshot? _mySnapshot;
   String? _myUserId;
 
@@ -34,6 +36,8 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       _loading = true;
       _error = null;
     });
+
+    final localAnsweredCount = await _loadLocalAnsweredCount();
 
     try {
       final rows = await _supabase
@@ -66,6 +70,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       setState(() {
         _entries = entries;
         _badgesByUser = badgesByUser;
+        _localAnsweredCount = localAnsweredCount;
         _mySnapshot = mySnapshot;
         _loading = false;
       });
@@ -74,10 +79,22 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       setState(() {
         _loading = false;
         _badgesByUser = const {};
+        _localAnsweredCount = localAnsweredCount;
         _mySnapshot = null;
         _error = e.toString();
       });
     }
+  }
+
+  Future<int> _loadLocalAnsweredCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('ai_univ_answered_quizzes') ?? '';
+    if (saved.isEmpty) return 0;
+    return saved
+        .split(',')
+        .where((providerId) => providerId.trim().isNotEmpty)
+        .toSet()
+        .length;
   }
 
   Future<Map<String, List<_BadgeEntry>>> _loadPublicBadges(
@@ -191,6 +208,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
               : _RankingBody(
                   entries: _entries,
                   badgesByUser: _badgesByUser,
+                  localAnsweredCount: _localAnsweredCount,
                   mySnapshot: _mySnapshot,
                   myUserId: _myUserId,
                   onOpenUniversity: _openUniversity,
@@ -280,6 +298,7 @@ class _RankingBody extends StatelessWidget {
   const _RankingBody({
     required this.entries,
     required this.badgesByUser,
+    required this.localAnsweredCount,
     required this.mySnapshot,
     required this.myUserId,
     required this.onOpenUniversity,
@@ -287,6 +306,7 @@ class _RankingBody extends StatelessWidget {
 
   final List<_LeaderboardEntry> entries;
   final Map<String, List<_BadgeEntry>> badgesByUser;
+  final int localAnsweredCount;
   final _MyLearningSnapshot? mySnapshot;
   final String? myUserId;
   final VoidCallback onOpenUniversity;
@@ -294,6 +314,17 @@ class _RankingBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
+      final knownProgressCount = max(
+        localAnsweredCount,
+        mySnapshot?.providersStudied ?? 0,
+      );
+      if ((mySnapshot?.hasProgress ?? false) || knownProgressCount > 0) {
+        return _LocalProgressView(
+          answeredCount: knownProgressCount,
+          requiresLogin: myUserId == null,
+          onOpenUniversity: onOpenUniversity,
+        );
+      }
       return _EmptyRankingView(onOpenUniversity: onOpenUniversity);
     }
 
@@ -424,6 +455,108 @@ class _EmptyRankingView extends StatelessWidget {
                   'AI大学でクイズに挑戦すると、ここに学習の積み上がりが並びます。まずは気になる1社から始めてみましょう。',
                   style: _RankingTextStyles.body,
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: onOpenUniversity,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('AI大学を開く'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _RankingPalette.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LocalProgressView extends StatelessWidget {
+  const _LocalProgressView({
+    required this.answeredCount,
+    required this.requiresLogin,
+    required this.onOpenUniversity,
+  });
+
+  final int answeredCount;
+  final bool requiresLogin;
+  final VoidCallback onOpenUniversity;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = requiresLogin
+        ? 'この端末では学習済みです'
+        : '学習記録を反映しています';
+    final body = requiresLogin
+        ? '$answeredCount社ぶんのクイズ達成はこの端末に保存されています。共有ランキングへ反映するにはログインが必要です。'
+        : '$answeredCount社ぶんのクイズ達成を確認しました。共有ランキングへの反映を確認中です。右上の更新でもう一度お試しください。';
+
+    return SafeArea(
+      top: false,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Container(
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: _RankingPalette.heroGradient,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _RankingPalette.orange.withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: _RankingPalette.orange.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _RankingPalette.orange.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.sync_rounded,
+                    color: _RankingPalette.orangeLight,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: _RankingTextStyles.heading2,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  body,
+                  style: _RankingTextStyles.body,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                _InfoPill(
+                  icon: Icons.quiz_rounded,
+                  label: '$answeredCount社でクイズ達成',
+                  color: _RankingPalette.amber,
                 ),
                 const SizedBox(height: 20),
                 FilledButton.icon(

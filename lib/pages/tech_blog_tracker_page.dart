@@ -221,8 +221,12 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     final todayCount = _todayPosts.map((p) => p['platform']).toSet().length;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('技術ブログ投稿管理'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -379,6 +383,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           final posted = _isPostedToday(platform.id);
           final post = _getTodayPost(platform.id);
           return Card(
+            color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: Container(
@@ -522,6 +527,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           final isPosted = status == 'posted';
 
           return Card(
+            color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 6),
             child: ListTile(
               dense: true,

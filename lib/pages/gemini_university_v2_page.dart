@@ -1675,6 +1675,11 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
             .cast<Map<String, dynamic>>()
             .map((r) => r['provider_id'] as String)
             .toSet();
+        final localOnly = localSet.difference(remoteSet);
+        if (localOnly.isNotEmpty) {
+          final synced = await _syncLocalScoresToSupabase(localOnly);
+          remoteSet = remoteSet.union(synced);
+        }
       } catch (_) {
         // Supabase 取得失敗はサイレント — ローカルデータを使用
       }
@@ -1693,6 +1698,55 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
   Future<void> _saveAnsweredQuizzes() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsKey, _answeredQuizzes.join(','));
+  }
+
+  Future<Set<String>> _syncLocalScoresToSupabase(Set<String> providerIds) async {
+    final synced = <String>{};
+    for (final providerId in providerIds) {
+      final ok = await _recordQuizScoreToSupabase(providerId);
+      if (ok) synced.add(providerId);
+    }
+    return synced;
+  }
+
+  Future<bool> _recordQuizScoreToSupabase(String providerId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return false;
+
+    try {
+      await _supabase.functions.invoke(
+        'ai-university-badges',
+        body: {
+          'action': 'record_score',
+          'provider_id': providerId,
+          'quiz_correct': true,
+        },
+      );
+      await _supabase.rpc(
+        'update_ai_university_streak',
+        params: {'p_user_id': user.id},
+      );
+      return true;
+    } catch (_) {
+      try {
+        await _supabase.from('ai_university_scores').upsert(
+          {
+            'user_id': user.id,
+            'provider_id': providerId,
+            'quiz_correct': true,
+            'studied_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'user_id,provider_id',
+        );
+        await _supabase.rpc(
+          'update_ai_university_streak',
+          params: {'p_user_id': user.id},
+        );
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
   }
 
   Future<void> _shareProgress() async {
@@ -1988,7 +2042,18 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     );
     // Supabase にスコアを記録 (RLS: users_own_scores で直接書き込み可)
     final user = _supabase.auth.currentUser;
-    if (user != null) {
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('この端末には保存しました。共有ランキングへの反映はログイン後です。'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+    if (!await _recordQuizScoreToSupabase(providerId)) {
       try {
         await _supabase.from('ai_university_scores').upsert(
           {

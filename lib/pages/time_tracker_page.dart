@@ -194,10 +194,12 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('勤怠・時間追跡'),
-        backgroundColor: const Color(0xFF0EA5E9),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -222,7 +224,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _logHours,
-        backgroundColor: const Color(0xFF0EA5E9),
+        backgroundColor: const Color(0xFFFF6B35),
         tooltip: '作業時間を記録',
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -325,6 +327,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                     final memo = entry['memo']?.toString() ?? '';
                     final recordedAt = entry['recordedAt']?.toString() ?? '';
                     return Card(
+                      color: const Color(0xFF1E1E1E),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: type == 'clock_in'

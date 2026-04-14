@@ -299,12 +299,17 @@ class _WipLimitPageState extends State<WipLimitPage> {
     final completed = _items.where((i) => i['status'] == 'completed').toList();
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('消化してから次を食え'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addItem,
+        backgroundColor: const Color(0xFFFF6B35),
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('登録'),
       ),

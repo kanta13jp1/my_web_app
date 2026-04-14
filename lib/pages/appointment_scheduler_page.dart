@@ -53,8 +53,12 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('予約スケジューラー'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -119,6 +123,7 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                             item['scheduled_at']?.toString() ??
                             '';
                         return Card(
+                          color: const Color(0xFF1E1E1E),
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: const Icon(

@@ -195,10 +195,12 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('Wiki・データベース'),
-        backgroundColor: const Color(0xFF4F46E5),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -283,6 +285,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             color: isSelected
                 ? const Color(0xFF4F46E5).withValues(alpha: 0.08)
                 : null,
+            shadowColor: isSelected ? null : const Color(0xFF1E1E1E),
             child: ListTile(
               leading:
                   const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
@@ -407,6 +410,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   row['content']?.toString() ?? row['data']?.toString() ?? '';
               final createdAt = row['createdAt']?.toString() ?? '';
               return Card(
+                color: const Color(0xFF1E1E1E),
                 child: ListTile(
                   leading:
                       const Icon(Icons.data_array, color: Color(0xFF4F46E5)),
