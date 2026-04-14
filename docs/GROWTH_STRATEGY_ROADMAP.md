@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-13 PowerShell版#52 (deploy-prod UNIQUE制約修正, Rule17全チェック, T-1第33弾投稿)
+最終更新: 2026-04-14 VSCode版#73 (Rule18 最新AIニュース3件反映 + NotebookLM 再認証確認)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -8520,3 +8520,89 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟢 Rule 16: 本番表示チェック (ホーム / AI大学 / ランキング)
 - 🟡 Rule 19: ホーム / AI大学バナーのモバイル余白と文言AB改善
 - 🟡 Rule 18: `notebooklm login` 後に最新AIニュース3件を ROADMAP へ反映
+
+---
+
+## VSCode版#72 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | `growth-import-preview` の Notion API ロジックを `notion_api.ts` に分離 | ✅ |
+| 2 | Notion ページ本文の再帰ブロック取得・pagination 対応を追加 | ✅ |
+| 3 | Notion API 429 rate limit 用 retry/backoff を追加 | ✅ |
+| 4 | `growth-import-preview/notion_api.test.ts` を新規追加 | ✅ |
+| 5 | `import_page.dart` の Notion API 文言を実装内容に合わせて更新 | ✅ |
+| 6 | `COMPRESSED_PROMPT_V3.md` の Feature #44 残件を完了表記へ更新 | ✅ |
+
+### 品質確認
+
+- `deno test supabase/functions/growth-import-preview/notion_api.test.ts` は Deno 2.6.5 (Windows) の panic で完走不可。ただし `deno check` と同等ケースの `deno eval` 手動検証は通過
+- `deno lint supabase/functions/growth-import-preview/` 実行済み (pass)
+- `markdownlint` 実行済み (pass)
+
+### 現状メモ
+- Notion API preview はページ本文の1階層取得から、子ブロック再帰取得に拡張
+- 429 応答時は `Retry-After` 優先で待機し、再試行後に継続
+- 深すぎるネストとブロック総数は preview 応答性を守るため warnings 付きで打ち切る
+
+### 次回VSCode版優先タスク
+- 🟢 Rule 16: import ページを含む本番表示チェック
+- 🟡 import preview warnings を UI 上でより読みやすく整理
+- 🟡 Rule 18: `notebooklm login` 後に最新AIニュース3件を ROADMAP へ反映
+
+---
+
+## VSCode版#73 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|------|------|
+| 1 | ユーザー実行の `notebooklm login` 成功を確認 | ✅ |
+| 2 | NotebookLM CLI で `list` / `use` / `source add-research` / `source list` を再試行 | ✅ |
+| 3 | NotebookLM notebook単位 RPC エラーを確認し、Rule 18 は公式ソース fallback で継続 | ✅ |
+| 4 | 最新AIニュース3件を開発ワークフロー視点で ROADMAP に反映 | ✅ |
+| 5 | 既存 Edge Function / ページのモデル利用状況を棚卸し | ✅ |
+
+### NotebookLM 状況
+
+- `notebooklm login` は 2026-04-14 に成功
+- `notebooklm list` は成功し、`jibun-master-brain` の存在を確認
+- ただし `notebooklm use` / `notebooklm source add-research` / `notebooklm source list` は `RPC ... returned null result data` で失敗
+- そのため Rule 18 のニュース反映は、公式発表ソースを直接確認する fallback で完了
+
+### 最新AIニュース3件と反映内容
+
+1. **2026-03-26 Google: Gemini 3.1 Flash Live**
+   - 公式: [Gemini 3.1 Flash Live: Making audio AI more natural and reliable](https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-flash-live/)
+   - 要点: 低遅延な音声対話モデルが `Gemini Live API` で preview 提供開始。複雑な task execution と自然な会話品質が強化
+   - 反映: `ai-secretary` / `morning_briefing` / 会議支援系ページで、リアルタイム音声 UI を差別化候補として検討対象に追加
+
+2. **2026-03-05 OpenAI: GPT-5.4**
+   - 公式: [Introducing GPT-5.4](https://openai.com/index/introducing-gpt-5-4/)
+   - 要点: API / Codex で native computer use、1M context、tool search、従来比で高い token efficiency を提供
+   - 反映: 画面操作を伴う長時間 agent workflow、スクリーンショット前提の UI 検証、ドキュメント横断タスクの強化候補として整理
+
+3. **2026-02-17 Anthropic: Claude Sonnet 4.6**
+   - 公式: [Introducing Claude Sonnet 4.6](https://www.anthropic.com/news/claude-sonnet-4-6)
+   - 要点: 1M token context beta、coding / agent planning / long-context reasoning を強化しつつ Sonnet 4.5 と同価格帯を維持
+   - 反映: 既存の `claude-sonnet-4-6` 採用方針は妥当と確認。長文ノート・長時間実行タスク・設計レビュー系ワークフローの優先モデル候補を維持
+
+### モデル棚卸しメモ
+
+- `ai-assistant` は `claude-sonnet-4-6` / `gpt-4o-mini` / `gemini-2.5-flash` 構成で、直近ニュースと比較して大きな後退はなし
+- 一方で `analyze-reality` / `ai-writing-assistant` / `enterprise-hub` / `guitar-recording-studio` などに `gemini-2.0-flash` が残っているため、次回は Gemini 系の高頻度処理をまとめて再監査する
+- `gemini-1.5-flash` を UI 選択肢に残しているページもあり、古い選択肢の整理余地あり
+
+### 品質確認
+
+- `markdownlint` 実行済み (pass)
+- `flutter analyze` は Codex 環境で固まるため、ユーザー指示どおりスキップ
+
+### 次回VSCode版優先タスク
+
+- 🟢 Rule 16: import ページを含む本番表示チェック
+- 🟡 Gemini 系モデル使用箇所を再監査し、`gemini-2.0-flash` / `gemini-1.5-flash` の置換候補を整理
+- 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開

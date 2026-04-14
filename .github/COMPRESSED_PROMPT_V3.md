@@ -422,7 +422,7 @@ web/sitemap.xml          # URL マップ
 | インスタンス | 作業内容 |
 | --- | --- |
 | ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
-| **VSCode版** | `growth-import-preview` に Notion API 連携を追加 (現状は汎用スタブ) |
+| ~~**VSCode版**~~ | ✅ 強化完了 (VSCode#72, 2026-04-14) — `growth-import-preview` に Notion API 再帰ブロック取得 + 429 rate limit retry を追加 |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 

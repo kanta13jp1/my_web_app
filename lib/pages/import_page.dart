@@ -106,7 +106,7 @@ class _ImportPageState extends State<ImportPage> {
             children: [
               const Text(
                 'Notion インテグレーションのトークンを入力してください。\n'
-                'Notion → Settings → Integrations から発行できます。',
+                'Notion → Settings → Integrations から発行できます。ページ本文、ネストしたブロック、データベース項目を直接プレビューします。',
               ),
               const SizedBox(height: 12),
               TextField(
@@ -492,7 +492,7 @@ class _ImportPageState extends State<ImportPage> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'インテグレーショントークンでNotion ページを直接取得します。ファイルエクスポート不要。',
+                  'インテグレーショントークンでページ本文とデータベース項目を直接取得します。ファイルエクスポート不要。',
                 ),
               ],
             ),
