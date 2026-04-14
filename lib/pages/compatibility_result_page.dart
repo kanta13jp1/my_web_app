@@ -331,7 +331,8 @@ ${_compatibilityMatch.description}''';
                     Text(
                       '/ 100',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],
@@ -403,7 +404,8 @@ ${_compatibilityMatch.description}''';
               child: LinearProgressIndicator(
                 value: _compatibilityMatch.compatibilityScore / 100,
                 minHeight: 12,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   Colors.pink.shade400,
                 ),

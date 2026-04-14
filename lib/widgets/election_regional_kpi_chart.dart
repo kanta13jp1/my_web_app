@@ -25,7 +25,8 @@ class ElectionRegionalKpiChart extends StatefulWidget {
   });
 
   @override
-  State<ElectionRegionalKpiChart> createState() => _ElectionRegionalKpiChartState();
+  State<ElectionRegionalKpiChart> createState() =>
+      _ElectionRegionalKpiChartState();
 }
 
 class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
@@ -47,27 +48,33 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Future<void> _printChart() async {
     try {
       // 棒グラフをキャプチャ
-      final barChartBoundary = _barChartKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      final barChartBoundary = _barChartKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
       if (barChartBoundary == null) return;
 
       final barChartImage = await barChartBoundary.toImage(pixelRatio: 3.0);
-      final barChartByteData = await barChartImage.toByteData(format: ui.ImageByteFormat.png);
+      final barChartByteData =
+          await barChartImage.toByteData(format: ui.ImageByteFormat.png);
       if (barChartByteData == null) return;
-      final barChartPdfImage = pw.MemoryImage(barChartByteData.buffer.asUint8List());
+      final barChartPdfImage =
+          pw.MemoryImage(barChartByteData.buffer.asUint8List());
 
       // 円グラフをキャプチャ
       pw.MemoryImage? pieChartPdfImage;
       if (widget.pieChartKey != null) {
-        final pieChartBoundary = widget.pieChartKey!.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+        final pieChartBoundary = widget.pieChartKey!.currentContext
+            ?.findRenderObject() as RenderRepaintBoundary?;
         if (pieChartBoundary != null) {
           final pieChartImage = await pieChartBoundary.toImage(pixelRatio: 3.0);
-          final pieChartByteData = await pieChartImage.toByteData(format: ui.ImageByteFormat.png);
+          final pieChartByteData =
+              await pieChartImage.toByteData(format: ui.ImageByteFormat.png);
           if (pieChartByteData != null) {
-            pieChartPdfImage = pw.MemoryImage(pieChartByteData.buffer.asUint8List());
+            pieChartPdfImage =
+                pw.MemoryImage(pieChartByteData.buffer.asUint8List());
           }
         }
       }
-      
+
       // 日本語フォントの読み込み（文字化け防止）
       final ttfRegular = await PdfGoogleFonts.notoSansJPRegular();
       final ttfBold = await PdfGoogleFonts.notoSansJPBold();
@@ -86,7 +93,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
               .select('display_name')
               .eq('user_id', user.id)
               .maybeSingle();
-          if (profile != null && profile['display_name']?.toString().isNotEmpty == true) {
+          if (profile != null &&
+              profile['display_name']?.toString().isNotEmpty == true) {
             authorName = profile['display_name'].toString();
           } else if (user.email != null) {
             authorName = user.email!;
@@ -95,9 +103,11 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       } catch (_) {}
 
       final now = DateTime.now();
-      final dateStr = '${now.year}年${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final dateStr =
+          '${now.year}年${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
       // ファイル名用に日付文字列を生成 (例: 20260328)
-      final dateFilenameStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      final dateFilenameStr =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
       final filename = 'election_report_$dateFilenameStr.pdf';
 
       final doc = pw.Document();
@@ -111,8 +121,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('統一地方選700 必達管理レポート', style: pw.TextStyle(font: ttfBold, fontSize: 18)),
-                    pw.Text('出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}', style: pw.TextStyle(font: ttfRegular, fontSize: 10, color: PdfColors.grey700), textAlign: pw.TextAlign.right),
+                    pw.Text('統一地方選700 必達管理レポート',
+                        style: pw.TextStyle(font: ttfBold, fontSize: 18),),
+                    pw.Text(
+                        '出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}',
+                        style: pw.TextStyle(
+                            font: ttfRegular,
+                            fontSize: 10,
+                            color: PdfColors.grey700,),
+                        textAlign: pw.TextAlign.right,),
                   ],
                 ),
                 pw.Divider(color: PdfColors.grey300),
@@ -175,8 +192,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       return const SizedBox.shrink();
     }
 
-    final totalRetain =
-        widget.prefectures.fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
+    final totalRetain = widget.prefectures
+        .fold<int>(0, (sum, p) => sum + p.incumbentRetentionTarget);
     final totalNew =
         widget.prefectures.fold<int>(0, (sum, p) => sum + p.newCandidateTarget);
     final totalTarget = totalRetain + totalNew;
@@ -189,15 +206,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       monthlyStats.putIfAbsent(month, () => {'total': 0, 'confirmed': 0});
       monthlyStats[month]!['total'] = monthlyStats[month]!['total']! + 1;
       if (p.endorsementConfirmed) {
-        monthlyStats[month]!['confirmed'] = monthlyStats[month]!['confirmed']! + 1;
+        monthlyStats[month]!['confirmed'] =
+            monthlyStats[month]!['confirmed']! + 1;
       }
     }
-    
+
     final sortedMonths = monthlyStats.keys.toList();
     sortedMonths.sort((a, b) {
       final statA = monthlyStats[a]!;
       final statB = monthlyStats[b]!;
-      
+
       int cmp = 0;
       switch (_sortColumnIndex) {
         case 0:
@@ -215,8 +233,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
           cmp = unconfA.compareTo(unconfB);
           break;
         case 4:
-          final progA = statA['total']! > 0 ? statA['confirmed']! / statA['total']! : 0.0;
-          final progB = statB['total']! > 0 ? statB['confirmed']! / statB['total']! : 0.0;
+          final progA =
+              statA['total']! > 0 ? statA['confirmed']! / statA['total']! : 0.0;
+          final progB =
+              statB['total']! > 0 ? statB['confirmed']! / statB['total']! : 0.0;
           cmp = progA.compareTo(progB);
           break;
       }
@@ -253,7 +273,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 8,),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -264,15 +285,19 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildSummaryItem('現職維持 合計', totalRetain.toString(), Colors.blue.shade700),
-                              _buildSummaryItem('新人擁立 合計', totalNew.toString(), Colors.orange.shade700),
-                              _buildSummaryItem('総合計', totalTarget.toString(), Colors.indigo.shade700),
+                              _buildSummaryItem('現職維持 合計',
+                                  totalRetain.toString(), Colors.blue.shade700,),
+                              _buildSummaryItem('新人擁立 合計', totalNew.toString(),
+                                  Colors.orange.shade700,),
+                              _buildSummaryItem('総合計', totalTarget.toString(),
+                                  Colors.indigo.shade700,),
                             ],
                           ),
                           if (totalTarget < 700) ...[
                             const SizedBox(height: 12),
                             Container(
-                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12,),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(8),
@@ -281,11 +306,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 16),
+                                  Icon(Icons.warning_amber_rounded,
+                                      color: Colors.red.shade700, size: 16,),
                                   const SizedBox(width: 8),
                                   Text(
                                     '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
-                                    style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: TextStyle(
+                                        color: Colors.red.shade700,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,),
                                   ),
                                 ],
                               ),
@@ -304,11 +333,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           barTouchData: BarTouchData(
                             enabled: true,
                             touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: (group) => Colors.blueGrey.shade900,
-                              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                              getTooltipColor: (group) =>
+                                  Colors.blueGrey.shade900,
+                              getTooltipItem:
+                                  (group, groupIndex, rod, rodIndex) {
                                 final data = widget.prefectures[group.x];
-                                final isAchieved = data.additionalSeatTarget > 0 &&
-                                    data.newCandidateTarget >= data.additionalSeatTarget;
+                                final isAchieved =
+                                    data.additionalSeatTarget > 0 &&
+                                        data.newCandidateTarget >=
+                                            data.additionalSeatTarget;
                                 final newTargetColor = isAchieved
                                     ? Colors.green.shade400
                                     : Colors.orange.shade400;
@@ -321,7 +354,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                   ),
                                   children: [
                                     TextSpan(
-                                      text: '現職維持: ${data.incumbentRetentionTarget}\n',
+                                      text:
+                                          '現職維持: ${data.incumbentRetentionTarget}\n',
                                       style: TextStyle(
                                         color: Colors.blue.shade300,
                                         fontSize: 12,
@@ -329,7 +363,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: '新人擁立: ${data.newCandidateTarget}\n',
+                                      text:
+                                          '新人擁立: ${data.newCandidateTarget}\n',
                                       style: TextStyle(
                                         color: newTargetColor,
                                         fontSize: 12,
@@ -337,7 +372,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: '純増割当: ${data.additionalSeatTarget}\n',
+                                      text:
+                                          '純増割当: ${data.additionalSeatTarget}\n',
                                       style: const TextStyle(
                                         color: Colors.white70,
                                         fontSize: 12,
@@ -345,7 +381,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       ),
                                     ),
                                     TextSpan(
-                                      text: '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
+                                      text:
+                                          '合計: ${data.incumbentRetentionTarget + data.newCandidateTarget}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
@@ -365,9 +402,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                 reservedSize: 40,
                                 getTitlesWidget: (value, meta) {
                                   if (value.toInt() >= 0 &&
-                                      value.toInt() < widget.prefectures.length) {
-                                    final region =
-                                        widget.prefectures[value.toInt()].prefecture;
+                                      value.toInt() <
+                                          widget.prefectures.length) {
+                                    final region = widget
+                                        .prefectures[value.toInt()].prefecture;
                                     final displayRegion = region.length > 3
                                         ? region.substring(0, 2)
                                         : region;
@@ -414,14 +452,18 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                             drawVerticalLine: false,
                           ),
                           borderData: FlBorderData(show: false),
-                          barGroups: widget.prefectures.asMap().entries.map((entry) {
+                          barGroups:
+                              widget.prefectures.asMap().entries.map((entry) {
                             final index = entry.key;
                             final data = entry.value;
                             final retainTarget =
                                 data.incumbentRetentionTarget.toDouble();
-                            final newTarget = data.newCandidateTarget.toDouble();
-                            final additionalTarget = data.additionalSeatTarget.toDouble();
-                            final isAchieved = additionalTarget > 0 && newTarget >= additionalTarget;
+                            final newTarget =
+                                data.newCandidateTarget.toDouble();
+                            final additionalTarget =
+                                data.additionalSeatTarget.toDouble();
+                            final isAchieved = additionalTarget > 0 &&
+                                newTarget >= additionalTarget;
                             final newTargetColor = isAchieved
                                 ? Colors.green.shade400
                                 : Colors.orange.shade400;
@@ -468,7 +510,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '月次公認内定 進捗状況',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold,),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -509,15 +552,23 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Widget _buildSummaryItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(label,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 24, fontWeight: FontWeight.bold, color: color,),),
       ],
     );
   }
 
   void _showMonthlyDetailsDialog(BuildContext context, String month) {
-    final prefecturesInMonth = widget.prefectures.where((p) => p.endorsementDeadlineMonth == month).toList();
+    final prefecturesInMonth = widget.prefectures
+        .where((p) => p.endorsementDeadlineMonth == month)
+        .toList();
     // 未確定の県連が上に来るようにソート
     prefecturesInMonth.sort((a, b) {
       if (a.endorsementConfirmed == b.endorsementConfirmed) {
@@ -540,12 +591,18 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 final p = prefecturesInMonth[index];
                 return ListTile(
                   leading: Icon(
-                    p.endorsementConfirmed ? Icons.check_circle : Icons.warning_amber_rounded,
-                    color: p.endorsementConfirmed ? Colors.green : Colors.orange,
+                    p.endorsementConfirmed
+                        ? Icons.check_circle
+                        : Icons.warning_amber_rounded,
+                    color:
+                        p.endorsementConfirmed ? Colors.green : Colors.orange,
                   ),
-                  title: Text(p.prefecture, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名'),
-                  trailing: const Icon(Icons.edit, size: 16, color: Colors.grey),
+                  title: Text(p.prefecture,
+                      style: const TextStyle(fontWeight: FontWeight.bold),),
+                  subtitle: Text(
+                      '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',),
+                  trailing:
+                      const Icon(Icons.edit, size: 16, color: Colors.grey),
                   onTap: () async {
                     try {
                       final supabase = Supabase.instance.client;
@@ -558,12 +615,14 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       if (data != null && context.mounted) {
                         final result = await showDialog<bool>(
                           context: context,
-                          builder: (ctx) => ElectionKpiEditDialog(initialData: data),
+                          builder: (ctx) =>
+                              ElectionKpiEditDialog(initialData: data),
                         );
                         if (result == true && context.mounted) {
                           Navigator.pop(context); // 一覧ダイアログを閉じる
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('データを更新しました。最新状態を反映します...')),
+                            const SnackBar(
+                                content: Text('データを更新しました。最新状態を反映します...'),),
                           );
                           widget.onDataUpdated?.call();
                         }
@@ -591,13 +650,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
     );
   }
 
-  Widget _buildMonthlyTable(List<String> sortedMonths, Map<String, Map<String, int>> stats) {
+  Widget _buildMonthlyTable(
+      List<String> sortedMonths, Map<String, Map<String, int>> stats,) {
     if (sortedMonths.isEmpty) return const SizedBox.shrink();
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
@@ -609,17 +670,23 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
           headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
           columns: [
             DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
-            DataColumn(label: const Text('対象県連数'), numeric: true, onSort: _onSort),
-            DataColumn(label: const Text('確定済み'), numeric: true, onSort: _onSort),
-            DataColumn(label: const Text('未確定'), numeric: true, onSort: _onSort),
-            DataColumn(label: const Text('進捗率'), numeric: true, onSort: _onSort),
+            DataColumn(
+                label: const Text('対象県連数'), numeric: true, onSort: _onSort,),
+            DataColumn(
+                label: const Text('確定済み'), numeric: true, onSort: _onSort,),
+            DataColumn(
+                label: const Text('未確定'), numeric: true, onSort: _onSort,),
+            DataColumn(
+                label: const Text('進捗率'), numeric: true, onSort: _onSort,),
           ],
           rows: sortedMonths.map((month) {
             final s = stats[month]!;
             final total = s['total']!;
             final confirmed = s['confirmed']!;
             final unconfirmed = total - confirmed;
-            final progress = total > 0 ? (confirmed / total * 100).toStringAsFixed(1) : '0.0';
+            final progress = total > 0
+                ? (confirmed / total * 100).toStringAsFixed(1)
+                : '0.0';
 
             return DataRow(
               onSelectChanged: (_) => _showMonthlyDetailsDialog(context, month),
@@ -629,10 +696,15 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       ? WidgetStateProperty.all(Colors.green.shade50)
                       : null,
               cells: [
-                DataCell(Text(month, style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataCell(Text(month,
+                    style: const TextStyle(fontWeight: FontWeight.bold),),),
                 DataCell(Text(total.toString())),
-                DataCell(Text(confirmed.toString(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green))),
-                DataCell(Text(unconfirmed.toString(), style: TextStyle(color: unconfirmed > 0 ? Colors.red : null))),
+                DataCell(Text(confirmed.toString(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.green,),),),
+                DataCell(Text(unconfirmed.toString(),
+                    style:
+                        TextStyle(color: unconfirmed > 0 ? Colors.red : null),),),
                 DataCell(Text('$progress%')),
               ],
             );

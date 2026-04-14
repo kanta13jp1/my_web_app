@@ -34,7 +34,8 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(() => _items = (data['items'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _items = (data['items'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _items = data.cast<Map<String, dynamic>>());
       } else {
@@ -69,16 +70,16 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),
-                        ),
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchItems,
@@ -94,18 +95,22 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                       itemCount: _items.length,
                       itemBuilder: (context, index) {
                         final item = _items[index];
-                        final title = item['title']?.toString() ?? 'アイテム ${index + 1}';
+                        final title =
+                            item['title']?.toString() ?? 'アイテム ${index + 1}';
                         final currentPrice = item['current_price'];
-                        final description = item['description']?.toString() ?? '';
+                        final description =
+                            item['description']?.toString() ?? '';
                         final endAt = item['end_at'];
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading: const Icon(Icons.gavel, color: Colors.amber),
+                            leading:
+                                const Icon(Icons.gavel, color: Colors.amber),
                             title: Text(
                               title,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold,),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(
                               currentPrice != null

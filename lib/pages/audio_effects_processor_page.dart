@@ -11,8 +11,7 @@ class AudioEffectsProcessorPage extends StatefulWidget {
       _AudioEffectsProcessorPageState();
 }
 
-class _AudioEffectsProcessorPageState
-    extends State<AudioEffectsProcessorPage> {
+class _AudioEffectsProcessorPageState extends State<AudioEffectsProcessorPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _errorMessage;
@@ -37,8 +36,8 @@ class _AudioEffectsProcessorPageState
       final data = response.data;
       if (data is Map<String, dynamic> && data['effects'] is List) {
         setState(
-          () => _effects =
-              (data['effects'] as List).cast<Map<String, dynamic>>(),
+          () =>
+              _effects = (data['effects'] as List).cast<Map<String, dynamic>>(),
         );
       } else if (data is List) {
         setState(() => _effects = data.cast<Map<String, dynamic>>());
@@ -73,7 +72,8 @@ class _AudioEffectsProcessorPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 12),
                       Text(_errorMessage!),
                       const SizedBox(height: 12),

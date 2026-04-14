@@ -168,7 +168,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 child: Center(
                   child: Text(
                     'ここに写真が表示されます',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
                   ),
                 ),
               ),
@@ -176,8 +177,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             const SizedBox(height: 24),
 
             // Action Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
               children: [
                 ElevatedButton.icon(
                   onPressed:

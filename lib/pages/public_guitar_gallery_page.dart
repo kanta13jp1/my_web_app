@@ -12,8 +12,7 @@ class PublicGuitarGalleryPage extends StatefulWidget {
       _PublicGuitarGalleryPageState();
 }
 
-class _PublicGuitarGalleryPageState
-    extends State<PublicGuitarGalleryPage> {
+class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;
@@ -159,9 +158,8 @@ class _PublicGuitarGalleryPageState
                   child: Text(
                     _sortLabel(s),
                     style: TextStyle(
-                      color: _sortBy == s
-                          ? const Color(0xFFFF6B35)
-                          : Colors.white,
+                      color:
+                          _sortBy == s ? const Color(0xFFFF6B35) : Colors.white,
                     ),
                   ),
                 ),
@@ -188,7 +186,8 @@ class _PublicGuitarGalleryPageState
             const SizedBox(height: 12),
             Text(
               'ギャラリーの読み込みに失敗しました',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -223,7 +222,8 @@ class _PublicGuitarGalleryPageState
             const SizedBox(height: 8),
             Text(
               'ギタースタジオで録音して公開しましょう！',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -360,7 +360,8 @@ class _PublicGuitarGalleryPageState
                         Text(
                           dateLabel,
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 11,
                           ),
                         ),
@@ -372,11 +373,10 @@ class _PublicGuitarGalleryPageState
                     icon: const Icon(Icons.open_in_new, size: 18),
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     tooltip: '詳細ページ',
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed(
-                          '/guitar-recording-studio',
-                          arguments: {'share': id},
-                        ),
+                    onPressed: () => Navigator.of(context).pushNamed(
+                      '/guitar-recording-studio',
+                      arguments: {'share': id},
+                    ),
                   ),
               ],
             ),
@@ -410,16 +410,14 @@ class _PublicGuitarGalleryPageState
                       children: [
                         Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
-                          color:
-                              isLiked ? Colors.red : Colors.grey[400],
+                          color: isLiked ? Colors.red : Colors.grey[400],
                           size: 18,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '$likes',
                           style: TextStyle(
-                            color:
-                                isLiked ? Colors.red : Colors.grey[400],
+                            color: isLiked ? Colors.red : Colors.grey[400],
                             fontSize: 13,
                           ),
                         ),
@@ -509,11 +507,14 @@ class _PublicGuitarGalleryPageState
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          Icon(icon,
+              size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant,),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(color: Theme.of(context).colorScheme.surfaceContainerHighest, fontSize: 11),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fontSize: 11,),
           ),
         ],
       ),

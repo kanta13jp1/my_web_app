@@ -2035,7 +2035,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+                        border: Border.all(
+                            color:
+                                Theme.of(context).colorScheme.outlineVariant),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -2047,7 +2049,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -2877,7 +2880,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      border: Border.all(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -3442,7 +3447,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 6),
             Text(
               remainText,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface, fontSize: 12),
             ),
             const SizedBox(height: 10),
             LinearProgressIndicator(
@@ -3638,7 +3644,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           Text(
             '未完了: $pendingTasks',
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+            style: TextStyle(
+                fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
           ),
         ],
       ),
@@ -3705,7 +3712,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 4),
             Text(
               '口座残高・固定費・必須タスクを3ヶ月単位で比較します。',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 12),
             _isCompact
@@ -3818,7 +3826,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 4),
             Text(
               '負債データをもとに、返済優先順位と3ヶ月アクションを自動生成します。',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
             ),
             const SizedBox(height: 10),
             Wrap(
@@ -3927,7 +3936,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 8),
               Text(
                 '生成日時: ${DateFormat('yyyy/MM/dd HH:mm').format(_debtPlanGeneratedAt!)}',
-                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
             if (_debtPlanMarkdown != null && _debtExecutionPlan != null) ...[
@@ -3953,7 +3964,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _debtPlannerMode == AssetDebtPlannerMode.ask
                     ? 'Ask は返済プランを読むモードです。'
                     : 'Code は返済プランを must tasks に反映するモードです。',
-                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurface),
               ),
             ],
             const SizedBox(height: 12),
@@ -3962,7 +3975,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             else if (_debtPlanMarkdown == null)
               Text(
                 'まだ返済プランは作成されていません。',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               )
             else
               _debtPlannerMode == AssetDebtPlannerMode.ask
@@ -3970,7 +3985,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MarkdownBody(
@@ -4039,7 +4055,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             isReleased
                 ? '借金は完済済みです。収監モードは解除されました。'
                 : '借金がゼロになるまでは、生活を最小化し、返済以外の逃避と浪費を止める前提で毎日を管理します。',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
+            style: TextStyle(
+                fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
           ),
           if (_isLoadingDebtLockdown && snapshot == null) ...[
             const SizedBox(height: 10),
@@ -4076,7 +4093,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             const SizedBox(height: 8),
             Text(
               '開始日: ${DateFormat('yyyy/MM/dd').format(snapshot!.startedAt!)}',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
             ),
           ],
           const SizedBox(height: 12),
@@ -4169,7 +4187,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               isEnabled
                   ? 'まだ違反記録はありません。今日も浪費と逃避を止めて返済だけに集中します。'
                   : '収監モードを開始すると、ここに違反ログが溜まります。',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
+              style: TextStyle(
+                  fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
             )
           else
             ...recentViolations.take(3).map((violation) {
@@ -4180,7 +4199,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   '${DateFormat('MM/dd HH:mm').format(violation.createdAt)}  ${violation.category}$amountLabel  ${violation.note}',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface),
                 ),
               );
             }),
@@ -4240,11 +4261,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       avatar: Icon(
         icon,
         size: 16,
-        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+        color: selected
+            ? Colors.white
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       selectedColor: Colors.deepPurple,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+        color:
+            selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
         fontWeight: FontWeight.w700,
       ),
       label: Text(label),
@@ -4256,7 +4280,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     if (plan == null) {
       return Text(
         'Code モード用の実行タスクはまだありません。',
-        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant),
       );
     }
 
@@ -4363,7 +4389,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -4741,7 +4769,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const SizedBox(width: 8),
                   Text(
                     '(${lastDate == todayStr ? "本日更新" : "最終更新: $lastDate"})',
-                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   if (canQuickUpdate) ...[
                     const SizedBox(width: 8),
@@ -4762,7 +4792,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               padding: const EdgeInsets.only(left: 4, top: 3),
               child: Text(
                 '未記録',
-                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
         ],
@@ -5105,7 +5137,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        border: Border.all(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -5115,7 +5149,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -5475,7 +5510,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        border: Border.all(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -5485,7 +5522,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Icon(
                             Icons.calendar_today,
                             size: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ],
                       ),
@@ -6130,7 +6168,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 '¥${NumberFormat('#,###').format(item['price'])}',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: isPaid ? Colors.grey : Theme.of(context).colorScheme.onSurface,
+                                  color: isPaid
+                                      ? Colors.grey
+                                      : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -6155,7 +6195,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   style: TextStyle(
                                     color: isPaid
                                         ? Colors.grey
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -6384,8 +6426,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ),
         gridData: const FlGridData(show: true),
         titlesData: _buildChartTitles(),
-        borderData:
-            FlBorderData(show: true, border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
+        borderData: FlBorderData(
+            show: true,
+            border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant)),
         lineBarsData: _lineChartBars,
       ),
     );
@@ -6427,9 +6471,13 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           checkToShowHorizontalLine: (value) => value == 0,
           getDrawingHorizontalLine: (value) {
             if (value == 0) {
-              return FlLine(color: Theme.of(context).colorScheme.onSurfaceVariant, strokeWidth: 1);
+              return FlLine(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  strokeWidth: 1);
             }
-            return FlLine(color: Theme.of(context).colorScheme.outlineVariant, strokeWidth: 1);
+            return FlLine(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                strokeWidth: 1);
           },
         ),
         borderData: FlBorderData(show: false),

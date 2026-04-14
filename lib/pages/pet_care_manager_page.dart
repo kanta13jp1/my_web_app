@@ -67,8 +67,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
         if (hd is Map<String, dynamic>) {
           final list = hd['logs'];
           if (list is List) {
-            _healthLogs =
-                list.map((h) => h as Map<String, dynamic>).toList();
+            _healthLogs = list.map((h) => h as Map<String, dynamic>).toList();
           }
         }
 
@@ -76,8 +75,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
         if (vd is Map<String, dynamic>) {
           final list = vd['vaccinations'];
           if (list is List) {
-            _vaccinations =
-                list.map((v) => v as Map<String, dynamic>).toList();
+            _vaccinations = list.map((v) => v as Map<String, dynamic>).toList();
           }
         }
       });
@@ -162,11 +160,11 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor:
-                  Theme.of(context).colorScheme.primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(emoji, style: const TextStyle(fontSize: 22)),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(
               '$species${breed.isNotEmpty ? " · $breed" : ""}${age > 0 ? " · $age歳" : ""}',
             ),

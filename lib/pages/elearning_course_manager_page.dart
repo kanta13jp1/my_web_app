@@ -12,8 +12,7 @@ class ElearningCourseManagerPage extends StatefulWidget {
       _ElearningCourseManagerPageState();
 }
 
-class _ElearningCourseManagerPageState
-    extends State<ElearningCourseManagerPage>
+class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
     with SingleTickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
@@ -287,7 +286,8 @@ class _ElearningCourseManagerPageState
               color: Colors.amber,
               size: 36,
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.bold),),
             subtitle: Text(
               '${date.length >= 10 ? date.substring(0, 10) : date}'
               '${id.isNotEmpty ? "\nID: $id" : ""}',

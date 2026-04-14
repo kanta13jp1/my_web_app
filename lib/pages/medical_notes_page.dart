@@ -69,7 +69,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
     try {
       await _supabase.from('notes').insert({
         'user_id': userId,
-        'title': '[Medical] [$_category] ${title.isNotEmpty ? title : DateFormat('MM/dd').format(DateTime.now())}',
+        'title':
+            '[Medical] [$_category] ${title.isNotEmpty ? title : DateFormat('MM/dd').format(DateTime.now())}',
         'content': content,
         'is_archived': false,
         'is_pinned': false,
@@ -260,7 +261,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: color.withAlpha(30),
-                      child: Icon(Icons.medical_services, color: color, size: 20),
+                      child:
+                          Icon(Icons.medical_services, color: color, size: 20),
                     ),
                     title: Row(
                       children: [

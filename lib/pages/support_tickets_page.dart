@@ -30,7 +30,8 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
     });
 
     try {
-      final response = await _supabase.functions.invoke('admin-hub', body: {'action': 'support.list'});
+      final response = await _supabase.functions
+          .invoke('admin-hub', body: {'action': 'support.list'});
 
       final data = response.data;
       if (data is Map<String, dynamic>) {

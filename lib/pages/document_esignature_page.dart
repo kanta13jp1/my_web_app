@@ -8,8 +8,7 @@ class DocumentEsignaturePage extends StatefulWidget {
   const DocumentEsignaturePage({super.key});
 
   @override
-  State<DocumentEsignaturePage> createState() =>
-      _DocumentEsignaturePageState();
+  State<DocumentEsignaturePage> createState() => _DocumentEsignaturePageState();
 }
 
 class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
@@ -168,7 +167,8 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
               color: pending ? Colors.orange : Colors.green,
               size: 32,
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.bold),),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

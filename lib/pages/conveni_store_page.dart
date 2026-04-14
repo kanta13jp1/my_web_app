@@ -164,14 +164,13 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
       );
       final baseRevenue = (15000 * locationMultiplier).toInt();
       final variance = (baseRevenue * 0.2).toInt();
-      final revenue =
-          baseRevenue - variance + (DateTime.now().millisecond % (variance * 2));
+      final revenue = baseRevenue -
+          variance +
+          (DateTime.now().millisecond % (variance * 2));
       final expenses = (revenue * 0.6).toInt();
       final profit = revenue - expenses;
       final newCash = cash + profit;
-      final newReputation = (reputation +
-              (profit > 0 ? 1 : -1))
-          .clamp(0, 100);
+      final newReputation = (reputation + (profit > 0 ? 1 : -1)).clamp(0, 100);
 
       await _supabase.from('conveni_daily_reports').insert({
         'store_id': storeId,
@@ -190,8 +189,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
         'total_expense': (_store!['total_expense'] as int? ?? 0) + expenses,
         'total_profit': (_store!['total_profit'] as int? ?? 0) + profit,
         'reputation': newReputation,
-        'experience_points':
-            (_store!['experience_points'] as int? ?? 0) + 10,
+        'experience_points': (_store!['experience_points'] as int? ?? 0) + 10,
       }).eq('id', storeId);
 
       await _load();
@@ -274,7 +272,9 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
           Text(
             '仕入れ・価格・人員配置を管理して\n経営感覚を身につけよう',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -531,7 +531,9 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             ),
             Text(
               label,
-              style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 4),
             LinearProgressIndicator(
@@ -584,12 +586,16 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             const Spacer(),
             Text(
               '👤 $customers人',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(width: 12),
             Text(
               '売上 ¥${fmt.format(revenue)}',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(width: 12),
             Text(

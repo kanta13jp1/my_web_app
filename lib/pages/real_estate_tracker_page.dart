@@ -80,7 +80,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('lifestyle-hub', body: {'action': 'realestate.list'});
+      final res = await _supabase.functions
+          .invoke('lifestyle-hub', body: {'action': 'realestate.list'});
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final list = data['properties'];
@@ -166,7 +167,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
           _fetchProperties();
           _fetchStats();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('物件を登録しました'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('物件を登録しました'), backgroundColor: Colors.green,),
           );
         }
       }
@@ -202,7 +204,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         _fetchFinances(propertyId);
         _fetchStats();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('収支を記録しました'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('収支を記録しました'), backgroundColor: Colors.green,),
         );
       }
     } catch (e) {
@@ -228,14 +231,17 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                 children: [
                   TextField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: '物件名 *', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: '物件名 *', border: OutlineInputBorder(),),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedType,
-                    decoration: const InputDecoration(labelText: '種別', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: '種別', border: OutlineInputBorder(),),
                     items: _typeLabels.entries
-                        .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                            value: e.key, child: Text(e.value),),)
                         .toList(),
                     onChanged: (v) {
                       if (v != null) setDlg(() => _selectedType = v);
@@ -244,7 +250,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   const SizedBox(height: 12),
                   TextField(
                     controller: _addressCtrl,
-                    decoration: const InputDecoration(labelText: '住所', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: '住所', border: OutlineInputBorder(),),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -259,14 +266,17 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   TextField(
                     controller: _areaCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: '面積 (㎡)', border: OutlineInputBorder()),
+                    decoration: const InputDecoration(
+                        labelText: '面積 (㎡)', border: OutlineInputBorder(),),
                   ),
                 ],
               ),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('キャンセル')),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('キャンセル'),),
             FilledButton(onPressed: _registerProperty, child: const Text('登録')),
           ],
         ),
@@ -285,9 +295,11 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             children: [
               DropdownButtonFormField<String>(
                 initialValue: _selectedTxnType,
-                decoration: const InputDecoration(labelText: '種別', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: '種別', border: OutlineInputBorder(),),
                 items: _txnTypeLabels.entries
-                    .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                    .map((e) =>
+                        DropdownMenuItem(value: e.key, child: Text(e.value)),)
                     .toList(),
                 onChanged: (v) {
                   if (v != null) setDlg(() => _selectedTxnType = v);
@@ -297,17 +309,21 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               TextField(
                 controller: _txnAmountCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: '金額 (円)', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: '金額 (円)', border: OutlineInputBorder(),),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: _txnDescCtrl,
-                decoration: const InputDecoration(labelText: '説明', border: OutlineInputBorder()),
+                decoration: const InputDecoration(
+                    labelText: '説明', border: OutlineInputBorder(),),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('キャンセル')),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('キャンセル'),),
             FilledButton(
               onPressed: () => _recordTransaction(propertyId),
               child: const Text('記録'),
@@ -351,10 +367,13 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
-                      TextButton(onPressed: _fetchProperties, child: const Text('再試行')),
+                      TextButton(
+                          onPressed: _fetchProperties,
+                          child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -375,7 +394,9 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.home_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+            Icon(Icons.home_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,),
             const SizedBox(height: 12),
             const Text('物件が登録されていません'),
             const SizedBox(height: 8),
@@ -403,17 +424,21 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
           return Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
-              leading: const Icon(Icons.home_work, color: Colors.teal, size: 36),
-              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              leading:
+                  const Icon(Icons.home_work, color: Colors.teal, size: 36),
+              title: Text(name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(typeLabel),
-                  if (address.isNotEmpty) Text(address, style: const TextStyle(fontSize: 12)),
+                  if (address.isNotEmpty)
+                    Text(address, style: const TextStyle(fontSize: 12)),
                   if (price > 0)
                     Text(
                       '購入価格: ¥${_fmt(price.toDouble())}',
-                      style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.blueGrey),
                     ),
                 ],
               ),
@@ -455,7 +480,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                 Expanded(
                   child: Text(
                     '物件: $propName',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15,),
                   ),
                 ),
                 TextButton.icon(
@@ -473,7 +499,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         else
           const Padding(
             padding: EdgeInsets.all(12),
-            child: Text('物件タブから物件を選択してください', style: TextStyle(color: Colors.grey)),
+            child:
+                Text('物件タブから物件を選択してください', style: TextStyle(color: Colors.grey)),
           ),
         Expanded(
           child: _finances.isEmpty
@@ -481,7 +508,11 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.receipt_long, size: 48, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      Icon(Icons.receipt_long,
+                          size: 48,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,),
                       const SizedBox(height: 8),
                       const Text('収支記録がありません'),
                     ],
@@ -531,17 +562,23 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ポートフォリオ概要', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text('ポートフォリオ概要',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
           const SizedBox(height: 12),
           _statCard('物件数', '$count件', Icons.home_work, Colors.teal),
           const SizedBox(height: 8),
-          _statCard('総資産評価額', '¥${_fmt(totalValue.toDouble())}', Icons.account_balance, Colors.blue),
+          _statCard('総資産評価額', '¥${_fmt(totalValue.toDouble())}',
+              Icons.account_balance, Colors.blue,),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _statCard('総収入', '¥${_fmt(totalIncome.toDouble())}', Icons.trending_up, Colors.green)),
+              Expanded(
+                  child: _statCard('総収入', '¥${_fmt(totalIncome.toDouble())}',
+                      Icons.trending_up, Colors.green,),),
               const SizedBox(width: 8),
-              Expanded(child: _statCard('総支出', '¥${_fmt(totalExpense.toDouble())}', Icons.trending_down, Colors.red)),
+              Expanded(
+                  child: _statCard('総支出', '¥${_fmt(totalExpense.toDouble())}',
+                      Icons.trending_down, Colors.red,),),
             ],
           ),
           const SizedBox(height: 8),
@@ -556,7 +593,9 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(child: _statCard('ROI', '${roi.toStringAsFixed(2)}%', Icons.percent, Colors.purple)),
+              Expanded(
+                  child: _statCard('ROI', '${roi.toStringAsFixed(2)}%',
+                      Icons.percent, Colors.purple,),),
             ],
           ),
         ],
@@ -575,8 +614,11 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text(label,
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),),
+                Text(value,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18,),),
               ],
             ),
           ],

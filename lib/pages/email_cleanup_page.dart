@@ -348,10 +348,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     if (confirmed != true) return;
 
     try {
-      await _supabase
-          .from('email_accounts')
-          .delete()
-          .eq('id', account['id']);
+      await _supabase.from('email_accounts').delete().eq('id', account['id']);
       await _load();
     } catch (e) {
       if (mounted) {
@@ -417,18 +414,16 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
   }
 
   Widget _buildRoutineCard(int doneCount) {
-    final progress = _routineSteps.isEmpty
-        ? 0.0
-        : doneCount / _routineSteps.length;
+    final progress =
+        _routineSteps.isEmpty ? 0.0 : doneCount / _routineSteps.length;
 
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: progress >= 1.0
-              ? Colors.green.shade200
-              : Colors.indigo.shade100,
+          color:
+              progress >= 1.0 ? Colors.green.shade200 : Colors.indigo.shade100,
         ),
       ),
       child: ExpansionTile(
@@ -443,9 +438,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
           ),
           child: Icon(
             progress >= 1.0 ? Icons.check_circle : Icons.checklist,
-            color: progress >= 1.0
-                ? Colors.green
-                : const Color(0xFF4338CA),
+            color: progress >= 1.0 ? Colors.green : const Color(0xFF4338CA),
           ),
         ),
         title: Text(
@@ -460,7 +453,8 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         subtitle: progress < 1.0
             ? LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: const AlwaysStoppedAnimation(Color(0xFF4338CA)),
                 minHeight: 4,
                 borderRadius: BorderRadius.circular(2),
@@ -481,9 +475,8 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                     _routineSteps[i],
                     style: TextStyle(
                       fontSize: 13,
-                      decoration: _routineChecks[i]
-                          ? TextDecoration.lineThrough
-                          : null,
+                      decoration:
+                          _routineChecks[i] ? TextDecoration.lineThrough : null,
                       color: _routineChecks[i] ? Colors.grey : null,
                     ),
                   ),
@@ -506,7 +499,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.mail_outline, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.mail_outline,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             const SizedBox(height: 16),
             const Text(
               'メールアカウントを登録して\n整理リマインダーを設定しましょう',
@@ -595,7 +590,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: needs ? Colors.orange.shade300 : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: needs
+              ? Colors.orange.shade300
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
           width: needs ? 1.5 : 1,
         ),
       ),
@@ -635,8 +632,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                         email,
                         style: TextStyle(
                           fontSize: label != null ? 12 : 14,
-                          fontWeight:
-                              label != null ? FontWeight.normal : FontWeight.w700,
+                          fontWeight: label != null
+                              ? FontWeight.normal
+                              : FontWeight.w700,
                           color: label != null ? Colors.grey : null,
                         ),
                       ),
@@ -744,7 +742,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: TextStyle(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,),
         ),
         Text(
           value,

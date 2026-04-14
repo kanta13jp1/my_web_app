@@ -64,15 +64,13 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         if (deptData is Map<String, dynamic>) {
           final list = deptData['departments'];
           if (list is List) {
-            _departments =
-                list.map((d) => d as Map<String, dynamic>).toList();
+            _departments = list.map((d) => d as Map<String, dynamic>).toList();
           }
         }
         if (agentData is Map<String, dynamic>) {
           final list = agentData['agents'];
           if (list is List) {
-            _agents =
-                list.map((a) => a as Map<String, dynamic>).toList();
+            _agents = list.map((a) => a as Map<String, dynamic>).toList();
           }
         }
         if (taskData is Map<String, dynamic>) {
@@ -226,12 +224,12 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(icon, style: const TextStyle(fontSize: 20)),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(desc),
             trailing: Chip(
               label: Text('$agentCount 人'),
-              backgroundColor:
-                  Theme.of(context).colorScheme.secondaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
             ),
           ),
         );

@@ -464,14 +464,12 @@ class WeeklyDigestSnapshot {
       }
     }
     return WeeklyDigestSnapshot(
-      currentWeekStart: (currentWeek is Map
-              ? currentWeek['startDate']
-              : null)
-          ?.toString() ??
-          '',
-      currentWeekEnd: (currentWeek is Map ? currentWeek['endDate'] : null)
-          ?.toString() ??
-          '',
+      currentWeekStart:
+          (currentWeek is Map ? currentWeek['startDate'] : null)?.toString() ??
+              '',
+      currentWeekEnd:
+          (currentWeek is Map ? currentWeek['endDate'] : null)?.toString() ??
+              '',
       channels: channels,
       signupSubmitTotal: (json['signupSubmitTotal'] as num?)?.toInt() ?? 0,
       signupSubmitDelta: (json['signupSubmitDelta'] as num?)?.toInt() ?? 0,

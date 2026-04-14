@@ -81,12 +81,10 @@ class _ReadingListPageState extends State<ReadingListPage> {
                             final title = item is Map
                                 ? (item['title'] ?? 'タイトルなし')
                                 : item.toString();
-                            final author = item is Map
-                                ? (item['author'] ?? '')
-                                : '';
-                            final status = item is Map
-                                ? (item['status'] ?? '')
-                                : '';
+                            final author =
+                                item is Map ? (item['author'] ?? '') : '';
+                            final status =
+                                item is Map ? (item['status'] ?? '') : '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(

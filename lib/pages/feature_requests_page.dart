@@ -60,8 +60,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
     try {
       await _supabase
           .from('feature_requests')
-          .update({'votes': currentVotes + 1})
-          .eq('id', id);
+          .update({'votes': currentVotes + 1}).eq('id', id);
       if (!mounted) return;
       setState(() {
         _requests = _requests.map((r) {
@@ -300,9 +299,8 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: rank <= 3
-                            ? const Color(0xFFFEFCE8)
-                            : Colors.white,
+                        color:
+                            rank <= 3 ? const Color(0xFFFEFCE8) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: rank <= 3

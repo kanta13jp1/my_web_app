@@ -133,19 +133,24 @@ class _LandingPageState extends State<LandingPage> {
       );
       final data = response.data as Map<String, dynamic>? ?? {};
       final list = (data['achievements'] as List<dynamic>?) ?? [];
-      final recent = list.take(5).map((e) {
-        final m = e as Map<String, dynamic>;
-        final completedAt = m['completed_at']?.toString() ?? '';
-        String dateStr = '';
-        final dt = DateTime.tryParse(completedAt)?.toLocal();
-        if (dt != null) {
-          dateStr = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
-        }
-        return <String, String>{
-          'title': m['title']?.toString() ?? '',
-          'date': dateStr,
-        };
-      }).where((m) => m['title']!.isNotEmpty).toList();
+      final recent = list
+          .take(5)
+          .map((e) {
+            final m = e as Map<String, dynamic>;
+            final completedAt = m['completed_at']?.toString() ?? '';
+            String dateStr = '';
+            final dt = DateTime.tryParse(completedAt)?.toLocal();
+            if (dt != null) {
+              dateStr =
+                  '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+            }
+            return <String, String>{
+              'title': m['title']?.toString() ?? '',
+              'date': dateStr,
+            };
+          })
+          .where((m) => m['title']!.isNotEmpty)
+          .toList();
 
       // 全件カウントは別で取得
       final allResponse = await client.functions.invoke(
@@ -671,7 +676,6 @@ $input
     return 'Magic Link の送信に失敗しました。通信状況を確認してから再試行してください。';
   }
 
-
   Widget _buildHeroSection() {
     return Column(
       key: const Key('landing_hero_section'),
@@ -860,7 +864,8 @@ $input
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle, size: 14, color: Color(0xFF22C55E)),
+                  const Icon(Icons.check_circle,
+                      size: 14, color: Color(0xFF22C55E),),
                   const SizedBox(width: 6),
                   Text(
                     '✓ 実装済み $_achievementCount件の機能',
@@ -964,7 +969,11 @@ $input
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
-              child: Text('𝕏', style: TextStyle(color: Color(0xFF1DA1F2), fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text('𝕏',
+                  style: TextStyle(
+                      color: Color(0xFF1DA1F2),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,),),
             ),
           ),
           const SizedBox(width: 12),
@@ -984,7 +993,8 @@ $input
                 SizedBox(height: 2),
                 Text(
                   'フォロワーに紹介すると登録者が増えてサービスが成長します',
-                  style: TextStyle(color: Color(0xFF71767B), fontSize: 11, height: 1.4),
+                  style: TextStyle(
+                      color: Color(0xFF71767B), fontSize: 11, height: 1.4,),
                 ),
               ],
             ),
@@ -996,11 +1006,13 @@ $input
               backgroundColor: const Color(0xFF1DA1F2),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('シェア', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+            child: const Text('シェア',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),),
           ),
         ],
       ),
@@ -1284,7 +1296,8 @@ $input
                             Expanded(
                               child: Text(
                                 e.value,
-                                style: const TextStyle(fontSize: 13, height: 1.5),
+                                style:
+                                    const TextStyle(fontSize: 13, height: 1.5),
                               ),
                             ),
                           ],
@@ -1310,24 +1323,74 @@ $input
   Widget _buildComparisonLinksSection() {
     const competitors = [
       (key: 'notion', name: 'Notion', emoji: '📝', color: Color(0xFF1F2937)),
-      (key: 'evernote', name: 'Evernote', emoji: '🐘', color: Color(0xFF00A82D)),
-      (key: 'moneyforward', name: 'MoneyForward', emoji: '💰', color: Color(0xFF0D47A1)),
+      (
+        key: 'evernote',
+        name: 'Evernote',
+        emoji: '🐘',
+        color: Color(0xFF00A82D)
+      ),
+      (
+        key: 'moneyforward',
+        name: 'MoneyForward',
+        emoji: '💰',
+        color: Color(0xFF0D47A1)
+      ),
       (key: 'x', name: 'X (Twitter)', emoji: '𝕏', color: Color(0xFF1C1C1E)),
-      (key: 'animaworks', name: 'Animaworks', emoji: '🎯', color: Color(0xFFFF6B35)),
-      (key: 'claude-code', name: 'Claude Code', emoji: '🤖', color: Color(0xFFD97706)),
+      (
+        key: 'animaworks',
+        name: 'Animaworks',
+        emoji: '🎯',
+        color: Color(0xFFFF6B35)
+      ),
+      (
+        key: 'claude-code',
+        name: 'Claude Code',
+        emoji: '🤖',
+        color: Color(0xFFD97706)
+      ),
       (key: 'codex', name: 'Codex', emoji: '⚡', color: Color(0xFF10B981)),
-      (key: 'netkeiba', name: 'netkeiba', emoji: '🐎', color: Color(0xFF7C3AED)),
-      (key: 'openclaw', name: 'OpenClaw', emoji: '🦾', color: Color(0xFF0EA5E9)),
-      (key: 'claude-cowork', name: 'Claude Cowork', emoji: '🏛️', color: Color(0xFF6366F1)),
-      (key: 'chatwork', name: 'Chatwork', emoji: '🏢', color: Color(0xFFE53935)),
+      (
+        key: 'netkeiba',
+        name: 'netkeiba',
+        emoji: '🐎',
+        color: Color(0xFF7C3AED)
+      ),
+      (
+        key: 'openclaw',
+        name: 'OpenClaw',
+        emoji: '🦾',
+        color: Color(0xFF0EA5E9)
+      ),
+      (
+        key: 'claude-cowork',
+        name: 'Claude Cowork',
+        emoji: '🏛️',
+        color: Color(0xFF6366F1)
+      ),
+      (
+        key: 'chatwork',
+        name: 'Chatwork',
+        emoji: '🏢',
+        color: Color(0xFFE53935)
+      ),
       (key: 'slack', name: 'Slack', emoji: '💬', color: Color(0xFF4A154B)),
       (key: 'jobcan', name: 'ジョブカン', emoji: '📋', color: Color(0xFF059669)),
       (key: 'amazon', name: 'Amazon', emoji: '📦', color: Color(0xFFFF9900)),
       (key: 'google', name: 'Google', emoji: '🔍', color: Color(0xFF4285F4)),
-      (key: 'microsoft', name: 'Microsoft', emoji: '🪟', color: Color(0xFF00A4EF)),
+      (
+        key: 'microsoft',
+        name: 'Microsoft',
+        emoji: '🪟',
+        color: Color(0xFF00A4EF)
+      ),
       (key: 'discord', name: 'Discord', emoji: '🎮', color: Color(0xFF5865F2)),
       (key: 'line', name: 'LINE', emoji: '💚', color: Color(0xFF06C755)),
-      (key: 'facebook', name: 'Facebook', emoji: '👥', color: Color(0xFF1877F2)),
+      (
+        key: 'facebook',
+        name: 'Facebook',
+        emoji: '👥',
+        color: Color(0xFF1877F2)
+      ),
       (key: 'liven', name: 'Liven', emoji: '🍽️', color: Color(0xFFFF6B35)),
       (key: 'github', name: 'GitHub', emoji: '🐙', color: Color(0xFF24292E)),
     ];
@@ -1370,7 +1433,8 @@ $input
                       ),
                       Text(
                         '気になるサービスをタップして機能・価格を比較しよう',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                        style:
+                            TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                       ),
                     ],
                   ),
@@ -1419,8 +1483,6 @@ $input
       ),
     );
   }
-
-
 
   Widget _buildEnterpriseCta() {
     return Container(
@@ -1496,7 +1558,8 @@ $input
           children: [
             Row(
               children: [
-                const Icon(Icons.rocket_launch, size: 16, color: Color(0xFF059669)),
+                const Icon(Icons.rocket_launch,
+                    size: 16, color: Color(0xFF059669),),
                 const SizedBox(width: 6),
                 const Text(
                   '今週の開発実績',
@@ -1509,7 +1572,8 @@ $input
                 const Spacer(),
                 Text(
                   '全 $_achievementCount 件実装済み',
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF6EE7B7)),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF6EE7B7)),
                 ),
               ],
             ),
@@ -1520,7 +1584,8 @@ $input
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.check_circle, size: 14, color: Color(0xFF10B981)),
+                    const Icon(Icons.check_circle,
+                        size: 14, color: Color(0xFF10B981),),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -1531,7 +1596,8 @@ $input
                     const SizedBox(width: 6),
                     Text(
                       a['date'] ?? '',
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280)),
+                      style: const TextStyle(
+                          fontSize: 10, color: Color(0xFF6B7280),),
                     ),
                   ],
                 ),
@@ -1545,136 +1611,771 @@ $input
 
   Widget _buildUniqueValueSection() {
     const features = [
-      (Icons.account_tree, '0xFF4F46E5', 'AI組織OS (12部署20人)', '自然言語でタスクを入力するだけで最適な部署が自動受付。ゴールを12部署に自動分解・配布。SlackもJiraも不要。'),
-      (Icons.smart_toy, '0xFF6366F1', 'AI役員会議 (MAGI)', 'CEO/CFO/CMO/CHROのAIペルソナが多角的にアドバイス。Notionにもない独自機能。'),
+      (
+        Icons.account_tree,
+        '0xFF4F46E5',
+        'AI組織OS (12部署20人)',
+        '自然言語でタスクを入力するだけで最適な部署が自動受付。ゴールを12部署に自動分解・配布。SlackもJiraも不要。'
+      ),
+      (
+        Icons.smart_toy,
+        '0xFF6366F1',
+        'AI役員会議 (MAGI)',
+        'CEO/CFO/CMO/CHROのAIペルソナが多角的にアドバイス。Notionにもない独自機能。'
+      ),
       (Icons.memory, '0xFF10B981', '記憶ドリル', '忘却曲線に基づく反復学習。Evernoteにはない学習機能。'),
-      (Icons.account_balance_wallet, '0xFFF59E0B', '経営コックピット', '収支・資産・KPIを一画面で管理。MoneyForwardの代替として使える。'),
-      (Icons.upload_file, '0xFF3B82F6', 'Notion/Evernoteから移行', 'CSVやENEXをそのままインポート。移行コストゼロ。'),
+      (
+        Icons.account_balance_wallet,
+        '0xFFF59E0B',
+        '経営コックピット',
+        '収支・資産・KPIを一画面で管理。MoneyForwardの代替として使える。'
+      ),
+      (
+        Icons.upload_file,
+        '0xFF3B82F6',
+        'Notion/Evernoteから移行',
+        'CSVやENEXをそのままインポート。移行コストゼロ。'
+      ),
       (Icons.hub, '0xFFA855F7', 'マインドマップ', '思考の整理をビジュアルで。ノートと連携。'),
       (Icons.public, '0xFF22C55E', '公開メモ・SEO', 'メモをURLで共有。知識のアウトプットが集客につながる。'),
-      (Icons.psychology_alt, '0xFF8B5CF6', '性格診断 (16タイプ MBTI)', 'MBTIベースの自己分析でメモ術・学習スタイルを最適化。恋愛相性診断も。他にはない自己理解機能。'),
-      (Icons.do_not_disturb_on, '0xFFEF4444', '思考妨害排除ガード', 'SNS・通知・散漫思考をブロックして深い集中を守る。フォーカスセッション中はアプリ内通知を自動ミュート。他のサービスにはない認知コスト削減機能。'),
-      (Icons.visibility_off, '0xFFF97316', '見栄ガード', 'かっこつけず・見栄をはらずに生きる仕組み。SNS承認欲求や衝動的な自己顕示を記録・可視化して断ち切る。競合21社に存在しない自己規律機能。'),
-      (Icons.money_off, '0xFF14B8A6', '浪費トラッキング', '投資を除いた資産放出を日次で記録・可視化。無意識の浪費パターンを把握してMoneyForwardを超える節制管理。'),
-      (Icons.corporate_fare, '0xFF6366F1', '12部署AI仮想組織', '自分一人でCEO・CFO・CMO・開発部・営業部など12部署20人のAI組織を持てる。Slack・Chatwork・ジョブカン対抗の次世代チーム管理。'),
-      (Icons.group_add, '0xFF22C55E', '友達招待・紹介コード', '紹介リンクをシェアするだけで招待実績が積み上がる。バイラル成長の仕組みを個人レベルで実装。'),
-      (Icons.chat_bubble_outline, '0xFF8B5CF6', 'ノートコメント・リアクション', '公開メモにコメント・絵文字リアクション・OGPシェアが可能。Notion/Evernoteを超えるソーシャル連携機能。'),
-      (Icons.notifications, '0xFF0EA5E9', '通知センター', 'アプリ内の全通知を一元管理。未読バッジ・フィルタリング・既読管理で重要な更新を見逃さない。'),
-      (Icons.draw, '0xFF64748B', '電子署名', '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'),
-      (Icons.storefront, '0xFFEC4899', 'コンビニ経営シミュレーション', '自分株式会社の中でコンビニを経営。春夏秋冬の季節・天気・トレンドをAIが反映した経営判断ゲーム。競合21社に存在しないゲーミフィケーション。'),
-      (Icons.timer, '0xFF10B981', '集中タイマー', 'ポモドーロ/ディープフォーカスモードで深い集中を実現。思考妨害排除ガードと連携しSNS通知を自動ブロック。'),
-      (Icons.edit_note, '0xFF7C3AED', 'AI文章アシスタント', 'メモ・ブログ・SNS投稿の文章作成・推敲・要約をAIが支援。Notion AIを超える日本語特化の文章強化機能。'),
-      (Icons.fitness_center, '0xFFF59E0B', '浪費耐性トレーニング', '買わずに耐えた回数・防いだ出費・取り戻した時間を毎日記録。我慢を筋トレのように可視化して浪費を断つ精神性を育てる。'),
-      (Icons.video_camera_back, '0xFFDC2626', 'バイラル動画パイプライン', 'AIが広告動画を自動生成→X/SNSに自動投稿→効果測定まで全自動。TikTok・YouTube Shortsを超えるバイラル成長エンジン。'),
-      (Icons.translate, '0xFF0891B2', '語学学習', 'フラッシュカード・発音練習・進捗管理をAIが支援。Duolingoを超える日本語圏特化の語学習得システム。'),
-      (Icons.restaurant_menu, '0xFFB45309', 'レシピ・献立管理', '食材管理・献立提案・栄養分析をAIが自動化。MoneyForwardの家計管理と食費を連携した生活密着型機能。'),
-      (Icons.flight_takeoff, '0xFF0369A1', '旅行計画・行程管理', '行程管理・現地情報・費用管理を一元化。Google旅行機能を超えるAI行程最適化で旅をもっと豊かに。'),
-      (Icons.pets, '0xFF7E22CE', 'ペット健康管理', 'ワクチン記録・健康日記・体重管理をアプリ内で完結。競合21社にない個人ライフ全領域カバーの証明。'),
-      (Icons.photo_library, '0xFF065F46', 'フォトギャラリー', 'AI自動分類・思い出管理・家族共有まで対応。Google フォトに対抗しつつ自分株式会社データとシームレス連携。'),
-      (Icons.emoji_events, '0xFFEAB308', '習慣ゲーミフィケーション', 'ストリーク・バッジ・XP獲得で習慣を楽しく継続。Duolingo式ゲーミフィケーションで継続率3倍。'),
-      (Icons.code, '0xFF0F172A', 'コードプレイグラウンド', 'ブラウザだけでコードを書いて即実行。学習・プロト制作・アイデア検証を一気通貫でサポート。'),
-      (Icons.home_work, '0xFF0284C7', '不動産管理', '物件情報・家賃・更新日を一元管理。投資用物件の収益計算もAIが自動化。'),
-      (Icons.school, '0xFF4338CA', 'eラーニング', 'コース作成・受講管理・修了証発行まで対応。Udemyを超える自分専用LMSを無料で構築。'),
-      (Icons.directions_car, '0xFF374151', '車両管理', '車検・整備記録・燃費管理を自動追跡。複数台・法人向け車両フリートにも対応。'),
-      (Icons.work_history, '0xFF059669', '採用ボード', '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を完全無料で実現。'),
-      (Icons.sensors, '0xFF7C3AED', 'IoTダッシュボード', '家電・センサー・スマートデバイスをダッシュボードで一元管理。スマートホームを自分株式会社に統合。'),
-      (Icons.gavel, '0xFFDC2626', '法務管理', '契約書・利用規約・コンプライアンスチェックをAIが支援。LegalForceを超える自動法務レビュー機能。'),
-      (Icons.mark_email_read, '0xFF0891B2', 'メールテンプレート管理', '返信テンプレート・差し込み変数・ABテストをAIが最適化。メール生産性を10倍に引き上げる。'),
-      (Icons.security, '0xFF16A34A', '2FA/多要素認証', 'TOTP・SMSで全アカウントを堅牢に保護。パスワードマネージャーと連携して認証情報を一元管理。'),
-      (Icons.music_video, '0xFFE11D48', '公開ギターギャラリー', 'スマホで録音したギター演奏をUGCとして公開共有。OGP・sitemap対応でSEO流入も獲得。競合21社にない音楽SNS機能。'),
-      (Icons.calendar_month, '0xFF0F766E', '月次カレンダービュー', '月間スケジュールをカレンダー形式で一覧表示。タスク・習慣・イベントをTimeTree/Googleカレンダーを超える統合ビューで管理。'),
-      (Icons.dynamic_feed, '0xFF0F172A', 'アクティビティフィード', '自分の行動ログ・達成記録・コミュニティ更新をタイムライン表示。Discord/Slackを超えるパーソナルアクティビティ可視化。'),
-      (Icons.emoji_events, '0xFFF59E0B', '報酬・達成バッジ', '習慣継続・目標達成でポイントとバッジを獲得。ゲーミフィケーションでモチベーションを維持し継続率を劇的に改善。'),
-      (Icons.alarm, '0xFF0369A1', '支払いリマインダー', '月次サブスク・公共料金・ローン返済を自動リマインド。MoneyForwardを超える決済管理と浪費防止の統合機能。'),
-      (Icons.how_to_vote, '0xFF1D4ED8', '地方選挙インテリジェンス', '47都道府県×1年先の選挙を自動追跡。X/SNSへの候補者分析スレッドをAIが自動生成。競合21社に存在しない市民×AI政治情報プラットフォーム。'),
-      (Icons.videocam, '0xFF6D28D9', 'ビデオ会議・ミーティング管理', 'ビデオ通話・会議室予約・議事録自動生成をワンストップで提供。Zoom/Google Meetを超える統合ミーティングプラットフォーム。'),
-      (Icons.inbox, '0xFF0F766E', 'スマート受信箱', 'AIがメール・通知・タスクを自動分類・優先度付け。重要度の低いメールを自動整理して認知コストを削減。'),
-      (Icons.lock, '0xFF7C3AED', 'パスワード金庫', '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を完全無料で提供。'),
-      (Icons.podcasts, '0xFFF59E0B', 'ポッドキャスト管理', 'ポッドキャスト制作・公開・リスナー分析をワンストップ。Anchor/Spotifyを超える個人ポッドキャスタープラットフォーム。'),
-      (Icons.screen_share, '0xFF0369A1', 'スクリーン録画', 'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを完全無料で提供。'),
-      (Icons.storefront, '0xFFE11D48', 'オークション・マーケットプレイス', 'フリマ・オークション出品から決済まで一括管理。メルカリ/ヤフオクの機能を自分株式会社内で完結。'),
-      (Icons.mic, '0xFF059669', '音声メモ文字起こし', '録音した音声をAIが自動文字起こし・要約。会議・インタビュー・アイデアメモをテキスト化して検索可能に。'),
-      (Icons.draw, '0xFF6D28D9', '仮想ホワイトボード', 'オンラインホワイトボードでアイデアをビジュアル整理。Miro/FigJamを超えるコラボ可能なキャンバス。'),
-      (Icons.alt_route, '0xFF0891B2', 'ワークフロー自動化', 'タスク・メール・通知をトリガー&アクションで自動化。Zapierを超えるノーコード業務自動化エンジン。'),
-      (Icons.qr_code, '0xFF374151', 'QRコード生成', 'URLやテキストを即座にQRコードに変換・保存・共有。業務・個人・イベント告知に対応した多用途QRジェネレーター。'),
-      (Icons.admin_panel_settings, '0xFF0F172A', 'アクセス制御・権限管理', 'ロール設定・ユーザー権限付与・アクセスログを一元管理。法人チームのセキュリティをジョブカンを超えるきめ細かさで実現。'),
-      (Icons.inventory, '0xFF059669', '在庫・バーコード管理', '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'),
-      (Icons.dashboard_customize, '0xFF7C3AED', 'テンプレート広場', 'ビジネス・学習・ライフスタイル・技術開発など6カテゴリ18種のテンプレートを即適用。Notionマーケットプレイスを超える日本語特化テンプレート集。'),
-      (Icons.bar_chart, '0xFF0891B2', 'パーソナルダッシュボード', 'ノート数・タスク達成率・習慣ストリーク・集中時間をチャートで可視化。Notion 3.4のダッシュボードビューを超えるAIパーソナルKPI分析。'),
-      (Icons.calendar_today, '0xFF4285F4', 'Google カレンダー同期', 'アプリの予定 ↔ Google カレンダーを双方向リアルタイム同期。OAuth 2.0による安全な認証で複数カレンダーを一元管理。Google カレンダーを超える統合スケジュール管理を実現。'),
-      (Icons.account_balance_wallet, '0xFF00B900', 'MoneyForward 連携', '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'),
-      (Icons.webhook, '0xFF4A154B', 'Slack 通知連携', 'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。'),
-      (Icons.psychology, '0xFF6366F1', 'マイスキル (AIプロンプト再利用)', 'よく使うAIプロンプトをスキルとして保存・1タップ再利用。Slackワークフロービルダーを超える個人AI自動化テンプレートを無制限登録。'),
-      (Icons.chat_bubble_outline, '0xFF5865F2', 'チームチャット', 'チャンネル別リアルタイムメッセージング。Discord/LINEを超える目的別チャンネル管理と検索可能なメッセージ履歴をセキュアに提供。'),
-      (Icons.favorite_outline, '0xFF22C55E', 'ヘルスコーチ', '歩数・カロリー・睡眠・水分をAIが統合分析し毎日パーソナルアドバイス。Livenを超える日本語完全対応の無料ヘルスケアコーチング。'),
-      (Icons.shopping_cart_outlined, '0xFFF97316', 'ショッピングリスト', '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの完全無料ショッピングアシスタント。'),
-      (Icons.notifications_active, '0xFF5865F2', 'Discord 通知連携', 'タスク完了・習慣達成・日次サマリーをリアルタイムでDiscordチャンネルに通知。Webhook URLを設定するだけで即稼働する自動通知ルーティング。'),
-      (Icons.notifications_active, '0xFF06C755', 'LINE 通知連携', 'タスク完了・習慣達成・ゴール達成をLINEにリアルタイム通知。LINE Notify トークン1枚で設定完了。LINEを超えるタスク×通知の完全統合。'),
-      (Icons.merge_type, '0xFF24292F', 'GitHub PR 管理', 'GitHubリポジトリのPull Request一覧・レビュー状況・マージ統計をアプリ内で一元管理。開発とライフマネジメントを自分株式会社に完全統合。'),
-      (Icons.psychology_alt, '0xFF4338CA', '思考妨害パターン診断', '4つの質問で最大の思考妨害要因を特定し禁欲ガードの対象を自動設定。SNS・ゲーム・動画など6カテゴリから衝動パターンを診断し、集中が途切れる時間帯と前兆サインを可視化するAIセルフケアツール。'),
-      (Icons.analytics, '0xFF6366F1', '週次 Slip パターンレポート', '思考妨害・衝動のslipを曜日別・時間帯別・要因別に分析。30日間のデータから最も危険な時間帯と要因を特定し、改善トレンドを可視化。'),
-      (Icons.flag, '0xFF10B981', 'ゴール追跡', 'OKR形式でスモールゴールから人生目標まで一元管理。進捗追跡・マイルストーン設定・期限リマインドをAIが支援し、目標達成率を劇的に向上。'),
-      (Icons.auto_awesome, '0xFF8B5CF6', 'AIサマリー', 'ノート・タスク・習慣データをAIが自動要約。1日・1週間・1ヶ月の活動を3行でまとめ、意思決定に必要なインサイトを即座に提供。'),
-      (Icons.trending_up, '0xFF0EA5E9', '収益予測', '過去データと市場トレンドからAIが収益を予測。キャッシュフロー・売上推移を視覚化してビジネス計画を最適化。MoneyForwardを超えるAI財務分析。'),
-      (Icons.bookmarks, '0xFFF59E0B', 'ブックマーク同期', 'ブラウザのブックマークをアプリと双方向同期。AI自動タグ付け・分類・検索で必要な情報を即座に発見。Notionリンクデータベースを超える知識管理。'),
-      (Icons.wb_sunny_outlined, '0xFF06B6D4', '天気・環境ウィジェット', '現在地の天気・気温・紫外線をダッシュボードに常時表示。天気に合わせた活動提案・外出可否判断をAIが自動生成し、ライフマネジメントと環境情報を完全統合。'),
-      (Icons.monetization_on, '0xFFEF4444', 'アフィリエイト管理', 'アフィリエイトリンク管理・クリック追跡・報酬分析を一元化。収益源の多様化を自動最適化するAI収益化エンジン。'),
-      (Icons.business_center, '0xFF0F766E', 'CRM・営業パイプライン', 'リード管理・商談ステージ追跡・成約予測をAIが自動化。Salesforceを超えるパーソナルCRMを無料で実現。'),
-      (Icons.table_chart, '0xFF6366F1', 'スプレッドシートDB', 'Notionデータベースを超える多機能スプレッドシート。フィルタ・ソート・数式・API連携に対応した柔軟なデータ管理。'),
-      (Icons.schedule_send, '0xFFEC4899', 'SNS投稿スケジューラー', 'X/Instagram/FacebookへのSNS投稿を最適時間に自動予約・一括投稿。AIが投稿内容の改善案も提案するコンテンツマーケ自動化ツール。'),
-      (Icons.subscriptions, '0xFF7C3AED', 'サブスク課金管理', 'サブスクリプション請求・顧客管理・解約防止分析を自動化。Stripeを超える自分株式会社内蔵の課金エンジン。'),
-      (Icons.contacts, '0xFF0369A1', 'アドレス帳・人脈管理', '連絡先・誕生日・交流履歴・SNSリンクを一元管理。LinkedInを超えるパーソナルCRM×人脈グラフで関係性を見える化。'),
-      (Icons.book, '0xFF7E22CE', '読書リスト管理', '読みたい本・読了記録・メモ・評価を一元管理。AIが次に読むべき本を推薦するパーソナル書評プラットフォーム。'),
-      (Icons.checkroom, '0xFFF97316', 'ワードローブ管理', '所持服の登録・コーデ提案・購入計画をAIが管理。ファッションコストを削減しながらスタイルを最適化。'),
-      (Icons.eco, '0xFF22C55E', 'カーボンフットプリント', '日常行動のCO2排出量を自動計算・可視化。移動・食事・エネルギー消費から個人の環境負荷を数値化し持続可能な生活を設計。'),
-      (Icons.timer_outlined, '0xFF6366F1', 'タイムトラッキング', 'プロジェクト別・タスク別の作業時間を自動記録。Toggleを超えるAI分析付き時間管理で生産性の無駄を即特定。'),
-      (Icons.menu_book, '0xFF0F766E', 'Wikiデータベース', '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを完全無料で構築。'),
-      (Icons.view_kanban, '0xFFF59E0B', 'WIPリミット管理', '進行中タスク数の上限設定・ボトルネック検出・フロー可視化。Jiraを超えるリーンカンバン管理で作業効率を最大化。'),
-      (Icons.rss_feed, '0xFFEC4899', '技術ブログトラッカー', 'Zenn/Qiita/note/dev.toの投稿管理・PV分析・読者獲得トレンドを一元追跡。エンジニアの影響力成長を数値化。'),
-      (Icons.calendar_view_day, '0xFF6366F1', '予約・アポイント管理', '来客予約・医療予約・会議調整をカレンダー連携で一元管理。Calendlyを超えるAI最適スケジューリングシステム。'),
-      (Icons.terminal, '0xFF0F172A', 'API プレイグラウンド', 'REST API・Supabase EF・外部APIをブラウザから即テスト。Postmanを超えるアプリ内API開発環境で実装速度を10倍に。'),
-      (Icons.download, '0xFF0891B2', 'データ分析エクスポート', 'ノート・タスク・習慣・財務データをCSV/JSON/PDFで一括エクスポート。BIツールへの連携や外部分析が自由自在。'),
-      (Icons.local_parking, '0xFF374151', '駐車場予約管理', '駐車場の空き確認・予約・支払い管理をアプリ内で完結。物件・店舗・イベント会場の駐車枠を効率的に運用。'),
-      (Icons.view_in_ar, '0xFF6D28D9', 'AR ナビゲーション', '拡張現実(AR)で店舗・施設・商品へのルートをスマホ画面に重畳表示。競合21社に存在しない空間×AIナビゲーション機能。'),
-      (Icons.account_balance, '0xFF059669', '資産管理', '不動産・株・仮想通貨・現金など全資産をポートフォリオ形式で一元管理。AIが資産配分の最適化提案をリアルタイムに実行。'),
-      (Icons.trending_up, '0xFFF97316', '行動・習慣ログ詳細', '1分単位の行動ログ・習慣連続記録・パターン分析をAIが自動集計。自分の生活リズムを科学的に可視化して最適な時間設計を実現。'),
-      (Icons.delete_sweep, '0xFF7E22CE', '断捨離アシスト', 'モノ・デジタルファイル・人間関係の断捨離を3ステップでAI支援。手放す/残す/保留を即決できる捨て活チェックリストで身軽な自分株式会社を構築。'),
-      (Icons.lock_clock, '0xFF0F172A', 'プリズンモード', 'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。刑務所級の集中力を自分で設計できる唯一のツール。'),
-      (Icons.hub, '0xFF1D9BF0', 'ソーシャルフィード', 'コミュニティメンバーの達成記録・習慣ストリーク・ノート共有をタイムラインで表示。FacebookとDiscordを超えるパーソナル×コミュニティ融合フィード。'),
-      (Icons.psychology, '0xFF10B981', '意思決定チェック', '重要な判断を迷わせる「認知バイアス」をAIが診断・可視化。見栄・衝動・過去の呪縛から解放されたクリアな意思決定を支援する競合21社にない独自機能。'),
-      (Icons.account_balance_wallet, '0xFF6366F1', 'デジタルウォレット', 'ポイント・ギフト券・仮想通貨・電子マネー残高を一元管理。多様化する決済手段をスマートに統合して家計管理と資産管理を完全連携。'),
-      (Icons.cruelty_free, '0xFFA855F7', 'バーチャルペット', 'アプリのタスク達成・習慣継続でペットが成長するゲーミフィケーション。モチベーション維持の最強トリガーを個性的なデジタルコンパニオンで実現。'),
-      (Icons.home_repair_service, '0xFF0F766E', 'リアル断捨離記録', '実物のモノを写真で記録しながら断捨離を進行。手放した物品数・削減重量・解放スペースを数値化して身軽さを可視化。'),
-      (Icons.anchor, '0xFF4338CA', '思考アンカー', '集中を乱す雑念・不安・タスク割り込みをその場でキャプチャしアンカーに変換。後で必ず戻ると約束することで今この瞬間の集中を守る認知制御機能。'),
-      (Icons.flash_on, '0xFF8B5CF6', '思考キャプチャ', 'ひらめき・アイデア・メモを0.5秒でキャプチャ。Inboxに溜めてAIが後から自動分類・タグ付けするGTD式思考管理システム。'),
-      (Icons.manage_search, '0xFF0EA5E9', 'セマンティック検索', 'キーワード一致ではなく意味・文脈で全ノート・タスク・習慣を横断検索。Notionの検索機能を超えるAI意味理解型の全文検索エンジン。'),
-      (Icons.receipt_long, '0xFF059669', '購買ログ・支出記録', '全購入品の記録・家計簿自動分類・支出トレンド分析。Amazonの購買履歴を超える節約インサイトをAIがリアルタイムで提供。'),
-      (Icons.audiotrack, '0xFF6D28D9', 'オーディオエフェクト', 'ギター・楽器・音声にエフェクト処理・音質補正・ミキシングをブラウザだけで実現。GarageBandを超えるポータブル音楽制作スタジオ。'),
-      (Icons.image, '0xFFF97316', 'AI画像生成', 'テキストから画像を即時生成。プレゼン・SNS・ブログ素材をAIが自動制作。Midjourneyを超えるライフマネジメント統合型AIクリエイティブツール。'),
-      (Icons.search, '0xFF0F766E', 'AI横断検索', '自分株式会社の全データ(ノート・タスク・習慣・財務)をAIが横断検索。Notionの検索・Googleを超えるパーソナルナレッジ検索エンジン。'),
-      (Icons.balance, '0xFF4338CA', '現実確認チェック', '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。'),
-      (Icons.compare_arrows, '0xFF8B5CF6', '相性チェック', '人・目標・習慣・ライフスタイルの相性をAIが多角分析。恋愛・ビジネスパートナー・チームメンバーとの相性スコアを科学的に算出。'),
-      (Icons.analytics_outlined, '0xFFFE4E1E', 'サイトマップ分析', 'サイトの全URLを可視化・SEO健全性チェック・クロール最適化をAIが自動分析。Googleサーチコンソールを超えるサイト構造把握ツール。'),
-      (Icons.feedback, '0xFF22C55E', '顧客フィードバック', 'ユーザーの声・評価・要望を一元収集・AI分析・優先度付け。Intercomを超える個人×AI顧客インサイト管理プラットフォーム。'),
-      (Icons.history, '0xFF0891B2', '変更履歴管理', 'コード・ドキュメント・設定の変更履歴を自動追跡。Changelogを自動生成してチームと変更情報を透明に共有。'),
-      (Icons.payments, '0xFF10B981', '支払いチャンネル台帳', '複数の支払い手段・口座・チャンネルを台帳形式で一元管理。誰に何をいくら支払ったかをAIが自動仕訳・可視化。'),
-      (Icons.smart_toy, '0xFF7C3AED', 'AI自律エージェント', '指定ゴールに向けてタスクを自律分解・実行するAIエージェント。AutoGPTを超える自分株式会社専用の自律実行AI。人間が指示しなくても仕事が進む。'),
-      (Icons.support_agent, '0xFF0369A1', 'AI仮想秘書', 'スケジュール・タスク・メール返信をAIが全自動管理。アシスタント雇用コストをゼロにする自分株式会社の専属デジタル秘書。'),
-      (Icons.insert_chart, '0xFF6366F1', '利用統計ダッシュボード', 'アプリの全機能利用状況・ユーザー行動・機能別エンゲージメントをリアルタイム可視化。自分のライフデータを科学する管理者コックピット。'),
-      (Icons.label, '0xFFF59E0B', 'タグ・カテゴリ管理', 'ノート・タスク・習慣・ファイルのタグ体系を一元設計。AI自動タグ付けと手動分類を組み合わせた最強の知識分類システム。'),
-      (Icons.assistant, '0xFF10B981', 'AI文章添削', '日本語文章の誤字・文法・表現をAIがリアルタイム添削。ブログ・メール・報告書の品質を即座に向上させる自分株式会社内蔵の校正エンジン。'),
-      (Icons.workspace_premium, '0xFFDC2626', 'プレミアムコンテンツ販売', 'ノート・テンプレート・スキルをコンテンツとして販売・収益化。Gumroadを超えるナレッジマーケットプレイスを自分株式会社に内蔵。'),
-      (Icons.groups, '0xFF6D28D9', 'オンラインコミュニティ', 'テーマ別コミュニティ・勉強会・習慣チャレンジをアプリ内で開催。Discordを超える目的特化型コミュニティプラットフォーム。'),
-      (Icons.favorite_border, '0xFFEC4899', 'AIメンタルヘルスケア', '気分・ストレス・睡眠を毎日記録しAIが統合分析。Calm/Headspaceを超えるパーソナライズドメンタルウェルネスを自分株式会社に内蔵。'),
-      (Icons.work_outline, '0xFF0891B2', 'フリーランス管理', '案件・請求書・契約・稼働時間・確定申告を一元管理。freee/MoneyForwardを超える個人事業主向けオールインワン経営管理ツール。'),
-      (Icons.present_to_all, '0xFF7C3AED', 'AIプレゼンビルダー', 'テーマを入力するだけでAIがスライド構成を自動生成。Gamma/Canva/Beautiful.aiを超えるライフマネジメント統合型AIプレゼン作成エンジン。'),
-      (Icons.cloud_sync, '0xFF0F766E', 'データバックアップ', '全データを自動バックアップ・クラウド同期・ワンクリック復元。Dropbox/iCloudを超えるライフデータ保全インフラが自分株式会社に標準搭載。'),
-      (Icons.calendar_view_week, '0xFFD97706', 'コンテンツカレンダー', 'SNS・ブログ・動画の制作スケジュールをカレンダーで一元管理。コンテンツ戦略・A/Bテスト計画・公開スケジュールを可視化するクリエイター向け投稿管理ツール。'),
-      (Icons.savings, '0xFF10B981', '家計・予算プランナー', '月次予算設定・支出追跡・カテゴリ別分析・AI節約提案。MoneyForward/Zaimを超える家計管理とビジネス財務を同一アプリで完結させるスマート予算管理ツール。'),
-      (Icons.psychology_outlined, '0xFF8B5CF6', 'ブレインダンプ', '頭の中にある全てをGTD式に書き出し・AIが自動分類。タスク・アイデア・心配事を即座にキャプチャしマインドをクリアにするEvernoteを超える思考整理ツール。'),
-      (Icons.account_tree_outlined, '0xFF0891B2', 'プロジェクト管理', 'ガントチャート・スプリント計画・マイルストーン・依存関係を一元管理。Asana/Jira/GitHub Projectsを超えるライフマネジメント統合型プロジェクト管理ツール。'),
-      (Icons.contact_mail_outlined, '0xFFD97706', '名刺管理', 'OCR+AI連絡先自動抽出・タグ管理・人脈グラフ可視化。Eightを超えるAI名刺管理とビジネスネットワーキングを自分株式会社に標準搭載。'),
-      (Icons.family_restroom, '0xFFEC4899', '家族カレンダー', '家族のスケジュール共有・タスク割当・誕生日・記念日管理を一元化。Googleカレンダー家族共有を超えるプライバシー重視の家族専用スマートカレンダー。'),
+      (
+        Icons.psychology_alt,
+        '0xFF8B5CF6',
+        '性格診断 (16タイプ MBTI)',
+        'MBTIベースの自己分析でメモ術・学習スタイルを最適化。恋愛相性診断も。他にはない自己理解機能。'
+      ),
+      (
+        Icons.do_not_disturb_on,
+        '0xFFEF4444',
+        '思考妨害排除ガード',
+        'SNS・通知・散漫思考をブロックして深い集中を守る。フォーカスセッション中はアプリ内通知を自動ミュート。他のサービスにはない認知コスト削減機能。'
+      ),
+      (
+        Icons.visibility_off,
+        '0xFFF97316',
+        '見栄ガード',
+        'かっこつけず・見栄をはらずに生きる仕組み。SNS承認欲求や衝動的な自己顕示を記録・可視化して断ち切る。競合21社に存在しない自己規律機能。'
+      ),
+      (
+        Icons.money_off,
+        '0xFF14B8A6',
+        '浪費トラッキング',
+        '投資を除いた資産放出を日次で記録・可視化。無意識の浪費パターンを把握してMoneyForwardを超える節制管理。'
+      ),
+      (
+        Icons.corporate_fare,
+        '0xFF6366F1',
+        '12部署AI仮想組織',
+        '自分一人でCEO・CFO・CMO・開発部・営業部など12部署20人のAI組織を持てる。Slack・Chatwork・ジョブカン対抗の次世代チーム管理。'
+      ),
+      (
+        Icons.group_add,
+        '0xFF22C55E',
+        '友達招待・紹介コード',
+        '紹介リンクをシェアするだけで招待実績が積み上がる。バイラル成長の仕組みを個人レベルで実装。'
+      ),
+      (
+        Icons.chat_bubble_outline,
+        '0xFF8B5CF6',
+        'ノートコメント・リアクション',
+        '公開メモにコメント・絵文字リアクション・OGPシェアが可能。Notion/Evernoteを超えるソーシャル連携機能。'
+      ),
+      (
+        Icons.notifications,
+        '0xFF0EA5E9',
+        '通知センター',
+        'アプリ内の全通知を一元管理。未読バッジ・フィルタリング・既読管理で重要な更新を見逃さない。'
+      ),
+      (
+        Icons.draw,
+        '0xFF64748B',
+        '電子署名',
+        '契約書・同意書をアプリ内で電子署名。法人・フリーランス向け。DocuSign連携と直接競合する機能を完全無料で提供。'
+      ),
+      (
+        Icons.storefront,
+        '0xFFEC4899',
+        'コンビニ経営シミュレーション',
+        '自分株式会社の中でコンビニを経営。春夏秋冬の季節・天気・トレンドをAIが反映した経営判断ゲーム。競合21社に存在しないゲーミフィケーション。'
+      ),
+      (
+        Icons.timer,
+        '0xFF10B981',
+        '集中タイマー',
+        'ポモドーロ/ディープフォーカスモードで深い集中を実現。思考妨害排除ガードと連携しSNS通知を自動ブロック。'
+      ),
+      (
+        Icons.edit_note,
+        '0xFF7C3AED',
+        'AI文章アシスタント',
+        'メモ・ブログ・SNS投稿の文章作成・推敲・要約をAIが支援。Notion AIを超える日本語特化の文章強化機能。'
+      ),
+      (
+        Icons.fitness_center,
+        '0xFFF59E0B',
+        '浪費耐性トレーニング',
+        '買わずに耐えた回数・防いだ出費・取り戻した時間を毎日記録。我慢を筋トレのように可視化して浪費を断つ精神性を育てる。'
+      ),
+      (
+        Icons.video_camera_back,
+        '0xFFDC2626',
+        'バイラル動画パイプライン',
+        'AIが広告動画を自動生成→X/SNSに自動投稿→効果測定まで全自動。TikTok・YouTube Shortsを超えるバイラル成長エンジン。'
+      ),
+      (
+        Icons.translate,
+        '0xFF0891B2',
+        '語学学習',
+        'フラッシュカード・発音練習・進捗管理をAIが支援。Duolingoを超える日本語圏特化の語学習得システム。'
+      ),
+      (
+        Icons.restaurant_menu,
+        '0xFFB45309',
+        'レシピ・献立管理',
+        '食材管理・献立提案・栄養分析をAIが自動化。MoneyForwardの家計管理と食費を連携した生活密着型機能。'
+      ),
+      (
+        Icons.flight_takeoff,
+        '0xFF0369A1',
+        '旅行計画・行程管理',
+        '行程管理・現地情報・費用管理を一元化。Google旅行機能を超えるAI行程最適化で旅をもっと豊かに。'
+      ),
+      (
+        Icons.pets,
+        '0xFF7E22CE',
+        'ペット健康管理',
+        'ワクチン記録・健康日記・体重管理をアプリ内で完結。競合21社にない個人ライフ全領域カバーの証明。'
+      ),
+      (
+        Icons.photo_library,
+        '0xFF065F46',
+        'フォトギャラリー',
+        'AI自動分類・思い出管理・家族共有まで対応。Google フォトに対抗しつつ自分株式会社データとシームレス連携。'
+      ),
+      (
+        Icons.emoji_events,
+        '0xFFEAB308',
+        '習慣ゲーミフィケーション',
+        'ストリーク・バッジ・XP獲得で習慣を楽しく継続。Duolingo式ゲーミフィケーションで継続率3倍。'
+      ),
+      (
+        Icons.code,
+        '0xFF0F172A',
+        'コードプレイグラウンド',
+        'ブラウザだけでコードを書いて即実行。学習・プロト制作・アイデア検証を一気通貫でサポート。'
+      ),
+      (
+        Icons.home_work,
+        '0xFF0284C7',
+        '不動産管理',
+        '物件情報・家賃・更新日を一元管理。投資用物件の収益計算もAIが自動化。'
+      ),
+      (
+        Icons.school,
+        '0xFF4338CA',
+        'eラーニング',
+        'コース作成・受講管理・修了証発行まで対応。Udemyを超える自分専用LMSを無料で構築。'
+      ),
+      (
+        Icons.directions_car,
+        '0xFF374151',
+        '車両管理',
+        '車検・整備記録・燃費管理を自動追跡。複数台・法人向け車両フリートにも対応。'
+      ),
+      (
+        Icons.work_history,
+        '0xFF059669',
+        '採用ボード',
+        '求人票作成・応募者管理・面接スケジューリングをAIが支援。HR SaaSの代替を完全無料で実現。'
+      ),
+      (
+        Icons.sensors,
+        '0xFF7C3AED',
+        'IoTダッシュボード',
+        '家電・センサー・スマートデバイスをダッシュボードで一元管理。スマートホームを自分株式会社に統合。'
+      ),
+      (
+        Icons.gavel,
+        '0xFFDC2626',
+        '法務管理',
+        '契約書・利用規約・コンプライアンスチェックをAIが支援。LegalForceを超える自動法務レビュー機能。'
+      ),
+      (
+        Icons.mark_email_read,
+        '0xFF0891B2',
+        'メールテンプレート管理',
+        '返信テンプレート・差し込み変数・ABテストをAIが最適化。メール生産性を10倍に引き上げる。'
+      ),
+      (
+        Icons.security,
+        '0xFF16A34A',
+        '2FA/多要素認証',
+        'TOTP・SMSで全アカウントを堅牢に保護。パスワードマネージャーと連携して認証情報を一元管理。'
+      ),
+      (
+        Icons.music_video,
+        '0xFFE11D48',
+        '公開ギターギャラリー',
+        'スマホで録音したギター演奏をUGCとして公開共有。OGP・sitemap対応でSEO流入も獲得。競合21社にない音楽SNS機能。'
+      ),
+      (
+        Icons.calendar_month,
+        '0xFF0F766E',
+        '月次カレンダービュー',
+        '月間スケジュールをカレンダー形式で一覧表示。タスク・習慣・イベントをTimeTree/Googleカレンダーを超える統合ビューで管理。'
+      ),
+      (
+        Icons.dynamic_feed,
+        '0xFF0F172A',
+        'アクティビティフィード',
+        '自分の行動ログ・達成記録・コミュニティ更新をタイムライン表示。Discord/Slackを超えるパーソナルアクティビティ可視化。'
+      ),
+      (
+        Icons.emoji_events,
+        '0xFFF59E0B',
+        '報酬・達成バッジ',
+        '習慣継続・目標達成でポイントとバッジを獲得。ゲーミフィケーションでモチベーションを維持し継続率を劇的に改善。'
+      ),
+      (
+        Icons.alarm,
+        '0xFF0369A1',
+        '支払いリマインダー',
+        '月次サブスク・公共料金・ローン返済を自動リマインド。MoneyForwardを超える決済管理と浪費防止の統合機能。'
+      ),
+      (
+        Icons.how_to_vote,
+        '0xFF1D4ED8',
+        '地方選挙インテリジェンス',
+        '47都道府県×1年先の選挙を自動追跡。X/SNSへの候補者分析スレッドをAIが自動生成。競合21社に存在しない市民×AI政治情報プラットフォーム。'
+      ),
+      (
+        Icons.videocam,
+        '0xFF6D28D9',
+        'ビデオ会議・ミーティング管理',
+        'ビデオ通話・会議室予約・議事録自動生成をワンストップで提供。Zoom/Google Meetを超える統合ミーティングプラットフォーム。'
+      ),
+      (
+        Icons.inbox,
+        '0xFF0F766E',
+        'スマート受信箱',
+        'AIがメール・通知・タスクを自動分類・優先度付け。重要度の低いメールを自動整理して認知コストを削減。'
+      ),
+      (
+        Icons.lock,
+        '0xFF7C3AED',
+        'パスワード金庫',
+        '全パスワードをゼロ知識暗号化で保護・自動入力・セキュリティ監査。1Password/Bitwardenを超える統合認証管理を完全無料で提供。'
+      ),
+      (
+        Icons.podcasts,
+        '0xFFF59E0B',
+        'ポッドキャスト管理',
+        'ポッドキャスト制作・公開・リスナー分析をワンストップ。Anchor/Spotifyを超える個人ポッドキャスタープラットフォーム。'
+      ),
+      (
+        Icons.screen_share,
+        '0xFF0369A1',
+        'スクリーン録画',
+        'ブラウザから直接スクリーン録画・即時共有。Loomを超える非同期ビデオコミュニケーションを完全無料で提供。'
+      ),
+      (
+        Icons.storefront,
+        '0xFFE11D48',
+        'オークション・マーケットプレイス',
+        'フリマ・オークション出品から決済まで一括管理。メルカリ/ヤフオクの機能を自分株式会社内で完結。'
+      ),
+      (
+        Icons.mic,
+        '0xFF059669',
+        '音声メモ文字起こし',
+        '録音した音声をAIが自動文字起こし・要約。会議・インタビュー・アイデアメモをテキスト化して検索可能に。'
+      ),
+      (
+        Icons.draw,
+        '0xFF6D28D9',
+        '仮想ホワイトボード',
+        'オンラインホワイトボードでアイデアをビジュアル整理。Miro/FigJamを超えるコラボ可能なキャンバス。'
+      ),
+      (
+        Icons.alt_route,
+        '0xFF0891B2',
+        'ワークフロー自動化',
+        'タスク・メール・通知をトリガー&アクションで自動化。Zapierを超えるノーコード業務自動化エンジン。'
+      ),
+      (
+        Icons.qr_code,
+        '0xFF374151',
+        'QRコード生成',
+        'URLやテキストを即座にQRコードに変換・保存・共有。業務・個人・イベント告知に対応した多用途QRジェネレーター。'
+      ),
+      (
+        Icons.admin_panel_settings,
+        '0xFF0F172A',
+        'アクセス制御・権限管理',
+        'ロール設定・ユーザー権限付与・アクセスログを一元管理。法人チームのセキュリティをジョブカンを超えるきめ細かさで実現。'
+      ),
+      (
+        Icons.inventory,
+        '0xFF059669',
+        '在庫・バーコード管理',
+        '商品バーコードスキャン・在庫数追跡・入出庫記録を自動化。Amazonの倉庫管理機能を個人・中小企業向けに完全無料で提供。'
+      ),
+      (
+        Icons.dashboard_customize,
+        '0xFF7C3AED',
+        'テンプレート広場',
+        'ビジネス・学習・ライフスタイル・技術開発など6カテゴリ18種のテンプレートを即適用。Notionマーケットプレイスを超える日本語特化テンプレート集。'
+      ),
+      (
+        Icons.bar_chart,
+        '0xFF0891B2',
+        'パーソナルダッシュボード',
+        'ノート数・タスク達成率・習慣ストリーク・集中時間をチャートで可視化。Notion 3.4のダッシュボードビューを超えるAIパーソナルKPI分析。'
+      ),
+      (
+        Icons.calendar_today,
+        '0xFF4285F4',
+        'Google カレンダー同期',
+        'アプリの予定 ↔ Google カレンダーを双方向リアルタイム同期。OAuth 2.0による安全な認証で複数カレンダーを一元管理。Google カレンダーを超える統合スケジュール管理を実現。'
+      ),
+      (
+        Icons.account_balance_wallet,
+        '0xFF00B900',
+        'MoneyForward 連携',
+        '銀行・証券・クレカ・電子マネー残高を自動取り込み。総資産・取引履歴をAIが分析して資産増加アドバイス。MoneyForwardを超える完全無料の資産管理を提供。'
+      ),
+      (
+        Icons.webhook,
+        '0xFF4A154B',
+        'Slack 通知連携',
+        'タスク完了・習慣達成・機能リクエストをリアルタイムでSlackチャンネルに通知。Webhook URL設定だけで即稼働。Slack AI に対抗するインテリジェント通知ルーティング。'
+      ),
+      (
+        Icons.psychology,
+        '0xFF6366F1',
+        'マイスキル (AIプロンプト再利用)',
+        'よく使うAIプロンプトをスキルとして保存・1タップ再利用。Slackワークフロービルダーを超える個人AI自動化テンプレートを無制限登録。'
+      ),
+      (
+        Icons.chat_bubble_outline,
+        '0xFF5865F2',
+        'チームチャット',
+        'チャンネル別リアルタイムメッセージング。Discord/LINEを超える目的別チャンネル管理と検索可能なメッセージ履歴をセキュアに提供。'
+      ),
+      (
+        Icons.favorite_outline,
+        '0xFF22C55E',
+        'ヘルスコーチ',
+        '歩数・カロリー・睡眠・水分をAIが統合分析し毎日パーソナルアドバイス。Livenを超える日本語完全対応の無料ヘルスケアコーチング。'
+      ),
+      (
+        Icons.shopping_cart_outlined,
+        '0xFFF97316',
+        'ショッピングリスト',
+        '買い物リスト作成・価格管理・購入チェックをスマート管理。Amazonの購入管理機能を超えるAI節約提案付きの完全無料ショッピングアシスタント。'
+      ),
+      (
+        Icons.notifications_active,
+        '0xFF5865F2',
+        'Discord 通知連携',
+        'タスク完了・習慣達成・日次サマリーをリアルタイムでDiscordチャンネルに通知。Webhook URLを設定するだけで即稼働する自動通知ルーティング。'
+      ),
+      (
+        Icons.notifications_active,
+        '0xFF06C755',
+        'LINE 通知連携',
+        'タスク完了・習慣達成・ゴール達成をLINEにリアルタイム通知。LINE Notify トークン1枚で設定完了。LINEを超えるタスク×通知の完全統合。'
+      ),
+      (
+        Icons.merge_type,
+        '0xFF24292F',
+        'GitHub PR 管理',
+        'GitHubリポジトリのPull Request一覧・レビュー状況・マージ統計をアプリ内で一元管理。開発とライフマネジメントを自分株式会社に完全統合。'
+      ),
+      (
+        Icons.psychology_alt,
+        '0xFF4338CA',
+        '思考妨害パターン診断',
+        '4つの質問で最大の思考妨害要因を特定し禁欲ガードの対象を自動設定。SNS・ゲーム・動画など6カテゴリから衝動パターンを診断し、集中が途切れる時間帯と前兆サインを可視化するAIセルフケアツール。'
+      ),
+      (
+        Icons.analytics,
+        '0xFF6366F1',
+        '週次 Slip パターンレポート',
+        '思考妨害・衝動のslipを曜日別・時間帯別・要因別に分析。30日間のデータから最も危険な時間帯と要因を特定し、改善トレンドを可視化。'
+      ),
+      (
+        Icons.flag,
+        '0xFF10B981',
+        'ゴール追跡',
+        'OKR形式でスモールゴールから人生目標まで一元管理。進捗追跡・マイルストーン設定・期限リマインドをAIが支援し、目標達成率を劇的に向上。'
+      ),
+      (
+        Icons.auto_awesome,
+        '0xFF8B5CF6',
+        'AIサマリー',
+        'ノート・タスク・習慣データをAIが自動要約。1日・1週間・1ヶ月の活動を3行でまとめ、意思決定に必要なインサイトを即座に提供。'
+      ),
+      (
+        Icons.trending_up,
+        '0xFF0EA5E9',
+        '収益予測',
+        '過去データと市場トレンドからAIが収益を予測。キャッシュフロー・売上推移を視覚化してビジネス計画を最適化。MoneyForwardを超えるAI財務分析。'
+      ),
+      (
+        Icons.bookmarks,
+        '0xFFF59E0B',
+        'ブックマーク同期',
+        'ブラウザのブックマークをアプリと双方向同期。AI自動タグ付け・分類・検索で必要な情報を即座に発見。Notionリンクデータベースを超える知識管理。'
+      ),
+      (
+        Icons.wb_sunny_outlined,
+        '0xFF06B6D4',
+        '天気・環境ウィジェット',
+        '現在地の天気・気温・紫外線をダッシュボードに常時表示。天気に合わせた活動提案・外出可否判断をAIが自動生成し、ライフマネジメントと環境情報を完全統合。'
+      ),
+      (
+        Icons.monetization_on,
+        '0xFFEF4444',
+        'アフィリエイト管理',
+        'アフィリエイトリンク管理・クリック追跡・報酬分析を一元化。収益源の多様化を自動最適化するAI収益化エンジン。'
+      ),
+      (
+        Icons.business_center,
+        '0xFF0F766E',
+        'CRM・営業パイプライン',
+        'リード管理・商談ステージ追跡・成約予測をAIが自動化。Salesforceを超えるパーソナルCRMを無料で実現。'
+      ),
+      (
+        Icons.table_chart,
+        '0xFF6366F1',
+        'スプレッドシートDB',
+        'Notionデータベースを超える多機能スプレッドシート。フィルタ・ソート・数式・API連携に対応した柔軟なデータ管理。'
+      ),
+      (
+        Icons.schedule_send,
+        '0xFFEC4899',
+        'SNS投稿スケジューラー',
+        'X/Instagram/FacebookへのSNS投稿を最適時間に自動予約・一括投稿。AIが投稿内容の改善案も提案するコンテンツマーケ自動化ツール。'
+      ),
+      (
+        Icons.subscriptions,
+        '0xFF7C3AED',
+        'サブスク課金管理',
+        'サブスクリプション請求・顧客管理・解約防止分析を自動化。Stripeを超える自分株式会社内蔵の課金エンジン。'
+      ),
+      (
+        Icons.contacts,
+        '0xFF0369A1',
+        'アドレス帳・人脈管理',
+        '連絡先・誕生日・交流履歴・SNSリンクを一元管理。LinkedInを超えるパーソナルCRM×人脈グラフで関係性を見える化。'
+      ),
+      (
+        Icons.book,
+        '0xFF7E22CE',
+        '読書リスト管理',
+        '読みたい本・読了記録・メモ・評価を一元管理。AIが次に読むべき本を推薦するパーソナル書評プラットフォーム。'
+      ),
+      (
+        Icons.checkroom,
+        '0xFFF97316',
+        'ワードローブ管理',
+        '所持服の登録・コーデ提案・購入計画をAIが管理。ファッションコストを削減しながらスタイルを最適化。'
+      ),
+      (
+        Icons.eco,
+        '0xFF22C55E',
+        'カーボンフットプリント',
+        '日常行動のCO2排出量を自動計算・可視化。移動・食事・エネルギー消費から個人の環境負荷を数値化し持続可能な生活を設計。'
+      ),
+      (
+        Icons.timer_outlined,
+        '0xFF6366F1',
+        'タイムトラッキング',
+        'プロジェクト別・タスク別の作業時間を自動記録。Toggleを超えるAI分析付き時間管理で生産性の無駄を即特定。'
+      ),
+      (
+        Icons.menu_book,
+        '0xFF0F766E',
+        'Wikiデータベース',
+        '階層式Wikiページ・社内マニュアル・チームナレッジを一元管理。Confluenceを超える個人・チーム向け知識ベースを完全無料で構築。'
+      ),
+      (
+        Icons.view_kanban,
+        '0xFFF59E0B',
+        'WIPリミット管理',
+        '進行中タスク数の上限設定・ボトルネック検出・フロー可視化。Jiraを超えるリーンカンバン管理で作業効率を最大化。'
+      ),
+      (
+        Icons.rss_feed,
+        '0xFFEC4899',
+        '技術ブログトラッカー',
+        'Zenn/Qiita/note/dev.toの投稿管理・PV分析・読者獲得トレンドを一元追跡。エンジニアの影響力成長を数値化。'
+      ),
+      (
+        Icons.calendar_view_day,
+        '0xFF6366F1',
+        '予約・アポイント管理',
+        '来客予約・医療予約・会議調整をカレンダー連携で一元管理。Calendlyを超えるAI最適スケジューリングシステム。'
+      ),
+      (
+        Icons.terminal,
+        '0xFF0F172A',
+        'API プレイグラウンド',
+        'REST API・Supabase EF・外部APIをブラウザから即テスト。Postmanを超えるアプリ内API開発環境で実装速度を10倍に。'
+      ),
+      (
+        Icons.download,
+        '0xFF0891B2',
+        'データ分析エクスポート',
+        'ノート・タスク・習慣・財務データをCSV/JSON/PDFで一括エクスポート。BIツールへの連携や外部分析が自由自在。'
+      ),
+      (
+        Icons.local_parking,
+        '0xFF374151',
+        '駐車場予約管理',
+        '駐車場の空き確認・予約・支払い管理をアプリ内で完結。物件・店舗・イベント会場の駐車枠を効率的に運用。'
+      ),
+      (
+        Icons.view_in_ar,
+        '0xFF6D28D9',
+        'AR ナビゲーション',
+        '拡張現実(AR)で店舗・施設・商品へのルートをスマホ画面に重畳表示。競合21社に存在しない空間×AIナビゲーション機能。'
+      ),
+      (
+        Icons.account_balance,
+        '0xFF059669',
+        '資産管理',
+        '不動産・株・仮想通貨・現金など全資産をポートフォリオ形式で一元管理。AIが資産配分の最適化提案をリアルタイムに実行。'
+      ),
+      (
+        Icons.trending_up,
+        '0xFFF97316',
+        '行動・習慣ログ詳細',
+        '1分単位の行動ログ・習慣連続記録・パターン分析をAIが自動集計。自分の生活リズムを科学的に可視化して最適な時間設計を実現。'
+      ),
+      (
+        Icons.delete_sweep,
+        '0xFF7E22CE',
+        '断捨離アシスト',
+        'モノ・デジタルファイル・人間関係の断捨離を3ステップでAI支援。手放す/残す/保留を即決できる捨て活チェックリストで身軽な自分株式会社を構築。'
+      ),
+      (
+        Icons.lock_clock,
+        '0xFF0F172A',
+        'プリズンモード',
+        'スマホ依存・SNS中毒を断ち切る超高集中モード。指定時間内はSNS/動画を完全シャットアウトし、思考妨害をゼロに。刑務所級の集中力を自分で設計できる唯一のツール。'
+      ),
+      (
+        Icons.hub,
+        '0xFF1D9BF0',
+        'ソーシャルフィード',
+        'コミュニティメンバーの達成記録・習慣ストリーク・ノート共有をタイムラインで表示。FacebookとDiscordを超えるパーソナル×コミュニティ融合フィード。'
+      ),
+      (
+        Icons.psychology,
+        '0xFF10B981',
+        '意思決定チェック',
+        '重要な判断を迷わせる「認知バイアス」をAIが診断・可視化。見栄・衝動・過去の呪縛から解放されたクリアな意思決定を支援する競合21社にない独自機能。'
+      ),
+      (
+        Icons.account_balance_wallet,
+        '0xFF6366F1',
+        'デジタルウォレット',
+        'ポイント・ギフト券・仮想通貨・電子マネー残高を一元管理。多様化する決済手段をスマートに統合して家計管理と資産管理を完全連携。'
+      ),
+      (
+        Icons.cruelty_free,
+        '0xFFA855F7',
+        'バーチャルペット',
+        'アプリのタスク達成・習慣継続でペットが成長するゲーミフィケーション。モチベーション維持の最強トリガーを個性的なデジタルコンパニオンで実現。'
+      ),
+      (
+        Icons.home_repair_service,
+        '0xFF0F766E',
+        'リアル断捨離記録',
+        '実物のモノを写真で記録しながら断捨離を進行。手放した物品数・削減重量・解放スペースを数値化して身軽さを可視化。'
+      ),
+      (
+        Icons.anchor,
+        '0xFF4338CA',
+        '思考アンカー',
+        '集中を乱す雑念・不安・タスク割り込みをその場でキャプチャしアンカーに変換。後で必ず戻ると約束することで今この瞬間の集中を守る認知制御機能。'
+      ),
+      (
+        Icons.flash_on,
+        '0xFF8B5CF6',
+        '思考キャプチャ',
+        'ひらめき・アイデア・メモを0.5秒でキャプチャ。Inboxに溜めてAIが後から自動分類・タグ付けするGTD式思考管理システム。'
+      ),
+      (
+        Icons.manage_search,
+        '0xFF0EA5E9',
+        'セマンティック検索',
+        'キーワード一致ではなく意味・文脈で全ノート・タスク・習慣を横断検索。Notionの検索機能を超えるAI意味理解型の全文検索エンジン。'
+      ),
+      (
+        Icons.receipt_long,
+        '0xFF059669',
+        '購買ログ・支出記録',
+        '全購入品の記録・家計簿自動分類・支出トレンド分析。Amazonの購買履歴を超える節約インサイトをAIがリアルタイムで提供。'
+      ),
+      (
+        Icons.audiotrack,
+        '0xFF6D28D9',
+        'オーディオエフェクト',
+        'ギター・楽器・音声にエフェクト処理・音質補正・ミキシングをブラウザだけで実現。GarageBandを超えるポータブル音楽制作スタジオ。'
+      ),
+      (
+        Icons.image,
+        '0xFFF97316',
+        'AI画像生成',
+        'テキストから画像を即時生成。プレゼン・SNS・ブログ素材をAIが自動制作。Midjourneyを超えるライフマネジメント統合型AIクリエイティブツール。'
+      ),
+      (
+        Icons.search,
+        '0xFF0F766E',
+        'AI横断検索',
+        '自分株式会社の全データ(ノート・タスク・習慣・財務)をAIが横断検索。Notionの検索・Googleを超えるパーソナルナレッジ検索エンジン。'
+      ),
+      (
+        Icons.balance,
+        '0xFF4338CA',
+        '現実確認チェック',
+        '自分の目標・計画・実績を客観的にスコアリングし「見栄・感情・バイアス」を排除した現実ベースの意思決定を支援。唯一無二のAI自己客観化機能。'
+      ),
+      (
+        Icons.compare_arrows,
+        '0xFF8B5CF6',
+        '相性チェック',
+        '人・目標・習慣・ライフスタイルの相性をAIが多角分析。恋愛・ビジネスパートナー・チームメンバーとの相性スコアを科学的に算出。'
+      ),
+      (
+        Icons.analytics_outlined,
+        '0xFFFE4E1E',
+        'サイトマップ分析',
+        'サイトの全URLを可視化・SEO健全性チェック・クロール最適化をAIが自動分析。Googleサーチコンソールを超えるサイト構造把握ツール。'
+      ),
+      (
+        Icons.feedback,
+        '0xFF22C55E',
+        '顧客フィードバック',
+        'ユーザーの声・評価・要望を一元収集・AI分析・優先度付け。Intercomを超える個人×AI顧客インサイト管理プラットフォーム。'
+      ),
+      (
+        Icons.history,
+        '0xFF0891B2',
+        '変更履歴管理',
+        'コード・ドキュメント・設定の変更履歴を自動追跡。Changelogを自動生成してチームと変更情報を透明に共有。'
+      ),
+      (
+        Icons.payments,
+        '0xFF10B981',
+        '支払いチャンネル台帳',
+        '複数の支払い手段・口座・チャンネルを台帳形式で一元管理。誰に何をいくら支払ったかをAIが自動仕訳・可視化。'
+      ),
+      (
+        Icons.smart_toy,
+        '0xFF7C3AED',
+        'AI自律エージェント',
+        '指定ゴールに向けてタスクを自律分解・実行するAIエージェント。AutoGPTを超える自分株式会社専用の自律実行AI。人間が指示しなくても仕事が進む。'
+      ),
+      (
+        Icons.support_agent,
+        '0xFF0369A1',
+        'AI仮想秘書',
+        'スケジュール・タスク・メール返信をAIが全自動管理。アシスタント雇用コストをゼロにする自分株式会社の専属デジタル秘書。'
+      ),
+      (
+        Icons.insert_chart,
+        '0xFF6366F1',
+        '利用統計ダッシュボード',
+        'アプリの全機能利用状況・ユーザー行動・機能別エンゲージメントをリアルタイム可視化。自分のライフデータを科学する管理者コックピット。'
+      ),
+      (
+        Icons.label,
+        '0xFFF59E0B',
+        'タグ・カテゴリ管理',
+        'ノート・タスク・習慣・ファイルのタグ体系を一元設計。AI自動タグ付けと手動分類を組み合わせた最強の知識分類システム。'
+      ),
+      (
+        Icons.assistant,
+        '0xFF10B981',
+        'AI文章添削',
+        '日本語文章の誤字・文法・表現をAIがリアルタイム添削。ブログ・メール・報告書の品質を即座に向上させる自分株式会社内蔵の校正エンジン。'
+      ),
+      (
+        Icons.workspace_premium,
+        '0xFFDC2626',
+        'プレミアムコンテンツ販売',
+        'ノート・テンプレート・スキルをコンテンツとして販売・収益化。Gumroadを超えるナレッジマーケットプレイスを自分株式会社に内蔵。'
+      ),
+      (
+        Icons.groups,
+        '0xFF6D28D9',
+        'オンラインコミュニティ',
+        'テーマ別コミュニティ・勉強会・習慣チャレンジをアプリ内で開催。Discordを超える目的特化型コミュニティプラットフォーム。'
+      ),
+      (
+        Icons.favorite_border,
+        '0xFFEC4899',
+        'AIメンタルヘルスケア',
+        '気分・ストレス・睡眠を毎日記録しAIが統合分析。Calm/Headspaceを超えるパーソナライズドメンタルウェルネスを自分株式会社に内蔵。'
+      ),
+      (
+        Icons.work_outline,
+        '0xFF0891B2',
+        'フリーランス管理',
+        '案件・請求書・契約・稼働時間・確定申告を一元管理。freee/MoneyForwardを超える個人事業主向けオールインワン経営管理ツール。'
+      ),
+      (
+        Icons.present_to_all,
+        '0xFF7C3AED',
+        'AIプレゼンビルダー',
+        'テーマを入力するだけでAIがスライド構成を自動生成。Gamma/Canva/Beautiful.aiを超えるライフマネジメント統合型AIプレゼン作成エンジン。'
+      ),
+      (
+        Icons.cloud_sync,
+        '0xFF0F766E',
+        'データバックアップ',
+        '全データを自動バックアップ・クラウド同期・ワンクリック復元。Dropbox/iCloudを超えるライフデータ保全インフラが自分株式会社に標準搭載。'
+      ),
+      (
+        Icons.calendar_view_week,
+        '0xFFD97706',
+        'コンテンツカレンダー',
+        'SNS・ブログ・動画の制作スケジュールをカレンダーで一元管理。コンテンツ戦略・A/Bテスト計画・公開スケジュールを可視化するクリエイター向け投稿管理ツール。'
+      ),
+      (
+        Icons.savings,
+        '0xFF10B981',
+        '家計・予算プランナー',
+        '月次予算設定・支出追跡・カテゴリ別分析・AI節約提案。MoneyForward/Zaimを超える家計管理とビジネス財務を同一アプリで完結させるスマート予算管理ツール。'
+      ),
+      (
+        Icons.psychology_outlined,
+        '0xFF8B5CF6',
+        'ブレインダンプ',
+        '頭の中にある全てをGTD式に書き出し・AIが自動分類。タスク・アイデア・心配事を即座にキャプチャしマインドをクリアにするEvernoteを超える思考整理ツール。'
+      ),
+      (
+        Icons.account_tree_outlined,
+        '0xFF0891B2',
+        'プロジェクト管理',
+        'ガントチャート・スプリント計画・マイルストーン・依存関係を一元管理。Asana/Jira/GitHub Projectsを超えるライフマネジメント統合型プロジェクト管理ツール。'
+      ),
+      (
+        Icons.contact_mail_outlined,
+        '0xFFD97706',
+        '名刺管理',
+        'OCR+AI連絡先自動抽出・タグ管理・人脈グラフ可視化。Eightを超えるAI名刺管理とビジネスネットワーキングを自分株式会社に標準搭載。'
+      ),
+      (
+        Icons.family_restroom,
+        '0xFFEC4899',
+        '家族カレンダー',
+        '家族のスケジュール共有・タスク割当・誕生日・記念日管理を一元化。Googleカレンダー家族共有を超えるプライバシー重視の家族専用スマートカレンダー。'
+      ),
     ];
 
     return Container(
@@ -1809,8 +2510,7 @@ $input
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white38),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () => Navigator.of(context).pushNamed('/import'),
             icon: const Icon(Icons.arrow_forward, size: 16),
@@ -1902,7 +2602,8 @@ $input
                       row.price,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: row.isOurs ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight:
+                            row.isOurs ? FontWeight.w800 : FontWeight.w600,
                         color: row.isOurs
                             ? Colors.yellowAccent
                             : const Color(0xFF64748B),
@@ -1934,12 +2635,24 @@ $input
   /// 3ステップで始めるセクション
   Widget _buildGetStartedStepsSection() {
     const steps = [
-      (Icons.play_circle_outline, '1. 無料トライアル', 'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
-          Color(0xFF6366F1)),
-      (Icons.save_outlined, '2. 無料登録して保存', 'メール認証だけで即登録。提案を保存して明日も続きから再開。',
-          Color(0xFF10B981)),
-      (Icons.upload_file_outlined, '3. 既存データを移行',
-          'NotionのCSV・EvernoteのENEXをインポート。移行コストゼロ。', Color(0xFFF59E0B)),
+      (
+        Icons.play_circle_outline,
+        '1. 無料トライアル',
+        'まず登録なしで1件試す。AIが今日の最優先タスクを提案。',
+        Color(0xFF6366F1)
+      ),
+      (
+        Icons.save_outlined,
+        '2. 無料登録して保存',
+        'メール認証だけで即登録。提案を保存して明日も続きから再開。',
+        Color(0xFF10B981)
+      ),
+      (
+        Icons.upload_file_outlined,
+        '3. 既存データを移行',
+        'NotionのCSV・EvernoteのENEXをインポート。移行コストゼロ。',
+        Color(0xFFF59E0B)
+      ),
     ];
 
     return Container(
@@ -2468,8 +3181,8 @@ $input
                               ? Icons.visibility_off
                               : Icons.visibility,
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,),
                         tooltip: _obscurePassword ? '表示' : '非表示',
                       ),
                       IconButton(
@@ -2525,7 +3238,6 @@ $input
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {

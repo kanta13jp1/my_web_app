@@ -63,9 +63,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
 
   bool _hasActiveInCategory(String category) {
     return _items.any(
-      (item) =>
-          item['category'] == category &&
-          item['status'] == 'active',
+      (item) => item['category'] == category && item['status'] == 'active',
     );
   }
 
@@ -273,8 +271,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
       await _supabase.from('wip_items').update({
         'progress_percent': result,
         'status': result >= 100 ? 'completed' : 'active',
-        'completed_at':
-            result >= 100 ? DateTime.now().toIso8601String() : null,
+        'completed_at': result >= 100 ? DateTime.now().toIso8601String() : null,
         'updated_at': DateTime.now().toIso8601String(),
       }).eq('id', item['id']);
       await _load();
@@ -388,7 +385,9 @@ class _WipLimitPageState extends State<WipLimitPage> {
                             '今取り組んでいることを登録してください。\n1カテゴリ1つまで。消化してから次。',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -457,16 +456,16 @@ class _WipLimitPageState extends State<WipLimitPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
-                            decoration: !isActive
-                                ? TextDecoration.lineThrough
-                                : null,
+                            decoration:
+                                !isActive ? TextDecoration.lineThrough : null,
                           ),
                         ),
                         Text(
                           category,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -488,7 +487,9 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 const SizedBox(height: 6),
                 Text(
                   note,
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
               ],
               const SizedBox(height: 8),
@@ -496,7 +497,8 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress / 100,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(
                     progress >= 100 ? Colors.green : Colors.orange,
                   ),

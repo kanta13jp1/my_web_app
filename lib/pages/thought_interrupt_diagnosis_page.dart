@@ -27,7 +27,8 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.psychology_alt,
       options: [
         _DiagOption('sns', 'SNS をチェック', Icons.thumb_up, Colors.blue),
-        _DiagOption('mobile_games', 'ゲームを開く', Icons.videogame_asset, const Color(0xFF7C3AED)),
+        _DiagOption('mobile_games', 'ゲームを開く', Icons.videogame_asset,
+            const Color(0xFF7C3AED),),
         _DiagOption('video', '動画を見る', Icons.play_circle, Colors.red),
         _DiagOption('manga', '漫画を読む', Icons.menu_book, const Color(0xFF0891B2)),
         _DiagOption('smartphone', 'スマホを手に取る', Icons.smartphone, Colors.grey),
@@ -39,10 +40,13 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.local_fire_department,
       options: [
         _DiagOption('smoking', 'タバコを吸う', Icons.smoking_rooms, Colors.brown),
-        _DiagOption('alcohol', 'お酒を飲む', Icons.local_bar, const Color(0xFFF59E0B)),
+        _DiagOption(
+            'alcohol', 'お酒を飲む', Icons.local_bar, const Color(0xFFF59E0B),),
         _DiagOption('masturbation', '性的な衝動に従う', Icons.block, Colors.pink),
-        _DiagOption('dating_apps', '出会い系・異性探索', Icons.favorite, const Color(0xFFE11D48)),
-        _DiagOption('gambling', 'ギャンブル・賭け事', Icons.casino, const Color(0xFF059669)),
+        _DiagOption('dating_apps', '出会い系・異性探索', Icons.favorite,
+            const Color(0xFFE11D48),),
+        _DiagOption(
+            'gambling', 'ギャンブル・賭け事', Icons.casino, const Color(0xFF059669),),
         _DiagOption('eating_out', '間食・外食', Icons.restaurant, Colors.orange),
       ],
     ),
@@ -51,11 +55,13 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.access_time,
       options: [
         _DiagOption('morning', '朝 (6〜9時)', Icons.wb_sunny, Colors.amber),
-        _DiagOption('midday', '昼食後 (12〜14時)', Icons.lunch_dining, const Color(0xFFF97316)),
+        _DiagOption('midday', '昼食後 (12〜14時)', Icons.lunch_dining,
+            const Color(0xFFF97316),),
         _DiagOption('afternoon', '午後 (14〜17時)', Icons.cloud, Colors.blue),
         _DiagOption('evening', '夕方 (17〜20時)', Icons.wb_twilight, Colors.orange),
         _DiagOption('night', '夜 (20〜23時)', Icons.nights_stay, Colors.indigo),
-        _DiagOption('midnight', '深夜 (23時〜)', Icons.bedtime, const Color(0xFF1E293B)),
+        _DiagOption(
+            'midnight', '深夜 (23時〜)', Icons.bedtime, const Color(0xFF1E293B),),
       ],
     ),
     _DiagQuestion(
@@ -63,10 +69,14 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.warning_amber,
       options: [
         _DiagOption('hand', '手が無意識に動く', Icons.front_hand, Colors.teal),
-        _DiagOption('eyes', '目が泳ぐ・視線が定まらない', Icons.visibility, const Color(0xFF0891B2)),
-        _DiagOption('posture', '姿勢が崩れる', Icons.airline_seat_recline_normal, Colors.brown),
-        _DiagOption('yawn', 'あくびが出る・眠くなる', Icons.bedtime_outlined, Colors.indigo),
-        _DiagOption('restless', 'そわそわ・落ち着かない', Icons.directions_run, Colors.orange),
+        _DiagOption(
+            'eyes', '目が泳ぐ・視線が定まらない', Icons.visibility, const Color(0xFF0891B2),),
+        _DiagOption('posture', '姿勢が崩れる', Icons.airline_seat_recline_normal,
+            Colors.brown,),
+        _DiagOption(
+            'yawn', 'あくびが出る・眠くなる', Icons.bedtime_outlined, Colors.indigo,),
+        _DiagOption(
+            'restless', 'そわそわ・落ち着かない', Icons.directions_run, Colors.orange,),
         _DiagOption('none', 'サインを感じない', Icons.help_outline, Colors.grey),
       ],
     ),
@@ -156,7 +166,7 @@ class _ThoughtInterruptDiagnosisPageState
       'warning_sign': sign,
       'advice':
           '${timeLabel[peakTime] ?? peakTime}に${itemLabel[focusBreak] ?? focusBreak}の誘惑が強まる傾向があります。'
-          'この時間帯はスマホを別室に置くか、代替行動（深呼吸・散歩・水を飲む）を設定しましょう。',
+              'この時間帯はスマホを別室に置くか、代替行動（深呼吸・散歩・水を飲む）を設定しましょう。',
     };
   }
 
@@ -230,9 +240,8 @@ class _ThoughtInterruptDiagnosisPageState
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: selected == null
-                      ? null
-                      : (_isSaving ? null : _nextStep),
+                  onPressed:
+                      selected == null ? null : (_isSaving ? null : _nextStep),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
@@ -447,9 +456,8 @@ class _OptionCard extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected
-              ? option.color.withValues(alpha: 0.12)
-              : Colors.white,
+          color:
+              isSelected ? option.color.withValues(alpha: 0.12) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? option.color : Colors.grey.shade300,
@@ -478,8 +486,7 @@ class _OptionCard extends StatelessWidget {
                 option.label,
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected ? option.color : Colors.black87,
                 ),
               ),

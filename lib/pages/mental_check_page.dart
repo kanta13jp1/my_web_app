@@ -72,7 +72,8 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
 
       await _supabase.from('notes').insert({
         'user_id': userId,
-        'title': '[MentalCheck] ${DateFormat('MM/dd HH:mm').format(DateTime.now())}',
+        'title':
+            '[MentalCheck] ${DateFormat('MM/dd HH:mm').format(DateTime.now())}',
         'content': content,
         'is_archived': false,
         'is_pinned': false,

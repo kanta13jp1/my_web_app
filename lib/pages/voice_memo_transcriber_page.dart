@@ -45,10 +45,12 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       _isSearching = false;
     });
     try {
-      final response = await _supabase.functions.invoke('media-hub', body: {'action': 'transcribe.list'});
+      final response = await _supabase.functions
+          .invoke('media-hub', body: {'action': 'transcribe.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
-        setState(() => _memos = (data['memos'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _memos = []);
       }
@@ -75,7 +77,8 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
-        setState(() => _memos = (data['memos'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _memos = []);
       }
@@ -122,8 +125,12 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('キャンセル')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('保存')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('キャンセル'),),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('保存'),),
         ],
       ),
     );
@@ -230,7 +237,8 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         },
                       )
                     : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 filled: true,
                 fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
               ),
@@ -260,9 +268,12 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                            Text(_errorMessage!,
+                                style: const TextStyle(color: Colors.red),),
                             const SizedBox(height: 8),
-                            ElevatedButton(onPressed: _fetchMemos, child: const Text('再試行')),
+                            ElevatedButton(
+                                onPressed: _fetchMemos,
+                                child: const Text('再試行'),),
                           ],
                         ),
                       )
@@ -271,9 +282,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.mic_none, size: 64, color: Colors.grey),
+                                const Icon(Icons.mic_none,
+                                    size: 64, color: Colors.grey,),
                                 const SizedBox(height: 16),
-                                const Text('音声メモがありません', style: TextStyle(color: Colors.grey)),
+                                const Text('音声メモがありません',
+                                    style: TextStyle(color: Colors.grey),),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
                                   onPressed: _addMemo,
@@ -290,7 +303,8 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         : RefreshIndicator(
                             onRefresh: _fetchMemos,
                             child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                               itemCount: _memos.length,
                               itemBuilder: (context, index) =>
                                   _buildMemoCard(_memos[index]),
@@ -317,19 +331,24 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
             backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.12),
             child: const Icon(Icons.mic, color: Color(0xFF7C3AED), size: 20),
           ),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title:
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           subtitle: Row(
             children: [
               if (durationSec > 0) ...[
                 const Icon(Icons.timer_outlined, size: 12, color: Colors.grey),
                 const SizedBox(width: 2),
-                Text('${durationSec ~/ 60}:${(durationSec % 60).toString().padLeft(2, '0')}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),),
+                Text(
+                  '${durationSec ~/ 60}:${(durationSec % 60).toString().padLeft(2, '0')}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
                 const SizedBox(width: 8),
               ],
               if (createdAt.isNotEmpty)
                 Text(
-                  createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt,
+                  createdAt.length > 10
+                      ? createdAt.substring(0, 10)
+                      : createdAt,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
             ],
@@ -341,7 +360,9 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (summary.isNotEmpty) ...[
-                    const Text('AI要約', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text('AI要約',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12,),),
                     const SizedBox(height: 4),
                     Container(
                       width: double.infinity,
@@ -350,18 +371,22 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         color: const Color(0xFF7C3AED).withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(summary, style: const TextStyle(fontSize: 13)),
+                      child:
+                          Text(summary, style: const TextStyle(fontSize: 13)),
                     ),
                     const SizedBox(height: 8),
                   ],
                   if (transcript.isNotEmpty) ...[
-                    const Text('文字起こし', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    const Text('文字起こし',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 12,),),
                     const SizedBox(height: 4),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

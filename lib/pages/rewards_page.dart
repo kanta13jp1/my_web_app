@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../main.dart';
 
 class RewardsPage extends StatefulWidget {
@@ -173,7 +173,9 @@ class _RewardsPageState extends State<RewardsPage> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isUnlocked ? Colors.amber.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
+            color: isUnlocked
+                ? Colors.amber.shade100
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -187,7 +189,9 @@ class _RewardsPageState extends State<RewardsPage> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isUnlocked ? Theme.of(context).colorScheme.onSurface : Colors.grey,
+            color: isUnlocked
+                ? Theme.of(context).colorScheme.onSurface
+                : Colors.grey,
             fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
           ),
           textAlign: TextAlign.center,

@@ -941,7 +941,9 @@ class _NoteListPageState extends State<NoteListPage> {
             IconButton(
               tooltip: isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
               icon: Icon(isFavorite ? Icons.star : Icons.star_border),
-              color: isFavorite ? Colors.amber.shade700 : Theme.of(context).colorScheme.outlineVariant,
+              color: isFavorite
+                  ? Colors.amber.shade700
+                  : Theme.of(context).colorScheme.outlineVariant,
               onPressed: () {
                 _toggleFavorite(context, note);
               },

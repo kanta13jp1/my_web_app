@@ -260,8 +260,7 @@ class _RankCard extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: SizedBox(
           width: 44,
           child: Center(
@@ -284,8 +283,7 @@ class _RankCard extends StatelessWidget {
                 entry.displayName,
                 style: TextStyle(
                   color: isMe ? Colors.indigoAccent.shade100 : Colors.white,
-                  fontWeight:
-                      isMe ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isMe ? FontWeight.bold : FontWeight.normal,
                   fontSize: 14,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -293,8 +291,7 @@ class _RankCard extends StatelessWidget {
             ),
             if (isMe)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.indigoAccent,
                   borderRadius: BorderRadius.circular(4),
@@ -318,8 +315,7 @@ class _RankCard extends StatelessWidget {
               const SizedBox(width: 3),
               Text(
                 '正解 ${entry.totalCorrect} 問',
-                style:
-                    const TextStyle(color: Colors.amber, fontSize: 12),
+                style: const TextStyle(color: Colors.amber, fontSize: 12),
               ),
               const SizedBox(width: 14),
               const Icon(Icons.school, size: 13, color: Colors.white38),
@@ -327,7 +323,9 @@ class _RankCard extends StatelessWidget {
               Text(
                 '${entry.providersStudied} 社学習',
                 style: const TextStyle(
-                    color: Colors.white54, fontSize: 12,),
+                  color: Colors.white54,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -347,8 +345,7 @@ class _RankCard extends StatelessWidget {
             if (entry.lastStudiedAt != null)
               Text(
                 _formatDate(entry.lastStudiedAt!),
-                style:
-                    const TextStyle(color: Colors.white38, fontSize: 10),
+                style: const TextStyle(color: Colors.white38, fontSize: 10),
               ),
           ],
         ),

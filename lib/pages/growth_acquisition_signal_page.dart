@@ -81,8 +81,7 @@ class _GrowthAcquisitionSignalPageState
 
       if (mounted) {
         setState(() {
-          _successMessage =
-              '「${_signalLabels[signal] ?? signal}」のシグナルを記録しました';
+          _successMessage = '「${_signalLabels[signal] ?? signal}」のシグナルを記録しました';
         });
       }
     } catch (e) {
@@ -132,9 +131,7 @@ class _GrowthAcquisitionSignalPageState
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selected
-                                    ? Colors.green
-                                    : Colors.grey,
+                                color: selected ? Colors.green : Colors.grey,
                                 width: 2,
                               ),
                             ),

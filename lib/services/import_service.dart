@@ -166,7 +166,8 @@ class ImportService {
     );
     final data = _asMap(response.data);
     if (data['success'] != true) {
-      throw Exception(data['error']?.toString() ?? 'Notion API preview failed.');
+      throw Exception(
+          data['error']?.toString() ?? 'Notion API preview failed.',);
     }
     return ImportPreviewResult.fromJson(_asMap(data['preview']));
   }

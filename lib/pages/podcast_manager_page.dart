@@ -222,7 +222,8 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(author.isNotEmpty ? author : '$episodeCount エピソード'),
             trailing: Chip(
               label: Text(subscribed ? '購読中' : '未購読'),

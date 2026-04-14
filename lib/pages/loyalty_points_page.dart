@@ -34,7 +34,8 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(() => _history = (data['history'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _history = (data['history'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _history = data.cast<Map<String, dynamic>>());
       } else {
@@ -68,7 +69,8 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -90,22 +92,27 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                       itemCount: _history.length,
                       itemBuilder: (context, index) {
                         final item = _history[index];
-                        final description = item['description']?.toString() ?? 'ポイント ${index + 1}';
+                        final description = item['description']?.toString() ??
+                            'ポイント ${index + 1}';
                         final points = item['points']?.toString() ?? '0';
                         final type = item['type']?.toString() ?? 'earn';
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading: const Icon(Icons.stars, color: Colors.amber),
+                            leading:
+                                const Icon(Icons.stars, color: Colors.amber),
                             title: Text(
                               description,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            subtitle: Text(item['created_at']?.toString() ?? ''),
+                            subtitle:
+                                Text(item['created_at']?.toString() ?? ''),
                             trailing: Text(
                               '${type == 'earn' ? '+' : '-'}$points pt',
                               style: TextStyle(
-                                color: type == 'earn' ? Colors.green : Colors.red,
+                                color:
+                                    type == 'earn' ? Colors.green : Colors.red,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

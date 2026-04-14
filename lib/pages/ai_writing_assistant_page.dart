@@ -70,7 +70,9 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
         'text': text,
       };
       if (_selectedAction == 'tone') body['tone'] = _selectedTone;
-      if (_selectedAction == 'translate') body['target_language'] = _selectedLang;
+      if (_selectedAction == 'translate') {
+        body['target_language'] = _selectedLang;
+      }
 
       final res = await _supabase.functions.invoke(
         'ai-writing-assistant',
@@ -138,8 +140,8 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                   : const Icon(Icons.auto_awesome),
               label: Text(_isLoading ? '処理中...' : 'AI に依頼する'),
               style: FilledButton.styleFrom(
-                backgroundColor: _actions[_selectedAction]?.$3 ??
-                    const Color(0xFF6366F1),
+                backgroundColor:
+                    _actions[_selectedAction]?.$3 ?? const Color(0xFF6366F1),
                 minimumSize: const Size.fromHeight(52),
               ),
             ),
@@ -202,12 +204,12 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                         ? e.value.$3.withValues(alpha: 0.15)
                         : (isDark
                             ? Colors.white.withValues(alpha: 0.08)
-                            : Theme.of(context).colorScheme.surfaceContainerHigh),
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHigh),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: selected
-                          ? e.value.$3
-                          : Colors.transparent,
+                      color: selected ? e.value.$3 : Colors.transparent,
                       width: 1.5,
                     ),
                   ),
@@ -388,7 +390,8 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                       final uri = Uri.parse(
                         'https://twitter.com/intent/tweet?text=$encoded',
                       );
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication,);
                     },
                   ),
                 IconButton(

@@ -34,7 +34,8 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['transactions'] is List) {
-        setState(() => _transactions = (data['transactions'] as List).cast<Map<String, dynamic>>());
+        setState(() => _transactions =
+            (data['transactions'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _transactions = data.cast<Map<String, dynamic>>());
       } else {
@@ -68,7 +69,8 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -90,25 +92,32 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                       itemCount: _transactions.length,
                       itemBuilder: (context, index) {
                         final tx = _transactions[index];
-                        final description = tx['description']?.toString() ?? '取引 ${index + 1}';
+                        final description =
+                            tx['description']?.toString() ?? '取引 ${index + 1}';
                         final amount = tx['amount']?.toString() ?? '0';
                         final type = tx['type']?.toString() ?? 'debit';
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             leading: Icon(
-                              type == 'credit' ? Icons.arrow_downward : Icons.arrow_upward,
-                              color: type == 'credit' ? Colors.green : Colors.red,
+                              type == 'credit'
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              color:
+                                  type == 'credit' ? Colors.green : Colors.red,
                             ),
                             title: Text(
                               description,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(tx['created_at']?.toString() ?? ''),
                             trailing: Text(
                               '¥$amount',
                               style: TextStyle(
-                                color: type == 'credit' ? Colors.green : Colors.red,
+                                color: type == 'credit'
+                                    ? Colors.green
+                                    : Colors.red,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

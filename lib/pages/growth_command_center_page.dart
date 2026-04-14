@@ -25,8 +25,8 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
     });
 
     try {
-      final response =
-          await _supabase.functions.invoke('growth-hub', body: {'action': 'command.analyze'});
+      final response = await _supabase.functions
+          .invoke('growth-hub', body: {'action': 'command.analyze'});
 
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -48,9 +48,9 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
   Widget _buildBriefCard(Map<String, dynamic> brief) {
     final priorityColor = switch (brief['priority']?.toString()) {
       'critical' => const Color(0xFFE53935),
-      'high'     => const Color(0xFFFF6B35),
-      'medium'   => const Color(0xFFFFC107),
-      _          => const Color(0xFF707070),
+      'high' => const Color(0xFFFF6B35),
+      'medium' => const Color(0xFFFFC107),
+      _ => const Color(0xFF707070),
     };
 
     return Container(

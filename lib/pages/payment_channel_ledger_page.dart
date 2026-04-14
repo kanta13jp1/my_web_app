@@ -118,7 +118,10 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                             const SizedBox(width: 8),
                             Text(
                               '最終監査:',
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,),
                             ),
                             const SizedBox(width: 8),
                             if (source.lastAuditedAt != null)

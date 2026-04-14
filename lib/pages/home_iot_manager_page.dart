@@ -100,7 +100,9 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(icon: const Icon(Icons.devices), text: 'デバイス (${_devices.length})'),
+            Tab(
+                icon: const Icon(Icons.devices),
+                text: 'デバイス (${_devices.length})',),
             const Tab(icon: Icon(Icons.auto_mode), text: '自動化'),
           ],
         ),

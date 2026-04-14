@@ -195,11 +195,18 @@ class _EnterprisePageState extends State<EnterprisePage> {
 
   Widget _buildCostSavingsSection(bool isMobile) {
     const tools = [
-      _ToolCost(name: 'Slack', icon: '💬', monthlyPerUser: 750, category: 'チャット'),
-      _ToolCost(name: 'Chatwork', icon: '💼', monthlyPerUser: 700, category: 'チャット'),
+      _ToolCost(
+          name: 'Slack', icon: '💬', monthlyPerUser: 750, category: 'チャット',),
+      _ToolCost(
+          name: 'Chatwork', icon: '💼', monthlyPerUser: 700, category: 'チャット',),
       _ToolCost(name: 'ジョブカン', icon: '📋', monthlyPerUser: 500, category: 'HR'),
-      _ToolCost(name: 'MoneyForward', icon: '💰', monthlyPerUser: 500, category: '経費'),
-      _ToolCost(name: 'Notion', icon: '📝', monthlyPerUser: 1650, category: 'ノート'),
+      _ToolCost(
+          name: 'MoneyForward',
+          icon: '💰',
+          monthlyPerUser: 500,
+          category: '経費',),
+      _ToolCost(
+          name: 'Notion', icon: '📝', monthlyPerUser: 1650, category: 'ノート',),
     ];
 
     final totalCost = tools.fold<int>(0, (sum, t) => sum + t.monthlyPerUser);
@@ -279,7 +286,8 @@ class _EnterprisePageState extends State<EnterprisePage> {
                     ),
                     Text(
                       '10人チームで年間¥${(4100 * 10 * 12).toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}の節約',
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -360,7 +368,8 @@ class _EnterprisePageState extends State<EnterprisePage> {
           const SizedBox(height: 24),
           isMobile
               ? Column(
-                  children: useCases.map((u) => _UseCaseCard(useCase: u)).toList(),
+                  children:
+                      useCases.map((u) => _UseCaseCard(useCase: u)).toList(),
                 )
               : GridView.count(
                   crossAxisCount: 3,
@@ -369,7 +378,8 @@ class _EnterprisePageState extends State<EnterprisePage> {
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
                   childAspectRatio: 1.4,
-                  children: useCases.map((u) => _UseCaseCard(useCase: u)).toList(),
+                  children:
+                      useCases.map((u) => _UseCaseCard(useCase: u)).toList(),
                 ),
         ],
       ),
@@ -539,7 +549,8 @@ class _EnterprisePageState extends State<EnterprisePage> {
             )
           else
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 600),
+              constraints:
+                  BoxConstraints(maxWidth: isMobile ? double.infinity : 600),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -550,7 +561,9 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       label: '会社メールアドレス *',
                       hint: 'example@company.co.jp',
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'メールアドレスを入力してください';
+                        if (v == null || v.trim().isEmpty) {
+                          return 'メールアドレスを入力してください';
+                        }
                         if (!v.contains('@')) return '有効なメールアドレスを入力してください';
                         return null;
                       },
@@ -561,7 +574,9 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       label: '会社名 *',
                       hint: '株式会社〇〇',
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return '会社名を入力してください';
+                        if (v == null || v.trim().isEmpty) {
+                          return '会社名を入力してください';
+                        }
                         return null;
                       },
                     ),
@@ -569,14 +584,16 @@ class _EnterprisePageState extends State<EnterprisePage> {
                     _buildFormField(
                       controller: _messageController,
                       label: '現在の課題・お問い合わせ内容',
-                      hint: '例: 現在Slack + ジョブカンを使用中で、コスト削減と一元管理を検討しています。チーム規模は20名です。',
+                      hint:
+                          '例: 現在Slack + ジョブカンを使用中で、コスト削減と一元管理を検討しています。チーム規模は20名です。',
                       maxLines: 4,
                     ),
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 12),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 13),
+                        style: const TextStyle(
+                            color: Color(0xFFFCA5A5), fontSize: 13,),
                       ),
                     ],
                     const SizedBox(height: 24),
@@ -654,11 +671,13 @@ class _EnterprisePageState extends State<EnterprisePage> {
             fillColor: Colors.white.withValues(alpha: 0.08),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              borderSide:
+                  BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

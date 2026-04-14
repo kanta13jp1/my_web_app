@@ -261,11 +261,9 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
 
     await AbstinenceGuardStore.recordDisciplineRep(
       categoryId: category.id,
-      moneySaved:
-          int.tryParse(moneyController.text.trim()) ??
+      moneySaved: int.tryParse(moneyController.text.trim()) ??
           category.defaultMoneySaved,
-      timeSavedMinutes:
-          int.tryParse(timeController.text.trim()) ??
+      timeSavedMinutes: int.tryParse(timeController.text.trim()) ??
           category.defaultTimeSavedMinutes,
       note: noteController.text.trim(),
       now: _selectedMoment(),

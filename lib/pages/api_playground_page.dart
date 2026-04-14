@@ -308,7 +308,10 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                  border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,),
                 ),
                 child: SingleChildScrollView(
                   child: SelectableText(

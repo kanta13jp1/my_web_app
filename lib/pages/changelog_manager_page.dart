@@ -34,7 +34,8 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
         final data = res.data as Map<String, dynamic>;
         setState(() {
           _entries = List<Map<String, dynamic>>.from(
-              data['entries'] as List? ?? [],);
+            data['entries'] as List? ?? [],
+          );
         });
       }
     } catch (e) {
@@ -76,15 +77,21 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchChangelog,
-                          child: const Text('再試行'),),
+                        onPressed: _fetchChangelog,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -104,16 +111,21 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
                                 (entry['version']?.toString() ?? 'v?')
                                     .replaceAll('v', ''),
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 11,),
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                ),
                               ),
                             ),
                             title: Text(
-                                entry['title']?.toString() ?? '変更 ${index + 1}',),
-                            subtitle: Text([
-                              if (type != null) type,
-                              if (entry['date'] != null)
-                                entry['date'].toString(),
-                            ].join(' · '),),
+                              entry['title']?.toString() ?? '変更 ${index + 1}',
+                            ),
+                            subtitle: Text(
+                              [
+                                if (type != null) type,
+                                if (entry['date'] != null)
+                                  entry['date'].toString(),
+                              ].join(' · '),
+                            ),
                             isThreeLine: entry['description'] != null,
                             trailing: entry['description'] != null
                                 ? const Icon(Icons.chevron_right)

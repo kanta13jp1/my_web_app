@@ -165,7 +165,9 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                         onPressed: () => _addTask(_addController.text.trim()),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10,),
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ],
@@ -183,18 +185,30 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                           children: [
                             Expanded(
                               child: _buildColumn(
-                                  _colTodo, 'To Do', Icons.radio_button_unchecked,
-                                  const Color(0xFF6366F1), isDark,),
+                                _colTodo,
+                                'To Do',
+                                Icons.radio_button_unchecked,
+                                const Color(0xFF6366F1),
+                                isDark,
+                              ),
                             ),
                             Expanded(
                               child: _buildColumn(
-                                  _colDoing, '進行中', Icons.play_circle_outline,
-                                  const Color(0xFFF59E0B), isDark,),
+                                _colDoing,
+                                '進行中',
+                                Icons.play_circle_outline,
+                                const Color(0xFFF59E0B),
+                                isDark,
+                              ),
                             ),
                             Expanded(
                               child: _buildColumn(
-                                  _colDone, '完了', Icons.check_circle_outline,
-                                  const Color(0xFF10B981), isDark,),
+                                _colDone,
+                                '完了',
+                                Icons.check_circle_outline,
+                                const Color(0xFF10B981),
+                                isDark,
+                              ),
                             ),
                           ],
                         );
@@ -203,14 +217,26 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                         padding: const EdgeInsets.only(bottom: 24),
                         children: [
                           _buildColumn(
-                              _colTodo, 'To Do', Icons.radio_button_unchecked,
-                              const Color(0xFF6366F1), isDark,),
+                            _colTodo,
+                            'To Do',
+                            Icons.radio_button_unchecked,
+                            const Color(0xFF6366F1),
+                            isDark,
+                          ),
                           _buildColumn(
-                              _colDoing, '進行中', Icons.play_circle_outline,
-                              const Color(0xFFF59E0B), isDark,),
+                            _colDoing,
+                            '進行中',
+                            Icons.play_circle_outline,
+                            const Color(0xFFF59E0B),
+                            isDark,
+                          ),
                           _buildColumn(
-                              _colDone, '完了', Icons.check_circle_outline,
-                              const Color(0xFF10B981), isDark,),
+                            _colDone,
+                            '完了',
+                            Icons.check_circle_outline,
+                            const Color(0xFF10B981),
+                            isDark,
+                          ),
                         ],
                       );
                     },
@@ -232,9 +258,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
     return Container(
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isDark
-            ? color.withAlpha(15)
-            : color.withAlpha(10),
+        color: isDark ? color.withAlpha(15) : color.withAlpha(10),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withAlpha(60)),
       ),
@@ -259,7 +283,9 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                 const SizedBox(width: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 6, vertical: 1,),
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withAlpha(20),
                     borderRadius: BorderRadius.circular(10),
@@ -312,7 +338,9 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
         color: isDark ? const Color(0xFF1F2937) : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isDark ? Colors.grey[700]! : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: isDark
+              ? Colors.grey[700]!
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
         boxShadow: [
           BoxShadow(
@@ -327,7 +355,9 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.drag_indicator, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.drag_indicator,
+                size: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -342,47 +372,66 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
               ),
             ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              icon: Icon(Icons.more_vert,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
               padding: EdgeInsets.zero,
               itemBuilder: (_) => [
                 if (currentCol != _colTodo)
                   const PopupMenuItem(
                     value: 'todo',
-                    child: Row(children: [
-                      Icon(Icons.radio_button_unchecked, size: 16,
-                          color: Color(0xFF6366F1),),
-                      SizedBox(width: 8),
-                      Text('To Do に戻す'),
-                    ],),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.radio_button_unchecked,
+                          size: 16,
+                          color: Color(0xFF6366F1),
+                        ),
+                        SizedBox(width: 8),
+                        Text('To Do に戻す'),
+                      ],
+                    ),
                   ),
                 if (currentCol != _colDoing)
                   const PopupMenuItem(
                     value: 'doing',
-                    child: Row(children: [
-                      Icon(Icons.play_circle_outline, size: 16,
-                          color: Color(0xFFF59E0B),),
-                      SizedBox(width: 8),
-                      Text('進行中に移動'),
-                    ],),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.play_circle_outline,
+                          size: 16,
+                          color: Color(0xFFF59E0B),
+                        ),
+                        SizedBox(width: 8),
+                        Text('進行中に移動'),
+                      ],
+                    ),
                   ),
                 if (currentCol != _colDone)
                   const PopupMenuItem(
                     value: 'done',
-                    child: Row(children: [
-                      Icon(Icons.check_circle_outline, size: 16,
-                          color: Color(0xFF10B981),),
-                      SizedBox(width: 8),
-                      Text('完了にする'),
-                    ],),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: Color(0xFF10B981),
+                        ),
+                        SizedBox(width: 8),
+                        Text('完了にする'),
+                      ],
+                    ),
                   ),
                 const PopupMenuDivider(),
                 const PopupMenuItem(
                   value: 'delete',
-                  child: Row(children: [
-                    Icon(Icons.delete_outline, size: 16, color: Colors.red),
-                    SizedBox(width: 8),
-                    Text('削除', style: TextStyle(color: Colors.red)),
-                  ],),
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text('削除', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
                 ),
               ],
               onSelected: (action) {

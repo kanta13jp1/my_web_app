@@ -318,7 +318,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+        side: BorderSide(
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,),
       ),
       child: InkWell(
         onTap: () => _testSingleModel(modelName),
@@ -369,7 +370,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           'MAGIノード: $nodeCode (${provider.toUpperCase()})',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -670,7 +672,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 child: LinearProgressIndicator(
                   value: totalScore / 100,
                   minHeight: 8,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     totalScore >= 80
                         ? Colors.green
@@ -718,7 +721,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
           ),
           child: Text(
             detail,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
         ),
 
@@ -799,11 +804,15 @@ class _AiStatusPageState extends State<AiStatusPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.timer_outlined, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+              Icon(Icons.timer_outlined,
+                  size: 12,
+                  color: Theme.of(context).colorScheme.outlineVariant,),
               const SizedBox(width: 4),
               Text(
                 '${(levelLatency / 1000).toStringAsFixed(2)}s',
-                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
           ),

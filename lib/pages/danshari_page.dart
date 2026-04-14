@@ -221,7 +221,8 @@ class _DanshariPageState extends State<DanshariPage> {
                 child: ElevatedButton.icon(
                   onPressed: () => _processNote(false), // Archive
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
                     foregroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,

@@ -108,7 +108,8 @@ class MarkdownPreview extends StatelessWidget {
         ),
         tableHead: TextStyle(
           fontWeight: FontWeight.bold,
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          backgroundColor:
+              Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
         tableBody: const TextStyle(
           fontSize: 14,

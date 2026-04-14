@@ -130,8 +130,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
     try {
       await _supabase.from('bookmark_folders').update({
         'is_organized': !current,
-        'last_organized_at':
-            current ? null : DateTime.now().toIso8601String(),
+        'last_organized_at': current ? null : DateTime.now().toIso8601String(),
       }).eq('id', folder['id']);
       await _load();
     } catch (e) {
@@ -198,8 +197,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
 
   @override
   Widget build(BuildContext context) {
-    final organized =
-        _folders.where((f) => f['is_organized'] == true).length;
+    final organized = _folders.where((f) => f['is_organized'] == true).length;
     final total = _folders.length;
     final progress = total > 0 ? organized / total : 0.0;
 
@@ -282,7 +280,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                             '整理対象のブックマークフォルダを登録してください',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -309,8 +309,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color:
-              isOrganized ? Colors.green.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: isOrganized
+              ? Colors.green.shade200
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: ListTile(

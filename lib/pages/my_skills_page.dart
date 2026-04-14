@@ -382,7 +382,8 @@ class _MySkillsPageState extends State<MySkillsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
+            child:
+                const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -481,7 +482,8 @@ class _MySkillsPageState extends State<MySkillsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx2),
-              child: const Text('閉じる', style: TextStyle(color: Color(0xFF94A3B8))),
+              child:
+                  const Text('閉じる', style: TextStyle(color: Color(0xFF94A3B8))),
             ),
             ElevatedButton.icon(
               onPressed: isRunning
@@ -533,7 +535,8 @@ class _MySkillsPageState extends State<MySkillsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
+            child:
+                const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),

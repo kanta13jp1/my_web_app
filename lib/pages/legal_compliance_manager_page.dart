@@ -12,8 +12,7 @@ class LegalComplianceManagerPage extends StatefulWidget {
       _LegalComplianceManagerPageState();
 }
 
-class _LegalComplianceManagerPageState
-    extends State<LegalComplianceManagerPage>
+class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
     with SingleTickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
   late final TabController _tabController;
@@ -145,7 +144,8 @@ class _LegalComplianceManagerPageState
               Icons.description,
               color: urgent ? Colors.red : Colors.blue,
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.bold),),
             subtitle: Text(party.isNotEmpty ? party : status),
             trailing: expiry.isNotEmpty
                 ? Column(
@@ -220,7 +220,8 @@ class _LegalComplianceManagerPageState
                   ),
                 ),
                 secondary: priority == 'high'
-                    ? const Icon(Icons.priority_high, color: Colors.red, size: 18)
+                    ? const Icon(Icons.priority_high,
+                        color: Colors.red, size: 18,)
                     : null,
               );
             },

@@ -99,7 +99,8 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['forms'] is List) {
-        setState(() => _forms = (data['forms'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _forms = (data['forms'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _forms = data.cast<Map<String, dynamic>>());
       } else {
@@ -133,9 +134,11 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _fetchForms, child: const Text('再試行')),
+                      ElevatedButton(
+                          onPressed: _fetchForms, child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -147,7 +150,8 @@ class _FormBuilderPageState extends State<FormBuilderPage> {
                         final form = _forms[index];
                         return ListTile(
                           leading: const Icon(Icons.article_outlined),
-                          title: Text(form['title']?.toString() ?? 'フォーム ${index + 1}'),
+                          title: Text(
+                              form['title']?.toString() ?? 'フォーム ${index + 1}',),
                           subtitle: Text(form['description']?.toString() ?? ''),
                           trailing: Text('${form['field_count'] ?? 0}フィールド'),
                         );

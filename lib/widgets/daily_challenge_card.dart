@@ -38,8 +38,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
       return;
     }
     try {
-      final data =
-          await _service.getTodaysChallengesWithProgress(userId);
+      final data = await _service.getTodaysChallengesWithProgress(userId);
       int pts = 0;
       for (final item in data) {
         if (item['is_completed'] == true) {
@@ -113,7 +112,9 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                 if (_totalPoints > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2,),
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber.withAlpha(40),
                       borderRadius: BorderRadius.circular(12),
@@ -171,15 +172,12 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _challenges.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: 8),
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final item = _challenges[index];
                   final challenge = item['challenge'] as DailyChallenge;
-                  final progress =
-                      (item['current_progress'] as int?) ?? 0;
-                  final isCompleted =
-                      (item['is_completed'] as bool?) ?? false;
+                  final progress = (item['current_progress'] as int?) ?? 0;
+                  final isCompleted = (item['is_completed'] as bool?) ?? false;
                   final rewardClaimed =
                       (item['reward_claimed'] as bool?) ?? false;
 
@@ -281,9 +279,7 @@ class _ChallengeRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    decoration: isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                     color: isCompleted ? Colors.grey : null,
                   ),
                 ),
@@ -345,7 +341,9 @@ class _ChallengeRow extends StatelessWidget {
                   onTap: onClaimReward,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3,),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.amber,
                       borderRadius: BorderRadius.circular(8),

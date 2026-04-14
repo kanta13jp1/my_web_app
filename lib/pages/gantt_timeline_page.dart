@@ -43,7 +43,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'gantt.list'});
+      final res = await _supabase.functions
+          .invoke('enterprise-hub', body: {'action': 'gantt.list'});
       final data = res.data;
       if (data is Map<String, dynamic> && data['tasks'] is List) {
         setState(() => _projects = data['tasks'] as List);
@@ -139,7 +140,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                         onPressed: () async {
                           final d = await showDatePicker(
                             context: ctx,
-                            initialDate: DateTime.now().add(const Duration(days: 30)),
+                            initialDate:
+                                DateTime.now().add(const Duration(days: 30)),
                             firstDate: DateTime(2020),
                             lastDate: DateTime(2030),
                           );
@@ -316,9 +318,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                     'project_id': _selectedProjectId,
                     'is_milestone': true,
                     'name': nameCtrl.text.trim(),
-                    'due_date':
-                        (dueDate ?? DateTime.now().add(const Duration(days: 14)))
-                            .toIso8601String(),
+                    'due_date': (dueDate ??
+                            DateTime.now().add(const Duration(days: 14)))
+                        .toIso8601String(),
                   },
                 );
                 await _fetchProjectDetails(_selectedProjectId!);
@@ -380,9 +382,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 8),
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _fetchProjects,
@@ -408,7 +412,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.view_timeline_outlined, size: 64, color: Colors.grey),
+            const Icon(Icons.view_timeline_outlined,
+                size: 64, color: Colors.grey,),
             const SizedBox(height: 16),
             const Text(
               'プロジェクトがありません',
@@ -543,7 +548,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 ],
               ),
               const SizedBox(height: 8),
-              ..._milestones.map((ms) => _buildMilestoneRow(ms as Map<String, dynamic>)),
+              ..._milestones
+                  .map((ms) => _buildMilestoneRow(ms as Map<String, dynamic>)),
               const Divider(height: 24),
             ],
 
@@ -581,7 +587,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 ),
               )
             else
-              ..._tasks.map((task) => _buildGanttTaskRow(task as Map<String, dynamic>)),
+              ..._tasks.map(
+                  (task) => _buildGanttTaskRow(task as Map<String, dynamic>),),
 
             const SizedBox(height: 80),
           ],
@@ -671,11 +678,13 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                    border:
+                        Border.all(color: statusColor.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     statusLabel,
@@ -695,21 +704,26 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 minHeight: 12,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation<Color>(statusColor),
               ),
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                Icon(Icons.calendar_today,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 const SizedBox(width: 4),
                 Text(
                   startDate != null ? _formatDate(startDate) : '未設定',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.timer, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                Icon(Icons.timer,
+                    size: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 const SizedBox(width: 4),
                 Text(
                   '$durationDays日間',
@@ -765,7 +779,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.account_tree, color: Colors.deepOrange, size: 32),
+                const Icon(Icons.account_tree,
+                    color: Colors.deepOrange, size: 32,),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

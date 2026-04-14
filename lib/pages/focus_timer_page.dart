@@ -76,9 +76,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
         'focus-timer',
         body: {
           'action': 'start',
-          'task_label': _taskController.text.isEmpty
-              ? '集中作業'
-              : _taskController.text,
+          'task_label':
+              _taskController.text.isEmpty ? '集中作業' : _taskController.text,
           'duration_minutes': _workMinutes,
         },
       );
@@ -202,8 +201,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
       if (data is Map<String, dynamic>) {
         if (mounted) {
           setState(() {
-            _sessions = (data['sessions'] as List? ?? [])
-                .cast<Map<String, dynamic>>();
+            _sessions =
+                (data['sessions'] as List? ?? []).cast<Map<String, dynamic>>();
             _stats = data['stats'] as Map<String, dynamic>? ?? {};
           });
         }
@@ -232,8 +231,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     return 1 - (_secondsLeft / total);
   }
 
-  Color get _timerColor =>
-      _isBreak ? Colors.green.shade600 : Colors.deepOrange;
+  Color get _timerColor => _isBreak ? Colors.green.shade600 : Colors.deepOrange;
 
   // ---- build ----
 
@@ -355,8 +353,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                           setState(() {
                             _workMinutes = work;
                             _breakMinutes = brk;
-                            _secondsLeft =
-                                (_isBreak ? brk : work) * 60;
+                            _secondsLeft = (_isBreak ? brk : work) * 60;
                           });
                         },
                 ),
@@ -785,7 +782,9 @@ class _StatCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -803,7 +802,9 @@ class _StatCard extends StatelessWidget {
             ),
             Text(
               sub,
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
           ],
         ),

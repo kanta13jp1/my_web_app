@@ -37,7 +37,8 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
       _errorMessage = null;
     });
     try {
-      final response = await _supabase.functions.invoke('ai-hub', body: {'action': 'secretary.history'});
+      final response = await _supabase.functions
+          .invoke('ai-hub', body: {'action': 'secretary.history'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['summaries'] is List) {
         setState(
@@ -67,7 +68,8 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
           .invoke('ai-hub', body: {'action': 'summarize.text', 'text': text});
       final data = response.data;
       if (data is Map<String, dynamic>) {
-        setState(() => _summary = data['summary']?.toString() ?? '要約を生成できませんでした');
+        setState(
+            () => _summary = data['summary']?.toString() ?? '要約を生成できませんでした',);
         await _fetchSummaries();
       }
     } catch (e) {
@@ -212,7 +214,11 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
               ),
             ],
             const SizedBox(height: 16),
-            Text('要約履歴', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+            Text('要約履歴',
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(color: Colors.white),),
             const SizedBox(height: 8),
             Expanded(
               child: _isLoading

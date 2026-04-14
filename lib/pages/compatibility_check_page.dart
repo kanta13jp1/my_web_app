@@ -216,14 +216,18 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isSelected
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -309,7 +313,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: rank <= 3 ? rankColor : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: rank <= 3
+              ? rankColor
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: rank <= 3 ? 2 : 1,
         ),
       ),
@@ -375,7 +381,9 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                           personalityType.nameJa,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                         ),
                       ],
@@ -384,7 +392,8 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],

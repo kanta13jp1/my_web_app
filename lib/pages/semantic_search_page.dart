@@ -132,8 +132,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, i) {
-                              final item =
-                                  _results[i] as Map<String, dynamic>;
+                              final item = _results[i] as Map<String, dynamic>;
                               final score = item['similarity'] ??
                                   item['score'] ??
                                   item['relevance'];

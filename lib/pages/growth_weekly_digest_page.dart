@@ -7,8 +7,7 @@ class GrowthWeeklyDigestPage extends StatefulWidget {
   const GrowthWeeklyDigestPage({super.key});
 
   @override
-  State<GrowthWeeklyDigestPage> createState() =>
-      _GrowthWeeklyDigestPageState();
+  State<GrowthWeeklyDigestPage> createState() => _GrowthWeeklyDigestPageState();
 }
 
 class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
@@ -30,8 +29,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
     });
 
     try {
-      final response =
-          await _supabase.functions.invoke('growth-weekly-digest');
+      final response = await _supabase.functions.invoke('growth-weekly-digest');
 
       final data = response.data;
       if (data is Map<String, dynamic>) {

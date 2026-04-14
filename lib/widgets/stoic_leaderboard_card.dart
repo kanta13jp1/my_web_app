@@ -96,16 +96,21 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
                   ),
                 )
               : _leaderboard.isEmpty
-                  ? Text('まだデータがありません。最初のランカーになりましょう！', style: TextStyle(color: subColor))
+                  ? Text('まだデータがありません。最初のランカーになりましょう！',
+                      style: TextStyle(color: subColor),)
                   : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _leaderboard.length,
-                      separatorBuilder: (context, index) => Divider(color: subColor.withValues(alpha: 0.2)),
+                      separatorBuilder: (context, index) =>
+                          Divider(color: subColor.withValues(alpha: 0.2)),
                       itemBuilder: (context, index) {
                         final item = _leaderboard[index];
-                        final profile = (item['user_profiles'] as Map<String, dynamic>?) ?? {};
-                        final displayName = (profile['display_name'] as String?) ?? '名無し役員';
+                        final profile =
+                            (item['user_profiles'] as Map<String, dynamic>?) ??
+                                {};
+                        final displayName =
+                            (profile['display_name'] as String?) ?? '名無し役員';
                         final savedMoney = (item['saved_money'] as int?) ?? 0;
                         final stoicLevel = (item['stoic_level'] as int?) ?? 1;
 

@@ -193,7 +193,8 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
             const SizedBox(height: 8),
             Text(
               widget.attachment.formattedSize,
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(

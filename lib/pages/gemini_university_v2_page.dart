@@ -479,7 +479,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'ai21': _Quiz(
     question: 'Jamba のアーキテクチャが革新的な理由は何ですか？',
-    options: ['SSM と Transformer を融合しO(n)の線形計算量で長文処理', '世界最大のパラメータ数', '画像生成に特化した設計', '量子コンピュータを活用'],
+    options: [
+      'SSM と Transformer を融合しO(n)の線形計算量で長文処理',
+      '世界最大のパラメータ数',
+      '画像生成に特化した設計',
+      '量子コンピュータを活用',
+    ],
     correct: 0,
   ),
   'aleph_alpha': _Quiz(
@@ -494,7 +499,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'elevenlabs': _Quiz(
     question: 'ElevenLabs の Eleven Turbo v2.5 の主な特徴は？',
-    options: ['低レイテンシ (<250ms) でリアルタイムAI音声に最適', '最高音質の有声本生成専用', '音声認識特化', '画像から音声生成'],
+    options: [
+      '低レイテンシ (<250ms) でリアルタイムAI音声に最適',
+      '最高音質の有声本生成専用',
+      '音声認識特化',
+      '画像から音声生成',
+    ],
     correct: 0,
   ),
   'fireworks_ai': _Quiz(
@@ -504,22 +514,42 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'ideogram': _Quiz(
     question: 'Ideogram AI が他の画像生成AIと比べて特に優れている点は？',
-    options: ['画像内のテキスト (文字) を正確に生成できる', '動画から静止画を抽出', 'リアルタイム画像ストリーミング', '音声から画像を生成'],
+    options: [
+      '画像内のテキスト (文字) を正確に生成できる',
+      '動画から静止画を抽出',
+      'リアルタイム画像ストリーミング',
+      '音声から画像を生成',
+    ],
     correct: 0,
   ),
   'ollama': _Quiz(
     question: 'Ollama の最大のメリットは？',
-    options: ['データが外部送信されず完全ローカル実行 → プライバシー保護 + API料金ゼロ', 'クラウドで最新GPT-4より高精度', 'リアルタイムWeb検索', '1秒以内の超高速レスポンス保証'],
+    options: [
+      'データが外部送信されず完全ローカル実行 → プライバシー保護 + API料金ゼロ',
+      'クラウドで最新GPT-4より高精度',
+      'リアルタイムWeb検索',
+      '1秒以内の超高速レスポンス保証',
+    ],
     correct: 0,
   ),
   'openrouter': _Quiz(
     question: 'OpenRouter の API は既存のどの SDK と互換性がある？',
-    options: ['OpenAI SDK (base_url変更のみ)', 'LangChain専用SDK', 'Anthropic SDKのみ', '独自SDK'],
+    options: [
+      'OpenAI SDK (base_url変更のみ)',
+      'LangChain専用SDK',
+      'Anthropic SDKのみ',
+      '独自SDK',
+    ],
     correct: 0,
   ),
   'oracle': _Quiz(
     question: 'Oracle Database 23ai でベクトル検索を実行する際に使う関数は？',
-    options: ['VECTOR_DISTANCE()', 'COSINE_SEARCH()', 'AI_SEARCH()', 'EMBED_QUERY()'],
+    options: [
+      'VECTOR_DISTANCE()',
+      'COSINE_SEARCH()',
+      'AI_SEARCH()',
+      'EMBED_QUERY()',
+    ],
     correct: 0,
   ),
   'reka': _Quiz(
@@ -549,12 +579,22 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'udio': _Quiz(
     question: 'Udio が Suno より優れているとされる領域は？',
-    options: ['インストゥルメンタル生成と音楽理論の精度', '日本語ボーカルの自然さ', '短い楽曲の高速生成', '無料プランでの生成曲数'],
+    options: [
+      'インストゥルメンタル生成と音楽理論の精度',
+      '日本語ボーカルの自然さ',
+      '短い楽曲の高速生成',
+      '無料プランでの生成曲数',
+    ],
     correct: 0,
   ),
   'voyage': _Quiz(
     question: 'Voyage AI の Reranker を RAG パイプラインに組み込む目的は？',
-    options: ['ベクトル検索の上位N件を精密に再スコアリングしてRAG精度向上', 'テキストを圧縮してコスト削減', 'クエリを自動翻訳', 'DB検索速度向上'],
+    options: [
+      'ベクトル検索の上位N件を精密に再スコアリングしてRAG精度向上',
+      'テキストを圧縮してコスト削減',
+      'クエリを自動翻訳',
+      'DB検索速度向上',
+    ],
     correct: 0,
   ),
   'writer': _Quiz(
@@ -564,7 +604,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'luma': _Quiz(
     question: 'Luma AI Dream Machine の最大の特徴は？',
-    options: ['3D空間を理解した動画生成 (物体の奥行き・動きを正確にレンダリング)', '音声から動画を生成', '静止画の解像度向上', 'テキスト文書の要約'],
+    options: [
+      '3D空間を理解した動画生成 (物体の奥行き・動きを正確にレンダリング)',
+      '音声から動画を生成',
+      '静止画の解像度向上',
+      'テキスト文書の要約',
+    ],
     correct: 0,
   ),
   'kling': _Quiz(
@@ -614,7 +659,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   '01ai': _Quiz(
     question: '01.AI を創業した著名人は誰ですか？',
-    options: ['李開復 (Kai-Fu Lee)', '李飛飛 (Fei-Fei Li)', 'Andrew Ng', 'Yann LeCun'],
+    options: [
+      '李開復 (Kai-Fu Lee)',
+      '李飛飛 (Fei-Fei Li)',
+      'Andrew Ng',
+      'Yann LeCun',
+    ],
     correct: 0,
   ),
   'coze': _Quiz(
@@ -624,7 +674,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'apple': _Quiz(
     question: 'Apple Intelligence のプライバシー保護技術の名称は？',
-    options: ['Private Cloud Compute', 'Secure Enclave AI', 'Neural Guard', 'On-Device Shield'],
+    options: [
+      'Private Cloud Compute',
+      'Secure Enclave AI',
+      'Neural Guard',
+      'On-Device Shield',
+    ],
     correct: 0,
   ),
   'allenai': _Quiz(
@@ -1603,8 +1658,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
     // ローカル (SharedPreferences) から読み込み
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_prefsKey) ?? '';
-    final localSet =
-        saved.isNotEmpty ? saved.split(',').toSet() : <String>{};
+    final localSet = saved.isNotEmpty ? saved.split(',').toSet() : <String>{};
 
     // Supabase からクロスデバイス記録を取得してマージ
     final user = _supabase.auth.currentUser;
@@ -1804,8 +1858,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                   style: TextStyle(
                     fontSize: 11,
                     color: learned ? Colors.white : Colors.white38,
-                    fontWeight:
-                        learned ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: learned ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               );
@@ -1853,8 +1906,7 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
           as RenderRepaintBoundary?;
       if (boundary == null) return;
       final image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
       final pngBytes = byteData.buffer.asUint8List();
       final b64 = base64Encode(pngBytes);
@@ -2030,7 +2082,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber, color: Color(0xFFFFC107), size: 18),
+                  const Icon(Icons.warning_amber,
+                      color: Color(0xFFFFC107), size: 18,),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -2103,7 +2156,10 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [m.color.withValues(alpha: 0.78), m.color.withValues(alpha: 0.51)],
+          colors: [
+            m.color.withValues(alpha: 0.78),
+            m.color.withValues(alpha: 0.51),
+          ],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -2283,7 +2339,8 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
                 ),
                 if (answered) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 18),
+                  const Icon(Icons.check_circle,
+                      color: Color(0xFF4CAF50), size: 18,),
                   const Text(
                     ' +50pt',
                     style: TextStyle(color: Color(0xFF4CAF50), fontSize: 12),

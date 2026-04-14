@@ -72,8 +72,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                   if (_errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                     ),
                   Card(
                     child: Padding(
@@ -81,18 +83,26 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('現在のプラン',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold,),),
+                          const Text(
+                            '現在のプラン',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold,),
+                          ),
                           const SizedBox(height: 8),
                           if (_billingInfo != null) ...[
-                            _infoRow('プラン',
-                                _billingInfo!['plan']?.toString() ?? 'Free',),
-                            _infoRow('ステータス',
-                                _billingInfo!['status']?.toString() ?? '-',),
-                            _infoRow('次回更新日',
-                                _billingInfo!['next_billing_date']?.toString() ??
-                                    '-',),
+                            _infoRow(
+                              'プラン',
+                              _billingInfo!['plan']?.toString() ?? 'Free',
+                            ),
+                            _infoRow(
+                              'ステータス',
+                              _billingInfo!['status']?.toString() ?? '-',
+                            ),
+                            _infoRow(
+                              '次回更新日',
+                              _billingInfo!['next_billing_date']?.toString() ??
+                                  '-',
+                            ),
                           ] else
                             const Text('プラン情報なし'),
                         ],
@@ -100,16 +110,18 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('請求履歴',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),),
+                  const Text(
+                    '請求履歴',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const Divider(),
                   if (_invoices.isEmpty)
                     const Center(
-                        child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('請求履歴はありません'),
-                    ),)
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text('請求履歴はありません'),
+                      ),
+                    )
                   else
                     ListView.builder(
                       shrinkWrap: true,
@@ -117,15 +129,13 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                       itemCount: _invoices.length,
                       itemBuilder: (context, index) {
                         final invoice = _invoices[index];
-                        final amount = invoice is Map
-                            ? (invoice['amount'] ?? '-')
-                            : '-';
+                        final amount =
+                            invoice is Map ? (invoice['amount'] ?? '-') : '-';
                         final date = invoice is Map
                             ? (invoice['date'] ?? invoice['created_at'] ?? '-')
                             : '-';
-                        final status = invoice is Map
-                            ? (invoice['status'] ?? '-')
-                            : '-';
+                        final status =
+                            invoice is Map ? (invoice['status'] ?? '-') : '-';
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           child: ListTile(
@@ -134,10 +144,9 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                             subtitle: Text(date.toString()),
                             trailing: Chip(
                               label: Text(status.toString()),
-                              backgroundColor:
-                                  status.toString() == 'paid'
-                                      ? Colors.green.shade100
-                                      : Colors.orange.shade100,
+                              backgroundColor: status.toString() == 'paid'
+                                  ? Colors.green.shade100
+                                  : Colors.orange.shade100,
                             ),
                           ),
                         );
@@ -156,8 +165,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: const TextStyle(color: Colors.grey),),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           Expanded(child: Text(value)),
         ],

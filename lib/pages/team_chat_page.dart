@@ -77,8 +77,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
       final data = res.data;
       if (data is Map && data['messages'] is List) {
         setState(() {
-          _messages =
-              List<Map<String, dynamic>>.from(data['messages'] as List);
+          _messages = List<Map<String, dynamic>>.from(data['messages'] as List);
         });
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients) {
@@ -126,9 +125,7 @@ class _TeamChatPageState extends State<TeamChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedChannelName != null
-              ? '# $_selectedChannelName'
-              : 'チームチャット',
+          _selectedChannelName != null ? '# $_selectedChannelName' : 'チームチャット',
         ),
         actions: [
           if (_isLoading)
@@ -355,8 +352,9 @@ class _MessageInput extends StatelessWidget {
             child: TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText:
-                    channelName != null ? '#$channelName にメッセージを送信' : 'メッセージを入力',
+                hintText: channelName != null
+                    ? '#$channelName にメッセージを送信'
+                    : 'メッセージを入力',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

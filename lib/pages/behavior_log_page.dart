@@ -205,8 +205,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       );
       final data = response.data as Map<String, dynamic>?;
       final resultMap = data?['result'] as Map<String, dynamic>?;
-      final analysis =
-          resultMap?['analysis']?.toString() ?? 'AI分析を取得できませんでした';
+      final analysis = resultMap?['analysis']?.toString() ?? 'AI分析を取得できませんでした';
 
       await _supabase.from('behavior_log').update({
         'ai_analysis': analysis,
@@ -234,9 +233,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       final dt = DateTime.tryParse(l['occurred_at']?.toString() ?? '');
       if (dt == null) return false;
       final now = DateTime.now();
-      return dt.year == now.year &&
-          dt.month == now.month &&
-          dt.day == now.day;
+      return dt.year == now.year && dt.month == now.month && dt.day == now.day;
     }).toList();
     final highRegret =
         _logs.where((l) => (l['regret_level'] as int? ?? 0) >= 3).length;
@@ -319,7 +316,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                             '行動や発言を記録して\n振り返りを始めましょう',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontSize: 13,
                             ),
                           ),
@@ -360,9 +359,8 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
     final regret = entry['regret_level'] as int? ?? 0;
     final analysis = entry['ai_analysis']?.toString();
     final dt = DateTime.tryParse(entry['occurred_at']?.toString() ?? '');
-    final dateStr = dt != null
-        ? DateFormat('MM/dd HH:mm').format(dt.toLocal())
-        : '';
+    final dateStr =
+        dt != null ? DateFormat('MM/dd HH:mm').format(dt.toLocal()) : '';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -370,7 +368,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: regret >= 3 ? Colors.red.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: regret >= 3
+              ? Colors.red.shade200
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: Padding(
@@ -420,7 +420,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 const SizedBox(width: 6),
                 Text(
                   dateStr,
-                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.outlineVariant,),
                 ),
               ],
             ),
@@ -430,7 +432,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
               const SizedBox(height: 4),
               Text(
                 '📍 $ctx',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
             if (analysis != null) ...[

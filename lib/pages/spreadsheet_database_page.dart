@@ -31,8 +31,10 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('enterprise-hub',
-          body: {'action': 'sheet.list'},);
+      final res = await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'sheet.list'},
+      );
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {
@@ -54,13 +56,14 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('enterprise-hub',
-          body: {'action': 'sheet.list'},);
+      final res = await _supabase.functions.invoke(
+        'enterprise-hub',
+        body: {'action': 'sheet.list'},
+      );
       if (res.data != null) {
         final data = res.data as Map<String, dynamic>;
         setState(() {
-          _rows =
-              List<Map<String, dynamic>>.from(data['rows'] as List? ?? []);
+          _rows = List<Map<String, dynamic>>.from(data['rows'] as List? ?? []);
         });
       }
     } catch (e) {
@@ -89,15 +92,21 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchSheets,
-                          child: const Text('再試行'),),
+                        onPressed: _fetchSheets,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -110,8 +119,10 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                         children: [
                           const Padding(
                             padding: EdgeInsets.all(12),
-                            child: Text('シート一覧',
-                                style: TextStyle(fontWeight: FontWeight.bold),),
+                            child: Text(
+                              'シート一覧',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                           Expanded(
                             child: _sheets.isEmpty
@@ -120,11 +131,11 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                                     itemCount: _sheets.length,
                                     itemBuilder: (context, index) {
                                       final sheet = _sheets[index];
-                                      final id =
-                                          sheet['id']?.toString() ?? '';
+                                      final id = sheet['id']?.toString() ?? '';
                                       return ListTile(
                                         title: Text(
-                                            sheet['name']?.toString() ?? id,),
+                                          sheet['name']?.toString() ?? id,
+                                        ),
                                         selected: _selectedSheetId == id,
                                         onTap: () => _fetchRows(id),
                                       );
@@ -146,14 +157,16 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                                     final row = _rows[index];
                                     return Card(
                                       margin: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4,),
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
                                       child: ListTile(
-                                        title: Text(row.entries
-                                            .map(
-                                              (e) =>
-                                                  '${e.key}: ${e.value}',
-                                            )
-                                            .join(' | '),),
+                                        title: Text(
+                                          row.entries
+                                              .map(
+                                                  (e) => '${e.key}: ${e.value}',)
+                                              .join(' | '),
+                                        ),
                                       ),
                                     );
                                   },

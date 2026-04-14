@@ -295,8 +295,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
   }
 
   Widget _buildDayOfWeekCard() {
-    final maxCount =
-        _byDayOfWeek.isEmpty ? 1 : _byDayOfWeek.map((e) => e.count).reduce((a, b) => a > b ? a : b);
+    final maxCount = _byDayOfWeek.isEmpty
+        ? 1
+        : _byDayOfWeek.map((e) => e.count).reduce((a, b) => a > b ? a : b);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -326,9 +327,8 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             style: TextStyle(
                               fontSize: 10,
                               color: isWorst ? Colors.red : Colors.black54,
-                              fontWeight: isWorst
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                              fontWeight:
+                                  isWorst ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -346,11 +346,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             _dayNames[d.day],
                             style: TextStyle(
                               fontSize: 11,
-                              color:
-                                  isWorst ? Colors.red : Colors.black54,
-                              fontWeight: isWorst
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
+                              color: isWorst ? Colors.red : Colors.black54,
+                              fontWeight:
+                                  isWorst ? FontWeight.bold : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -366,8 +364,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
   }
 
   Widget _buildTimeSlotCard() {
-    final maxCount =
-        _byHour.isEmpty ? 1 : _byHour.map((e) => e.count).reduce((a, b) => a > b ? a : b);
+    final maxCount = _byHour.isEmpty
+        ? 1
+        : _byHour.map((e) => e.count).reduce((a, b) => a > b ? a : b);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -487,8 +486,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                     child: Text(
                       '${item.count}回',
                       style: TextStyle(
-                        color:
-                            rank == 1 ? Colors.red.shade700 : _primaryColor,
+                        color: rank == 1 ? Colors.red.shade700 : _primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -532,9 +530,10 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                     ? Text(note, style: const TextStyle(fontSize: 11))
                     : null,
                 trailing: Text(
-                  slippedAt.length >= 10 ? slippedAt.substring(0, 10) : slippedAt,
-                  style:
-                      const TextStyle(fontSize: 11, color: Colors.black45),
+                  slippedAt.length >= 10
+                      ? slippedAt.substring(0, 10)
+                      : slippedAt,
+                  style: const TextStyle(fontSize: 11, color: Colors.black45),
                 ),
               );
             }),

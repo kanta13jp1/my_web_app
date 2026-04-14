@@ -192,7 +192,9 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                           widget.document.categoryDisplayName,
                                           style: TextStyle(
                                             fontSize: 14,
-                                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                           ),
                                         ),
                                       ],
@@ -201,21 +203,28 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                              Divider(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Icon(
                                     Icons.insert_drive_file,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     widget.document.path,
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                       fontFamily: 'monospace',
                                     ),
                                   ),

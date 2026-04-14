@@ -208,8 +208,8 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                     onPressed: () async {
                       final d = await showDatePicker(
                         context: ctx,
-                        initialDate: DateTime.now()
-                            .add(const Duration(days: 30)),
+                        initialDate:
+                            DateTime.now().add(const Duration(days: 30)),
                         firstDate: DateTime.now(),
                         lastDate: DateTime(2040),
                       );
@@ -247,9 +247,8 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         'parent_id': parentId,
         'level': level,
         'title': title,
-        'description': descCtrl.text.trim().isEmpty
-            ? null
-            : descCtrl.text.trim(),
+        'description':
+            descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
         'category': selectedCategory,
         'priority': selectedPriority,
         'recurrence': selectedRecurrence,
@@ -267,15 +266,11 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
 
   Future<void> _updateProgress(String goalId, int progress) async {
     try {
-      await _supabase
-          .from('life_goals')
-          .update({
-            'progress': progress,
-            'status': progress >= 100 ? 'completed' : 'active',
-            if (progress >= 100)
-              'completed_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', goalId);
+      await _supabase.from('life_goals').update({
+        'progress': progress,
+        'status': progress >= 100 ? 'completed' : 'active',
+        if (progress >= 100) 'completed_at': DateTime.now().toIso8601String(),
+      }).eq('id', goalId);
       setState(() {
         final idx = _goals.indexWhere((g) => g['id'] == goalId);
         if (idx >= 0) {
@@ -356,18 +351,17 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                         _categories[levelGoals[i]['category']] ?? '📎 その他',
                     onAddChild: level != 'small'
                         ? () => _showAddGoalDialog(
-                            level: _levels[_levels.indexOf(level) + 1],
-                            parentId: levelGoals[i]['id'] as String,
-                          )
+                              level: _levels[_levels.indexOf(level) + 1],
+                              parentId: levelGoals[i]['id'] as String,
+                            )
                         : null,
                     onProgressChanged: level == 'small'
                         ? (v) => _updateProgress(
-                            levelGoals[i]['id'] as String,
-                            v,
-                          )
+                              levelGoals[i]['id'] as String,
+                              v,
+                            )
                         : null,
-                    onDelete: () =>
-                        _deleteGoal(levelGoals[i]['id'] as String),
+                    onDelete: () => _deleteGoal(levelGoals[i]['id'] as String),
                   ),
                 );
               }).toList(),
@@ -476,12 +470,9 @@ class _GoalCard extends StatelessWidget {
     DateTime? targetDate;
     if (targetDateStr != null) targetDate = DateTime.tryParse(targetDateStr);
 
-    final bgColor = isDark
-        ? const Color(0xFF1A2233)
-        : Colors.white;
-    final borderColor = isDark
-        ? const Color(0xFF2A3A55)
-        : const Color(0xFFE2E8F0);
+    final bgColor = isDark ? const Color(0xFF1A2233) : Colors.white;
+    final borderColor =
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -528,9 +519,8 @@ class _GoalCard extends StatelessWidget {
                               : (isDark
                                   ? Colors.white
                                   : const Color(0xFF1E293B)),
-                          decoration: isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
+                          decoration:
+                              isCompleted ? TextDecoration.lineThrough : null,
                         ),
                       ),
                       Row(
@@ -539,9 +529,8 @@ class _GoalCard extends StatelessWidget {
                             categoryLabel,
                             style: TextStyle(
                               fontSize: 11,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
                             ),
                           ),
                           if (targetDate != null) ...[
@@ -549,9 +538,8 @@ class _GoalCard extends StatelessWidget {
                             Icon(
                               Icons.calendar_today,
                               size: 10,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
                             ),
                             const SizedBox(width: 2),
                             Text(
@@ -658,9 +646,7 @@ class _GoalCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isCompleted
-                                  ? Colors.green
-                                  : levelColor,
+                              color: isCompleted ? Colors.green : levelColor,
                             ),
                           ),
                           if (isCompleted)
@@ -688,16 +674,12 @@ class _GoalCard extends StatelessWidget {
                       if (onProgressChanged != null)
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: isCompleted
-                                ? Colors.green
-                                : levelColor,
+                            activeTrackColor:
+                                isCompleted ? Colors.green : levelColor,
                             inactiveTrackColor:
                                 levelColor.withValues(alpha: 0.2),
-                            thumbColor: isCompleted
-                                ? Colors.green
-                                : levelColor,
-                            overlayColor:
-                                levelColor.withValues(alpha: 0.1),
+                            thumbColor: isCompleted ? Colors.green : levelColor,
+                            overlayColor: levelColor.withValues(alpha: 0.1),
                             trackHeight: 4,
                             thumbShape: const RoundSliderThumbShape(
                               enabledThumbRadius: 8,
@@ -708,8 +690,7 @@ class _GoalCard extends StatelessWidget {
                             min: 0,
                             max: 100,
                             divisions: 10,
-                            onChanged: (v) =>
-                                onProgressChanged!(v.toInt()),
+                            onChanged: (v) => onProgressChanged!(v.toInt()),
                           ),
                         )
                       else
@@ -718,8 +699,7 @@ class _GoalCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: progress / 100,
                             minHeight: 6,
-                            backgroundColor:
-                                levelColor.withValues(alpha: 0.15),
+                            backgroundColor: levelColor.withValues(alpha: 0.15),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               isCompleted ? Colors.green : levelColor,
                             ),

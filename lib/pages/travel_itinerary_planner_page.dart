@@ -36,7 +36,8 @@ class _TravelItineraryPlannerPageState
         final data = res.data as Map<String, dynamic>;
         setState(() {
           _itineraries = List<Map<String, dynamic>>.from(
-              data['itineraries'] as List? ?? [],);
+            data['itineraries'] as List? ?? [],
+          );
         });
       }
     } catch (e) {
@@ -65,15 +66,21 @@ class _TravelItineraryPlannerPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchItineraries,
-                          child: const Text('再試行'),),
+                        onPressed: _fetchItineraries,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -82,8 +89,11 @@ class _TravelItineraryPlannerPageState
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.flight_takeoff,
-                              size: 64, color: Colors.grey,),
+                          const Icon(
+                            Icons.flight_takeoff,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(height: 16),
                           const Text('旅行プランがありません'),
                           const SizedBox(height: 8),
@@ -104,16 +114,20 @@ class _TravelItineraryPlannerPageState
                           child: ListTile(
                             leading: const Icon(Icons.flight_takeoff),
                             title: Text(
-                                item['title']?.toString() ?? '旅程 ${index + 1}',),
-                            subtitle: Text([
-                              if (item['destination'] != null)
-                                item['destination'].toString(),
-                              if (item['start_date'] != null)
-                                item['start_date'].toString(),
-                            ].join(' · '),),
+                              item['title']?.toString() ?? '旅程 ${index + 1}',
+                            ),
+                            subtitle: Text(
+                              [
+                                if (item['destination'] != null)
+                                  item['destination'].toString(),
+                                if (item['start_date'] != null)
+                                  item['start_date'].toString(),
+                              ].join(' · '),
+                            ),
                             trailing: Chip(
                               label: Text(
-                                  item['status']?.toString() ?? 'draft',),
+                                item['status']?.toString() ?? 'draft',
+                              ),
                             ),
                           ),
                         );

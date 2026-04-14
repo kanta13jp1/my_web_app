@@ -49,8 +49,11 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
     if (user == null) return;
     setState(() => _loading = true);
     try {
-      final monthStart = DateTime(_selectedDate.year, _selectedDate.month, 1).toIso8601String();
-      final monthEnd = DateTime(_selectedDate.year, _selectedDate.month + 1, 0, 23, 59).toIso8601String();
+      final monthStart = DateTime(_selectedDate.year, _selectedDate.month, 1)
+          .toIso8601String();
+      final monthEnd =
+          DateTime(_selectedDate.year, _selectedDate.month + 1, 0, 23, 59)
+              .toIso8601String();
       final data = await _supabase
           .from('family_events')
           .select()
@@ -58,7 +61,9 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
           .gte('event_date', monthStart)
           .lte('event_date', monthEnd)
           .order('event_date');
-      if (mounted) setState(() => _events = List<Map<String, dynamic>>.from(data));
+      if (mounted) {
+        setState(() => _events = List<Map<String, dynamic>>.from(data));
+      }
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -144,7 +149,8 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+              child:
+                  const Text('キャンセル', style: TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               onPressed: _saving ? null : _save,
@@ -153,7 +159,11 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                 foregroundColor: Colors.white,
               ),
               child: _saving
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white,),)
                   : const Text('保存'),
             ),
           ],
@@ -208,18 +218,23 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                 IconButton(
                   icon: const Icon(Icons.chevron_left, color: Colors.white),
                   onPressed: () {
-                    setState(() => _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1));
+                    setState(() => _selectedDate =
+                        DateTime(_selectedDate.year, _selectedDate.month - 1),);
                     _load();
                   },
                 ),
                 Text(
                   _monthLabel(_selectedDate),
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,),
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right, color: Colors.white),
                   onPressed: () {
-                    setState(() => _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1));
+                    setState(() => _selectedDate =
+                        DateTime(_selectedDate.year, _selectedDate.month + 1),);
                     _load();
                   },
                 ),
@@ -229,15 +244,18 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
           // イベント一覧
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B35)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFF6B35)),)
                 : _events.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.calendar_month_outlined, color: Colors.white38, size: 48),
+                            const Icon(Icons.calendar_month_outlined,
+                                color: Colors.white38, size: 48,),
                             const SizedBox(height: 12),
-                            const Text('この月のイベントはありません', style: TextStyle(color: Colors.white38)),
+                            const Text('この月のイベントはありません',
+                                style: TextStyle(color: Colors.white38),),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: _showAddDialog,
@@ -257,7 +275,8 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                         itemBuilder: (_, i) {
                           final e = _events[i];
                           final cat = e['category'] as String? ?? 'その他';
-                          final color = _categoryColors[cat] ?? const Color(0xFF9CA3AF);
+                          final color =
+                              _categoryColors[cat] ?? const Color(0xFF9CA3AF);
                           final dateStr = e['event_date'] != null
                               ? DateTime.parse(e['event_date'].toString())
                                   .toLocal()
@@ -283,20 +302,29 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                               subtitle: Row(
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2,),
                                     decoration: BoxDecoration(
                                       color: color.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text(cat, style: TextStyle(color: color, fontSize: 11)),
+                                    child: Text(cat,
+                                        style: TextStyle(
+                                            color: color, fontSize: 11,),),
                                   ),
-                                  if ((e['member'] as String? ?? '').isNotEmpty) ...[
+                                  if ((e['member'] as String? ?? '')
+                                      .isNotEmpty) ...[
                                     const SizedBox(width: 8),
-                                    Text(e['member'] as String, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                                    Text(e['member'] as String,
+                                        style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,),),
                                   ],
                                 ],
                               ),
-                              trailing: Text(dateStr, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                              trailing: Text(dateStr,
+                                  style: const TextStyle(
+                                      color: Colors.white38, fontSize: 12,),),
                             ),
                           );
                         },

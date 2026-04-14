@@ -23,12 +23,17 @@ class _DataBackupPageState extends State<DataBackupPage> {
     _ExportTarget('notes', 'ノート', Icons.note, Colors.amber),
     _ExportTarget('tasks', 'タスク', Icons.task, Colors.blue),
     _ExportTarget('habits', '習慣', Icons.loop, Colors.green),
-    _ExportTarget('finances', '財務', Icons.account_balance_wallet, Colors.purple),
+    _ExportTarget(
+        'finances', '財務', Icons.account_balance_wallet, Colors.purple,),
     _ExportTarget('blog_posts', 'ブログ', Icons.article, Colors.indigo),
   ];
 
   final Set<String> _selected = {
-    'notes', 'tasks', 'habits', 'finances', 'blog_posts',
+    'notes',
+    'tasks',
+    'habits',
+    'finances',
+    'blog_posts',
   };
 
   @override

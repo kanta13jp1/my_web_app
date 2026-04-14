@@ -70,7 +70,9 @@ class GrowthChartWidget extends StatelessWidget {
                     horizontalInterval: maxY > 10 ? null : 1,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         strokeWidth: 1,
                       );
                     },
@@ -129,8 +131,14 @@ class GrowthChartWidget extends StatelessWidget {
                   borderData: FlBorderData(
                     show: true,
                     border: Border(
-                      bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                      left: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      bottom: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,),
+                      left: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,),
                     ),
                   ),
                   minX: 0,

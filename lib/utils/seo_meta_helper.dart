@@ -18,8 +18,7 @@ class SeoMetaHelper {
     if (existing != null) {
       existing.setAttribute('content', content);
     } else {
-      final meta =
-          web.document.createElement('meta') as web.HTMLMetaElement;
+      final meta = web.document.createElement('meta') as web.HTMLMetaElement;
       meta.name = name;
       meta.content = content;
       web.document.head?.appendChild(meta);
@@ -28,13 +27,11 @@ class SeoMetaHelper {
 
   /// <meta property="[property]"> (OG タグ) の content を更新する。
   static void setOgTag(String property, String content) {
-    final existing =
-        web.document.querySelector('meta[property="$property"]');
+    final existing = web.document.querySelector('meta[property="$property"]');
     if (existing != null) {
       existing.setAttribute('content', content);
     } else {
-      final meta =
-          web.document.createElement('meta') as web.HTMLMetaElement;
+      final meta = web.document.createElement('meta') as web.HTMLMetaElement;
       meta.setAttribute('property', property);
       meta.content = content;
       web.document.head?.appendChild(meta);

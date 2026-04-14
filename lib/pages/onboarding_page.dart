@@ -82,7 +82,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow, // 高級感のあるオフホワイト
+      backgroundColor:
+          Theme.of(context).colorScheme.surfaceContainerLow, // 高級感のあるオフホワイト
       body: SafeArea(
         child: Column(
           children: [
@@ -202,7 +203,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_edu, size: 60, color: Theme.of(context).colorScheme.onSurface),
+          Icon(Icons.history_edu,
+              size: 60, color: Theme.of(context).colorScheme.onSurface,),
           const SizedBox(height: 24),
           const Text(
             '代表取締役 就任承諾書',
@@ -222,7 +224,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
-              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+              border: Border.all(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Column(
@@ -258,12 +261,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
   // 4. スタートガイドページ（就任完了後に表示）
   Widget _buildFirstStepsPage() {
     final steps = [
-      (Icons.wb_sunny, Colors.amber, 'モーニングブリーフィング',
-          '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'),
-      (Icons.edit_note, Colors.blue, '最初のメモを書く',
-          '考えていることを何でも書いてみてください。\nホーム画面「CMO/CKO OFFICE」→「新規事業起案」'),
-      (Icons.upload_file, Colors.teal, 'Notionから移行する',
-          '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'),
+      (
+        Icons.wb_sunny,
+        Colors.amber,
+        'モーニングブリーフィング',
+        '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'
+      ),
+      (
+        Icons.edit_note,
+        Colors.blue,
+        '最初のメモを書く',
+        '考えていることを何でも書いてみてください。\nホーム画面「CMO/CKO OFFICE」→「新規事業起案」'
+      ),
+      (
+        Icons.upload_file,
+        Colors.teal,
+        'Notionから移行する',
+        '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'
+      ),
     ];
 
     return Padding(
@@ -280,7 +295,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           Text(
             'まずこの3つから始めましょう',
-            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
           const SizedBox(height: 28),
           ...steps.asMap().entries.map((entry) {
@@ -338,7 +355,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           desc,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.5,
                           ),
                         ),

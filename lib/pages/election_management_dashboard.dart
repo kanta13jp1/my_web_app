@@ -6,10 +6,13 @@ class ElectionManagementDashboard extends StatefulWidget {
   const ElectionManagementDashboard({super.key});
 
   @override
-  State<ElectionManagementDashboard> createState() => _ElectionManagementDashboardState();
+  State<ElectionManagementDashboard> createState() =>
+      _ElectionManagementDashboardState();
 }
 
-class _ElectionManagementDashboardState extends State<ElectionManagementDashboard> with SingleTickerProviderStateMixin {
+class _ElectionManagementDashboardState
+    extends State<ElectionManagementDashboard>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isLoading = true;
   List<Map<String, dynamic>> _politicians = [];
@@ -93,7 +96,7 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
 
   Widget _buildKpiTab() {
     if (_monthlyKpi == null) return const Center(child: Text('データがありません'));
-    
+
     final regions = (_monthlyKpi!['regions'] as List<dynamic>)
         .whereType<Map<String, dynamic>>()
         .toList();
@@ -115,41 +118,70 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('党全体必達目標', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red)),
+                  const Text('党全体必達目標',
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,),),
                   const SizedBox(height: 12),
-                  Text('現在の現職数: ${_monthlyKpi!['currentTotal']}人', style: const TextStyle(fontSize: 16)),
-                  Text('必達目標数: ${_monthlyKpi!['targetTotal']}人', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('現在の現職数: ${_monthlyKpi!['currentTotal']}人',
+                      style: const TextStyle(fontSize: 16),),
+                  Text('必達目標数: ${_monthlyKpi!['targetTotal']}人',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold,),),
                   const Divider(height: 24),
-                  Text('必要な純増数: ${_monthlyKpi!['requiredAddition']}人', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                  Text('必要な純増数: ${_monthlyKpi!['requiredAddition']}人',
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,),),
                   const SizedBox(height: 8),
                   Text(
-                    _monthlyKpi!['message'], 
-                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                    _monthlyKpi!['message'],
+                    style: const TextStyle(
+                        color: Colors.redAccent, fontWeight: FontWeight.w600,),
                   ),
                   const SizedBox(height: 4),
-                  const Text('※万が一達成できなければ解党の覚悟で臨む“工程管理”の勝負です。', style: TextStyle(color: Colors.red)),
+                  const Text('※万が一達成できなければ解党の覚悟で臨む“工程管理”の勝負です。',
+                      style: TextStyle(color: Colors.red),),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 24),
-          const Text('地方議員数の推移と目標', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('地方議員数の推移と目標',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
           const SizedBox(height: 16),
           _buildTrendChart(),
           const SizedBox(height: 24),
-          const Text('都道府県連ごとの月次KPI配分', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('都道府県連ごとの月次KPI配分',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
           const SizedBox(height: 16),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
-              headingRowColor: WidgetStateProperty.resolveWith<Color>((Set<WidgetState> states) => Theme.of(context).colorScheme.surfaceContainerHigh),
+              headingRowColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) =>
+                      Theme.of(context).colorScheme.surfaceContainerHigh,),
               columns: const [
-                DataColumn(label: Text('都道府県', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('現職維持目標', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('必達目標', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('新人擁立数', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('接戦区支援回数', style: TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text('公認内定時期', style: TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(
+                    label: Text('都道府県',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
+                DataColumn(
+                    label: Text('現職維持目標',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
+                DataColumn(
+                    label: Text('必達目標',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
+                DataColumn(
+                    label: Text('新人擁立数',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
+                DataColumn(
+                    label: Text('接戦区支援回数',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
+                DataColumn(
+                    label: Text('公認内定時期',
+                        style: TextStyle(fontWeight: FontWeight.bold),),),
               ],
               rows: regions.map((region) {
                 return DataRow(
@@ -159,7 +191,8 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                     DataCell(Text(region['target']?.toString() ?? '')),
                     DataCell(Text(region['newCandidates']?.toString() ?? '')),
                     DataCell(Text(region['supportCount']?.toString() ?? '')),
-                    DataCell(Text(region['expectedEndorsement']?.toString() ?? '')),
+                    DataCell(
+                        Text(region['expectedEndorsement']?.toString() ?? ''),),
                   ],
                 );
               }).toList(),
@@ -201,9 +234,12 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                 reservedSize: 30,
               ),
             ),
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: true, reservedSize: 40),),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           gridData: const FlGridData(show: true, drawVerticalLine: false),
           borderData: FlBorderData(show: false),
@@ -212,7 +248,12 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
             return BarChartGroupData(
               x: entry.key,
               barRods: [
-                BarChartRodData(toY: count, color: count >= 700 ? Colors.redAccent : Colors.blue, width: 24, borderRadius: const BorderRadius.vertical(top: Radius.circular(4))),
+                BarChartRodData(
+                    toY: count,
+                    color: count >= 700 ? Colors.redAccent : Colors.blue,
+                    width: 24,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(4)),),
               ],
               showingTooltipIndicators: [0],
             );
@@ -234,17 +275,24 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
           margin: const EdgeInsets.only(bottom: 12.0),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: p['gender'] == '女性' ? Colors.pink.shade100 : Colors.blue.shade100,
-              child: Text(p['gender'] == '女性' ? '👩' : '👨', style: const TextStyle(fontSize: 20)),
+              backgroundColor: p['gender'] == '女性'
+                  ? Colors.pink.shade100
+                  : Colors.blue.shade100,
+              child: Text(p['gender'] == '女性' ? '👩' : '👨',
+                  style: const TextStyle(fontSize: 20),),
             ),
             title: Text('${p['name']} (${p['age']}歳) - ${p['gender']}'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 6),
-                Text('${p['region']} ${p['municipality']} / ${p['type']}', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade800)),
+                Text('${p['region']} ${p['municipality']} / ${p['type']}',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade800,),),
                 const SizedBox(height: 4),
-                Text(p['profile']?.toString() ?? '', style: const TextStyle(height: 1.3)),
+                Text(p['profile']?.toString() ?? '',
+                    style: const TextStyle(height: 1.3),),
               ],
             ),
             isThreeLine: true,
@@ -262,7 +310,7 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
       final parsedDate = DateTime.tryParse(dateStr);
       if (parsedDate == null) return false;
       return parsedDate.year == _selectedDate.year &&
-             parsedDate.month == _selectedDate.month;
+          parsedDate.month == _selectedDate.month;
     }).toList();
 
     // 日付順にソート
@@ -281,17 +329,20 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
             duration: const Duration(milliseconds: 300),
             child: filteredSchedules.isEmpty
                 ? Center(
-                    key: ValueKey<String>('empty_${_selectedDate.year}_${_selectedDate.month}'),
+                    key: ValueKey<String>(
+                        'empty_${_selectedDate.year}_${_selectedDate.month}',),
                     child: const Text('選択した月の選挙スケジュールはありません'),
                   )
                 : ListView.builder(
-                    key: ValueKey<String>('list_${_selectedDate.year}_${_selectedDate.month}'),
+                    key: ValueKey<String>(
+                        'list_${_selectedDate.year}_${_selectedDate.month}',),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     itemCount: filteredSchedules.length,
                     itemBuilder: (context, index) {
                       final s = filteredSchedules[index];
-                      final candidateCount = s['dppCandidateCount'] as int? ?? 0;
-                      
+                      final candidateCount =
+                          s['dppCandidateCount'] as int? ?? 0;
+
                       Color? tileColor;
                       if (candidateCount == 0) {
                         tileColor = Colors.red.shade100;
@@ -313,14 +364,18 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                         margin: const EdgeInsets.only(bottom: 12.0),
                         shape: isSelectedDate
                             ? RoundedRectangleBorder(
-                                side: const BorderSide(color: Colors.blue, width: 2),
+                                side: const BorderSide(
+                                    color: Colors.blue, width: 2,),
                                 borderRadius: BorderRadius.circular(12),
                               )
                             : null,
                         child: ListTile(
                           leading: const Icon(Icons.event),
-                          title: Text('${s['electionName']} (${s['date']})', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: Text('${s['location']} - 国民民主党 候補者擁立数: $candidateCount人'),
+                          title: Text('${s['electionName']} (${s['date']})',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),),
+                          subtitle: Text(
+                              '${s['location']} - 国民民主党 候補者擁立数: $candidateCount人',),
                         ),
                       );
                     },
@@ -345,7 +400,8 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
       final dateStr = s['date']?.toString() ?? '';
       final parsedDate = DateTime.tryParse(dateStr);
       if (parsedDate != null) {
-        final date = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+        final date =
+            DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
         final candidateCount = s['dppCandidateCount'] as int? ?? 0;
         if (candidateCount > (scheduleDates[date] ?? -1)) {
           scheduleDates[date] = candidateCount;
@@ -386,7 +442,9 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                     });
                   },
                 ),
-                Text('$year年 $month月', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('$year年 $month月',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16,),),
                 IconButton(
                   icon: const Icon(Icons.chevron_right),
                   onPressed: () {
@@ -400,7 +458,13 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: weekdays.map((w) => Expanded(child: Center(child: Text(w, style: const TextStyle(color: Colors.grey, fontSize: 12))))).toList(),
+              children: weekdays
+                  .map((w) => Expanded(
+                      child: Center(
+                          child: Text(w,
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12,),),),),)
+                  .toList(),
             ),
             const SizedBox(height: 8),
             AnimatedSize(
@@ -425,8 +489,12 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                       return const SizedBox.shrink();
                     }
                     final currentDate = DateTime(year, month, day);
-                    final isSelected = _selectedDate.year == year && _selectedDate.month == month && _selectedDate.day == day;
-                    final isToday = now.year == year && now.month == month && now.day == day;
+                    final isSelected = _selectedDate.year == year &&
+                        _selectedDate.month == month &&
+                        _selectedDate.day == day;
+                    final isToday = now.year == year &&
+                        now.month == month &&
+                        now.day == day;
                     final candidateCount = scheduleDates[currentDate];
                     final hasSchedule = candidateCount != null;
 
@@ -439,14 +507,21 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                       child: Container(
                         margin: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.blue.shade100 : Colors.transparent,
+                          color: isSelected
+                              ? Colors.blue.shade100
+                              : Colors.transparent,
                           shape: BoxShape.circle,
-                          border: isToday ? Border.all(color: Colors.blue) : null,
+                          border:
+                              isToday ? Border.all(color: Colors.blue) : null,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('$day', style: TextStyle(fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal)),
+                            Text('$day',
+                                style: TextStyle(
+                                    fontWeight: isSelected || isToday
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,),),
                             if (hasSchedule) ...[
                               const SizedBox(height: 2),
                               Container(
@@ -456,7 +531,9 @@ class _ElectionManagementDashboardState extends State<ElectionManagementDashboar
                                   shape: BoxShape.circle,
                                   color: candidateCount == 0
                                       ? Colors.redAccent
-                                      : (candidateCount == 1 ? Colors.amber : Colors.green),
+                                      : (candidateCount == 1
+                                          ? Colors.amber
+                                          : Colors.green),
                                 ),
                               ),
                             ] else ...[

@@ -150,7 +150,10 @@ class _DevelopmentAchievementsCardState
                           try {
                             await Supabase.instance.client.functions.invoke(
                               'core-hub',
-                              body: {'action': 'achievements.add', 'title': text},
+                              body: {
+                                'action': 'achievements.add',
+                                'title': text,
+                              },
                             );
                             if (ctx.mounted) {
                               Navigator.of(ctx).pop(true);
@@ -401,7 +404,8 @@ class _DevelopmentAchievementsCardState
                           height: 20,
                           margin: const EdgeInsets.only(top: 1, right: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                            color:
+                                const Color(0xFF10B981).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Center(
@@ -442,7 +446,8 @@ class _DevelopmentAchievementsCardState
                                     Icon(
                                       Icons.info_outline,
                                       size: 12,
-                                      color: subTextColor.withValues(alpha: 0.6),
+                                      color:
+                                          subTextColor.withValues(alpha: 0.6),
                                     ),
                                 ],
                               ),

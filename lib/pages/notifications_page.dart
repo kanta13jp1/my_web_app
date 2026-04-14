@@ -48,9 +48,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() {
-          _notifications =
-              (data['notifications'] as List<dynamic>? ?? [])
-                  .cast<Map<String, dynamic>>();
+          _notifications = (data['notifications'] as List<dynamic>? ?? [])
+              .cast<Map<String, dynamic>>();
           _unreadCount = (data['unreadCount'] as num?)?.toInt() ?? 0;
         });
       }
@@ -86,9 +85,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         body: {'action': 'notification.mark_all'},
       );
       setState(() {
-        _notifications = _notifications
-            .map((n) => {...n, 'is_read': true})
-            .toList();
+        _notifications =
+            _notifications.map((n) => {...n, 'is_read': true}).toList();
         _unreadCount = 0;
       });
       if (mounted) {
@@ -244,7 +242,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             const SizedBox(height: 12),
             Text(
               _filter == 'unread' ? '未読通知はありません' : '通知はありません',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 16),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 16,),
             ),
           ],
         ),
@@ -260,7 +260,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         itemBuilder: (context, index) => _NotifTile(
           notif: _notifications[index],
           typeMeta: _typeMeta,
-          relativeTime: _relativeTime(_notifications[index]['created_at'] as String?),
+          relativeTime:
+              _relativeTime(_notifications[index]['created_at'] as String?),
           onTap: () {
             final n = _notifications[index];
             if (n['is_read'] == false) _markRead(n['id'] as String);
@@ -412,8 +413,7 @@ class _NotifTile extends StatelessWidget {
                   Text(
                     notif['title'] as String? ?? '',
                     style: TextStyle(
-                      fontWeight:
-                          isRead ? FontWeight.normal : FontWeight.bold,
+                      fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),

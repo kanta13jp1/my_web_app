@@ -42,8 +42,8 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
       _error = null;
     });
     try {
-      final res = await Supabase.instance.client.functions
-          .invoke('admin-hub', body: {'action': 'monitoring.get'}, queryParameters: {'days': '7'});
+      final res = await Supabase.instance.client.functions.invoke('admin-hub',
+          body: {'action': 'monitoring.get'}, queryParameters: {'days': '7'},);
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final raw = data['competitors'];
@@ -54,8 +54,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                   raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
                 )
               : [];
-          _summary =
-              rawSummary is Map<String, dynamic> ? rawSummary : null;
+          _summary = rawSummary is Map<String, dynamic> ? rawSummary : null;
         });
       }
     } catch (e) {

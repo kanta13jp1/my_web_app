@@ -57,8 +57,8 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
         final rawReactions = data['reactions'] as Map<String, dynamic>? ?? {};
         final rawUser = data['userReactions'] as List<dynamic>? ?? [];
         setState(() {
-          _reactions = rawReactions
-              .map((k, v) => MapEntry(k, (v as num).toInt()));
+          _reactions =
+              rawReactions.map((k, v) => MapEntry(k, (v as num).toInt()));
           _userReactions = rawUser.map((e) => e.toString()).toList();
         });
       }
@@ -155,11 +155,16 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                         decoration: BoxDecoration(
                           color: isActive
                               ? Colors.amber.shade100
-                              : Theme.of(context).colorScheme.surfaceContainerHigh,
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color:
-                                isActive ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: isActive
+                                ? Colors.amber
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
                             width: 1.5,
                           ),
                         ),
@@ -175,7 +180,9 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                                 fontWeight: FontWeight.bold,
                                 color: isActive
                                     ? Colors.amber.shade800
-                                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                               ),
                             ),
                           ],

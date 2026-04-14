@@ -83,11 +83,8 @@ class ErrorReporter {
     _count++;
 
     // スタックトレース（最初の6行）
-    final stackLines = stackTrace
-        ?.toString()
-        .split('\n')
-        .take(6)
-        .join('\n') ?? '';
+    final stackLines =
+        stackTrace?.toString().split('\n').take(6).join('\n') ?? '';
 
     final content = '[自動エラー報告]\n'
         '$fullMessage'

@@ -26,8 +26,23 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
 
   Map<String, dynamic>? _selectedDomain;
 
-  static const _recordTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SRV', 'CAA'];
-  static const _registrars = ['Cloudflare', 'Google Domains', 'Amazon Route53', 'お名前.com', 'その他'];
+  static const _recordTypes = [
+    'A',
+    'AAAA',
+    'CNAME',
+    'MX',
+    'TXT',
+    'NS',
+    'SRV',
+    'CAA',
+  ];
+  static const _registrars = [
+    'Cloudflare',
+    'Google Domains',
+    'Amazon Route53',
+    'お名前.com',
+    'その他',
+  ];
 
   @override
   void initState() {
@@ -60,7 +75,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['domains'] is List) {
-        setState(() => _domains = (data['domains'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _domains = (data['domains'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _domains = []);
       }
@@ -85,7 +101,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['records'] is List) {
-        setState(() => _records = (data['records'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _records = (data['records'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _records = []);
       }
@@ -110,7 +127,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['ssl'] is List) {
-        setState(() => _sslStatus = (data['ssl'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _sslStatus = (data['ssl'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _sslStatus = []);
       }
@@ -129,7 +147,11 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     try {
       final response = await _supabase.functions.invoke(
         'dns-domain-manager',
-        body: {'action': 'add_domain', 'domain': domain, 'registrar': registrar},
+        body: {
+          'action': 'add_domain',
+          'domain': domain,
+          'registrar': registrar,
+        },
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['success'] == true) {
@@ -439,7 +461,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
           children: [
             Icon(Icons.language, size: 64, color: colorScheme.outlineVariant),
             const SizedBox(height: 16),
-            Text('ドメインが登録されていません', style: TextStyle(color: colorScheme.outline)),
+            Text('ドメインが登録されていません',
+                style: TextStyle(color: colorScheme.outline),),
             const SizedBox(height: 8),
             FilledButton.icon(
               onPressed: _showAddDomainDialog,
@@ -463,10 +486,12 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
           margin: const EdgeInsets.only(bottom: 12),
           color: isSelected ? colorScheme.primaryContainer : null,
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
               backgroundColor: colorScheme.secondaryContainer,
-              child: Icon(Icons.language, color: colorScheme.onSecondaryContainer),
+              child:
+                  Icon(Icons.language, color: colorScheme.onSecondaryContainer),
             ),
             title: Text(
               domain['domain']?.toString() ?? '',
@@ -559,7 +584,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.dns, size: 64, color: colorScheme.outlineVariant),
+                          Icon(Icons.dns,
+                              size: 64, color: colorScheme.outlineVariant,),
                           const SizedBox(height: 16),
                           Text(
                             'DNSレコードがありません',
@@ -579,23 +605,27 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                       itemCount: _records.length,
                       itemBuilder: (context, index) {
                         final record = _records[index];
-                        final recordType = record['record_type']?.toString() ?? '';
+                        final recordType =
+                            record['record_type']?.toString() ?? '';
                         final recordId = record['record_id']?.toString() ?? '';
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            leading: _buildRecordTypeChip(recordType, colorScheme),
+                            leading:
+                                _buildRecordTypeChip(recordType, colorScheme),
                             title: Text(
                               record['name']?.toString() ?? '',
-                              style: const TextStyle(fontWeight: FontWeight.w500),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   record['value']?.toString() ?? '',
-                                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,),
                                 ),
                                 Text(
                                   'TTL: ${record['ttl'] ?? 3600}s',
@@ -607,9 +637,11 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                               ],
                             ),
                             trailing: IconButton(
-                              icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                              icon: Icon(Icons.delete_outline,
+                                  color: colorScheme.error,),
                               tooltip: 'レコードを削除',
-                              onPressed: () => _confirmDeleteRecord(recordId, domainId),
+                              onPressed: () =>
+                                  _confirmDeleteRecord(recordId, domainId),
                             ),
                           ),
                         );
@@ -635,7 +667,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline, size: 64, color: colorScheme.outlineVariant),
+            Icon(Icons.lock_outline,
+                size: 64, color: colorScheme.outlineVariant,),
             const SizedBox(height: 16),
             Text('SSL情報がありません', style: TextStyle(color: colorScheme.outline)),
             const SizedBox(height: 8),
@@ -715,7 +748,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+        style:
+            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -802,7 +836,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+        style:
+            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

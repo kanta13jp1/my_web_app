@@ -48,7 +48,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           .maybeSingle();
 
       if (profile == null || profile['is_public'] != true) {
-        if (mounted) setState(() { _notFound = true; _loading = false; });
+        if (mounted) {
+          setState(() {
+            _notFound = true;
+            _loading = false;
+          });
+        }
         return;
       }
 
@@ -71,7 +76,12 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         _loading = false;
       });
     } catch (_) {
-      if (mounted) setState(() { _notFound = true; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _notFound = true;
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -105,8 +115,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isOwnProfile =
-        _supabase.auth.currentUser?.id == widget.userId;
+    final isOwnProfile = _supabase.auth.currentUser?.id == widget.userId;
 
     return Scaffold(
       appBar: AppBar(
@@ -183,9 +192,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               CircleAvatar(
                 radius: 36,
                 backgroundColor: const Color(0xFF6366F1).withAlpha(30),
-                backgroundImage: _avatarUrl != null
-                    ? NetworkImage(_avatarUrl!)
-                    : null,
+                backgroundImage:
+                    _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
                 child: _avatarUrl == null
                     ? Text(
                         (_displayName?.isNotEmpty == true)
@@ -226,9 +234,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                             _location!,
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -265,23 +272,26 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1A2233)
-                  : const Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF1A2233) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark
-                    ? const Color(0xFF2A3A55)
-                    : const Color(0xFFE2E8F0),
+                color:
+                    isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _StatChip(label: 'ノート数', value: '$_noteCount', isDark: isDark),
-                Container(width: 1, height: 32, color: isDark ? Colors.white12 : Colors.black12),
+                Container(
+                    width: 1,
+                    height: 32,
+                    color: isDark ? Colors.white12 : Colors.black12,),
                 _StatChip(label: 'ストリーク', value: '$_streak日', isDark: isDark),
-                Container(width: 1, height: 32, color: isDark ? Colors.white12 : Colors.black12),
+                Container(
+                    width: 1,
+                    height: 32,
+                    color: isDark ? Colors.white12 : Colors.black12,),
                 _StatChip(label: '自分株式会社', value: '登録中', isDark: isDark),
               ],
             ),

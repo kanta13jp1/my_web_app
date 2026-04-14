@@ -61,9 +61,12 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
         final langs = data['languages'];
         final tmpl = data['templates'];
         setState(() {
-          if (langs is List) _languages = langs.map((l) => l as String).toList();
+          if (langs is List) {
+            _languages = langs.map((l) => l as String).toList();
+          }
           if (tmpl is Map) {
-            _templates = tmpl.map((k, v) => MapEntry(k as String, v as Map<String, dynamic>));
+            _templates = tmpl.map(
+                (k, v) => MapEntry(k as String, v as Map<String, dynamic>),);
           }
         });
       }
@@ -78,7 +81,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       _errorMessage = null;
     });
     try {
-      final res = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'playground.list'});
+      final res = await _supabase.functions
+          .invoke('enterprise-hub', body: {'action': 'playground.list'});
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final list = data['snippets'];
@@ -165,7 +169,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           _fetchSnippets();
           _fetchStats();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('スニペット保存完了'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('スニペット保存完了'), backgroundColor: Colors.green,),
           );
         }
       }
@@ -211,7 +216,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                       labelText: '言語',
                       border: OutlineInputBorder(),
                     ),
-                    items: _languages.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
+                    items: _languages
+                        .map((l) => DropdownMenuItem(value: l, child: Text(l)))
+                        .toList(),
                     onChanged: (v) {
                       if (v != null) {
                         setDlg(() => _selectedLanguage = v);
@@ -226,7 +233,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   TextField(
                     controller: _codeCtrl,
                     maxLines: 10,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 13),
                     decoration: const InputDecoration(
                       labelText: 'コード *',
                       border: OutlineInputBorder(),
@@ -255,7 +263,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('キャンセル')),
+            TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('キャンセル'),),
             FilledButton(onPressed: _saveSnippet, child: const Text('保存')),
           ],
         ),
@@ -296,10 +306,12 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
-                      TextButton(onPressed: _fetchSnippets, child: const Text('再試行')),
+                      TextButton(
+                          onPressed: _fetchSnippets, child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -320,7 +332,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.code_off, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+            Icon(Icons.code_off,
+                size: 64,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,),
             const SizedBox(height: 12),
             const Text('スニペットがありません'),
             const SizedBox(height: 8),
@@ -345,12 +359,14 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           final code = s['code'] as String? ?? '';
           final isPublic = s['is_public'] == true;
           final shareCode = s['share_code'] as String?;
-          final preview = code.length > 80 ? '${code.substring(0, 80)}...' : code;
+          final preview =
+              code.length > 80 ? '${code.substring(0, 80)}...' : code;
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ExpansionTile(
               leading: _langIcon(lang),
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.w600),),
               subtitle: Text(lang, style: const TextStyle(fontSize: 12)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -378,7 +394,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     children: [
                       TextButton.icon(
@@ -397,7 +414,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                           onPressed: () {
                             Clipboard.setData(ClipboardData(text: shareCode));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('共有コード: $shareCode コピー済み')),
+                              SnackBar(
+                                  content: Text('共有コード: $shareCode コピー済み'),),
                             );
                           },
                           icon: const Icon(Icons.share, size: 16),
@@ -434,7 +452,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       backgroundColor: color.withValues(alpha: 0.15),
       child: Text(
         lang.isEmpty ? '?' : lang.substring(0, 1).toUpperCase(),
-        style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+        style:
+            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
       ),
     );
   }
@@ -445,7 +464,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_off, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+            Icon(Icons.folder_off,
+                size: 64,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,),
             const SizedBox(height: 12),
             const Text('コレクションがありません'),
             const SizedBox(height: 8),
@@ -493,24 +514,33 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'コレクション名', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'コレクション名', border: OutlineInputBorder(),),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: descCtrl,
-              decoration: const InputDecoration(labelText: '説明', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: '説明', border: OutlineInputBorder(),),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('キャンセル')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('キャンセル'),),
           FilledButton(
             onPressed: () async {
               final name = nameCtrl.text.trim();
               if (name.isEmpty) return;
               await _supabase.functions.invoke(
                 'enterprise-hub',
-                body: {'action': 'playground.save', 'title': name, 'code': '// ${descCtrl.text.trim()}', 'language': 'markdown'},
+                body: {
+                  'action': 'playground.save',
+                  'title': name,
+                  'code': '// ${descCtrl.text.trim()}',
+                  'language': 'markdown',
+                },
               );
               if (ctx.mounted) Navigator.of(ctx).pop();
               _fetchCollections();
@@ -541,12 +571,14 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _statCard('公開スニペット', '$publicCount件', Icons.public, Colors.green),
+                child: _statCard(
+                    '公開スニペット', '$publicCount件', Icons.public, Colors.green,),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          const Text('言語別内訳', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const Text('言語別内訳',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),),
           const SizedBox(height: 8),
           if (breakdown.isEmpty)
             const Text('データなし', style: TextStyle(color: Colors.grey))
@@ -559,17 +591,23 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    SizedBox(width: 90, child: Text(lang, style: const TextStyle(fontSize: 13))),
+                    SizedBox(
+                        width: 90,
+                        child:
+                            Text(lang, style: const TextStyle(fontSize: 13)),),
                     Expanded(
                       child: LinearProgressIndicator(
                         value: fraction,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         minHeight: 10,
                         borderRadius: BorderRadius.circular(5),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text('$count', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text('$count',
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600,),),
                   ],
                 ),
               );
@@ -587,7 +625,9 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           children: [
             Icon(icon, color: color, size: 32),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(value,
+                style:
+                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),),
             Text(label, style: const TextStyle(color: Colors.grey)),
           ],
         ),

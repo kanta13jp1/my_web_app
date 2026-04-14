@@ -63,57 +63,61 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchAds,
+                        child: const Text('再試行'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchAds,
-                    child: const Text('再試行'),
-                  ),
-                ],
-              ),
-            )
-          : _ads.isEmpty
-          ? const Center(child: Text('動画広告はありません'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _ads.length,
-              itemBuilder: (context, index) {
-                final ad = _ads[index];
-                final title = ad['title']?.toString() ?? '広告 ${index + 1}';
-                final platform = ad['platform']?.toString() ?? '-';
-                final status = ad['status']?.toString() ?? 'draft';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.video_collection,
-                      color: Colors.deepOrange,
+                )
+              : _ads.isEmpty
+                  ? const Center(child: Text('動画広告はありません'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _ads.length,
+                      itemBuilder: (context, index) {
+                        final ad = _ads[index];
+                        final title =
+                            ad['title']?.toString() ?? '広告 ${index + 1}';
+                        final platform = ad['platform']?.toString() ?? '-';
+                        final status = ad['status']?.toString() ?? 'draft';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.video_collection,
+                              color: Colors.deepOrange,
+                            ),
+                            title: Text(
+                              title,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(platform),
+                            trailing: Chip(
+                              label: Text(status,
+                                  style: const TextStyle(fontSize: 12),),
+                              backgroundColor: status == 'ready'
+                                  ? Colors.green.shade100
+                                  : Colors.orange.shade100,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    title: Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(platform),
-                    trailing: Chip(
-                      label: Text(status, style: const TextStyle(fontSize: 12)),
-                      backgroundColor: status == 'ready'
-                          ? Colors.green.shade100
-                          : Colors.orange.shade100,
-                    ),
-                  ),
-                );
-              },
-            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(

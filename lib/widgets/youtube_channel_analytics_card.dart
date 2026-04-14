@@ -308,7 +308,9 @@ class _YoutubeChannelAnalyticsCardState
           Text(
             'youtube_video_stats テーブルにデータをインポートしてください。\n'
             'TSV形式のYouTubeアナリティクスデータを管理者ページからアップロードできます。',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             textAlign: TextAlign.center,
           ),
         ],
@@ -317,10 +319,8 @@ class _YoutubeChannelAnalyticsCardState
   }
 
   Widget _buildContent(bool isDark) {
-    final latestDate =
-        _snapshotDates.isNotEmpty ? _snapshotDates.first : '';
-    final prevDate =
-        _snapshotDates.length > 1 ? _snapshotDates[1] : '';
+    final latestDate = _snapshotDates.isNotEmpty ? _snapshotDates.first : '';
+    final prevDate = _snapshotDates.length > 1 ? _snapshotDates[1] : '';
 
     // サマリー統計
     int totalViews = 0;
@@ -452,19 +452,19 @@ class _YoutubeChannelAnalyticsCardState
                   ),
                 ),
                 ..._snapshotDates.take(3).map(
-                  (d) => SizedBox(
-                    width: 72,
-                    child: Text(
-                      _formatDate(d),
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                      (d) => SizedBox(
+                        width: 72,
+                        child: Text(
+                          _formatDate(d),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.grey[400] : Colors.grey[700],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -474,8 +474,7 @@ class _YoutubeChannelAnalyticsCardState
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _videos.length,
-          separatorBuilder: (_, __) =>
-              const Divider(height: 1, thickness: 0.5),
+          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
           itemBuilder: (context, index) =>
               _buildVideoRow(_videos[index], isDark),
         ),
@@ -484,10 +483,8 @@ class _YoutubeChannelAnalyticsCardState
   }
 
   Widget _buildVideoRow(_VideoRow video, bool isDark) {
-    final latestDate =
-        _snapshotDates.isNotEmpty ? _snapshotDates.first : '';
-    final prevDate =
-        _snapshotDates.length > 1 ? _snapshotDates[1] : '';
+    final latestDate = _snapshotDates.isNotEmpty ? _snapshotDates.first : '';
+    final prevDate = _snapshotDates.length > 1 ? _snapshotDates[1] : '';
     final latest = video.snapshots[latestDate];
     final prev = prevDate.isNotEmpty ? video.snapshots[prevDate] : null;
     final viewGrowth =

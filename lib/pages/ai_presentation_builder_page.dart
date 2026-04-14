@@ -11,8 +11,7 @@ class AiPresentationBuilderPage extends StatefulWidget {
       _AiPresentationBuilderPageState();
 }
 
-class _AiPresentationBuilderPageState
-    extends State<AiPresentationBuilderPage> {
+class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
   final _supabase = Supabase.instance.client;
 
   final _topicCtrl = TextEditingController();
@@ -138,7 +137,8 @@ class _AiPresentationBuilderPageState
                 color: Colors.red.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(_error!, style: const TextStyle(color: Colors.red)),
+                  child:
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
                 ),
               ),
             const SizedBox(height: 16),

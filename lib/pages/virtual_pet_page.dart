@@ -97,7 +97,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
           Expanded(
             child: LinearProgressIndicator(
               value: val / 100,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+              backgroundColor:
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
               color: color,
               minHeight: 10,
             ),
@@ -143,7 +144,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
-                            const Icon(Icons.pets, size: 64, color: Colors.orange),
+                            const Icon(Icons.pets,
+                                size: 64, color: Colors.orange,),
                             const SizedBox(height: 8),
                             Text(
                               _pet!['name']?.toString() ?? 'ペット',
@@ -159,7 +161,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                               ),
                             const SizedBox(height: 16),
                             _buildStatBar('空腹', _pet!['hunger'], Colors.orange),
-                            _buildStatBar('幸福', _pet!['happiness'], Colors.pink),
+                            _buildStatBar(
+                                '幸福', _pet!['happiness'], Colors.pink,),
                             _buildStatBar('体力', _pet!['energy'], Colors.green),
                           ],
                         ),
@@ -171,17 +174,20 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                       runSpacing: 8,
                       children: [
                         ElevatedButton.icon(
-                          onPressed: _isLoading ? null : () => _doAction('feed'),
+                          onPressed:
+                              _isLoading ? null : () => _doAction('feed'),
                           icon: const Icon(Icons.restaurant),
                           label: const Text('ご飯をあげる'),
                         ),
                         ElevatedButton.icon(
-                          onPressed: _isLoading ? null : () => _doAction('play'),
+                          onPressed:
+                              _isLoading ? null : () => _doAction('play'),
                           icon: const Icon(Icons.sports_esports),
                           label: const Text('遊ぶ'),
                         ),
                         ElevatedButton.icon(
-                          onPressed: _isLoading ? null : () => _doAction('sleep'),
+                          onPressed:
+                              _isLoading ? null : () => _doAction('sleep'),
                           icon: const Icon(Icons.bedtime),
                           label: const Text('寝かせる'),
                         ),

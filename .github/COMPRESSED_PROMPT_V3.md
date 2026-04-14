@@ -324,105 +324,15 @@ web/sitemap.xml          # URL マップ
 
 ### ~~機能 #12~~: ✅ 全インスタンス解決済み
 
-- VSCode版: `lib/utils/error_reporter.dart` + `main.dart` `ErrorReporter.instance.install()` 実装済み
-- Windows版: `supabase/migrations/20260410000700_add_is_auto_reported_to_feature_requests.sql` 作成済み
+*(過去の解決済みタスク（機能 #12〜#32、バグ #B1, #B3, #B4、機能 #44）はアーカイブされ、プロンプトサイズ最適化のため削除されました。)*
 
-### ~~バグ #B1~~: ✅ 解決済み
+### 現在のアクティブなタスク・課題
 
-全 `obscureText:` フィールド (4箇所) に `enableInteractiveSelection: true` + visibility toggle + paste ボタン適用済み:
-
-- `emergency_meeting_page.dart` (APIキー)
-- `morning_briefing_page.dart` (APIキー ×2)
-- `landing_page.dart` (パスワード)
-
-### ~~バグ #B3~~: ✅ 解決済み
-
-`edge_function_status_page.dart` の「競合14社」→「競合21社」修正完了 (commit: VSCode#19)
-
-### ~~バグ #B4~~: ✅ 解決済み (Web版#26, 2026-04-10)
-
-`note-comments/index.ts` の `getUserIdFromJwt()` (署名未検証) を削除し、`client.auth.getUser()` による正式JWT署名検証に置き換え。`deno lint` 0エラー確認済み。
-
-### ~~機能 #13~~: ✅ 全インスタンス解決済み (Web版#28 + PowerShell版#20, 2026-04-11)
-
-- Web版: `growth-acquisition/index.ts` 新規作成。`growth-acquisition-signal` + `growth-acquisition-report` を `action: "signal"|"report"` 分岐で統合。`deno lint` 0エラー確認。
-- PowerShell版: `deploy-prod.yml` Tier 1B から旧2本を削除し `growth-acquisition` + `my-ai-agent` を追加。Cleanup step に削除コマンド追加。Tier 2 コメントに旧2本を記録。
-
-### ~~機能 #15~~: ✅ 解決済み (VSCode#23, 2026-04-10)
-
-`lib/pages/landing_page.dart` `_buildUniqueValueSection()` に9つ目として追加。タイトル「9つのこと」に更新。コミット `ffc849bd`。
-
-### ~~機能 #16~~: ✅ 解決済み (Web版#27, 2026-04-11)
-
-`blog-auto-publisher` EF に Qiita API (`publish_qiita`) / dev.to API (`publish_devto`) / `auto_publish` アクションを実装。`blog_posts.status` を `draft→posted` に自動更新。`CLAUDE.md` の blog-draft Schedule タスクに Step 4 (auto_publish 呼び出し) を追加。Supabase シークレット: `QIITA_ACCESS_TOKEN` / `DEVTO_API_KEY` を設定すれば即稼働。
-
-### ~~機能 #17~~: ✅ 解決済み (VSCode#24, 2026-04-11)
-
-見栄ガード・浪費トラッキングを `_buildUniqueValueSection()` に追加。
-
-### ~~機能 #18~~: ✅ 解決済み (VSCode#24, 2026-04-11)
-
-12部署AI仮想組織を `_buildUniqueValueSection()` に追加。
-
-### ~~機能 #19~~: ✅ 解決済み (VSCode#24, 2026-04-11)
-
-友達招待・紹介コードを `_buildUniqueValueSection()` に追加。
-
-### ~~機能 #20~~: ✅ 解決済み (VSCode#24, 2026-04-11)
-
-ノートコメント・リアクション・OGP シェアを `_buildUniqueValueSection()` に追加。タイトル「14のこと」に更新。
-
-### ~~機能 #21~~: ✅ 解決済み (VSCode#25, 2026-04-11)
-
-通知センターを `_buildUniqueValueSection()` に追加。
-
-### ~~機能 #22~~: ✅ 解決済み (VSCode#25, 2026-04-11)
-
-電子署名を `_buildUniqueValueSection()` に追加。タイトル「16のこと」に更新。
-
-### ~~機能 #23~~: ✅ 解決済み (VSCode#26, 2026-04-11)
-
-コンビニ経営シミュレーションを `_buildUniqueValueSection()` に追加 (Icons.storefront)。タイトル「17のこと」に更新。コア機能リスト #15〜#22 のステータスを「LP未訴求 → LP済」に一括更新。
-
-### ~~docs/ リンク修正~~: ✅ 解決済み (Windows版#18, 2026-04-11)
-
-- `docs/technical/BRANCH_PROTECTION_SETUP.md` 新規作成 (ブランチ保護設定手順・CI連携・Claude Schedule との関係を記載)
-- `LICENSE` ファイルをリポジトリルートに作成 (MIT License, 2025-2026 kanta13jp1)
-- markdownlint 0エラー確認 (COMPRESSED_PROMPT_V3.md MD012 連続空行1件修正)
-
-### ~~機能 #24~~: ✅ 解決済み (VSCode#27, 2026-04-11)
-
-集中タイマー (Icons.timer) + AI文章アシスタント (Icons.edit_note) を `_buildUniqueValueSection()` に追加。
-
-### ~~機能 #25~~: ✅ 解決済み (VSCode#27, 2026-04-11)
-
-浪費耐性トレーニング (Icons.fitness_center) を `_buildUniqueValueSection()` に追加。タイトル「17のこと」→「20のこと」に更新。コア機能リスト #23〜#25 LP済に更新。
-
-### ~~機能 #26~~: ✅ 解決済み (VSCode#28, 2026-04-11)
-
-語学学習・レシピ管理・旅行計画・ペット管理・フォトギャラリー + バイラル動画パイプラインを LP 追加。タイトル「20のこと」→「26のこと」。コア機能リスト #8 LP済に更新。
-
-### ~~機能 #31~~: ✅ 解決済み (VSCode#28 + Web版#28, 2026-04-11)
-
-- VSCode版: `lib/pages/ai_agent_page.dart` 作成済み — タスク自動化フロー定義 UI + `/my-ai-agent` ルート追加
-- Web版: `my-ai-agent` EF 作成済み — create/update/delete/run/list アクション実装。ステップ種別: ai_chat (Anthropic API) / http_request / send_notification / supabase_insert
-
-### ~~機能 #32~~: ✅ 解決済み (VSCode#29, 2026-04-11)
-
-**背景**: 2026-04-04 日次レポートで確認。PS#15・VSCode#1・VSCode#2で実装済みの10機能が LP 未掲載。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| ~~**VSCode版**~~ | ✅ `landing_page.dart` に10機能追加 (VSCode#29) — 習慣ゲーミフィケーション・コードプレイグラウンド・不動産管理・eラーニング・車両管理・採用ボード・IoT・法務・メールテンプレート・2FA。"36のこと"に更新 |
-
-### 機能 #44: SaaSデータインポート UI 実装
-
-**背景**: 2026-04-08 AI分析で `growth-import-preview` / `growth-import-commit` EF が実装済みと確認。ユーザーリクエスト上位「Notion インポート強化」に対応するフロントエンド UI が未実装。
-
-| インスタンス | 作業内容 |
-| --- | --- |
-| ~~**VSCode版**~~ | ✅ 既実装確認 (VSCode#30) — `lib/pages/import_page.dart` + `/import` ルート + `growth-import-preview` EF 呼び出し済み |
-| ~~**VSCode版**~~ | ✅ 強化完了 (VSCode#72, 2026-04-14) — `growth-import-preview` に Notion API 再帰ブロック取得 + 429 rate limit retry を追加 |
+| タスク / 課題 | 担当 | 優先度 | 詳細 |
+| --- | --- | --- | --- |
+| **モバイルアプリ (iOS/Android) 対応** | VSCode版 | 🟡中 | Flutter モバイルビルド環境の整備と動作検証 |
+| **Notion API 連携のメモリ最適化** | Web版 | 🟡中 | `growth-import-preview` EF の再帰ブロック取得時のメモリ使用量最適化 |
+| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 56社目以降のプロバイダー（Cohere standalone API, Voyage AI 等）の追加評価 |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 
@@ -542,11 +452,8 @@ web/sitemap.xml          # URL マップ
 
 > feature_requests 投票上位。優先度順に実装検討する。
 
-1. ~~**Notion インポート強化**~~ — ✅ 解決済み (daily-dev#3, 2026-04-11) `growth-import-preview` EF DB対応 + `import_page.dart` Notion API UIカード実装
-2. ~~**MoneyForward 連携**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `money_forward_page.dart` 実装 + LP追加
-3. ~~**Slack 通知連携**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `slack_notification_page.dart` 実装 + LP追加
-4. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
-5. ~~**Google カレンダー同期**~~ — ✅ 解決済み (VSCode#35, 2026-04-12) `google_calendar_sync_page.dart` 実装 + LP追加
+1. **モバイルアプリ (iOS/Android)** — Flutter モバイルビルド対応
+*(その他の上位リクエスト（Notionインポート強化、MoneyForward連携、Slack連携、Googleカレンダー同期）はすべて実装済み)*
 
 ### 競合脅威対応タスク (2026-04-11 Claude Schedule 競合モニタリングから追加)
 
@@ -627,18 +534,7 @@ google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, gr
 
 #### 未完了 (各インスタンスへ指示)
 
-| 作業内容 | インスタンス | 優先度 |
-| --- | --- | --- |
-| ~~`ai-university-content` EF 新規作成~~ ✅ 完了 (Web版#28, 2026-04-12, PR#317 main マージ済み) | Web版 | ✅ |
-| ~~`ai_university_scores` にスコア書き込み (EF + Flutter)~~ ✅ 完了 (VSCode版#54 + Web版#33) | — | ✅ |
-| ~~ランキングUI (`ai_university_ranking_page.dart`): leaderboard TOP10 表示~~ ✅ 完了 (VSCode版#53, 2026-04-12) | VSCode版 | ✅ 完了 |
-| ~~`ai_university_badges` バッジ発行 EF (達成条件判定・INSERT)~~ ✅ 完了 (Web版#29/#33, PR#317 main マージ済み) | Web版 | ✅ |
-| ~~`ai_university_streaks` ストリーク計算 EF~~  ✅ 完了 (Web版#29, PR#317 main マージ済み) / HomeCard 連続日数表示 ✅ 完了 (VSCode版#54) | — | ✅ |
-| ~~シェア文言 A/Bテスト (3バリエーション実装)~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
-| ~~ホームカード: ストリーク日数・バッジ数を動的表示~~ ✅ 完了 (VSCode版#54, 2026-04-12) | VSCode版 | ✅ |
-| ~~SharedPreferences → Supabase 移行 (クロスデバイス学習記録)~~ ✅ 完了 (VSCode版#55, 2026-04-12) | VSCode版 | ✅ |
-| ~~学習リマインダー通知 (3日未学習 → notification-center EF)~~ ✅ 完了 (Web版#34, 2026-04-12, PR#317) | Web版 | ✅ |
-| ~~SNS シェア画像生成 (OGP カード: 何社学習済みを視覚化)~~ ✅ 完了 (VSCode版#56, 2026-04-12) | VSCode版 | ✅ |
+*(全て完了済みのためクリア)*
 
 #### `ai_university_badges` テーブルスキーマ
 

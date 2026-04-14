@@ -27,12 +27,18 @@ class _ElectionKpiEditDialogState extends State<ElectionKpiEditDialog> {
   @override
   void initState() {
     super.initState();
-    _retainTargetCtrl = TextEditingController(text: widget.initialData['incumbent_retain_target']?.toString() ?? '0');
-    _priorityMunicipalitiesCtrl = TextEditingController(text: widget.initialData['priority_municipalities']?.toString() ?? '0');
-    _newTargetCtrl = TextEditingController(text: widget.initialData['new_candidates_target']?.toString() ?? '0');
-    _newActualCtrl = TextEditingController(text: widget.initialData['new_candidates_actual']?.toString() ?? '0');
-    _endorsementTimingCtrl = TextEditingController(text: widget.initialData['endorsement_timing']?.toString() ?? '');
-    _supportVisitsCtrl = TextEditingController(text: widget.initialData['support_visits']?.toString() ?? '0');
+    _retainTargetCtrl = TextEditingController(
+        text: widget.initialData['incumbent_retain_target']?.toString() ?? '0',);
+    _priorityMunicipalitiesCtrl = TextEditingController(
+        text: widget.initialData['priority_municipalities']?.toString() ?? '0',);
+    _newTargetCtrl = TextEditingController(
+        text: widget.initialData['new_candidates_target']?.toString() ?? '0',);
+    _newActualCtrl = TextEditingController(
+        text: widget.initialData['new_candidates_actual']?.toString() ?? '0',);
+    _endorsementTimingCtrl = TextEditingController(
+        text: widget.initialData['endorsement_timing']?.toString() ?? '',);
+    _supportVisitsCtrl = TextEditingController(
+        text: widget.initialData['support_visits']?.toString() ?? '0',);
   }
 
   @override
@@ -56,7 +62,8 @@ class _ElectionKpiEditDialogState extends State<ElectionKpiEditDialog> {
 
       await supabase.from('election_regional_kpis').update({
         'incumbent_retain_target': int.tryParse(_retainTargetCtrl.text) ?? 0,
-        'priority_municipalities': int.tryParse(_priorityMunicipalitiesCtrl.text) ?? 0,
+        'priority_municipalities':
+            int.tryParse(_priorityMunicipalitiesCtrl.text) ?? 0,
         'new_candidates_target': int.tryParse(_newTargetCtrl.text) ?? 0,
         'new_candidates_actual': int.tryParse(_newActualCtrl.text) ?? 0,
         'endorsement_timing': _endorsementTimingCtrl.text,
@@ -120,8 +127,12 @@ class _ElectionKpiEditDialogState extends State<ElectionKpiEditDialog> {
         ),
         FilledButton(
           onPressed: _isLoading ? null : _save,
-          child: _isLoading 
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+          child: _isLoading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2,),)
               : const Text('保存'),
         ),
       ],

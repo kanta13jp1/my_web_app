@@ -150,10 +150,12 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     border: OutlineInputBorder(),
                   ),
                   items: _typeLabels.entries
-                      .map((e) => DropdownMenuItem(
-                            value: e.key,
-                            child: Text(e.value),
-                          ),)
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) => setS(() => selectedType = v!),
                 ),
@@ -165,10 +167,12 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     border: OutlineInputBorder(),
                   ),
                   items: _statusLabels.entries
-                      .map((e) => DropdownMenuItem(
-                            value: e.key,
-                            child: Text(e.value),
-                          ),)
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) => setS(() => selectedStatus = v!),
                 ),
@@ -265,7 +269,8 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     decoration: InputDecoration(
                       hintText: '今浮かんだことを即記録...',
                       hintStyle: TextStyle(
-                          color: isDark ? Colors.grey[500] : Colors.grey[400],),
+                        color: isDark ? Colors.grey[500] : Colors.grey[400],
+                      ),
                       filled: true,
                       fillColor: isDark
                           ? const Color(0xFF0F172A)
@@ -275,7 +280,9 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10,),
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
                     onSubmitted: (_) => _quickCapture(),
                   ),
@@ -293,7 +300,10 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white,),)
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.add, color: Colors.white),
                 ),
               ],
@@ -308,50 +318,56 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
               child: Row(
                 children: [
                   _filterChip(
-                      context,
-                      '全て',
-                      _filterStatus == 'all',
-                      () => setState(() {
-                            _filterStatus = 'all';
-                            _load();
-                          }),),
+                    context,
+                    '全て',
+                    _filterStatus == 'all',
+                    () => setState(() {
+                      _filterStatus = 'all';
+                      _load();
+                    }),
+                  ),
                   _filterChip(
-                      context,
-                      '捕獲',
-                      _filterStatus == 'captured',
-                      () => setState(() {
-                            _filterStatus = 'captured';
-                            _load();
-                          }),),
+                    context,
+                    '捕獲',
+                    _filterStatus == 'captured',
+                    () => setState(() {
+                      _filterStatus = 'captured';
+                      _load();
+                    }),
+                  ),
                   _filterChip(
-                      context,
-                      '振り返り済',
-                      _filterStatus == 'reviewed',
-                      () => setState(() {
-                            _filterStatus = 'reviewed';
-                            _load();
-                          }),),
+                    context,
+                    '振り返り済',
+                    _filterStatus == 'reviewed',
+                    () => setState(() {
+                      _filterStatus = 'reviewed';
+                      _load();
+                    }),
+                  ),
                   _filterChip(
-                      context,
-                      '行動済',
-                      _filterStatus == 'acted',
-                      () => setState(() {
-                            _filterStatus = 'acted';
-                            _load();
-                          }),),
+                    context,
+                    '行動済',
+                    _filterStatus == 'acted',
+                    () => setState(() {
+                      _filterStatus = 'acted';
+                      _load();
+                    }),
+                  ),
                   const SizedBox(width: 8),
                   const VerticalDivider(width: 1),
                   const SizedBox(width: 8),
-                  ..._typeLabels.entries.map((e) => _filterChip(
-                        context,
-                        e.value.split(' ').last,
-                        _filterType == e.key,
-                        () => setState(() {
-                          _filterType = _filterType == e.key ? null : e.key;
-                          _load();
-                        }),
-                        color: _typeColors[e.key],
-                      ),),
+                  ..._typeLabels.entries.map(
+                    (e) => _filterChip(
+                      context,
+                      e.value.split(' ').last,
+                      _filterType == e.key,
+                      () => setState(() {
+                        _filterType = _filterType == e.key ? null : e.key;
+                        _load();
+                      }),
+                      color: _typeColors[e.key],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -375,8 +391,13 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
     );
   }
 
-  Widget _filterChip(BuildContext context, String label, bool selected,
-      VoidCallback onTap, {Color? color,}) {
+  Widget _filterChip(
+    BuildContext context,
+    String label,
+    bool selected,
+    VoidCallback onTap, {
+    Color? color,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(right: 6),
@@ -409,7 +430,10 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
   }
 
   Widget _buildThoughtCard(
-      Map<String, dynamic> thought, Color cardColor, bool isDark,) {
+    Map<String, dynamic> thought,
+    Color cardColor,
+    bool isDark,
+  ) {
     final type = thought['thought_type'] as String? ?? 'random';
     final status = thought['status'] as String? ?? 'captured';
     final content = thought['content'] as String? ?? '';
@@ -448,32 +472,38 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     child: Text(
                       _typeLabels[type] ?? type,
                       style: TextStyle(
-                          fontSize: 11,
-                          color: color,
-                          fontWeight: FontWeight.w600,),
+                        fontSize: 11,
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     _statusLabels[status] ?? status,
-                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
                   ),
                   const Spacer(),
                   Row(
                     children: List.generate(
-                        5,
-                        (i) => Icon(
-                              Icons.star,
-                              size: 12,
-                              color: i < importance
-                                  ? const Color(0xFFF59E0B)
-                                  : Colors.grey[300],
-                            ),),
+                      5,
+                      (i) => Icon(
+                        Icons.star,
+                        size: 12,
+                        color: i < importance
+                            ? const Color(0xFFF59E0B)
+                            : Colors.grey[300],
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () => _discard(thought['id'] as String),
-                    child: Icon(Icons.close, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    child: Icon(Icons.close,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
                   ),
                 ],
               ),
@@ -489,7 +519,9 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 const SizedBox(height: 4),
                 Text(
                   '💭 $reflection',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -498,9 +530,11 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('MM/dd HH:mm').format(
-                      DateTime.tryParse(capturedAt)?.toLocal() ??
-                          DateTime.now(),),
-                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    DateTime.tryParse(capturedAt)?.toLocal() ?? DateTime.now(),
+                  ),
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
               ],
             ],
@@ -515,20 +549,25 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.bubble_chart_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          Icon(Icons.bubble_chart_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,),
           const SizedBox(height: 16),
           Text(
             '思考を捕まえよう',
             style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),),
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '上のテキストボックスに\n浮かんだことを入力してください',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
         ],
       ),

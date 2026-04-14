@@ -27,18 +27,14 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
     // 今日の日付をシードにして毎日違う名言を表示
     final today = DateTime.now();
     final seed = today.year * 10000 + today.month * 100 + today.day;
-    _quoteIndex =
-        Random(seed).nextInt(PhilosopherQuote.quotes.length);
+    _quoteIndex = Random(seed).nextInt(PhilosopherQuote.quotes.length);
   }
 
-  PhilosopherQuote get _quote =>
-      PhilosopherQuote.quotes[_quoteIndex];
+  PhilosopherQuote get _quote => PhilosopherQuote.quotes[_quoteIndex];
 
-  String get _shareUrl =>
-      '$_supabaseBase/share-quote?id=$_quoteIndex';
+  String get _shareUrl => '$_supabaseBase/share-quote?id=$_quoteIndex';
 
-  String get _imageUrl =>
-      '$_supabaseBase/generate-quote-image?id=$_quoteIndex';
+  String get _imageUrl => '$_supabaseBase/generate-quote-image?id=$_quoteIndex';
 
   Future<void> _shareOnX() async {
     final text = Uri.encodeComponent(
@@ -60,8 +56,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
 
   void _nextQuote() {
     setState(() {
-      _quoteIndex =
-          (_quoteIndex + 1) % PhilosopherQuote.quotes.length;
+      _quoteIndex = (_quoteIndex + 1) % PhilosopherQuote.quotes.length;
     });
   }
 
@@ -145,9 +140,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                       '(${quote.authorDescription})',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark
-                            ? Colors.grey[400]
-                            : Colors.grey[600],
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
                       ),
                     ),
                   ],

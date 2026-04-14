@@ -34,7 +34,8 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['reservations'] is List) {
-        setState(() => _reservations = (data['reservations'] as List).cast<Map<String, dynamic>>());
+        setState(() => _reservations =
+            (data['reservations'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _reservations = data.cast<Map<String, dynamic>>());
       } else {
@@ -94,7 +95,8 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                       itemCount: _reservations.length,
                       itemBuilder: (context, index) {
                         final res = _reservations[index];
-                        final spotName = res['spot_name']?.toString() ?? 'スポット ${index + 1}';
+                        final spotName =
+                            res['spot_name']?.toString() ?? 'スポット ${index + 1}';
                         final reservedAt = res['reserved_at']?.toString();
                         final status = res['status']?.toString() ?? '予約済み';
                         return Card(
@@ -118,7 +120,9 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                               ),
                               backgroundColor: status == 'active'
                                   ? Colors.green.shade100
-                                  : Theme.of(context).colorScheme.surfaceContainerHigh,
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHigh,
                             ),
                           ),
                         );

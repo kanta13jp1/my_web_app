@@ -35,7 +35,8 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(() => _projects = (data['projects'] as List).cast<Map<String, dynamic>>());
+        setState(() => _projects =
+            (data['projects'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _projects = data.cast<Map<String, dynamic>>());
       } else {
@@ -72,13 +73,14 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchProjects,
-                          child: const Text('再試行'),),
+                        onPressed: _fetchProjects,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -104,18 +106,22 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                 Text(
                                   project['title']?.toString() ?? 'タイトル不明',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(project['description']?.toString() ?? ''),
                                 const SizedBox(height: 8),
                                 LinearProgressIndicator(
                                   value: progress.clamp(0.0, 1.0),
-                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                          Colors.pink,),
+                                    Colors.pink,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(

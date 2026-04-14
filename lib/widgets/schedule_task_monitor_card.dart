@@ -140,8 +140,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       }
 
       final tasks = _definedTasks.map((def) {
-        final latestRuns =
-            runs.where((r) => r['task_id'] == def.id).toList();
+        final latestRuns = runs.where((r) => r['task_id'] == def.id).toList();
         if (latestRuns.isNotEmpty) {
           final run = latestRuns.first;
           int consecutiveErrors = 0;
@@ -330,7 +329,8 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                 color: const Color(0xFF6366F1).withAlpha(20),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(trigger.icon, size: 14, color: const Color(0xFF6366F1)),
+              child:
+                  Icon(trigger.icon, size: 14, color: const Color(0xFF6366F1)),
             ),
             const SizedBox(width: 10),
             Expanded(

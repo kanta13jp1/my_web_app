@@ -42,7 +42,8 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(() => _history = (data['history'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _history = (data['history'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _history = data.cast<Map<String, dynamic>>());
       } else {

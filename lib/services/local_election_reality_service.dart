@@ -174,9 +174,9 @@ class LocalElectionRealityService {
 
     final Future<LocalElectionRealitySnapshot> request =
         _fetchLatestSnapshotFromEdgeFunction(
-          client: client,
-          includeAiSummary: includeAiSummary,
-        );
+      client: client,
+      includeAiSummary: includeAiSummary,
+    );
     _latestSnapshotInFlight = request;
 
     try {
@@ -255,14 +255,12 @@ class LocalElectionRealityService {
     required SupabaseClient client,
     required bool includeAiSummary,
   }) async {
-    final response = await client.functions
-        .invoke(
-          'local-election-intelligence',
-          body: <String, dynamic>{
-            'includeAiSummary': includeAiSummary,
-          },
-        )
-        .timeout(const Duration(seconds: 50));
+    final response = await client.functions.invoke(
+      'local-election-intelligence',
+      body: <String, dynamic>{
+        'includeAiSummary': includeAiSummary,
+      },
+    ).timeout(const Duration(seconds: 50));
     final data = _toMap(response.data);
     if (data['success'] != true) {
       throw Exception(

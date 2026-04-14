@@ -63,7 +63,9 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
   List<Map<String, dynamic>> _toList(dynamic data, String key) {
     if (data is Map<String, dynamic>) {
       final list = data[key];
-      if (list is List) return list.map((e) => e as Map<String, dynamic>).toList();
+      if (list is List) {
+        return list.map((e) => e as Map<String, dynamic>).toList();
+      }
     }
     return [];
   }
@@ -150,7 +152,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 color: status == 'open' ? Colors.green : Colors.grey,
               ),
             ),
-            title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(title,
+                style: const TextStyle(fontWeight: FontWeight.bold),),
             subtitle: Text(
               [
                 if (dept.isNotEmpty) dept,

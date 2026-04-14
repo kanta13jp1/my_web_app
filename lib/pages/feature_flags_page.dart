@@ -68,12 +68,17 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 12),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchFlags,
@@ -87,12 +92,19 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.toggle_off_outlined,
-                              size: 64, color: Colors.grey,),
+                          Icon(
+                            Icons.toggle_off_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 16),
-                          Text('フィーチャーフラグがありません',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.grey,),),
+                          Text(
+                            'フィーチャーフラグがありません',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                     )
@@ -104,15 +116,13 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                         final name = item['name']?.toString() ??
                             item['key']?.toString() ??
                             'フラグ ${index + 1}';
-                        final enabled = item['enabled'] == true ||
-                            item['value'] == true;
+                        final enabled =
+                            item['enabled'] == true || item['value'] == true;
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: Icon(
-                              enabled
-                                  ? Icons.toggle_on
-                                  : Icons.toggle_off,
+                              enabled ? Icons.toggle_on : Icons.toggle_off,
                               color: enabled
                                   ? const Color(0xFF6366F1)
                                   : Colors.grey,

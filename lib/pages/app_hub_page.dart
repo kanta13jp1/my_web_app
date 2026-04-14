@@ -49,7 +49,8 @@ class _AppHubPageState extends State<AppHubPage> {
 
       setState(() {
         if (billing is Map<String, dynamic>) _billingStatus = billing;
-        if (eventsData is Map<String, dynamic> && eventsData['events'] is List) {
+        if (eventsData is Map<String, dynamic> &&
+            eventsData['events'] is List) {
           _events = (eventsData['events'] as List).cast<Map<String, dynamic>>();
         }
         if (tasksData is Map<String, dynamic> && tasksData['tasks'] is List) {
@@ -84,9 +85,11 @@ class _AppHubPageState extends State<AppHubPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 12),
-                      ElevatedButton(onPressed: _fetchData, child: const Text('再試行')),
+                      ElevatedButton(
+                          onPressed: _fetchData, child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -107,7 +110,8 @@ class _AppHubPageState extends State<AppHubPage> {
                     ),
                     const SizedBox(height: 16),
                     // カレンダーイベント
-                    Text('直近のイベント', style: Theme.of(context).textTheme.titleMedium),
+                    Text('直近のイベント',
+                        style: Theme.of(context).textTheme.titleMedium,),
                     const SizedBox(height: 8),
                     if (_events.isEmpty)
                       const Card(child: ListTile(title: Text('イベントなし')))
@@ -117,10 +121,12 @@ class _AppHubPageState extends State<AppHubPage> {
                               child: ListTile(
                                 leading: const Icon(Icons.event),
                                 title: Text(
-                                  (e['metadata'] as Map<String, dynamic>?)?['title'] as String? ??
+                                  (e['metadata'] as Map<String, dynamic>?)?[
+                                          'title'] as String? ??
                                       'イベント',
                                 ),
-                                subtitle: Text(e['created_at']?.toString() ?? ''),
+                                subtitle:
+                                    Text(e['created_at']?.toString() ?? ''),
                               ),
                             ),
                           ),
@@ -136,10 +142,12 @@ class _AppHubPageState extends State<AppHubPage> {
                               child: ListTile(
                                 leading: const Icon(Icons.task_alt),
                                 title: Text(
-                                  (t['metadata'] as Map<String, dynamic>?)?['title'] as String? ??
+                                  (t['metadata'] as Map<String, dynamic>?)?[
+                                          'title'] as String? ??
                                       'タスク',
                                 ),
-                                subtitle: Text(t['created_at']?.toString() ?? ''),
+                                subtitle:
+                                    Text(t['created_at']?.toString() ?? ''),
                               ),
                             ),
                           ),

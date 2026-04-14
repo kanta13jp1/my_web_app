@@ -196,7 +196,9 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white,),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.save),
                 label: const Text('記録を保存'),
@@ -247,27 +249,29 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        ..._records.map((r) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: Text(
-                  _moodIcons[(r['mood_score'] as int? ?? 3) - 1],
-                  style: const TextStyle(fontSize: 24),
-                ),
-                title: Text(
-                  '気分: ${_moodLabels[(r['mood_score'] as int? ?? 3) - 1]}  '
-                  'ストレス: ${_stressLabels[(r['stress_score'] as int? ?? 3) - 1]}',
-                ),
-                subtitle: Text(
-                  '睡眠: ${r['sleep_hours'] ?? '-'}時間'
-                  '${r['note'] != null ? '  ${r['note']}' : ''}',
-                ),
-                trailing: Text(
-                  (r['recorded_at'] as String? ?? '').substring(0, 10),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                ),
+        ..._records.map(
+          (r) => Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: Text(
+                _moodIcons[(r['mood_score'] as int? ?? 3) - 1],
+                style: const TextStyle(fontSize: 24),
               ),
-            ),),
+              title: Text(
+                '気分: ${_moodLabels[(r['mood_score'] as int? ?? 3) - 1]}  '
+                'ストレス: ${_stressLabels[(r['stress_score'] as int? ?? 3) - 1]}',
+              ),
+              subtitle: Text(
+                '睡眠: ${r['sleep_hours'] ?? '-'}時間'
+                '${r['note'] != null ? '  ${r['note']}' : ''}',
+              ),
+              trailing: Text(
+                (r['recorded_at'] as String? ?? '').substring(0, 10),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

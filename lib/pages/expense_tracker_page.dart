@@ -79,11 +79,13 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
                           itemBuilder: (context, index) {
                             final item = _expenses[index];
                             final title = item is Map
-                                ? (item['title'] ?? item['name'] ?? item['category'] ?? '支出')
+                                ? (item['title'] ??
+                                    item['name'] ??
+                                    item['category'] ??
+                                    '支出')
                                 : item.toString();
-                            final amount = item is Map
-                                ? (item['amount'] ?? '')
-                                : '';
+                            final amount =
+                                item is Map ? (item['amount'] ?? '') : '';
                             final date = item is Map
                                 ? (item['date'] ?? item['created_at'] ?? '')
                                 : '';

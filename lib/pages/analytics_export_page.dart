@@ -43,11 +43,14 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
       setState(() {
         if (optData is Map<String, dynamic>) {
           final types = optData['reportTypes'];
-          _reportTypes = types is List ? types.map((e) => e.toString()).toList() : [];
+          _reportTypes =
+              types is List ? types.map((e) => e.toString()).toList() : [];
           final formats = optData['exportFormats'];
-          _exportFormats = formats is List ? formats.map((e) => e.toString()).toList() : [];
+          _exportFormats =
+              formats is List ? formats.map((e) => e.toString()).toList() : [];
         }
-        final exports = histData is Map<String, dynamic> ? histData['exports'] : null;
+        final exports =
+            histData is Map<String, dynamic> ? histData['exports'] : null;
         _history = exports is List ? exports : [];
       });
     } catch (e) {
@@ -97,7 +100,8 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                     if (_reportTypes.isNotEmpty) ...[
                       const Text(
                         'レポートタイプ',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16,),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -117,7 +121,8 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                     if (_exportFormats.isNotEmpty) ...[
                       const Text(
                         'エクスポート形式',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16,),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -136,7 +141,8 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                     ],
                     const Text(
                       'エクスポート履歴',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     if (_history.isEmpty)
@@ -160,14 +166,18 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                               child: Icon(Icons.download, color: Colors.teal),
                             ),
                             title: Text(
-                              item['type']?.toString() ?? item['report_type']?.toString() ?? 'レポート',
+                              item['type']?.toString() ??
+                                  item['report_type']?.toString() ??
+                                  'レポート',
                             ),
                             subtitle: Text(
                               item['format']?.toString().toUpperCase() ?? '',
                             ),
                             trailing: Text(
-                              item['createdAt']?.toString().substring(0, 10) ?? '',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              item['createdAt']?.toString().substring(0, 10) ??
+                                  '',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey,),
                             ),
                           ),
                         );

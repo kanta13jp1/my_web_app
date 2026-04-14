@@ -84,8 +84,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         if (wd is Map<String, dynamic>) {
           final list = wd['workouts'];
           if (list is List) {
-            _workouts =
-                list.map((w) => w as Map<String, dynamic>).toList();
+            _workouts = list.map((w) => w as Map<String, dynamic>).toList();
           }
         }
 
@@ -369,8 +368,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                 avatar: Icon(t.$3, size: 16),
                 label: Text(t.$2),
                 selected: isSelected,
-                onSelected: (_) =>
-                    setState(() => _selectedWorkoutType = t.$1),
+                onSelected: (_) => setState(() => _selectedWorkoutType = t.$1),
               );
             }).toList(),
           ),

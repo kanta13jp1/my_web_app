@@ -437,8 +437,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
               children: grouped.entries.map((entry) {
                 final cat = entry.key;
                 final fns = entry.value;
-                final color =
-                    _categoryColors[cat] ?? const Color(0xFF6366F1);
+                final color = _categoryColors[cat] ?? const Color(0xFF6366F1);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -470,7 +469,9 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             '${fns.length}件',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -553,9 +554,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                 Icon(
                   hasUi ? Icons.check_circle : Icons.cancel,
                   size: 18,
-                  color: hasUi
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFEF4444),
+                  color:
+                      hasUi ? const Color(0xFF10B981) : const Color(0xFFEF4444),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -575,8 +575,10 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                       const SizedBox(height: 2),
                       Text(
                         description,
-                        style:
-                            TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                            fontSize: 11,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,),
                       ),
                       if (uiLabel != null) ...[
                         const SizedBox(height: 3),
@@ -673,8 +675,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                         },
                         style: TextButton.styleFrom(
                           minimumSize: const Size(0, 28),
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                         ),
                         child: const Text(
                           '実装へ',

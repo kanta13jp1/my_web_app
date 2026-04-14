@@ -106,8 +106,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 8),
                             itemBuilder: (context, i) {
-                              final post =
-                                  _posts[i] as Map<String, dynamic>;
+                              final post = _posts[i] as Map<String, dynamic>;
                               return Card(
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),

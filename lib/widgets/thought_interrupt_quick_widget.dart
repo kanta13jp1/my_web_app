@@ -7,28 +7,52 @@ class ThoughtInterruptQuickWidget extends StatelessWidget {
 
   static final List<_ImpulseItem> _items = [
     _ImpulseItem(
-      'sns', 'SNS', Icons.thumb_up, const Color(0xFF1D9BF0),
-      '通知をOFFにしてスマホを裏返す', '水を1杯飲んで3回深呼吸',
+      'sns',
+      'SNS',
+      Icons.thumb_up,
+      const Color(0xFF1D9BF0),
+      '通知をOFFにしてスマホを裏返す',
+      '水を1杯飲んで3回深呼吸',
     ),
     _ImpulseItem(
-      'games', 'ゲーム', Icons.videogame_asset, const Color(0xFF7C3AED),
-      'アプリを閉じて画面ロック', '5分間ストレッチ',
+      'games',
+      'ゲーム',
+      Icons.videogame_asset,
+      const Color(0xFF7C3AED),
+      'アプリを閉じて画面ロック',
+      '5分間ストレッチ',
     ),
     _ImpulseItem(
-      'video', '動画', Icons.play_circle, const Color(0xFFEF4444),
-      'タブを閉じてブラウザを終了', '読みたい本を1ページ開く',
+      'video',
+      '動画',
+      Icons.play_circle,
+      const Color(0xFFEF4444),
+      'タブを閉じてブラウザを終了',
+      '読みたい本を1ページ開く',
     ),
     _ImpulseItem(
-      'smoking', 'タバコ', Icons.smoking_rooms, const Color(0xFF92400E),
-      '禁煙アイテム(ガム・水)を手に取る', 'エレベーターで階段に変更',
+      'smoking',
+      'タバコ',
+      Icons.smoking_rooms,
+      const Color(0xFF92400E),
+      '禁煙アイテム(ガム・水)を手に取る',
+      'エレベーターで階段に変更',
     ),
     _ImpulseItem(
-      'alcohol', 'お酒', Icons.local_bar, const Color(0xFFF59E0B),
-      '冷水・炭酸水を代替として用意', '翌朝のコストを計算する',
+      'alcohol',
+      'お酒',
+      Icons.local_bar,
+      const Color(0xFFF59E0B),
+      '冷水・炭酸水を代替として用意',
+      '翌朝のコストを計算する',
     ),
     _ImpulseItem(
-      'impulse', '衝動', Icons.block, const Color(0xFFDB2777),
-      '目を閉じて10秒カウント', '目標ノートを1行書く',
+      'impulse',
+      '衝動',
+      Icons.block,
+      const Color(0xFFDB2777),
+      '目を閉じて10秒カウント',
+      '目標ノートを1行書く',
     ),
   ];
 
@@ -59,7 +83,8 @@ class ThoughtInterruptQuickWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.psychology_alt, size: 16, color: Color(0xFF4338CA)),
+              const Icon(Icons.psychology_alt,
+                  size: 16, color: Color(0xFF4338CA),),
               const SizedBox(width: 6),
               const Text(
                 '今の衝動を即排除',

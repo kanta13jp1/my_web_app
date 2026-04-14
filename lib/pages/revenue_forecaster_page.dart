@@ -28,8 +28,8 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
       _errorMessage = null;
     });
     try {
-      final response =
-          await _supabase.functions.invoke('enterprise-hub', body: {'action': 'forecast.list'});
+      final response = await _supabase.functions
+          .invoke('enterprise-hub', body: {'action': 'forecast.list'});
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() => _forecast = data);
@@ -122,49 +122,41 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                         children: [
                           Text(
                             '収益サマリー',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium,
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 12),
                           GridView.count(
                             crossAxisCount: 2,
                             shrinkWrap: true,
-                            physics:
-                                const NeverScrollableScrollPhysics(),
+                            physics: const NeverScrollableScrollPhysics(),
                             crossAxisSpacing: 8,
                             mainAxisSpacing: 8,
                             childAspectRatio: 1.6,
                             children: [
                               _buildMetricCard(
                                 '今月予測',
-                                _forecast!['monthly_forecast']
-                                        ?.toString() ??
+                                _forecast!['monthly_forecast']?.toString() ??
                                     '-',
                                 Icons.trending_up,
                                 Colors.green,
                               ),
                               _buildMetricCard(
                                 '四半期予測',
-                                _forecast!['quarterly_forecast']
-                                        ?.toString() ??
+                                _forecast!['quarterly_forecast']?.toString() ??
                                     '-',
                                 Icons.bar_chart,
                                 Colors.blue,
                               ),
                               _buildMetricCard(
                                 '年間予測',
-                                _forecast!['annual_forecast']
-                                        ?.toString() ??
+                                _forecast!['annual_forecast']?.toString() ??
                                     '-',
                                 Icons.show_chart,
                                 Colors.orange,
                               ),
                               _buildMetricCard(
                                 '成長率',
-                                _forecast!['growth_rate']
-                                        ?.toString() ??
-                                    '-',
+                                _forecast!['growth_rate']?.toString() ?? '-',
                                 Icons.arrow_upward,
                                 Colors.purple,
                               ),
@@ -174,25 +166,23 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                           if (_forecast!['insights'] is List) ...[
                             Text(
                               'AI インサイト',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium,
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
-                            ...(_forecast!['insights'] as List)
-                                .map((insight) => Card(
-                                      margin: const EdgeInsets.only(
-                                        bottom: 8,
-                                      ),
-                                      child: ListTile(
-                                        leading: const Icon(
-                                          Icons.lightbulb,
-                                          color: Colors.amber,
-                                        ),
-                                        title: Text(insight.toString()),
-                                      ),
-                                    ),
+                            ...(_forecast!['insights'] as List).map(
+                              (insight) => Card(
+                                margin: const EdgeInsets.only(
+                                  bottom: 8,
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.lightbulb,
+                                    color: Colors.amber,
                                   ),
+                                  title: Text(insight.toString()),
+                                ),
+                              ),
+                            ),
                           ],
                         ],
                       ),

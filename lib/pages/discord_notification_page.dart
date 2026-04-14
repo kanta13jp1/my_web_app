@@ -182,7 +182,8 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
           children: [
             _buildInfoBanner(),
             const SizedBox(height: 12),
-            if (_errorMessage != null) _buildAlert(_errorMessage!, isError: true),
+            if (_errorMessage != null)
+              _buildAlert(_errorMessage!, isError: true),
             if (_successMessage != null)
               _buildAlert(_successMessage!, isError: false),
             _buildWebhookCard(),

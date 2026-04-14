@@ -57,8 +57,7 @@ class _WebNoteImagePasteRegistration implements NoteImagePasteRegistration {
 
     for (var index = 0; index < items.length; index++) {
       final item = items[index];
-      if (item.kind != 'file' ||
-          !item.type.startsWith('image/')) {
+      if (item.kind != 'file' || !item.type.startsWith('image/')) {
         continue;
       }
 
@@ -71,9 +70,7 @@ class _WebNoteImagePasteRegistration implements NoteImagePasteRegistration {
       _isProcessing = true;
       try {
         final bytes = await _blobToBytes(file);
-        final name = file.name.trim().isEmpty
-            ? 'pasted-image.png'
-            : file.name;
+        final name = file.name.trim().isEmpty ? 'pasted-image.png' : file.name;
         await _onImagePasted(bytes, name, item.type);
       } finally {
         _isProcessing = false;

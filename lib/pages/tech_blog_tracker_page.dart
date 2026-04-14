@@ -71,7 +71,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
         final draftData = await _supabase
             .from('blog_posts')
             .select(
-                'id, title, status, target_platforms, draft_path, posted_at, url, created_at',)
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at',
+            )
             .inFilter('status', ['draft', 'posted'])
             .order('created_at', ascending: false)
             .limit(10);
@@ -217,10 +218,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final todayCount = _todayPosts
-        .map((p) => p['platform'])
-        .toSet()
-        .length;
+    final todayCount = _todayPosts.map((p) => p['platform']).toSet().length;
 
     return Scaffold(
       appBar: AppBar(
@@ -339,7 +337,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -434,7 +434,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     border: Border.all(
                       color: posted
                           ? platform.color.withValues(alpha: 0.4)
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          : Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                     ),
                   ),
                   child: Row(
@@ -503,19 +505,17 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
         const SizedBox(height: 8),
         ...(_scheduleDrafts.map((draft) {
           final status = draft['status']?.toString() ?? 'draft';
-          final title =
-              draft['title']?.toString() ?? '(タイトルなし)';
+          final title = draft['title']?.toString() ?? '(タイトルなし)';
           final platforms = draft['target_platforms'];
           final platformLabels = (platforms is List)
-              ? platforms
-                  .map((p) {
-                    final match = _platforms.where((pl) => pl.id == p);
-                    return match.isNotEmpty ? match.first.label : p.toString();
-                  })
-                  .join(', ')
+              ? platforms.map((p) {
+                  final match = _platforms.where((pl) => pl.id == p);
+                  return match.isNotEmpty ? match.first.label : p.toString();
+                }).join(', ')
               : '';
           final createdAt = DateTime.tryParse(
-              draft['created_at']?.toString() ?? '',);
+            draft['created_at']?.toString() ?? '',
+          );
           final dateLabel = createdAt != null
               ? DateFormat('MM/dd HH:mm').format(createdAt)
               : '';
@@ -533,7 +533,9 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               title: Text(
                 title,
                 style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600,),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -545,8 +547,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 ),
               ),
               trailing: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isPosted
                       ? Colors.green.withAlpha(20)
@@ -558,9 +559,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isPosted
-                        ? Colors.green
-                        : const Color(0xFF6366F1),
+                    color: isPosted ? Colors.green : const Color(0xFF6366F1),
                   ),
                 ),
               ),
@@ -595,9 +594,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
         ...sortedDates.take(14).map((date) {
           final posts = grouped[date]!;
           final dt = DateTime.tryParse(date);
-          final label = dt != null
-              ? DateFormat('MM/dd (E)', 'ja').format(dt)
-              : date;
+          final label =
+              dt != null ? DateFormat('MM/dd (E)', 'ja').format(dt) : date;
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),

@@ -32,7 +32,8 @@ class NotificationService {
     );
 
     await flutterLocalNotificationsPlugin.initialize(
-        settings: initializationSettings,);
+      settings: initializationSettings,
+    );
   }
 
   Future<void> scheduleSaturdayReminder() async {

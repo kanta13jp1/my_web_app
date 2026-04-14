@@ -149,10 +149,8 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
     if (result != true) return;
 
     final title = titleCtrl.text.trim();
-    final items = itemCtrls
-        .map((c) => c.text.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final items =
+        itemCtrls.map((c) => c.text.trim()).where((s) => s.isNotEmpty).toList();
     if (title.isEmpty || items.isEmpty) return;
 
     final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -582,7 +580,9 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                                 : FontWeight.w500,
                             color: _showAnswers
                                 ? Theme.of(context).colorScheme.onSurface
-                                : Theme.of(context).colorScheme.onSurfaceVariant,
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                           ),
                         ),
                         if (!_showAnswers && _showHints) ...[
@@ -591,7 +591,9 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                             _buildHint(value),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                         ],

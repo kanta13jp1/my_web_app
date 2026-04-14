@@ -46,7 +46,8 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
       return;
     }
 
-    final yesterday = _dateKey(DateTime.now().subtract(const Duration(days: 1)));
+    final yesterday =
+        _dateKey(DateTime.now().subtract(const Duration(days: 1)));
     if (lastDate == yesterday) {
       // Consecutive day
       newStreak = streak + 1;
@@ -91,10 +92,10 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
       streak == 365;
 
   Future<void> _shareOnX() async {
-    final text =
-        Uri.encodeComponent('自分株式会社に$_streak日連続アクセス中！$_streakEmoji $_streakLabel\n'
-            '#buildinpublic #自分株式会社\n'
-            'https://my-web-app-b67f4.web.app/');
+    final text = Uri.encodeComponent(
+        '自分株式会社に$_streak日連続アクセス中！$_streakEmoji $_streakLabel\n'
+        '#buildinpublic #自分株式会社\n'
+        'https://my-web-app-b67f4.web.app/');
     final url = Uri.parse('https://x.com/intent/tweet?text=$text');
     await launchUrl(url, mode: LaunchMode.externalApplication);
   }

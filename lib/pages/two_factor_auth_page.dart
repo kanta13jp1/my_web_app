@@ -271,7 +271,8 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                   trailing: current
                       ? const Chip(label: Text('このデバイス'))
                       : IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                          icon: const Icon(Icons.remove_circle_outline,
+                              color: Colors.red,),
                           onPressed: () async {
                             try {
                               await _supabase.functions.invoke(

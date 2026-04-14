@@ -100,7 +100,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['bookings'] is List) {
-        setState(() => _bookings = (data['bookings'] as List).cast<Map<String, dynamic>>());
+        setState(() => _bookings =
+            (data['bookings'] as List).cast<Map<String, dynamic>>(),);
       }
     } catch (_) {}
   }
@@ -113,7 +114,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(() => _packingItems = (data['items'] as List).map((e) => e.toString()).toList());
+        setState(() => _packingItems =
+            (data['items'] as List).map((e) => e.toString()).toList(),);
       }
     } catch (_) {}
   }
@@ -297,25 +299,39 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
 
   Color _bookingTypeColor(String type) {
     switch (type) {
-      case 'hotel': return const Color(0xFF6366F1);
-      case 'flight': return const Color(0xFF0EA5E9);
-      case 'train': return const Color(0xFF10B981);
-      case 'rental_car': return const Color(0xFFF59E0B);
-      case 'restaurant': return const Color(0xFFEF4444);
-      default: return Colors.grey;
+      case 'hotel':
+        return const Color(0xFF6366F1);
+      case 'flight':
+        return const Color(0xFF0EA5E9);
+      case 'train':
+        return const Color(0xFF10B981);
+      case 'rental_car':
+        return const Color(0xFFF59E0B);
+      case 'restaurant':
+        return const Color(0xFFEF4444);
+      default:
+        return Colors.grey;
     }
   }
 
   IconData _bookingTypeIcon(String type) {
     switch (type) {
-      case 'hotel': return Icons.hotel;
-      case 'flight': return Icons.flight;
-      case 'train': return Icons.train;
-      case 'bus': return Icons.directions_bus;
-      case 'rental_car': return Icons.directions_car;
-      case 'restaurant': return Icons.restaurant;
-      case 'activity': return Icons.local_activity;
-      default: return Icons.bookmark;
+      case 'hotel':
+        return Icons.hotel;
+      case 'flight':
+        return Icons.flight;
+      case 'train':
+        return Icons.train;
+      case 'bus':
+        return Icons.directions_bus;
+      case 'rental_car':
+        return Icons.directions_car;
+      case 'restaurant':
+        return Icons.restaurant;
+      case 'activity':
+        return Icons.local_activity;
+      default:
+        return Icons.bookmark;
     }
   }
 
@@ -368,7 +384,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: '更新',
-            onPressed: _selectedTrip == null ? _fetchTrips : () => _selectTrip(_selectedTrip!),
+            onPressed: _selectedTrip == null
+                ? _fetchTrips
+                : () => _selectTrip(_selectedTrip!),
           ),
         ],
       ),
@@ -387,9 +405,11 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 8),
-                      ElevatedButton(onPressed: _fetchTrips, child: const Text('再試行')),
+                      ElevatedButton(
+                          onPressed: _fetchTrips, child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -415,9 +435,11 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           children: [
             Icon(Icons.flight_takeoff, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('旅行プランがありません', style: TextStyle(color: Colors.grey, fontSize: 16)),
+            Text('旅行プランがありません',
+                style: TextStyle(color: Colors.grey, fontSize: 16),),
             SizedBox(height: 8),
-            Text('右下の + から新しい旅行を作成してください', style: TextStyle(color: Colors.grey)),
+            Text('右下の + から新しい旅行を作成してください',
+                style: TextStyle(color: Colors.grey),),
           ],
         ),
       );
@@ -429,8 +451,11 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
         final trip = _trips[index];
         final name = trip['name']?.toString() ?? '無題';
         final destination = trip['destination']?.toString() ?? '';
-        final startDate = trip['startDate']?.toString() ?? trip['start_date']?.toString() ?? '';
-        final endDate = trip['endDate']?.toString() ?? trip['end_date']?.toString() ?? '';
+        final startDate = trip['startDate']?.toString() ??
+            trip['start_date']?.toString() ??
+            '';
+        final endDate =
+            trip['endDate']?.toString() ?? trip['end_date']?.toString() ?? '';
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
@@ -438,14 +463,16 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
               child: const Icon(Icons.flight_takeoff, color: Color(0xFF0EA5E9)),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (destination.isNotEmpty)
                   Row(
                     children: [
-                      const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                      const Icon(Icons.location_on,
+                          size: 14, color: Colors.grey,),
                       const SizedBox(width: 4),
                       Text(destination, style: const TextStyle(fontSize: 13)),
                     ],
@@ -506,7 +533,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               ),
             ),
             ...activities.map((activity) {
-              final actName = activity['name']?.toString() ?? activity['activity']?.toString() ?? '未定';
+              final actName = activity['name']?.toString() ??
+                  activity['activity']?.toString() ??
+                  '未定';
               final time = activity['time']?.toString() ?? '';
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -541,24 +570,33 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       itemBuilder: (context, index) {
         final booking = _bookings[index];
         final type = booking['type']?.toString() ?? 'other';
-        final name = booking['name']?.toString() ?? booking['provider']?.toString() ?? '未登録';
-        final date = booking['date']?.toString() ?? booking['checkIn']?.toString() ?? '';
+        final name = booking['name']?.toString() ??
+            booking['provider']?.toString() ??
+            '未登録';
+        final date =
+            booking['date']?.toString() ?? booking['checkIn']?.toString() ?? '';
         final confirmNo = booking['confirmation_number']?.toString() ?? '';
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: _bookingTypeColor(type).withValues(alpha: 0.15),
-              child: Icon(_bookingTypeIcon(type), color: _bookingTypeColor(type), size: 20),
+              child: Icon(_bookingTypeIcon(type),
+                  color: _bookingTypeColor(type), size: 20,),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(type, style: TextStyle(color: _bookingTypeColor(type), fontSize: 12)),
-                if (date.isNotEmpty) Text(date, style: const TextStyle(fontSize: 12)),
+                Text(type,
+                    style: TextStyle(
+                        color: _bookingTypeColor(type), fontSize: 12,),),
+                if (date.isNotEmpty)
+                  Text(date, style: const TextStyle(fontSize: 12)),
                 if (confirmNo.isNotEmpty)
-                  Text('確認番号: $confirmNo', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text('確認番号: $confirmNo',
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),),
               ],
             ),
           ),
@@ -578,7 +616,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               const SizedBox(width: 8),
               Text(
                 '持ち物リスト (${_packingItems.length}件)',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -586,7 +625,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
         Expanded(
           child: _packingItems.isEmpty
               ? const Center(
-                  child: Text('持ち物リストがありません', style: TextStyle(color: Colors.grey)),
+                  child: Text('持ち物リストがありません',
+                      style: TextStyle(color: Colors.grey),),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -623,12 +663,15 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('予算サマリー', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('予算サマリー',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _budgetStat('総予算', '¥${_formatNum(totalBudget)}', Colors.blue),
+                      _budgetStat(
+                          '総予算', '¥${_formatNum(totalBudget)}', Colors.blue,),
                       _budgetStat('支出', '¥${_formatNum(spent)}', Colors.red),
                       _budgetStat(
                         '残高',
@@ -640,9 +683,14 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
                     value: ratio,
-                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHigh,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      ratio < 0.7 ? Colors.green : ratio < 0.9 ? Colors.orange : Colors.red,
+                      ratio < 0.7
+                          ? Colors.green
+                          : ratio < 0.9
+                              ? Colors.orange
+                              : Colors.red,
                     ),
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(4),
@@ -658,7 +706,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           ),
           const SizedBox(height: 16),
           if (_budget['categories'] is List)
-            ...((_budget['categories'] as List).cast<Map<String, dynamic>>()).map((cat) {
+            ...((_budget['categories'] as List).cast<Map<String, dynamic>>())
+                .map((cat) {
               final catName = cat['name']?.toString() ?? '';
               final catAmount = (cat['amount'] as num?)?.toDouble() ?? 0;
               return Padding(
@@ -674,7 +723,8 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                 ),
               );
             }),
-          if (_budget['categories'] == null || (_budget['categories'] as List?)?.isEmpty == true)
+          if (_budget['categories'] == null ||
+              (_budget['categories'] as List?)?.isEmpty == true)
             const Center(
               child: Text('予算データがありません', style: TextStyle(color: Colors.grey)),
             ),
@@ -686,7 +736,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Widget _budgetStat(String label, String value, Color color) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: color,),),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );

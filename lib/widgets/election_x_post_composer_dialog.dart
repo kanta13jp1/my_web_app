@@ -98,17 +98,14 @@ class _ElectionXPostComposerDialogState
     final publicUrl = widget.publishedMemo == null
         ? ''
         : PublicMemoService.buildPublicMemoUrl(widget.publishedMemo!.id);
-    final window =
-        LocalElectionShareService.availableWindows[_selectedIndex];
-    final saturday =
-        widget.shareService.scheduleWindowRange(window).start;
+    final window = LocalElectionShareService.availableWindows[_selectedIndex];
+    final saturday = widget.shareService.scheduleWindowRange(window).start;
     final tweets = widget.shareService.buildUpcomingElectionsThread(
       snapshot: widget.snapshot,
       publicUrl: publicUrl,
       weekendSaturday: saturday,
     );
-    _controllers =
-        tweets.map((t) => TextEditingController(text: t)).toList();
+    _controllers = tweets.map((t) => TextEditingController(text: t)).toList();
   }
 
   void _selectWindow(int index) {
@@ -175,7 +172,9 @@ class _ElectionXPostComposerDialogState
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh)),
+        border: Border(
+            bottom: BorderSide(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,8 +215,7 @@ class _ElectionXPostComposerDialogState
 
   Widget _buildTweetList() {
     if (_controllers.isEmpty ||
-        (_controllers.length == 1 &&
-            _controllers[0].text.endsWith('ありません。'))) {
+        (_controllers.length == 1 && _controllers[0].text.endsWith('ありません。'))) {
       return const Padding(
         padding: EdgeInsets.all(24),
         child: Center(
@@ -283,9 +281,10 @@ class _ElectionXPostComposerDialogState
                   '$len / $_maxTweetLen',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isOver ? Colors.red : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight:
-                        isOver ? FontWeight.bold : FontWeight.normal,
+                    color: isOver
+                        ? Colors.red
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: isOver ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -305,7 +304,9 @@ class _ElectionXPostComposerDialogState
             Container(
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: isOver ? Colors.red : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  color: isOver
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -329,7 +330,9 @@ class _ElectionXPostComposerDialogState
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh)),
+        border: Border(
+            top: BorderSide(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh)),
       ),
       child: Row(
         children: [
@@ -346,9 +349,7 @@ class _ElectionXPostComposerDialogState
               style: FilledButton.styleFrom(backgroundColor: _xBlue),
               icon: const Icon(Icons.send, size: 15),
               label: const Text('1つ目を投稿'),
-              onPressed: _controllers.isNotEmpty
-                  ? () => _openXIntent(0)
-                  : null,
+              onPressed: _controllers.isNotEmpty ? () => _openXIntent(0) : null,
             ),
           ),
         ],
@@ -386,8 +387,7 @@ class _ElectionXPostComposerDialogState
     if (index >= _controllers.length) return;
     final text = _controllers[index].text;
     final uri = Uri.https('x.com', '/intent/tweet', {'text': text});
-    final launched =
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && mounted) {
       await Clipboard.setData(ClipboardData(text: text));
       if (!mounted) return;
@@ -450,7 +450,9 @@ class _WeekendChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                color: isSelected
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 2),
@@ -465,8 +467,7 @@ class _WeekendChip extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.25)
@@ -515,7 +516,8 @@ class _SmallIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.all(4),
-          child: Icon(icon, size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          child: Icon(icon,
+              size: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );

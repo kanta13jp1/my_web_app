@@ -21,8 +21,7 @@ class GuitarRecordingStudioPage extends StatefulWidget {
       _GuitarRecordingStudioPageState();
 }
 
-class _GuitarRecordingStudioPageState
-    extends State<GuitarRecordingStudioPage> {
+class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   final _supabase = Supabase.instance.client;
 
   // 録音状態
@@ -109,9 +108,7 @@ class _GuitarRecordingStudioPageState
 
   /// 最新録音のAIフィードバック (履歴リストの先頭から取得)
   String? get _latestRecordingAiFeedback =>
-      _recordings.isNotEmpty
-          ? _recordingAiFeedbackOf(_recordings.first)
-          : null;
+      _recordings.isNotEmpty ? _recordingAiFeedbackOf(_recordings.first) : null;
 
   @override
   void initState() {
@@ -188,8 +185,9 @@ class _GuitarRecordingStudioPageState
   }
 
   String? _recordingAiFeedbackOf(Map<String, dynamic> recording) {
-    final text =
-        (recording['aiFeedback'] ?? recording['ai_feedback'])?.toString().trim();
+    final text = (recording['aiFeedback'] ?? recording['ai_feedback'])
+        ?.toString()
+        .trim();
     if (text == null || text.isEmpty) return null;
     return text;
   }
@@ -284,7 +282,8 @@ class _GuitarRecordingStudioPageState
       return List<Map<String, dynamic>>.from(recordings);
     }
     final next = List<Map<String, dynamic>>.from(recordings);
-    final index = next.indexWhere((item) => _recordingIdOf(item) == recordingId);
+    final index =
+        next.indexWhere((item) => _recordingIdOf(item) == recordingId);
     if (index >= 0) {
       next[index] = recording;
     } else {
@@ -318,7 +317,8 @@ class _GuitarRecordingStudioPageState
   }
 
   String _buildShareMessage(String title, {String? publicUrl}) {
-    final normalizedTitle = title.trim().isEmpty ? 'guitar-recording' : title.trim();
+    final normalizedTitle =
+        title.trim().isEmpty ? 'guitar-recording' : title.trim();
     return <String>[
       'ギター録音をシェアします',
       normalizedTitle,
@@ -352,7 +352,11 @@ class _GuitarRecordingStudioPageState
     try {
       final file = XFile.fromData(bytes, mimeType: mimeType, name: fileName);
       await SharePlus.instance.share(
-        ShareParams(files: [file], fileNameOverrides: [fileName], text: text, subject: fileName),
+        ShareParams(
+            files: [file],
+            fileNameOverrides: [fileName],
+            text: text,
+            subject: fileName,),
       );
       return true;
     } catch (e) {
@@ -586,10 +590,9 @@ class _GuitarRecordingStudioPageState
         ? _titleController.text.trim()
         : 'guitar-recording';
     final fileName = _buildLocalFileName(title, _shareableAudioExtension);
-    final publicUrl =
-        _isPublic && _savedRecordingId != null
-            ? _buildShareUrl(_savedRecordingId!)
-            : null;
+    final publicUrl = _isPublic && _savedRecordingId != null
+        ? _buildShareUrl(_savedRecordingId!)
+        : null;
     final shareText = _buildShareMessage(title, publicUrl: publicUrl);
     setState(() => _isSharingFile = true);
     try {
@@ -655,9 +658,8 @@ class _GuitarRecordingStudioPageState
       Uint8List? downloadedBytes;
 
       if (filePath.isNotEmpty) {
-        downloadedBytes = await _supabase.storage
-            .from(_recordingsBucket)
-            .download(filePath);
+        downloadedBytes =
+            await _supabase.storage.from(_recordingsBucket).download(filePath);
         shared = await _tryShareAudioFile(
           bytes: downloadedBytes,
           mimeType: mimeType,
@@ -766,7 +768,7 @@ class _GuitarRecordingStudioPageState
 
     final url = _sharedRecording?['playbackUrl']?.toString() ?? '';
     if (url.isEmpty) return;
-    
+
     if (_sharedAudioElement == null) {
       _sharedAudioElement = web.HTMLAudioElement()..src = url;
       _sharedAudioElement!.onended = ((web.Event _) {
@@ -941,10 +943,9 @@ class _GuitarRecordingStudioPageState
       }
 
       // Fallback: open Twitter intent (manual post)
-      final shareUrl =
-          recordingId.isNotEmpty && recordingId != 'unknown'
-              ? _buildShareUrl(recordingId)
-              : null;
+      final shareUrl = recordingId.isNotEmpty && recordingId != 'unknown'
+          ? _buildShareUrl(recordingId)
+          : null;
       final shareMessage = _buildShareMessage('「$title」', publicUrl: shareUrl);
       final intentUrl =
           'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(shareMessage)}';
@@ -978,7 +979,11 @@ class _GuitarRecordingStudioPageState
     try {
       final res = await _supabase.functions.invoke(
         'guitar-recording-studio',
-        body: {'action': 'ai_analyze', 'userId': user.id, 'analysisType': 'practice_menu'},
+        body: {
+          'action': 'ai_analyze',
+          'userId': user.id,
+          'analysisType': 'practice_menu',
+        },
       );
       final data = _parseResponse(res.data);
       if (data != null) {
@@ -1159,7 +1164,8 @@ class _GuitarRecordingStudioPageState
         msg = 'マイクが見つかりません。\nマイクが接続されているか確認してください。';
       } else if (errStr.contains('notsupported') ||
           errStr.contains('insecure')) {
-        msg = 'このブラウザでは録音がサポートされていません。\nChrome または Safari をお使いください。\nまた https:// でアクセスしていることを確認してください。';
+        msg =
+            'このブラウザでは録音がサポートされていません。\nChrome または Safari をお使いください。\nまた https:// でアクセスしていることを確認してください。';
       } else {
         msg = 'マイクへのアクセスに失敗しました。\nブラウザの設定でマイクが許可されているか確認してください。';
       }
@@ -1218,12 +1224,10 @@ class _GuitarRecordingStudioPageState
           _shareableAudioBytes = useSourceAsPrimary ? sourceBytes : wavBytes;
           _shareableAudioMimeType =
               useSourceAsPrimary ? sourceMimeType : 'audio/wav';
-          _shareableAudioExtension = useSourceAsPrimary
-              ? _extensionForMime(sourceMimeType)
-              : 'wav';
-          _shareableAudioLabel = useSourceAsPrimary
-              ? _shareLabelForMime(sourceMimeType)
-              : 'WAV';
+          _shareableAudioExtension =
+              useSourceAsPrimary ? _extensionForMime(sourceMimeType) : 'wav';
+          _shareableAudioLabel =
+              useSourceAsPrimary ? _shareLabelForMime(sourceMimeType) : 'WAV';
         });
       }
       audioCtx.close();
@@ -1244,7 +1248,8 @@ class _GuitarRecordingStudioPageState
   }
 
   /// Float32 PCM → 16-bit WAV バイト列にエンコード
-  Uint8List _encodeWav(List<Float32List> channels, int sampleRate, int numChannels) {
+  Uint8List _encodeWav(
+      List<Float32List> channels, int sampleRate, int numChannels,) {
     final length = channels[0].length;
     final byteRate = sampleRate * numChannels * 2; // 16-bit = 2 bytes
     final dataSize = length * numChannels * 2;
@@ -1447,7 +1452,8 @@ class _GuitarRecordingStudioPageState
       final data = _parseResponse(res.data);
       final savedRecording = _normalizeRecordingMap(data?['recording']);
       final xPosted = data?['xPosted'] == true;
-      String? recId = data?['recordingId']?.toString() ?? data?['id']?.toString();
+      String? recId =
+          data?['recordingId']?.toString() ?? data?['id']?.toString();
       if ((recId == null || recId.isEmpty) && savedRecording != null) {
         final normalizedId = _recordingIdOf(savedRecording);
         if (normalizedId.isNotEmpty) {
@@ -1590,7 +1596,8 @@ class _GuitarRecordingStudioPageState
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
-        title: const Text('🎸 ギター練習レポート', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('🎸 ギター練習レポート',
+            style: TextStyle(fontWeight: FontWeight.bold),),
         centerTitle: true,
       ),
       body: _isLoadingSharedRecording
@@ -1602,7 +1609,8 @@ class _GuitarRecordingStudioPageState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.music_off, size: 56, color: Colors.white24),
+                      const Icon(Icons.music_off,
+                          size: 56, color: Colors.white24,),
                       const SizedBox(height: 12),
                       Text(
                         _sharedRecordingError ?? '公開録音を読み込めませんでした',
@@ -1620,11 +1628,15 @@ class _GuitarRecordingStudioPageState
     final title = recording['title']?.toString() ?? '無題の録音';
     final preset = recording['preset']?.toString() ?? '-';
     final duration = recording['durationSeconds'] as int? ?? 0;
-    
+
     // Edge Function側で保存された分析データがあれば取得
-    final analysisData = recording['analysis_data'] as Map<String, dynamic>? ?? {};
-    final bpm = analysisData['bpm']?.toString() ?? recording['bpm']?.toString() ?? '-';
-    final advice = analysisData['advice']?.toString() ?? _recordingAiFeedbackOf(recording) ?? 'AIが分析を行い、的確なアドバイスとパーソナライズされた練習メニューを提案します。';
+    final analysisData =
+        recording['analysis_data'] as Map<String, dynamic>? ?? {};
+    final bpm =
+        analysisData['bpm']?.toString() ?? recording['bpm']?.toString() ?? '-';
+    final advice = analysisData['advice']?.toString() ??
+        _recordingAiFeedbackOf(recording) ??
+        'AIが分析を行い、的確なアドバイスとパーソナライズされた練習メニューを提案します。';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
@@ -1633,18 +1645,20 @@ class _GuitarRecordingStudioPageState
         children: [
           Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold,),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          
+
           // メタデータバッジ
           Wrap(
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.center,
             children: [
-              _buildShareBadge(Icons.timer, _formatDuration(Duration(seconds: duration))),
+              _buildShareBadge(
+                  Icons.timer, _formatDuration(Duration(seconds: duration)),),
               _buildShareBadge(Icons.album, _presetLabel(preset)),
               _buildShareBadge(Icons.speed, '$bpm BPM'),
             ],
@@ -1656,7 +1670,9 @@ class _GuitarRecordingStudioPageState
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _isPlayingShared ? const Color(0xFF818CF8).withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05),
+              color: _isPlayingShared
+                  ? const Color(0xFF818CF8).withValues(alpha: 0.2)
+                  : Colors.white.withValues(alpha: 0.05),
               boxShadow: _isPlayingShared
                   ? [
                       BoxShadow(
@@ -1692,24 +1708,30 @@ class _GuitarRecordingStudioPageState
                   children: [
                     Icon(Icons.auto_awesome, color: Color(0xFF818CF8)),
                     SizedBox(width: 8),
-                    Text('AIコーチからのアドバイス', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text('AIコーチからのアドバイス',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,),),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Text(
                   advice,
-                  style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.6),
+                  style: const TextStyle(
+                      color: Colors.white70, fontSize: 15, height: 1.6,),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 48),
-          
+
           // CTA（Call To Action）
           const Divider(color: Colors.white12),
           const SizedBox(height: 24),
-          const Text('あなたの演奏もAIに分析してもらいませんか？', style: TextStyle(color: Colors.white70)),
+          const Text('あなたの演奏もAIに分析してもらいませんか？',
+              style: TextStyle(color: Colors.white70),),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () {
@@ -1762,9 +1784,8 @@ class _GuitarRecordingStudioPageState
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected
-                    ? const Color(0xFFE94560)
-                    : Colors.transparent,
+                color:
+                    isSelected ? const Color(0xFFE94560) : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -1773,9 +1794,7 @@ class _GuitarRecordingStudioPageState
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected
-                  ? const Color(0xFFE94560)
-                  : Colors.white60,
+              color: isSelected ? const Color(0xFFE94560) : Colors.white60,
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -1872,8 +1891,7 @@ class _GuitarRecordingStudioPageState
               selectedColor: const Color(0xFFE94560),
               checkmarkColor: Colors.white,
               side: BorderSide(
-                color:
-                    isSelected ? const Color(0xFFE94560) : Colors.white24,
+                color: isSelected ? const Color(0xFFE94560) : Colors.white24,
               ),
             );
           }).toList(),
@@ -1917,14 +1935,12 @@ class _GuitarRecordingStudioPageState
         color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color:
-              _isRecording ? const Color(0xFFE94560) : Colors.white12,
+          color: _isRecording ? const Color(0xFFE94560) : Colors.white12,
         ),
         boxShadow: _isRecording
             ? [
                 BoxShadow(
-                  color:
-                      const Color(0xFFE94560).withValues(alpha: 0.3),
+                  color: const Color(0xFFE94560).withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 4,
                 ),
@@ -1938,9 +1954,7 @@ class _GuitarRecordingStudioPageState
             style: TextStyle(
               fontSize: 56,
               fontWeight: FontWeight.bold,
-              color: _isRecording
-                  ? const Color(0xFFE94560)
-                  : Colors.white38,
+              color: _isRecording ? const Color(0xFFE94560) : Colors.white38,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -2263,7 +2277,8 @@ class _GuitarRecordingStudioPageState
             if (_isPublic) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1DA1F2).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -2273,7 +2288,8 @@ class _GuitarRecordingStudioPageState
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome, color: Color(0xFF1DA1F2), size: 16),
+                    const Icon(Icons.auto_awesome,
+                        color: Color(0xFF1DA1F2), size: 16,),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -2286,10 +2302,11 @@ class _GuitarRecordingStudioPageState
                       ),
                     ),
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(context).pushNamed('/public-guitar-gallery'),
+                      onPressed: () => Navigator.of(context)
+                          .pushNamed('/public-guitar-gallery'),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4,),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -2335,9 +2352,10 @@ class _GuitarRecordingStudioPageState
                       onPressed: _isPostingToX
                           ? null
                           : () {
-                              final title = _titleController.text.trim().isNotEmpty
-                                  ? _titleController.text.trim()
-                                  : '新しい録音';
+                              final title =
+                                  _titleController.text.trim().isNotEmpty
+                                      ? _titleController.text.trim()
+                                      : '新しい録音';
                               _postToX(
                                 title,
                                 _savedRecordingId ?? 'unknown',
@@ -2470,7 +2488,8 @@ class _GuitarRecordingStudioPageState
           const SizedBox(height: 10),
           Row(
             children: [
-              const Text('公開する', style: TextStyle(color: Colors.white70, fontSize: 13)),
+              const Text('公開する',
+                  style: TextStyle(color: Colors.white70, fontSize: 13),),
               const SizedBox(width: 8),
               Switch(
                 value: _isPublic,
@@ -2546,7 +2565,8 @@ class _GuitarRecordingStudioPageState
           Text(
             'メトロノーム $_bpm BPM',
             style: TextStyle(
-              color: _isMetronomeActive ? const Color(0xFFE94560) : Colors.white54,
+              color:
+                  _isMetronomeActive ? const Color(0xFFE94560) : Colors.white54,
               fontSize: 13,
             ),
           ),
@@ -2590,12 +2610,10 @@ class _GuitarRecordingStudioPageState
                 title: Text(
                   chord,
                   style: TextStyle(
-                    color: isSelected
-                        ? const Color(0xFFE94560)
-                        : Colors.white70,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    color:
+                        isSelected ? const Color(0xFFE94560) : Colors.white70,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 selected: isSelected,
@@ -2787,9 +2805,8 @@ class _GuitarRecordingStudioPageState
                     selectedColor: const Color(0xFFE94560),
                     backgroundColor: const Color(0xFF16213E),
                     labelStyle: TextStyle(
-                      color: _beatsPerMeasure == b
-                          ? Colors.white
-                          : Colors.white60,
+                      color:
+                          _beatsPerMeasure == b ? Colors.white : Colors.white60,
                     ),
                   ),
                 ),
@@ -2814,8 +2831,7 @@ class _GuitarRecordingStudioPageState
                 boxShadow: _isMetronomeActive
                     ? [
                         BoxShadow(
-                          color: const Color(0xFFE94560)
-                              .withValues(alpha: 0.4),
+                          color: const Color(0xFFE94560).withValues(alpha: 0.4),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
@@ -2930,20 +2946,25 @@ class _GuitarRecordingStudioPageState
                       const CircleAvatar(
                         backgroundColor: Color(0xFFE94560),
                         radius: 18,
-                        child: Icon(Icons.music_note, color: Colors.white, size: 18),
+                        child: Icon(Icons.music_note,
+                            color: Colors.white, size: 18,),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            Text(title,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,),),
                             const SizedBox(height: 2),
                             Text(
                               '${_formatDuration(Duration(seconds: duration))} • ${_presetLabel(preset)}'
                               '${bpm > 0 ? ' • ${bpm}BPM' : ''}'
                               '${tuning.isNotEmpty ? ' • $tuning' : ''}',
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Colors.white54, fontSize: 12,),
                             ),
                           ],
                         ),
@@ -2951,19 +2972,24 @@ class _GuitarRecordingStudioPageState
                       if (isPublicRec)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
-                          child: Icon(Icons.public, color: Colors.white38, size: 16),
+                          child: Icon(Icons.public,
+                              color: Colors.white38, size: 16,),
                         ),
                       if (likes > 0)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.favorite, color: Color(0xFFE94560), size: 14),
+                            const Icon(Icons.favorite,
+                                color: Color(0xFFE94560), size: 14,),
                             const SizedBox(width: 2),
-                            Text('$likes', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                            Text('$likes',
+                                style: const TextStyle(
+                                    color: Colors.white54, fontSize: 12,),),
                           ],
                         ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert, color: Colors.white38, size: 20),
+                        icon: const Icon(Icons.more_vert,
+                            color: Colors.white38, size: 20,),
                         color: const Color(0xFF16213E),
                         onSelected: (value) {
                           if (value == 'delete' && recordingId.isNotEmpty) {
@@ -2971,7 +2997,10 @@ class _GuitarRecordingStudioPageState
                           }
                         },
                         itemBuilder: (_) => [
-                          const PopupMenuItem(value: 'delete', child: Text('削除', style: TextStyle(color: Colors.redAccent))),
+                          const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('削除',
+                                  style: TextStyle(color: Colors.redAccent),),),
                         ],
                       ),
                     ],
@@ -2981,14 +3010,21 @@ class _GuitarRecordingStudioPageState
                     Wrap(
                       spacing: 6,
                       runSpacing: 4,
-                      children: tags.map((t) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text('#$t', style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                      ),).toList(),
+                      children: tags
+                          .map(
+                            (t) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2,),
+                              decoration: BoxDecoration(
+                                color: Colors.white12,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text('#$t',
+                                  style: const TextStyle(
+                                      color: Colors.white38, fontSize: 11,),),
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                   if (aiFeedback != null) ...[
@@ -3032,27 +3068,33 @@ class _GuitarRecordingStudioPageState
                     children: [
                       IconButton(
                         onPressed: () => _playSavedRecording(r),
-                        icon: const Icon(Icons.play_circle_fill, color: Color(0xFF4CAF50)),
+                        icon: const Icon(Icons.play_circle_fill,
+                            color: Color(0xFF4CAF50),),
                         visualDensity: VisualDensity.compact,
                         tooltip: '再生',
                       ),
                       IconButton(
                         onPressed: () => _downloadSavedRecording(r),
-                        icon: const Icon(Icons.download_outlined, color: Colors.white70),
+                        icon: const Icon(Icons.download_outlined,
+                            color: Colors.white70,),
                         visualDensity: VisualDensity.compact,
                         tooltip: 'ダウンロード',
                       ),
                       IconButton(
-                        onPressed: _isSharingFile ? null : () => _shareSavedRecording(r),
-                        icon: const Icon(Icons.ios_share, color: Colors.white70),
+                        onPressed: _isSharingFile
+                            ? null
+                            : () => _shareSavedRecording(r),
+                        icon:
+                            const Icon(Icons.ios_share, color: Colors.white70),
                         visualDensity: VisualDensity.compact,
                         tooltip: 'ファイル共有',
                       ),
                       if (recordingId.isNotEmpty) ...[
                         IconButton(
-                          onPressed: () =>
-                              _postToX(title, recordingId, isPublic: isPublicRec),
-                          icon: const Icon(Icons.open_in_new, color: Color(0xFF1DA1F2)),
+                          onPressed: () => _postToX(title, recordingId,
+                              isPublic: isPublicRec,),
+                          icon: const Icon(Icons.open_in_new,
+                              color: Color(0xFF1DA1F2),),
                           visualDensity: VisualDensity.compact,
                           tooltip: 'Xに投稿',
                         ),
@@ -3079,18 +3121,21 @@ class _GuitarRecordingStudioPageState
                           padding: const EdgeInsets.only(right: 8),
                           child: Text(
                             '$plays plays',
-                            style: const TextStyle(color: Colors.white24, fontSize: 11),
+                            style: const TextStyle(
+                                color: Colors.white24, fontSize: 11,),
                           ),
                         ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4,),
                         decoration: BoxDecoration(
                           color: Colors.white10,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           exportFormat.toUpperCase(),
-                          style: const TextStyle(color: Colors.white54, fontSize: 10),
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 10,),
                         ),
                       ),
                     ],
@@ -3098,8 +3143,11 @@ class _GuitarRecordingStudioPageState
                   Align(
                     alignment: Alignment.bottomRight,
                     child: Text(
-                      createdAt.length >= 10 ? createdAt.substring(0, 10) : createdAt,
-                      style: const TextStyle(color: Colors.white24, fontSize: 11),
+                      createdAt.length >= 10
+                          ? createdAt.substring(0, 10)
+                          : createdAt,
+                      style:
+                          const TextStyle(color: Colors.white24, fontSize: 11),
                     ),
                   ),
                 ],
@@ -3144,12 +3192,15 @@ class _GuitarRecordingStudioPageState
         ),
       );
     }
-    final totalRecordings = _practiceStats!['totalSessions'] as int?
-        ?? _practiceStats!['totalRecordings'] as int? ?? 0;
-    final totalMinutes = _practiceStats!['totalMinutes'] as int?
-        ?? _practiceStats!['totalPracticeMinutes'] as int? ?? 0;
-    final streak = _practiceStats!['streakDays'] as int?
-        ?? _practiceStats!['currentStreak'] as int? ?? 0;
+    final totalRecordings = _practiceStats!['totalSessions'] as int? ??
+        _practiceStats!['totalRecordings'] as int? ??
+        0;
+    final totalMinutes = _practiceStats!['totalMinutes'] as int? ??
+        _practiceStats!['totalPracticeMinutes'] as int? ??
+        0;
+    final streak = _practiceStats!['streakDays'] as int? ??
+        _practiceStats!['currentStreak'] as int? ??
+        0;
     final favoritePreset = _practiceStats!['favoritePreset'] as String? ?? '-';
     final hours = totalMinutes ~/ 60;
     final mins = totalMinutes % 60;
@@ -3161,87 +3212,98 @@ class _GuitarRecordingStudioPageState
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24),
         child: Column(
-        children: [
-          // ストリーク
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: streak > 0
-                    ? [const Color(0xFFE94560), const Color(0xFFBF360C)]
-                    : [const Color(0xFF16213E), const Color(0xFF16213E)],
+          children: [
+            // ストリーク
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: streak > 0
+                      ? [const Color(0xFFE94560), const Color(0xFFBF360C)]
+                      : [const Color(0xFF16213E), const Color(0xFF16213E)],
+                ),
+                borderRadius: BorderRadius.circular(16),
               ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  streak > 0 ? Icons.local_fire_department : Icons.music_off,
-                  color: streak > 0 ? Colors.amber : Colors.white24,
-                  size: 48,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$streak',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+              child: Column(
+                children: [
+                  Icon(
+                    streak > 0 ? Icons.local_fire_department : Icons.music_off,
+                    color: streak > 0 ? Colors.amber : Colors.white24,
+                    size: 48,
                   ),
-                ),
-                Text(
-                  '日連続練習中',
-                  style: TextStyle(
-                    color: streak > 0 ? Colors.white70 : Colors.white38,
-                    fontSize: 14,
-                  ),
-                ),
-                if (streak == 0)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
-                    child: Text(
-                      '録音を保存してストリークを始めましょう！',
-                      style: TextStyle(color: Colors.white24, fontSize: 12),
+                  const SizedBox(height: 8),
+                  Text(
+                    '$streak',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  Text(
+                    '日連続練習中',
+                    style: TextStyle(
+                      color: streak > 0 ? Colors.white70 : Colors.white38,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (streak == 0)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        '録音を保存してストリークを始めましょう！',
+                        style: TextStyle(color: Colors.white24, fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // 統計カード
+            Row(
+              children: [
+                Expanded(
+                    child: _statCard('総録音数', '$totalRecordings', Icons.mic),),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _statCard(
+                    '総練習時間',
+                    hours > 0 ? '$hours時間$mins分' : '$mins分',
+                    Icons.timer,
+                  ),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          // 統計カード
-          Row(
-            children: [
-              Expanded(child: _statCard('総録音数', '$totalRecordings', Icons.mic)),
-              const SizedBox(width: 12),
-              Expanded(child: _statCard(
-                '総練習時間',
-                hours > 0 ? '$hours時間$mins分' : '$mins分',
-                Icons.timer,
-              ),),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _statCard('よく使うジャンル', _presetLabel(favoritePreset), Icons.album)),
-              const SizedBox(width: 12),
-              Expanded(child: _statCard('平均録音時間', totalRecordings > 0
-                  ? '${(totalMinutes / totalRecordings).round()}分'
-                  : '-', Icons.av_timer,),),
-            ],
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: _fetchPracticeStats,
-            icon: const Icon(Icons.refresh),
-            label: const Text('統計を更新'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white24),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                    child: _statCard(
+                        'よく使うジャンル', _presetLabel(favoritePreset), Icons.album,),),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _statCard(
+                    '平均録音時間',
+                    totalRecordings > 0
+                        ? '${(totalMinutes / totalRecordings).round()}分'
+                        : '-',
+                    Icons.av_timer,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: _fetchPracticeStats,
+              icon: const Icon(Icons.refresh),
+              label: const Text('統計を更新'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white70,
+                side: const BorderSide(color: Colors.white24),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -3302,7 +3364,10 @@ class _GuitarRecordingStudioPageState
                 const SizedBox(height: 8),
                 const Text(
                   'AIギターコーチ',
-                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -3314,13 +3379,20 @@ class _GuitarRecordingStudioPageState
                 ElevatedButton.icon(
                   onPressed: _isLoadingAI ? null : _fetchAIAnalysis,
                   icon: _isLoadingAI
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF7C3AED)))
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Color(0xFF7C3AED),),)
                       : const Icon(Icons.psychology),
-                  label: Text(_isLoadingAI ? '分析中...' : (_aiAnalysis != null ? '再分析する' : '練習を分析する')),
+                  label: Text(_isLoadingAI
+                      ? '分析中...'
+                      : (_aiAnalysis != null ? '再分析する' : '練習を分析する'),),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF7C3AED),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12,),
                   ),
                 ),
               ],
@@ -3349,13 +3421,15 @@ class _GuitarRecordingStudioPageState
             _aiSection('分析結果', Icons.insights, _aiInsights()),
 
             // レコメンデーション
-            if ((_aiAnalysis!['recommendations'] as List?)?.isNotEmpty == true) ...[
+            if ((_aiAnalysis!['recommendations'] as List?)?.isNotEmpty ==
+                true) ...[
               const SizedBox(height: 12),
               _aiSection('おすすめ', Icons.lightbulb_outline, _aiRecommendations()),
             ],
 
             // 練習メニュー
-            if ((_aiAnalysis!['practiceMenu'] as List?)?.isNotEmpty == true) ...[
+            if ((_aiAnalysis!['practiceMenu'] as List?)?.isNotEmpty ==
+                true) ...[
               const SizedBox(height: 12),
               _aiSection('今日の練習メニュー', Icons.assignment, _aiPracticeMenu()),
             ],
@@ -3384,7 +3458,11 @@ class _GuitarRecordingStudioPageState
             children: [
               Icon(icon, color: const Color(0xFF7C3AED), size: 20),
               const SizedBox(width: 8),
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              Text(title,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,),),
             ],
           ),
           const SizedBox(height: 12),
@@ -3397,20 +3475,31 @@ class _GuitarRecordingStudioPageState
   Widget _aiInsights() {
     final insights = (_aiAnalysis!['insights'] as List?) ?? [];
     if (insights.isEmpty) {
-      return const Text('データが不足しています。録音を増やしましょう！', style: TextStyle(color: Colors.white54));
+      return const Text('データが不足しています。録音を増やしましょう！',
+          style: TextStyle(color: Colors.white54),);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: insights.map((i) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('• ', style: TextStyle(color: Color(0xFF7C3AED), fontSize: 16)),
-            Expanded(child: Text('$i', style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4))),
-          ],
-        ),
-      ),).toList(),
+      children: insights
+          .map(
+            (i) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• ',
+                      style: TextStyle(color: Color(0xFF7C3AED), fontSize: 16),),
+                  Expanded(
+                      child: Text('$i',
+                          style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                              height: 1.4,),),),
+                ],
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -3418,26 +3507,44 @@ class _GuitarRecordingStudioPageState
     final recs = (_aiAnalysis!['recommendations'] as List?) ?? [];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: recs.asMap().entries.map((entry) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F3460),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 24, height: 24,
-              decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF7C3AED)),
-              child: Center(child: Text('${entry.key + 1}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold))),
+      children: recs
+          .asMap()
+          .entries
+          .map(
+            (entry) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F3460),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: Color(0xFF7C3AED),),
+                    child: Center(
+                        child: Text('${entry.key + 1}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,),),),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                      child: Text('${entry.value}',
+                          style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                              height: 1.4,),),),
+                ],
+              ),
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Text('${entry.value}', style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4))),
-          ],
-        ),
-      ),).toList(),
+          )
+          .toList(),
     );
   }
 
@@ -3447,7 +3554,9 @@ class _GuitarRecordingStudioPageState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...menu.asMap().entries.map((entry) {
-          final item = entry.value is Map<String, dynamic> ? entry.value as Map<String, dynamic> : Map<String, dynamic>.from(entry.value as Map);
+          final item = entry.value is Map<String, dynamic>
+              ? entry.value as Map<String, dynamic>
+              : Map<String, dynamic>.from(entry.value as Map);
           final title = item['title'] as String? ?? '';
           final duration = item['duration'] as String? ?? '';
           final desc = item['description'] as String? ?? '';
@@ -3465,19 +3574,31 @@ class _GuitarRecordingStudioPageState
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2,),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE94560),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(duration, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: Text(duration,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,),),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                    Expanded(
+                        child: Text(title,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,),),),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(desc, style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.4)),
+                Text(desc,
+                    style: const TextStyle(
+                        color: Colors.white54, fontSize: 12, height: 1.4,),),
               ],
             ),
           );
@@ -3485,9 +3606,14 @@ class _GuitarRecordingStudioPageState
         if (menu.isNotEmpty) ...[
           const SizedBox(height: 8),
           OutlinedButton.icon(
-            onPressed: _isAddingToKanban ? null : () => _addPracticeMenuToKanban(menu),
+            onPressed:
+                _isAddingToKanban ? null : () => _addPracticeMenuToKanban(menu),
             icon: _isAddingToKanban
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE94560)))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Color(0xFFE94560),),)
                 : const Icon(Icons.playlist_add, size: 18),
             label: Text(_isAddingToKanban ? '追加中...' : 'カンバンボード（To Do）にすべて追加'),
             style: OutlinedButton.styleFrom(
@@ -3502,18 +3628,20 @@ class _GuitarRecordingStudioPageState
 
   Future<void> _addPracticeMenuToKanban(List<dynamic> menu) async {
     setState(() => _isAddingToKanban = true);
-    
+
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('ログインが必要です');
 
       // カンバンに登録するためのタスクリストを生成
       final tasks = menu.map((item) {
-        final data = item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map);
+        final data = item is Map<String, dynamic>
+            ? item
+            : Map<String, dynamic>.from(item as Map);
         final title = data['title'] as String? ?? '練習タスク';
         final duration = data['duration'] as String? ?? '';
         final desc = data['description'] as String? ?? '';
-        
+
         return {
           'user_id': userId,
           'title': '🎸 $title ($duration)', // アイコンをつけて識別しやすくする
@@ -3527,12 +3655,15 @@ class _GuitarRecordingStudioPageState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('カンバンボードに練習メニューを追加しました！🎸'), backgroundColor: Color(0xFF4CAF50)),
+        const SnackBar(
+            content: Text('カンバンボードに練習メニューを追加しました！🎸'),
+            backgroundColor: Color(0xFF4CAF50),),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('タスクの追加に失敗しました: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('タスクの追加に失敗しました: $e'), backgroundColor: Colors.red,),
       );
     } finally {
       if (mounted) setState(() => _isAddingToKanban = false);
@@ -3567,9 +3698,14 @@ class _GuitarRecordingStudioPageState
       ),
       child: Column(
         children: [
-          Text(value, style: const TextStyle(color: Color(0xFF7C3AED), fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(value,
+              style: const TextStyle(
+                  color: Color(0xFF7C3AED),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,),),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+          Text(label,
+              style: const TextStyle(color: Colors.white38, fontSize: 10),),
         ],
       ),
     );

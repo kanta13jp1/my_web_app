@@ -19,9 +19,8 @@ class WelcomeNewUserCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = Supabase.instance.client.auth.currentUser;
     final createdAt = DateTime.tryParse(user?.createdAt ?? '');
-    final daysAgo = createdAt != null
-        ? DateTime.now().difference(createdAt).inDays
-        : 0;
+    final daysAgo =
+        createdAt != null ? DateTime.now().difference(createdAt).inDays : 0;
     final dayLabel = daysAgo == 0 ? '今日' : '$daysAgo日前';
 
     return Container(
@@ -36,7 +35,8 @@ class WelcomeNewUserCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4F46E5).withValues(alpha: isDark ? 0.4 : 0.25),
+            color:
+                const Color(0xFF4F46E5).withValues(alpha: isDark ? 0.4 : 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -74,7 +74,8 @@ class WelcomeNewUserCard extends StatelessWidget {
               _QuickActionChip(
                 icon: Icons.wb_sunny_outlined,
                 label: 'モーニングブリーフィング',
-                onTap: () => Navigator.of(context).pushNamed('/morning-briefing'),
+                onTap: () =>
+                    Navigator.of(context).pushNamed('/morning-briefing'),
               ),
               _QuickActionChip(
                 icon: Icons.edit_note,

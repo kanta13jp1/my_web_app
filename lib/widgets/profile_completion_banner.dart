@@ -108,7 +108,9 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
           color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
-      color: isDark ? const Color(0xFF1E1B4B).withAlpha(80) : const Color(0xFFF5F3FF),
+      color: isDark
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -117,7 +119,8 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
+                color:
+                    isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -167,7 +170,8 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/profile-settings'),
                   style: TextButton.styleFrom(
-                    foregroundColor: isDark ? Colors.white70 : const Color(0xFF4338CA),
+                    foregroundColor:
+                        isDark ? Colors.white70 : const Color(0xFF4338CA),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,

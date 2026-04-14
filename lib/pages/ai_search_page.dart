@@ -179,7 +179,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                           '${_results.length}件',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -249,9 +250,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              _controller.text.isEmpty
-                  ? 'キーワードを入力して検索'
-                  : '該当するノートが見つかりませんでした',
+              _controller.text.isEmpty ? 'キーワードを入力して検索' : '該当するノートが見つかりませんでした',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 14,
@@ -285,9 +284,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: isDark
-              ? const Color(0xFF334155)
-              : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Padding(

@@ -16,7 +16,8 @@ class ComparisonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final info = _competitorInfo[competitorKey.toLowerCase()] ?? _defaultInfo;
-    return _ComparisonShell(info: info, competitorKey: competitorKey.toLowerCase());
+    return _ComparisonShell(
+        info: info, competitorKey: competitorKey.toLowerCase(),);
   }
 }
 
@@ -83,12 +84,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'データベースの設定が複雑で学習コストが高い',
     ],
     features: [
-      _FeatureComparison(feature: 'メモ・ノート作成', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'データベース / テーブル', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'AI 自動整理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料（制限なし）', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'Notion データインポート', competitorHas: true, weHave: true),
+      _FeatureComparison(
+          feature: 'メモ・ノート作成', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'データベース / テーブル', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI 自動整理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料（制限なし）', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'Notion データインポート', competitorHas: true, weHave: true,),
     ],
   ),
   'evernote': const _CompetitorInfo(
@@ -103,12 +110,17 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'AI機能がなく手動整理が必要',
     ],
     features: [
-      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '画像・添付ファイル管理', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'AI タグ自動付与', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'メモ・ノート管理', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '画像・添付ファイル管理', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI タグ自動付与', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '公開メモ共有', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料（デバイス制限なし）', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ENEX インポート', competitorHas: true, weHave: true),
+      _FeatureComparison(
+          feature: '完全無料（デバイス制限なし）', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ENEX インポート', competitorHas: true, weHave: true,),
     ],
   ),
   'moneyforward': const _CompetitorInfo(
@@ -125,9 +137,12 @@ final _competitorInfo = <String, _CompetitorInfo>{
     features: [
       _FeatureComparison(feature: '収支・家計管理', competitorHas: true, weHave: true),
       _FeatureComparison(feature: '資産残高把握', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'タスク・ノート連携', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AI 資産アドバイス', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料（口座数制限なし）', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'タスク・ノート連携', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI 資産アドバイス', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料（口座数制限なし）', competitorHas: false, weHave: true,),
     ],
   ),
   'slack': const _CompetitorInfo(
@@ -142,10 +157,14 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '他の業務ツールと連携が必要で複数アプリを行き来する',
     ],
     features: [
-      _FeatureComparison(feature: 'メッセージ・チャット', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'メッセージ履歴無制限', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・メモ統合', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AI 会話まとめ', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'メッセージ・チャット', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'メッセージ履歴無制限', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・メモ統合', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI 会話まとめ', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -161,10 +180,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'チャット以外の機能がなく複数ツール管理が必要',
     ],
     features: [
-      _FeatureComparison(feature: 'ビジネスチャット', competitorHas: true, weHave: true),
+      _FeatureComparison(
+          feature: 'ビジネスチャット', competitorHas: true, weHave: true,),
       _FeatureComparison(feature: 'タスク管理', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'ノート・メモ統合', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AI サポート', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'ノート・メモ統合', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI サポート', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -180,12 +202,17 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '投稿は流れてしまい知識として蓄積されない',
     ],
     features: [
-      _FeatureComparison(feature: '長文・短文メモ', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AI 要約・整理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '公開共有（OGP付き）', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '思考の蓄積・検索', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: '長文・短文メモ', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI 要約・整理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '公開共有（OGP付き）', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '思考の蓄積・検索', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'Markdown 対応', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'Markdown 対応', competitorHas: false, weHave: true,),
     ],
   ),
   'animaworks': const _CompetitorInfo(
@@ -200,10 +227,14 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '成長の振り返りがデータとして蓄積されない',
     ],
     features: [
-      _FeatureComparison(feature: '習慣トラッキング', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '目標設定・進捗管理', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'AI コーチング', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・メモ統合', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: '習慣トラッキング', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '目標設定・進捗管理', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI コーチング', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・メモ統合', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '資産管理連携', competitorHas: false, weHave: true),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
@@ -220,11 +251,16 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '開発実績や成長を可視化・共有する仕組みがない',
     ],
     features: [
-      _FeatureComparison(feature: 'AI コーディング支援', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '開発実績の記録・可視化', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・アイデア管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ロードマップ追跡', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AI 朝ブリーフィング', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI コーディング支援', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '開発実績の記録・可視化', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・アイデア管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ロードマップ追跡', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AI 朝ブリーフィング', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -240,11 +276,16 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '生成したコードや知見を体系的に蓄積・検索する手段がない',
     ],
     features: [
-      _FeatureComparison(feature: 'AI コード生成', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'コード・アイデアの蓄積', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '技術ブログ投稿管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ミッション追跡', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '公開メモ共有（OGP）', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI コード生成', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'コード・アイデアの蓄積', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '技術ブログ投稿管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ミッション追跡', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '公開メモ共有（OGP）', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -261,10 +302,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
     ],
     features: [
       _FeatureComparison(feature: '情報収集・閲覧', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'AI 分析・要約', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノートへの記録・蓄積', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI 分析・要約', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノートへの記録・蓄積', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '公開メモ共有', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・収支管理', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: '資産・収支管理', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -280,11 +324,16 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '継続利用には API コストが必要',
     ],
     features: [
-      _FeatureComparison(feature: 'AI エージェント実行', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '個人向け AI 朝ブリーフィング', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・メモ統合管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ロードマップ可視化', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノーコードで即利用可能', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI エージェント実行', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '個人向け AI 朝ブリーフィング', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・メモ統合管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ロードマップ可視化', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノーコードで即利用可能', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -300,12 +349,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '個人の成長・資産管理には対応していない',
     ],
     features: [
-      _FeatureComparison(feature: 'AI ワークスペース', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '個人向け AI 組織OS', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ミッション追跡', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・公開メモ', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料（個人利用）', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI ワークスペース', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '個人向け AI 組織OS', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ミッション追跡', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・公開メモ', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料（個人利用）', competitorHas: false, weHave: true,),
     ],
   ),
   'jobcan': const _CompetitorInfo(
@@ -320,11 +375,15 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'バックオフィス管理と知識管理・成長管理は完全に分断されている',
     ],
     features: [
-      _FeatureComparison(feature: '勤怠・タスク管理', competitorHas: true, weHave: true),
+      _FeatureComparison(
+          feature: '勤怠・タスク管理', competitorHas: true, weHave: true,),
       _FeatureComparison(feature: '経費・収支管理', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'AI 業務サポート', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・ナレッジ管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '個人向け無料プラン', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AI 業務サポート', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・ナレッジ管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '個人向け無料プラン', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -340,11 +399,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       '購買記録・読書記録・タスク・メモを統合して管理する手段がない',
     ],
     features: [
-      _FeatureComparison(feature: 'AIアシスタント (Alexa/Gemini)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '読書・ナレッジ管理 (Kindle相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '購買・支出の記録と資産管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'ノート・メモ・タスク統合', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AIアシスタント (Alexa/Gemini)',
+          competitorHas: true,
+          weHave: true,),
+      _FeatureComparison(
+          feature: '読書・ナレッジ管理 (Kindle相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '購買・支出の記録と資産管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート・メモ・タスク統合', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -360,12 +426,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'メモ・タスク・カレンダー・資産管理を一元化できるツールがGoogleにはない',
     ],
     features: [
-      _FeatureComparison(feature: 'AIアシスタント (Gemini相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'メモ・ノート管理 (Keep相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'タスク・ToDo管理 (Tasks相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '広告なし・完全無料', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AIアシスタント (Gemini相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'メモ・ノート管理 (Keep相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'タスク・ToDo管理 (Tasks相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '広告なし・完全無料', competitorHas: false, weHave: true,),
     ],
   ),
   'microsoft': const _CompetitorInfo(
@@ -380,11 +452,16 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'AIコパイロット機能は上位プランに限定されており個人ユーザーには敷居が高い',
     ],
     features: [
-      _FeatureComparison(feature: 'AIアシスタント (Copilot相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'ノート管理 (OneNote相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'タスク管理 (To Do相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'AIアシスタント (Copilot相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'ノート管理 (OneNote相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'タスク管理 (To Do相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '習慣化・成長ロードマップ', competitorHas: false, weHave: true,),
       _FeatureComparison(feature: '完全無料', competitorHas: false, weHave: true),
     ],
   ),
@@ -400,12 +477,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'メモ・習慣化・成長管理など個人の生産性向上ツールとしての機能が皆無',
     ],
     features: [
-      _FeatureComparison(feature: 'コミュニティ/チャット', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ロードマップ', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料 (Nitro不要)', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'コミュニティ/チャット', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'AIアシスタント', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'タスク・習慣管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ロードマップ', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料 (Nitro不要)', competitorHas: false, weHave: true,),
     ],
   ),
   'line': const _CompetitorInfo(
@@ -420,12 +503,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'LINEビジネス機能 (LINE公式アカウント等) は月額5,000円〜と高コスト',
     ],
     features: [
-      _FeatureComparison(feature: 'メッセージ・通話', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'メモ・ノート (Keep相当)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '成長ロードマップ・自己分析', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'メッセージ・通話', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'AIアシスタント', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'タスク・習慣管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'メモ・ノート (Keep相当)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '成長ロードマップ・自己分析', competitorHas: false, weHave: true,),
     ],
   ),
   'facebook': const _CompetitorInfo(
@@ -440,12 +529,18 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'Facebookメモ・グループ機能は基本的で、AI活用・習慣化管理ツールとしては力不足',
     ],
     features: [
-      _FeatureComparison(feature: 'SNS・コミュニティ', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'AIアシスタント (Meta AI)', competitorHas: true, weHave: true),
-      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '広告なし・完全無料・プライバシー保護', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'SNS・コミュニティ', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'AIアシスタント (Meta AI)', competitorHas: true, weHave: true,),
+      _FeatureComparison(
+          feature: 'タスク・習慣管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'メモ・ノート管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '広告なし・完全無料・プライバシー保護', competitorHas: false, weHave: true,),
     ],
   ),
   'github': const _CompetitorInfo(
@@ -460,14 +555,22 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'GitHubはコード以外のメモ・目標管理・AIアシスタント機能が欠けている',
     ],
     features: [
-      _FeatureComparison(feature: 'コードリポジトリ管理', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'Pull Request・コードレビュー', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'CI/CDパイプライン', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料・広告なし', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: 'コードリポジトリ管理', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'Pull Request・コードレビュー', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'CI/CDパイプライン', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'タスク・習慣管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AIアシスタント', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'メモ・ノート管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料・広告なし', competitorHas: false, weHave: true,),
     ],
   ),
   'liven': const _CompetitorInfo(
@@ -482,13 +585,20 @@ final _competitorInfo = <String, _CompetitorInfo>{
       'Livenのデータは飲食消費に偏り、個人の成長・目標達成・メモ管理のツールとしては力不足',
     ],
     features: [
-      _FeatureComparison(feature: '飲食注文・デリバリー', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'ポイント・ロイヤルティプログラム', competitorHas: true, weHave: false),
-      _FeatureComparison(feature: 'タスク・習慣管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'AIアシスタント', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '資産・家計管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: 'メモ・ノート管理', competitorHas: false, weHave: true),
-      _FeatureComparison(feature: '完全無料・広告なし', competitorHas: false, weHave: true),
+      _FeatureComparison(
+          feature: '飲食注文・デリバリー', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'ポイント・ロイヤルティプログラム', competitorHas: true, weHave: false,),
+      _FeatureComparison(
+          feature: 'タスク・習慣管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'AIアシスタント', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '資産・家計管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: 'メモ・ノート管理', competitorHas: false, weHave: true,),
+      _FeatureComparison(
+          feature: '完全無料・広告なし', competitorHas: false, weHave: true,),
     ],
   ),
 };
@@ -595,8 +705,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     ),
                   ),
                   OutlinedButton.icon(
-                    onPressed: () =>
-                        Navigator.of(context).pushNamed('/import'),
+                    onPressed: () => Navigator.of(context).pushNamed('/import'),
                     icon: const Icon(Icons.upload_file, size: 18),
                     label: Text('${_info.name} からインポート'),
                     style: OutlinedButton.styleFrom(
@@ -720,7 +829,10 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     (f) => TableRow(
                       decoration: BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                          bottom: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,),
                         ),
                       ),
                       children: [

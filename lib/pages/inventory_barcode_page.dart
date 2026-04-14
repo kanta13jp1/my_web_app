@@ -62,7 +62,9 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
   List<Map<String, dynamic>> _toList(dynamic data, String key) {
     if (data is Map<String, dynamic>) {
       final list = data[key];
-      if (list is List) return list.map((e) => e as Map<String, dynamic>).toList();
+      if (list is List) {
+        return list.map((e) => e as Map<String, dynamic>).toList();
+      }
     }
     return [];
   }
@@ -78,7 +80,9 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         bottom: TabBar(
           controller: _tabController,
           tabs: [
-            Tab(icon: const Icon(Icons.inventory), text: '在庫 (${_items.length})'),
+            Tab(
+                icon: const Icon(Icons.inventory),
+                text: '在庫 (${_items.length})',),
             const Tab(icon: Icon(Icons.swap_horiz), text: '入出庫'),
           ],
         ),

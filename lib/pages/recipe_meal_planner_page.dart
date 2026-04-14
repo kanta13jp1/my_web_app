@@ -75,8 +75,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
         if (sd is Map<String, dynamic>) {
           final list = sd['items'];
           if (list is List) {
-            _shoppingList =
-                list.map((s) => s as Map<String, dynamic>).toList();
+            _shoppingList = list.map((s) => s as Map<String, dynamic>).toList();
           }
         }
       });
@@ -161,11 +160,11 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor:
-                  Theme.of(context).colorScheme.primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(emoji, style: const TextStyle(fontSize: 20)),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text('$category${time > 0 ? " · $time分" : ""}'),
             trailing: calories > 0
                 ? Chip(

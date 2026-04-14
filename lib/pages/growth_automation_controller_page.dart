@@ -37,8 +37,8 @@ class _GrowthAutomationControllerPageState
       final data = response.data;
       if (data is Map<String, dynamic> && data['campaigns'] is List) {
         setState(
-          () => _items =
-              (data['campaigns'] as List).cast<Map<String, dynamic>>(),
+          () =>
+              _items = (data['campaigns'] as List).cast<Map<String, dynamic>>(),
         );
       } else if (data is List) {
         setState(() => _items = data.cast<Map<String, dynamic>>());
@@ -66,55 +66,61 @@ class _GrowthAutomationControllerPageState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchData,
+                        child: const Text('再試行'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchData,
-                    child: const Text('再試行'),
-                  ),
-                ],
-              ),
-            )
-          : _items.isEmpty
-          ? const Center(child: Text('キャンペーンデータはありません'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                final item = _items[index];
-                final name = item['name']?.toString() ?? 'キャンペーン ${index + 1}';
-                final status = item['status']?.toString() ?? '不明';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.auto_graph,
-                      color: Colors.indigo,
+                )
+              : _items.isEmpty
+                  ? const Center(child: Text('キャンペーンデータはありません'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _items.length,
+                      itemBuilder: (context, index) {
+                        final item = _items[index];
+                        final name =
+                            item['name']?.toString() ?? 'キャンペーン ${index + 1}';
+                        final status = item['status']?.toString() ?? '不明';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.auto_graph,
+                              color: Colors.indigo,
+                            ),
+                            title: Text(
+                              name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            trailing: Chip(
+                              label: Text(status,
+                                  style: const TextStyle(fontSize: 12),),
+                              backgroundColor: status == 'active'
+                                  ? Colors.green.shade100
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHigh,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    title: Text(
-                      name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: Chip(
-                      label: Text(status, style: const TextStyle(fontSize: 12)),
-                      backgroundColor: status == 'active'
-                          ? Colors.green.shade100
-                          : Theme.of(context).colorScheme.surfaceContainerHigh,
-                    ),
-                  ),
-                );
-              },
-            ),
     );
   }
 }

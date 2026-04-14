@@ -48,10 +48,12 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       _errorMessage = null;
     });
     try {
-      final response = await _supabase.functions.invoke('enterprise-hub', body: {'action': 'wiki.list'});
+      final response = await _supabase.functions
+          .invoke('enterprise-hub', body: {'action': 'wiki.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
-        setState(() => _pages = (data['pages'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _pages = (data['pages'] as List).cast<Map<String, dynamic>>(),);
       } else {
         setState(() => _pages = []);
       }
@@ -113,8 +115,12 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('キャンセル')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('作成')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('キャンセル'),),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('作成'),),
         ],
       ),
     );
@@ -156,8 +162,12 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('キャンセル')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('追加')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('キャンセル'),),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('追加'),),
         ],
       ),
     );
@@ -219,9 +229,11 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 8),
-                      ElevatedButton(onPressed: _fetchPages, child: const Text('再試行')),
+                      ElevatedButton(
+                          onPressed: _fetchPages, child: const Text('再試行'),),
                     ],
                   ),
                 )
@@ -262,18 +274,25 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         itemBuilder: (context, index) {
           final page = _pages[index];
           final title = page['title']?.toString() ?? '無題';
-          final pageId = page['page_id']?.toString() ?? page['id']?.toString() ?? '';
+          final pageId =
+              page['page_id']?.toString() ?? page['id']?.toString() ?? '';
           final createdAt = page['createdAt']?.toString() ?? '';
           final isSelected = _selectedPageId == pageId;
           return Card(
             elevation: isSelected ? 4 : 1,
-            color: isSelected ? const Color(0xFF4F46E5).withValues(alpha: 0.08) : null,
+            color: isSelected
+                ? const Color(0xFF4F46E5).withValues(alpha: 0.08)
+                : null,
             child: ListTile(
-              leading: const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              leading:
+                  const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
+              title: Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),),
               subtitle: createdAt.isNotEmpty
                   ? Text(
-                      createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt,
+                      createdAt.length > 10
+                          ? createdAt.substring(0, 10)
+                          : createdAt,
                       style: const TextStyle(fontSize: 12),
                     )
                   : null,
@@ -325,10 +344,14 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(title,
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
           const Divider(height: 24),
           if (content.isNotEmpty) ...[
-            const Text('内容', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Text('内容',
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -344,23 +367,29 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           if (_children.isNotEmpty) ...[
             const Text('サブページ', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ..._children.map((child) => ListTile(
-              leading: const Icon(Icons.subdirectory_arrow_right, color: Color(0xFF4F46E5)),
-              title: Text(child['title']?.toString() ?? '無題'),
-              dense: true,
-              onTap: () {
-                final id = child['page_id']?.toString() ?? child['id']?.toString() ?? '';
-                if (id.isNotEmpty) {
-                  setState(() => _selectedPageId = id);
-                  _fetchPageDetail(id);
-                }
-              },
-            ),),
+            ..._children.map(
+              (child) => ListTile(
+                leading: const Icon(Icons.subdirectory_arrow_right,
+                    color: Color(0xFF4F46E5),),
+                title: Text(child['title']?.toString() ?? '無題'),
+                dense: true,
+                onTap: () {
+                  final id = child['page_id']?.toString() ??
+                      child['id']?.toString() ??
+                      '';
+                  if (id.isNotEmpty) {
+                    setState(() => _selectedPageId = id);
+                    _fetchPageDetail(id);
+                  }
+                },
+              ),
+            ),
             const SizedBox(height: 16),
           ],
           Row(
             children: [
-              const Text('テーブルデータ', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('テーブルデータ',
+                  style: TextStyle(fontWeight: FontWeight.bold),),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _addTableRow(_selectedPageId!),
@@ -374,15 +403,21 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             const Text('テーブルデータなし', style: TextStyle(color: Colors.grey))
           else
             ..._tableRows.map((row) {
-              final content2 = row['content']?.toString() ?? row['data']?.toString() ?? '';
+              final content2 =
+                  row['content']?.toString() ?? row['data']?.toString() ?? '';
               final createdAt = row['createdAt']?.toString() ?? '';
               return Card(
                 child: ListTile(
-                  leading: const Icon(Icons.data_array, color: Color(0xFF4F46E5)),
-                  title: Text(content2.length > 60 ? '${content2.substring(0, 60)}...' : content2),
+                  leading:
+                      const Icon(Icons.data_array, color: Color(0xFF4F46E5)),
+                  title: Text(content2.length > 60
+                      ? '${content2.substring(0, 60)}...'
+                      : content2,),
                   subtitle: createdAt.isNotEmpty
                       ? Text(
-                          createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt,
+                          createdAt.length > 10
+                              ? createdAt.substring(0, 10)
+                              : createdAt,
                           style: const TextStyle(fontSize: 12),
                         )
                       : null,

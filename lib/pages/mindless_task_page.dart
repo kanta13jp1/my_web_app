@@ -1369,7 +1369,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 6),
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.surfaceContainerLow,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerLow,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: Colors.blueGrey.withValues(
@@ -1397,8 +1399,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                   ? TextDecoration.lineThrough
                                                   : null,
                                               color: isChecked
-                                                  ? Theme.of(context).colorScheme.onSurfaceVariant
-                                                  : Theme.of(context).colorScheme.onSurface,
+                                                  ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant
+                                                  : Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface,
                                             ),
                                           ),
                                         ),
@@ -1867,7 +1873,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         selected: selected,
                         selectedColor: color.withValues(alpha: 0.18),
                         side: BorderSide(
-                          color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
+                          color: selected
+                              ? color
+                              : Theme.of(context).colorScheme.outlineVariant,
                         ),
                         onSelected: (_) {
                           setDialogState(() => selectedPriority = priority);
@@ -2004,7 +2012,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         selected: selected,
                         selectedColor: color.withValues(alpha: 0.18),
                         side: BorderSide(
-                          color: selected ? color : Theme.of(context).colorScheme.outlineVariant,
+                          color: selected
+                              ? color
+                              : Theme.of(context).colorScheme.outlineVariant,
                         ),
                         onSelected: (_) {
                           setDialogState(() => selectedPriority = priority);
@@ -2088,8 +2098,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           Text(
             remainingText,
             style: TextStyle(
-              color:
-                  _remainingTasksToTarget == 0 ? Colors.green : Theme.of(context).colorScheme.onSurface,
+              color: _remainingTasksToTarget == 0
+                  ? Colors.green
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -2307,7 +2318,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           const SizedBox(height: 6),
           Text(
             '物理的に使えなくして、他のことに没頭する。',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -2828,7 +2841,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -3036,14 +3051,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               ),
               Text(
                 '完了 $_completedTimeboxCount 回',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
           ),
           const SizedBox(height: 6),
           Text(
             '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
           const SizedBox(height: 10),
           _buildCriticalLockPanel(),
@@ -3078,7 +3097,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 const SizedBox(height: 6),
                 Text(
                   'アルバム1枚=60分で読書。2枚集中したら30〜60分散歩して、次の店で繰り返す。',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -3413,7 +3434,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                           return Container(
                             decoration: BoxDecoration(
                               border: Border(
-                                bottom: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                                bottom: BorderSide(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,),
                                 left: isCurrentHour
                                     ? const BorderSide(
                                         color: Colors.blue,
@@ -3460,8 +3484,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                               '＋ タスクを追加',
                                               style: TextStyle(
                                                 color: _isCriticalLockActive
-                                                    ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                                    : Theme.of(context).colorScheme.outlineVariant,
+                                                    ? Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceContainerHighest
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .outlineVariant,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -3520,7 +3548,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                         : null,
                                                 border: Border(
                                                   bottom: BorderSide(
-                                                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceContainerHigh,
                                                   ),
                                                 ),
                                               ),
@@ -3665,7 +3695,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                             child: Icon(
                                               Icons.add,
                                               size: 16,
-                                              color: Theme.of(context).colorScheme.outlineVariant,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .outlineVariant,
                                             ),
                                           ),
                                         ),

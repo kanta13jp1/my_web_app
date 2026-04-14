@@ -150,7 +150,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                               : FontWeight.normal,
                                           color: isSelected
                                               ? Colors.blue
-                                              : Theme.of(context).colorScheme.onSurface,
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
                                         ),
                                       ),
                                     ],
@@ -502,7 +504,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
       ),
       child: Icon(
         icon,

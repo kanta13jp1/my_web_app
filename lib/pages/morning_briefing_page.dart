@@ -2665,7 +2665,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   subtitle: Text(
                     _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   initiallyExpanded: _isHeaderExpanded,
                   onExpansionChanged: (bool expanded) {
@@ -2682,9 +2683,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Text(
                             'CEO、本日の最優先事項を定義し、実行に移しましょう。',
                             style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
                           ),
                           if (_weatherData != null) ...[
                             const SizedBox(height: 16),
@@ -2722,9 +2724,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   .surfaceContainerLow,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.grey.withValues(alpha: 0.1),
@@ -4044,7 +4047,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh),
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        ),
       ),
       child: Column(
         children: [
@@ -4100,7 +4104,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   child: Text(
                     'この日に登録されているタスクはありません。',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -4203,9 +4208,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           ? Theme.of(context).colorScheme.surfaceContainerHigh
                           : Colors.white,
                       border: Border.all(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: ListTile(
@@ -4446,7 +4452,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh),
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            ),
           ),
           child: TableCalendar<Map<String, dynamic>>(
             locale: 'ja_JP',
@@ -5223,7 +5230,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       debugPrint('Error moving task: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('移動エラー: $e')),
+          SnackBar(
+            content: Text('移動エラー: $e'),
+          ),
         );
       }
     }
@@ -5258,14 +5267,18 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           .eq('id', id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('タスクを削除しました。')),
+          const SnackBar(
+            content: Text('タスクを削除しました。'),
+          ),
         );
       }
     } catch (e) {
       debugPrint('Error deleting someday task: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除エラー: $e')),
+          SnackBar(
+            content: Text('削除エラー: $e'),
+          ),
         );
       }
     }

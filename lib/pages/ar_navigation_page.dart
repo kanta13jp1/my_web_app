@@ -34,7 +34,8 @@ class _ArNavigationPageState extends State<ArNavigationPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['locations'] is List) {
-        setState(() => _locations = (data['locations'] as List).cast<Map<String, dynamic>>());
+        setState(() => _locations =
+            (data['locations'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _locations = data.cast<Map<String, dynamic>>());
       } else {
@@ -68,7 +69,8 @@ class _ArNavigationPageState extends State<ArNavigationPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+                      Text(_errorMessage!,
+                          style: const TextStyle(color: Colors.red),),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchLocations,
@@ -88,7 +90,8 @@ class _ArNavigationPageState extends State<ArNavigationPage> {
                           child: ListTile(
                             leading: const Icon(Icons.navigation),
                             title: Text(loc['name']?.toString() ?? ''),
-                            subtitle: Text(loc['description']?.toString() ?? ''),
+                            subtitle:
+                                Text(loc['description']?.toString() ?? ''),
                           ),
                         );
                       },

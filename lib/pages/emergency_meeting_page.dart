@@ -340,10 +340,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _currentLog = seedLog;
         _continuationPlan = List<String>.from(seedContinuationPlan);
         _abstinenceRules = List<String>.from(seedAbstinenceRules);
-        _continuationChecks = List<bool>.filled(_continuationPlan.length, false);
+        _continuationChecks =
+            List<bool>.filled(_continuationPlan.length, false);
         _abstinenceChecks = List<bool>.filled(_abstinenceRules.length, false);
-        _selectedContinuationPriorityIndex =
-            _continuationPlan.isEmpty ? -1 : 0;
+        _selectedContinuationPriorityIndex = _continuationPlan.isEmpty ? -1 : 0;
       }
       if (seedMetrics != null) {
         _applyNextMeetingMetrics(seedMetrics.toJson());
@@ -1483,7 +1483,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      border: Border.all(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1492,7 +1495,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           children: [
                             Text(
                               '現在のモデル: ',
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,),
                             ),
                             Expanded(
                               child: Text(
@@ -1508,7 +1514,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         const Divider(height: 16),
                         Text(
                           '利用可能なモデル一覧 (サポートメソッド):',
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -2448,8 +2457,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         _abstinenceRules = abstinenceRules;
         _continuationChecks = List<bool>.filled(continuationPlan.length, false);
         _abstinenceChecks = List<bool>.filled(abstinenceRules.length, false);
-        _selectedContinuationPriorityIndex =
-            continuationPlan.isEmpty ? -1 : 0;
+        _selectedContinuationPriorityIndex = continuationPlan.isEmpty ? -1 : 0;
         _riskAlert =
             (normalizedRiskAlert == null || normalizedRiskAlert.isEmpty)
                 ? null
@@ -2767,12 +2775,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             selected: isSelected,
                             selectedColor: chipColor.withValues(alpha: 0.18),
                             side: BorderSide(
-                              color:
-                                  isSelected ? chipColor : Theme.of(context).colorScheme.outlineVariant,
+                              color: isSelected
+                                  ? chipColor
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant,
                             ),
                             labelStyle: TextStyle(
-                              color:
-                                  isSelected ? chipColor : Theme.of(context).colorScheme.onSurface,
+                              color: isSelected
+                                  ? chipColor
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                             onSelected: (selected) {
@@ -2788,7 +2800,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: Text(
                           _resolvedFocusInstruction(_selectedFocus),
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             height: 1.45,
                           ),
                         ),
@@ -2800,7 +2813,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -2809,14 +2824,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           children: [
                             Text(
                               '使用モデル: ',
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,),
                             ),
                             Flexible(
                               child: Text(
                                 _selectedModel,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -2904,7 +2923,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         child: Text(
                           '${_currentLog!.createdAt.year}年${_currentLog!.createdAt.month}月${_currentLog!.createdAt.day}日 臨時取締役会',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -2966,7 +2986,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     ),
                     Text(
                       msg.role,
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,),
                     ),
                   ],
                 ),
@@ -3282,9 +3304,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
     final priorityIndex = _currentPriorityContinuationIndex();
     final hasPending =
         priorityIndex >= 0 && priorityIndex < _continuationPlan.length;
-    final nextActionText = hasPending
-        ? _continuationPlan[priorityIndex]
-        : '全タスク完了';
+    final nextActionText =
+        hasPending ? _continuationPlan[priorityIndex] : '全タスク完了';
 
     return Container(
       width: double.infinity,

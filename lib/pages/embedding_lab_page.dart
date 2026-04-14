@@ -255,8 +255,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   Expanded(
                     child: Text(
                       'gemini-embedding-001 — 768次元ベクトルを生成',
-                      style:
-                          TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: Colors.white, fontSize: 13),
                     ),
                   ),
                 ],
@@ -282,8 +281,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child:
-                        CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white,),
                   )
                 : const Icon(Icons.memory),
             label: const Text('Embedding を生成'),
@@ -304,7 +303,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,),
               ),
               child: SingleChildScrollView(
                 child: SelectableText(
@@ -312,7 +313,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 13,
-                    color: _singleResult.isEmpty ? Colors.grey : Theme.of(context).colorScheme.onSurface,
+                    color: _singleResult.isEmpty
+                        ? Colors.grey
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -370,9 +373,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: (_isLoading || _apiKey == null)
-                ? null
-                : _compareSimilarity,
+            onPressed:
+                (_isLoading || _apiKey == null) ? null : _compareSimilarity,
             icon: _isLoading
                 ? const SizedBox(
                     width: 18,
@@ -425,7 +427,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       child: LinearProgressIndicator(
                         value: ((score + 1) / 2).clamp(0.0, 1.0),
                         minHeight: 12,
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         valueColor: AlwaysStoppedAnimation<Color>(
                           _similarityColor(score),
                         ),
@@ -441,8 +444,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                         color: _similarityColor(score).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color:
-                              _similarityColor(score).withValues(alpha: 0.4),
+                          color: _similarityColor(score).withValues(alpha: 0.4),
                         ),
                       ),
                       child: Text(
@@ -480,7 +482,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     Text(
                       '2つのテキストを入力して\n類似度を計算しましょう',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.outlineVariant,),
                     ),
                   ],
                 ),

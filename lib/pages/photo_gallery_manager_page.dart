@@ -180,8 +180,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
   }
 
   Widget _buildPhotoGrid() {
-    final albumName =
-        _selectedAlbum?['name'] as String? ?? 'アルバム';
+    final albumName = _selectedAlbum?['name'] as String? ?? 'アルバム';
     if (_photos.isEmpty) {
       return Column(
         children: [
@@ -234,8 +233,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.all(8),
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 3,
               crossAxisSpacing: 4,
               mainAxisSpacing: 4,
@@ -251,7 +249,9 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                   url.isNotEmpty
                       ? Image.network(url, fit: BoxFit.cover)
                       : Container(
-                          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHigh,
                           child: const Icon(
                             Icons.image,
                             color: Colors.grey,

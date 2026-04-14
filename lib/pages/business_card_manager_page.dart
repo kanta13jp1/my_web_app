@@ -7,7 +7,8 @@ class BusinessCardManagerPage extends StatefulWidget {
   const BusinessCardManagerPage({super.key});
 
   @override
-  State<BusinessCardManagerPage> createState() => _BusinessCardManagerPageState();
+  State<BusinessCardManagerPage> createState() =>
+      _BusinessCardManagerPageState();
 }
 
 class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
@@ -49,7 +50,9 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
           .eq('user_id', user.id)
           .order('created_at', ascending: false)
           .limit(100);
-      if (mounted) setState(() => _cards = List<Map<String, dynamic>>.from(data));
+      if (mounted) {
+        setState(() => _cards = List<Map<String, dynamic>>.from(data));
+      }
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -123,7 +126,11 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
               foregroundColor: Colors.white,
             ),
             child: _saving
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white,),)
                 : const Text('保存'),
           ),
         ],
@@ -168,15 +175,18 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B35)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFFFF6B35)),)
           : _cards.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.contact_mail_outlined, color: Colors.white38, size: 48),
+                      const Icon(Icons.contact_mail_outlined,
+                          color: Colors.white38, size: 48,),
                       const SizedBox(height: 12),
-                      const Text('名刺はまだありません', style: TextStyle(color: Colors.white38)),
+                      const Text('名刺はまだありません',
+                          style: TextStyle(color: Colors.white38),),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: _showAddDialog,
@@ -195,41 +205,55 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                   itemCount: _cards.length,
                   itemBuilder: (_, i) {
                     final c = _cards[i];
-                    final raw = (c['name'] as String? ?? '?').replaceAll(' ', '');
-                    final initials = raw.length >= 2 ? raw.substring(0, 2) : raw;
+                    final raw =
+                        (c['name'] as String? ?? '?').replaceAll(' ', '');
+                    final initials =
+                        raw.length >= 2 ? raw.substring(0, 2) : raw;
                     return Card(
                       color: const Color(0xFF1E1E1E),
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.2),
+                          backgroundColor:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.2),
                           child: Text(
                             initials,
-                            style: const TextStyle(color: Color(0xFFFF6B35), fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                color: Color(0xFFFF6B35),
+                                fontWeight: FontWeight.bold,),
                           ),
                         ),
                         title: Text(
                           c['name'] as String? ?? '',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.w600,),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if ((c['company'] as String? ?? '').isNotEmpty)
-                              Text(c['company'] as String, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                              Text(c['company'] as String,
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 12,),),
                             if ((c['title'] as String? ?? '').isNotEmpty)
-                              Text(c['title'] as String, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                              Text(c['title'] as String,
+                                  style: const TextStyle(
+                                      color: Colors.white54, fontSize: 11,),),
                           ],
                         ),
-                        isThreeLine: (c['company'] as String? ?? '').isNotEmpty && (c['title'] as String? ?? '').isNotEmpty,
+                        isThreeLine:
+                            (c['company'] as String? ?? '').isNotEmpty &&
+                                (c['title'] as String? ?? '').isNotEmpty,
                         trailing: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             if ((c['email'] as String? ?? '').isNotEmpty)
-                              const Icon(Icons.email_outlined, color: Colors.white38, size: 16),
+                              const Icon(Icons.email_outlined,
+                                  color: Colors.white38, size: 16,),
                             if ((c['phone'] as String? ?? '').isNotEmpty)
-                              const Icon(Icons.phone_outlined, color: Colors.white38, size: 16),
+                              const Icon(Icons.phone_outlined,
+                                  color: Colors.white38, size: 16,),
                           ],
                         ),
                       ),

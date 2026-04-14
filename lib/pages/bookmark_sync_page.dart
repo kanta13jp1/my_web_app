@@ -63,9 +63,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           _bookmarks = data['bookmarks'] is List
               ? (data['bookmarks'] as List).cast<Map<String, dynamic>>()
               : [];
-          _allTags = data['tags'] is List
-              ? (data['tags'] as List).cast<String>()
-              : [];
+          _allTags =
+              data['tags'] is List ? (data['tags'] as List).cast<String>() : [];
           _stats = data['stats'] is Map
               ? Map<String, dynamic>.from(data['stats'] as Map)
               : {};
@@ -89,9 +88,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
         body: {
           'action': 'add',
           'url': url,
-          'title': _titleCtrl.text.trim().isNotEmpty
-              ? _titleCtrl.text.trim()
-              : url,
+          'title':
+              _titleCtrl.text.trim().isNotEmpty ? _titleCtrl.text.trim() : url,
           'description': _descCtrl.text.trim(),
           'tags': List<String>.from(_newTags),
         },
@@ -223,7 +221,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                       children: _newTags
                           .map(
                             (t) => Chip(
-                              label: Text(t, style: const TextStyle(fontSize: 12)),
+                              label:
+                                  Text(t, style: const TextStyle(fontSize: 12)),
                               onDeleted: () =>
                                   setDialogState(() => _newTags.remove(t)),
                               deleteIconColor: Colors.grey,
@@ -438,7 +437,9 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
             if (displayDate.isNotEmpty)
               Text(
                 displayDate,
-                style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
           ],
         ),
@@ -536,13 +537,17 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                                   Icon(
                                     Icons.bookmarks_outlined,
                                     size: 64,
-                                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
                                     'ブックマークがありません',
-                                    style:
-                                        TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,),
                                   ),
                                   const SizedBox(height: 16),
                                   ElevatedButton.icon(
@@ -557,9 +562,8 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                               onRefresh: _fetchBookmarks,
                               child: ListView(
                                 padding: const EdgeInsets.all(12),
-                                children: _bookmarks
-                                    .map(_buildBookmarkCard)
-                                    .toList(),
+                                children:
+                                    _bookmarks.map(_buildBookmarkCard).toList(),
                               ),
                             ),
                     ),

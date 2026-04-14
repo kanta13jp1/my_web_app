@@ -187,7 +187,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                     const SizedBox(height: 4),
                     Text(
                       'Track PTO requests, date ranges, and approval status in one place.',
-                      style: TextStyle(height: 1.5, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                          height: 1.5,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,),
                     ),
                   ],
                 ),
@@ -253,7 +256,9 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                                 Text(
                                   request.leaveType,
                                   style: TextStyle(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

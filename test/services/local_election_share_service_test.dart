@@ -216,7 +216,8 @@ void main() {
     expect(tweets.first, isNot(contains('Third Weekend Safe Race')));
   });
 
-  test('buildUpcomingElectionsThread includes staffed races with candidate names',
+  test(
+      'buildUpcomingElectionsThread includes staffed races with candidate names',
       () {
     final snapshot = buildWeekendSnapshot();
 

@@ -572,7 +572,9 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
                       '・${item.title}',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,),
                     ),
                   ),
                 ),
@@ -657,7 +659,8 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   const Spacer(),
                   Text(
                     _formatDate(item.createdAt),
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
                   ),
                 ],
               ),

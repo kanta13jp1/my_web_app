@@ -68,11 +68,9 @@ class EmergencyMeetingPdcaMetrics {
       'continuation_completed_count': continuationCompletedCount,
       'continuation_total_count': continuationTotalCount,
       'continuation_completion_rate_percent': continuationCompletionRatePercent,
-      'continuation_priority_declared_count':
-          continuationPriorityDeclaredCount,
+      'continuation_priority_declared_count': continuationPriorityDeclaredCount,
       'continuation_quick_start_count': continuationQuickStartCount,
-      'continuation_focus_sprint_25_count':
-          continuationFocusSprint25Count,
+      'continuation_focus_sprint_25_count': continuationFocusSprint25Count,
       'continuation_time_block_reserved_count':
           continuationTimeBlockReservedCount,
       'continuation_progress_log_count': continuationProgressLogCount,

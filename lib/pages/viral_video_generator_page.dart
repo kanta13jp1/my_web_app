@@ -48,8 +48,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
       final data = res.data;
       if (data is Map<String, dynamic> && data['briefs'] is List) {
         setState(() {
-          _videos =
-              (data['briefs'] as List).cast<Map<String, dynamic>>();
+          _videos = (data['briefs'] as List).cast<Map<String, dynamic>>();
         });
       }
     } catch (e) {
@@ -94,8 +93,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
     final score = brief['viralScore'];
     final scoreInt = score is num ? score.toInt() : null;
     final hashtags = brief['hashtags'];
-    final hashtagList =
-        hashtags is List ? hashtags.cast<String>() : <String>[];
+    final hashtagList = hashtags is List ? hashtags.cast<String>() : <String>[];
     final scenes = brief['scenes'];
     final sceneCount = scenes is List ? scenes.length : 0;
 
@@ -124,9 +122,8 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                         'VS $scoreInt',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      backgroundColor: scoreInt >= 80
-                          ? Colors.orange.shade700
-                          : null,
+                      backgroundColor:
+                          scoreInt >= 80 ? Colors.orange.shade700 : null,
                     ),
                 ],
               ),
@@ -298,8 +295,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                       itemBuilder: (context, index) {
                         final v = _videos[index];
                         final score = v['viralScore'];
-                        final scoreInt =
-                            score is num ? score.toInt() : null;
+                        final scoreInt = score is num ? score.toInt() : null;
                         return ListTile(
                           leading: const Icon(Icons.video_library),
                           title: Text(

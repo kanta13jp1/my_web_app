@@ -85,7 +85,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     final lastPaid = r['last_paid_at']?.toString();
     if (lastPaid != null && lastPaid.isNotEmpty) {
       final lastDate = DateTime.tryParse(lastPaid);
-      if (lastDate != null && lastDate.month == now.month && lastDate.year == now.year) {
+      if (lastDate != null &&
+          lastDate.month == now.month &&
+          lastDate.year == now.year) {
         return false; // 今月支払い済み
       }
     }
@@ -406,7 +408,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.payments_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.payments_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             const SizedBox(height: 16),
             const Text(
               '毎月の支払いを登録して\n忘れずにリマインドしましょう',
@@ -436,7 +440,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.account_balance_wallet, color: Colors.white, size: 32),
+          const Icon(Icons.account_balance_wallet,
+              color: Colors.white, size: 32,),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -517,7 +522,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         side: BorderSide(
           color: overdue
               ? Colors.red.shade300
-              : (dueSoon ? Colors.orange.shade300 : Theme.of(context).colorScheme.surfaceContainerHigh),
+              : (dueSoon
+                  ? Colors.orange.shade300
+                  : Theme.of(context).colorScheme.surfaceContainerHigh),
           width: overdue || dueSoon ? 1.5 : 1,
         ),
       ),
@@ -585,7 +592,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                           payee,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                     ],
@@ -604,7 +612,10 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                       ),
                     Text(
                       '毎月$dueDay日',
-                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                          fontSize: 11,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,),
                     ),
                   ],
                 ),
@@ -614,7 +625,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             Row(
               children: [
                 if (method != null)
-                  _buildMiniTag(method, Theme.of(context).colorScheme.surfaceContainerHigh),
+                  _buildMiniTag(method,
+                      Theme.of(context).colorScheme.surfaceContainerHigh,),
                 const SizedBox(width: 6),
                 _buildMiniTag(
                   _categoryLabel(cat),
@@ -625,7 +637,10 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                   Flexible(
                     child: Text(
                       note,
-                      style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                          fontSize: 10,
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant,),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

@@ -88,8 +88,7 @@ class _NoteImageDropZoneState extends State<NoteImageDropZone> {
       if (file == null || !file.type.startsWith('image/')) continue;
       try {
         final bytes = await _blobToBytes(file);
-        final name =
-            file.name.trim().isEmpty ? 'dropped-image.png' : file.name;
+        final name = file.name.trim().isEmpty ? 'dropped-image.png' : file.name;
         await widget.onImageDropped(bytes, name, file.type);
       } catch (_) {
         // ignore individual file errors

@@ -157,13 +157,11 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(12),
                         itemCount: _feeds.length,
-                        separatorBuilder: (_, __) =>
-                            const Divider(height: 1),
+                        separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, i) {
-                          final item =
-                              _feeds[i] as Map<String, dynamic>;
-                          final meta = item['metadata']
-                              as Map<String, dynamic>?;
+                          final item = _feeds[i] as Map<String, dynamic>;
+                          final meta =
+                              item['metadata'] as Map<String, dynamic>?;
                           final title = meta?['title']?.toString() ??
                               item['title']?.toString() ??
                               '(無題)';
@@ -172,8 +170,7 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                               '';
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor:
-                                  Colors.orange.withAlpha(30),
+                              backgroundColor: Colors.orange.withAlpha(30),
                               child: const Icon(
                                 Icons.rss_feed,
                                 color: Colors.orange,

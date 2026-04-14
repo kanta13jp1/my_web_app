@@ -118,7 +118,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  Future<void> _addItem({String? presetName, String? presetCat, int? presetDays}) async {
+  Future<void> _addItem(
+      {String? presetName, String? presetCat, int? presetDays,}) async {
     final nameCtrl = TextEditingController(text: presetName ?? '');
     final qtyCtrl = TextEditingController(text: '1');
     final unitCtrl = TextEditingController();
@@ -349,8 +350,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
       if (isRecurring) {
         final nextDate = now.add(Duration(days: recurDays));
-        updates['next_remind_date'] =
-            DateFormat('yyyy-MM-dd').format(nextDate);
+        updates['next_remind_date'] = DateFormat('yyyy-MM-dd').format(nextDate);
         updates['is_purchased'] = false; // 定期品はリストに残す
       }
 
@@ -371,9 +371,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isRecurring
-                  ? '✅ 購入済み ($recurDays日後にリマインド)'
-                  : '✅ 購入済み',
+              isRecurring ? '✅ 購入済み ($recurDays日後にリマインド)' : '✅ 購入済み',
             ),
             backgroundColor: Colors.green,
           ),
@@ -405,8 +403,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   Widget build(BuildContext context) {
     final toBuy =
         _items.where((i) => i['is_purchased'] != true || _needsBuy(i)).toList();
-    final purchased =
-        _items.where((i) => i['is_purchased'] == true && !_needsBuy(i)).toList();
+    final purchased = _items
+        .where((i) => i['is_purchased'] == true && !_needsBuy(i))
+        .toList();
     final urgentCount = toBuy.where(_needsBuy).length;
 
     return Scaffold(
@@ -450,8 +449,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    if (urgentCount > 0)
-                      _buildUrgentBanner(urgentCount),
+                    if (urgentCount > 0) _buildUrgentBanner(urgentCount),
                     if (urgentCount > 0) const SizedBox(height: 12),
                     ...toBuy.map(_buildItemCard),
                     if (_showPurchased && purchased.isNotEmpty) ...[
@@ -479,7 +477,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_cart_outlined, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.shopping_cart_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             const SizedBox(height: 16),
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',
@@ -620,9 +620,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
-                    isPurchased && !needs
-                        ? Icons.check
-                        : _categoryIcon(cat),
+                    isPurchased && !needs ? Icons.check : _categoryIcon(cat),
                     color: isPurchased && !needs
                         ? Colors.grey
                         : _categoryColor(cat),
@@ -645,9 +643,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 decoration: isPurchased && !needs
                                     ? TextDecoration.lineThrough
                                     : null,
-                                color: isPurchased && !needs
-                                    ? Colors.grey
-                                    : null,
+                                color:
+                                    isPurchased && !needs ? Colors.grey : null,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -668,7 +665,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             '$qty${unit.isNotEmpty ? unit : '個'}',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           ),
                           if (price != null) ...[
@@ -677,7 +676,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               '¥${fmt.format(price)}',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -687,7 +688,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               shop,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                           ],

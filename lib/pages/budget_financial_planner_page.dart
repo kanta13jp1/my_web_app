@@ -542,7 +542,9 @@ $breakdown
                     Text(
                       '¥${_fmt.format(amount)}',
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 13,),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
@@ -715,8 +717,9 @@ $breakdown
                       child: Text(
                         '支出データを記録してから実行してください',
                         style: TextStyle(
-                            color: cs.onPrimaryContainer.withValues(alpha: 0.7),
-                            fontSize: 12,),
+                          color: cs.onPrimaryContainer.withValues(alpha: 0.7),
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                 ],
@@ -735,10 +738,13 @@ $breakdown
                       children: [
                         Icon(Icons.lightbulb, color: cs.tertiary),
                         const SizedBox(width: 8),
-                        Text('AIからの提案',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: cs.onSurface,),),
+                        Text(
+                          'AIからの提案',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: cs.onSurface,
+                          ),
+                        ),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.copy, size: 18),
@@ -1110,10 +1116,12 @@ class _AddRecordSheetState extends State<_AddRecordSheet>
                   ),
                   items: (_tab.index == 0 ? _categories : _incomeTypes)
                       .entries
-                      .map((e) => DropdownMenuItem(
-                            value: e.key,
-                            child: Text(e.value),
-                          ),)
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v == null) return;

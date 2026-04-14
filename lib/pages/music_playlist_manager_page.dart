@@ -12,8 +12,7 @@ class MusicPlaylistManagerPage extends StatefulWidget {
       _MusicPlaylistManagerPageState();
 }
 
-class _MusicPlaylistManagerPageState
-    extends State<MusicPlaylistManagerPage> {
+class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
   final _supabase = Supabase.instance.client;
 
   bool _isLoading = false;
@@ -57,8 +56,7 @@ class _MusicPlaylistManagerPageState
         final list = data['playlists'];
         if (list is List) {
           setState(() {
-            _playlists =
-                list.map((p) => p as Map<String, dynamic>).toList();
+            _playlists = list.map((p) => p as Map<String, dynamic>).toList();
           });
         }
       }
@@ -81,8 +79,7 @@ class _MusicPlaylistManagerPageState
         final list = data['tracks'];
         if (list is List) {
           setState(() {
-            _tracks =
-                list.map((t) => t as Map<String, dynamic>).toList();
+            _tracks = list.map((t) => t as Map<String, dynamic>).toList();
           });
         }
       }

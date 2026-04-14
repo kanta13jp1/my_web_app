@@ -135,8 +135,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
     try {
       await _supabase
           .from('ai_agent_flows')
-          .update({'is_active': !current})
-          .eq('id', id);
+          .update({'is_active': !current}).eq('id', id);
       await _loadFlows();
     } catch (_) {}
   }

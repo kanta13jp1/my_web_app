@@ -66,18 +66,23 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       ]);
 
       final templatesData = results[0].data;
-      if (templatesData is Map<String, dynamic> && templatesData['templates'] is List) {
-        setState(() => _templates = (templatesData['templates'] as List).cast<Map<String, dynamic>>());
+      if (templatesData is Map<String, dynamic> &&
+          templatesData['templates'] is List) {
+        setState(() => _templates =
+            (templatesData['templates'] as List).cast<Map<String, dynamic>>(),);
       }
 
       final historyData = results[1].data;
-      if (historyData is Map<String, dynamic> && historyData['history'] is List) {
-        setState(() => _history = (historyData['history'] as List).cast<Map<String, dynamic>>());
+      if (historyData is Map<String, dynamic> &&
+          historyData['history'] is List) {
+        setState(() => _history =
+            (historyData['history'] as List).cast<Map<String, dynamic>>(),);
       }
 
       final statsData = results[2].data;
       if (statsData is Map<String, dynamic>) {
-        setState(() => _viralStats = statsData['stats'] as Map<String, dynamic>?);
+        setState(
+            () => _viralStats = statsData['stats'] as Map<String, dynamic>?,);
       }
     } catch (e) {
       setState(() => _errorMessage = 'データ取得エラー: $e');
@@ -142,7 +147,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       final result = res.data as Map<String, dynamic>?;
 
       if (mounted) {
-        final tweetUrl = result?['tweetLink']?.toString() ?? result?['tweetUrl']?.toString();
+        final tweetUrl =
+            result?['tweetLink']?.toString() ?? result?['tweetUrl']?.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tweetUrl != null ? '✅ X投稿成功! $tweetUrl' : '✅ 投稿完了'),
@@ -152,7 +158,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         );
         if (tweetUrl != null) {
           final uri = Uri.tryParse(tweetUrl);
-          if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (uri != null) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          }
         }
         await _loadData();
       }
@@ -190,7 +198,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('コード: $code', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                Text('コード: $code',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18,),),
                 const SizedBox(height: 8),
                 const Text('友達に共有するとお互いにポイントがもらえます！'),
                 const SizedBox(height: 12),
@@ -198,11 +208,15 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   ElevatedButton.icon(
                     onPressed: () async {
                       final uri = Uri.tryParse(xUrl);
-                      if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      if (uri != null) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication,);
+                      }
                     },
                     icon: const Icon(Icons.share),
                     label: const Text('Xでシェア'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.black),
                   ),
               ],
             ),
@@ -218,7 +232,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('招待コード生成エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('招待コード生成エラー: $e'), backgroundColor: Colors.red,),
         );
       }
     }
@@ -283,7 +298,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     ('competitor_comparison', '💸 競合比較・コスト削減', '料金比較でお得感を訴求'),
                     ('feature_highlight', '📱 機能ハイライト', '実装済み機能をスピードで紹介'),
                     ('user_growth', '🚀 ユーザー成長ストーリー', '0人から始めたソロ開発'),
-                  ].map((item) => _buildTemplateCard(item.$1, item.$2, item.$3, isDark)),
+                  ].map((item) =>
+                      _buildTemplateCard(item.$1, item.$2, item.$3, isDark),),
                 ],
               ),
             ),
@@ -314,7 +330,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           ElevatedButton.icon(
             onPressed: _loading ? null : _generateAd,
             icon: _loading
-                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),)
                 : const Icon(Icons.auto_awesome),
             label: Text(_loading ? '生成中...' : '広告スクリプトを生成'),
             style: ElevatedButton.styleFrom(
@@ -348,7 +367,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     );
   }
 
-  Widget _buildTemplateCard(String key, String title, String desc, bool isDark) {
+  Widget _buildTemplateCard(
+      String key, String title, String desc, bool isDark,) {
     final selected = _selectedTemplate == key;
     return GestureDetector(
       onTap: () => setState(() => _selectedTemplate = key),
@@ -371,12 +391,15 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(desc, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),),
+                  Text(desc,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),),
                 ],
               ),
             ),
-            if (selected) const Icon(Icons.check_circle, color: Color(0xFF6366F1)),
+            if (selected)
+              const Icon(Icons.check_circle, color: Color(0xFF6366F1)),
           ],
         ),
       ),
@@ -406,9 +429,12 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: hasImage ? Colors.green.withAlpha(30) : Colors.orange.withAlpha(30),
+                    color: hasImage
+                        ? Colors.green.withAlpha(30)
+                        : Colors.orange.withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -422,7 +448,6 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 ),
               ],
             ),
-
             if (imageUrl != null) ...[
               const SizedBox(height: 12),
               ClipRRect(
@@ -434,37 +459,44 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 180,
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    child: const Center(child: Icon(Icons.image, size: 48, color: Colors.grey)),
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: const Center(
+                        child: Icon(Icons.image, size: 48, color: Colors.grey),),
                   ),
                 ),
               ),
             ],
-
             const SizedBox(height: 12),
             const Text('スクリプト:', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            ...script.map((line) => Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(line.toString(), style: const TextStyle(fontSize: 14)),
-            ),),
-
+            ...script.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child:
+                    Text(line.toString(), style: const TextStyle(fontSize: 14)),
+              ),
+            ),
             const SizedBox(height: 12),
-            const Text('X投稿キャプション:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('X投稿キャプション:',
+                style: TextStyle(fontWeight: FontWeight.bold),),
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isDark ? Colors.black26 : Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,),
               ),
               child: Text(
-                caption.length > 280 ? '${caption.substring(0, 280)}...' : caption,
+                caption.length > 280
+                    ? '${caption.substring(0, 280)}...'
+                    : caption,
                 style: const TextStyle(fontSize: 13),
               ),
             ),
-
             const SizedBox(height: 16),
             Row(
               children: [
@@ -472,7 +504,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   child: ElevatedButton.icon(
                     onPressed: _isPosting ? null : _postToX,
                     icon: _isPosting
-                        ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),)
                         : const Icon(Icons.send),
                     label: Text(_isPosting ? '投稿中...' : 'Xに投稿'),
                     style: ElevatedButton.styleFrom(
@@ -505,13 +540,22 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   children: [
                     const Text(
                       '📊 バイラル指標',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 16),
-                    _buildStatRow('バイラル係数 K', _viralStats!['kFactor']?.toString() ?? '0', '目標: K ≥ 1.0'),
-                    _buildStatRow('総シェア数', _viralStats!['totalShares']?.toString() ?? '0', ''),
-                    _buildStatRow('総コンバージョン', _viralStats!['totalConversions']?.toString() ?? '0', ''),
-                    _buildStatRow('ランディング訪問', _viralStats!['totalViews']?.toString() ?? '0', ''),
+                    _buildStatRow(
+                        'バイラル係数 K',
+                        _viralStats!['kFactor']?.toString() ?? '0',
+                        '目標: K ≥ 1.0',),
+                    _buildStatRow('総シェア数',
+                        _viralStats!['totalShares']?.toString() ?? '0', '',),
+                    _buildStatRow(
+                        '総コンバージョン',
+                        _viralStats!['totalConversions']?.toString() ?? '0',
+                        '',),
+                    _buildStatRow('ランディング訪問',
+                        _viralStats!['totalViews']?.toString() ?? '0', '',),
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -545,10 +589,15 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
-                    children: [7, 8, 12, 19, 21, 22].map((h) => Chip(
-                      label: Text('$h:00'),
-                      backgroundColor: const Color(0xFF6366F1).withAlpha(25),
-                    ),).toList(),
+                    children: [7, 8, 12, 19, 21, 22]
+                        .map(
+                          (h) => Chip(
+                            label: Text('$h:00'),
+                            backgroundColor:
+                                const Color(0xFF6366F1).withAlpha(25),
+                          ),
+                        )
+                        .toList(),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -579,16 +628,20 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     ('💸 競合比較', '48時間ごと'),
                     ('📱 機能紹介', '36時間ごと'),
                     ('🚀 成長ストーリー', '72時間ごと'),
-                  ].map((item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(item.$1),
-                        Text(item.$2, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                      ],
+                  ].map(
+                    (item) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(item.$1),
+                          Text(item.$2,
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12,),),
+                        ],
+                      ),
                     ),
-                  ),),
+                  ),
                 ],
               ),
             ),
@@ -624,7 +677,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             children: [
               Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
               if (sub.isNotEmpty)
-                Text(sub, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                Text(sub,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),),
             ],
           ),
         ],
@@ -642,7 +696,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             SizedBox(height: 16),
             Text('まだ広告を生成していません', style: TextStyle(color: Colors.grey)),
             SizedBox(height: 8),
-            Text('「生成」タブで広告を作成しましょう', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text('「生成」タブで広告を作成しましょう',
+                style: TextStyle(fontSize: 12, color: Colors.grey),),
           ],
         ),
       );
@@ -668,7 +723,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   : const Color(0xFF6366F1).withAlpha(25),
               child: Icon(
                 status == 'posted' ? Icons.check : Icons.auto_awesome,
-                color: status == 'posted' ? Colors.green : const Color(0xFF6366F1),
+                color:
+                    status == 'posted' ? Colors.green : const Color(0xFF6366F1),
                 size: 20,
               ),
             ),
@@ -686,12 +742,16 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     icon: const Icon(Icons.open_in_new, size: 18),
                     onPressed: () async {
                       final uri = Uri.tryParse(tweetUrl);
-                      if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      if (uri != null) {
+                        await launchUrl(uri,
+                            mode: LaunchMode.externalApplication,);
+                      }
                     },
                     tooltip: 'Xで見る',
                   )
                 : Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: _statusColor(status).withAlpha(25),
                       borderRadius: BorderRadius.circular(12),
@@ -722,8 +782,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data?['success'] == true ? '✅ 自動投稿完了!' : '⚠️ ${data?['error']}'),
-            backgroundColor: data?['success'] == true ? Colors.green : Colors.orange,
+            content: Text(data?['success'] == true
+                ? '✅ 自動投稿完了!'
+                : '⚠️ ${data?['error']}',),
+            backgroundColor:
+                data?['success'] == true ? Colors.green : Colors.orange,
           ),
         );
         await _loadData();
@@ -741,29 +804,42 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
 
   String _templateLabel(String key) {
     switch (key) {
-      case 'dark_war': return '⚔️ Dark War風バトル広告';
-      case 'competitor_comparison': return '💸 競合比較・コスト削減';
-      case 'feature_highlight': return '📱 機能ハイライト';
-      case 'user_growth': return '🚀 ユーザー成長ストーリー';
-      default: return key;
+      case 'dark_war':
+        return '⚔️ Dark War風バトル広告';
+      case 'competitor_comparison':
+        return '💸 競合比較・コスト削減';
+      case 'feature_highlight':
+        return '📱 機能ハイライト';
+      case 'user_growth':
+        return '🚀 ユーザー成長ストーリー';
+      default:
+        return key;
     }
   }
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'posted': return Colors.green;
-      case 'ready_to_post': return Colors.blue;
-      case 'script_only': return Colors.orange;
-      default: return Colors.grey;
+      case 'posted':
+        return Colors.green;
+      case 'ready_to_post':
+        return Colors.blue;
+      case 'script_only':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
   String _statusLabel(String status) {
     switch (status) {
-      case 'posted': return '投稿済み';
-      case 'ready_to_post': return '投稿可能';
-      case 'script_only': return 'スクリプトのみ';
-      default: return '下書き';
+      case 'posted':
+        return '投稿済み';
+      case 'ready_to_post':
+        return '投稿可能';
+      case 'script_only':
+        return 'スクリプトのみ';
+      default:
+        return '下書き';
     }
   }
 }

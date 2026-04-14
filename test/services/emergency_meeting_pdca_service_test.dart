@@ -360,7 +360,8 @@ void main() {
       expect(report.nextMeetingMetrics['abstinence_violation_count'], 2);
     });
 
-    test('buildContinuationPlan prioritizes focus selection and 25 minute sprint',
+    test(
+        'buildContinuationPlan prioritizes focus selection and 25 minute sprint',
         () {
       final service = EmergencyMeetingBiReportService();
 

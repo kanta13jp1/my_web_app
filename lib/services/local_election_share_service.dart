@@ -636,8 +636,7 @@ class LocalElectionShareService {
     return '';
   }
 
-  DateTime _normalizeDate(DateTime dt) =>
-      DateTime(dt.year, dt.month, dt.day);
+  DateTime _normalizeDate(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 
   String _normalizePrefectureKey(String value) {
     final trimmed = value.trim();

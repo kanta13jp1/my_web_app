@@ -206,20 +206,17 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   'decision_statement': text,
                   'category': category,
                   'past_attempts': pastAttempts,
-                  'what_is_different':
-                      whatDiffCtrl.text.trim().isEmpty
-                          ? null
-                          : whatDiffCtrl.text.trim(),
+                  'what_is_different': whatDiffCtrl.text.trim().isEmpty
+                      ? null
+                      : whatDiffCtrl.text.trim(),
                   'has_concrete_plan': hasPlan,
-                  'execution_plan':
-                      planCtrl.text.trim().isEmpty
-                          ? null
-                          : planCtrl.text.trim(),
+                  'execution_plan': planCtrl.text.trim().isEmpty
+                      ? null
+                      : planCtrl.text.trim(),
                   'has_fallback': hasFallback,
-                  'fallback_plan':
-                      fallbackCtrl.text.trim().isEmpty
-                          ? null
-                          : fallbackCtrl.text.trim(),
+                  'fallback_plan': fallbackCtrl.text.trim().isEmpty
+                      ? null
+                      : fallbackCtrl.text.trim(),
                   'verdict': verdict,
                   'status': 'checked',
                 });
@@ -294,8 +291,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                   itemCount: _checks.length,
-                  itemBuilder: (ctx, i) =>
-                      _buildCheckCard(_checks[i], isDark),
+                  itemBuilder: (ctx, i) => _buildCheckCard(_checks[i], isDark),
                 ),
     );
   }
@@ -309,8 +305,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
     final hasFallback = check['has_fallback'] as bool? ?? false;
     final createdAt = check['created_at'] as String?;
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final verdictColor =
-        verdict != null ? (_verdictColors[verdict] ?? Colors.grey) : Colors.grey;
+    final verdictColor = verdict != null
+        ? (_verdictColors[verdict] ?? Colors.grey)
+        : Colors.grey;
 
     return Card(
       color: cardColor,
@@ -349,7 +346,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 const SizedBox(width: 6),
                 Text(
                   _categoryLabels[category] ?? category,
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
                 const Spacer(),
                 PopupMenuButton<String>(
@@ -418,7 +417,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 DateFormat('yyyy/MM/dd').format(
                   DateTime.tryParse(createdAt)?.toLocal() ?? DateTime.now(),
                 ),
-                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
           ],
@@ -450,7 +451,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.psychology_outlined, size: 64, color: Theme.of(context).colorScheme.surfaceContainerHighest),
+          Icon(Icons.psychology_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,),
           const SizedBox(height: 16),
           Text(
             '論理的に決断しよう',
@@ -464,7 +467,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
           Text(
             '衝動的な決意の前に\nまずチェックしてみましょう',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
         ],
       ),

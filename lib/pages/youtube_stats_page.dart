@@ -152,11 +152,14 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
         _subscriberCountController.text.trim().replaceAll(',', ''),
       );
       if (subCount != null) {
-        await supabase.from('youtube_channels').upsert({
-          'channel_handle': channelHandle,
-          'subscriber_count': subCount,
-          'updated_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'channel_handle',);
+        await supabase.from('youtube_channels').upsert(
+          {
+            'channel_handle': channelHandle,
+            'subscriber_count': subCount,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+          onConflict: 'channel_handle',
+        );
       }
 
       // バッチ upsert (50件ずつ)
@@ -167,9 +170,9 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
           i + 50 > records.length ? records.length : i + 50,
         );
         await supabase.from('youtube_video_stats').upsert(
-          batch,
-          onConflict: 'video_url,snapshot_date',
-        );
+              batch,
+              onConflict: 'video_url,snapshot_date',
+            );
         total += batch.length;
       }
 
@@ -539,9 +542,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
     // チャンネルフィルター
     final filtered = _selectedChannel.isEmpty
         ? _stats
-        : _stats
-            .where((r) => r['channel_handle'] == _selectedChannel)
-            .toList();
+        : _stats.where((r) => r['channel_handle'] == _selectedChannel).toList();
 
     // スナップショット日付一覧
     final dates = filtered
@@ -553,9 +554,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
     final latestDate = dates.isNotEmpty ? dates.first : '';
 
     // 最新スナップショットの統計
-    var latestRows = filtered
-        .where((r) => r['snapshot_date'] == latestDate)
-        .toList();
+    var latestRows =
+        filtered.where((r) => r['snapshot_date'] == latestDate).toList();
 
     // サマリー計算
     int totalViews = 0, totalLikes = 0, totalGrowth = 0;
@@ -689,8 +689,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                               style: const TextStyle(fontSize: 11),
                             ),
                             selected: active,
-                            onSelected: (_) =>
-                                setState(() => _sortMode = mode),
+                            onSelected: (_) => setState(() => _sortMode = mode),
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
                           ),
@@ -702,7 +701,6 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
               ),
             ),
           ),
-
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) {
@@ -715,13 +713,11 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 final comments = row['comments'] as int? ?? 0;
 
                 // 成長デルタ
-                final prevViews =
-                    _prevSnapshot[url]?['views'] as int? ?? 0;
+                final prevViews = _prevSnapshot[url]?['views'] as int? ?? 0;
                 final delta = prevViews > 0 ? views - prevViews : 0;
 
                 // エンゲージメント率
-                final engRate =
-                    views > 0 ? (likes / views * 100) : 0.0;
+                final engRate = views > 0 ? (likes / views * 100) : 0.0;
 
                 return ListTile(
                   dense: true,

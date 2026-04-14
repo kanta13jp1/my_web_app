@@ -1,4 +1,4 @@
-﻿// lib/pages/admin/feedback_list_page.dart
+// lib/pages/admin/feedback_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../main.dart';
@@ -71,8 +71,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
             'appFeedbackId': id,
             'status': 'done',
             'markAsResolved': true,
-            'resolutionSummary':
-                '管理画面から対応完了として反映しました。最新のリリース内容をご確認ください。',
+            'resolutionSummary': '管理画面から対応完了として反映しました。最新のリリース内容をご確認ください。',
           };
 
           if (session == null) {
@@ -90,7 +89,8 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
             );
           }
         } catch (notifyErr) {
-          AppLogger.error('Failed to send release notification', error: notifyErr);
+          AppLogger.error('Failed to send release notification',
+              error: notifyErr,);
           // 通知失敗はステータス変更の成功には影響させない
         }
       }
@@ -179,8 +179,11 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                         ),
                         subtitle: Text(
                           '${timeago.format(date, locale: 'ja')} • $userId',
-                          style:
-                              TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,),
                         ),
                         children: [
                           Padding(
@@ -210,7 +213,9 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                     '投稿者メール: ${fb['user_email']}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     ),
                                   ),
                                 ],

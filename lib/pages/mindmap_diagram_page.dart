@@ -34,7 +34,8 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['diagrams'] is List) {
-        setState(() => _diagrams = (data['diagrams'] as List).cast<Map<String, dynamic>>());
+        setState(() => _diagrams =
+            (data['diagrams'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _diagrams = data.cast<Map<String, dynamic>>());
       } else {
@@ -117,7 +118,8 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                             diagram['name']?.toString() ??
                             'マインドマップ $index';
                         final updatedAt = diagram['updated_at']?.toString() ??
-                            diagram['created_at']?.toString() ?? '';
+                            diagram['created_at']?.toString() ??
+                            '';
                         return Card(
                           child: ListTile(
                             leading: const Icon(

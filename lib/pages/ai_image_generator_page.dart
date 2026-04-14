@@ -41,7 +41,8 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['images'] is List) {
-        setState(() => _images = (data['images'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _images = (data['images'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _images = data.cast<Map<String, dynamic>>());
       } else {
@@ -139,9 +140,11 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
                   itemCount: _images.length,
                   itemBuilder: (context, index) {
                     final item = _images[index];
-                    final prompt = item['prompt']?.toString() ?? 'プロンプト ${index + 1}';
+                    final prompt =
+                        item['prompt']?.toString() ?? 'プロンプト ${index + 1}';
                     final createdAt = item['created_at']?.toString();
-                    final imageUrl = item['url']?.toString() ?? item['image_url']?.toString();
+                    final imageUrl = item['url']?.toString() ??
+                        item['image_url']?.toString();
                     return Card(
                       child: ListTile(
                         leading: imageUrl != null

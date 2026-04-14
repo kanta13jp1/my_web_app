@@ -69,7 +69,9 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
   List<Map<String, dynamic>> _toList(dynamic data, String key) {
     if (data is Map<String, dynamic>) {
       final list = data[key];
-      if (list is List) return list.map((e) => e as Map<String, dynamic>).toList();
+      if (list is List) {
+        return list.map((e) => e as Map<String, dynamic>).toList();
+      }
     }
     return [];
   }
@@ -148,14 +150,16 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor:
-                  status == 'active' ? Colors.green.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
+              backgroundColor: status == 'active'
+                  ? Colors.green.shade100
+                  : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.directions_car,
                 color: status == 'active' ? Colors.green : Colors.grey,
               ),
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(
               '${model.isNotEmpty ? "$model · " : ""}${plate.isNotEmpty ? plate : ""}',
             ),
@@ -255,9 +259,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
               color: overdue ? Colors.red : Colors.orange,
             ),
             title: Text('$vehicle — $type'),
-            subtitle: cost > 0
-                ? Text('費用: ¥${cost.toStringAsFixed(0)}')
-                : null,
+            subtitle: cost > 0 ? Text('費用: ¥${cost.toStringAsFixed(0)}') : null,
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,

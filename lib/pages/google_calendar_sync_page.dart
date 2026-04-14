@@ -7,8 +7,7 @@ class GoogleCalendarSyncPage extends StatefulWidget {
   const GoogleCalendarSyncPage({super.key});
 
   @override
-  State<GoogleCalendarSyncPage> createState() =>
-      _GoogleCalendarSyncPageState();
+  State<GoogleCalendarSyncPage> createState() => _GoogleCalendarSyncPageState();
 }
 
 class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
@@ -275,8 +274,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF4285F4),
                             foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                         ),
                       ),

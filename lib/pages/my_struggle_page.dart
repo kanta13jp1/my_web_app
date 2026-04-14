@@ -94,8 +94,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
           )
           .toList(),
       'todos_total': todos.length,
-      'todos_completed':
-          todos.where((t) => t['is_completed'] == true).length,
+      'todos_completed': todos.where((t) => t['is_completed'] == true).length,
       'todos': todos
           .map(
             (t) =>
@@ -193,7 +192,10 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Theme.of(context).colorScheme.onSurface, Theme.of(context).colorScheme.onSurfaceVariant],
+                colors: [
+                  Theme.of(context).colorScheme.onSurface,
+                  Theme.of(context).colorScheme.onSurfaceVariant,
+                ],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -217,7 +219,8 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                 Text(
                   '日々の暮らしの中にある、静かな闘いの記録',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     fontSize: 12,
                   ),
                 ),
@@ -350,7 +353,8 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+        side: BorderSide(
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -363,7 +367,9 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
         ),
         subtitle: Text(
           dateStr,
-          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+          style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.outlineVariant,),
         ),
         leading: const Text('📜', style: TextStyle(fontSize: 20)),
         children: [

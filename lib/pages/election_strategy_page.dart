@@ -82,7 +82,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     };
     if (imageBase64 != null) body['imageBase64'] = imageBase64;
     if (mimeType != null) body['mimeType'] = mimeType;
-    final response = await _supabase.functions.invoke('ai-assistant', body: body);
+    final response =
+        await _supabase.functions.invoke('ai-assistant', body: body);
     final data = response.data;
     if (data is Map<String, dynamic> && data['success'] == true) {
       return (data['result'] as String?) ?? '';
@@ -153,7 +154,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   Future<void> _triggerBatchAnalysis() async {
     setState(() => _isBusy = true);
     try {
-      final response = await _supabase.functions.invoke('ai-hub', body: {'action': 'trigger.analyze'});
+      final response = await _supabase.functions
+          .invoke('ai-hub', body: {'action': 'trigger.analyze'});
 
       if (mounted) {
         if (response.status == 200) {
@@ -679,7 +681,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.92),
+                color: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHigh
+                    .withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(color: Colors.black26, blurRadius: 4),
@@ -1094,8 +1099,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor:
-                      score >= 80 ? Colors.red.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
+                  backgroundColor: score >= 80
+                      ? Colors.red.shade100
+                      : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Text('$score'),
                 ),
                 title: Text(item['content'] ?? ''),

@@ -41,7 +41,9 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
           .eq('user_id', user.id)
           .order('created_at', ascending: false)
           .limit(100);
-      if (mounted) setState(() => _items = List<Map<String, dynamic>>.from(data));
+      if (mounted) {
+        setState(() => _items = List<Map<String, dynamic>>.from(data));
+      }
     } catch (_) {}
   }
 
@@ -74,8 +76,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
   Future<void> _toggle(String id, bool current) async {
     await _supabase
         .from('brain_dump_items')
-        .update({'is_processed': !current})
-        .eq('id', id);
+        .update({'is_processed': !current}).eq('id', id);
     await _load();
   }
 
@@ -119,15 +120,18 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                         hintStyle: const TextStyle(color: Colors.white38),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF333333)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF333333)),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF333333)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF333333)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFFF6B35)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFFF6B35)),
                         ),
                       ),
                     ),
@@ -138,7 +142,8 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
-                              border: Border.all(color: const Color(0xFF333333)),
+                              border:
+                                  Border.all(color: const Color(0xFF333333)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: DropdownButton<String>(
@@ -148,9 +153,11 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                               underline: const SizedBox.shrink(),
                               isExpanded: true,
                               items: _categories
-                                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                                  .map((c) => DropdownMenuItem(
+                                      value: c, child: Text(c),),)
                                   .toList(),
-                              onChanged: (v) => setState(() => _selectedCategory = v!),
+                              onChanged: (v) =>
+                                  setState(() => _selectedCategory = v!),
                             ),
                           ),
                         ),
@@ -162,7 +169,11 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                             foregroundColor: Colors.white,
                           ),
                           child: _saving
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white,),)
                               : const Text('追加'),
                         ),
                       ],
@@ -185,7 +196,8 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                       itemCount: _items.length,
                       itemBuilder: (_, i) {
                         final item = _items[i];
-                        final processed = item['is_processed'] as bool? ?? false;
+                        final processed =
+                            item['is_processed'] as bool? ?? false;
                         return Card(
                           color: const Color(0xFF1E1E1E),
                           margin: const EdgeInsets.only(bottom: 8),
@@ -193,21 +205,27 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                             leading: Checkbox(
                               value: processed,
                               activeColor: const Color(0xFF4CAF50),
-                              onChanged: (_) => _toggle(item['id'].toString(), processed),
+                              onChanged: (_) =>
+                                  _toggle(item['id'].toString(), processed),
                             ),
                             title: Text(
                               item['content'] as String? ?? '',
                               style: TextStyle(
-                                color: processed ? Colors.white38 : Colors.white,
-                                decoration: processed ? TextDecoration.lineThrough : null,
+                                color:
+                                    processed ? Colors.white38 : Colors.white,
+                                decoration: processed
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                             subtitle: Text(
                               item['category'] as String? ?? '',
-                              style: const TextStyle(color: Color(0xFFFF6B35), fontSize: 12),
+                              style: const TextStyle(
+                                  color: Color(0xFFFF6B35), fontSize: 12,),
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 18),
+                              icon: const Icon(Icons.delete_outline,
+                                  color: Colors.white38, size: 18,),
                               onPressed: () => _delete(item['id'].toString()),
                             ),
                           ),

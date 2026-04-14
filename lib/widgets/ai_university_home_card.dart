@@ -113,8 +113,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
         setState(() {
           // リモート記録があればローカルより優先 (クロスデバイス対応)
           if (remoteCount > _answeredCount) _answeredCount = remoteCount;
-          _currentStreak =
-              (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
+          _currentStreak = (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
           _badgeCount = badgeRow.count;
         });
       }
@@ -125,7 +124,8 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
 
   Future<void> _share() async {
     final providerCountText = _providerCount > 0 ? '$_providerCount社' : '多数の';
-    final learnedText = _answeredCount > 0 ? '$_answeredCount社学習済み' : '最初の1社に挑戦中';
+    final learnedText =
+        _answeredCount > 0 ? '$_answeredCount社学習済み' : '最初の1社に挑戦中';
     final streakText = _currentStreak > 0 ? ' / $_currentStreak日連続' : '';
     await SharePlus.instance.share(
       ShareParams(
@@ -268,21 +268,18 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   Widget build(BuildContext context) {
     final providerCountText = _providerCount > 0 ? '$_providerCount社' : '多数の';
     final learnedTotalLabel = _providerCount > 0 ? '$_providerCount' : '—';
-    final progress = _providerCount <= 0
-        ? 0.0
-        : min(1.0, _answeredCount / _providerCount);
+    final progress =
+        _providerCount <= 0 ? 0.0 : min(1.0, _answeredCount / _providerCount);
     final progressPercent = (progress * 100).round();
     final extraProviders = _providerCount > _featuredProviders.length
         ? _providerCount - _featuredProviders.length
         : 0;
-    final remainingProviders = _providerCount > 0
-        ? max(0, _providerCount - _answeredCount)
-        : 0;
+    final remainingProviders =
+        _providerCount > 0 ? max(0, _providerCount - _answeredCount) : 0;
     final isReturningLearner =
         _answeredCount > 0 || _currentStreak > 0 || _badgeCount > 0;
-    final headline = isReturningLearner
-        ? '今日の1社で連続学習とランキングを伸ばす'
-        : '最短3分で主要AIの違いをつかむ';
+    final headline =
+        isReturningLearner ? '今日の1社で連続学習とランキングを伸ばす' : '最短3分で主要AIの違いをつかむ';
     final subcopy = isReturningLearner
         ? remainingProviders > 0
             ? '$_answeredCount社を学習済み。残り$remainingProviders社で制覇に近づきます。'
@@ -340,10 +337,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B35).withValues(alpha: 0.18),
+                          color:
+                              const Color(0xFFFF6B35).withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: const Color(0xFFFF6B35).withValues(alpha: 0.28),
+                            color:
+                                const Color(0xFFFF6B35).withValues(alpha: 0.28),
                           ),
                         ),
                         child: const Icon(

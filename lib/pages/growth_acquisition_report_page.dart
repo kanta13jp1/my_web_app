@@ -31,8 +31,8 @@ class _GrowthAcquisitionReportPageState
     });
 
     try {
-      final response =
-          await _supabase.functions.invoke('growth-hub', body: {'action': 'acquisition.report'});
+      final response = await _supabase.functions
+          .invoke('growth-hub', body: {'action': 'acquisition.report'});
 
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -54,9 +54,8 @@ class _GrowthAcquisitionReportPageState
   Widget _buildTouchpointRow(Map<String, dynamic> tp) {
     final touches = (tp['touches'] as num? ?? 0).toDouble();
     final signups = (tp['signupSubmits'] as num? ?? 0).toDouble();
-    final rate = touches > 0
-        ? ((signups / touches) * 100).toStringAsFixed(1)
-        : '0.0';
+    final rate =
+        touches > 0 ? ((signups / touches) * 100).toStringAsFixed(1) : '0.0';
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(

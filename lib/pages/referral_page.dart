@@ -42,8 +42,7 @@ class _ReferralPageState extends State<ReferralPage> {
       if (data != null && data['success'] == true) {
         final items = (data['items'] as List<dynamic>?) ?? [];
         if (items.isNotEmpty) {
-          final meta =
-              (items.first as Map<String, dynamic>)['metadata']
+          final meta = (items.first as Map<String, dynamic>)['metadata']
                   as Map<String, dynamic>? ??
               {};
           setState(() {
@@ -73,8 +72,7 @@ class _ReferralPageState extends State<ReferralPage> {
     }
   }
 
-  String get _referralLink =>
-      '$_siteUrl/?ref=${_referralCode ?? ''}';
+  String get _referralLink => '$_siteUrl/?ref=${_referralCode ?? ''}';
 
   void _copyLink() {
     Clipboard.setData(ClipboardData(text: _referralLink));
@@ -108,13 +106,18 @@ class _ReferralPageState extends State<ReferralPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 12),
                       Text(_error!),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _load, child: const Text('再試行'),),
+                        onPressed: _load,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -135,8 +138,11 @@ class _ReferralPageState extends State<ReferralPage> {
                         ),
                         child: const Column(
                           children: [
-                            Icon(Icons.people_alt,
-                                size: 48, color: Colors.white,),
+                            Icon(
+                              Icons.people_alt,
+                              size: 48,
+                              color: Colors.white,
+                            ),
                             SizedBox(height: 12),
                             Text(
                               '友達を誘って一緒に使おう',
@@ -168,13 +174,17 @@ class _ReferralPageState extends State<ReferralPage> {
                               ? const Color(0xFF022C22).withAlpha(180)
                               : const Color(0xFFECFDF5),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                const Icon(Icons.emoji_events,
-                                    color: Color(0xFF059669), size: 32,),
+                                const Icon(
+                                  Icons.emoji_events,
+                                  color: Color(0xFF059669),
+                                  size: 32,
+                                ),
                                 const SizedBox(width: 12),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,8 +200,9 @@ class _ReferralPageState extends State<ReferralPage> {
                                     const Text(
                                       'ありがとうございます 🎉',
                                       style: TextStyle(
-                                          fontSize: 12,
-                                          color: Color(0xFF059669),),
+                                        fontSize: 12,
+                                        color: Color(0xFF059669),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -214,7 +225,9 @@ class _ReferralPageState extends State<ReferralPage> {
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12,),
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.grey[850]
@@ -234,8 +247,9 @@ class _ReferralPageState extends State<ReferralPage> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontFamily: 'monospace',
-                                  color:
-                                      isDark ? Colors.grey[300] : Colors.black87,
+                                  color: isDark
+                                      ? Colors.grey[300]
+                                      : Colors.black87,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -246,7 +260,9 @@ class _ReferralPageState extends State<ReferralPage> {
                               tooltip: 'コピー',
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 32,),
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
                             ),
                           ],
                         ),
@@ -332,7 +348,9 @@ class _ReferralPageState extends State<ReferralPage> {
                         runSpacing: 8,
                         children: [
                           _buildFeatureChip(
-                              '📝 Notionライクなメモ', isDark,),
+                            '📝 Notionライクなメモ',
+                            isDark,
+                          ),
                           _buildFeatureChip('💰 資産管理', isDark),
                           _buildFeatureChip('🤖 AI秘書', isDark),
                           _buildFeatureChip('📋 テンプレート17種', isDark),

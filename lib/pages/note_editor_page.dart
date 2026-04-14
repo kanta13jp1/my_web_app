@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -470,9 +470,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String mimeType,
   ) async {
     final extension = _extensionForMimeType(mimeType);
-    final effectiveFileName = fileName.trim().isEmpty
-        ? 'pasted-image.$extension'
-        : fileName;
+    final effectiveFileName =
+        fileName.trim().isEmpty ? 'pasted-image.$extension' : fileName;
     final file = PlatformFile(
       name: effectiveFileName,
       size: bytes.length,
@@ -1459,13 +1458,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         final dateStr = savedAt != null
                             ? '${savedAt.year}/${savedAt.month.toString().padLeft(2, '0')}/${savedAt.day.toString().padLeft(2, '0')} ${savedAt.hour.toString().padLeft(2, '0')}:${savedAt.minute.toString().padLeft(2, '0')}'
                             : '不明';
-                        final title = (v['title'] as String?)?.isNotEmpty == true
-                            ? v['title'] as String
-                            : '無題';
+                        final title =
+                            (v['title'] as String?)?.isNotEmpty == true
+                                ? v['title'] as String
+                                : '無題';
                         return ListTile(
                           leading: const Icon(Icons.restore, size: 20),
-                          title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          subtitle: Text(dateStr, style: const TextStyle(fontSize: 12)),
+                          title: Text(title,
+                              maxLines: 1, overflow: TextOverflow.ellipsis,),
+                          subtitle: Text(dateStr,
+                              style: const TextStyle(fontSize: 12),),
                           trailing: TextButton(
                             child: const Text('復元'),
                             onPressed: () async {
@@ -1474,14 +1476,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                 context: context,
                                 builder: (_) => AlertDialog(
                                   title: const Text('バージョンを復元しますか？'),
-                                  content: Text('$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。'),
+                                  content: Text(
+                                      '$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。',),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
                                       child: const Text('キャンセル'),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
                                       child: const Text('復元'),
                                     ),
                                   ],
@@ -1490,11 +1495,14 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                               if (confirmed == true && mounted) {
                                 await _saveVersionSnapshot();
                                 setState(() {
-                                  _titleController.text = v['title'] as String? ?? '';
-                                  _contentController.text = v['content'] as String? ?? '';
+                                  _titleController.text =
+                                      v['title'] as String? ?? '';
+                                  _contentController.text =
+                                      v['content'] as String? ?? '';
                                 });
                                 _autoSaveService.markAsModified();
-                                _autoSaveService.triggerAutoSave(_saveNoteWithoutClosing);
+                                _autoSaveService
+                                    .triggerAutoSave(_saveNoteWithoutClosing);
                               }
                             },
                           ),
@@ -1973,8 +1981,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   FilledButton.icon(
-                    onPressed:
-                        _isUploadingAttachment ? null : _insertAttachmentFromPicker,
+                    onPressed: _isUploadingAttachment
+                        ? null
+                        : _insertAttachmentFromPicker,
                     icon: _isUploadingAttachment
                         ? const SizedBox(
                             width: 16,
@@ -2023,7 +2032,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               Expanded(
                 child: NoteImageDropZone(
                   onImageDropped: (bytes, fileName, mimeType) =>
-                      _handlePastedImage(Uint8List.fromList(bytes), fileName, mimeType),
+                      _handlePastedImage(
+                          Uint8List.fromList(bytes), fileName, mimeType,),
                   child: _showMarkdownPreview
                       ? ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _contentController,
@@ -2423,7 +2433,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                 const Spacer(),
                 Text(
                   '${_comments.length}件',
-                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
               ],
             ),
@@ -2437,7 +2449,10 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                         child: Text(
                           'コメントはまだありません\n最初のメモを追加しましょう',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,),
                         ),
                       )
                     : ListView.separated(
@@ -2477,7 +2492,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                 _formatDate(c['created_at']?.toString()),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                               trailing: IconButton(
@@ -2488,8 +2505,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                 ),
                                 tooltip: '削除',
                                 onPressed: () async {
-                                  final id =
-                                      c['id']?.toString() ?? '';
+                                  final id = c['id']?.toString() ?? '';
                                   if (id.isEmpty) return;
                                   final ok = await showDialog<bool>(
                                     context: context,
@@ -2506,8 +2522,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                               Navigator.pop(context, true),
                                           child: const Text(
                                             '削除',
-                                            style:
-                                                TextStyle(color: Colors.red),
+                                            style: TextStyle(color: Colors.red),
                                           ),
                                         ),
                                       ],

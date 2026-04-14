@@ -35,7 +35,8 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['members'] is List) {
-        setState(() => _members = (data['members'] as List).cast<Map<String, dynamic>>());
+        setState(() =>
+            _members = (data['members'] as List).cast<Map<String, dynamic>>(),);
       } else if (data is List) {
         setState(() => _members = data.cast<Map<String, dynamic>>());
       } else {
@@ -70,16 +71,16 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
-                        ),
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),
-                        ),
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchMembers,
@@ -94,16 +95,18 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                              Icons.family_restroom,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
+                            Icons.family_restroom,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 16),
                           Text(
-                              'ファミリーメンバーがいません',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.grey,),
+                            'ファミリーメンバーがいません',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
                             ),
+                          ),
                         ],
                       ),
                     )
@@ -112,21 +115,20 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                       itemCount: _members.length,
                       itemBuilder: (context, index) {
                         final member = _members[index];
-                        final name = (member['name'] ?? member['email'] ?? 'メンバー $index').toString();
+                        final name =
+                            (member['name'] ?? member['email'] ?? 'メンバー $index')
+                                .toString();
                         final role = (member['role'] ?? 'member').toString();
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
                               child: Text(
-                                name.isNotEmpty
-                                    ? name[0].toUpperCase()
-                                    : 'M',
+                                name.isNotEmpty ? name[0].toUpperCase() : 'M',
                               ),
                             ),
                             title: Text(name),
                             subtitle: Text(role),
-                            trailing:
-                                const Icon(Icons.chevron_right),
+                            trailing: const Icon(Icons.chevron_right),
                           ),
                         );
                       },

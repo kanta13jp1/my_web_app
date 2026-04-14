@@ -54,8 +54,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
       final runsData = results[0].data;
       if (runsData is Map<String, dynamic> && runsData['runs'] is List) {
         setState(() {
-          _recentRuns =
-              (runsData['runs'] as List).cast<Map<String, dynamic>>();
+          _recentRuns = (runsData['runs'] as List).cast<Map<String, dynamic>>();
         });
       }
       final statsData = results[1].data;
@@ -88,7 +87,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
           _svgPreview = data['svg']?.toString();
         });
       } else {
-        setState(() => _errorMessage = (data as Map<String, dynamic>?)?['error']?.toString() ?? 'プレビュー失敗');
+        setState(() => _errorMessage =
+            (data as Map<String, dynamic>?)?['error']?.toString() ?? 'プレビュー失敗',);
       }
     } catch (e) {
       setState(() => _errorMessage = 'プレビュー取得エラー: $e');
@@ -129,7 +129,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
           });
           _fetchRecentRuns();
         } else {
-          setState(() => _errorMessage = data['error']?.toString() ?? 'キャンペーン失敗');
+          setState(
+              () => _errorMessage = data['error']?.toString() ?? 'キャンペーン失敗',);
         }
       }
     } catch (e) {
@@ -143,7 +144,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        Icon(icon,
+            size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant,),
         const SizedBox(width: 3),
         Text(
           value,
@@ -209,8 +211,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                           '${e.key}: ${e.value}',
                           style: const TextStyle(fontSize: 11),
                         ),
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: EdgeInsets.zero,
                       ),
                     )
@@ -243,8 +244,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color:
-                  highlight ? Colors.orange : null,
+              color: highlight ? Colors.orange : null,
             ),
           ),
           Text(label, style: const TextStyle(fontSize: 11)),
@@ -284,7 +284,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                   children: [
                     const Text(
                       '広告テンプレート',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -406,7 +407,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                   children: [
                     const Text(
                       'キャンペーン実行',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
@@ -441,7 +443,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Icon(
                                 _isDryRun ? Icons.science : Icons.send,

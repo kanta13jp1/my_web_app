@@ -63,7 +63,9 @@ class AgentWorkspacePanel extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'identity と直近の agent_memories を自動注入した起動コンテキストです。',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -107,7 +109,9 @@ class AgentWorkspacePanel extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   '自分宛ての未完了タスクだけを表示します。${currentWorkspace.tasks.length}件',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
                 const SizedBox(height: 12),
                 if (currentWorkspace.tasks.isEmpty)

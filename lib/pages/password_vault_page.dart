@@ -141,7 +141,8 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               _strengthIcon(strength),
               color: _strengthColor(strength),
             ),
-            title: Text(site, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title:
+                Text(site, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(username.isNotEmpty ? username : '—'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,

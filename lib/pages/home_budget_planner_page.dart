@@ -59,8 +59,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
       final now = DateTime.now();
-      final monthStart =
-          DateTime(now.year, now.month, 1).toIso8601String();
+      final monthStart = DateTime(now.year, now.month, 1).toIso8601String();
       final results = await Future.wait([
         _supabase
             .from('monthly_budgets')
@@ -224,7 +223,8 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
     final categoryTotals = <String, int>{};
     for (final e in _expenses) {
       final cat = e['category'] as String? ?? 'その他';
-      categoryTotals[cat] = (categoryTotals[cat] ?? 0) + (e['amount'] as int? ?? 0);
+      categoryTotals[cat] =
+          (categoryTotals[cat] ?? 0) + (e['amount'] as int? ?? 0);
     }
 
     return Card(
@@ -254,7 +254,8 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
               ),
               const SizedBox(height: 6),
               ...categoryTotals.entries.map((e) {
-                final cat = _categories.where((c) => c.name == e.key).firstOrNull;
+                final cat =
+                    _categories.where((c) => c.name == e.key).firstOrNull;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
@@ -304,7 +305,8 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
                 cat?.icon ?? Icons.category,
                 color: cat?.color ?? Colors.grey,
               ),
-              title: Text(e['label'] as String? ?? e['category'] as String? ?? ''),
+              title:
+                  Text(e['label'] as String? ?? e['category'] as String? ?? ''),
               subtitle: Text(
                 spentAt.length >= 10 ? spentAt.substring(0, 10) : spentAt,
               ),

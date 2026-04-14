@@ -195,7 +195,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             labelText: '返済額 (円)',
-            hintText: '残高: ¥${_formatNumber(debt['remaining_amount'] as int? ?? 0)}',
+            hintText:
+                '残高: ¥${_formatNumber(debt['remaining_amount'] as int? ?? 0)}',
             prefixText: '¥',
           ),
         ),
@@ -281,9 +282,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
       (sum, d) => sum + (d['original_amount'] as int? ?? 0),
     );
     final paidOff = totalDebt <= 0 && _debts.isNotEmpty;
-    final scheduleCompleted = _defaultSchedule
-        .where((s) => _completedToday.contains(s.$1))
-        .length;
+    final scheduleCompleted =
+        _defaultSchedule.where((s) => _completedToday.contains(s.$1)).length;
     final scheduleProgress = _defaultSchedule.isEmpty
         ? 0.0
         : scheduleCompleted / _defaultSchedule.length;
@@ -291,7 +291,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isActive ? '🔒 収監中' : '刑務所モード'),
-        backgroundColor: isActive ? Theme.of(context).colorScheme.onSurface : null,
+        backgroundColor:
+            isActive ? Theme.of(context).colorScheme.onSurface : null,
         foregroundColor: isActive ? Colors.white : null,
         elevation: 0,
       ),
@@ -320,7 +321,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
                       icon: const Icon(Icons.lock),
                       label: const Text('刑務所モードを有効にする'),
                       style: FilledButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.onSurface,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.onSurface,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -351,15 +353,20 @@ class _PrisonModePageState extends State<PrisonModePage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(
-                          color:
-                              done ? Colors.green.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
+                          color: done
+                              ? Colors.green.shade200
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHigh,
                         ),
                       ),
                       child: ListTile(
                         dense: true,
                         leading: Icon(
                           done ? Icons.check_circle : s.$3,
-                          color: done ? Colors.green : Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: done
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           size: 22,
                         ),
                         title: Text(
@@ -400,7 +407,10 @@ class _PrisonModePageState extends State<PrisonModePage> {
           colors: paidOff
               ? [Colors.green.shade600, Colors.green.shade400]
               : isActive
-                  ? [Theme.of(context).colorScheme.onSurface, Theme.of(context).colorScheme.onSurfaceVariant]
+                  ? [
+                      Theme.of(context).colorScheme.onSurface,
+                      Theme.of(context).colorScheme.onSurfaceVariant,
+                    ]
                   : [Colors.blueGrey.shade700, Colors.blueGrey.shade500],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -408,7 +418,11 @@ class _PrisonModePageState extends State<PrisonModePage> {
       child: Column(
         children: [
           Text(
-            paidOff ? '🎉' : isActive ? '🔒' : '🏛️',
+            paidOff
+                ? '🎉'
+                : isActive
+                    ? '🔒'
+                    : '🏛️',
             style: const TextStyle(fontSize: 40),
           ),
           const SizedBox(height: 8),
@@ -437,7 +451,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
             const SizedBox(height: 4),
             Text(
               '返済率: $repaidPercent% (¥${_formatNumber(totalOriginal - totalDebt)} / ¥${_formatNumber(totalOriginal)})',
-              style: TextStyle(color: Theme.of(context).colorScheme.surfaceContainerHighest, fontSize: 12),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fontSize: 12,),
             ),
             const SizedBox(height: 10),
             ClipRRect(
@@ -458,7 +474,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
             const SizedBox(height: 12),
             Text(
               '日課遵守率: ${(scheduleProgress * 100).toInt()}%',
-              style: TextStyle(color: Theme.of(context).colorScheme.surfaceContainerHighest, fontSize: 12),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  fontSize: 12,),
             ),
             const SizedBox(height: 4),
             ClipRRect(
@@ -500,7 +518,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isPaidOff ? Colors.green.shade300 : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: isPaidOff
+              ? Colors.green.shade300
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
       ),
       child: Padding(
@@ -521,8 +541,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                     name,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      decoration:
-                          isPaidOff ? TextDecoration.lineThrough : null,
+                      decoration: isPaidOff ? TextDecoration.lineThrough : null,
                     ),
                   ),
                 ),
@@ -547,7 +566,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                backgroundColor:
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation(
                   isPaidOff ? Colors.green : Colors.amber.shade700,
                 ),

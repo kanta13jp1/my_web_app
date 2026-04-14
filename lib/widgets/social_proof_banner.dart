@@ -31,10 +31,8 @@ class _SocialProofBannerState extends State<SocialProofBanner> {
           .select('user_id')
           .count(CountOption.exact);
 
-      final noteRes = await supabase
-          .from('notes')
-          .select('id')
-          .count(CountOption.exact);
+      final noteRes =
+          await supabase.from('notes').select('id').count(CountOption.exact);
 
       if (!mounted) return;
       setState(() {

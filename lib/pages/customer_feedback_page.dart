@@ -127,8 +127,13 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
               Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
             ],
             const SizedBox(height: 16),
-            const Text('フィードバック一覧',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,),),
+            const Text(
+              'フィードバック一覧',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const Divider(),
             Expanded(
               child: _isLoading
@@ -145,9 +150,8 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
                                     item['content'] ??
                                     item.toString())
                                 : item.toString();
-                            final createdAt = item is Map
-                                ? (item['created_at'] ?? '')
-                                : '';
+                            final createdAt =
+                                item is Map ? (item['created_at'] ?? '') : '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(

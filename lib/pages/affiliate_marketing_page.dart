@@ -36,9 +36,8 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
       final data = response.data;
       if (data is Map<String, dynamic>) {
         setState(() {
-          _campaigns = (data['campaigns'] as List?)
-                  ?.cast<Map<String, dynamic>>() ??
-              [];
+          _campaigns =
+              (data['campaigns'] as List?)?.cast<Map<String, dynamic>>() ?? [];
           _summary = data['summary'] as Map<String, dynamic>?;
         });
       } else if (data is List) {
@@ -149,14 +148,17 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       final earnings = c['earnings']?.toString() ?? '0';
                       return Card(
                         child: ListTile(
-                          leading: const Icon(Icons.campaign, color: Colors.indigo),
+                          leading:
+                              const Icon(Icons.campaign, color: Colors.indigo),
                           title: Text(name),
                           subtitle: Text('クリック: $clicks  |  報酬: ¥$earnings'),
                           trailing: Chip(
                             label: Text(status),
                             backgroundColor: status == 'active'
                                 ? Colors.green[100]
-                                : Theme.of(context).colorScheme.surfaceContainerHighest,
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
                           ),
                         ),
                       );

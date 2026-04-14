@@ -157,10 +157,8 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                         separatorBuilder: (_, __) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final c = _comments[index];
-                          final currentUserId =
-                              _supabase.auth.currentUser?.id;
-                          final isOwner =
-                              currentUserId != null &&
+                          final currentUserId = _supabase.auth.currentUser?.id;
+                          final isOwner = currentUserId != null &&
                               c['user_id'] == currentUserId;
                           return ListTile(
                             title: Text(c['content']?.toString() ?? ''),

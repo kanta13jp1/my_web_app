@@ -119,8 +119,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     String userId,
     List<Map<String, dynamic>> habits,
   ) async {
-    final activeHabits =
-        habits.where((h) => h['is_active'] == true).toList();
+    final activeHabits = habits.where((h) => h['is_active'] == true).toList();
     if (activeHabits.isEmpty) return 0;
     final activeCount = activeHabits.length;
 
@@ -256,7 +255,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                   onTap: () async {
                     final picked = await showTimePicker(
                       context: ctx,
-                      initialTime: remindTime ?? const TimeOfDay(hour: 21, minute: 0),
+                      initialTime:
+                          remindTime ?? const TimeOfDay(hour: 21, minute: 0),
                     );
                     if (picked != null) {
                       setD(() => remindTime = picked);
@@ -347,8 +347,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
   @override
   Widget build(BuildContext context) {
     final active = _habits.where((h) => h['is_active'] == true).toList();
-    final completedCount =
-        active.where((h) => _completedToday.contains(h['id']?.toString())).length;
+    final completedCount = active
+        .where((h) => _completedToday.contains(h['id']?.toString()))
+        .length;
     final progress = active.isEmpty ? 0.0 : completedCount / active.length;
     final remaining = active.length - completedCount;
 
@@ -429,7 +430,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.repeat, size: 64, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(Icons.repeat,
+                size: 64,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
             const SizedBox(height: 16),
             const Text(
               '毎日やることを登録して\n習慣化しましょう',
@@ -607,7 +610,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isCompleted ? Colors.green.shade200 : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: isCompleted
+              ? Colors.green.shade200
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: InkWell(
@@ -621,9 +626,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? Colors.green.shade50
-                      : color.withAlpha(20),
+                  color:
+                      isCompleted ? Colors.green.shade50 : color.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -642,9 +646,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
-                        decoration: isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
+                        decoration:
+                            isCompleted ? TextDecoration.lineThrough : null,
                         color: isCompleted ? Colors.grey : null,
                       ),
                     ),
@@ -682,7 +685,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 const SizedBox(width: 4),
                 Text(
                   '🏆$bestStreak',
-                  style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 ),
               ],
               PopupMenuButton<String>(

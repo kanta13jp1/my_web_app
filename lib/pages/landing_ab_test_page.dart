@@ -67,60 +67,64 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    _errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _fetchVariants,
-                    child: const Text('再試行'),
-                  ),
-                ],
-              ),
-            )
-          : _variants.isEmpty
-          ? const Center(child: Text('A/Bテストバリアントはありません'))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _variants.length,
-              itemBuilder: (context, index) {
-                final variant = _variants[index];
-                final id = variant['id']?.toString() ?? 'v${index + 1}';
-                final text = variant['text']?.toString() ?? 'バリアント $id';
-                final conv = variant['conversion_rate']?.toString() ?? '-';
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue.shade100,
-                      child: Text(
-                        id.toUpperCase().substring(0, 1),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
                       ),
-                    ),
-                    title: Text(
-                      text,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: Text(
-                      'CVR: $conv%',
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _fetchVariants,
+                        child: const Text('再試行'),
                       ),
-                    ),
+                    ],
                   ),
-                );
-              },
-            ),
+                )
+              : _variants.isEmpty
+                  ? const Center(child: Text('A/Bテストバリアントはありません'))
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _variants.length,
+                      itemBuilder: (context, index) {
+                        final variant = _variants[index];
+                        final id = variant['id']?.toString() ?? 'v${index + 1}';
+                        final text = variant['text']?.toString() ?? 'バリアント $id';
+                        final conv =
+                            variant['conversion_rate']?.toString() ?? '-';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.blue.shade100,
+                              child: Text(
+                                id.toUpperCase().substring(0, 1),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,),
+                              ),
+                            ),
+                            title: Text(
+                              text,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            trailing: Text(
+                              'CVR: $conv%',
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
     );
   }
 }

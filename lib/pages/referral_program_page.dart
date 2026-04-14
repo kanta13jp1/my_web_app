@@ -41,7 +41,8 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
       final refData = refRes.data;
       setState(() {
         _myCode = codeData is Map<String, dynamic> ? codeData : null;
-        final refs = refData is Map<String, dynamic> ? refData['referrals'] : null;
+        final refs =
+            refData is Map<String, dynamic> ? refData['referrals'] : null;
         _referrals = refs is List ? refs : [];
       });
     } catch (e) {
@@ -126,7 +127,8 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                     ],
                     const Text(
                       '紹介履歴',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     if (_referrals.isEmpty)
@@ -147,7 +149,8 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A3F51B5),
-                              child: Icon(Icons.person_add, color: Colors.indigo),
+                              child:
+                                  Icon(Icons.person_add, color: Colors.indigo),
                             ),
                             title: Text(
                               item['referred_email']?.toString() ??
@@ -158,8 +161,10 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                               item['status']?.toString() ?? 'pending',
                             ),
                             trailing: Text(
-                              item['createdAt']?.toString().substring(0, 10) ?? '',
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              item['createdAt']?.toString().substring(0, 10) ??
+                                  '',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey,),
                             ),
                           ),
                         );

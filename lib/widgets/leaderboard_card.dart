@@ -163,9 +163,8 @@ class _RankRow extends StatelessWidget {
         CircleAvatar(
           radius: 14,
           backgroundColor: const Color(0xFF6366F1).withAlpha(30),
-          backgroundImage: entry.avatarUrl != null
-              ? NetworkImage(entry.avatarUrl!)
-              : null,
+          backgroundImage:
+              entry.avatarUrl != null ? NetworkImage(entry.avatarUrl!) : null,
           child: entry.avatarUrl == null
               ? Text(
                   entry.displayName.isNotEmpty

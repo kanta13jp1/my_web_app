@@ -275,7 +275,9 @@ class _StockTasksPageState extends State<StockTasksPage> {
                           ? '未完了タスクはありません。'
                           : '未完了タスクが$_pendingCount件あります。')
                       : '土曜10:00にリマインドされます（${_saturdayReminderEnabled ? 'ON' : 'OFF'}）。',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface,),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -451,7 +453,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
         margin: const EdgeInsets.only(bottom: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+          side: BorderSide(
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,),
         ),
         color: Colors.white,
         child: ListTile(
@@ -467,7 +470,9 @@ class _StockTasksPageState extends State<StockTasksPage> {
             style: TextStyle(
               fontSize: 16,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
-              color: isCompleted ? Colors.grey : Theme.of(context).colorScheme.onSurface,
+              color: isCompleted
+                  ? Colors.grey
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           subtitle: Padding(

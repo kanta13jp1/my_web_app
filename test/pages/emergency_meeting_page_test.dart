@@ -307,7 +307,8 @@ void main() {
 
     expect(find.text('最重要: Bを進める'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('continuation_focus_sprint_25_button')));
+    await tester
+        .tap(find.byKey(const Key('continuation_focus_sprint_25_button')));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('25分着手を開始しました: Bを進める'), findsOneWidget);

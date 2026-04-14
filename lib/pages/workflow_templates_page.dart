@@ -35,7 +35,8 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       final data = response.data;
       if (data is Map<String, dynamic> && data['templates'] is List) {
         setState(() => _templates = data['templates'] as List);
-      } else if (data is Map<String, dynamic> && data['builtinTemplates'] is List) {
+      } else if (data is Map<String, dynamic> &&
+          data['builtinTemplates'] is List) {
         setState(() => _templates = data['builtinTemplates'] as List);
       } else if (data is List) {
         setState(() => _templates = data);
@@ -107,7 +108,8 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.account_tree_outlined, size: 48, color: Colors.grey),
+                          Icon(Icons.account_tree_outlined,
+                              size: 48, color: Colors.grey,),
                           SizedBox(height: 8),
                           Text(
                             'テンプレートはありません',
@@ -128,15 +130,19 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: _categoryColor(category).withAlpha(30),
+                              backgroundColor:
+                                  _categoryColor(category).withAlpha(30),
                               child: Icon(
                                 Icons.account_tree,
                                 color: _categoryColor(category),
                               ),
                             ),
                             title: Text(
-                              item['name']?.toString() ?? item['id']?.toString() ?? 'テンプレート',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              item['name']?.toString() ??
+                                  item['id']?.toString() ??
+                                  'テンプレート',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
                             ),
                             subtitle: Text(
                               '$stepCount ステップ${category != null ? ' · $category' : ''}',
@@ -148,7 +154,8 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: _categoryColor(category).withAlpha(30),
+                                      color: _categoryColor(category)
+                                          .withAlpha(30),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(

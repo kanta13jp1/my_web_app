@@ -88,7 +88,9 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                   DropdownMenuItem(value: 'audio', child: Text('音声のみ')),
                   DropdownMenuItem(value: 'webinar', child: Text('ウェビナー')),
                   DropdownMenuItem(
-                      value: 'screen_share', child: Text('画面共有'),),
+                    value: 'screen_share',
+                    child: Text('画面共有'),
+                  ),
                 ],
                 onChanged: (v) => typeVal.value = v ?? 'video',
               ),
@@ -435,8 +437,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                     const SizedBox(height: 4),
                     Text(
                       item.$1,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                   ],

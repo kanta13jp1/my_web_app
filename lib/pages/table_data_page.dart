@@ -34,7 +34,8 @@ class _ColDef {
         id: j['id'] as String,
         name: j['name'] as String,
         type: j['type'] as String? ?? 'text',
-        options: (j['options'] as List?)?.map((e) => e as String).toList() ?? [],
+        options:
+            (j['options'] as List?)?.map((e) => e as String).toList() ?? [],
       );
 
   Map<String, dynamic> toJson() => {
@@ -131,7 +132,7 @@ class _TableDataPageState extends State<TableDataPage> {
           _rows = (data as List).map((e) {
             final m = Map<String, dynamic>.from(e as Map<String, dynamic>);
             final rd = Map<String, dynamic>.from(
-                m['row_data'] as Map<String, dynamic>? ?? {},
+              m['row_data'] as Map<String, dynamic>? ?? {},
             );
             return {'_id': m['id'], ...rd};
           }).toList();
@@ -174,16 +175,15 @@ class _TableDataPageState extends State<TableDataPage> {
     try {
       final result = await _db.from('user_tables').insert({
         'user_id': uid,
-        'title': titleCtrl.text.trim().isEmpty
-            ? '新しいデータベース'
-            : titleCtrl.text.trim(),
+        'title':
+            titleCtrl.text.trim().isEmpty ? '新しいデータベース' : titleCtrl.text.trim(),
         'icon': '📊',
         'columns': [
           {'id': 'col_title', 'name': 'タイトル', 'type': 'text', 'options': []},
         ],
       }).select('id, title, icon, columns');
       final meta = _TableMeta.fromJson(
-          (result as List).first as Map<String, dynamic>,
+        (result as List).first as Map<String, dynamic>,
       );
       if (mounted) {
         setState(() {
@@ -386,10 +386,10 @@ class _TableDataPageState extends State<TableDataPage> {
         'sort_order': _rows.length,
       }).select('id, row_data');
       final newRow = Map<String, dynamic>.from(
-          (result as List).first as Map<String, dynamic>,
+        (result as List).first as Map<String, dynamic>,
       );
       final rd = Map<String, dynamic>.from(
-          newRow['row_data'] as Map<String, dynamic>? ?? {},
+        newRow['row_data'] as Map<String, dynamic>? ?? {},
       );
       if (mounted) {
         setState(() {
@@ -432,7 +432,9 @@ class _TableDataPageState extends State<TableDataPage> {
       );
       if (picked == null) return;
       await _updateCell(
-          rowIndex, col.id, '${picked.year}-${_pad(picked.month)}-${_pad(picked.day)}',
+        rowIndex,
+        col.id,
+        '${picked.year}-${_pad(picked.month)}-${_pad(picked.day)}',
       );
       return;
     }
@@ -584,7 +586,8 @@ class _TableDataPageState extends State<TableDataPage> {
                 ),
               ],
       ),
-      body: _selected == null ? _buildTableList(isDark) : _buildTableView(isDark),
+      body:
+          _selected == null ? _buildTableList(isDark) : _buildTableView(isDark),
       floatingActionButton: _selected == null
           ? FloatingActionButton.extended(
               onPressed: _createTable,
@@ -610,7 +613,8 @@ class _TableDataPageState extends State<TableDataPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.table_chart_outlined, size: 64, color: Colors.grey),
+            const Icon(Icons.table_chart_outlined,
+                size: 64, color: Colors.grey,),
             const SizedBox(height: 16),
             const Text(
               'データベースがありません',
@@ -619,7 +623,8 @@ class _TableDataPageState extends State<TableDataPage> {
             const SizedBox(height: 8),
             Text(
               'Notionのような表形式でデータを管理できます',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -645,7 +650,9 @@ class _TableDataPageState extends State<TableDataPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
-                color: isDark ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.surfaceContainerHigh,
+                color: isDark
+                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                    : Theme.of(context).colorScheme.surfaceContainerHigh,
               ),
             ),
             child: ListTile(
@@ -719,16 +726,22 @@ class _TableDataPageState extends State<TableDataPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              Icon(Icons.table_rows_outlined, size: 16, color: Theme.of(context).colorScheme.outlineVariant),
+              Icon(Icons.table_rows_outlined,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.outlineVariant,),
               const SizedBox(width: 4),
               Text(
                 '${_rows.length} 件',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
               const Spacer(),
               Text(
                 '${cols.length} カラム',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
           ),
@@ -785,7 +798,9 @@ class _TableDataPageState extends State<TableDataPage> {
                               child: Icon(
                                 Icons.close,
                                 size: 14,
-                                color: Theme.of(context).colorScheme.outlineVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant,
                               ),
                             ),
                           ],
@@ -808,7 +823,9 @@ class _TableDataPageState extends State<TableDataPage> {
                               '${i + 1}',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Theme.of(context).colorScheme.outlineVariant,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outlineVariant,
                               ),
                             ),
                           ),
@@ -845,12 +862,16 @@ class _TableDataPageState extends State<TableDataPage> {
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                top: BorderSide(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.add, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
+                Icon(Icons.add,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.outlineVariant,),
                 const SizedBox(width: 8),
                 Text(
                   '行を追加',
@@ -879,7 +900,9 @@ class _TableDataPageState extends State<TableDataPage> {
         return Text(
           value.isEmpty ? '—' : value,
           style: TextStyle(
-            color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
+            color: value.isEmpty
+                ? Theme.of(context).colorScheme.outlineVariant
+                : null,
             fontSize: 13,
           ),
         );
@@ -887,7 +910,9 @@ class _TableDataPageState extends State<TableDataPage> {
         return Text(
           value.isEmpty ? '—' : value,
           style: TextStyle(
-            color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
+            color: value.isEmpty
+                ? Theme.of(context).colorScheme.outlineVariant
+                : null,
             fontSize: 13,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
@@ -898,7 +923,9 @@ class _TableDataPageState extends State<TableDataPage> {
           child: Text(
             value.isEmpty ? '—' : value,
             style: TextStyle(
-              color: value.isEmpty ? Theme.of(context).colorScheme.outlineVariant : null,
+              color: value.isEmpty
+                  ? Theme.of(context).colorScheme.outlineVariant
+                  : null,
               fontSize: 13,
             ),
             overflow: TextOverflow.ellipsis,

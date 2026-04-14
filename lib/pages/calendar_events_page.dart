@@ -35,8 +35,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   static Color _eventColor(Map<String, dynamic> event) {
-    final hex =
-        event['color']?.toString().replaceFirst('#', '') ?? '4285f4';
+    final hex = event['color']?.toString().replaceFirst('#', '') ?? '4285f4';
     if (hex.length == 6) {
       return Color(int.parse('FF$hex', radix: 16));
     }
@@ -65,10 +64,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
         },
       );
       final data = res.data;
-      final rawEvents =
-          data is Map<String, dynamic> && data['events'] is List
-              ? data['events'] as List
-              : <dynamic>[];
+      final rawEvents = data is Map<String, dynamic> && data['events'] is List
+          ? data['events'] as List
+          : <dynamic>[];
 
       final newMap = <String, List<Map<String, dynamic>>>{};
       for (final e in rawEvents) {
@@ -248,12 +246,16 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         Icon(
                           Icons.event_available,
                           size: 48,
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'この日のイベントはありません',
-                          style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
+                          style: TextStyle(
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,),
                         ),
                       ],
                     ),
@@ -267,15 +269,13 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         event: event,
                         color: _eventColor(event),
                         onDelete: () {
-                          final eventId =
-                              event['event_id']?.toString() ?? '';
+                          final eventId = event['event_id']?.toString() ?? '';
                           if (eventId.isEmpty) return;
                           showDialog(
                             context: context,
                             builder: (ctx) => AlertDialog(
                               title: const Text('削除確認'),
-                              content:
-                                  Text('「${event['title']}」を削除しますか？'),
+                              content: Text('「${event['title']}」を削除しますか？'),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx),
@@ -385,8 +385,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   children: colors
                       .map(
                         (c) => GestureDetector(
-                          onTap: () =>
-                              setDialogState(() => selectedColor = c),
+                          onTap: () => setDialogState(() => selectedColor = c),
                           child: Container(
                             width: 28,
                             height: 28,
@@ -400,7 +399,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                               shape: BoxShape.circle,
                               border: selectedColor == c
                                   ? Border.all(
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
                                       width: 2.5,
                                     )
                                   : null,

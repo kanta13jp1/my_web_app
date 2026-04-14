@@ -54,7 +54,8 @@ class _GrowthAchievementSummaryPageState
     }
   }
 
-  Widget _buildStatCard(String label, dynamic value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, dynamic value, IconData icon, Color color,) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -67,7 +68,9 @@ class _GrowthAchievementSummaryPageState
                 const SizedBox(width: 8),
                 Text(
                   label,
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,),
                 ),
               ],
             ),

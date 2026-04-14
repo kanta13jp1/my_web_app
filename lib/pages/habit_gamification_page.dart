@@ -43,10 +43,14 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.profile'}),
-        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.badges'}),
-        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.challenges'}),
-        _supabase.functions.invoke('tools-hub', body: {'action': 'habit.gamification.leaderboard'}),
+        _supabase.functions.invoke('tools-hub',
+            body: {'action': 'habit.gamification.profile'},),
+        _supabase.functions
+            .invoke('tools-hub', body: {'action': 'habit.gamification.badges'}),
+        _supabase.functions.invoke('tools-hub',
+            body: {'action': 'habit.gamification.challenges'},),
+        _supabase.functions.invoke('tools-hub',
+            body: {'action': 'habit.gamification.leaderboard'},),
       ]);
       setState(() {
         final profileData = results[0].data;
@@ -56,17 +60,23 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         final badgesData = results[1].data;
         if (badgesData is Map<String, dynamic>) {
           final list = badgesData['badges'];
-          if (list is List) _badges = list.map((b) => b as Map<String, dynamic>).toList();
+          if (list is List) {
+            _badges = list.map((b) => b as Map<String, dynamic>).toList();
+          }
         }
         final challengesData = results[2].data;
         if (challengesData is Map<String, dynamic>) {
           final list = challengesData['challenges'];
-          if (list is List) _challenges = list.map((c) => c as Map<String, dynamic>).toList();
+          if (list is List) {
+            _challenges = list.map((c) => c as Map<String, dynamic>).toList();
+          }
         }
         final leaderboardData = results[3].data;
         if (leaderboardData is Map<String, dynamic>) {
           final list = leaderboardData['leaderboard'];
-          if (list is List) _leaderboard = list.map((l) => l as Map<String, dynamic>).toList();
+          if (list is List) {
+            _leaderboard = list.map((l) => l as Map<String, dynamic>).toList();
+          }
         }
       });
     } catch (e) {
@@ -113,16 +123,26 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
 
   IconData _badgeIcon(String icon) {
     switch (icon) {
-      case 'star': return Icons.star;
-      case 'fire': return Icons.local_fire_department;
-      case 'trophy': return Icons.emoji_events;
-      case 'crown': return Icons.workspace_premium;
-      case 'shield': return Icons.shield;
-      case 'check': return Icons.check_circle;
-      case 'medal': return Icons.military_tech;
-      case 'sun': return Icons.wb_sunny;
-      case 'moon': return Icons.nightlight;
-      default: return Icons.star_outline;
+      case 'star':
+        return Icons.star;
+      case 'fire':
+        return Icons.local_fire_department;
+      case 'trophy':
+        return Icons.emoji_events;
+      case 'crown':
+        return Icons.workspace_premium;
+      case 'shield':
+        return Icons.shield;
+      case 'check':
+        return Icons.check_circle;
+      case 'medal':
+        return Icons.military_tech;
+      case 'sun':
+        return Icons.wb_sunny;
+      case 'moon':
+        return Icons.nightlight;
+      default:
+        return Icons.star_outline;
     }
   }
 
@@ -161,16 +181,19 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.red,),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
-                      TextButton(onPressed: _fetchAll, child: const Text('再試行')),
+                      TextButton(
+                          onPressed: _fetchAll, child: const Text('再試行'),),
                     ],
                   ),
                 )
               : Column(
                   children: [
-                    _buildProfileCard(level, totalXp, currentXp, nextLevelXp, streak, totalTasks),
+                    _buildProfileCard(level, totalXp, currentXp, nextLevelXp,
+                        streak, totalTasks,),
                     Expanded(
                       child: TabBarView(
                         controller: _tabController,
@@ -228,18 +251,23 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   children: [
                     Text(
                       '総XP: $totalXp',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,),
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(Colors.amber),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '$currentXp / $nextLevelXp XP',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),
@@ -250,9 +278,13 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _statChip(Icons.local_fire_department, '$streak日連続', Colors.orange),
+              _statChip(
+                  Icons.local_fire_department, '$streak日連続', Colors.orange,),
               _statChip(Icons.check_circle, '$totalTasks タスク', Colors.green),
-              _statChip(Icons.stars, '${_badges.where((b) => b['earned'] == true).length}バッジ', Colors.amber),
+              _statChip(
+                  Icons.stars,
+                  '${_badges.where((b) => b['earned'] == true).length}バッジ',
+                  Colors.amber,),
             ],
           ),
         ],
@@ -266,13 +298,15 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       children: [
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(label,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),),
       ],
     );
   }
 
   Widget _buildChallengesTab() {
-    final completedCount = _challenges.where((c) => c['completed'] == true).length;
+    final completedCount =
+        _challenges.where((c) => c['completed'] == true).length;
     return RefreshIndicator(
       onRefresh: _fetchAll,
       child: ListView(
@@ -311,7 +345,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                         labelStyle: const TextStyle(color: Colors.green),
                       )
                     : FilledButton.tonal(
-                        onPressed: () => _completeChallenge(c['type'] as String? ?? ''),
+                        onPressed: () =>
+                            _completeChallenge(c['type'] as String? ?? ''),
                         child: Text('+${xp}XP'),
                       ),
               ),
@@ -336,21 +371,27 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           ),
           const SizedBox(height: 8),
           if (earnedBadges.isNotEmpty) ...[
-            const Text('🏆 獲得済みバッジ', style: TextStyle(fontWeight: FontWeight.w600)),
+            const Text('🏆 獲得済みバッジ',
+                style: TextStyle(fontWeight: FontWeight.w600),),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: earnedBadges.map((b) => _buildBadgeChip(b, earned: true)).toList(),
+              children: earnedBadges
+                  .map((b) => _buildBadgeChip(b, earned: true))
+                  .toList(),
             ),
             const SizedBox(height: 16),
           ],
-          const Text('🔒 未獲得バッジ', style: TextStyle(fontWeight: FontWeight.w600)),
+          const Text('🔒 未獲得バッジ',
+              style: TextStyle(fontWeight: FontWeight.w600),),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: unearnedBadges.map((b) => _buildBadgeChip(b, earned: false)).toList(),
+            children: unearnedBadges
+                .map((b) => _buildBadgeChip(b, earned: false))
+                .toList(),
           ),
         ],
       ),
@@ -367,10 +408,14 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: earned ? Colors.amber.shade100 : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: earned
+              ? Colors.amber.shade100
+              : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: earned ? Colors.amber : Theme.of(context).colorScheme.surfaceContainerHighest,
+            color: earned
+                ? Colors.amber
+                : Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
         ),
         child: Row(
@@ -430,11 +475,13 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   ),
                 ),
               ),
-              title: Text('Lv$level ユーザー', style: const TextStyle(fontWeight: FontWeight.w600)),
+              title: Text('Lv$level ユーザー',
+                  style: const TextStyle(fontWeight: FontWeight.w600),),
               subtitle: Text('🔥 $streak日連続'),
               trailing: Text(
                 '${xp}XP',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
             ),
           );

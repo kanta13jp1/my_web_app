@@ -714,8 +714,7 @@ class AbstinenceGuardStore {
     final entries = _loadDisciplineEntriesFromPrefs(store, date).toList();
     entries.add(
       AbstinenceDisciplineEntry(
-        id:
-            '${todayKey(date)}_${categoryId}_${DateTime.now().microsecondsSinceEpoch}',
+        id: '${todayKey(date)}_${categoryId}_${DateTime.now().microsecondsSinceEpoch}',
         categoryId: categoryId,
         moneySaved: (moneySaved ?? category.defaultMoneySaved).clamp(
           0,
@@ -940,8 +939,8 @@ class AbstinenceGuardStore {
     SharedPreferences store,
     DateTime date,
   ) {
-    final rawEntries = store.getStringList(_disciplineEntriesKey(date)) ??
-        const <String>[];
+    final rawEntries =
+        store.getStringList(_disciplineEntriesKey(date)) ?? const <String>[];
     final entries = <AbstinenceDisciplineEntry>[];
 
     for (final rawEntry in rawEntries) {
@@ -951,7 +950,8 @@ class AbstinenceGuardStore {
           continue;
         }
         final entry = AbstinenceDisciplineEntry.fromJson(decoded);
-        if (entry != null && _disciplineCategoryById(entry.categoryId) != null) {
+        if (entry != null &&
+            _disciplineCategoryById(entry.categoryId) != null) {
           entries.add(entry);
         }
       } catch (_) {

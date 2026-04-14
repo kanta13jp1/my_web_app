@@ -119,7 +119,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
       final data = response.data;
       if (data is Map<String, dynamic> && data['dueCards'] is List) {
         setState(() {
-          _reviewCards = (data['dueCards'] as List).cast<Map<String, dynamic>>();
+          _reviewCards =
+              (data['dueCards'] as List).cast<Map<String, dynamic>>();
           _reviewIndex = 0;
           _showAnswer = false;
         });
@@ -135,7 +136,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['streak'] is Map) {
-        setState(() => _streak = Map<String, dynamic>.from(data['streak'] as Map));
+        setState(
+            () => _streak = Map<String, dynamic>.from(data['streak'] as Map),);
       }
     } catch (_) {}
   }
@@ -148,7 +150,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['stats'] is Map) {
-        setState(() => _stats = Map<String, dynamic>.from(data['stats'] as Map));
+        setState(
+            () => _stats = Map<String, dynamic>.from(data['stats'] as Map),);
       }
     } catch (_) {}
   }
@@ -182,7 +185,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
   Future<void> _addCard() async {
     final deck = _selectedDeck;
     if (deck == null) return;
-    if (_cardFrontCtrl.text.trim().isEmpty || _cardBackCtrl.text.trim().isEmpty) return;
+    if (_cardFrontCtrl.text.trim().isEmpty || _cardBackCtrl.text.trim().isEmpty) {
+      return;
+    }
     try {
       await _supabase.functions.invoke(
         'language-learning',
@@ -260,7 +265,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     value: _selectedFromLang,
                     isExpanded: true,
                     items: _langLabels.entries
-                        .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                            value: e.key, child: Text(e.value),),)
                         .toList(),
                     onChanged: (v) {
                       if (v != null) setState(() => _selectedFromLang = v);
@@ -276,7 +282,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     value: _selectedToLang,
                     isExpanded: true,
                     items: _langLabels.entries
-                        .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                        .map((e) => DropdownMenuItem(
+                            value: e.key, child: Text(e.value),),)
                         .toList(),
                     onChanged: (v) {
                       if (v != null) setState(() => _selectedToLang = v);
@@ -367,7 +374,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? Center(child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? Center(
+                  child: Text(_errorMessage!,
+                      style: const TextStyle(color: Colors.red),),)
               : TabBarView(
                   controller: _tabController,
                   children: [
@@ -385,9 +394,11 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.library_books_outlined, size: 64, color: Colors.grey),
+            const Icon(Icons.library_books_outlined,
+                size: 64, color: Colors.grey,),
             const SizedBox(height: 16),
-            const Text('単語帳がありません', style: TextStyle(fontSize: 18, color: Colors.grey)),
+            const Text('単語帳がありません',
+                style: TextStyle(fontSize: 18, color: Colors.grey),),
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: _showCreateDeckDialog,
@@ -411,7 +422,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 const SizedBox(width: 8),
                 Text(
                   '${_streak['current'] ?? 0}日連続学習中',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.orange,),
                 ),
                 const Spacer(),
                 Text(
@@ -446,7 +458,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     children: [
                       if (isSelected)
                         IconButton(
-                          icon: const Icon(Icons.add_card, color: Colors.deepOrange),
+                          icon: const Icon(Icons.add_card,
+                              color: Colors.deepOrange,),
                           tooltip: 'カードを追加',
                           onPressed: _showAddCardDialog,
                         ),
@@ -455,7 +468,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         tooltip: 'レビュー開始',
                         onPressed: () async {
                           setState(() => _selectedDeck = deck);
-                          await _fetchReviewCards(deck['deck_id'] as String? ?? '');
+                          await _fetchReviewCards(
+                              deck['deck_id'] as String? ?? '',);
                           _tabController.animateTo(1);
                         },
                       ),
@@ -475,7 +489,11 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           Container(
             height: 200,
             decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest)),
+              border: Border(
+                  top: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest,),),
             ),
             child: Column(
               children: [
@@ -529,14 +547,17 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+            const Icon(Icons.check_circle_outline,
+                size: 64, color: Colors.green,),
             const SizedBox(height: 16),
-            const Text('本日のレビューは完了です！', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('本日のレビューは完了です！',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
             const SizedBox(height: 8),
             const Text('また明日復習しましょう', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => _fetchReviewCards(_selectedDeck!['deck_id'] as String? ?? ''),
+              onPressed: () =>
+                  _fetchReviewCards(_selectedDeck!['deck_id'] as String? ?? ''),
               icon: const Icon(Icons.refresh),
               label: const Text('再チェック'),
             ),
@@ -555,9 +576,12 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           // Progress
           Row(
             children: [
-              Expanded(child: LinearProgressIndicator(value: progress, color: Colors.deepOrange)),
+              Expanded(
+                  child: LinearProgressIndicator(
+                      value: progress, color: Colors.deepOrange,),),
               const SizedBox(width: 8),
-              Text('${_reviewIndex + 1}/${_reviewCards.length}', style: const TextStyle(color: Colors.grey)),
+              Text('${_reviewIndex + 1}/${_reviewCards.length}',
+                  style: const TextStyle(color: Colors.grey),),
             ],
           ),
           const SizedBox(height: 32),
@@ -567,7 +591,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               onTap: () => setState(() => _showAnswer = !_showAnswer),
               child: Card(
                 elevation: 8,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),),
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -584,30 +609,42 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (!_showAnswer) ...[
-                        const Text('単語', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text('単語',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),),
                         const SizedBox(height: 16),
                         Text(
                           card['front'] as String? ?? '',
-                          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 32, fontWeight: FontWeight.bold,),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
-                        const Text('タップして答えを見る', style: TextStyle(color: Colors.grey)),
+                        const Text('タップして答えを見る',
+                            style: TextStyle(color: Colors.grey),),
                       ] else ...[
-                        const Text('訳', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text('訳',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),),
                         const SizedBox(height: 16),
                         Text(
                           card['back'] as String? ?? '',
-                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green),
+                          style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,),
                           textAlign: TextAlign.center,
                         ),
-                        if (card['example'] != null && (card['example'] as String).isNotEmpty) ...[
+                        if (card['example'] != null &&
+                            (card['example'] as String).isNotEmpty) ...[
                           const SizedBox(height: 16),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: Text(
                               '例: ${card['example']}',
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  fontSize: 14,),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -630,7 +667,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     child: OutlinedButton.icon(
                       onPressed: () => _reviewCard(false),
                       icon: const Icon(Icons.close, color: Colors.red),
-                      label: const Text('もう一度', style: TextStyle(color: Colors.red)),
+                      label: const Text('もう一度',
+                          style: TextStyle(color: Colors.red),),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.red),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -699,9 +737,13 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     children: [
                       Text(
                         '${_streak['current'] ?? 0}日連続',
-                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.orange),
+                        style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,),
                       ),
-                      Text('最長: ${_streak['longest'] ?? 0}日', style: const TextStyle(color: Colors.grey)),
+                      Text('最長: ${_streak['longest'] ?? 0}日',
+                          style: const TextStyle(color: Colors.grey),),
                     ],
                   ),
                 ],
@@ -718,10 +760,14 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             mainAxisSpacing: 12,
             childAspectRatio: 1.5,
             children: [
-              _buildStatCard('単語帳', '$deckCount', Icons.library_books, Colors.blue),
-              _buildStatCard('総カード数', '$totalCards', Icons.flip, Colors.deepOrange),
-              _buildStatCard('総レビュー', '$totalReviews', Icons.history, Colors.green),
-              _buildStatCard('正解率', '$correctRate%', Icons.percent, Colors.purple),
+              _buildStatCard(
+                  '単語帳', '$deckCount', Icons.library_books, Colors.blue,),
+              _buildStatCard(
+                  '総カード数', '$totalCards', Icons.flip, Colors.deepOrange,),
+              _buildStatCard(
+                  '総レビュー', '$totalReviews', Icons.history, Colors.green,),
+              _buildStatCard(
+                  '正解率', '$correctRate%', Icons.percent, Colors.purple,),
             ],
           ),
           const SizedBox(height: 16),
@@ -733,7 +779,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('学習のコツ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('学習のコツ',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
                   const SizedBox(height: 8),
                   _buildTip('🧠', '間隔反復法 (SM-2) で効率的に暗記'),
                   _buildTip('⏰', '毎日少しずつ継続することが大切'),
@@ -748,7 +796,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color,) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -757,8 +806,11 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           children: [
             Icon(icon, color: color, size: 28),
             const SizedBox(height: 8),
-            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
-            Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            Text(value,
+                style: TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold, color: color,),),
+            Text(label,
+                style: const TextStyle(color: Colors.grey, fontSize: 12),),
           ],
         ),
       ),

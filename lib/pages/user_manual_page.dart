@@ -8,7 +8,8 @@ class UserManualPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final subColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final accentColor = isDark ? const Color(0xFF818CF8) : const Color(0xFF3949AB);
+    final accentColor =
+        isDark ? const Color(0xFF818CF8) : const Color(0xFF3949AB);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,7 +21,6 @@ class UserManualPage extends StatelessWidget {
         children: [
           _buildIntroCard(accentColor),
           const SizedBox(height: 24),
-
           _buildSectionTitle('1. ホーム画面の使い方', textColor),
           _buildContent(
             'ログイン後に「ホーム画面（経営コックピット）」が表示されます。\n\n'
@@ -70,7 +70,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('2. ノート・メモの作成と管理', textColor),
           _buildContent(
             '【新規ノート作成】\n'
@@ -97,7 +96,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('3. 外部アプリからのデータ移行（インポート）', textColor),
           _buildContent(
             '自分株式会社は Notion / Evernote / MoneyForward / X (Twitter) / GitHub / Markdown ファイルからのインポートに対応しています。\n\n'
@@ -178,7 +176,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('4. 競合21製品を上回る独自機能', textColor),
           _buildContent(
             '【AI エグゼクティブ組織 (AI組織OS)】\n'
@@ -284,7 +281,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('5. 公開メモと共有', textColor),
           _buildContent(
             '【公開メモの作成】\n'
@@ -300,7 +296,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('6. 成長ロードマップ・開発実績の確認', textColor),
           _buildContent(
             '【GROWTH ROADMAP カード（ホーム画面上部）】\n'
@@ -319,7 +314,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('7. AI・モーニングブリーフィング', textColor),
           _buildContent(
             '【モーニングブリーフィング】\n'
@@ -370,7 +364,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('8. プロフィール設定', textColor),
           _buildContent(
             '【プロフィール設定画面の開き方】\n'
@@ -392,7 +385,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('9. 技術ブログ投稿管理', textColor),
           _buildContent(
             '毎日の技術ブログ投稿をこのアプリで管理できます。\n\n'
@@ -414,7 +406,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('10. ゲーミフィケーション・チャレンジ・報酬', textColor),
           _buildContent(
             '【ログインストリーク】\n'
@@ -436,7 +427,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('11. 機能リクエスト', textColor),
           _buildContent(
             '欲しい機能をリクエストできます。他のユーザーの投票数が多いものから優先的に実装されます。\n\n'
@@ -450,7 +440,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('12. 友達招待（リファラル）', textColor),
           _buildContent(
             '友達を招待して一緒に使いましょう。\n\n'
@@ -482,7 +471,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('14. プロフィール完成度', textColor),
           _buildContent(
             '「成長・支援ダッシュボード」の「プロフィール完成度」カードで、自分のプロフィールの埋まり具合を確認できます。\n'
@@ -501,7 +489,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('15. 成長・支援ダッシュボード', textColor),
           _buildContent(
             'ホーム画面から退避した補助カードをまとめて確認できるダッシュボードです。\n'
@@ -517,7 +504,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 24),
-
           _buildSectionTitle('16. Claude Code Schedule 自動タスク一覧', textColor),
           _buildContent(
             '以下のタスクが定期的に自動実行されています（管理者ダッシュボードで実行状況を確認可能）。\n\n'
@@ -545,7 +531,6 @@ class UserManualPage extends StatelessWidget {
             subColor,
           ),
           const SizedBox(height: 32),
-
           Center(
             child: Column(
               children: [

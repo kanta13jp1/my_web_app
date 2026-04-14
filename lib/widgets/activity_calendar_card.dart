@@ -224,7 +224,8 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.grey[300] : const Color(0xFF374151),
+                      color:
+                          isDark ? Colors.grey[300] : const Color(0xFF374151),
                     ),
                   ),
                   const SizedBox(width: 12),

@@ -68,8 +68,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
             _webhookController.text = data['webhook_url'].toString();
           }
           if (data['triggers'] is Map) {
-            final saved =
-                Map<String, dynamic>.from(data['triggers'] as Map);
+            final saved = Map<String, dynamic>.from(data['triggers'] as Map);
             for (final key in _triggers.keys) {
               if (saved.containsKey(key)) {
                 _triggers[key] = saved[key] == true;

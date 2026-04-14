@@ -8,8 +8,7 @@ class DailyHabitsSummaryCard extends StatefulWidget {
   const DailyHabitsSummaryCard({super.key});
 
   @override
-  State<DailyHabitsSummaryCard> createState() =>
-      _DailyHabitsSummaryCardState();
+  State<DailyHabitsSummaryCard> createState() => _DailyHabitsSummaryCardState();
 }
 
 class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
@@ -80,9 +79,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
           border: Border.all(
             color: allDone
                 ? Colors.green.withAlpha(60)
-                : (isDark
-                    ? const Color(0xFF2A3A55)
-                    : const Color(0xFFE2E8F0)),
+                : (isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0)),
           ),
         ),
         child: Row(

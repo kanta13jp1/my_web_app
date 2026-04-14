@@ -39,8 +39,7 @@ class GrowthRoadmapProgressCard extends StatefulWidget {
       _GrowthRoadmapProgressCardState();
 }
 
-class _GrowthRoadmapProgressCardState
-    extends State<GrowthRoadmapProgressCard> {
+class _GrowthRoadmapProgressCardState extends State<GrowthRoadmapProgressCard> {
   List<_PlanItem> _plans = [];
   int _userCount = 0;
   bool _isLoading = true;
@@ -121,7 +120,8 @@ class _GrowthRoadmapProgressCardState
         children: [
           Row(
             children: [
-              const Icon(Icons.flag_outlined, size: 18, color: Color(0xFF6366F1)),
+              const Icon(Icons.flag_outlined,
+                  size: 18, color: Color(0xFF6366F1),),
               const SizedBox(width: 8),
               const Text(
                 'GROWTH ROADMAP',
@@ -198,9 +198,8 @@ class _PlanProgressRow extends StatelessWidget {
     final userBarText = _buildBarText(userFilled);
     final currentStr = _fmt(currentCount);
     final targetStr = _fmt(plan.target);
-    final userBarColor = userRatio >= 1.0
-        ? const Color(0xFF22C55E)
-        : const Color(0xFF6366F1);
+    final userBarColor =
+        userRatio >= 1.0 ? const Color(0xFF22C55E) : const Color(0xFF6366F1);
 
     // ---- 機能実装進捗 ----
     final hasFeatures = plan.featuresTotal > 0;
@@ -211,9 +210,8 @@ class _PlanProgressRow extends StatelessWidget {
         (featRatio * 100).toStringAsFixed(featRatio >= 0.01 ? 1 : 0);
     final featFilled = (featRatio * _barSegments).round();
     final featBarText = _buildBarText(featFilled);
-    final featBarColor = featRatio >= 1.0
-        ? const Color(0xFF22C55E)
-        : const Color(0xFF10B981);
+    final featBarColor =
+        featRatio >= 1.0 ? const Color(0xFF22C55E) : const Color(0xFF10B981);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -329,7 +327,6 @@ class _PlanProgressRow extends StatelessWidget {
     return buf.toString();
   }
 }
-
 
 // ===========================================================================
 // Competitor Feature Comparison Card
@@ -476,7 +473,8 @@ const _notionFeatureRows = <_FeatureRow>[
     feature: 'ガントチャート',
     competitorDetail: 'タイムラインビューでスケジュール管理',
     status: _FeatureStatus.done,
-    appDetail: 'GanttTimelinePage実装済み。プロジェクト・タスク・マイルストーン・クリティカルパス分析対応 (2026-04-02)',
+    appDetail:
+        'GanttTimelinePage実装済み。プロジェクト・タスク・マイルストーン・クリティカルパス分析対応 (2026-04-02)',
   ),
   _FeatureRow(
     category: 'データベース',
@@ -2451,8 +2449,8 @@ class _CompetitorFeatureComparisonCardState
   Future<void> _loadRemoteFeatures() async {
     try {
       final client = Supabase.instance.client;
-      final response =
-          await client.functions.invoke('admin-hub', body: {'action': 'competitor.list'});
+      final response = await client.functions
+          .invoke('admin-hub', body: {'action': 'competitor.list'});
       final data = response.data;
       if (data is! Map || data['success'] != true) return;
       final competitors = data['competitors'];
@@ -2538,8 +2536,7 @@ class _CompetitorFeatureComparisonCardState
     final borderColor =
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final subColor =
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final subColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     final rows = _currentRows;
 
@@ -2565,8 +2562,7 @@ class _CompetitorFeatureComparisonCardState
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             onTap: () => setState(() => _expanded = !_expanded),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2636,8 +2632,7 @@ class _CompetitorFeatureComparisonCardState
                   _OverallProgressBar(
                     implemented: _implemented(rows),
                     total: _totalNotUnique(rows),
-                    competitorName:
-                        _competitors[_tabController.index],
+                    competitorName: _competitors[_tabController.index],
                     isDark: isDark,
                     textColor: textColor,
                     subColor: subColor,
@@ -2652,15 +2647,17 @@ class _CompetitorFeatureComparisonCardState
             Divider(height: 1, color: borderColor),
             // Tab bar
             TabBar(
-                controller: _tabController,
-                onTap: (_) => setState(() => _filterCategory = 'すべて'),
+              controller: _tabController,
+              onTap: (_) => setState(() => _filterCategory = 'すべて'),
               tabs: _competitors
-                  .map((c) => Tab(
-                        child: Text(
-                          c,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),)
+                  .map(
+                    (c) => Tab(
+                      child: Text(
+                        c,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  )
                   .toList(),
               labelColor: const Color(0xFF6366F1),
               unselectedLabelColor: subColor,
@@ -2672,8 +2669,7 @@ class _CompetitorFeatureComparisonCardState
             // Category filter chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: _categories.map((cat) {
                   final selected = cat == _filterCategory;
@@ -2682,15 +2678,12 @@ class _CompetitorFeatureComparisonCardState
                     child: FilterChip(
                       label: Text(cat, style: const TextStyle(fontSize: 11)),
                       selected: selected,
-                      onSelected: (_) =>
-                          setState(() => _filterCategory = cat),
+                      onSelected: (_) => setState(() => _filterCategory = cat),
                       selectedColor:
                           const Color(0xFF6366F1).withValues(alpha: 0.15),
                       checkmarkColor: const Color(0xFF6366F1),
                       side: BorderSide(
-                        color: selected
-                            ? const Color(0xFF6366F1)
-                            : borderColor,
+                        color: selected ? const Color(0xFF6366F1) : borderColor,
                       ),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
@@ -2845,9 +2838,8 @@ class _OverallProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: ratio,
             minHeight: 8,
-            backgroundColor: isDark
-                ? const Color(0xFF2D3748)
-                : const Color(0xFFE2E8F0),
+            backgroundColor:
+                isDark ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0),
             valueColor: const AlwaysStoppedAnimation<Color>(
               Color(0xFF6366F1),
             ),

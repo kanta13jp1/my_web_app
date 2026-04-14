@@ -126,8 +126,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
             if (_errorMessage != null)
               Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
             if (_result != null)
-              ..._result!.entries
-                  .map((e) => _buildResultCard(e.key, e.value)),
+              ..._result!.entries.map((e) => _buildResultCard(e.key, e.value)),
           ],
         ),
       ),

@@ -62,7 +62,11 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
     try {
       await _supabase.functions.invoke(
         'enterprise-hub',
-        body: {'action': 'ai_workflow.run', 'workflow_id': id, 'enabled': enabled},
+        body: {
+          'action': 'ai_workflow.run',
+          'workflow_id': id,
+          'enabled': enabled,
+        },
       );
       await _fetchData();
     } catch (e) {

@@ -100,8 +100,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
     for (final item in _items) {
       guards[item.id] =
           prefs.getBool('twg_active_${_todayKey}_${item.id}') ?? false;
-      slips[item.id] =
-          prefs.getInt('twg_slips_${_todayKey}_${item.id}') ?? 0;
+      slips[item.id] = prefs.getInt('twg_slips_${_todayKey}_${item.id}') ?? 0;
     }
     if (mounted) {
       setState(() {
@@ -151,10 +150,8 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final activeCount =
-        _activeGuards.values.where((v) => v).length;
-    final totalSlips =
-        _todaySlips.values.fold(0, (sum, v) => sum + v);
+    final activeCount = _activeGuards.values.where((v) => v).length;
+    final totalSlips = _todaySlips.values.fold(0, (sum, v) => sum + v);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -162,9 +159,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: totalSlips > 0
-              ? Colors.red.shade200
-              : Colors.indigo.shade100,
+          color: totalSlips > 0 ? Colors.red.shade200 : Colors.indigo.shade100,
         ),
       ),
       child: Column(
@@ -188,12 +183,9 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      totalSlips > 0
-                          ? Icons.warning_amber
-                          : Icons.shield,
-                      color: totalSlips > 0
-                          ? Colors.red
-                          : const Color(0xFF4338CA),
+                      totalSlips > 0 ? Icons.warning_amber : Icons.shield,
+                      color:
+                          totalSlips > 0 ? Colors.red : const Color(0xFF4338CA),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -214,9 +206,8 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                               : 'ガード: $activeCount個 ON',
                           style: TextStyle(
                             fontSize: 11,
-                            color: totalSlips > 0
-                                ? Colors.red
-                                : Colors.grey[600],
+                            color:
+                                totalSlips > 0 ? Colors.red : Colors.grey[600],
                           ),
                         ),
                       ],
@@ -258,18 +249,23 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                       decoration: BoxDecoration(
                         color: isActive
                             ? item.color.withAlpha(20)
-                            : Theme.of(context).colorScheme.surfaceContainerHigh,
+                            : Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isActive
                               ? item.color.withAlpha(80)
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(item.emoji, style: const TextStyle(fontSize: 16)),
+                          Text(item.emoji,
+                              style: const TextStyle(fontSize: 16),),
                           const SizedBox(width: 4),
                           Text(
                             item.label,
@@ -278,7 +274,9 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                               fontWeight: isActive
                                   ? FontWeight.w700
                                   : FontWeight.normal,
-                              color: isActive ? item.color : Theme.of(context).colorScheme.onSurface,
+                              color: isActive
+                                  ? item.color
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           if (slips > 0) ...[

@@ -11,8 +11,7 @@ class BuildInPublicShareCard extends StatefulWidget {
   const BuildInPublicShareCard({super.key});
 
   @override
-  State<BuildInPublicShareCard> createState() =>
-      _BuildInPublicShareCardState();
+  State<BuildInPublicShareCard> createState() => _BuildInPublicShareCardState();
 }
 
 class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
@@ -38,10 +37,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
       return;
     }
     try {
-      final notesFuture = client
-          .from('notes')
-          .select('id')
-          .eq('user_id', uid);
+      final notesFuture = client.from('notes').select('id').eq('user_id', uid);
       final statsFuture = client
           .from('user_stats')
           .select('current_streak, created_at')
@@ -82,8 +78,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
     final parts = [daysText, streakText, noteText].where((s) => s.isNotEmpty);
     final statsLine = parts.isNotEmpty ? parts.join(' / ') : '';
 
-    final tweetText =
-        '$_appName を試しています！$statsLine\n\n'
+    final tweetText = '$_appName を試しています！$statsLine\n\n'
         'Notion・MoneyForward を1アプリに統合した AI ライフマネジメント。'
         '無料で使えます 👇\n$_appUrl\n\n'
         '#buildinpublic #自分株式会社 #FlutterWeb';
@@ -227,21 +222,21 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withAlpha(15)
-            : Colors.white.withAlpha(200),
+        color:
+            isDark ? Colors.white.withAlpha(15) : Colors.white.withAlpha(200),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark
-              ? Colors.white.withAlpha(30)
-              : const Color(0xFFBAE6FD),
+          color: isDark ? Colors.white.withAlpha(30) : const Color(0xFFBAE6FD),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12,
-              color: isDark ? Colors.white70 : const Color(0xFF0369A1),),
+          Icon(
+            icon,
+            size: 12,
+            color: isDark ? Colors.white70 : const Color(0xFF0369A1),
+          ),
           const SizedBox(width: 4),
           Text(
             label,

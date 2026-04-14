@@ -69,8 +69,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ? (d1['predictions'] as List).cast<Map<String, dynamic>>()
           : [];
       final d2 = results[2].data;
-      _accuracyStats =
-          (d2 is Map && d2['stats'] is Map) ? d2['stats'] as Map<String, dynamic> : {};
+      _accuracyStats = (d2 is Map && d2['stats'] is Map)
+          ? d2['stats'] as Map<String, dynamic>
+          : {};
     } catch (e) {
       if (mounted) setState(() => _error = 'データ取得失敗: $e');
     } finally {
@@ -134,8 +135,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         backgroundColor: const Color(0xFF1A1A1A),
         title: Row(
           children: [
-            const Text('競馬AI予想',
-                style: TextStyle(fontWeight: FontWeight.bold),),
+            const Text(
+              '競馬AI予想',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: _pickDate,
@@ -197,7 +200,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       Text(_error!, style: const TextStyle(color: Colors.red)),
                       const SizedBox(height: 8),
                       FilledButton(
-                          onPressed: _loadAll, child: const Text('再試行'),),
+                        onPressed: _loadAll,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -260,8 +265,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 const Expanded(
                   child: Text(
                     'AI予想未実行 — 右上の脳アイコンで3連単予想を生成',
-                    style:
-                        TextStyle(color: Color(0xFFFF6D00), fontSize: 12),
+                    style: TextStyle(color: Color(0xFFFF6D00), fontSize: 12),
                   ),
                 ),
                 TextButton(
@@ -295,11 +299,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final results = (race['horse_results'] as List?) ?? [];
     final hasPrediction = predictions.isNotEmpty;
     final hasResult = results.isNotEmpty;
-    final pred = hasPrediction
-        ? predictions.first as Map<String, dynamic>
-        : null;
-    final result =
-        hasResult ? results.first as Map<String, dynamic> : null;
+    final pred =
+        hasPrediction ? predictions.first as Map<String, dynamic> : null;
+    final result = hasResult ? results.first as Map<String, dynamic> : null;
     final isCorrect = result?['is_prediction_correct'] as bool?;
     final trifectaPaid = (result?['trifecta_paid'] as num?)?.toInt();
 
@@ -319,13 +321,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     return Card(
       color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.only(bottom: 10),
-      shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           childrenPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Container(
@@ -494,9 +494,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color:
-                        (isCorrect == true ? Colors.green : Colors.red)
-                            .withValues(alpha: 0.3),
+                    color: (isCorrect == true ? Colors.green : Colors.red)
+                        .withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -505,27 +504,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     Row(
                       children: [
                         Icon(
-                          isCorrect == true
-                              ? Icons.check_circle
-                              : Icons.cancel,
-                          color: isCorrect == true
-                              ? Colors.green
-                              : Colors.red,
+                          isCorrect == true ? Icons.check_circle : Icons.cancel,
+                          color: isCorrect == true ? Colors.green : Colors.red,
                           size: 16,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           isCorrect == true ? '3連単 的中!' : '外れ',
                           style: TextStyle(
-                            color: isCorrect == true
-                                ? Colors.green
-                                : Colors.red,
+                            color:
+                                isCorrect == true ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
                         ),
-                        if (trifectaPaid != null &&
-                            isCorrect == true) ...[
+                        if (trifectaPaid != null && isCorrect == true) ...[
                           const SizedBox(width: 8),
                           Text(
                             '配当 ¥${NumberFormat('#,###').format(trifectaPaid)}',
@@ -596,8 +589,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6D00).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -735,8 +727,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor:
-                  const Color(0xFFFF6D00).withValues(alpha: 0.12),
+              backgroundColor: const Color(0xFFFF6D00).withValues(alpha: 0.12),
               child: const Icon(
                 Icons.psychology,
                 color: Color(0xFFFF6D00),
@@ -768,8 +759,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     '実際: ${result['first_place'] ?? '?'} - '
                     '${result['second_place'] ?? '?'} - '
                     '${result['third_place'] ?? '?'}',
-                    style:
-                        TextStyle(color: Colors.grey[600], fontSize: 11),
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
                   ),
               ],
             ),
@@ -782,15 +772,12 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildAccuracyTab() {
-    final total =
-        (_accuracyStats['total_predictions'] as num?)?.toInt() ?? 0;
+    final total = (_accuracyStats['total_predictions'] as num?)?.toInt() ?? 0;
     final resultsCount =
         (_accuracyStats['total_results'] as num?)?.toInt() ?? 0;
     final hits = (_accuracyStats['correct_count'] as num?)?.toInt() ?? 0;
-    final hitRate =
-        (_accuracyStats['hit_rate_pct'] as num?)?.toDouble() ?? 0;
-    final totalPayout =
-        (_accuracyStats['total_payout'] as num?)?.toInt() ?? 0;
+    final hitRate = (_accuracyStats['hit_rate_pct'] as num?)?.toDouble() ?? 0;
+    final totalPayout = (_accuracyStats['total_payout'] as num?)?.toInt() ?? 0;
     final maxPayout = (_accuracyStats['max_payout'] as num?)?.toInt() ?? 0;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -905,28 +892,30 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       ('予想方式', '3連単 (1着-2着-3着の順序予想)'),
       ('取得タイミング', '毎朝 07:30 JST 自動実行'),
       ('結果取得', '毎日 17:30 / 21:00 JST 自動実行'),
-    ].map<Widget>(
-      (pair) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 110,
-              child: Text(
-                pair.$1,
-                style: TextStyle(color: Colors.grey[500], fontSize: 12),
-              ),
+    ]
+        .map<Widget>(
+          (pair) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: Text(
+                    pair.$1,
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    pair.$2,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: Text(
-                pair.$2,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ).toList();
+          ),
+        )
+        .toList();
   }
 
   Widget _statCard(

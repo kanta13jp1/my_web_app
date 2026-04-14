@@ -516,7 +516,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final data = await _supabase
           .from('app_feedback')
-          .select('id, category, content, status, user_email, github_issue_url, created_at')
+          .select(
+              'id, category, content, status, user_email, github_issue_url, created_at',)
           .order('created_at', ascending: false)
           .limit(50);
       if (mounted) {
@@ -531,7 +532,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Future<void> _updateFeedbackStatus(int id, String newStatus) async {
-    await _supabase.from('app_feedback').update({'status': newStatus}).eq('id', id);
+    await _supabase
+        .from('app_feedback')
+        .update({'status': newStatus}).eq('id', id);
     if (newStatus == 'implemented') {
       try {
         await _supabase.functions.invoke(
@@ -652,7 +655,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         _supabase.functions.invoke(
           'admin-hub',
           headers: headers,
-          body: const {'action': 'support.list', 'source': 'admin_manual_check'},
+          body: const {
+            'action': 'support.list',
+            'source': 'admin_manual_check',
+          },
         ),
       ]);
 
@@ -1063,7 +1069,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
       final res = await _supabase.functions.invoke(
         'growth-hub',
-        body: {'action': 'waitlist.notify', 'subject': subject, 'bodyHtml': bodyHtml},
+        body: {
+          'action': 'waitlist.notify',
+          'subject': subject,
+          'bodyHtml': bodyHtml,
+        },
       );
       debugPrint('waitlist.notify result: ${res.data}');
       if (mounted) {
@@ -1474,7 +1484,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       height: 220,
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerLow,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -1941,7 +1952,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 6),
             Text(
               'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2056,7 +2069,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
         ],
       ),
@@ -2201,7 +2216,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 6),
             Text(
               'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2275,7 +2292,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           padding: const EdgeInsets.all(18),
           child: Text(
             'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,),
           ),
         ),
       );
@@ -2430,7 +2449,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           createdAt,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -3023,7 +3043,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            border:
+                Border.all(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           child: ListTile(
             contentPadding:
@@ -3100,18 +3121,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Widget _buildProfileCompletionSummary() {
-    final complete = _adminUsers
-        .where((u) => _toInt(u['completionPct']) >= 67)
-        .length;
-    final partial = _adminUsers
-        .where((u) {
-          final pct = _toInt(u['completionPct']);
-          return pct >= 34 && pct < 67;
-        })
-        .length;
-    final empty = _adminUsers
-        .where((u) => _toInt(u['completionPct']) < 34)
-        .length;
+    final complete =
+        _adminUsers.where((u) => _toInt(u['completionPct']) >= 67).length;
+    final partial = _adminUsers.where((u) {
+      final pct = _toInt(u['completionPct']);
+      return pct >= 34 && pct < 67;
+    }).length;
+    final empty =
+        _adminUsers.where((u) => _toInt(u['completionPct']) < 34).length;
     return Row(
       children: [
         _profileStatChip(Icons.check_circle, '$complete 完成', Colors.green),
@@ -3242,207 +3259,214 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final user = filteredUsers[index];
-                  final email = user['email']?.toString() ?? '';
-                  final displayName = user['displayName']?.toString();
-                  final bio = user['bio']?.toString();
-                  final location = user['location']?.toString();
-                  final provider = user['provider']?.toString() ?? 'email';
-                  final createdAt = user['createdAt']?.toString() ?? '';
-                  final lastSignIn = user['lastSignInAt']?.toString() ?? '';
-                  final hasProfile = user['hasProfile'] as bool? ?? false;
-                  final completionPct = _toInt(user['completionPct']);
+                      final email = user['email']?.toString() ?? '';
+                      final displayName = user['displayName']?.toString();
+                      final bio = user['bio']?.toString();
+                      final location = user['location']?.toString();
+                      final provider = user['provider']?.toString() ?? 'email';
+                      final createdAt = user['createdAt']?.toString() ?? '';
+                      final lastSignIn = user['lastSignInAt']?.toString() ?? '';
+                      final hasProfile = user['hasProfile'] as bool? ?? false;
+                      final completionPct = _toInt(user['completionPct']);
 
-                  String createdStr = '';
-                  String lastSignInStr = '';
-                  try {
-                    createdStr = DateFormat('yyyy/MM/dd').format(
-                      DateTime.parse(createdAt).toLocal(),
-                    );
-                  } catch (_) {}
-                  try {
-                    lastSignInStr = DateFormat('MM/dd HH:mm').format(
-                      DateTime.parse(lastSignIn).toLocal(),
-                    );
-                  } catch (_) {}
+                      String createdStr = '';
+                      String lastSignInStr = '';
+                      try {
+                        createdStr = DateFormat('yyyy/MM/dd').format(
+                          DateTime.parse(createdAt).toLocal(),
+                        );
+                      } catch (_) {}
+                      try {
+                        lastSignInStr = DateFormat('MM/dd HH:mm').format(
+                          DateTime.parse(lastSignIn).toLocal(),
+                        );
+                      } catch (_) {}
 
-                  final isGoogle = provider.contains('google');
+                      final isGoogle = provider.contains('google');
 
-                  Color profileColor;
-                  if (!hasProfile || completionPct < 34) {
-                    profileColor = Colors.red;
-                  } else if (completionPct < 67) {
-                    profileColor = Colors.orange;
-                  } else {
-                    profileColor = Colors.green;
-                  }
+                      Color profileColor;
+                      if (!hasProfile || completionPct < 34) {
+                        profileColor = Colors.red;
+                      } else if (completionPct < 67) {
+                        profileColor = Colors.orange;
+                      } else {
+                        profileColor = Colors.green;
+                      }
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: isGoogle
-                              ? const Color(0xFFE8F5E9)
-                              : const Color(0xFFE8EAF6),
-                          child: Text(
-                            email.isNotEmpty ? email[0].toUpperCase() : '?',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: isGoogle
-                                  ? const Color(0xFF388E3C)
-                                  : const Color(0xFF3949AB),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      displayName != null &&
-                                              displayName.isNotEmpty
-                                          ? displayName
-                                          : email,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isGoogle
-                                          ? const Color(0xFFE8F5E9)
-                                          : const Color(0xFFE8EAF6),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      isGoogle ? 'Google' : 'Email',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: isGoogle
-                                            ? const Color(0xFF388E3C)
-                                            : const Color(0xFF3949AB),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: isGoogle
+                                  ? const Color(0xFFE8F5E9)
+                                  : const Color(0xFFE8EAF6),
+                              child: Text(
+                                email.isNotEmpty ? email[0].toUpperCase() : '?',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isGoogle
+                                      ? const Color(0xFF388E3C)
+                                      : const Color(0xFF3949AB),
+                                ),
                               ),
-                              if (displayName != null && displayName.isNotEmpty)
-                                Text(
-                                  email,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          displayName != null &&
+                                                  displayName.isNotEmpty
+                                              ? displayName
+                                              : email,
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isGoogle
+                                              ? const Color(0xFFE8F5E9)
+                                              : const Color(0xFFE8EAF6),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          isGoogle ? 'Google' : 'Email',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: isGoogle
+                                                ? const Color(0xFF388E3C)
+                                                : const Color(0xFF3949AB),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              if (bio != null && bio.isNotEmpty)
-                                Text(
-                                  bio,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              if (location != null && location.isNotEmpty)
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.location_on_outlined,
-                                      size: 11,
-                                      color: Colors.grey,
-                                    ),
+                                  if (displayName != null &&
+                                      displayName.isNotEmpty)
                                     Text(
-                                      location,
+                                      email,
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Colors.grey,
                                       ),
                                     ),
-                                  ],
-                                ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: completionPct / 100,
-                                        minHeight: 4,
-                                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                          profileColor,
+                                  if (bio != null && bio.isNotEmpty)
+                                    Text(
+                                      bio,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  if (location != null && location.isNotEmpty)
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on_outlined,
+                                          size: 11,
+                                          color: Colors.grey,
+                                        ),
+                                        Text(
+                                          location,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          child: LinearProgressIndicator(
+                                            value: completionPct / 100,
+                                            minHeight: 4,
+                                            backgroundColor: Theme.of(context)
+                                                .colorScheme
+                                                .surfaceContainerHighest,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              profileColor,
+                                            ),
+                                          ),
                                         ),
                                       ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'プロフィール $completionPct%',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: profileColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    '登録: $createdStr　最終ログイン: $lastSignInStr',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.grey,
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'プロフィール $completionPct%',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: profileColor,
-                                      fontWeight: FontWeight.w600,
+                                  const SizedBox(height: 4),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      onPressed: () =>
+                                          _showUserProfileDialog(user),
+                                      icon: const Icon(
+                                        Icons.person_outline,
+                                        size: 13,
+                                      ),
+                                      label: const Text(
+                                        'プロフィール詳細',
+                                        style: TextStyle(fontSize: 11),
+                                      ),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor:
+                                            const Color(0xFF3949AB),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              Text(
-                                '登録: $createdStr　最終ログイン: $lastSignInStr',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: () =>
-                                      _showUserProfileDialog(user),
-                                  icon: const Icon(
-                                    Icons.person_outline,
-                                    size: 13,
-                                  ),
-                                  label: const Text(
-                                    'プロフィール詳細',
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor:
-                                        const Color(0xFF3949AB),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
+                      );
                     },
                   );
                 },
@@ -3652,7 +3676,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             child: LinearProgressIndicator(
                               value: completionPct / 100,
                               minHeight: 6,
-                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 profileColor,
                               ),
@@ -3823,7 +3849,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.public, size: 16, color: Colors.grey),
+                          const Icon(Icons.public,
+                              size: 16, color: Colors.grey,),
                           const SizedBox(width: 6),
                           const Text(
                             '公開プロフィール',
@@ -4043,7 +4070,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           radius: 16,
                           backgroundColor: index < 3
                               ? Colors.amber[100]
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                           child: Text(
                             '$votes',
                             style: TextStyle(
@@ -4051,7 +4080,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               fontWeight: FontWeight.bold,
                               color: index < 3
                                   ? Colors.amber[800]
-                                  : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -4482,7 +4513,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     try {
       final data = await _supabase
           .from('blog_posts')
-          .select('id, title, status, target_platforms, draft_path, posted_at, url, created_at')
+          .select(
+              'id, title, status, target_platforms, draft_path, posted_at, url, created_at',)
           .order('created_at', ascending: false)
           .limit(20);
       if (mounted) {
@@ -4760,9 +4792,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     if (!mounted) return;
     setState(() => _comparisonCvrLoading = true);
     try {
-      final rows = await _supabase
-          .from('app_analytics')
-          .select('source_details');
+      final rows =
+          await _supabase.from('app_analytics').select('source_details');
       final touches = <String, int>{};
       var signups = 0;
       for (final row in rows) {
@@ -4797,8 +4828,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final borderColor =
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
-    final totalTouches =
-        _comparisonTouches.values.fold(0, (a, b) => a + b);
+    final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
     final cvrPct = totalTouches > 0
         ? (_comparisonSignups / totalTouches * 100).toStringAsFixed(1)
         : '0.0';
@@ -4865,8 +4895,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             )
           else
             ...sorted.take(14).map((e) {
-              final pct =
-                  totalTouches > 0 ? e.value / totalTouches : 0.0;
+              final pct = totalTouches > 0 ? e.value / totalTouches : 0.0;
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
@@ -4888,9 +4917,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: pct.clamp(0.0, 1.0),
-                          backgroundColor: isDark
-                              ? Colors.white12
-                              : Colors.purple.shade50,
+                          backgroundColor:
+                              isDark ? Colors.white12 : Colors.purple.shade50,
                           color: Colors.purple.shade400,
                           minHeight: 8,
                         ),
@@ -4959,12 +4987,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildGrowthAchievementSummaryCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDark ? const Color(0xFF1A2233) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+    final borderColor =
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final periods = [
-      ('今日', DateTime.now().copyWith(hour: 0, minute: 0, second: 0).toIso8601String()),
-      ('今週', DateTime.now().subtract(const Duration(days: 7)).toIso8601String()),
-      ('今月', DateTime.now().subtract(const Duration(days: 30)).toIso8601String()),
+      (
+        '今日',
+        DateTime.now().copyWith(hour: 0, minute: 0, second: 0).toIso8601String()
+      ),
+      (
+        '今週',
+        DateTime.now().subtract(const Duration(days: 7)).toIso8601String()
+      ),
+      (
+        '今月',
+        DateTime.now().subtract(const Duration(days: 30)).toIso8601String()
+      ),
       ('すべて', '2020-01-01T00:00:00Z'),
     ];
 
@@ -5020,18 +5058,32 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(height: 12),
           if (_growthSummary == null && !_growthSummaryLoading)
-            const Text('データなし', style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)))
+            const Text('データなし',
+                style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),)
           else if (_growthSummary != null) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 10),
-            _growthStatRow('新規ユーザー', '${_growthSummary!['newUsers'] ?? 0}人', const Color(0xFF6366F1)),
-            _growthStatRow('累計ユーザー', '${_growthSummary!['totalUsersEver'] ?? 0}人', const Color(0xFF10B981)),
-            _growthStatRow('成長シグナル', '${_growthSummary!['acquisitionSignals'] ?? 0}件', const Color(0xFFF59E0B)),
-            _growthStatRow('紹介成立', '${_growthSummary!['referralsCompleted'] ?? 0}件', const Color(0xFFEC4899)),
-            _growthStatRow('インポート試行', '${_growthSummary!['importPreviews'] ?? 0}件', const Color(0xFF0EA5E9)),
+            _growthStatRow('新規ユーザー', '${_growthSummary!['newUsers'] ?? 0}人',
+                const Color(0xFF6366F1),),
+            _growthStatRow(
+                '累計ユーザー',
+                '${_growthSummary!['totalUsersEver'] ?? 0}人',
+                const Color(0xFF10B981),),
+            _growthStatRow(
+                '成長シグナル',
+                '${_growthSummary!['acquisitionSignals'] ?? 0}件',
+                const Color(0xFFF59E0B),),
+            _growthStatRow(
+                '紹介成立',
+                '${_growthSummary!['referralsCompleted'] ?? 0}件',
+                const Color(0xFFEC4899),),
+            _growthStatRow(
+                'インポート試行',
+                '${_growthSummary!['importPreviews'] ?? 0}件',
+                const Color(0xFF0EA5E9),),
           ],
         ],
       ),
@@ -5050,7 +5102,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: color,),),
         ],
       ),
     );
@@ -5071,7 +5125,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             // ヘッダー行
             Row(
               children: [
-                const Icon(Icons.feedback_outlined, color: Color(0xFF6366F1), size: 20),
+                const Icon(Icons.feedback_outlined,
+                    color: Color(0xFF6366F1), size: 20,),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -5081,14 +5136,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 if (newCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '未対応 $newCount',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,),
                     ),
                   ),
                 const SizedBox(width: 8),
@@ -5110,13 +5169,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   const SizedBox(width: 8),
                   _feedbackCountChip(
                     '確認済',
-                    _appFeedbacks.where((f) => f['status'] == 'reviewed').length,
+                    _appFeedbacks
+                        .where((f) => f['status'] == 'reviewed')
+                        .length,
                     Colors.orange,
                   ),
                   const SizedBox(width: 8),
                   _feedbackCountChip(
                     '対応完',
-                    _appFeedbacks.where((f) => f['status'] == 'implemented').length,
+                    _appFeedbacks
+                        .where((f) => f['status'] == 'implemented')
+                        .length,
                     Colors.green,
                   ),
                 ],
@@ -5141,7 +5204,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
               )
             else
-              ...(_appFeedbacks.take(5).map((fb) => _buildFeedbackInlineRow(fb))),
+              ...(_appFeedbacks
+                  .take(5)
+                  .map((fb) => _buildFeedbackInlineRow(fb))),
 
             const SizedBox(height: 12),
             SizedBox(
@@ -5150,7 +5215,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 icon: const Icon(Icons.open_in_new, size: 16),
                 label: Text('全${_appFeedbacks.length}件を管理する'),
                 style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),),
                 ),
                 onPressed: () => Navigator.push(
                   context,
@@ -5173,7 +5239,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       ),
       child: Text(
         '$label $count',
-        style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+        style:
+            TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -5210,7 +5277,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                Icon(categoryIcon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                Icon(categoryIcon,
+                    size: 14,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -5222,14 +5291,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    status == 'new' ? '未対応' : status == 'reviewed' ? '確認済' : '対応完',
-                    style: TextStyle(fontSize: 10, color: statusColor, fontWeight: FontWeight.w600),
+                    status == 'new'
+                        ? '未対応'
+                        : status == 'reviewed'
+                            ? '確認済'
+                            : '対応完',
+                    style: TextStyle(
+                        fontSize: 10,
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,),
                   ),
                 ),
               ],
@@ -5238,7 +5315,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(height: 4),
               Text(
                 'Issue: $issueUrl',
-                style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.primary),
+                style: TextStyle(
+                    fontSize: 10, color: Theme.of(context).colorScheme.primary,),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -5250,7 +5328,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   TextButton(
                     onPressed: () => _updateFeedbackStatus(id, 'reviewed'),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4,),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -5260,7 +5339,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   TextButton(
                     onPressed: () => _updateFeedbackStatus(id, 'implemented'),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4,),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       foregroundColor: Colors.green,

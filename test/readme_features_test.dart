@@ -342,7 +342,8 @@ void main() {
       expect(monthLabel.data, '2026年2月');
     });
 
-    testWidgets('Feature: HomePage shows abstinence discipline prompt by default',
+    testWidgets(
+        'Feature: HomePage shows abstinence discipline prompt by default',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         createTestWidget(

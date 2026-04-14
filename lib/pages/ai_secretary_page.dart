@@ -316,7 +316,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                 children: [
                   Text(
                     'MAGI秘書が画像からタスクを起案しました。',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,),
                   ),
                   const SizedBox(height: 16),
                   Align(
@@ -483,8 +485,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
                   children: [
                     _buildStrategyButton(context, '今', 'now', Icons.flash_on),
                     _buildStrategyButton(context, '今日', 'today', Icons.today),
@@ -494,8 +498,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                       'week',
                       Icons.calendar_view_week,
                     ),
-                    _buildStrategyButton(context, '今月', 'month', Icons.calendar_month),
-                    _buildStrategyButton(context, '今年', 'year', Icons.rocket_launch),
+                    _buildStrategyButton(
+                        context, '今月', 'month', Icons.calendar_month,),
+                    _buildStrategyButton(
+                        context, '今年', 'year', Icons.rocket_launch,),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -603,7 +609,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                 margin: const EdgeInsets.symmetric(vertical: 8),
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Column(
@@ -643,7 +651,11 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
   }
 
   Widget _buildStrategyButton(
-      BuildContext context, String label, String type, IconData icon,) {
+    BuildContext context,
+    String label,
+    String type,
+    IconData icon,
+  ) {
     final isSelected = _currentStrategyType == type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(

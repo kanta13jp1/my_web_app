@@ -150,7 +150,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                      const Icon(Icons.error_outline,
+                          size: 48, color: Colors.grey,),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
@@ -265,8 +266,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             const SizedBox(height: 4),
             Text(
               '${(taskRate * 100).toStringAsFixed(1)}% 完了',
-              style:
-                  const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 24),
           ],
@@ -596,7 +596,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                             decoration: BoxDecoration(
                               color: val > 0
                                   ? const Color(0xFFDC2626)
-                                  : const Color(0xFFDC2626).withValues(alpha: 0.15),
+                                  : const Color(0xFFDC2626)
+                                      .withValues(alpha: 0.15),
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(4),
                               ),

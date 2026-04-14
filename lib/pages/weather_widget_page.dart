@@ -42,9 +42,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
               ? currentConditions.first as Map<String, dynamic>
               : null;
           final hourly = weatherData?['weather'];
-          _forecast = hourly is List
-              ? hourly.cast<Map<String, dynamic>>()
-              : [];
+          _forecast = hourly is List ? hourly.cast<Map<String, dynamic>>() : [];
         });
       }
     } catch (e) {
@@ -117,13 +115,11 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                             child: Column(
                               children: [
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
                                       _weatherIcon(
-                                        _weather!['condition']
-                                            ?.toString(),
+                                        _weather!['condition']?.toString(),
                                       ),
                                       size: 64,
                                       color: Colors.orange,
@@ -140,8 +136,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                                               .displaySmall,
                                         ),
                                         Text(
-                                          _weather!['condition']
-                                                  ?.toString() ??
+                                          _weather!['condition']?.toString() ??
                                               '-',
                                           style: Theme.of(context)
                                               .textTheme
@@ -182,9 +177,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.blue[900]
-                                : Colors.blue[50],
+                            color: isDark ? Colors.blue[900] : Colors.blue[50],
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Column(

@@ -89,9 +89,8 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
       await _supabase.from('freelance_projects').insert({
         'user_id': userId,
         'title': _titleCtrl.text.trim(),
-        'client_name': _clientCtrl.text.trim().isEmpty
-            ? null
-            : _clientCtrl.text.trim(),
+        'client_name':
+            _clientCtrl.text.trim().isEmpty ? null : _clientCtrl.text.trim(),
         'amount': int.tryParse(_amountCtrl.text.trim()),
         'status': 'active',
       });

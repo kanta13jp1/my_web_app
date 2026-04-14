@@ -37,7 +37,10 @@ class _AddressBookPageState extends State<AddressBookPage> {
     try {
       final response = await _supabase.functions.invoke(
         'address-book',
-        body: {'action': 'list', if (query != null && query.isNotEmpty) 'query': query},
+        body: {
+          'action': 'list',
+          if (query != null && query.isNotEmpty) 'query': query,
+        },
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['contacts'] is List) {
@@ -102,12 +105,10 @@ class _AddressBookPageState extends State<AddressBookPage> {
                             final name = item is Map
                                 ? (item['name'] ?? item['full_name'] ?? '名前なし')
                                 : item.toString();
-                            final email = item is Map
-                                ? (item['email'] ?? '')
-                                : '';
-                            final phone = item is Map
-                                ? (item['phone'] ?? '')
-                                : '';
+                            final email =
+                                item is Map ? (item['email'] ?? '') : '';
+                            final phone =
+                                item is Map ? (item['phone'] ?? '') : '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(

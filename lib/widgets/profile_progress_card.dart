@@ -76,10 +76,14 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
           color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
-      color: isDark ? const Color(0xFF1E1B4B).withAlpha(80) : const Color(0xFFF5F3FF),
+      color: isDark
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: ListTile(
-        leading: Icon(Icons.person_add,
-            color: isDark ? Colors.white70 : const Color(0xFF4338CA),),
+        leading: Icon(
+          Icons.person_add,
+          color: isDark ? Colors.white70 : const Color(0xFF4338CA),
+        ),
         title: Text(
           'プロフィールを作成しましょう',
           style: TextStyle(
@@ -88,10 +92,15 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
             color: isDark ? Colors.white : const Color(0xFF3730A3),
           ),
         ),
-        subtitle: const Text('他のユーザーに見つけてもらいやすくなります', style: TextStyle(fontSize: 11)),
-        trailing: Icon(Icons.chevron_right,
-            color: isDark ? Colors.white70 : const Color(0xFF4338CA),),
-        onTap: () => Navigator.of(context).pushNamed('/profile-settings').then((_) => _load()),
+        subtitle:
+            const Text('他のユーザーに見つけてもらいやすくなります', style: TextStyle(fontSize: 11)),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: isDark ? Colors.white70 : const Color(0xFF4338CA),
+        ),
+        onTap: () => Navigator.of(context)
+            .pushNamed('/profile-settings')
+            .then((_) => _load()),
       ),
     );
   }
@@ -99,7 +108,9 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
   Widget _buildCompleteBadge(BuildContext context, _ProfileData profile) {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
-      onTap: () => Navigator.of(context).pushNamed('/profile-settings').then((_) => _load()),
+      onTap: () => Navigator.of(context)
+          .pushNamed('/profile-settings')
+          .then((_) => _load()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -129,7 +140,8 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
     );
   }
 
-  Widget _buildProgressCard(BuildContext context, _ProfileData profile, int pct) {
+  Widget _buildProgressCard(
+      BuildContext context, _ProfileData profile, int pct,) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final missingFields = profile.missingFields;
 
@@ -142,7 +154,9 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
           color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
-      color: isDark ? const Color(0xFF1E1B4B).withAlpha(80) : const Color(0xFFF5F3FF),
+      color: isDark
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -154,12 +168,16 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 // アバター
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
-                  backgroundImage: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-                      ? NetworkImage(profile.avatarUrl!)
-                      : null,
+                  backgroundColor: isDark
+                      ? const Color(0xFF4B5563)
+                      : const Color(0xFFE0E7FF),
+                  backgroundImage:
+                      profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
+                          ? NetworkImage(profile.avatarUrl!)
+                          : null,
                   child: profile.avatarUrl == null || profile.avatarUrl!.isEmpty
-                      ? const Icon(Icons.person, size: 20, color: Color(0xFF4338CA))
+                      ? const Icon(Icons.person,
+                          size: 20, color: Color(0xFF4338CA),)
                       : null,
                 ),
                 const SizedBox(width: 10),
@@ -168,13 +186,15 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profile.displayName != null && profile.displayName!.isNotEmpty
+                        profile.displayName != null &&
+                                profile.displayName!.isNotEmpty
                             ? profile.displayName!
                             : 'プロフィール未設定',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF3730A3),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF3730A3),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -182,18 +202,22 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                         'プロフィール完成度 $pct%',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.grey[400] : const Color(0xFF6B7280),
+                          color: isDark
+                              ? Colors.grey[400]
+                              : const Color(0xFF6B7280),
                         ),
                       ),
                     ],
                   ),
                 ),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/profile-settings').then((_) => _load()),
+                  onPressed: () => Navigator.of(context)
+                      .pushNamed('/profile-settings')
+                      .then((_) => _load()),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF4338CA),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -213,7 +237,8 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
               child: LinearProgressIndicator(
                 value: pct / 100,
                 minHeight: 8,
-                backgroundColor: isDark ? Colors.grey[800] : const Color(0xFFE0E7FF),
+                backgroundColor:
+                    isDark ? Colors.grey[800] : const Color(0xFFE0E7FF),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   pct >= 75
                       ? const Color(0xFF059669)
@@ -286,7 +311,8 @@ class _ProfileData {
         if (!_filled(location)) const _FieldStatus('場所', Icons.location_on),
         if (!_filled(twitterHandle)) const _FieldStatus('Twitter', Icons.tag),
         if (!_filled(githubHandle)) const _FieldStatus('GitHub', Icons.code),
-        if (!_filled(websiteUrl)) const _FieldStatus('WebサイトURL', Icons.language),
+        if (!_filled(websiteUrl))
+          const _FieldStatus('WebサイトURL', Icons.language),
       ];
 
   int get completionPct {

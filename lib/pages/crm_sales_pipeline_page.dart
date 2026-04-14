@@ -83,9 +83,12 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
-        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
-        _supabase.functions.invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
+        _supabase.functions
+            .invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
+        _supabase.functions
+            .invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
+        _supabase.functions
+            .invoke('enterprise-hub', body: {'action': 'crm.list_leads'}),
       ]);
 
       final dealsData = results[0].data;
@@ -116,10 +119,13 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         body: {
           'action': 'crm.add_lead',
           'name': name,
-          'email': _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
-          'company':
-              _companyCtrl.text.trim().isEmpty ? null : _companyCtrl.text.trim(),
-          'phone': _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+          'email':
+              _emailCtrl.text.trim().isEmpty ? null : _emailCtrl.text.trim(),
+          'company': _companyCtrl.text.trim().isEmpty
+              ? null
+              : _companyCtrl.text.trim(),
+          'phone':
+              _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
           'source': _selectedSource,
         },
       );
@@ -288,9 +294,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
           final info = _pipeline[stage];
           final count = (info?['count'] as num?)?.toInt() ?? 0;
           final value = (info?['value'] as num?)?.toInt() ?? 0;
-          final stageDeals = _deals
-              .where((d) => d['stage'] == stage)
-              .toList();
+          final stageDeals = _deals.where((d) => d['stage'] == stage).toList();
           final color = _stageColors[stage] ?? Colors.grey;
           return Container(
             width: 220,

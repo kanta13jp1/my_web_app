@@ -409,7 +409,8 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,7 +426,9 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
               ),
               Text(
                 formatter.format(entry.createdAt),
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
               ),
             ],
           ),

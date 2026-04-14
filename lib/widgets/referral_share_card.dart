@@ -103,9 +103,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark
-              ? const Color(0xFF3B4A78)
-              : const Color(0xFFC7D2FE),
+          color: isDark ? const Color(0xFF3B4A78) : const Color(0xFFC7D2FE),
         ),
       ),
       child: Column(
@@ -203,13 +201,10 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: _copied
-                        ? Colors.green
-                        : const Color(0xFF6366F1),
+                    foregroundColor:
+                        _copied ? Colors.green : const Color(0xFF6366F1),
                     side: BorderSide(
-                      color: _copied
-                          ? Colors.green
-                          : const Color(0xFF6366F1),
+                      color: _copied ? Colors.green : const Color(0xFF6366F1),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),

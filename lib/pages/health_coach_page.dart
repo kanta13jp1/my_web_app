@@ -144,14 +144,25 @@ class _SummaryTab extends StatelessWidget {
       return const Center(child: Text('データがありません'));
     }
     final metrics = [
-      ('今日の歩数', data!['steps']?.toString() ?? '—', Icons.directions_walk,
-        Colors.green),
-      ('消費カロリー', '${data!['calories_burned'] ?? '—'} kcal',
-        Icons.local_fire_department, Colors.orange),
-      ('睡眠時間', '${data!['sleep_hours'] ?? '—'} 時間', Icons.bedtime,
-        Colors.indigo),
-      ('水分摂取', '${data!['water_ml'] ?? '—'} ml', Icons.water_drop,
-        Colors.blue),
+      (
+        '今日の歩数',
+        data!['steps']?.toString() ?? '—',
+        Icons.directions_walk,
+        Colors.green
+      ),
+      (
+        '消費カロリー',
+        '${data!['calories_burned'] ?? '—'} kcal',
+        Icons.local_fire_department,
+        Colors.orange
+      ),
+      (
+        '睡眠時間',
+        '${data!['sleep_hours'] ?? '—'} 時間',
+        Icons.bedtime,
+        Colors.indigo
+      ),
+      ('水分摂取', '${data!['water_ml'] ?? '—'} ml', Icons.water_drop, Colors.blue),
     ];
     return RefreshIndicator(
       onRefresh: () async {},
@@ -213,8 +224,8 @@ class _SummaryTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
-                      value: (data!['goal_progress'] as num?)?.toDouble() ??
-                          0.0,
+                      value:
+                          (data!['goal_progress'] as num?)?.toDouble() ?? 0.0,
                       backgroundColor: Colors.grey.shade200,
                       color: Colors.green,
                       minHeight: 8,
