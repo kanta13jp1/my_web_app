@@ -12,10 +12,26 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" };
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const QUIZ_MASTER_3 = {
+  badge_id: "quiz_master_3",
+  badge_name: "クイズ3冠",
+  icon_emoji: "🥉",
+  condition: "3社以上でクイズ正解",
+};
+const QUIZ_MASTER_ALL = {
+  badge_id: "quiz_master_all",
+  badge_name: "全社制覇",
+  icon_emoji: "🏆",
+  condition: "全アクティブプロバイダーでクイズ正解",
+};
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 async function getUserId(req: Request): Promise<string | null> {
@@ -24,6 +40,64 @@ async function getUserId(req: Request): Promise<string | null> {
   const c = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: auth } } });
   const { data: { user } } = await c.auth.getUser();
   return user?.id ?? null;
+}
+
+async function evaluateUniversityQuizMaster(admin: SupabaseClient, userId: string) {
+  const { data: scoreRows, error: scoreErr } = await admin
+    .from("ai_university_scores")
+    .select("provider_id")
+    .eq("user_id", userId)
+    .eq("quiz_correct", true);
+  if (scoreErr) throw new Error(scoreErr.message);
+
+  const correctSet = new Set<string>();
+  for (const row of scoreRows ?? []) {
+    const providerId = asString((row as { provider_id?: unknown }).provider_id);
+    if (providerId) correctSet.add(providerId);
+  }
+
+  const { data: providerRows, error: providerErr } = await admin
+    .from("ai_university_content")
+    .select("provider")
+    .eq("is_active", true);
+  if (providerErr) throw new Error(providerErr.message);
+
+  const providerSet = new Set<string>();
+  for (const row of providerRows ?? []) {
+    const provider = asString((row as { provider?: unknown }).provider);
+    if (provider) providerSet.add(provider);
+  }
+
+  const awarded: string[] = [];
+  if (correctSet.size >= 3) {
+    const { data, error } = await admin.rpc("award_ai_university_badge", {
+      p_user_id: userId,
+      p_badge_id: QUIZ_MASTER_3.badge_id,
+      p_badge_name: QUIZ_MASTER_3.badge_name,
+      p_icon_emoji: QUIZ_MASTER_3.icon_emoji,
+      p_condition: QUIZ_MASTER_3.condition,
+    });
+    if (error) throw new Error(error.message);
+    if (data === true) awarded.push(QUIZ_MASTER_3.badge_id);
+  }
+
+  if (providerSet.size > 0 && correctSet.size >= providerSet.size) {
+    const { data, error } = await admin.rpc("award_ai_university_badge", {
+      p_user_id: userId,
+      p_badge_id: QUIZ_MASTER_ALL.badge_id,
+      p_badge_name: QUIZ_MASTER_ALL.badge_name,
+      p_icon_emoji: QUIZ_MASTER_ALL.icon_emoji,
+      p_condition: QUIZ_MASTER_ALL.condition,
+    });
+    if (error) throw new Error(error.message);
+    if (data === true) awarded.push(QUIZ_MASTER_ALL.badge_id);
+  }
+
+  return {
+    correct_count: correctSet.size,
+    total_providers: providerSet.size,
+    awarded,
+  };
 }
 
 async function listItems(admin: SupabaseClient, source: string, userId: string, limit = 50) {
@@ -304,16 +378,19 @@ serve(async (req: Request) => {
 
       case "university.streak_update": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
-        await admin.from("ai_university_streaks").upsert(
-          {
-            user_id: userId,
-            current_streak: body.current_streak ?? 1,
-            max_streak: body.max_streak ?? 1,
-            last_studied_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id" }
-        );
-        return json({ success: true });
+        const { data, error } = await admin.rpc("update_ai_university_streak", {
+          p_user_id: userId,
+        });
+        if (error) throw new Error(error.message);
+        const row = Array.isArray(data) && data.length > 0
+          ? data[0] as { current_streak?: number; longest_streak?: number; is_new_streak_day?: boolean }
+          : null;
+        return json({
+          success: true,
+          current_streak: row?.current_streak ?? 1,
+          longest_streak: row?.longest_streak ?? 1,
+          is_new_streak_day: row?.is_new_streak_day ?? true,
+        });
       }
 
       case "university.badges": {
@@ -321,19 +398,85 @@ serve(async (req: Request) => {
         const { data: badges } = await admin.from("ai_university_badges")
           .select("*")
           .eq("user_id", userId)
-          .order("earned_at", { ascending: false });
+          .order("awarded_at", { ascending: false });
         return json({ success: true, badges: badges ?? [] });
       }
 
       case "university.award_badge": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
-        await admin.from("ai_university_badges").insert({
-          user_id: userId,
-          badge_type: body.badge_type,
-          badge_name: body.badge_name,
-          earned_at: new Date().toISOString(),
+        const badgeId = asString(body.badge_id ?? body.badge_type);
+        const badgeName = asString(body.badge_name);
+        if (!badgeId || !badgeName) return json({ error: "badge_id and badge_name required" }, 400);
+        const { data, error } = await admin.rpc("award_ai_university_badge", {
+          p_user_id: userId,
+          p_badge_id: badgeId,
+          p_badge_name: badgeName,
+          p_icon_emoji: asString(body.icon_emoji),
+          p_condition: asString(body.condition) || null,
         });
-        return json({ success: true });
+        if (error) throw new Error(error.message);
+        return json({ success: true, newly_awarded: data === true });
+      }
+
+      case "university.record_score": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const providerId = asString(body.provider_id);
+        if (!providerId) return json({ error: "provider_id required" }, 400);
+
+        const quizCorrect = body.quiz_correct === true;
+        const now = new Date().toISOString();
+        const { data: existing, error: existingErr } = await admin
+          .from("ai_university_scores")
+          .select("id, quiz_correct")
+          .eq("user_id", userId)
+          .eq("provider_id", providerId)
+          .maybeSingle();
+        if (existingErr) throw new Error(existingErr.message);
+
+        const row = existing as { id?: string; quiz_correct?: boolean } | null;
+        const wasCorrect = row?.quiz_correct === true;
+        const isNewProvider = row == null;
+        const newlyCorrect = !wasCorrect && quizCorrect;
+
+        if (row?.id) {
+          const { error } = await admin
+            .from("ai_university_scores")
+            .update({
+              quiz_correct: wasCorrect || quizCorrect,
+              studied_at: now,
+            })
+            .eq("id", row.id);
+          if (error) throw new Error(error.message);
+        } else {
+          const { error } = await admin
+            .from("ai_university_scores")
+            .insert({
+              user_id: userId,
+              provider_id: providerId,
+              quiz_correct: quizCorrect,
+              studied_at: now,
+            });
+          if (error) throw new Error(error.message);
+        }
+
+        let awardedBadges: string[] = [];
+        let correctCount = 0;
+        let totalProviders = 0;
+        if (newlyCorrect) {
+          const evaluation = await evaluateUniversityQuizMaster(admin, userId);
+          awardedBadges = evaluation.awarded;
+          correctCount = evaluation.correct_count;
+          totalProviders = evaluation.total_providers;
+        }
+
+        return json({
+          success: true,
+          is_new_provider: isNewProvider,
+          newly_correct: newlyCorrect,
+          awarded_badges: awardedBadges,
+          correct_count: correctCount,
+          total_providers: totalProviders,
+        });
       }
 
       default:

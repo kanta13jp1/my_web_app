@@ -228,7 +228,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byType(GeminiUniversityV2Page), findsOneWidget);
+      expect(find.byType(AiUniversityPage), findsOneWidget);
     });
 
     testWidgets('ルーティング: /danshari へ遷移できること', (WidgetTester tester) async {

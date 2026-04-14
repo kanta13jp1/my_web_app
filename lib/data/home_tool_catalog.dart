@@ -716,7 +716,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       icon: Icons.menu_book_outlined,
       color: Colors.blue,
       keywords: const <String>['Gemini', '大学', '学習'],
-      onOpen: (context) => _pushPage(context, const GeminiUniversityV2Page()),
+      onOpen: (context) => _pushPage(context, const AiUniversityPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(

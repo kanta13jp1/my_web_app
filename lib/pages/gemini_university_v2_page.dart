@@ -1627,14 +1627,14 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 // ページ本体
 // ─────────────────────────────────────────────────────────────────────────────
 
-class GeminiUniversityV2Page extends StatefulWidget {
-  const GeminiUniversityV2Page({super.key});
+class AiUniversityPage extends StatefulWidget {
+  const AiUniversityPage({super.key});
 
   @override
-  State<GeminiUniversityV2Page> createState() => _GeminiUniversityV2PageState();
+  State<AiUniversityPage> createState() => _AiUniversityPageState();
 }
 
-class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
+class _AiUniversityPageState extends State<AiUniversityPage>
     with TickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
 
@@ -1715,9 +1715,9 @@ class _GeminiUniversityV2PageState extends State<GeminiUniversityV2Page>
 
     try {
       await _supabase.functions.invoke(
-        'ai-university-badges',
+        'ai-hub',
         body: {
-          'action': 'record_score',
+          'action': 'university.record_score',
           'provider_id': providerId,
           'quiz_correct': true,
         },
