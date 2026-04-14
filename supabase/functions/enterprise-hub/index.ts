@@ -503,7 +503,7 @@ serve(async (req) => {
         const prompt = String(body.prompt ?? "");
         const tone = String(body.tone ?? "professional");
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -522,7 +522,7 @@ serve(async (req) => {
       case "ai_workflow.create": {
         const item = await addItem(admin, "ai_workflow", userId, {
           name: body.name, trigger: body.trigger, steps: body.steps ?? [],
-          ai_model: body.ai_model ?? "gemini-2.0-flash", status: "active",
+          ai_model: body.ai_model ?? "gemini-2.5-flash", status: "active",
         });
         return json({ success: true, workflow: item });
       }

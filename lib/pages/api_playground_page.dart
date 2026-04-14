@@ -110,7 +110,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
       final method = _selectedMethod!;
 
       // エンドポイントの構築
-      // 例: https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=...
+      // 例: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=...
       final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/$modelName:$method?key=$_apiKey',
       );

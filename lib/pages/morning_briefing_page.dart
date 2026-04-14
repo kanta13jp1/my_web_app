@@ -54,7 +54,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   String _sortOrder = 'manual'; // 並び替え順 ('manual', 'estimated_asc')
   String _selectedDifficulty = 'normal'; // 新規タスク用の難易度
   String? _geminiApiKey; // 日報生成用APIキー
-  String _selectedModel = 'gemini-1.5-flash'; // 日報生成用モデル
+  static const String _defaultGeminiModel = 'gemini-2.5-flash';
+  static const Set<String> _legacyGeminiModels = {
+    'gemini-pro',
+    'gemini-1.5-flash',
+    'gemini-1.5-pro',
+    'gemini-2.0-flash',
+  };
+
+  String _selectedModel = _defaultGeminiModel; // 日報生成用モデル
   bool _addToStock = false; // ★ Add this line
   String _customPromptInstructions = _defaultPromptInstructions;
   static const String _defaultPromptInstructions =
@@ -64,22 +72,6 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
 
   List<Map<String, dynamic>> _selectableModels = [
     {
-      'name': 'gemini-1.5-flash',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemini-1.5-pro',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemini-pro',
-      'methods': ['generateContent'],
-    },
-    {
-      'name': 'gemini-2.0-flash',
-      'methods': ['generateContent'],
-    },
-    {
       'name': 'gemini-2.5-flash',
       'methods': ['generateContent'],
     },
@@ -88,6 +80,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       'methods': ['generateContent'],
     },
   ];
+
+  String _normalizeSelectedGeminiModel(String? model) {
+    final normalized = model?.trim();
+    if (normalized == null || normalized.isEmpty) {
+      return _defaultGeminiModel;
+    }
+    if (_legacyGeminiModels.contains(normalized)) {
+      return _defaultGeminiModel;
+    }
+    return normalized;
+  }
 
   final Map<String, String> _categoryLabels = {
     'work': '仕事',
@@ -309,10 +312,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     final prefs = await SharedPreferences.getInstance();
 
     // 1) Prompt / Model は今まで通り SharedPreferences
-    String? savedModel = prefs.getString('gemini_model');
-    if (savedModel == 'gemini-pro' || savedModel == null) {
-      savedModel = 'gemini-1.5-flash';
-    }
+    final savedModel =
+        _normalizeSelectedGeminiModel(prefs.getString('gemini_model'));
 
     final prompt =
         prefs.getString('daily_report_prompt') ?? _defaultPromptInstructions;
@@ -333,7 +334,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
     if (!mounted) return;
     setState(() {
       _customPromptInstructions = prompt;
-      _selectedModel = savedModel!;
+      _selectedModel = savedModel;
       _geminiApiKey = secureKey; // ✅ SecureStorage由来
     });
   }
@@ -1549,9 +1550,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         },
       );
       final data = res.data;
-      final responseText = (data is Map<String, dynamic> && data['success'] == true)
-          ? data['result'] as String?
-          : null;
+      final responseText =
+          (data is Map<String, dynamic> && data['success'] == true)
+              ? data['result'] as String?
+              : null;
 
       if (mounted && responseText != null) {
         showReportDialog(responseText, historyTodos);
@@ -1670,9 +1672,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     children: [
                       IconButton(
                         icon: Icon(
-                          obscureKey
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          obscureKey ? Icons.visibility_off : Icons.visibility,
                         ),
                         onPressed: () =>
                             setDialogState(() => obscureKey = !obscureKey),
@@ -1810,8 +1810,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1869,9 +1869,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   border: Border.all(
                     color: ((model['name']?.toString() ?? '') == selectedModel)
                         ? Colors.indigo.withValues(alpha: 0.25)
-                        : Theme.of(context)
-                            .colorScheme
-                            .outlineVariant,
+                        : Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
                 child: Column(
@@ -1893,7 +1891,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             '利用可能メソッド: 未取得',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                             ),
                           );
                         }
@@ -2068,7 +2068,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               TextButton(
                 onPressed: () {
                   controller.text = _defaultPromptInstructions;
-                  setDialogState(() => tempSelectedModel = 'gemini-1.5-flash');
+                  setDialogState(
+                    () => tempSelectedModel = _defaultGeminiModel,
+                  );
                 },
                 child: const Text('デフォルトに戻す'),
               ),
@@ -2185,7 +2187,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       Container(
                         padding: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerLow,
+                          color:
+                              Theme.of(context).colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
                             color: Theme.of(context).colorScheme.outlineVariant,
@@ -2513,7 +2516,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             value: snapshot.progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
-            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+            backgroundColor:
+                Theme.of(context).colorScheme.surfaceContainerHighest,
             color: accentColor,
           ),
           const SizedBox(height: 8),
@@ -2660,7 +2664,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   ),
                   subtitle: Text(
                     _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   initiallyExpanded: _isHeaderExpanded,
                   onExpansionChanged: (bool expanded) {
@@ -2676,7 +2681,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           const SizedBox(height: 8),
                           Text(
                             'CEO、本日の最優先事項を定義し、実行に移しましょう。',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant),
                           ),
                           if (_weatherData != null) ...[
                             const SizedBox(height: 16),
@@ -2709,9 +2717,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerLow,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLow,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                              border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.grey.withValues(alpha: 0.1),
@@ -2798,7 +2811,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     }).join('; ')}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     ),
                                   ),
                                 ),
@@ -2900,7 +2915,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 const SizedBox(height: 4),
                                 LinearProgressIndicator(
                                   value: progress,
-                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                   color: progress == 1.0
                                       ? Colors.orange
                                       : Colors.green,
@@ -3656,7 +3673,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         side: BorderSide(
           color: isOverdue
               ? Colors.red.shade200
-              : (isCompleted ? Theme.of(context).colorScheme.surfaceContainerHigh : Theme.of(context).colorScheme.surfaceContainerHighest),
+              : (isCompleted
+                  ? Theme.of(context).colorScheme.surfaceContainerHigh
+                  : Theme.of(context).colorScheme.surfaceContainerHighest),
         ),
       ),
       child: InkWell(
@@ -3697,7 +3716,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       ? Colors.grey
                                       : (isOverdue
                                           ? Colors.red.shade700
-                                          : Theme.of(context).colorScheme.onSurface),
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface),
                                 ),
                               ),
                             ),
@@ -3750,7 +3771,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             maxLines: compact ? 2 : 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               height: 1.4,
                             ),
                           ),
@@ -3926,7 +3949,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                        color:
+                            Theme.of(context).colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Text('別の日付を選ぶか、タスクを追加してください。'),
@@ -4019,7 +4043,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+        border: Border.all(
+            color: Theme.of(context).colorScheme.surfaceContainerHigh),
       ),
       child: Column(
         children: [
@@ -4074,7 +4099,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   padding: const EdgeInsets.all(24),
                   child: Text(
                     'この日に登録されているタスクはありません。',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -4173,8 +4199,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       vertical: 4.0,
                     ),
                     decoration: BoxDecoration(
-                      color: isCompleted ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.white,
-                      border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                      color: isCompleted
+                          ? Theme.of(context).colorScheme.surfaceContainerHigh
+                          : Colors.white,
+                      border: Border.all(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: ListTile(
@@ -4185,7 +4216,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           decoration:
                               isCompleted ? TextDecoration.lineThrough : null,
                           color: isCompleted
-                              ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.38)
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.38)
                               : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
@@ -4344,7 +4378,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         Text(
                           '登録 ${value.length}件 / 完了 $completedCount件',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -4353,7 +4388,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Text(
                             'カードをタップすると詳細とサブタスクを確認できます。',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -4391,9 +4428,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         final isWideSplit = !isCompact && _useWideCalendarSplit(context);
         final denseCalendar = !isCompact && constraints.maxHeight < 720;
         final isTwoWeeks = _calendarFormat == CalendarFormat.twoWeeks;
-        final rowHeight =
-            isCompact ? 42.0 : (isTwoWeeks ? 30.0 : (denseCalendar ? 34.0 : 38.0));
-        final daysOfWeekHeight = isTwoWeeks ? 16.0 : (denseCalendar ? 18.0 : 22.0);
+        final rowHeight = isCompact
+            ? 42.0
+            : (isTwoWeeks ? 30.0 : (denseCalendar ? 34.0 : 38.0));
+        final daysOfWeekHeight =
+            isTwoWeeks ? 16.0 : (denseCalendar ? 18.0 : 22.0);
 
         final calendar = Container(
           width: double.infinity,
@@ -4406,7 +4445,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh),
+            border: Border.all(
+                color: Theme.of(context).colorScheme.surfaceContainerHigh),
           ),
           child: TableCalendar<Map<String, dynamic>>(
             locale: 'ja_JP',
@@ -4711,7 +4751,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         Text(
                           '登録 ${value.length}件 / 完了 $completedCount件',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -4720,7 +4761,9 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           Text(
                             'カードをタップすると詳細とサブタスクを確認できます。',
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -4970,7 +5013,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Expanded(
                     child: LinearProgressIndicator(
                       value: subTotal > 0 ? subDone / subTotal : 0,
-                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.surfaceContainerHigh,
                       color: Colors.blueAccent,
                       minHeight: 4,
                       borderRadius: BorderRadius.circular(2),

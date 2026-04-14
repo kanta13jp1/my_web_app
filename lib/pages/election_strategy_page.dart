@@ -70,7 +70,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
   // Gemini calls are proxied through ai-assistant Edge Function (server-side key)
   Future<String> _callGeminiViaEdge(
     String prompt, {
-    String model = 'gemini-2.0-flash',
+    String model = 'gemini-2.5-flash',
     String? imageBase64,
     String? mimeType,
   }) async {

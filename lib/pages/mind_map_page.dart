@@ -18,7 +18,7 @@ class _MindMapPageState extends State<MindMapPage> {
   static const List<String> _mindMapFallbackModels = <String>[
     'gemini-2.5-flash',
     'gemma-3n-e2b-it',
-    'gemini-2.0-flash',
+    'gemini-2.5-pro',
   ];
   static const double _canvasPadding = 32;
   static const double _horizontalGap = 32;

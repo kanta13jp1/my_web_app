@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-14 VSCode版#73 (Rule18 最新AIニュース3件反映 + NotebookLM 再認証確認)
+最終更新: 2026-04-14 VSCode版#74 (Gemini 旧既定値を gemini-2.5 系へ整理)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -8606,3 +8606,35 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟢 Rule 16: import ページを含む本番表示チェック
 - 🟡 Gemini 系モデル使用箇所を再監査し、`gemini-2.0-flash` / `gemini-1.5-flash` の置換候補を整理
 - 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
+
+## VSCode版#74 セッション記録 (2026-04-14)
+
+### 実施内容
+
+| # | 作業 | 状態 |
+|---|---|---|
+| 1 | `.github/COMPRESSED_PROMPT_V3.md` を 100 行ずつ再読し、VSCode スコープと Rule 18 / Rule 19 / Master Brain 手順を再確認 | ✅ |
+| 2 | Master Brain memory を再確認し、NotebookLM 再認証後も notebook 単位 RPC エラーが残っている状況を引き継ぎ | ✅ |
+| 3 | `analyze-reality` / `ai-writing-assistant` / `enterprise-hub` / `guitar-recording-studio` の `gemini-2.0-flash` 呼び出しを `gemini-2.5-flash` に更新 | ✅ |
+| 4 | `Home` / `Morning Briefing` / `Election Strategy` / `Mind Map` の Gemini 既定値・フォールバック・旧 UI 選択肢を `gemini-2.5` 系へ整理 | ✅ |
+| 5 | `API Playground` の Gemini API 呼び出し例コメントも現行モデル名へ更新 | ✅ |
+
+### Rule 18 メモ
+
+- Google 公式 `Gemini API deprecations` を前提に、`gemini-2.0-flash` の置換先を `gemini-2.5-flash` として統一した
+- `gemini-pro` / `gemini-1.5-flash` / `gemini-1.5-pro` / `gemini-2.0-flash` を保存済み設定に持っている場合も、`Home` と `Morning Briefing` では `gemini-2.5-flash` へ自動正規化するようにした
+- `Morning Briefing` の静的候補からは旧 Gemini 選択肢を外し、現行の `gemini-2.5-flash` / `gemini-2.5-pro` を基本候補にした
+
+### 品質確認
+
+- `markdownlint-cli --dot "docs/**/*.md" ".github/**/*.md" "CLAUDE.md"` (pass)
+- `deno lint supabase/functions/analyze-reality supabase/functions/ai-writing-assistant supabase/functions/enterprise-hub supabase/functions/guitar-recording-studio` (pass)
+- `dart format` は `home_page.dart` / `morning_briefing_page.dart` / `mind_map_page.dart` で実行し、`api_playground_page.dart` / `election_strategy_page.dart` は軽微差分のため `git diff` 目視確認で補完
+- `git diff --check` (pass)
+- `flutter analyze` は Codex 環境で固まるため、ユーザー指示どおりスキップ
+
+### 次回VSCode版優先タスク
+
+- 🟢 Rule 16: import ページを含む本番表示チェック
+- 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
+- 🟡 Gemini 系モデル更新後の UI 文言と Supabase Edge Function 呼び出しを継続監査

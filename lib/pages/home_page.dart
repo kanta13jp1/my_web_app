@@ -1174,6 +1174,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _resolveHomeModel(SharedPreferences prefs) {
+    const legacyModels = {
+      'gemini-pro',
+      'gemini-1.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash',
+    };
     final candidates = <String?>[
       prefs.getString('gemini_model_home'),
       prefs.getString('gemini_model_emergency_meeting'),
@@ -1181,10 +1187,13 @@ class _HomePageState extends State<HomePage> {
     ];
     for (final candidate in candidates) {
       if (candidate != null && candidate.trim().isNotEmpty) {
-        return candidate.trim();
+        final normalized = candidate.trim();
+        return legacyModels.contains(normalized)
+            ? 'gemini-2.5-flash'
+            : normalized;
       }
     }
-    return 'gemini-1.5-flash';
+    return 'gemini-2.5-flash';
   }
 
   Future<String?> _loadHomeApiKey(SharedPreferences prefs) async {
@@ -1233,8 +1242,7 @@ class _HomePageState extends State<HomePage> {
     // 前回呼び出しから 60 秒未満ならスキップ
     final now = DateTime.now();
     if (_lastNudgeCallTime != null &&
-        now.difference(_lastNudgeCallTime!) <
-            const Duration(seconds: 60)) {
+        now.difference(_lastNudgeCallTime!) < const Duration(seconds: 60)) {
       return null;
     }
 
@@ -4215,7 +4223,8 @@ abstinence_slip_details: $slipDetailsText
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 side: BorderSide(
-                                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.24),
+                                  color: const Color(0xFF3D5AFE)
+                                      .withValues(alpha: 0.24),
                                 ),
                               ),
                               child: InkWell(
@@ -4225,8 +4234,7 @@ abstinence_slip_details: $slipDetailsText
                                   () => Navigator.push(
                                     context,
                                     MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const AISecretaryPage(
+                                      builder: (_) => const AISecretaryPage(
                                         autoRunOnOpen: true,
                                       ),
                                     ),
@@ -4243,7 +4251,8 @@ abstinence_slip_details: $slipDetailsText
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF3D5AFE).withValues(alpha: 0.08),
+                                          color: const Color(0xFF3D5AFE)
+                                              .withValues(alpha: 0.08),
                                           borderRadius:
                                               BorderRadius.circular(10),
                                         ),
