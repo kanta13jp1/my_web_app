@@ -116,9 +116,11 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AIワークフロー自動化'),
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
         foregroundColor: Colors.white,
         actions: [
           IconButton(

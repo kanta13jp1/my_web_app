@@ -195,9 +195,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('音声メモ・文字起こし'),
-        backgroundColor: const Color(0xFF7C3AED),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -214,7 +216,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addMemo,
-        backgroundColor: const Color(0xFF7C3AED),
+        backgroundColor: const Color(0xFFFF6B35),
         tooltip: '音声メモを追加',
         child: const Icon(Icons.mic, color: Colors.white),
       ),

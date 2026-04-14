@@ -55,6 +55,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
   Widget _buildSummaryCard() {
     if (_summary == null) return const SizedBox.shrink();
     return Card(
+      color: const Color(0xFF1E1E1E),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -101,8 +102,12 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('アフィリエイト・マーケティング'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -147,6 +152,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       final clicks = c['clicks']?.toString() ?? '0';
                       final earnings = c['earnings']?.toString() ?? '0';
                       return Card(
+                        color: const Color(0xFF1E1E1E),
                         child: ListTile(
                           leading:
                               const Icon(Icons.campaign, color: Colors.indigo),

@@ -169,6 +169,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
         title: const Text('新規リード登録'),
         content: SingleChildScrollView(
           child: Column(
@@ -233,8 +234,12 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('CRM 営業パイプライン'),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -253,6 +258,8 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddLeadDialog,
+        backgroundColor: const Color(0xFFFF6B35),
+        foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add),
         label: const Text('リード追加'),
       ),
@@ -362,6 +369,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     final stage = deal['stage'] as String? ?? 'lead';
 
     return Card(
+      color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -470,6 +478,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         final source = deal['lead_source'] as String? ?? 'web';
         final stageColor = _stageColors[stage] ?? Colors.grey;
         return Card(
+          color: const Color(0xFF1E1E1E),
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
@@ -593,6 +602,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
           ),
           const SizedBox(height: 16),
           Card(
+            color: const Color(0xFF1E1E1E),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -638,6 +648,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
 
   Widget _statCard(String label, String value, IconData icon, Color color) {
     return Card(
+      color: const Color(0xFF1E1E1E),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

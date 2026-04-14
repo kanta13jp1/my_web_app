@@ -18,6 +18,8 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
   bool _loading = true;
   String? _error;
   List<_LeaderboardEntry> _entries = [];
+  Map<String, List<_BadgeEntry>> _badgesByUser = const {};
+  _MyLearningSnapshot? _mySnapshot;
   String? _myUserId;
 
   @override
@@ -44,19 +46,111 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       final entries = (rows as List)
           .cast<Map<String, dynamic>>()
           .map(_LeaderboardEntry.fromMap)
+          .where(
+            (entry) => entry.totalCorrect > 0 || entry.providersStudied > 0,
+          )
           .toList();
+
+      final leaderboardUserIds = entries
+          .map((entry) => entry.userId)
+          .where((userId) => userId.isNotEmpty)
+          .toList(growable: false);
+      final badgesFuture = _loadPublicBadges(leaderboardUserIds);
+      final mySnapshotFuture = _myUserId == null
+          ? Future<_MyLearningSnapshot?>.value(null)
+          : _loadMySnapshot(_myUserId!);
+      final badgesByUser = await badgesFuture;
+      final mySnapshot = await mySnapshotFuture;
 
       if (!mounted) return;
       setState(() {
         _entries = entries;
+        _badgesByUser = badgesByUser;
+        _mySnapshot = mySnapshot;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
+        _badgesByUser = const {};
+        _mySnapshot = null;
         _error = e.toString();
       });
+    }
+  }
+
+  Future<Map<String, List<_BadgeEntry>>> _loadPublicBadges(
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return const {};
+    try {
+      final rows = await _supabase
+          .from('ai_university_badges')
+          .select('user_id, badge_id, badge_name, icon_emoji, awarded_at')
+          .inFilter('user_id', userIds)
+          .eq('is_public', true)
+          .order('awarded_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
+
+      final grouped = <String, List<_BadgeEntry>>{};
+      for (final row in (rows as List).cast<Map<String, dynamic>>()) {
+        final badge = _BadgeEntry.fromMap(row);
+        if (badge.userId.isEmpty) continue;
+        (grouped[badge.userId] ??= <_BadgeEntry>[]).add(badge);
+      }
+      return grouped;
+    } catch (_) {
+      return const {};
+    }
+  }
+
+  Future<_MyLearningSnapshot?> _loadMySnapshot(String userId) async {
+    try {
+      final scoreRows = await _supabase
+          .from('ai_university_scores')
+          .select('provider_id, quiz_correct')
+          .eq('user_id', userId)
+          .timeout(const Duration(seconds: 10));
+      final streakRow = await _supabase
+          .from('ai_university_streaks')
+          .select('current_streak, longest_streak')
+          .eq('user_id', userId)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 10));
+      final badgeRows = await _supabase
+          .from('ai_university_badges')
+          .select('user_id, badge_id, badge_name, icon_emoji, awarded_at')
+          .eq('user_id', userId)
+          .order('awarded_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
+
+      var totalCorrect = 0;
+      final providersStudied = <String>{};
+      for (final row in (scoreRows as List).cast<Map<String, dynamic>>()) {
+        final providerId = row['provider_id'] as String?;
+        if (providerId != null && providerId.isNotEmpty) {
+          providersStudied.add(providerId);
+        }
+        if (row['quiz_correct'] == true) {
+          totalCorrect += 1;
+        }
+      }
+
+      final badges = (badgeRows as List)
+          .cast<Map<String, dynamic>>()
+          .map(_BadgeEntry.fromMap)
+          .toList(growable: false);
+
+      return _MyLearningSnapshot(
+        totalCorrect: totalCorrect,
+        providersStudied: providersStudied.length,
+        currentStreak: (streakRow?['current_streak'] as num?)?.toInt() ?? 0,
+        longestStreak: (streakRow?['longest_streak'] as num?)?.toInt() ?? 0,
+        badges: badges,
+      );
+    } catch (_) {
+      return null;
     }
   }
 
@@ -96,6 +190,8 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
               ? _ErrorView(error: _error!, onRetry: _load)
               : _RankingBody(
                   entries: _entries,
+                  badgesByUser: _badgesByUser,
+                  mySnapshot: _mySnapshot,
                   myUserId: _myUserId,
                   onOpenUniversity: _openUniversity,
                 ),
@@ -183,11 +279,15 @@ class _ErrorView extends StatelessWidget {
 class _RankingBody extends StatelessWidget {
   const _RankingBody({
     required this.entries,
+    required this.badgesByUser,
+    required this.mySnapshot,
     required this.myUserId,
     required this.onOpenUniversity,
   });
 
   final List<_LeaderboardEntry> entries;
+  final Map<String, List<_BadgeEntry>> badgesByUser;
+  final _MyLearningSnapshot? mySnapshot;
   final String? myUserId;
   final VoidCallback onOpenUniversity;
 
@@ -208,9 +308,8 @@ class _RankingBody extends StatelessWidget {
 
     final maxProvidersStudied = entries.fold<int>(
       0,
-      (best, entry) => entry.providersStudied > best
-          ? entry.providersStudied
-          : best,
+      (best, entry) =>
+          entry.providersStudied > best ? entry.providersStudied : best,
     );
 
     return SafeArea(
@@ -221,9 +320,11 @@ class _RankingBody extends StatelessWidget {
           _RankingHero(
             leader: leader,
             myEntry: myEntry,
+            mySnapshot: mySnapshot,
             myUserId: myUserId,
             displayedPlayers: entries.length,
             maxProvidersStudied: maxProvidersStudied,
+            onOpenUniversity: onOpenUniversity,
           ),
           const SizedBox(height: 20),
           const Text(
@@ -238,6 +339,7 @@ class _RankingBody extends StatelessWidget {
           const SizedBox(height: 14),
           for (final entry in entries) ...[
             _RankCard(
+              badges: badgesByUser[entry.userId] ?? const [],
               entry: entry,
               isMe: entry.userId == myUserId,
             ),
@@ -253,7 +355,7 @@ class _RankingBody extends StatelessWidget {
               ),
             ),
             child: const Text(
-              'ランキングは AI大学のクイズ正解数に応じて更新されます。毎日の1問を積み上げるほど、順位とストリークの両方が伸びていきます。',
+              'ランキングは AI大学のクイズ正解数に応じて更新されます。毎日の1問を積み上げるほど、順位とストリークが伸び、公開バッジにも学習の勢いが表れます。',
               style: _RankingTextStyles.bodySmall,
             ),
           ),
@@ -350,33 +452,48 @@ class _RankingHero extends StatelessWidget {
   const _RankingHero({
     required this.leader,
     required this.myEntry,
+    required this.mySnapshot,
     required this.myUserId,
     required this.displayedPlayers,
     required this.maxProvidersStudied,
+    required this.onOpenUniversity,
   });
 
   final _LeaderboardEntry leader;
   final _LeaderboardEntry? myEntry;
+  final _MyLearningSnapshot? mySnapshot;
   final String? myUserId;
   final int displayedPlayers;
   final int maxProvidersStudied;
+  final VoidCallback onOpenUniversity;
 
   @override
   Widget build(BuildContext context) {
-    final leaderGap =
-        myEntry == null ? null : max(0, leader.totalCorrect - myEntry!.totalCorrect);
+    final leaderGap = myEntry == null
+        ? null
+        : max(0, leader.totalCorrect - myEntry!.totalCorrect);
 
     String summaryTitle;
     String summaryBody;
     if (myEntry != null) {
       summaryTitle = 'あなたは現在 ${myEntry!.rank} 位です';
-      summaryBody = leaderGap == 0
+      final baseBody = leaderGap == 0
           ? '首位タイです。このまま連続学習を伸ばして、差を広げましょう。'
           : '首位まであと $leaderGap 問。今日の1問で順位が動く位置にいます。';
+      final streakText = mySnapshot != null && mySnapshot!.currentStreak > 0
+          ? ' いまは ${mySnapshot!.currentStreak} 日連続で学習中です。'
+          : '';
+      summaryBody = '$baseBody$streakText';
+    } else if (mySnapshot != null && mySnapshot!.hasProgress) {
+      summaryTitle = 'いまの積み上げが次の順位をつくります';
+      final streakText = mySnapshot!.currentStreak > 0
+          ? ' / ${mySnapshot!.currentStreak}日連続'
+          : '';
+      summaryBody =
+          '${mySnapshot!.totalCorrect}問正解・${mySnapshot!.providersStudied}社学習$streakText。次の1問で TOP10 に近づけます。';
     } else if (myUserId != null) {
       summaryTitle = 'いま見えているのは TOP10 です';
-      summaryBody =
-          'まだ表示圏外でも、クイズ正解数を積むほどここに近づきます。次の学習で一段上を狙えます。';
+      summaryBody = 'まだ表示圏外でも、クイズ正解数を積むほどここに近づきます。次の学習で一段上を狙えます。';
     } else {
       summaryTitle = 'ログインすると学習の積み上がりが残せます';
       summaryBody = 'AI大学でクイズに正解すると、ランキングとストリークに反映されます。';
@@ -432,11 +549,11 @@ class _RankingHero extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
+                        const Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           crossAxisAlignment: WrapCrossAlignment.center,
-                          children: const [
+                          children: [
                             Text(
                               'AI大学',
                               style: _RankingTextStyles.heading1,
@@ -532,9 +649,32 @@ class _RankingHero extends StatelessWidget {
                       summaryBody,
                       style: _RankingTextStyles.bodySmall,
                     ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: onOpenUniversity,
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('AI大学で学ぶ'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.24),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
+              if (mySnapshot != null && mySnapshot!.hasProgress) ...[
+                const SizedBox(height: 12),
+                _MySnapshotPanel(snapshot: mySnapshot!),
+              ],
             ],
           ),
         );
@@ -544,10 +684,15 @@ class _RankingHero extends StatelessWidget {
 }
 
 class _RankCard extends StatelessWidget {
-  const _RankCard({required this.entry, required this.isMe});
+  const _RankCard({
+    required this.entry,
+    required this.isMe,
+    this.badges = const [],
+  });
 
   final _LeaderboardEntry entry;
   final bool isMe;
+  final List<_BadgeEntry> badges;
 
   static const _medals = {
     1: '🥇',
@@ -609,7 +754,13 @@ class _RankCard extends StatelessWidget {
                           color: _rankColor,
                         ),
                         const SizedBox(width: 14),
-                        Expanded(child: _RankDetails(entry: entry, isMe: isMe)),
+                        Expanded(
+                          child: _RankDetails(
+                            badges: badges,
+                            entry: entry,
+                            isMe: isMe,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -632,7 +783,13 @@ class _RankCard extends StatelessWidget {
                       color: _rankColor,
                     ),
                     const SizedBox(width: 14),
-                    Expanded(child: _RankDetails(entry: entry, isMe: isMe)),
+                    Expanded(
+                      child: _RankDetails(
+                        badges: badges,
+                        entry: entry,
+                        isMe: isMe,
+                      ),
+                    ),
                     const SizedBox(width: 16),
                     _ScoreColumn(
                       score: entry.totalCorrect,
@@ -648,8 +805,13 @@ class _RankCard extends StatelessWidget {
 }
 
 class _RankDetails extends StatelessWidget {
-  const _RankDetails({required this.entry, required this.isMe});
+  const _RankDetails({
+    required this.badges,
+    required this.entry,
+    required this.isMe,
+  });
 
+  final List<_BadgeEntry> badges;
   final _LeaderboardEntry entry;
   final bool isMe;
 
@@ -706,6 +868,12 @@ class _RankDetails extends StatelessWidget {
               label: '${entry.providersStudied}社学習',
               color: _RankingPalette.indigoLight,
             ),
+            if (badges.isNotEmpty)
+              _InfoPill(
+                icon: Icons.workspace_premium_outlined,
+                label: '${badges.length}バッジ',
+                color: _RankingPalette.gold,
+              ),
             if (entry.lastStudiedAt != null)
               _InfoPill(
                 icon: Icons.schedule_rounded,
@@ -714,6 +882,13 @@ class _RankDetails extends StatelessWidget {
               ),
           ],
         ),
+        if (badges.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _BadgeWrap(
+            title: '公開バッジ',
+            badges: badges.take(3).toList(growable: false),
+          ),
+        ],
       ],
     );
   }
@@ -860,6 +1035,79 @@ class _MetricTile extends StatelessWidget {
   }
 }
 
+class _MySnapshotPanel extends StatelessWidget {
+  const _MySnapshotPanel({required this.snapshot});
+
+  final _MyLearningSnapshot snapshot;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'あなたの学習ペース',
+            style: _RankingTextStyles.heading3.copyWith(
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _InfoPill(
+                icon: Icons.quiz_rounded,
+                label: '正解 ${snapshot.totalCorrect} 問',
+                color: _RankingPalette.amber,
+              ),
+              _InfoPill(
+                icon: Icons.hub_outlined,
+                label: '${snapshot.providersStudied}社学習',
+                color: _RankingPalette.indigoLight,
+              ),
+              if (snapshot.currentStreak > 0)
+                _InfoPill(
+                  icon: Icons.local_fire_department_rounded,
+                  label: '${snapshot.currentStreak}日連続',
+                  color: _RankingPalette.orangeLight,
+                ),
+              if (snapshot.longestStreak > 0)
+                _InfoPill(
+                  icon: Icons.timeline_rounded,
+                  label: '最長 ${snapshot.longestStreak}日',
+                  color: _RankingPalette.green,
+                ),
+              if (snapshot.badgeCount > 0)
+                _InfoPill(
+                  icon: Icons.workspace_premium_outlined,
+                  label: '${snapshot.badgeCount}バッジ',
+                  color: _RankingPalette.gold,
+                ),
+            ],
+          ),
+          if (snapshot.badges.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _BadgeWrap(
+              title: '最近の達成バッジ',
+              badges: snapshot.badges.take(3).toList(growable: false),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusPill extends StatelessWidget {
   const _StatusPill({
     required this.icon,
@@ -892,6 +1140,68 @@ class _StatusPill extends StatelessWidget {
             style: _RankingTextStyles.label.copyWith(color: color),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BadgeWrap extends StatelessWidget {
+  const _BadgeWrap({
+    required this.title,
+    required this.badges,
+  });
+
+  final String title;
+  final List<_BadgeEntry> badges;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: _RankingTextStyles.caption.copyWith(
+            color: _RankingPalette.textTertiary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final badge in badges)
+              _BadgeChip(
+                badge: badge,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _BadgeChip extends StatelessWidget {
+  const _BadgeChip({required this.badge});
+
+  final _BadgeEntry badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Text(
+        '${badge.iconEmoji} ${badge.badgeName}',
+        style: _RankingTextStyles.label.copyWith(
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -967,7 +1277,6 @@ class _RankingTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.w800,
     color: Colors.white,
-    letterSpacing: 0.96,
     height: 1.4,
   );
 
@@ -975,7 +1284,6 @@ class _RankingTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w700,
     color: Colors.white,
-    letterSpacing: 0.72,
     height: 1.4,
   );
 
@@ -1045,7 +1353,7 @@ class _LeaderboardEntry {
   factory _LeaderboardEntry.fromMap(Map<String, dynamic> map) {
     return _LeaderboardEntry(
       userId: map['user_id'] as String? ?? '',
-      displayName: map['display_name'] as String? ?? '匿名ユーザー',
+      displayName: _sanitizeDisplayName(map['display_name'] as String?),
       totalCorrect: (map['total_correct'] as num?)?.toInt() ?? 0,
       providersStudied: (map['providers_studied'] as num?)?.toInt() ?? 0,
       lastStudiedAt: map['last_studied_at'] != null
@@ -1054,4 +1362,68 @@ class _LeaderboardEntry {
       rank: (map['rank'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
+class _MyLearningSnapshot {
+  const _MyLearningSnapshot({
+    required this.totalCorrect,
+    required this.providersStudied,
+    required this.currentStreak,
+    required this.longestStreak,
+    required this.badges,
+  });
+
+  final int totalCorrect;
+  final int providersStudied;
+  final int currentStreak;
+  final int longestStreak;
+  final List<_BadgeEntry> badges;
+
+  int get badgeCount => badges.length;
+
+  bool get hasProgress =>
+      totalCorrect > 0 ||
+      providersStudied > 0 ||
+      currentStreak > 0 ||
+      longestStreak > 0 ||
+      badgeCount > 0;
+}
+
+class _BadgeEntry {
+  const _BadgeEntry({
+    required this.userId,
+    required this.badgeId,
+    required this.badgeName,
+    required this.iconEmoji,
+    required this.awardedAt,
+  });
+
+  final String userId;
+  final String badgeId;
+  final String badgeName;
+  final String iconEmoji;
+  final DateTime? awardedAt;
+
+  factory _BadgeEntry.fromMap(Map<String, dynamic> map) {
+    return _BadgeEntry(
+      userId: map['user_id'] as String? ?? '',
+      badgeId: map['badge_id'] as String? ?? '',
+      badgeName: map['badge_name'] as String? ?? '達成バッジ',
+      iconEmoji: map['icon_emoji'] as String? ?? '🏅',
+      awardedAt: map['awarded_at'] != null
+          ? DateTime.tryParse(map['awarded_at'] as String)
+          : null,
+    );
+  }
+}
+
+String _sanitizeDisplayName(String? raw) {
+  final trimmed = raw?.trim() ?? '';
+  if (trimmed.isEmpty) return '匿名ユーザー';
+  if (!trimmed.contains('@')) return trimmed;
+
+  final localPart = trimmed.split('@').first.trim();
+  if (localPart.isEmpty) return '匿名ユーザー';
+  if (localPart.length <= 3) return '$localPart***';
+  return '${localPart.substring(0, 3)}***';
 }

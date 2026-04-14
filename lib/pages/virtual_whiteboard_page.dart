@@ -317,13 +317,15 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: Text(
           _selectedBoard != null
               ? _selectedBoard!['name']?.toString() ?? 'ホワイトボード'
               : 'バーチャルホワイトボード',
         ),
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF1A1A1A),
+        elevation: 0,
         foregroundColor: Colors.white,
         leading: _selectedBoard != null
             ? IconButton(
@@ -366,7 +368,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
       floatingActionButton: _selectedBoard == null
           ? FloatingActionButton(
               onPressed: _createBoard,
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: const Color(0xFFFF6B35),
               tooltip: '新しいボードを作成',
               child: const Icon(Icons.add, color: Colors.white),
             )
