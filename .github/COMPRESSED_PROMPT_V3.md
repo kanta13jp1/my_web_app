@@ -7,7 +7,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ---
 
-## 🔀 3インスタンス並行開発スコープ
+## 🔀 3インスタンス並行開発スコープ（セッション 2026-04-16 確認済み）
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
@@ -322,6 +322,21 @@ web/sitemap.xml          # URL マップ
 
 ## 🔜 実装待ち（他インスタンスへの指示）
 
+### セッション 2026-04-16 VSCode版#76: 完了
+
+**実施内容**: `horse_racing_predictor_page.dart` コードレビュー + デザイントークン統一
+
+- ✅ UIコード全件レビュー（Null安全・型安全・デザイン整合性）
+- ✅ Orange色 `0xFFFF6D00` → `0xFFFF6B35` に統一（9箇所）
+- ✅ Gradient色 `0xFFFF9800` → `0xFFFF8C5A` に統一
+- ✅ TabBar / AppBar / SegmentedButton / Info Container / Status / Prediction / History / Accuracy タブ全部改修
+- ✅ `flutter analyze` 0エラー確認
+- ✅ git commit `5bd60bde` / commit `6a9cab47` (ROADMAP更新) 完了
+
+**セッション記録**: `docs/GROWTH_STRATEGY_ROADMAP.md` に記録済み
+
+---
+
 ### ~~機能 #12~~: ✅ 全インスタンス解決済み
 
 *(過去の解決済みタスク（機能 #12〜#32、バグ #B1, #B3, #B4、機能 #44）はアーカイブされ、プロンプトサイズ最適化のため削除されました。)*
@@ -489,6 +504,63 @@ web/sitemap.xml          # URL マップ
 | GH006 Step5 保護ブランチ直接 push | `git push origin main` → ブランチ保護違反 | PR 作成→自動マージ方式に変更 (PS#35) |
 
 **dev.to 投稿済み (PS#37)**: `2026-03-31-notification-center.md` → [dev.to投稿完了](https://dev.to/kanta13jp1/flutter-webdesupabasewoshi-tutaapurinei-tong-zhi-sentawoshi-zhuang-sitahua-50g3)。**Qiita ✅ 投稿完了 (2026-04-12)**: [https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7](https://qiita.com/kanta13jp1/items/68d26f0fe4224fd17de7)
+
+### AI大学 キラーコンテンツ化方針（毎回必ず実行）
+
+AI大学はユーザー数拡大のための**最重要差別化機能**。毎セッションで必ず以下の3Stepを実行する。
+
+#### 目標 KPI
+
+| KPI | 目標 | 測定方法 |
+| --- | --- | --- |
+| 週次アクティブ学習者率 | 登録ユーザーの 40% 以上 | ai_university_scores.studied_at |
+| クイズ完了率 | 初回訪問の 60% 以上 | SharedPreferences → Supabase 移行後 |
+| シェア転換率 | 学習完了の 10% 以上 | share_plus イベント計測 |
+| ランキング参加率 | 学習者の 30% 以上 | ai_university_leaderboard ビュー |
+| 連続学習日数 (ストリーク) | 平均 7 日以上 | ai_university_streaks テーブル |
+
+#### 毎セッション 3Step（必須）
+
+**Step A: ホームカード改善 (VSCode版)**
+
+毎セッション必ず `lib/widgets/ai_university_home_card.dart` を見直す:
+
+- 学習済みプロバイダー数・クイズ正解数・ストリーク日数を動的表示できるか？
+- タップ時のCTA文言・ボタン色を改善できるか？
+- 新規ユーザーと復帰ユーザーで表示を出し分けられるか？
+
+**Step B: バイラル機能強化 (VSCode版)**
+
+シェア・ランキング・バッジで口コミ拡散を加速する:
+
+- **シェア文言 A/B テスト**: 「X 社を制覇」「クイズ全問正解」等バリエーションを試す
+- **ランキングUI** (`ai_university_ranking_page.dart`): 週次TOP10・全体ランキング表示
+- **バッジシステム** (`ai_university_badges` テーブル): 達成条件別バッジ発行・シェア誘導
+- **SNSカード生成**: シェア時にOGP画像で「何社学習済み」を視覚化
+
+**Step C: リテンション強化 (Windowsアプリ版 migration + VSCode版 EF)**
+
+一度使ったユーザーが戻ってくる仕掛けを入れる:
+
+- **学習ストリーク** (`ai_university_streaks`): 連続学習日数バッジ → 7日/30日/100日
+- **学習リマインダー** (`notification-center` EF 連携): 3日未学習でプッシュ
+- **コンテンツ鮮度表示**: 「X日前に更新」を AI大学ページに表示
+- **パーソナライズ**: 学習済みプロバイダーを次回訪問時に先頭表示
+
+#### 実装ロードマップ（優先度順）
+
+| 優先度 | 機能 | 担当インスタンス | 状態 |
+| --- | --- | --- | --- |
+| ✅ | ランキングUI (`ai_university_ranking_page.dart`) | VSCode版 | ✅ 完了 (VSCode版#53) |
+| ✅ | `ai-university-content` EF (GET/UPSERT) | Web版 | ✅ 完了 (Web版#28, PR#317) |
+| ✅ | `ai_university_scores` スコア書込み (EF + Dart) | Web版+VSCode版 | ✅ 完了 (VSCode版#54 + Web版#33) |
+| ✅ | `ai_university_streaks` EF + ストリークUI | Web版+VSCode版 | ✅ 完了 (Web版#29, VSCode版#54) |
+| ✅ | `ai_university_badges` バッジ発行 EF | Web版 | ✅ 完了 (Web版#29/#33, PR#317) |
+| ✅ | シェア文言 A/B テスト (3バリエーション) | VSCode版 | ✅ 完了 (VSCode版#54) |
+| ✅ | ホームカード: ストリーク日数表示 | VSCode版 | ✅ 完了 (VSCode版#54) |
+| ✅ | SNS シェア画像生成 (OGP カード) | VSCode版 | ✅ 完了 (VSCode版#56) |
+| 🟢 中 | 学習リマインダー通知 (定期バッチ) | VSCode版 | EF action 実装済み / バッチ未設定 |
+| 🔵 低 | 他ユーザー学習状況表示 | VSCode版 | 未実装 |
 
 ### 機能強化 #T3: AI大学 マルチプロバイダー対応 + 毎週自動更新 (Windows版#30〜#31, 2026-04-11)
 
