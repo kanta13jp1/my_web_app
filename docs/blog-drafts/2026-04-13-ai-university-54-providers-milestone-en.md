@@ -1,7 +1,7 @@
 ---
 title: "Building an AI Learning Platform with 54 Providers in 3 Days (Flutter + Supabase)"
 tags: Flutter,Supabase,buildinpublic,AI,productivity
-published: false
+published: true
 ---
 
 # Building an AI Learning Platform with 54 Providers in 3 Days (Flutter + Supabase)

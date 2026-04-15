@@ -1,7 +1,7 @@
 ---
 title: "How a Bash Quoting Artifact Broke Our Production PostgreSQL Deploy"
 tags: PostgreSQL,Supabase,bash,GitHubActions,buildinpublic
-published: false
+published: true
 ---
 
 # How a Bash Quoting Artifact Broke Our Production PostgreSQL Deploy

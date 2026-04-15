@@ -483,6 +483,10 @@ web/sitemap.xml          # URL マップ
 - ✅ **第34弾 投稿成功** (PS#54, 2026-04-13): `2026-04-13-sql-shell-quoting-artifact-fix.md` → Qiita+dev.to / EN版: https://dev.to/kanta13jp1/how-a-bash-quoting-artifact-broke-our-production-postgresql-deploy-3n66
 - ✅ **第35弾 投稿成功** (PS#55, 2026-04-13): `2026-04-12-blog-publish-automation-github-actions-en.md` → dev.to: https://dev.to/kanta13jp1/how-i-published-21-technical-articles-in-one-day-using-github-actions-supabase-8cm
 - ✅ **第36弾 投稿成功** (PS#56, 2026-04-13): `2026-04-13-three-instance-parallel-dev.md` → Qiita: https://qiita.com/kanta13jp1/items/cd4ba18c7329700edf80 / dev.to: https://dev.to/kanta13jp1/running-3-parallel-claude-code-instances-to-triple-my-solo-dev-velocity-2g2p
+- ✅ **第37弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-horse-racing-ai-pipeline.md` → Qiita+dev.to
+- ✅ **第38弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-ai-university-54-providers-milestone-en.md` → dev.to
+- ✅ **第39弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-sql-shell-quoting-artifact-fix-en.md` → dev.to
+- ✅ **第40弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-three-instance-parallel-dev-en.md` → dev.to
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
 **次回候補 (第11弾以降)**:

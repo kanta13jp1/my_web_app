@@ -1,9 +1,11 @@
 # Copilot Inline Chat 検証 (2026-04-16)
 
 ## 対象ファイル
+
 `lib/pages/horse_racing_predictor_page.dart` (1019行)
 
 ## 検証目的
+
 GitHub Copilot Inline Chat (`Ctrl+I`) の効果測定・効率性確認
 
 ---
@@ -13,14 +15,16 @@ GitHub Copilot Inline Chat (`Ctrl+I`) の効果測定・効率性確認
 ### 🟢 高優先度（即実装可能・効果大）
 
 #### 1. エラーハンドリング改善
+
 **現状:**
+
 ```dart
 } catch (e) {
   if (mounted) setState(() => _error = 'データ取得失敗: $e');
 }
 ```
 
-**問題:** 
+**問題:**
 - ユーザーが実行可能なアクション（再試行など）が不明確
 - ネットワーク遅延 vs API エラー の判別ができない
 
@@ -29,7 +33,9 @@ GitHub Copilot Inline Chat (`Ctrl+I`) の効果測定・効率性確認
 - リトライボタンの動的表示（ネットワーク遅延時のみ）
 
 #### 2. ローディング UX の改善
+
 **現状:**
+
 ```dart
 body: _isLoading
     ? const Center(child: CircularProgressIndicator())
@@ -44,7 +50,9 @@ body: _isLoading
 - 各段階のラベル表示（"レースデータ取得中..." → "予想履歴取得中..." → "統計計算中..."）
 
 #### 3. Tab 未初期化時の処理
+
 **現状:**
+
 ```dart
 _tabController = TabController(length: 3, vsync: this);
 ```
@@ -62,7 +70,9 @@ _tabController = TabController(length: 3, vsync: this);
 ### 🟡 中優先度（設計が必要・改善スコープ大）
 
 #### 4. AI 予想実行のエラー処理
+
 **現状:**
+
 ```dart
 Future<void> _runAiPredictions() async {
   setState(() => _isPredicting = true);
@@ -83,6 +93,7 @@ Future<void> _runAiPredictions() async {
 - 予想失敗時の部分保存
 
 #### 5. Design Token 統一（既実装確認）
+
 **現状:** ✅ Orange `Color(0xFFFF6B35)` で統一完了
 **次手:** 他ページとの 1ページコンポーネント統一チェック
 
@@ -91,10 +102,12 @@ Future<void> _runAiPredictions() async {
 ### 🔵 低優先度（UI/UX 洗練・将来対応）
 
 #### 6. 過去予想の絞り込み
+
 **提案:** 日付フィルタ・馬名検索
 **スコープ:** 大（UI + EF 拡張）
 
 #### 7. ランキング・統計ビジュアル
+
 **提案:** 的中率チャート（円グラフ / 折れ線グラフ）
 **スコープ:** 大（新ライブラリ検討）
 
@@ -142,7 +155,8 @@ Future<void> _runAiPredictions() async {
 ---
 
 ### ⏳ 改善#2: ローディング UX（実装予定）
-```
+
+```text
 次回セッション対象:
 - LinearProgressIndicator で 3段階進捗表示 (33% → 66% → 100%)
 - 各段階ラベル表示（「レースデータ取得中...」等）
@@ -153,6 +167,7 @@ Future<void> _runAiPredictions() async {
 **design-skills 分析結果から最優先改善を実装:**
 
 #### 1. ✅ AppBar グラデーション削除（完了）
+
 **修正内容:**
 - 複雑なグラデーション処理を削除
 - `backgroundColor: const Color(0xFF1A1A1A)` に統一（DESIGN.md 標準）
@@ -164,6 +179,7 @@ Future<void> _runAiPredictions() async {
 - `flutter analyze` 0エラー確認済み
 
 #### 2. 🟢 スペーシング統一（次回継続）
+
 **検出事項:**
 - `SizedBox(height: 10)` × 15件 → 8 or 12 に統一
 - `SizedBox(height: 14)` × 2件 → 12 or 16 に統一
@@ -174,4 +190,3 @@ Future<void> _runAiPredictions() async {
 **所要時間: 10分（AppBar のみ。スペーシング統一は20+ 修正→スコープ大）**
 
 ---
-
