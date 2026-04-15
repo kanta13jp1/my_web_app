@@ -113,7 +113,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     final existing = _getTodayPost(platform);
     if (existing != null) {
       // 削除
-      await _supabase.from('tech_blog_posts').delete().eq('id', existing['id']);
+      await _supabase.from('tech_blog_posts').delete().eq('id', existing['id']).select();
     } else {
       // 追加ダイアログ
       final result = await _showAddDialog(platform);

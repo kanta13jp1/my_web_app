@@ -219,7 +219,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
 
   Future<void> _deleteTask(String id) async {
     try {
-      await _supabase.from('someday_tasks').delete().eq('id', id);
+      await _supabase.from('someday_tasks').delete().eq('id', id).select();
       await _loadTasks();
     } catch (e) {
       debugPrint('Error deleting task: $e');

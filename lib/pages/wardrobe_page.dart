@@ -214,7 +214,7 @@ class _WardrobePageState extends State<WardrobePage>
       ),
     );
     if (ok == true) {
-      await _supabase.from('wardrobe_items').delete().eq('id', item.id);
+      await _supabase.from('wardrobe_items').delete().eq('id', item.id).select();
       _fetchItems();
     }
   }

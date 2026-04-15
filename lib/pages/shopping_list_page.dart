@@ -388,7 +388,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   Future<void> _deleteItem(Map<String, dynamic> item) async {
     try {
-      await _supabase.from('shopping_items').delete().eq('id', item['id']);
+      await _supabase.from('shopping_items').delete().eq('id', item['id']).select();
       await _load();
     } catch (e) {
       if (mounted) {

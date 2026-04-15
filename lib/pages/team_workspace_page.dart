@@ -197,7 +197,7 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
 
     setState(() => _isLoading = true);
     try {
-      await _supabase.from('teams').delete().eq('id', teamId);
+      await _supabase.from('teams').delete().eq('id', teamId).select();
       await _loadTeams();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -245,7 +245,7 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
           .from('team_memberships')
           .delete()
           .eq('team_id', teamId)
-          .eq('user_id', userId);
+          .eq('user_id', userId).select();
       await _loadTeams();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

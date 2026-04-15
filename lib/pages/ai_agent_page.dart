@@ -142,7 +142,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
 
   Future<void> _deleteFlow(String id) async {
     try {
-      await _supabase.from('ai_agent_flows').delete().eq('id', id);
+      await _supabase.from('ai_agent_flows').delete().eq('id', id).select();
       await _loadFlows();
     } catch (_) {}
   }

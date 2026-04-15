@@ -160,7 +160,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             .from('daily_habit_logs')
             .delete()
             .eq('habit_id', habitId)
-            .eq('completed_date', _todayStr);
+            .eq('completed_date', _todayStr).select();
 
         // streak を減算
         final currentStreak = (habit['streak'] as int? ?? 0);
@@ -333,7 +333,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     );
     if (confirmed != true) return;
     try {
-      await _supabase.from('daily_habits').delete().eq('id', habit['id']);
+      await _supabase.from('daily_habits').delete().eq('id', habit['id']).select();
       await _load();
     } catch (e) {
       if (mounted) {

@@ -77,7 +77,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   Future<void> _deleteCategory(String id) async {
     try {
-      await supabase.from('categories').delete().eq('id', id);
+      await supabase.from('categories').delete().eq('id', id).select();
       await _fetchCategories();
     } catch (e) {
       if (mounted) {

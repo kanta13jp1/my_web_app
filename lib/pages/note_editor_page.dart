@@ -2381,7 +2381,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
           .from('note_comments')
           .delete()
           .eq('id', commentId)
-          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '');
+          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '').select();
       if (mounted) {
         setState(() => _comments.removeWhere((c) => c['id'] == commentId));
         widget.onCountChanged(_comments.length);
