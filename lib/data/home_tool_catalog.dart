@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/abstinence_guard_page.dart';
 import '../pages/admin_analytics_page.dart';
 import '../pages/agent_org_page.dart';
+import '../pages/ai_company_builder_page.dart';
 import '../pages/ai_secretary_page.dart';
 import '../pages/my_skills_page.dart';
 import '../pages/ai_search_page.dart';
@@ -673,6 +674,25 @@ List<HomeToolEntry> buildHomeToolCatalog({
       color: Colors.deepPurple,
       keywords: const <String>['AI組織', 'エージェント', 'OS'],
       onOpen: (context) => _pushPage(context, AgentOrgPage()),
+      requiresClearDeck: true,
+    ),
+    HomeToolEntry(
+      id: 'ai-company-builder',
+      sectionId: 'knowledge',
+      title: 'AI Company Builder',
+      subtitle:
+          'One sentence to gate review, dedicated managers, shared tools, tasks, and vault notes',
+      icon: Icons.approval_outlined,
+      color: const Color(0xFF2563EB),
+      keywords: const <String>[
+        'company builder',
+        'ai company',
+        'agents',
+        'vault',
+        'workflow',
+        'startup',
+      ],
+      onOpen: (context) => _pushPage(context, const AiCompanyBuilderPage()),
       requiresClearDeck: true,
     ),
     HomeToolEntry(

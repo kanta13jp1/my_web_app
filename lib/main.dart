@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:my_web_app/pages/agent_org_page.dart';
+import 'package:my_web_app/pages/ai_company_builder_page.dart';
 import 'package:my_web_app/pages/ai_agent_page.dart';
 import 'package:my_web_app/pages/behavior_review_page.dart';
 import 'package:my_web_app/pages/daily_habits_page.dart';
@@ -349,6 +350,10 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const HomePage());
           case '/agents':
             return MaterialPageRoute(builder: (_) => AgentOrgPage());
+          case '/ai-company-builder':
+            return MaterialPageRoute(
+              builder: (_) => const AiCompanyBuilderPage(),
+            );
           case '/my-ai-agent':
             return MaterialPageRoute(builder: (_) => const AiAgentPage());
           case '/ai-university-ranking':
