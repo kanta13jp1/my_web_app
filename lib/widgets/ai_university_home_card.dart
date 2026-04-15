@@ -127,14 +127,24 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     final learnedText =
         _answeredCount > 0 ? '$_answeredCount社学習済み' : '最初の1社に挑戦中';
     final streakText = _currentStreak > 0 ? ' / $_currentStreak日連続' : '';
-    await SharePlus.instance.share(
-      ShareParams(
-        text: '自分株式会社の AI 大学で学習中！\n'
+
+    // A/B テスト: バリアント選択 (50/50)
+    final variant = DateTime.now().millisecond % 2 == 0 ? 'a' : 'b';
+    final shareText = variant == 'a'
+        ? '🤖 自分株式会社の AI 大学で学習中！\n'
             '$providerCountTextのAIを1か所で横断しながら学べます。'
             '$learnedText$streakText\n'
             'https://my-web-app-b67f4.web.app/#/gemini-university\n'
-            '#AILearning #buildinpublic #FlutterWeb',
-      ),
+            '#AILearning #buildinpublic #FlutterWeb'
+        : '🎓 最新AIの違いが3分でわかる！\n'
+            'Google / OpenAI / Anthropic など $providerCountTextを '
+            'クイズ+ニュースで横断学習。\n'
+            '$learnedText$streakText\n'
+            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
+            '#AI学習 #AIリテラシー';
+
+    await SharePlus.instance.share(
+      ShareParams(text: shareText),
     );
   }
 
