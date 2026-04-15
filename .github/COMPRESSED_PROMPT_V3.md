@@ -11,9 +11,10 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
-| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
-| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
+| **VSCode版 (Claude Code)** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
+| **Windowsアプリ版 (Claude Code)** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
+| **PowerShell版 (Claude Code)** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
+| **GitHub Copilot (統合AI)** | VSCode 内インライン補完・チャット・PR レビュー / 全インスタンス横断支援 | Inline Chat: `I#` 接頭辞で簡易修正 / Copilot Chat: 複雑な判断・アーキテクチャ / `claude-agent-review.yml`: PR自動レビュー |
 
 **緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
 
@@ -212,6 +213,101 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版 専任）** — PowerShell版が `.github/workflows/` を毎セッション見直す: (a) 常にエラーになるステップを無効化、(b) push + workflow_call 二重起動防止、(c) `continue-on-error: true` 乱用排除、(d) timeout-minutes 実態確認。**加えて全ブランチの CI 失敗を監視し `.github/ci-failures/<sha>.json` に記録する（他インスタンスは次セッション冒頭で確認）**。改善後は ROADMAP に記録する
 18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
 19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他2インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
+
+---
+
+## 🤖 GitHub Copilot 統合（全インスタンス横断支援）
+
+GitHub Copilot は VS Code 内での **即座のコード補完・インライン Chat・PR 自動レビュー** を担当。Claude Code Schedule との役割分担で開発を加速。
+
+### インスタンス別の GitHub Copilot 使用パターン
+
+| 場面 | 使用方法 | 期待される成果 |
+| --- | --- | --- |
+| **コード補完（即座）** | `Ctrl+Enter` でインライン候補表示・受け入れ | 30-50% のコード時間削減・typo 自動修正 |
+| **インライン Chat** | `Ctrl+I` で「`I#` 修正内容」を入力 | 単発修正・簡易リファクタリング 5分以内 |
+| **Copilot Chat** | サイドバー Chat で複雑な判断・設計相談 | アーキテクチャ検討・パフォーマンス改善提案 |
+| **PR Auto-Review** | `claude-agent-review.yml` による全PR自動レビュー | セキュリティ・ルール違反を自動検出・修正提案 |
+| **コンテキスト活用** | `.github/COMPRESSED_PROMPT_V3.md` をシステムプロンプトに含める | プロジェクト文脈を理解した補完・提案 |
+
+### 使用禁止パターン（ルール違反）
+
+| 禁止パターン | 理由 | 推奨代替 |
+| --- | --- | --- |
+| ❌ ダミーデータ生成 | Rule #4 「ダミーデータ禁止」 | `supabase_flutter` で実データ取得 |
+| ❌ `flutter analyze` エラー受け入れ | Rule #1 「常に 0エラー」 | Copilot に「flutter analyze 0エラーで修正」指示 |
+| ❌ 複雑ロジックをフロントに配置 | Rule #5 「Edge Function ファースト」 | Copilot に「Edge Function として実装」指示 |
+| ❌ 依頼外の大量機能追加 | Rule #6 「シンプルさ優先」 | Copilot に「最小限の実装」と明示指示 |
+| ❌ セキュリティ考慮なしの API 実装 | セキュリティリスク | PR `claude-agent-review.yml` でレビュー必須 |
+
+### Copilot Chat の推奨プロンプトパターン
+
+```text
+// 複雑な判断が必要な時
+"このプロジェクトはFlutter Web + Supabase です。
+COMPRESSED_PROMPT_V3.md の開発ルール #1-#19 に従い、
+[具体的な問題・要望] について設計してください。"
+
+// パフォーマンス改善
+"このコードは [N+1クエリ/重い処理] を含む。
+Supabase Edge Function への移行方法と手順を提案してください。"
+
+// AI大学機能改善（Rule #15 連携）
+"AI大学の [具体的な改善]。
+毎セッション3Step (Step A: ホームカード / Step B: バイラル / Step C: リテンション) の内どれに該当しますか？"
+
+// UI改善（Rule #19 連携）
+"この UI コンポーネントを docs/DESIGN.md のカラートークン [具体色] を使って改善してください。
+毎セッション UI改善チェーン (design-skills / Figma MCP / AIDesigner MCP) に合わせた修正をお願いします。"
+```
+
+### GitHub Copilot と Claude Code の役割分担
+
+| 作業内容 | GitHub Copilot | Claude Code |
+| --- | --- | --- |
+| **行レベルのコード補完** | ✅ リアルタイム補完 | ❌ 不要 |
+| **簡易修正（5分以内）** | ✅ `Ctrl+I` で即対応 | ❌ オーバーキル |
+| **コード理解・リファクタリング** | ✅ 候補提示・Chat で検討 | ✅ 詳細実装・テスト |
+| **プロジェクトルール統合** | ✅ コンテキスト活用 | ✅ ルール厳格適用 |
+| **複雑な設計・判断** | 🟡 候補提示のみ | ✅ **最終判断・実装** |
+| **セッション横断メモリ** | ❌ 不可 | ✅ `/wrap-up` で永続化 |
+| **自動デプロイ・CI/CD** | ❌ 不可 | ✅ GitHub Actions 統合 |
+| **長期計画・戦略** | ❌ 不可 | ✅ ROADMAP 更新 |
+
+### `.github/COMPRESSED_PROMPT_V3.md` を Copilot のシステムプロンプトに含める方法
+
+VS Code の `settings.json` に以下を追加:
+
+```json
+{
+  "github.copilot.advanced": {
+    "extra_headers": {},
+    "debug.overrideSslVerification": false
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "copilot.chat.projectContext": [
+    ".github/COMPRESSED_PROMPT_V3.md",
+    "docs/DESIGN.md",
+    "CLAUDE.md"
+  ]
+}
+```
+
+これにより、Copilot Chat で質問する際に自動的にプロジェクトのルール・デザイン仕様を参照可能になります。
+
+### Quality Gate（Copilot 提案を受け入れる前のチェックリスト）
+
+Copilot からの提案を `accept` する前に必ず以下を確認:
+
+- [ ] `flutter analyze` で新エラーが出ていないか？（Rule #1）
+- [ ] ダミーデータを使っていないか？（Rule #4）
+- [ ] Edge Function のスロット数が増えていないか？（Rule #7 EFハードキャップ）
+- [ ] セキュリティ的に問題ないか？ （`ANTHROPIC_API_KEY` など機密がコミットされていないか）
+- [ ] 依頼のスコープ内の修正か？（Rule #6 シンプルさ優先）
+- [ ] 元のプロジェクト方針に一貫しているか？ （Notion/Supabase/Flutter Web 標準に従っているか）
 
 ---
 
