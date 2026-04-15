@@ -2,6 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+enum RaceType {
+  all('すべて'),
+  jra('中央'),
+  nar('地方');
+
+  const RaceType(this.label);
+  final String label;
+}
+
 /// 競馬自動予想・分析ページ
 /// JRA/NAR の出走表を自動取得し、Gemini AI が全レースの3連単を予想する。
 /// netkeiba 競合 — 完全自動化パイプライン版
@@ -21,6 +30,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   bool _isLoading = false;
   bool _isPredicting = false;
   String? _error;
+  RaceType _selectedRaceType = RaceType.all;
   String _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
   List<Map<String, dynamic>> _todayRaces = [];
@@ -49,7 +59,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       final results = await Future.wait([
         _supabase.functions.invoke(
           'tools-hub',
-          body: {'action': 'horseracing.today', 'date': _selectedDate},
+          body: {
+            'action': 'horseracing.today',
+            'date': _selectedDate,
+            'type': _selectedRaceType.name,
+          },
         ),
         _supabase.functions.invoke(
           'tools-hub',
@@ -58,7 +72,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         _supabase.functions.invoke(
           'tools-hub',
           body: {'action': 'horseracing.accuracy'},
-        ),
+        ), // Trailing comma added here
       ]);
       final d0 = results[0].data;
       _todayRaces = (d0 is Map && d0['races'] is List)
@@ -218,32 +232,67 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Widget _buildTodayTab() {
-    if (_todayRaces.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.sports, size: 64, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(
-              '$_selectedDate のレースデータなし',
-              style: const TextStyle(color: Colors.grey),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+          child: SegmentedButton<RaceType>(
+            segments: RaceType.values
+                .map(
+                  (type) => ButtonSegment<RaceType>(
+                    value: type,
+                    label: Text(type.label),
+                  ),
+                )
+                .toList(),
+            selected: {_selectedRaceType},
+            onSelectionChanged: (newSelection) {
+              if (newSelection.isNotEmpty) {
+                setState(() => _selectedRaceType = newSelection.first);
+                _loadAll();
+              }
+            },
+            style: SegmentedButton.styleFrom(
+              backgroundColor: const Color(0xFF1E1E1E),
+              foregroundColor: Colors.grey,
+              selectedForegroundColor: Colors.white,
+              selectedBackgroundColor: const Color(0xFFFF6D00),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              '毎朝 07:30 に自動取得されます',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: _isPredicting ? null : _runAiPredictions,
-              icon: const Icon(Icons.psychology),
-              label: const Text('AI予想を今すぐ実行'),
-            ),
-          ],
+          ),
         ),
-      );
-    }
+        Expanded(
+          child: _todayRaces.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.sports, size: 64, color: Colors.grey),
+                      const SizedBox(height: 12),
+                      Text(
+                        '$_selectedDate のレースデータなし',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '毎朝 07:30 に自動取得されます',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _isPredicting ? null : _runAiPredictions,
+                        icon: const Icon(Icons.psychology),
+                        label: const Text('AI予想を今すぐ実行'),
+                      ),
+                    ],
+                  ),
+                )
+              : _buildTodayRacesList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTodayRacesList() {
     final hasPredictions = _todayRaces.any((r) {
       final p = r['horse_predictions'];
       return p is List && p.isNotEmpty;
@@ -277,7 +326,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             itemCount: _todayRaces.length,
             itemBuilder: (ctx, i) => _buildRaceCard(_todayRaces[i]),
           ),
@@ -334,7 +383,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             decoration: BoxDecoration(
               color: _gradeColor(grade).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
-            ),
+            ), // ここにカンマを追加
             alignment: Alignment.center,
             child: Text(
               grade.length > 2 ? grade.substring(0, 2) : grade,
@@ -365,7 +414,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               statusLabel,
               style: TextStyle(
                 color: statusColor,
-                fontSize: 11,
+                fontSize: 11, // ここにカンマを追加します
                 fontWeight: FontWeight.bold,
               ),
             ),

@@ -139,11 +139,17 @@ serve(async (req) => {
       switch (action) {
         case "horseracing.today": {
           const targetDate = String(body.date ?? new Date().toISOString().split("T")[0]);
-          const { data: races, error: re } = await admin
+          const type = String(body.type ?? "all");
+          
+          let query = admin
             .from("horse_races")
             .select("*, horse_entries(*), horse_predictions(*), horse_results(*)")
-            .eq("race_date", targetDate)
-            .order("post_time", { ascending: true });
+            .eq("race_date", targetDate);
+            
+          if (type === "jra") query = query.eq("source", "jra");
+          else if (type === "nar") query = query.eq("source", "nar");
+            
+          const { data: races, error: re } = await query.order("post_time", { ascending: true });
           if (re) throw new Error(re.message);
           return json({ success: true, races: races ?? [], date: targetDate });
         }
