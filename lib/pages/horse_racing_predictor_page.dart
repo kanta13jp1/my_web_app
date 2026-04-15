@@ -169,7 +169,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFFFF6D00),
+          indicatorColor: const Color(0xFFFF6B35),
           tabs: const [
             Tab(icon: Icon(Icons.today), text: '今日のレース'),
             Tab(icon: Icon(Icons.history), text: '予想履歴'),
@@ -192,7 +192,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               child: IconButton(
                 icon: const Icon(
                   Icons.psychology,
-                  color: Color(0xFFFF6D00),
+                  color: Color(0xFFFF6B35),
                 ),
                 onPressed: _runAiPredictions,
               ),
@@ -256,7 +256,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               backgroundColor: const Color(0xFF1E1E1E),
               foregroundColor: Colors.grey,
               selectedForegroundColor: Colors.white,
-              selectedBackgroundColor: const Color(0xFFFF6D00),
+              selectedBackgroundColor: const Color(0xFFFF6B35),
             ),
           ),
         ),
@@ -295,26 +295,26 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildTodayRacesList() {
     final hasPredictions = _todayRaces.any((r) {
       final p = r['horse_predictions'];
-      return p is List && p.isNotEmpty;
+      return p != null && (p is List ? p.isNotEmpty : true);
     });
     return Column(
       children: [
         if (!hasPredictions)
           Container(
-            color: const Color(0xFFFF6D00).withValues(alpha: 0.1),
+            color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 const Icon(
                   Icons.info_outline,
-                  color: Color(0xFFFF6D00),
+                  color: Color(0xFFFF6B35),
                   size: 16,
                 ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
                     'AI予想未実行 — 右上の脳アイコンで3連単予想を生成',
-                    style: TextStyle(color: Color(0xFFFF6D00), fontSize: 12),
+                    style: TextStyle(color: Color(0xFFFF6B35), fontSize: 12),
                   ),
                 ),
                 TextButton(
@@ -360,7 +360,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       statusColor = isCorrect == true ? Colors.green : Colors.red;
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
-      statusColor = const Color(0xFFFF6D00);
+      statusColor = const Color(0xFFFF6B35);
       statusLabel = postTime ?? '予定';
     } else {
       statusColor = Colors.grey;
@@ -613,25 +613,25 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFFF6D00).withValues(alpha: 0.08),
+            const Color(0xFFFF6B35).withValues(alpha: 0.08),
             const Color(0xFF3D5AFE).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(10),
         border:
-            Border.all(color: const Color(0xFFFF6D00).withValues(alpha: 0.25)),
+            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.psychology, color: Color(0xFFFF6D00), size: 16),
+              const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
               const SizedBox(width: 6),
               const Text(
                 'AI 3連単予想',
                 style: TextStyle(
-                  color: Color(0xFFFF6D00),
+                  color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -640,13 +640,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6D00).withValues(alpha: 0.15),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
                   style:
-                      const TextStyle(color: Color(0xFFFF6D00), fontSize: 11),
+                      const TextStyle(color: Color(0xFFFF6B35), fontSize: 11),
                 ),
               ),
             ],
@@ -776,10 +776,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFFFF6D00).withValues(alpha: 0.12),
+              backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.12),
               child: const Icon(
                 Icons.psychology,
-                color: Color(0xFFFF6D00),
+                color: Color(0xFFFF6B35),
                 size: 18,
               ),
             ),
@@ -793,7 +793,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 Text(
                   '$first - $second - $third',
                   style: const TextStyle(
-                    color: Color(0xFFFF6D00),
+                    color: Color(0xFFFF6B35),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -838,7 +838,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFF6D00), Color(0xFFFF9800)],
+                colors: [Color(0xFFFF6B35), Color(0xFFFF8C5A)],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
