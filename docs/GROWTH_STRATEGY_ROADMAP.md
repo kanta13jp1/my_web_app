@@ -1,7 +1,7 @@
 # 成長戦略ロードマップ - 自分株式会社
 
 作成日: 2025-11-10
-最終更新: 2026-04-14 VSCode版#75 (AI大学ホームカードのCTAと進捗表示を改善)
+最終更新: 2026-04-16 VSCode版#76 (デザイントークン統一・horse_racing_predictor_page.dart 修正)
 現時点の登録者数: 4人
 最重要目的: Notion・EverNote・MoneyForward・X・Animaworks・Claude Code・Codex・netkeiba・OpenClaw・Claude Cowork・Chatwork・Slack・ジョブカン・Amazon・Google・Microsoft・Discord・LINE・Facebook・Liven・GitHub を上回る規模の知的生産・資産管理・SNS 統合プラットフォームを作る
 運用原則: flutter analyze を常に 0 に保ち、複雑な処理は可能な限り Supabase Edge Function へ移す
@@ -492,6 +492,11 @@
 
 - **schedule-task-monitor スキーマ完全修正** (PowerShell 2026-04-01): `task_name` → `task_id` カラム名修正、`failure` → `error` ステータス正規化、存在しない `get_schedule_task_stats()` RPC を削除しクライアント側統計計算に変更。Edge Function が `schedule_task_runs` テーブルと正しく連携するよう修正。deno lint 0件・flutter analyze 0件維持。
 - **cs-check / daily-report トリガー schema修正** (PowerShell 2026-04-01): RemoteTrigger API で `cs-check`・`daily-report` 両トリガーのプロンプトを更新。`schedule_task_runs` への POST 時に `task_id` カラムと `error` ステータスを使用するよう修正し、次回 Schedule 実行からリアルデータ記録が開始される状態を確立。
+
+### 2026-04-16 VSCode版#76 コードレビュー・デザイン改善 実装済み
+
+- **horse_racing_predictor_page.dart デザイントークン統一** (VSCode#76): 競馬AI予想ページのオレンジ色を `0xFFFF6D00` → `0xFFFF6B35` (docs/DESIGN.md 標準) に全箇所統一。修正対象: TabBar.indicatorColor / AppBar.IconButton / SegmentedButton.selectedBackgroundColor / Info通知コンテナ・アイコン・テキスト / ステータス表示色 / 予想セクショングラデーション・テキスト / 履歴セクション / 的中率カード背景グラデーション。計9箇所の色定数を正規化。flutter analyze 0 errors ✓。commit: `5bd60bde`
+- **UI品質コードレビュー実施** (VSCode#76): `get_errors` ツールで flutter analyze エラー 0件確認。Null 安全・型安全・デザイントークン整合性・Edge Function ファースト原則を全て適合。複雑な予想ロジックを Edge Function (`tools-hub`) に委譲しており、フロント側は UI に専念した設計になっていることを確認。
 
 ### 2026-04-01 PowerShell全体管理セッション #7 実装済み
 
