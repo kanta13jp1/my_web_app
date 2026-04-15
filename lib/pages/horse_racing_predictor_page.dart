@@ -11,6 +11,25 @@ enum RaceType {
   final String label;
 }
 
+enum ErrorType { network, api, unknown }
+
+ErrorType _parseErrorType(dynamic error) {
+  final msg = error.toString().toLowerCase();
+  if (msg.contains('network') ||
+      msg.contains('timeout') ||
+      msg.contains('socket') ||
+      msg.contains('connection refused')) {
+    return ErrorType.network;
+  } else if (msg.contains('statuscode') ||
+      msg.contains('api') ||
+      msg.contains('400') ||
+      msg.contains('401') ||
+      msg.contains('500')) {
+    return ErrorType.api;
+  }
+  return ErrorType.unknown;
+}
+
 /// 競馬自動予想・分析ページ
 /// JRA/NAR の出走表を自動取得し、Gemini AI が全レースの3連単を予想する。
 /// netkeiba 競合 — 完全自動化パイプライン版
@@ -30,6 +49,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   bool _isLoading = false;
   bool _isPredicting = false;
   String? _error;
+  ErrorType? _errorType;
   RaceType _selectedRaceType = RaceType.all;
   String _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
@@ -87,7 +107,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ? d2['stats'] as Map<String, dynamic>
           : {};
     } catch (e) {
-      if (mounted) setState(() => _error = 'データ取得失敗: $e');
+      final errorType = _parseErrorType(e);
+      final errorMsg = switch (errorType) {
+        ErrorType.network => 'ネットワーク接続エラー: $e\n数秒後に再度お試しください。',
+        ErrorType.api => 'データ取得に失敗しました: $e\nサーバーに問題がある可能性があります。',
+        ErrorType.unknown => 'データ取得失敗: $e',
+      };
+      if (mounted) {
+        setState(() {
+          _error = errorMsg;
+          _errorType = errorType;
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -211,11 +242,43 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 8),
-                      FilledButton(
+                      Icon(
+                        _errorType == ErrorType.network
+                            ? Icons.cloud_off
+                            : _errorType == ErrorType.api
+                                ? Icons.error
+                                : Icons.warning,
+                        size: 64,
+                        color: _errorType == ErrorType.network
+                            ? Colors.orange
+                            : Colors.red,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        _errorType == ErrorType.network
+                            ? 'ネットワーク接続エラー'
+                            : _errorType == ErrorType.api
+                                ? 'サーバーエラー'
+                                : 'エラーが発生しました',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
                         onPressed: _loadAll,
-                        child: const Text('再試行'),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('再試行'),
                       ),
                     ],
                   ),
