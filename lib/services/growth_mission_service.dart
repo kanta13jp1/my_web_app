@@ -869,8 +869,9 @@ $inviteUrl
 
     try {
       final response = await client.functions.invoke(
-        'growth-acquisition-report',
+        'growth-hub',
         body: <String, dynamic>{
+          'action': 'acquisition.report',
           'windowDays': windowDays,
         },
       );
