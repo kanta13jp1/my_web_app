@@ -1353,7 +1353,7 @@ serve(async (req: Request) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-5",
+            model: "claude-sonnet-4-6",
             max_tokens: 512,
             messages: [{ role: "user", content: prompt }],
           }),
@@ -1433,7 +1433,7 @@ serve(async (req: Request) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            model: "claude-sonnet-4-5",
+            model: "claude-sonnet-4-6",
             max_tokens: 512,
             messages: [{ role: "user", content: prompt }],
           }),
