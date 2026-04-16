@@ -3,10 +3,7 @@ name: Scheduled Analysis Batch
 # 復活させる場合はシークレット設定後に on: の schedule を戻すこと
 
 on:
-    workflow_dispatch:  # 手動実行
-    schedule:
-        # UTC時刻。JST = UTC+9 なので、01:00 UTC = 10:00 JST (朝10時)
-        - cron: '0 1,7,13,19 * * *'  # 毎6時間 (10:00, 16:00, 22:00, 04:00 JST)
+    workflow_dispatch:  # 手動実行のみ (schedule は SUPABASE_SERVICE_ROLE_KEY/GEMINI_API_KEY 設定後に戻す)
 
 concurrency:
     group: cron-batch

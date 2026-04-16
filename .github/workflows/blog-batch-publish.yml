@@ -35,7 +35,7 @@ jobs:
   batch:
     name: Batch Publish All Drafts
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 20
 
     steps:
       - name: Checkout

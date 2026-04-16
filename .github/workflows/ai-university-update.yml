@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: ai-university-update
-  cancel-in-progress: true  # 2時間毎のため前回実行中なら新しい実行を優先
+  cancel-in-progress: false  # 前回実行をキャンセルせず完了させる (エラー隠蔽防止)
 
 permissions:
   contents: write
