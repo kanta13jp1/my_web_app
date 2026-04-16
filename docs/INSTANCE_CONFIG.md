@@ -1,14 +1,14 @@
 # インスタンス設定・制約カタログ — 自分株式会社 マルチAI開発ガイド
 
 **作成**: 2026-04-16 (VSCode版#79)
-**最終更新**: 2026-04-16 (PowerShell版 — 4インスタンス体制 + Multi-AI + Learning Mode + 制約解消フロー)
+**最終更新**: 2026-04-16 (PowerShell版 — v2.1.110 新機能統合・/recap公式Learning Mode・WEB版役割再定義・CODEX/Gemini/Copilot詳細化)
 **更新責任者**: 制約を発見したインスタンスが随時更新。構造変更は PowerShell版 が担当。
 
 > **このドキュメントの目的**: 各AIインスタンスの「できること・できないこと」を一元管理し、
 > セッション冒頭の自動確認と役割分担の最適化に使用する。
 > **毎セッション冒頭に必ずこのドキュメントを参照して推奨プロンプトを確認すること。**
 
----
+ --- 
 
 ## Rule 22: セッション開始チェックリスト（毎セッション必須）
 
@@ -22,6 +22,7 @@ echo "現在: $CURRENT / 最新: $LATEST"
 ```
 
 **現在の確認済みバージョン**: `2.1.110` (確認日: 2026-04-16, PowerShell版)
+> `/doctor` 実行済み: playwright MCP 重複エントリを修正 (local scope削除, project scope `.mcp.json` に統一)
 
 ### Step 2: バージョン更新があった場合 — 必須アクション
 
@@ -73,46 +74,67 @@ codex --version 2>/dev/null || echo "codex: not installed"
 更新があった場合は本ドキュメント末尾の「変更ログ」に追記し、
 影響を受ける推奨プロンプトを更新して git push する (PowerShell版 が担当)。
 
----
+ --- 
 
 ## 新機能追跡ログ（バージョン更新時に追記）
 
 | バージョン | 機能名 | 概要 | 開発フロー組み込み | 担当インスタンス |
 | --- | --- | --- | --- | --- |
+| **2.1.108** | **`/recap` 🆕 公式 Learning Mode** | セッション開始時に `/recap` → 前セッション作業サマリーを自動生成。**WEB版でも動作** | ✅ 全推奨プロンプト Step 1 に追加済み | 全インスタンス |
+| **2.1.108** | **`ENABLE_PROMPT_CACHING_1H` 🆕** | キャッシュTTL を5分→1時間に延長。長いセッションのトークンコスト最適化 | ⚠️ 要設定: ローカル `.env` or shell profile | ローカルインスタンス |
+| **2.1.105** | **PreCompact hook 🆕** | コンパクション前にフック実行。`exit 2` でブロック → 記憶消失防止 | ⚠️ 要設定: `.claude/hooks/pre-compact` 追加検討 | 全インスタンス |
+| **2.1.105** | **`/proactive` (= `/loop` alias) 🆕** | `/loop` の別名。会話内で反復タスクを起動しやすい | ✅ 利用可能 | 全インスタンス |
+| **2.1.110** | **`/tui` フルスクリーンモード 🆕** | フリッカーなし全画面表示。`/focus` で要約ビュー切替 | ⚠️ 任意 | ローカルインスタンス |
+| **2.1.110** | **Push notifications 🆕** | Remote Control 設定後、長時間タスク完了をモバイルに通知 | ⚠️ 要設定: Windowsアプリ版 Remote Control | Windowsアプリ版 |
+| **2.1.110** | **`/doctor` MCP重複検出 🆕** | 複数スコープで同一MCP定義があると警告 (`f` キーで one-click 修正) | ✅ 毎セッション `/doctor` 実行 (PowerShell版担当) | PowerShell版 |
+| **2.1.98** | **Monitor tool 🆕** | バックグラウンドスクリプトのイベントをストリーミング監視 | ✅ GHA 長時間ジョブ監視に活用可 | ローカルインスタンス |
 | 2.1.x (2026-04) | **Routines** | Desktop版専用サーバーレス自動化スケジューラ | ✅ 組み込み済み (Windowsアプリ版専任) | Windowsアプリ版 |
 | 2.1.x (2026-04) | **Extended Thinking (ultrathink)** | 5段階思考トリガー (`think`〜`ultrathink`) | ✅ 各推奨プロンプトに追加済み | 全インスタンス |
 | 2.1.x (2026) | **Adaptive Thinking** | Opus 4.6/Sonnet 4.6 が effort 値に応じて思考量を自動調整 | ✅ WEB版 Opus 4.6 使用に反映済み | 全インスタンス |
 | 2.1.x (2026) | **Cross-session Memory** | セッション間でユーザー情報・設計方針を記憶 | ✅ `memory/` + NotebookLM Master Brain で実装済み | 全インスタンス |
-| 2.1.x (2026) | **Learning Mode (Codebase Priming)** | セッション開始時に MEMORY.md + git log を読んでコードベースを「学習」させる | ✅ 下記「Learning Mode」セクション参照 | 全インスタンス |
 | — | *(次のバージョン更新時に追記)* | | | |
 
----
+ --- 
 
 ## Learning Mode — コードベース学習システム
 
-Claude Code には公式の "Learning Mode" スイッチはないが、以下の仕組みで **セッション開始時のコードベース理解を最大化** する。
-バージョン更新で公式 Learning Mode が追加された場合はここに記録する。
+**v2.1.108 で `/recap` コマンドが追加され、公式の Learning Mode が実装された。**
+セッション開始時に `/recap` を実行すると前回の作業サマリーが自動生成される。**WEB版でも動作する。**
 
-### 3層学習アーキテクチャ
+### `/recap` — 公式 Learning Mode (v2.1.108+)
 
-| 層 | 仕組み | 更新タイミング |
-| --- | --- | --- |
-| **L1: セッション内リアルタイム** | claude-mem (SQLite + Gemini圧縮) — ツール呼び出しを自動記録・ベクター検索 | 自動 (hooks) |
-| **L2: セッション間永続** | `memory/` mdファイル — 成功/失敗パターン・プロジェクト状態 | セッション終了時 (`/wrap-up`) |
-| **L3: プロジェクト横断深層** | NotebookLM Master Brain — アーキテクチャ決定・競合調査成果物 | `/wrap-up` 時に source add |
+```
+/recap
+```
+
+- セッション復帰時に「前回何をしていたか」を即座に把握できる
+- 全インスタンス共通で動作 (WEB版 ✅ / ローカル版 ✅)
+- 設定: `/config` → `recap` を有効化
+
+### 4層学習アーキテクチャ (更新版)
+
+| 層 | 仕組み | タイミング | WEB版可否 |
+| --- | --- | --- | --- |
+| **L0: 公式リキャップ** | `/recap` — 前セッション作業サマリーを自動生成 | セッション開始時に手動実行 | ✅ 可 |
+| **L1: セッション内リアルタイム** | claude-mem (SQLite + Gemini圧縮) — ツール呼び出しを自動記録 | 自動 (hooks) | ❌ 不可 |
+| **L2: セッション間永続** | `memory/` mdファイル — 成功/失敗パターン・プロジェクト状態 | `/wrap-up` 時 | ❌ 不可 (GitHub MCP経由で参照可) |
+| **L3: プロジェクト横断深層** | NotebookLM Master Brain — アーキテクチャ決定・競合調査 | `/wrap-up` 時に source add | ❌ 不可 |
 
 ### セッション開始時の「Learning Mode」手順 (全インスタンス共通)
 
 ```bash
+# Step 0: [全インスタンス共通] /recap で前セッションのサマリーを確認
+/recap
+
 # Step 1: memory/MEMORY.md を読んで前回の成功パターン・禁止事項を確認
 # (CLAUDE.md の system-reminder で自動ロードされる)
 
-# Step 2: git log で直近の変更を把握 (別インスタンスの作業を把握)
+# Step 2: git log で直近の変更を把握 (別インスタンスの作業を把握) ← ローカルのみ
 git log --oneline -5
 
-# Step 3: 作業ファイルのコンテキストを読む (3ファイル未満なら直接 Read、3以上なら NotebookLM)
-# ローカルインスタンス: notebooklm use jibun-master-brain && notebooklm ask "今日の作業コンテキスト"
-# WEB版: WebFetch で対象ファイルを確認
+# Step 3: 作業ファイルのコンテキストを読む (ローカル: 3ファイル未満なら直接Read/3以上はNotebookLM)
+# ローカル: notebooklm use jibun-master-brain && notebooklm ask "今日の作業コンテキスト"
+# WEB版: GitHub MCP → list_commits で直近コミットを確認
 
 # Step 4: MEMORY.md の pending タスクを確認して今日の作業を決定
 ```
@@ -124,10 +146,11 @@ git log --oneline -5
 | 定型実装 (lint修正・minor bug fix) | Sonnet 4.6 | なし (デフォルト) |
 | 新機能設計・EF実装 | Sonnet 4.6 | `think deeply` |
 | アーキテクチャ判断・大規模リファクタ | Opus 4.6 | `ultrathink` |
-| 競合調査・戦略判断 (WEB版向け) | Opus 4.6 | `ultrathink` |
+| 競合調査・戦略判断 (WEB版向け) | **Opus 4.6** | `ultrathink` |
 | NotebookLM連携 (ローカル版) | Sonnet 4.6 | — (NotebookLMが重い処理を担当) |
+| `/recap` 後の方針決定 | Sonnet 4.6 | `think` | |
 
----
+ --- 
 
 ## インスタンス制約カタログ（確認済み）
 
@@ -200,7 +223,7 @@ git log --oneline -5
 - Opus 4.6 + ultrathink でのアーキテクチャレビュー (実行不要の純粋推論タスク)
 - `docs/research/` へのリサーチ成果物保存 (GitHub MCP 経由)
 
----
+ --- 
 
 ## モード・モデル指定ガイド
 
@@ -238,7 +261,7 @@ git log --oneline -5
 | **PowerShell版** | Sonnet 4.6 + `think deeply` | Opus 4.6 + `ultrathink` | CI/CD設計 |
 | **WEB版** | **Opus 4.6** + `think deeply` | **Opus 4.6** + `ultrathink` | CLI不可の分、思考力で補完 |
 
----
+ --- 
 
 ## インスタンス別 役割分担 (確定版 2026-04-16)
 
@@ -282,7 +305,7 @@ git log --oneline -5
 | **代替** | GitHub MCP (gh代替) / WebSearch+WebFetch (notebooklm代替) |
 | **禁止** | CLI依存タスク全般 |
 
----
+ --- 
 
 ## フォールバックAI詳細設定 (Claude レート制限到達時のみ)
 
@@ -338,7 +361,7 @@ npm install -g @openai/codex
 | バージョン確認 | VS Code Extensions パネルで確認 | |
 | リリースノート | https://cloud.google.com/code/docs/vscode/release-notes | |
 
----
+ --- 
 
 ## Routines 詳細設定 (Windowsアプリ版専任)
 
@@ -370,7 +393,7 @@ Routine = プロンプト + リポジトリ + コネクター + トリガー
 
 **→ Windowsアプリ版が次セッションで Routines 設定を実施すること**
 
----
+ --- 
 
 ## 各インスタンス推奨プロンプト (毎セッション冒頭に使用)
 
@@ -381,27 +404,40 @@ Routine = プロンプト + リポジトリ + コネクター + トリガー
 ```
 このインスタンスはVSCode版です。担当: lib/ + supabase/functions/
 
-【Step 1: バージョン確認】
+【Step 0: /recap — 公式 Learning Mode】
+/recap
+→ 前セッションのサマリーを確認してから作業開始
+
+【Step 1: バージョン確認 + /doctor】
 claude --version && npm show @anthropic-ai/claude-code dist-tags.latest
+/doctor
+→ バージョンが古ければ: npm update -g @anthropic-ai/claude-code
+→ 更新あり: https://github.com/anthropics/claude-code/releases でリリースノート確認
+→ 新機能 → docs/INSTANCE_CONFIG.md の「新機能追跡ログ」に追記 (cross-instance-pr 経由で PowerShell版に依頼)
 
 【Step 2: Learning Mode — コンテキスト確認】
 git log --oneline -5
-# MEMORY.md は自動ロード済み
+# MEMORY.md は system-reminder で自動ロード済み
+# 3ファイル以上参照する場合: notebooklm use jibun-master-brain → notebooklm ask "今日の作業コンテキスト"
 
 【Step 3: 今日のタスク候補 (優先度順)】
 1. Rule 8: Playwright で https://my-web-app-b67f4.web.app/ を確認 → コンソールエラー修正
 2. Rule 19: design-skills サブエージェント起動 → 本日のUI改善1ページ実施
 3. cross-instance-prs/ の pending 確認 → 処理
-4. AI大学v2: docs/superpowers/plans/2026-04-16-ai-university-v2.md の続き
-5. quota dashboard 実装: docs/cross-instance-prs/20260416_quota_dashboard_ui.md 参照
+4. AI大学v2: docs/superpowers/plans/ の続き
 
 【推奨思考モード】
 新ページ実装・EF設計: "think deeply してから実装してください"
 アーキテクチャ全体: "ultrathink して最適な実装を提案してください"
 定型修正: /fast モードで高速処理
 
+【キャッシュ最適化 (任意)】
+# 1時間キャッシュTTL を有効化 (長時間セッション向け)
+export ENABLE_PROMPT_CACHING_1H=1
+
 【フォールバックAI (Claude 429時のみ)】
-.dart → Gemini Code Assist (VS Code: Cmd+Shift+P → "Gemini Code Assist: Start")
+.dart → Gemini Code Assist (VS Code: Cmd+Shift+P → "Gemini: Start Chat")
+.py/.ts → codex (npm install -g @openai/codex でインストール後)
 ```
 
 ### Windowsアプリ版 推奨プロンプト
@@ -409,9 +445,16 @@ git log --oneline -5
 ```
 このインスタンスはWindowsアプリ版 (Claude Code Desktop) です。担当: docs/ + supabase/migrations/
 
+【Step 0: /recap — 公式 Learning Mode】
+/recap
+→ 前セッションのサマリーを確認してから作業開始
+
 【Step 1: バージョン確認 + Routines確認】
 claude --version && npm show @anthropic-ai/claude-code dist-tags.latest
-# Routines: code.claude.com/docs/en/routines を参照 (Desktop専用・上限15回/日)
+→ バージョンが古ければ: npm update -g @anthropic-ai/claude-code
+→ 更新あり: リリースノート確認 → 制約解消があれば INSTANCE_CONFIG.md を更新
+# Routines: Desktop アプリ → Routines タブで確認 (上限: Pro 5回/日 / Max 15回/日)
+# Push notifications: Desktop → Remote Control → Enable push notifications (v2.1.110+)
 
 【Step 2: Learning Mode — コンテキスト確認】
 git log --oneline -5
@@ -421,13 +464,18 @@ notebooklm ask "直近セッションの変更内容と今日取り組むべき�
 【Step 3: 今日のタスク候補 (優先度順)】
 1. Routines 設定: ai-university-update / blog-draft を Routine 化できるか検討
    → Desktop: Routines タブ → New Routine → スケジュール設定
-2. /ai-university-add-provider で新規プロバイダー候補を評価・追加
+2. /ai-university-add-provider で新規プロバイダー候補を評価・追加 (PYTHONUTF8=1 必須)
 3. Rule 10: docs/ 全件分析 → 鮮度切れ修正
 4. supabase/migrations/ で AI大学v2テーブル作成
 
 【推奨思考モード】
 Routines設計: "think about the best Routine structure for ai-university-update"
-provider追加: 通常モード (PYTHONUTF8=1 必須)
+provider追加 + docs修正: 通常モード (PYTHONUTF8=1 必須)
+設計判断: "think deeply"
+
+【フォールバックAI (Claude 429時のみ)】
+.dart → Gemini Code Assist (Desktop版 VS Code 拡張)
+.py/.ts → codex
 ```
 
 ### PowerShell版 推奨プロンプト
@@ -435,106 +483,179 @@ provider追加: 通常モード (PYTHONUTF8=1 必須)
 ```
 このインスタンスはPowerShell版です。担当: .github/workflows/ + INSTANCE_CONFIG.md
 
-【Step 1: バージョン確認 + フォールバックAI確認】
+【Step 0: /recap — 公式 Learning Mode】
+/recap
+→ 前セッションのサマリーを確認してから作業開始
+
+【Step 1: バージョン確認 + /doctor + フォールバックAI確認】
 claude --version; npm show @anthropic-ai/claude-code dist-tags.latest
+/doctor
+→ バージョン更新あり: npm update -g @anthropic-ai/claude-code
+→ リリースノート確認: WebFetch https://github.com/anthropics/claude-code/releases
+→ 新機能 → 新機能追跡ログ更新 → 制約解消 → 役割分担見直し → 推奨プロンプト更新
 gh copilot --version 2>$null; codex --version 2>$null
 
 【Step 2: Learning Mode — コンテキスト確認】
 git log --oneline -5
 
 【Step 3: 今日のタスク候補 (優先度順)】
-1. Rule 17: GH Actions 全20本の健全確認
+1. Rule 17: GH Actions 全ワークフロー健全確認
    gh run list --limit 20 --json name,status,conclusion | ConvertFrom-Json
-2. docs/INSTANCE_CONFIG.md 更新 (制約変化・推奨プロンプト更新)
+2. docs/INSTANCE_CONFIG.md 更新 (制約変化・バージョン変更・推奨プロンプト更新)
 3. T-1: 未投稿ブログのディスパッチ
    gh workflow run blog-publish.yml -f draft_path="docs/blog-drafts/YYYY-MM-DD.md" -f platforms="qiita,devto"
-4. VSCode版 quota dashboard 実装完了確認 → cross-instance-pr クローズ
+4. cross-instance-prs/ の pending 確認・マージ依頼処理
 
 【推奨思考モード】
 CI/CDワークフロー設計: "think deeply してから実装"
 Rule 17定期チェック: 通常モード
+INSTANCE_CONFIG.md 更新: 通常モード
+
+【フォールバックAI (Claude 429時のみ)】
+.yml/.sql/.md → GitHub Copilot (gh extension install github/gh-copilot)
+.py/.ts → codex
 ```
 
 ### WEB版 推奨プロンプト
 
 ```
 このインスタンスはWEB版Claude Code (claude.ai/code) です。
+モデル: Opus 4.6 (CLI不可の分、思考力で補完)
 
-【重要: WEB版の制約】
-notebooklm CLI / flutter analyze / deno lint / gh CLI / git CLI は使用不可。
-代替: WebSearch/WebFetch (リサーチ) + GitHub MCP (コード操作) を使用してください。
+【制約サマリー (2026-04-16 確認済み)】
+❌ 使用不可: notebooklm CLI / flutter analyze / deno lint / gh CLI / git CLI / ローカルFS / Hooks / Routines
+✅ 使用可能: /recap / WebSearch / WebFetch / GitHub MCP / Playwright MCP / Skills / Opus 4.6
 
-【Step 1: WEB版制約の変更確認】
+【Step 0: /recap — 公式 Learning Mode (WEB版でも動作!)】
+/recap
+→ 前セッションのサマリーを確認。WEB版唯一の公式セッション記憶復元手段
+
+【Step 1: バージョン・制約変更確認】
 WebFetch: https://github.com/anthropics/claude-code/releases
 → WEB版で新機能が利用可能になっていないか確認
-→ 変更があれば docs/INSTANCE_CONFIG.md を更新 (cross-instance-pr 経由で PowerShell版に依頼)
+→ 制約解消があれば GitHub MCP push_files で docs/INSTANCE_CONFIG.md を更新
 
-【Step 2: Learning Mode — コンテキスト確認】
+【Step 2: Learning Mode — 並行インスタンス確認】
 GitHub MCP: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
-→ 直近5コミットで並行インスタンスの作業内容を把握
+→ 直近5コミットで VSCode版・PS版・Windowsアプリ版の作業を把握
 
 【Step 3: 今日のタスク候補 (優先度順)】
-1. WebSearch で AI大学新規プロバイダー候補を3軸評価してレポート作成
+1. ultrathink でアーキテクチャレビュー (実行不要の純粋推論タスク)
+   → GitHub MCP で最新コードを確認 → 改善提案を docs/research/ に保存
+2. WebSearch で AI大学新規プロバイダー候補を3軸評価
    → GitHub MCP push_files で docs/research/YYYY-MM-DD-providers.md に保存
-2. GitHub MCP でオープンPRのコードレビュー実施
+3. GitHub MCP でオープンPRのコードレビュー
    → list_pull_requests → pull_request_read → pull_request_review_write
-3. 競合21社最新動向調査 → docs/research/YYYY-MM-DD-competitors.md に保存
-4. ブログ英語版の品質レビュー・改善提案
+4. 競合21社最新動向調査 → docs/research/YYYY-MM-DD-competitors.md に保存
+5. ブログ英語版の品質レビュー・改善 (GitH MCP で draft 確認 → 改善提案)
 
 【モデル設定】
 このセッションは Opus 4.6 を使用してください。
 複雑な分析・アーキテクチャレビューには必ず "ultrathink" を含めてください。
 
-【GitHub MCP 使用例】
-PR一覧: list_pull_requests({state:"open"})
-PR確認: pull_request_read({pullRequestNumber: 123})
-レビュー: pull_request_review_write({pullRequestNumber:123, body:"...", event:"COMMENT"})
-ファイル保存: push_files({owner:"kanta13jp1", repo:"my_web_app", branch:"main", files:[{path:"...",content:"..."}], message:"..."})
+【GitHub MCP 使用チートシート】
+コミット確認: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
+PR一覧:       list_pull_requests({state:"open"})
+PR確認:       pull_request_read({pullRequestNumber: 123})
+レビュー:     pull_request_review_write({pullRequestNumber:123, body:"...", event:"COMMENT"})
+ファイル保存: push_files({owner:"kanta13jp1", repo:"my_web_app", branch:"main",
+              files:[{path:"docs/research/YYYY.md", content:"..."}], message:"research: ..."})
+Issue作成:    issue_write({owner:"kanta13jp1", repo:"my_web_app", title:"...", body:"..."})
+
+【制約発見時の記録手順】
+1. GitHub MCP push_files で docs/INSTANCE_CONFIG.md を更新
+2. Issue 作成: タイトル "[制約変更] WEB版で XXX が [使用可/不可] になった"
+   → PowerShell版が次セッションで INSTANCE_CONFIG.md の role 分担を見直す
 ```
 
 ### CODEX CLI 使用時プロンプト (Claude 429時のフォールバック)
 
+> **インストール**: `npm install -g @openai/codex`
+> **バージョン確認**: `codex --version`
+> **リリースノート**: https://github.com/openai/codex/releases
+> **対象ファイル**: `.py` / `.ts` のみ。`.dart` は Gemini Code Assist を使用
+
 ```
 Claude が 429 エラーのため CODEX CLI で続行します。
-対象ファイル: [.py または .ts ファイルのみ — Dartは Gemini Code Assist を使用]
 
-【プロジェクトコンテキスト (必ず貼り付け)】
+【プロジェクトコンテキスト (必ず冒頭に貼り付け)】
 ---CLAUDE.md 要約---
 プロジェクト: Flutter Web + Supabase (自分株式会社)
 技術: Flutter (Dart) + Deno Edge Functions (TypeScript) + Python スクリプト
-ルール: flutter analyze 0エラー / deno lint 0エラー / ダミーデータ禁止
----
+ルール: flutter analyze 0エラー / deno lint 0エラー / ダミーデータ禁止 / EF 50本以下
+ --- 
 
 【対象ファイルの現在の内容】
-[ここにファイル内容を貼り付け]
+[ここにファイル内容を貼り付け — 関連型定義・import も含める]
 
 【タスク】
 [具体的な実装内容]
 
-【完了後】
-必ず VSCode版 Claude Code で flutter analyze / deno lint を実行して検証してください。
+【完了後の必須確認】
+1. VSCode版 Claude Code で flutter analyze (Dart変更時)
+2. VSCode版 Claude Code で deno lint (TypeScript EF変更時)
+3. 実装をClaude Code にコミット依頼
 ```
 
 ### GitHub Copilot 使用時プロンプト (PR Review + フォールバック)
 
+> **インストール**: `gh extension install github/gh-copilot`
+> **バージョン確認**: `gh copilot --version`
+> **リリースノート**: https://github.blog/changelog/ (copilot で検索)
+> **推奨モデル**: Auto (GPT-4.1 / Claude Sonnet 4.6 自動選択) または Claude Sonnet 4.6 固定
+
 ```
-# PR自動レビュー (常時稼働)
+# PR自動レビュー (常時稼働 — claude-agent-review.yml の補完として)
 以下の観点でこのPRをレビューしてください:
-- セキュリティ: SQL injection / XSS / 認証漏れ
-- パフォーマンス: N+1クエリ / 不要な再レンダリング
-- Lint: flutter analyze / deno lint エラー
-- CLAUDE.md ルール違反: ダミーデータ使用 / EF 50本超過 / etc
+- セキュリティ: SQL injection / XSS / 認証漏れ / シークレットハードコーディング
+- パフォーマンス: N+1クエリ / 不要な再レンダリング / 重いウィジェットのキャッシュ漏れ
+- Lint: flutter analyze / deno lint エラーの可能性
+- CLAUDE.md ルール違反: ダミーデータ使用 / EF 50本超過 / ダミーデータ使用
 
-モデル選択: Auto (GPT-4.1 / Claude Sonnet 4.6 自動選択)
+モデル選択: Auto
+Agent Mode: 有効化推奨 (複数ファイル横断レビュー)
 
----
+ --- 
 # フォールバック (Claude 429時 — .yml/.sql/.md ファイル)
 対象: [ファイルパス]
 タスク: [変更内容]
 プロジェクトコンテキスト: Flutter Web + Supabase / GitHub Actions / PostgreSQL
 ```
 
----
+### Gemini Code Assist 使用時プロンプト (Flutter/Dart + フォールバック)
+
+> **インストール**: VS Code 拡張 "Google Cloud Code" または "Gemini Code Assist"
+> **バージョン確認**: VS Code Extensions パネルで確認
+> **リリースノート**: https://cloud.google.com/code/docs/vscode/release-notes
+> **推奨モデル**: Gemini 2.5 Pro (VS Code 拡張設定から変更可)
+> **対象ファイル**: `.dart` (Flutter/Dart に最適化)
+
+```
+# 通常使用: Claude Code と並行してIDE補完として利用
+# VS Code: Cmd+Shift+P → "Gemini Code Assist: Start Chat"
+
+# フォールバック (Claude 429時 — .dart ファイル)
+プロジェクト: 自分株式会社 Flutter Web アプリ
+技術スタック: Flutter Web (Dart) + Supabase
+
+【プロジェクトルール (必ず確認)】
+- flutter analyze 0エラー必須
+- Theme.of(context) + ThemeService を使用 (直接 Color() 禁止)
+- Supabase リアルデータのみ (ダミーデータ禁止)
+- docs/DESIGN.md のカラートークン使用
+
+【現在のファイル】
+[lib/ 内のファイル内容を貼り付け]
+
+【タスク】
+[具体的な実装内容]
+
+【完了後】
+1. flutter analyze でエラーを確認
+2. Claude Code (VSCode版) にコミット依頼
+```
+
+ --- 
 
 ## 制約発見・解消時の更新手順
 
@@ -567,7 +688,30 @@ memory/feedback_success_YYYYMMDD_[instance].md
 
 PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-pr 経由で依頼)
 
----
+ --- 
+
+## 制約 Kaizen ループ (毎セッション)
+
+```
+セッション開始
+    ↓
+/recap + /doctor + バージョン確認
+    ↓
+制約カタログと現実を比較
+    ├── 制約が増えた → 制約カタログ更新 → 役割分担見直し → 推奨プロンプト更新
+    ├── 制約が解消した → 制約カタログ更新 → 役割拡大 → 推奨プロンプト更新
+    └── 変化なし → そのまま作業へ
+    ↓
+作業中に制約を新発見
+    → memory/feedback_correction_YYYYMMDD_[instance].md に即記録
+    → Issue 作成: "[制約変更] XXX インスタンスで YYY が ZZZ になった"
+    → PowerShell版 が次セッションで INSTANCE_CONFIG.md を更新
+    ↓
+セッション終了: /wrap-up
+    → 制約変化・新機能発見 を memory/ に保存
+```
+
+ --- 
 
 ## 変更ログ
 
@@ -575,3 +719,4 @@ PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-
 | --- | --- | --- |
 | 2026-04-16 | 初版作成。WEB版制約確認・Routines追加・モデル設定・推奨プロンプト追加 | VSCode版#79 |
 | 2026-04-16 | 大幅改訂。WEB版制約詳細化・Learning Mode追加・フォールバックAI詳細・全インスタンス推奨プロンプト更新・制約解消フロー追加 | PowerShell版 |
+| 2026-04-16 | v2.1.110 対応。/recap公式Learning Mode追加・新機能追跡ログ(v2.1.97-110)・全推奨プロンプトに/recap追加・Gemini Code Assist推奨プロンプト追加・制約KaizenループDoc追加・playwright MCP重複修正記録 | PowerShell版 |

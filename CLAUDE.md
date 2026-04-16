@@ -103,21 +103,78 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 競合21社調査 → `notebooklm source add-research`
    - ドキュメント全体俯瞰 → NotebookLM source 追加後に要約
    - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
-   
+
    Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
    **WEB版インスタンス**は `notebooklm` CLI 不可のため WebSearch/WebFetch + Opus 4.6 ultrathink で代替し `docs/research/` に成果物を保存する。
 
-15. **毎セッション冒頭: バージョン確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
+15. **毎セッション冒頭: /recap + バージョン確認・リリースノート確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
+
+   **Step 0: /recap — 公式 Learning Mode (v2.1.108+・全インスタンス共通)**
+
+   ```
+   /recap
+   ```
+   セッション開始時に必ず `/recap` を実行し、前回の作業サマリーを確認してから作業開始する。
+   **WEB版でも動作する。** CLI が使えない WEB版では `/recap` が唯一の前セッション文脈確認手段。
+
+   **Step 1: バージョン確認 (ローカルインスタンスのみ)**
 
    ```bash
-   # Claude Code バージョン確認 (ローカルインスタンスのみ)
-   claude --version && npm show @anthropic-ai/claude-code dist-tags.latest
+   CURRENT=$(claude --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+   LATEST=$(npm show @anthropic-ai/claude-code dist-tags.latest)
+   echo "現在: $CURRENT / 最新: $LATEST"
    ```
 
-   - インストール済みと最新が異なれば `npm update -g @anthropic-ai/claude-code` で更新
-   - 更新後は `docs/INSTANCE_CONFIG.md` の制約カタログを WebFetch で再確認し、解消された制約を削除 + 役割分担を更新する
-   - **制約を発見したセッション**では `docs/INSTANCE_CONFIG.md` を即座に更新し、`memory/feedback_correction_YYYYMMDD_[instance].md` にも記録する
-   - **各インスタンスの推奨プロンプト**: `docs/INSTANCE_CONFIG.md` の「各インスタンス推奨プロンプト」セクションを参照して次回セッションを開始する
+   **Step 2: バージョンが古ければ更新**
+
+   ```bash
+   npm update -g @anthropic-ai/claude-code
+   ```
+
+   **Step 3: 更新があった場合は必ずリリースノートを確認**
+
+   ```bash
+   # WebFetch でリリースノートを確認 (全インスタンス共通)
+   # URL: https://claudefa.st/blog/guide/changelog
+   # または: https://github.com/anthropics/claude-code/releases
+   ```
+
+   リリースノート確認後、以下を実施する:
+
+   | 確認項目 | 対応 |
+   | --- | --- |
+   | **新機能追加** | `docs/INSTANCE_CONFIG.md` の「新機能」セクションに追記 → 開発フローへの組み込み可否を判断 → 有用であれば即 CLAUDE.md の該当 Rule に追記 |
+   | **WEB版制約の解消** | `docs/INSTANCE_CONFIG.md` の WEB版制約カタログを更新 → WEB版の役割分担を見直し |
+   | **他インスタンス制約の変化** | 同様に制約カタログを更新 |
+   | **Routines 上限変更** | `docs/INSTANCE_CONFIG.md` の Routines セクションを更新 |
+   | **モデル追加** | `docs/INSTANCE_CONFIG.md` の「利用可能モデル」表を更新 |
+
+   **Step 4: 制約・新機能を docs/INSTANCE_CONFIG.md に記録**
+
+   - 変更ログに `| YYYY-MM-DD | [変更内容] | [発見インスタンス] |` を追記
+   - 開発フローに組み込む新機能は CLAUDE.md の該当 Rule (Rule 8〜22) に追記するか新 Rule を追加
+   - 記憶: `memory/project_YYYYMMDD_[instance].md` にも要約を保存
+
+   **Step 5: 各インスタンスの推奨プロンプトを更新**
+
+   - 制約解消・新機能追加に合わせて `docs/INSTANCE_CONFIG.md` の推奨プロンプトを更新
+   - 次回セッション開始時は必ず同ファイルの推奨プロンプトを使用する
+
+   **他ツールのバージョン確認 (フォールバックAI)**
+
+   ```bash
+   # GitHub Copilot CLI
+   gh copilot --version 2>/dev/null || echo "not installed"
+   # リリースノート: https://github.blog/changelog/ (copilot で検索)
+
+   # Codex CLI (OpenAI)
+   codex --version 2>/dev/null || echo "not installed"
+   # リリースノート: https://github.com/openai/codex/releases
+
+   # Gemini Code Assist
+   # VS Code 拡張パネル → "Google Cloud Code" → バージョン確認
+   # リリースノート: https://cloud.google.com/code/docs/vscode/release-notes
+   ```
 
    **拡張思考トリガー** (プロンプトに含めて起動):
 
