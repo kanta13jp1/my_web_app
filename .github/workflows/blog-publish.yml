@@ -1,6 +1,6 @@
 name: Blog Publish (技術記事投稿)
 
-# 手動トリガーで docs/blog-drafts/ の記事を Qiita / dev.to に投稿する
+# 手動 or 自動スケジュール で docs/blog-drafts/ の記事を Qiita / dev.to に投稿する
 # 必要な Supabase シークレット: QIITA_ACCESS_TOKEN, DEVTO_API_KEY (Supabase側に設定)
 on:
   workflow_dispatch:
@@ -21,6 +21,9 @@ on:
         description: 'ドライラン (true=投稿しない, false=実投稿)'
         required: false
         default: 'false'
+  schedule:
+    # UTC 時刻。JST = UTC+9 なので、12:00 UTC = 21:00 JST (毎日夜9時)
+    - cron: '0 12 * * *'  # 毎日 12:00 UTC = 21:00 JST
 
 concurrency:
   group: blog-publish-${{ github.run_id }}
@@ -41,11 +44,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      # ── Step 1.5: 自動スケジュール実行時 — 未投稿ドラフト自動選択 ──────
+      - name: Auto-select unpublished draft (scheduled)
+        if: github.event_name == 'schedule'
+        id: auto_select
+        run: |
+          # docs/blog-drafts/ から published: false なドラフトを探す
+          DRAFT=$(find docs/blog-drafts/ -name "*.md" -type f | while read f; do
+            if ! grep -q "^published: true" "$f" 2>/dev/null; then
+              echo "$f"
+              break
+            fi
+          done)
+
+          if [ -z "$DRAFT" ]; then
+            echo "ℹ️ No unpublished drafts found — skipping blog publish"
+            echo "has_draft=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_draft=true" >> $GITHUB_OUTPUT
+          echo "draft_path=$DRAFT" >> $GITHUB_OUTPUT
+          echo "✅ Auto-selected: $DRAFT"
+
       # ── Step 2: ドラフトを読み込んでメタデータ抽出 ──────────────────────
       - name: Step 2 - Extract metadata from draft
+        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
         id: meta
         run: |
-          DRAFT_PATH="${{ github.event.inputs.draft_path }}"
+          # Scheduled実行の場合は自動選択ドラフトを使用、手動実行の場合は入力値を使用
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRAFT_PATH="${{ steps.auto_select.outputs.draft_path }}"
+          else
+            DRAFT_PATH="${{ github.event.inputs.draft_path }}"
+          fi
+          
           if [ ! -f "$DRAFT_PATH" ]; then
             echo "Error: $DRAFT_PATH not found"
             exit 1
@@ -80,6 +113,7 @@ jobs:
 
       # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
+        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
         id: register
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
@@ -87,7 +121,14 @@ jobs:
         run: |
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
-          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          # Scheduled実行の場合は自動投稿 (dry_run=false), 手動実行の場合は入力値を使用
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRY_RUN="false"
+            PLATFORMS="qiita,devto"
+          else
+            DRY_RUN="${{ github.event.inputs.dry_run }}"
+            PLATFORMS="${{ github.event.inputs.platforms }}"
+          fi
 
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 [DRY RUN] 登録をスキップ"
@@ -124,6 +165,7 @@ jobs:
       # Qiita: 日本語ドラフト (draft_path) を投稿
       # dev.to: 英語ドラフト (draft_path_en) を投稿 — 省略時はスキップ
       - name: Step 4 - Publish to platforms
+        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
         id: publish
         env:
           ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
@@ -134,9 +176,16 @@ jobs:
           DRAFT_PATH="$DRAFT_PATH_VAR"
           TITLE="$ARTICLE_TITLE"
           TAGS="$TAGS_VAR"
-          DRY_RUN="${{ github.event.inputs.dry_run }}"
-          PLATFORMS="${{ github.event.inputs.platforms }}"
-
+          
+          # Scheduled実行の場合は自動投稿 (dry_run=false, platforms=qiita,devto)
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRY_RUN="false"
+            PLATFORMS="qiita,devto"
+          else
+            DRY_RUN="${{ github.event.inputs.dry_run }}"
+            PLATFORMS="${{ github.event.inputs.platforms }}"
+          fi
+          
           CONTENT_JP=$(cat "$DRAFT_PATH")
           TAGS_JSON=$(echo "$TAGS" | tr ',' '\n' | jq -R . | jq -s .)
 
@@ -215,7 +264,7 @@ jobs:
 
       # ── Step 5: frontmatter を published: true に更新 ───────────────────
       - name: Step 5 - Mark draft as published
-        if: github.event.inputs.dry_run != 'true'
+        if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -237,14 +286,18 @@ jobs:
           git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
           git push origin "$BRANCH"
 
-          # NOTE: GITHUB_TOKEN はブランチ保護 (require PR) をバイパスできないため
-          # main への直接マージは手動で実施する必要がある。
-          # 解決策: BLOG_PAT シークレット (bypass 権限付き PAT) を設定して
-          # git push origin HEAD:main か gh api merges で自動化する。
-          # 現状は branch を push してジョブを成功扱いにする (published:true更新は手動)。
-          echo "ℹ️ ブランチ '$BRANCH' を push しました。"
-          echo "   published:true マーク: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
-          echo "   (BLOG_PAT シークレット設定で自動化可能)"
+          # NOTE: Scheduled実行時は GITHUB_TOKEN の制限により、自動マージはできない。
+          # BLOG_PAT シークレット (bypass 権限付き PAT) の設定を推奨。
+          # 現状は branch を push してジョブを成功扱いにする。
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "ℹ️ [SCHEDULED] ブランチ '$BRANCH' を push しました。"
+            echo "   マージは手動またはBLOG_PATで自動化："
+            echo "   git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+          else
+            echo "ℹ️ ブランチ '$BRANCH' を push しました。"
+            echo "   published:true マーク: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+            echo "   (BLOG_PAT シークレット設定で自動化可能)"
+          fi
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
