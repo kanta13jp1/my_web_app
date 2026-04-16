@@ -97,131 +97,60 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
-14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — 全インスタンス (VSCode/Windowsアプリ/PowerShell版) に適用。
-   - 3ファイル以上同時読み込み → `notebooklm source add` → `notebooklm ask`
-   - URL・競合サイト分析 → `notebooklm source add URL`
-   - 競合21社調査 → `notebooklm source add-research`
-   - ドキュメント全体俯瞰 → NotebookLM source 追加後に要約
-   - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
+14. **セッション開始時: ツールバージョンチェック（全インスタンス・必須）** — セッション冒頭で以下を実行する。バージョン変更があれば制約解消チェックと役割分担の見直しを行う。
+   - **デスクトップ版 (VSCode/Windowsアプリ/PowerShell)**: `PYTHONUTF8=1 python3 scripts/check_versions.py` を実行
+   - **WEB版**: `python3 scripts/check_versions.py --web` は不可 → 下記URLを WebFetch で確認し手動更新
+     - Claude Code: `https://github.com/anthropics/claude-code/releases`
+     - Gemini: `https://marketplace.visualstudio.com/items?itemName=google.geminicodeassist`
+   - **バージョン更新時の対応**:
+     1. `docs/tool-versions.md` を更新 (`--update` フラグで自動更新可)
+     2. `docs/tool-versions.md` の「制約解消チェックリスト」を確認
+     3. 解消された制約を `docs/instance-constraints.md` から削除
+     4. `.github/COMPRESSED_PROMPT_V3.md` の制約列を更新
+   - **新モデルリリース時** (例: `claude-sonnet-4-7` 等): `supabase/functions/ai-assistant/index.ts` の `DEFAULT_SYNTHESIS_MODEL` + 各 EF のモデルパラメータを更新する
 
-   Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
-
-15. **毎セッション冒頭: /recap + バージョン確認・リリースノート確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
-
-   **Step 0: /recap — 公式 Learning Mode (v2.1.108+・全インスタンス共通)**
-
-   ```text
-   /recap
-   ```
-
-   セッション開始時に必ず `/recap` を実行し、前回の作業サマリーを確認してから作業開始する。
-   全インスタンス共通で動作する。
-
-   **Step 1: バージョン確認 (ローカルインスタンスのみ)**
-
-   ```bash
-   CURRENT=$(claude --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-   LATEST=$(npm show @anthropic-ai/claude-code dist-tags.latest)
-   echo "現在: $CURRENT / 最新: $LATEST"
-   ```
-
-   **Step 2: バージョンが古ければ更新**
-
-   ```bash
-   npm update -g @anthropic-ai/claude-code
-   ```
-
-   **Step 3: 更新があった場合は必ずリリースノートを確認**
-
-   ```bash
-   # WebFetch でリリースノートを確認 (全インスタンス共通)
-   # URL: https://claudefa.st/blog/guide/changelog
-   # または: https://github.com/anthropics/claude-code/releases
-   ```
-
-   リリースノート確認後、以下を実施する:
-
-   | 確認項目 | 対応 |
-   | --- | --- |
-   | **新機能追加** | `docs/INSTANCE_CONFIG.md` の「新機能」セクションに追記 → 開発フローへの組み込み可否を判断 → 有用であれば即 CLAUDE.md の該当 Rule に追記 |
-   | **他インスタンス制約の変化** | 同様に制約カタログを更新 |
-   | **Routines 上限変更** | `docs/INSTANCE_CONFIG.md` の Routines セクションを更新 |
-   | **モデル追加** | `docs/INSTANCE_CONFIG.md` の「利用可能モデル」表を更新 |
-
-   **Step 4: 制約・新機能を docs/INSTANCE_CONFIG.md に記録**
-
-   - 変更ログに `| YYYY-MM-DD | [変更内容] | [発見インスタンス] |` を追記
-   - 開発フローに組み込む新機能は CLAUDE.md の該当 Rule (Rule 8〜22) に追記するか新 Rule を追加
-   - 記憶: `memory/project_YYYYMMDD_[instance].md` にも要約を保存
-
-   **Step 5: 各インスタンスの推奨プロンプトを更新**
-
-   - 制約解消・新機能追加に合わせて `docs/INSTANCE_CONFIG.md` の推奨プロンプトを更新
-   - 次回セッション開始時は必ず同ファイルの推奨プロンプトを使用する
-
-   **他ツールのバージョン確認 (フォールバックAI)**
-
-   ```bash
-   # GitHub Copilot CLI
-   gh copilot --version 2>/dev/null || echo "not installed"
-   # リリースノート: https://github.blog/changelog/ (copilot で検索)
-
-   # Codex CLI (OpenAI)
-   codex --version 2>/dev/null || echo "not installed"
-   # リリースノート: https://github.com/openai/codex/releases
-
-   # Gemini Code Assist
-   # VS Code 拡張パネル → "Google Cloud Code" → バージョン確認
-   # リリースノート: https://cloud.google.com/code/docs/vscode/release-notes
-   ```
-
-   **利用可能モデル (2026-04-17 更新)**:
-
-   | モデル | ID | 用途 | 備考 |
-   | --- | --- | --- | --- |
-   | **Opus 4.7** 🆕 | `claude-opus-4-7` | **推奨**: agentic coding・複雑設計 | Extended Thinking なし。Adaptive Thinking あり |
-   | **Sonnet 4.6** | `claude-sonnet-4-6` | 日常実装・ultrathink使用時 | Extended Thinking ✅ |
-   | **Haiku 4.5** | `claude-haiku-4-5-20251001` | 定型処理 | Extended Thinking ✅ |
-   | ~~Opus 4.6~~ | ~~`claude-opus-4-6`~~ | レガシー → Opus 4.7 へ移行 | |
-   | ~~Haiku 3~~ | ~~`claude-3-haiku-20240307`~~ | **2026-04-19 廃止** | Haiku 4.5 へ移行 |
-
-   **拡張思考トリガー** (プロンプトに含めて起動):
-   > ⚠️ **Opus 4.7 は Extended Thinking 非対応。ultrathink を使う場合は Sonnet 4.6 を使用。**
-
-   | キーワード | 思考レベル | 使いどき |
-   | --- | --- | --- |
-   | `think` | Lv.1 | 設計確認 |
-   | `think deeply` | Lv.2 | 中程度の設計判断 |
-   | `think harder` | Lv.3 | 複雑なバグ・パフォーマンス |
-   | `think very hard` | Lv.4 | アーキテクチャ設計 |
-   | `ultrathink` | Lv.5 (最大) | 全体設計・競合戦略 (**Sonnet 4.6 で実行**) |
-
-   **Routines** (Windowsアプリ版 Desktop 専用): `code.claude.com/docs/en/routines` 参照。GitHub Actions の代替として積極活用する (Pro:5回/日, Max:15回/日)。
+15. **制約・仕様変更を即記録（全インスタンス・必須）** — どのインスタンスでも新しい制約・モデル変更・モード仕様を発見したら即座に以下を実施する:
+   1. `docs/instance-constraints.md` の「制約発見ログ」に追記 (`| 日付 | インスタンス | 制約内容 | 代替手段 | セッション名 |`)
+   2. `.github/COMPRESSED_PROMPT_V3.md` の該当インスタンス行の制約列を更新
+   3. `memory/feedback_correction_YYYYMMDD.md` に記録
+   4. `docs/cross-instance-prs/YYYYMMDD_constraint.md` で他インスタンスへ周知
+   **対象範囲**: Claude モデル制限・WEB版の新たな不可操作・MCP ツール制限・GitHub Actions の仕様変更・外部AI (Copilot/Gemini/CODEX) のモデル変更すべてを含む
 
 ---
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
-**設計思想**: 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
+**設計思想**: Claude Code 4インスタンス (VSCode/Windowsアプリ/PowerShell/WEB版) を主軸に、Gemini Code Assist・CODEX・GitHub Copilot を補完役で活用。
+「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
 Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
 
-### フォールバック AI ツール (Claude MAX レート制限到達時のみ使用)
+### インスタンス別 推奨モデル / 制約表
 
-> **通常運用**: Claude Code 3インスタンス (VSCode / Windowsアプリ / PowerShell) のみ使用。
-> フォールバックは Claude が **429 エラー / 月次 $50 超過** のときだけ発動。
-> NotebookLM のみ制限に関係なく **常時使用必須 (Rule 21)**。
-
-| ツール | 発動条件 | ファイル種別 | 用途 |
+| インスタンス | 推奨モデル | 推奨モード | 主な制約 |
 | --- | --- | --- | --- |
-| **Gemini Code Assist** | Claude 429 / $50超過 | `.dart` | Flutter/Dart IDE補完 (Google製言語に最適化) |
-| **CODEX CLI** (OpenAI) | Claude 429 / $50超過 | `.py` / `.ts` | Pythonスクリプト・TypeScript EF draft |
-| **GitHub Copilot** | Claude 429 / $50超過 + **常時PR自動レビュー** | `.yml` / `.sql` / `.md` | YAML補完・PR自動レビュー |
-| **NotebookLM** | **常時使用必須 (Rule 21)** | 全種別 | 3ファイル以上同時読み込み・URL分析・競合21社調査 |
+| **VSCode版** | `claude-sonnet-4-6` | 通常 (Flutter解析は深い思考要) | なし |
+| **Windowsアプリ版** | `claude-sonnet-4-6` | 通常 + CAVEMAN節約 | なし。`PYTHONUTF8=1` 必須 |
+| **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | なし |
+| **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
 
-**フォールバック発動ルール**:
-1. `quota-monitor.yml` が月次閾値超過を検知 → `ai_quota_usage.alert=true` 書き込み
-2. `cs-check.yml` 次回実行時に GitHub Issue 自動生成「⚠️ Claude レート制限到達」
-3. Issue 本文に「推奨フォールバック AI + ファイル種別対応表」を記載して手動切替を案内
+**WEB版代替パターン**:
+- `notebooklm ask` → WebSearch で代替
+- `flutter analyze` → 実行不可→ VSCode版に cross-instance-pr で検証依頼
+- `deno lint` → 実行不可 → EF変更は VSCode版に依頼
+- git commit → GitHub MCP (`mcp__plugin_github_github__create_or_update_file`) で代替
+
+### AI振り分け早見表
+
+| タスク | 最適ツール | 理由 |
+| --- | --- | --- |
+| 行レベル補完 | GitHub Copilot | 最速・ゼロ待機 |
+| 5分以内の修正 | Copilot Inline Chat | コンテキスト取得コスト不要 |
+| 500行超リファクタリング | Gemini Code Assist | 長コンテキスト強み |
+| SQL/アルゴリズム最適化 | OpenAI CODEX | コード特化モデル |
+| 設計・戦略・ルール遵守 | Claude Code | Memory + プロジェクト文脈 |
+| ブログ・競合リサーチ | Claude Code WEB版 (WebSearch/WebFetch) | ローカルCLI不要・GitHub MCP対応 |
+| NotebookLM Deep Research | Windowsアプリ版 (notebooklm CLI) | WEB版は notebooklm 不可 |
+| クオータ使用状況確認 | `quota-monitor.yml` Dashboard | Supabase `ai_quota_usage` テーブル |
 
 ### マルチエージェント協調パターン (新機能設計時に参照)
 
@@ -231,7 +160,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **3インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell) / `ai-university-update.yml` (66プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell/WEB版) + Gemini Code Assist / CODEX / GitHub Copilot 補完 / `ai-university-update.yml` (60プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
@@ -770,19 +699,7 @@ GitHub PRの自動コードレビュー。
 
 ---
 
-### Task: blog-draft (毎日 07:00 JST — GitHub Actions 自動化済み)
-
-> **2026-04-17 更新**: `blog-draft.yml` GitHub Actions ワークフローに移行。
-> 毎日 07:00 JST に直近 git log を Anthropic API (Claude Sonnet 4.5) に投げてドラフト自動生成 → commit → `blog-publish.yml` を自動トリガー。
-> Claude Schedule タスクとしての手動実行は不要だが、特別な記事を書きたい場合は以下の手順で手動実行可能:
->
-> ```bash
-> gh workflow run blog-draft.yml -f target_date=YYYY-MM-DD -f days=1
-> ```
->
-> 以下は Claude が手動でドラフトを書く場合の参考仕様。自動生成で品質が不足する場合に上書き用テンプレートとして使用する。
-
-### Task: blog-draft (手動モード・参考仕様)
+### Task: blog-draft (毎日 08:00 JST に実行)
 
 技術ブログの下書きを生成し、投稿管理テーブルに記録する。
 
@@ -1012,7 +929,7 @@ AI大学コンテンツを最新情報に自動更新する。**プロバイダ�
 #### 現在の登録プロバイダー
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, black_forest_labs, liquid_ai, black_forest_labs, liquid_ai
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii
 ```
 
 登録済みプロバイダーは `ai_university_content` テーブルの `provider` カラム個別値で確認できる。

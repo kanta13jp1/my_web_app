@@ -101,6 +101,11 @@ interface AIRequest {
     promptTemplate?: string;
     skillModel?: string;
     skillTags?: string[];
+    // 音声AIチャット (long-term memory)
+    message?: string;
+    conversationId?: string;
+    conversationContext?: string;  // 'general_chat' | 'ai_university_quiz' | 'habit_coach'
+    voiceUsed?: boolean;
 }
 
 interface Fighter {
@@ -749,6 +754,85 @@ ${entryData}`;
              return new Response(JSON.stringify({ success: true, result }), { headers: corsHeaders });
         }
 
+        // ===== 音声AIチャット: 長期記憶付き会話 =====
+        if (action === 'chat') {
+            const userMessage = requestData.message ?? requestContent ?? '';
+            if (!userMessage.trim()) {
+                return new Response(JSON.stringify({ success: false, error: 'message is required' }), { headers: corsHeaders, status: 400 });
+            }
+
+            // サービスロールクライアント (RLS bypass で会話履歴を読み書き)
+            const serviceClient = createClient(
+                Deno.env.get('SUPABASE_URL') ?? '',
+                Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+            );
+
+            let conversationId: string = requestData.conversationId ?? '';
+
+            // 会話セッションが無ければ新規作成
+            if (!conversationId) {
+                const { data: conv, error: convErr } = await serviceClient
+                    .from('user_conversations')
+                    .insert({
+                        user_id: user.id,
+                        title: userMessage.slice(0, 50),
+                        context: requestData.conversationContext ?? 'general_chat',
+                    })
+                    .select('id')
+                    .single();
+                if (convErr) throw new Error(`Failed to create conversation: ${convErr.message}`);
+                conversationId = conv.id as string;
+            }
+
+            // 直近10件の会話履歴を取得 (長期記憶注入)
+            const { data: history } = await serviceClient
+                .from('conversation_messages')
+                .select('role, content')
+                .eq('conversation_id', conversationId)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            const historyMessages = (history ?? []).reverse();
+            const historyText = historyMessages.length > 0
+                ? historyMessages.map((m: { role: string; content: string }) => `[${m.role}]: ${m.content}`).join('\n')
+                : '';
+
+            const prompt = historyText
+                ? `以下はこれまでの会話履歴です:\n${historyText}\n\n---\n[user]: ${userMessage}`
+                : userMessage;
+
+            // ユーザーメッセージを保存
+            await serviceClient.from('conversation_messages').insert({
+                conversation_id: conversationId,
+                role: 'user',
+                content: userMessage,
+                voice_used: requestData.voiceUsed ?? false,
+            });
+
+            // AI応答生成
+            const reply = await runPromptWithStrategy(prompt);
+
+            // アシスタントメッセージを保存
+            const { data: savedMsg } = await serviceClient
+                .from('conversation_messages')
+                .insert({
+                    conversation_id: conversationId,
+                    role: 'assistant',
+                    content: reply,
+                    model: targetModel ?? DEFAULT_SYNTHESIS_MODEL,
+                    voice_used: false,
+                })
+                .select('id')
+                .single();
+
+            return new Response(JSON.stringify({
+                success: true,
+                reply,
+                conversationId,
+                messageId: savedMsg?.id ?? null,
+            }), { headers: corsHeaders });
+        }
+
         return new Response(JSON.stringify({
             success: false,
             error: `Action "${action}" not found`,
@@ -759,6 +843,7 @@ ${entryData}`;
                 'improve', 'summarize', 'expand', 'translate',
                 'suggest_title', 'custom_prompt',
                 'save_skill', 'list_skills', 'delete_skill', 'run_skill',
+                'chat',
             ],
         }), { headers: corsHeaders, status: 404 });
 
