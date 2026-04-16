@@ -1,7 +1,7 @@
 ---
 title: "Forest × Grammarly を Flutter Web で自前実装した話 — 集中タイマー & AI文章アシスタント同時開発"
 tags: Flutter,Supabase,個人開発,buildinpublic,AI
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-01 (daily-development)
