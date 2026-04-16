@@ -9258,3 +9258,56 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 3. 🟡 **quota-monitor スケジュール実行確認**: 次回09:00 JST通過を確認
 4. ✅ **T-1 第53弾完了**: Qiita https://qiita.com/kanta13jp1/items/c6ee22c28d83903e6c3f / dev.to https://dev.to/kanta13jp1/why-i-killed-my-4th-claude-code-instance-lessons-from-multi-agent-indie-dev-2l1h
 5. 🟢 **`/less-permission-prompts` 実行**: settings.json 許可リスト最適化 (v2.1.111新機能)
+
+---
+
+## VSCode版セッション #81 (2026-04-17)
+
+### 実施内容
+
+#### ブログ管理スイート完成
+
+1. **blog-publish.yml Step5 無限ループ修正** (e78cf127)
+   - `_mark_published()` bash関数: 4-case frontmatter処理
+   - `published: false` → replace / `published: true` → skip / frontmatterあり → insert / frontmatterなし → prepend
+
+2. **GROWTH_STRATEGY_ROADMAP.md markdownlint対応** (b8bca877)
+   - MD022/MD012/MD009: `--fix` で自動修正 (56件)
+   - MD060 (テーブルセパレーター): Python script で456件修正 `|---|` → `| --- | --- |`
+   - MD040 (コードフェンス言語): 2件 `sed` 修正
+   - `.markdownlintignore` から除外 → 以降 CI でチェック対象
+
+3. **blog-batch-publish.yml 新規作成**
+   - 未投稿ドラフト全件 (21本) 一括投稿
+   - `scripts/batch_publish.py`: 4-case frontmatter + EF呼び出し
+
+4. **blog-engagement.yml 新規作成** + **scripts/blog_engagement.py**
+   - Qiita/dev.to エンゲージメント取得・重複削除
+   - コメント自動返信 (Claude Haiku)
+   - いいね者フォロー (Qiita)
+   - Supabase `blog_engagement` / `blog_comments` / `blog_likers` テーブルに保存
+
+5. **blog_management_page.dart 新規作成**
+   - 管理画面: 記事一覧・エンゲージメント・コメント表示
+   - `/blog-management` ルート + admin_analytics_page からリンク
+
+6. **supabase/migrations/20260417120000_create_blog_engagement.sql**
+   - blog_engagement / blog_comments / blog_likers テーブル作成
+
+### ワークフロー実行状況
+
+- `blog-batch-publish.yml`: 実行中 (21本バッチ投稿)
+- `blog-engagement.yml`: キュー済み (Qiita/dev.to同期開始)
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **223** / AI大学: **66社** / LP: 126のこと
+- T-1: **第53弾完了** / ブログ投稿: バッチ実行中
+
+### 次回優先タスク (VSCode版)
+
+1. 🔴 **blog-engagement.yml 実行結果確認**: Qiita/dev.to データが `blog_engagement` テーブルに入ったか
+2. 🔴 **blog_management_page.dart 動作確認**: `/blog-management` ページで記事・コメント表示確認
+3. 🟡 **batch publish 結果確認**: 21本のうち何本成功したか、失敗したものは手動投稿
+4. 🟡 **blog-engagement.yml 定期実行**: daily schedule (10:00 JST) が正常に動くか確認
+5. 🟢 **schedule-hub blog.sync_engagement アクション確認**: EFが blog_engagement と連携できるか
