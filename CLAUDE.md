@@ -97,7 +97,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
-14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — 以下の条件に該当する場合は Claude 直接処理禁止。`notebooklm` CLI 経由で処理する:
+14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — **ローカルCLIがあるインスタンス (VSCode/Windowsアプリ/PowerShell版) のみ適用**。WEB版は `notebooklm` CLI が使用不可のため代わりに WebSearch/WebFetch を使用する。
    - 3ファイル以上同時読み込み → `notebooklm source add` → `notebooklm ask`
    - URL・競合サイト分析 → `notebooklm source add URL`
    - 競合21社調査 → `notebooklm source add-research`
@@ -105,7 +105,31 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
    
    Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
-   **WEB版インスタンス**が Deep Research 専任として `docs/research/` に成果物を保存する。
+   **WEB版インスタンス**は `notebooklm` CLI 不可のため WebSearch/WebFetch + Opus 4.6 ultrathink で代替し `docs/research/` に成果物を保存する。
+
+15. **毎セッション冒頭: バージョン確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
+
+   ```bash
+   # Claude Code バージョン確認 (ローカルインスタンスのみ)
+   claude --version && npm show @anthropic-ai/claude-code dist-tags.latest
+   ```
+
+   - インストール済みと最新が異なれば `npm update -g @anthropic-ai/claude-code` で更新
+   - 更新後は `docs/INSTANCE_CONFIG.md` の制約カタログを WebFetch で再確認し、解消された制約を削除 + 役割分担を更新する
+   - **制約を発見したセッション**では `docs/INSTANCE_CONFIG.md` を即座に更新し、`memory/feedback_correction_YYYYMMDD_[instance].md` にも記録する
+   - **各インスタンスの推奨プロンプト**: `docs/INSTANCE_CONFIG.md` の「各インスタンス推奨プロンプト」セクションを参照して次回セッションを開始する
+
+   **拡張思考トリガー** (プロンプトに含めて起動):
+
+   | キーワード | 思考レベル | 使いどき |
+   | --- | --- | --- |
+   | `think` | Lv.1 | 設計確認 |
+   | `think deeply` | Lv.2 | 中程度の設計判断 |
+   | `think harder` | Lv.3 | 複雑なバグ・パフォーマンス |
+   | `think very hard` | Lv.4 | アーキテクチャ設計 |
+   | `ultrathink` | Lv.5 (最大) | 全体設計・競合戦略 |
+
+   **Routines** (Windowsアプリ版 Desktop 専用): `code.claude.com/docs/en/routines` 参照。GitHub Actions の代替として積極活用する (Pro:5回/日, Max:15回/日)。
 
 ---
 
