@@ -1,0 +1,26 @@
+- main "自分株式会社" [ref=e3]:
+  - paragraph [ref=e4]: AI Life Management App
+  - heading "自分株式会社" [level=1] [ref=e5]
+  - paragraph [ref=e6]: Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合したAI統合プラットフォーム。 AIが今日の最優先タスクを1件に絞り、資産管理・習慣化・チームコラボまで一元管理。 無料体験で価値を確認したあと、提案を保存して明日も続きから再開できます。
+  - paragraph [ref=e7]: All-in-one alternative to Notion, Evernote, MoneyForward, Slack, X, Google Workspace, Microsoft 365, Discord, LINE, Facebook, GitHub and more. AI picks your single most important action today, explains why it matters, and unifies task, finance, habit, and team management in one free app.
+  - generic "主要機能" [ref=e8]:
+    - generic [ref=e9]: Notion代替
+    - generic [ref=e10]: Evernote代替
+    - generic [ref=e11]: MoneyForward代替
+    - generic [ref=e12]: Slack代替
+    - generic [ref=e13]: Google代替
+    - generic [ref=e14]: Microsoft代替
+    - generic [ref=e15]: LINE代替
+    - generic [ref=e16]: GitHub代替
+    - generic [ref=e17]: AI task prioritization
+    - generic [ref=e18]: MAGI strategy support
+  - navigation "公開ページ" [ref=e19]:
+    - link "無料で始める" [ref=e20] [cursor=pointer]:
+      - /url: https://my-web-app-b67f4.web.app/
+    - link "Gemini University" [ref=e21] [cursor=pointer]:
+      - /url: https://my-web-app-b67f4.web.app/gemini-university
+    - link "機能リクエスト" [ref=e22] [cursor=pointer]:
+      - /url: https://my-web-app-b67f4.web.app/feature-requests
+    - link "断捨離ツール" [ref=e23] [cursor=pointer]:
+      - /url: https://my-web-app-b67f4.web.app/danshari
+  - paragraph [ref=e24]: Loading application...
