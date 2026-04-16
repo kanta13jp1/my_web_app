@@ -112,11 +112,19 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         children: [
           _statCard('記事数', '${_engagement.length}', Icons.article_outlined),
           const SizedBox(width: 8),
-          _statCard('いいね合計', '$_totalLikes', Icons.favorite_outline,
-              color: Colors.pinkAccent,),
+          _statCard(
+            'いいね合計',
+            '$_totalLikes',
+            Icons.favorite_outline,
+            color: Colors.pinkAccent,
+          ),
           const SizedBox(width: 8),
-          _statCard('閲覧数', _formatNum(_totalViews), Icons.visibility_outlined,
-              color: Colors.blueAccent,),
+          _statCard(
+            '閲覧数',
+            _formatNum(_totalViews),
+            Icons.visibility_outlined,
+            color: Colors.blueAccent,
+          ),
           const SizedBox(width: 8),
           _statCard(
             '未返信',
@@ -129,8 +137,12 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     );
   }
 
-  Widget _statCard(String label, String value, IconData icon,
-      {Color color = _orange,}) {
+  Widget _statCard(
+    String label,
+    String value,
+    IconData icon, {
+    Color color = _orange,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -152,8 +164,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             ),
             Text(
               label,
-              style:
-                  const TextStyle(color: Colors.white38, fontSize: 10),
+              style: const TextStyle(color: Colors.white38, fontSize: 10),
             ),
           ],
         ),
@@ -169,7 +180,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         children: [
           _tabBtn('articles', '記事一覧'),
           const SizedBox(width: 8),
-          _tabBtn('comments', 'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}'),
+          _tabBtn(
+            'comments',
+            'コメント${_unrepliedCount > 0 ? ' ($_unrepliedCount)' : ''}',
+          ),
         ],
       ),
     );
@@ -237,9 +251,8 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final comments = e['comments_count'] as int? ?? 0;
     final views = e['views_count'] as int? ?? 0;
 
-    final platformColor = platform == 'qiita'
-        ? const Color(0xFF55C500)
-        : const Color(0xFF08090A);
+    final platformColor =
+        platform == 'qiita' ? const Color(0xFF55C500) : const Color(0xFF08090A);
     final platformBg = platform == 'qiita'
         ? const Color(0xFF55C500).withAlpha(20)
         : const Color(0xFFFFFFFF).withAlpha(10);
@@ -304,7 +317,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     style: TextButton.styleFrom(
                       foregroundColor: _orange,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4,),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                     ),
                   ),
               ],
@@ -331,8 +346,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
 
   // ── コメント一覧 ─────────────────────────────────────────────
   List<Widget> _buildCommentSliver() {
-    final sorted = [..._comments]
-      ..sort((a, b) {
+    final sorted = [..._comments]..sort((a, b) {
         final ra = (a['replied'] as bool?) == true ? 1 : 0;
         final rb = (b['replied'] as bool?) == true ? 1 : 0;
         return ra.compareTo(rb); // 未返信を先頭に
@@ -396,24 +410,22 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 Text(
                   '@$author',
                   style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,),
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   platform.toUpperCase(),
-                  style:
-                      const TextStyle(color: Colors.white38, fontSize: 10),
+                  style: const TextStyle(color: Colors.white38, fontSize: 10),
                 ),
                 const Spacer(),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: replied
-                        ? _green.withAlpha(30)
-                        : _red.withAlpha(30),
+                    color: replied ? _green.withAlpha(30) : _red.withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -454,7 +466,9 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     Text(
                       replyText,
                       style: const TextStyle(
-                          color: Colors.white54, fontSize: 11,),
+                        color: Colors.white54,
+                        fontSize: 11,
+                      ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
