@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web で旅行プランナー・リアルタイムホワイトボード・レシピ管理を同時実装した話"
 tags: Flutter,Supabase,個人開発,buildinpublic,EdgeFunctions
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-03
