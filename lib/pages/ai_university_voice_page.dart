@@ -152,9 +152,18 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      // DESIGN.md: background = 0xFF0A0A0A (surface0)
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0F),
+        backgroundColor: const Color(0xFF0A0A0A),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: Colors.white.withValues(alpha: 0.08),
+            height: 1,
+          ),
+        ),
         title: const Text(
           'AI大学 音声学習',
           style: TextStyle(color: Colors.white),
@@ -162,14 +171,16 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        // DESIGN.md: pagePadding = 16px (4px grid)
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // プロバイダー選択
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A2E),
+                // DESIGN.md: surface1 = 0xFF1A1A1A
+                color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: const Color(0xFF3D5AFE).withValues(alpha: 0.3),
@@ -179,7 +190,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
               child: DropdownButton<String>(
                 value: _selectedProvider,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1A1A2E),
+                dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 underline: const SizedBox.shrink(),
                 items: _providers
@@ -194,12 +205,13 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
             ),
             const SizedBox(height: 16),
 
-            // 学習開始ボタン
+            // 学習開始ボタン (DESIGN.md: primary CTA = orange #FF6B35)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3D5AFE),
+                  backgroundColor: const Color(0xFFFF6B35),
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -219,7 +231,8 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A2E),
+                  // DESIGN.md: surface2 = 0xFF1E1E1E
+                  color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -279,7 +292,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A1A2E),
+                      backgroundColor: const Color(0xFF1E1E1E),
                       side: const BorderSide(color: Color(0xFF3D5AFE)),
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
@@ -316,7 +329,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                     hintText: '回答を入力してください...',
                     hintStyle: const TextStyle(color: Colors.white38),
                     filled: true,
-                    fillColor: const Color(0xFF1A1A2E),
+                    fillColor: const Color(0xFF1E1E1E),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Color(0xFF3D5AFE)),
@@ -327,9 +340,11 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                 Row(
                   children: [
                     Expanded(
+                      // DESIGN.md: primary CTA = orange
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3D5AFE),
+                          backgroundColor: const Color(0xFFFF6B35),
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -351,7 +366,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                 ),
               ],
 
-              // フィードバック
+              // フィードバック (DESIGN.md: error = 0xFFE53935, success = green)
               if (_feedbackText.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -360,12 +375,12 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                   decoration: BoxDecoration(
                     color: _feedbackText.startsWith('正解')
                         ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
-                        : const Color(0xFFFF6B35).withValues(alpha: 0.1),
+                        : const Color(0xFFE53935).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _feedbackText.startsWith('正解')
                           ? const Color(0xFF4CAF50).withValues(alpha: 0.4)
-                          : const Color(0xFFFF6B35).withValues(alpha: 0.4),
+                          : const Color(0xFFE53935).withValues(alpha: 0.4),
                     ),
                   ),
                   child: Text(
