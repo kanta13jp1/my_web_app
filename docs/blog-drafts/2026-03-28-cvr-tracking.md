@@ -4,23 +4,13 @@ tags: Flutter,Supabase,EdgeFunction,buildinpublic,個人開発
 published: true
 ---
 
-# Flutter Webで比較ページからの流入をSupabase Edge Functionで計測するCVRトラッキング実装
-
-## タイトル案
+<!-- タイトル案:
 1. Flutter Webで「どの比較ページから登録したか」を追跡するCVRトラッキングを実装した話
 2. 21競合比較ページの流入をSupabase Edge Functionで計測する — route-level acquisition signal
 3. StatelessWidget→StatefulWidgetへの安全な移行と獲得シグナル記録パターン
+投稿先: Zenn, Qiita -->
 
-## 投稿先候補
-- [x] Zenn
-- [x] Qiita
-- [ ] note
-- [ ] はてなブログ
-- [ ] X Article
-
-## 本文下書き
-
-### はじめに
+## はじめに
 
 自分株式会社 (https://my-web-app-b67f4.web.app/) はNotion・Evernote・Slack・MoneyForwardなど21の競合SaaSを代替するAI統合プラットフォームです。
 
@@ -143,4 +133,4 @@ flutter analyze
 
 ---
 URL: https://my-web-app-b67f4.web.app/
-#FlutterWeb #Supabase #buildinpublic #CVR #グロース
+FlutterWeb / Supabase / buildinpublic / CVR / グロース

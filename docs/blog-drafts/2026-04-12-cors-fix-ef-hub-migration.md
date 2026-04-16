@@ -5,8 +5,6 @@ topics: ["Flutter", "Supabase", "個人開発", "アーキテクチャ"]
 published: true
 ---
 
-# Supabase Edge Function を 94本→15本に統合 + 廃止EF17本のCORS修正を一括解消した話
-
 ## はじめに
 
 Supabase Edge Function (EF) の上限は**プロジェクトあたり99本**です。

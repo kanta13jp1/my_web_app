@@ -4,8 +4,6 @@ tags: Flutter,Supabase,個人開発,buildinpublic,機械学習
 published: true
 ---
 
-# Flutter × Supabase で競馬AI予想パイプラインを全自動化した話 — JRA+NAR両対応・前走情報まで実装
-
 ## はじめに
 
 「AIで競馬予想ができたら面白い」という発想から始まり、Flutter UI・Supabase Edge Function・GitHub Actions をつなぎ合わせた**完全自動化パイプライン**を構築しました。
@@ -16,7 +14,7 @@ JRA (中央競馬) だけでなく **NAR (地方競馬) 15場**にも対応し�
 
 ## アーキテクチャ全体像
 
-```
+```text
 [JRA/NAR データ取得]  → fetch_horse_racing.py (Python)
         ↓
 [tools-hub EF]        → horseracing.today / predict_all / predictions / accuracy
@@ -132,7 +130,7 @@ jobs:
 `horse_racing_predictor_page.dart` は3タブ構成:
 
 | タブ | 内容 |
-|------|------|
+| ------ | ------ |
 | 今日のレース | ExpansionTile でレースカード展開、グレードバッジ (G1=赤/G2=青/G3=緑) |
 | 予想履歴 | 過去のAI予想一覧、日付フィルタ |
 | 的中率 | ヒット率%・総予想数・最高払戻し |
@@ -165,6 +163,7 @@ ListTile(
 ```
 
 マイグレーション:
+
 ```sql
 ALTER TABLE horse_races
   ADD COLUMN prev_race_name  text,
@@ -179,7 +178,7 @@ ALTER TABLE horse_races
 ## まとめ
 
 | 機能 | 実装状況 |
-|------|---------|
+| ------ | --------- |
 | JRA データ取得 | ✅ netkeiba.com EUC-JP対応 |
 | NAR 地方競馬 15場 | ✅ 大井/川崎/船橋 etc. |
 | AI予想生成 | ✅ tools-hub EF |
@@ -192,4 +191,4 @@ ALTER TABLE horse_races
 ---
 
 自分株式会社: https://my-web-app-b67f4.web.app/
-#FlutterWeb #Supabase #個人開発 #buildinpublic #競馬AI
+FlutterWeb / Supabase / 個人開発 / buildinpublic / 競馬AI

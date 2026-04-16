@@ -4,8 +4,6 @@ tags: ClaudeCode,個人開発,Flutter,Supabase,buildinpublic
 published: true
 ---
 
-# Claude Code を3インスタンス並行運用して個人開発を3倍速にした話
-
 ## はじめに
 
 Flutter Web + Supabase のアプリを個人開発していると、「やることが多すぎて追いつかない」という問題に直面します。
@@ -21,7 +19,7 @@ Flutter Web + Supabase のアプリを個人開発していると、「やるこ
 ## 3インスタンス体制の概要
 
 | インスタンス | 担当ファイル | 専任タスク |
-|-------------|-------------|-----------|
+| ------------- | ------------- | ----------- |
 | **VSCode版** | `lib/` + `supabase/functions/` | Flutter UI実装・Edge Function開発 |
 | **Windowsアプリ版** | `docs/` + `supabase/migrations/` | ドキュメント管理・DBスキーマ追加 |
 | **PowerShell版** | `.github/workflows/` | CI/CD最適化・ブログ自動投稿管理 |
@@ -53,7 +51,7 @@ Claude Code のコンテキスト圧縮により、1セッションで長時間�
 
 直接ファイルを操作できないインスタンスが、他のインスタンスへ作業依頼をする仕組みが `docs/cross-instance-prs/` ディレクトリです。
 
-```
+```text
 docs/cross-instance-prs/
 ├── 20260412_groq_provider_ui.md        # Windows版 → VSCode版 へ依頼
 ├── 20260413_allenai_naver_provider_ui.md
@@ -107,7 +105,7 @@ VSCode版がUIを追加したら `done/` フォルダに移動してクローズ
 
 Claude Code はセッションをまたいで記憶を保持しないため、3層のメモリシステムを使います。
 
-```
+```text
 C:\Users\kanta\.claude\projects\...\memory\
 ├── MEMORY.md                    # 全メモリのインデックス (200行以内)
 ├── user_instance_powershell.md  # このインスタンスはPS版
@@ -122,7 +120,7 @@ C:\Users\kanta\.claude\projects\...\memory\
 
 ## 実際の1日の作業フロー
 
-```
+```text
 09:00 JST  各インスタンス起動 → MEMORY.md 確認 → COMPRESSED_PROMPT 確認
            ↓ 並行作業開始
 VSCode版   : AI大学 UI追加 (lib/pages/gemini_university_v2_page.dart)
@@ -156,7 +154,7 @@ PS版       : blog-publish.yml 修正 + T-1記事 dispatch
 **実績 (2026-04-12〜04-13):**
 
 | インスタンス | 1日の成果 |
-|-------------|----------|
+| ------------- | ---------- |
 | VSCode版 | AI大学 UI 17社追加 + OGP シェアカード実装 + ページ4本追加 |
 | Windowsアプリ版 | AI大学 DB 39社追加 (migration 39ファイル作成) |
 | PowerShell版 | T-1 ブログ記事 35本 dispatch + CI 25本最適化 |
@@ -178,4 +176,4 @@ Claude Code を単一セッションで使うより、**専任ロール × 3イ�
 ---
 
 自分株式会社: https://my-web-app-b67f4.web.app/
-#ClaudeCode #個人開発 #Flutter #Supabase #buildinpublic
+ClaudeCode / 個人開発 / Flutter / Supabase / buildinpublic
