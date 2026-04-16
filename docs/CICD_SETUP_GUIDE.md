@@ -1,7 +1,7 @@
 # CI/CD環境セットアップガイド 🚀
 
 > **⚠️ アーカイブ済 (2026-04-11 Windows版#29 確認)**: このドキュメントは 2025年11月14日時点のセットアップ手順書です。
-> 現在は GitHub Secrets (Firebase / Supabase / X OAuth 等) の設定が完了し、**19本の GitHub Actions ワークフロー**が本番稼働中。
+> 現在は GitHub Secrets (Firebase / Supabase / X OAuth 等) の設定が完了し、**20本の GitHub Actions ワークフロー**が本番稼働中。
 > 最新の CI/CD 状態は `.github/COMPRESSED_PROMPT_V3.md` の「CI/CD改善」セクション (#C1〜#C6) を参照してください。
 
 **作成日**: 2025年11月14日
@@ -15,7 +15,7 @@
 
 ### 完了済み ✅
 
-- ✅ GitHub Actionsワークフローファイル作成（19ファイル、2026-04-16時点）
+- ✅ GitHub Actionsワークフローファイル作成（20ファイル、2026-04-16時点）
 - ✅ CI/CDガイドドキュメント作成
 - ✅ デプロイメントガイド作成
 - ✅ ブランチ保護設定ガイド作成

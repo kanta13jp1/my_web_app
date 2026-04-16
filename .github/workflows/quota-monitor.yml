@@ -1,0 +1,302 @@
+name: AI Quota Monitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 毎日 09:00 JST (UTC 00:00)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (Supabase に書き込まない)'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: quota-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-quotas:
+    name: Check AI Tool Quotas
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Check Anthropic Claude Usage
+        id: anthropic
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+          from datetime import date, timedelta
+
+          api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+          if not api_key:
+              print('ANTHROPIC_API_KEY not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=skipped\nusage_json={}\n')
+              exit(0)
+
+          today = date.today()
+          start = (today.replace(day=1)).isoformat()
+          end = today.isoformat()
+
+          try:
+              resp = requests.get(
+                  'https://api.anthropic.com/v1/usage',
+                  headers={
+                      'x-api-key': api_key,
+                      'anthropic-version': '2023-06-01',
+                  },
+                  params={'start_time': start, 'end_time': end},
+                  timeout=10
+              )
+              data = resp.json() if resp.ok else {}
+              usage = data.get('data', [{}])
+              total_cost = sum(u.get('cost', 0) for u in usage) if usage else 0
+              print(f'Anthropic usage: ${total_cost:.4f} this month')
+
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'status=ok\n')
+                  f.write(f'cost={total_cost:.4f}\n')
+                  f.write(f'usage_json={json.dumps({"tool":"anthropic","cost_usd":round(total_cost,4),"period":f"{start}/{end}","alert":total_cost>50})}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=error\nusage_json={}\n')
+          EOF
+
+      - name: Check OpenAI (CODEX) Usage
+        id: openai
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+          from datetime import date
+
+          api_key = os.environ.get('OPENAI_API_KEY', '')
+          if not api_key:
+              print('OPENAI_API_KEY not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=skipped\nusage_json={}\n')
+              exit(0)
+
+          try:
+              today = date.today()
+              resp = requests.get(
+                  'https://api.openai.com/v1/usage',
+                  headers={'Authorization': f'Bearer {api_key}'},
+                  params={'date': today.strftime('%Y-%m-%d')},
+                  timeout=10
+              )
+              if resp.ok:
+                  data = resp.json()
+                  total_tokens = data.get('total_tokens', 0)
+                  # 概算コスト: gpt-4.1 $2/1M tokens
+                  cost_est = total_tokens / 1_000_000 * 2.0
+                  print(f'OpenAI usage today: {total_tokens} tokens (~${cost_est:.4f})')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'status=ok\n')
+                      f.write(f'usage_json={json.dumps({"tool":"openai","tokens":total_tokens,"cost_usd_est":round(cost_est,4),"alert":cost_est>20})}\n')
+              else:
+                  print(f'OpenAI API error: {resp.status_code}')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write('status=api_error\nusage_json={}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=error\nusage_json={}\n')
+          EOF
+
+      - name: Check GitHub Copilot Usage
+        id: copilot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+          from datetime import date
+
+          token = os.environ.get('GITHUB_TOKEN', '')
+          if not token:
+              print('GITHUB_TOKEN not set — skipping')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=skipped\nusage_json={}\n')
+              exit(0)
+
+          try:
+              # ユーザーレベルの Copilot 課金情報
+              resp = requests.get(
+                  'https://api.github.com/user/copilot_billing',
+                  headers={
+                      'Authorization': f'token {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28'
+                  },
+                  timeout=10
+              )
+              if resp.ok:
+                  data = resp.json()
+                  plan = data.get('plan_type', 'unknown')
+                  print(f'GitHub Copilot plan: {plan}')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'status=ok\n')
+                      f.write(f'usage_json={json.dumps({"tool":"github_copilot","plan":plan,"alert":False})}\n')
+              else:
+                  # 403 = Copilot 未加入 or パーミッション不足
+                  print(f'Copilot billing API: {resp.status_code} (plan may not include API access)')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'status=limited\nusage_json={json.dumps({"tool":"github_copilot","status":resp.status_code,"alert":False})}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=error\nusage_json={}\n')
+          EOF
+
+      - name: Check Gemini Code Assist Quota
+        id: gemini
+        env:
+          GOOGLE_AI_API_KEY: ${{ secrets.GOOGLE_AI_API_KEY }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+          from datetime import date
+
+          api_key = os.environ.get('GOOGLE_AI_API_KEY', '')
+          if not api_key:
+              print('GOOGLE_AI_API_KEY not set — skipping (Gemini Code Assist quota is checked via Google Cloud Console)')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=skipped\nusage_json={}\n')
+              exit(0)
+
+          try:
+              # Gemini API 疎通確認 (使用量はCloud Consoleで管理)
+              resp = requests.get(
+                  f'https://generativelanguage.googleapis.com/v1beta/models?key={api_key}',
+                  timeout=10
+              )
+              if resp.ok:
+                  models = resp.json().get('models', [])
+                  print(f'Gemini API reachable: {len(models)} models available')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'status=ok\n')
+                      f.write(f'usage_json={json.dumps({"tool":"gemini","models_count":len(models),"alert":False,"note":"quota details at console.cloud.google.com"})}\n')
+              else:
+                  print(f'Gemini API error: {resp.status_code}')
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f'status=api_error\nusage_json={json.dumps({"tool":"gemini","error":resp.status_code})}\n')
+          except Exception as e:
+              print(f'Error: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write('status=error\nusage_json={}\n')
+          EOF
+
+      - name: Save quota data to Supabase
+        if: ${{ github.event.inputs.dry_run != 'true' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
+          OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
+          COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
+        run: |
+          python3 - << 'EOF'
+          import os, requests, json
+          from datetime import date
+
+          service_key = os.environ['SUPABASE_SERVICE_KEY']
+          base_url = 'https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_quota_usage'
+          headers = {
+              'apikey': service_key,
+              'Authorization': f'Bearer {service_key}',
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+          }
+          today = date.today().isoformat()
+
+          tools = ['ANTHROPIC_USAGE', 'OPENAI_USAGE', 'COPILOT_USAGE', 'GEMINI_USAGE']
+          for env_key in tools:
+              raw = os.environ.get(env_key, '{}')
+              if not raw or raw == '{}':
+                  continue
+              try:
+                  data = json.loads(raw)
+                  if not data.get('tool'):
+                      continue
+                  row = {
+                      'tool': data['tool'],
+                      'checked_at': today,
+                      'usage_json': data,
+                      'alert': data.get('alert', False)
+                  }
+                  resp = requests.post(base_url, headers=headers, json=row, timeout=10)
+                  if resp.ok:
+                      print(f"Saved {data['tool']} quota data")
+                  else:
+                      print(f"Failed to save {data['tool']}: {resp.status_code} {resp.text[:100]}")
+              except Exception as e:
+                  print(f'Error saving {env_key}: {e}')
+          EOF
+
+      - name: Build quota summary report
+        id: summary
+        env:
+          ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
+          OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
+          COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
+          GEMINI_USAGE: ${{ steps.gemini.outputs.usage_json }}
+        run: |
+          python3 - << 'EOF'
+          import os, json
+          from datetime import date
+
+          today = date.today().isoformat()
+          lines = [f'## AI クォータ監視レポート {today}\n']
+          alerts = []
+
+          for env_key, label in [
+              ('ANTHROPIC_USAGE', 'Claude (Anthropic)'),
+              ('OPENAI_USAGE', 'OpenAI (CODEX)'),
+              ('COPILOT_USAGE', 'GitHub Copilot'),
+              ('GEMINI_USAGE', 'Gemini Code Assist'),
+          ]:
+              raw = os.environ.get(env_key, '{}')
+              if not raw or raw == '{}':
+                  lines.append(f'- **{label}**: スキップ (APIキー未設定)')
+                  continue
+              try:
+                  d = json.loads(raw)
+                  if d.get('alert'):
+                      alerts.append(label)
+                      lines.append(f'- **{label}**: ⚠️ アラート — {d}')
+                  else:
+                      lines.append(f'- **{label}**: ✅ 正常 — {d}')
+              except Exception:
+                  lines.append(f'- **{label}**: エラー')
+
+          if alerts:
+              lines.append(f'\n⚠️ アラート発生: {", ".join(alerts)}')
+          else:
+              lines.append('\n✅ 全ツール正常範囲内')
+
+          report = '\n'.join(lines)
+          print(report)
+
+          # GitHub Step Summary
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'w') as f:
+              f.write(report)
+          EOF

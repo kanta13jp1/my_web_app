@@ -8907,3 +8907,44 @@ WebSearch と専門分析により、以下の候補を評価:
 
 - cross-instance-pr 発行: VSCode版に lmsys/falcon_tii の UI追加を依頼
 - docs/ 追加確認: CONTRIBUTING.md の Flutter SDK バージョン照合
+
+
+## Windows版#64 セッション記録 (2026-04-16)
+
+### 実施内容: 4インスタンス + Multi-AI体制 + クォータ監視 構築
+
+| # | 作業 | 状態 |
+|---|---|---|
+| 1 | **4インスタンス体制へ移行**: WEB版 (claude.ai/code) 復活 — ブログ/競合リサーチ担当 | ✅ |
+| 2 | **外部AI統合**: Gemini Code Assist + OpenAI CODEX + GitHub Copilot 役割定義 | ✅ |
+| 3 | COMPRESSED_PROMPT_V3.md: 3インスタンス→4インスタンス + AI振り分けフロー追加 | ✅ |
+| 4 | CLAUDE.md: Multi-AI振り分け早見表 + 設計思想を更新 | ✅ |
+| 5 | `.github/workflows/quota-monitor.yml` 新規作成 (毎日 09:00 JST) | ✅ |
+| 6 | `supabase/migrations/20260416130000_create_ai_quota_usage.sql` 作成 | ✅ |
+| 7 | GHA ワークフロー数: 19本 → 20本 に更新 (COMPRESSED_PROMPT + CICD_SETUP_GUIDE) | ✅ |
+
+### Multi-AI 役割分担 (確定版)
+
+| ツール | 役割 | 閾値アラート |
+|---|---|---|
+| Claude Code VSCode版 | Flutter UI + EF + Rule16/19 | — |
+| Claude Code Windowsアプリ版 | docs + migrations + Rule10 | — |
+| Claude Code PowerShell版 | CI/CD + workflows + Rule17 | — |
+| Claude Code WEB版 | ブログ投稿 + 競合リサーチ + Rule11 | — |
+| GitHub Copilot | インライン補完 + PR自動レビュー | シート上限 |
+| Gemini Code Assist | 長文リファクタリング + テスト生成 | 月次クォータ 80% |
+| OpenAI CODEX | SQL最適化 + アルゴリズム | 月次 $20 |
+| Claude API | EF内AI処理 | 月次 $50 |
+
+### クォータ監視 Supabase テーブル
+
+```sql
+ai_quota_usage (tool, checked_at, usage_json, alert)
+```
+
+各ツールの使用量を毎日記録。`alert=true` 時は cs-notes に異常記録。
+
+### 次回Windows版優先タスク
+
+- GitHub Secrets に `GOOGLE_AI_API_KEY` / `OPENAI_API_KEY` 追加を検討 (quota-monitor有効化)
+- WEB版インスタンスに担当タスク引継ぎ (blog-drafts / competitor-reports)

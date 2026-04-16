@@ -101,8 +101,21 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
-**設計思想**: 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
+**設計思想**: Claude Code 4インスタンス (VSCode/Windowsアプリ/PowerShell/WEB版) を主軸に、Gemini Code Assist・CODEX・GitHub Copilot を補完役で活用。
+「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
 Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
+
+### AI振り分け早見表
+
+| タスク | 最適ツール | 理由 |
+| --- | --- | --- |
+| 行レベル補完 | GitHub Copilot | 最速・ゼロ待機 |
+| 5分以内の修正 | Copilot Inline Chat | コンテキスト取得コスト不要 |
+| 500行超リファクタリング | Gemini Code Assist | 長コンテキスト強み |
+| SQL/アルゴリズム最適化 | OpenAI CODEX | コード特化モデル |
+| 設計・戦略・ルール遵守 | Claude Code | Memory + プロジェクト文脈 |
+| ブログ・競合リサーチ | Claude Code WEB版 + NotebookLM | 大量読み込み無料委譲 |
+| クオータ使用状況確認 | `quota-monitor.yml` Dashboard | Supabase `ai_quota_usage` テーブル |
 
 ### マルチエージェント協調パターン (新機能設計時に参照)
 
@@ -112,7 +125,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **3インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell) / `ai-university-update.yml` (41プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell/WEB版) + Gemini Code Assist / CODEX / GitHub Copilot 補完 / `ai-university-update.yml` (60プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
