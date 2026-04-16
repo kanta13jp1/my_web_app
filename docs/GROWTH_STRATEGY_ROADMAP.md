@@ -9052,3 +9052,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 1. 🟡 **AI大学65社目以降**: Poolside AI (コーディング特化) / Scale AI (データ+エンタープライズ) を評価
 2. 🟢 **notebooklm Master Brain更新**: 今セッションの新プロバイダー情報を蓄積
 3. 🟢 **frosty-hamilton PRのマージ確認**: バージョンチェックスクリプト等がmainに取り込まれているか確認
+
+## VSCode版 2026-04-17
+
+### 完了タスク
+
+- `docs/INSTANCE_CONFIG.md` + `CLAUDE.md` Rule 22 完成: markdownlint 0エラー達成・commit d9bcbd40
+- Rule 22 内容: /recap公式Learning Mode + バージョン確認 + リリースノートWebFetch確認 + 新機能追跡ログ表 + 5インスタンス推奨プロンプト
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **221** / AI大学: **64社** / LP: 126のこと
+
+### 次回優先タスク (VSCode版)
+
+1. 🔴 **AI大学 v2 実装開始**: `docs/superpowers/plans/2026-04-16-ai-university-v2.md` (Task 1: SQL migration) — Subagent-Driven or Inline Execution選択後に着手
+2. 🟡 **Rule 8 Web/モバイル表示チェック**: Playwright MCP で本番URL確認
+3. 🟢 **GROQ_API_KEY設定確認**: supabase secrets set GROQ_API_KEY=... (P3実装前に必要)
