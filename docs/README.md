@@ -12,7 +12,7 @@
 | --- | --- |
 | [GROWTH_STRATEGY_ROADMAP.md](./GROWTH_STRATEGY_ROADMAP.md) | 全戦略・セッション記録（毎回更新） |
 | [DESIGN.md](./DESIGN.md) | デザイントークン（唯一の真実ソース・Orange+Indigoダークテーマ） |
-| [MULTI_INSTANCE_COORDINATION.md](./MULTI_INSTANCE_COORDINATION.md) | 3インスタンス並行開発・競合防止ガイド |
+| [MULTI_INSTANCE_COORDINATION.md](./MULTI_INSTANCE_COORDINATION.md) | 4インスタンス + マルチAI並行開発・競合防止ガイド |
 | [DESIGN_TOOLING_SETUP.md](./DESIGN_TOOLING_SETUP.md) | Figma MCP / AIDesigner MCP セットアップ |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | コーディング規約・PR作成ガイド |
 | [CICD_SETUP_GUIDE.md](./CICD_SETUP_GUIDE.md) | GitHub Actions / Secrets セットアップ手順 |
