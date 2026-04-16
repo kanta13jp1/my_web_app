@@ -1,0 +1,116 @@
+name: Blog Batch Publish (未投稿ドラフト全件一括)
+
+# 未投稿の全ドラフトを一括投稿する
+# 通常は blog-publish.yml (毎日21:00 JST) が1件ずつ処理するが、
+# 過去の未投稿ストックを一気に消化したい場合に使う
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_posts:
+        description: '最大投稿数 (default: 全件)'
+        required: false
+        default: '999'
+      delay_seconds:
+        description: '投稿間隔(秒) — レート制限対策'
+        required: false
+        default: '30'
+      dry_run:
+        description: 'true=一覧表示のみ・false=実際に投稿'
+        required: false
+        default: 'true'
+      platforms:
+        description: '投稿先: qiita / devto / qiita,devto'
+        required: false
+        default: 'qiita'
+
+concurrency:
+  group: blog-batch-publish
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  batch:
+    name: Batch Publish All Drafts
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: List unpublished drafts
+        id: list
+        run: |
+          COUNT=0
+          echo "## 未投稿ドラフト一覧" >> $GITHUB_STEP_SUMMARY
+          echo "| # | ファイル | タイトル |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- | --- |" >> $GITHUB_STEP_SUMMARY
+          while IFS= read -r f; do
+            # skip YYYY-MM-DD.md (daily-only filter)
+            if echo "$f" | grep -qE '/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$'; then continue; fi
+            # skip already published
+            if grep -q "^published: true" "$f" 2>/dev/null; then continue; fi
+            # must have title: or # heading
+            if grep -q "^title:" "$f" 2>/dev/null || grep -q "^# " "$f" 2>/dev/null; then
+              COUNT=$((COUNT+1))
+              TITLE=$(grep '^title:' "$f" 2>/dev/null | head -1 | sed "s/^title: *//;s/^['\"]//;s/['\"]$//")
+              [ -z "$TITLE" ] && TITLE=$(grep '^# ' "$f" 2>/dev/null | head -1 | sed 's/^# //')
+              echo "| $COUNT | \`$(basename $f)\` | $TITLE |" >> $GITHUB_STEP_SUMMARY
+              echo "$f"
+            fi
+          done < <(find docs/blog-drafts/ -name "*.md" -type f | sort) > /tmp/drafts.txt
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          echo ""
+          echo "Total: $COUNT unpublished drafts"
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Batch publish
+        env:
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MAX_POSTS: ${{ github.event.inputs.max_posts || '999' }}
+          DELAY: ${{ github.event.inputs.delay_seconds || '30' }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'true' }}
+          PLATFORMS: ${{ github.event.inputs.platforms || 'qiita' }}
+        run: |
+          python3 scripts/batch_publish.py
+
+      - name: Commit published markers
+        if: github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git pull origin main --ff-only
+
+          # Stage all modified draft files
+          git add docs/blog-drafts/
+          if git diff --cached --quiet; then
+            echo "ℹ️ No changes to commit"
+          else
+            COUNT=$(git diff --cached --name-only | wc -l)
+            git commit -m "docs: 一括投稿完了 ${COUNT}件 (batch-publish)"
+            git push origin HEAD:main
+            echo "✅ $COUNT ファイルを published:true に更新"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 実行結果" >> $GITHUB_STEP_SUMMARY
+          echo "- dry_run: ${{ github.event.inputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "- platforms: ${{ github.event.inputs.platforms }}" >> $GITHUB_STEP_SUMMARY
+          echo "- delay: ${{ github.event.inputs.delay_seconds }}s" >> $GITHUB_STEP_SUMMARY

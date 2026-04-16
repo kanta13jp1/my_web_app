@@ -1,0 +1,68 @@
+name: Blog Engagement (毎日・コメント返信/フォロー/重複削除)
+
+# 毎日 10:00 JST に Qiita/dev.to の engagement を処理する:
+# 1. 記事一覧取得 → 重複削除
+# 2. コメント取得 → Claude で返信
+# 3. いいねしたユーザー → フォロー
+# 4. 結果を Supabase に保存 → アプリ画面で閲覧可能に
+
+# 必要な GitHub Secrets:
+#   QIITA_ACCESS_TOKEN      — Qiita設定 > アプリケーション > 新しいトークン
+#   DEVTO_API_KEY           — dev.to設定 > Extensions > DEV Community API Keys
+#   SUPABASE_SERVICE_ROLE_KEY — Supabase > Project Settings > API > service_role
+#   ANTHROPIC_API_KEY       — console.anthropic.com (コメント返信AI生成用・任意)
+
+on:
+  schedule:
+    # 10:00 JST = 01:00 UTC
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'true=確認のみ・false=実際に処理'
+        required: false
+        default: 'true'
+
+concurrency:
+  group: blog-engagement
+  cancel-in-progress: false
+
+jobs:
+  engagement:
+    name: Blog Engagement Processing
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Run engagement script
+        env:
+          QIITA_ACCESS_TOKEN: ${{ secrets.QIITA_ACCESS_TOKEN }}
+          DEVTO_API_KEY: ${{ secrets.DEVTO_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: python3 scripts/blog_engagement.py
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Blog Engagement $(TZ=Asia/Tokyo date +'%Y-%m-%d %H:%M JST')" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | 値 |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| dry_run | ${{ github.event.inputs.dry_run || 'false' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Qiita token | ${{ secrets.QIITA_ACCESS_TOKEN != '' && 'set' || '❌ NOT SET' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| dev.to key | ${{ secrets.DEVTO_API_KEY != '' && 'set' || '⚠️ not set' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Claude key | ${{ secrets.ANTHROPIC_API_KEY != '' && 'set (AI返信)' || '⚠️ not set (template返信)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ Qiitaトークン未設定の場合: Settings > Secrets > QIITA_ACCESS_TOKEN を追加" >> $GITHUB_STEP_SUMMARY

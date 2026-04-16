@@ -41,6 +41,7 @@ import 'package:my_web_app/pages/rewards_page.dart';
 import 'package:my_web_app/pages/admin_analytics_page.dart';
 import 'package:my_web_app/pages/admin/feedback_list_page.dart';
 import 'package:my_web_app/pages/admin/quota_dashboard_page.dart';
+import 'package:my_web_app/pages/admin/blog_management_page.dart';
 import 'package:my_web_app/pages/home_insights_page.dart';
 import 'package:my_web_app/pages/life_goals_page.dart';
 import 'package:my_web_app/pages/thought_capture_page.dart';
@@ -686,6 +687,10 @@ class MyApp extends StatelessWidget {
           case '/quota-dashboard':
             return MaterialPageRoute(
               builder: (_) => const QuotaDashboardPage(),
+            );
+          case '/blog-management':
+            return MaterialPageRoute(
+              builder: (_) => const BlogManagementPage(),
             );
           case '/ai-assistant-chat':
             return MaterialPageRoute(
