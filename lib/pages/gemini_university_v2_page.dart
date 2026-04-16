@@ -384,6 +384,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF2B5CE6),
     officialUrl: 'https://www.adept.ai/',
   ),
+  'cerebras': _ProviderMeta(
+    name: 'Cerebras',
+    emoji: '⚡',
+    color: const Color(0xFFFFD700),
+    officialUrl: 'https://www.cerebras.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

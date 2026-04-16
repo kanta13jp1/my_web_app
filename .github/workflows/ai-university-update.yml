@@ -80,7 +80,7 @@ jobs:
           upsert_provider "huggingface" "https://huggingface.co/blog/feed.xml"                "Hugging Face"
           upsert_provider "nvidia"      "https://blogs.nvidia.com/feed/"                      "NVIDIA"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
-          # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core
+          # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras
           # 新規追加時は upsert_provider 行を追加する
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
