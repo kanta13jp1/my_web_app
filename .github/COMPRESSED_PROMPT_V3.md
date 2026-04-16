@@ -487,14 +487,15 @@ web/sitemap.xml          # URL マップ
 - ✅ **第38弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-ai-university-54-providers-milestone-en.md` → dev.to
 - ✅ **第39弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-sql-shell-quoting-artifact-fix-en.md` → dev.to
 - ✅ **第40弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-three-instance-parallel-dev-en.md` → dev.to
+- ✅ **第41弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita+dev.to
+- ✅ **第42弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-10-dns-domain-manager.md` → Qiita+dev.to
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第11弾以降)**:
+**次回候補 (第13弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | `2026-04-11-personal-dashboard-notion-competitor.md` — Notion競合 KPI実装 | Qiita/dev.to |
-| 中 | `2026-04-10-dns-domain-manager.md` / `2026-04-08-guitar-x-auto-post.md` | Qiita/dev.to |
+| 中 | `2026-04-08-guitar-x-auto-post.md` / その他蓄積下書き (52本) | Qiita/dev.to |
 | 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
