@@ -390,6 +390,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFFFD700),
     officialUrl: 'https://www.cerebras.ai/',
   ),
+  'prover': _ProviderMeta(
+    name: 'Prover',
+    emoji: '🧮',
+    color: const Color(0xFF9370DB),
+    officialUrl: 'https://www.prover.io/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -732,6 +738,11 @@ final Map<String, _Quiz> _quizzes = {
   'adept': _Quiz(
     question: 'Adept AI の ACT-1 / ACT-2 が得意とする領域は？',
     options: ['ブラウザや業務ソフトの操作自動化', '画像生成', '音声合成', '半導体設計'],
+    correct: 0,
+  ),
+  'prover': _Quiz(
+    question: 'Prover が特化している領域として正しいのは？',
+    options: ['定理証明・形式検証・数学的正確性保証', '画像生成', 'リアルタイムWeb検索', '音声合成'],
     correct: 0,
   ),
 };
@@ -1657,6 +1668,43 @@ Microsoft に主要チームが移籍後も Pi は独立サービスとして継
 - 「回答するAI」より「実行するAI」に重心がある
 
 [公式サイト](https://www.adept.ai/)
+''',
+  'prover': '''
+## Prover — 定理証明・形式検証特化型 AI
+
+Prover は定理証明（Theorem Proving）と形式検証（Formal Verification）に特化した AI エンジンです。
+数学や科学領域で最先端の正確性を求められるタスクに対応し、
+汎用 LLM では到達できない SOTA（最先端技術）を達成しています。
+
+## 主要機能
+
+- **Theorem Prover**: Lean / Coq などの証明言語で定理の正確性を機械的に検証
+- **Formal Verification**: スマートコントラクト・組み込みシステムの形式的安全性証明
+- **Mathematical AI Assistant**: 複雑な数学問題の段階的解法とその正確性保証
+- **Logic Analysis Engine**: 論理的矛盾の検出と形式システムの正当性検証
+
+## 特徴
+
+- **数学領域での高精度**: GPT-4 や Claude を遥かに上回る定理証明成功率
+- **検証可能性**: AI の出力が機械的に検証可能な形で提示される
+- **業界標準ツール統合**: Lean 4、Coq、Isabelle など標準形式言語に対応
+- **形式検証による安全性**: ブロックチェーン・航空宇宙など安全性クリティカルな業界に対応
+
+## 対応言語・形式
+
+- Lean 4 / Lean 3 — 依存型言語・定理証明
+- Coq — 構成的証明支援
+- Isabelle — HOL 系形式言語
+- SMT-LIB 2.0 — SMT ソルバー連携
+
+## ユースケース
+
+- **大学数学**: 複雑な定理の自動証明・学習支援
+- **スマートコントラクト監査**: 形式検証による安全性保証
+- **暗号プロトコル検証**: 意図通りの暗号安全性を機械的に検証
+- **飛行制御システム**: FAA等による形式検証対応
+
+[公式サイト](https://www.prover.io/)
 ''',
 };
 
