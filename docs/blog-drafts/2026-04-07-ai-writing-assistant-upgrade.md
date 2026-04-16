@@ -1,7 +1,7 @@
 ---
 title: "1つのEdge Functionで議事録・Xスレッド・技術ブログ原稿を同時生成する実装解説"
 tags: Flutter,Supabase,個人開発,buildinpublic,GeminiAPI
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-07 (AI文章アシスタント拡張)
