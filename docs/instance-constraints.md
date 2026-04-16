@@ -152,6 +152,11 @@ Step 5: GROWTH_STRATEGY_ROADMAP.md のセッション記録に追記
 ```
 このインスタンスはVSCode版です。
 
+【セッション開始時必須】まずバージョンチェックを実行してください:
+  PYTHONUTF8=1 python3 scripts/check_versions.py
+バージョン更新があれば docs/tool-versions.md の制約解消チェックリストを確認し、
+解消済みなら docs/instance-constraints.md から該当行を削除して役割分担を見直すこと。
+
 .github/COMPRESSED_PROMPT_V3.md と docs/instance-constraints.md を確認してください。
 その後、以下の順で実行してください:
 1. docs/cross-instance-prs/ の pending タスクをすべて処理
@@ -165,6 +170,11 @@ Step 5: GROWTH_STRATEGY_ROADMAP.md のセッション記録に追記
 ```
 このインスタンスはWindowsアプリ版です。
 
+【セッション開始時必須】まずバージョンチェックを実行してください:
+  PYTHONUTF8=1 python3 scripts/check_versions.py
+バージョン更新があれば docs/tool-versions.md の制約解消チェックリストを確認し、
+解消済みなら docs/instance-constraints.md から該当行を削除して役割分担を見直すこと。
+
 .github/COMPRESSED_PROMPT_V3.md と docs/instance-constraints.md を確認してください。
 その後、標準フローで実行してください:
 1. Rule 10: docs/ 全件分析 (矛盾・鮮度切れ修正)
@@ -177,6 +187,11 @@ Step 5: GROWTH_STRATEGY_ROADMAP.md のセッション記録に追記
 
 ```
 このインスタンスはPowerShell版です (推奨モデル: ルーティンはclaude-haiku-4-5)。
+
+【セッション開始時必須】まずバージョンチェックを実行してください:
+  PYTHONUTF8=1 python3 scripts/check_versions.py
+バージョン更新があれば docs/tool-versions.md の制約解消チェックリストを確認し、
+解消済みなら docs/instance-constraints.md から該当行を削除して役割分担を見直すこと。
 
 .github/COMPRESSED_PROMPT_V3.md と docs/instance-constraints.md を確認してください。
 その後、以下の順で実行してください:
@@ -192,6 +207,14 @@ Step 5: GROWTH_STRATEGY_ROADMAP.md のセッション記録に追記
 このインスタンスはWEB版(claude.ai/code)です。
 【制約】notebooklm CLI・flutter analyze・deno lint・ローカルCLI は実行不可。
 代替: notebooklm→WebSearch / git→GitHub MCP / analyze→cross-instance-pr依頼。
+
+【セッション開始時必須】WEB版はCLIが使えないためWebFetchでリリース確認してください:
+  Claude Code  : https://github.com/anthropics/claude-code/releases
+  Gemini       : https://marketplace.visualstudio.com/items?itemName=google.geminicodeassist
+  Copilot      : https://marketplace.visualstudio.com/items?itemName=github.copilot
+  OpenAI models: https://platform.openai.com/docs/models
+バージョン変更があれば docs/tool-versions.md を GitHub MCP 経由で更新し、
+制約解消チェックリストを確認すること。
 
 .github/COMPRESSED_PROMPT_V3.md と docs/instance-constraints.md を確認してください。
 その後、WEB版許可タスクを実行してください:

@@ -63,6 +63,17 @@ Step 3: memory/feedback_correction_YYYYMMDD.md に記録
 Step 4: cross-instance-pr で他インスタンスへ周知
 ```
 
+### セッション開始時 バージョンチェック（全インスタンス必須）
+
+詳細: `docs/tool-versions.md` / チェックスクリプト: `scripts/check_versions.py`
+
+| インスタンス | 実行コマンド | 更新時のアクション |
+| --- | --- | --- |
+| VSCode / Windowsアプリ / PowerShell | `PYTHONUTF8=1 python3 scripts/check_versions.py` | 制約解消チェックリストを確認し `docs/tool-versions.md` を更新 |
+| WEB版 | WebFetch でリリースページを確認 | GitHub MCP 経由で `docs/tool-versions.md` を手動更新 |
+
+**新モデルリリース時**: `ai-assistant` EF の `DEFAULT_SYNTHESIS_MODEL` + 各 EF のモデルパラメータを更新する。
+
 ### クオータ監視 (quota-monitor.yml 毎日 09:00 JST)
 
 | ツール | 監視方法 | アラート閃値 |

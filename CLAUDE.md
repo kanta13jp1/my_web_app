@@ -97,7 +97,19 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
-14. **制約・仕様変更を即記録（全インスタンス・必須）** — どのインスタンスでも新しい制約・モデル変更・モード仕様を発見したら即座に以下を実施する:
+14. **セッション開始時: ツールバージョンチェック（全インスタンス・必須）** — セッション冒頭で以下を実行する。バージョン変更があれば制約解消チェックと役割分担の見直しを行う。
+   - **デスクトップ版 (VSCode/Windowsアプリ/PowerShell)**: `PYTHONUTF8=1 python3 scripts/check_versions.py` を実行
+   - **WEB版**: `python3 scripts/check_versions.py --web` は不可 → 下記URLを WebFetch で確認し手動更新
+     - Claude Code: `https://github.com/anthropics/claude-code/releases`
+     - Gemini: `https://marketplace.visualstudio.com/items?itemName=google.geminicodeassist`
+   - **バージョン更新時の対応**:
+     1. `docs/tool-versions.md` を更新 (`--update` フラグで自動更新可)
+     2. `docs/tool-versions.md` の「制約解消チェックリスト」を確認
+     3. 解消された制約を `docs/instance-constraints.md` から削除
+     4. `.github/COMPRESSED_PROMPT_V3.md` の制約列を更新
+   - **新モデルリリース時** (例: `claude-sonnet-4-7` 等): `supabase/functions/ai-assistant/index.ts` の `DEFAULT_SYNTHESIS_MODEL` + 各 EF のモデルパラメータを更新する
+
+15. **制約・仕様変更を即記録（全インスタンス・必須）** — どのインスタンスでも新しい制約・モデル変更・モード仕様を発見したら即座に以下を実施する:
    1. `docs/instance-constraints.md` の「制約発見ログ」に追記 (`| 日付 | インスタンス | 制約内容 | 代替手段 | セッション名 |`)
    2. `.github/COMPRESSED_PROMPT_V3.md` の該当インスタンス行の制約列を更新
    3. `memory/feedback_correction_YYYYMMDD.md` に記録
