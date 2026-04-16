@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で競馬AI予想パイプラインを全自動化した話 — 3タブUI・的中率ダッシュボード実装"
 tags: Flutter,Supabase,個人開発,buildinpublic,競馬AI
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-12
