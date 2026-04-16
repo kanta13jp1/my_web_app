@@ -7,47 +7,13 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ---
 
-## 🔀 4インスタンス + Multi-AI 並行開発スコープ（2026-04-16 更新）
-
-### Claude Code 4インスタンス構成
+## 🔀 3インスタンス並行開発スコープ（セッション 2026-04-16 確認済み）
 
 | インスタンス | 担当範囲 (write 権限) | 専任ルール |
 | --- | --- | --- |
 | **VSCode版 (Claude Code)** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
 | **Windowsアプリ版 (Claude Code)** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
 | **PowerShell版 (Claude Code)** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 |
-| **WEB版 (claude.ai/code)** | `docs/blog-drafts/` + `docs/competitor-reports/` + NotebookLM統合タスク | Rule 11 (AI大学コンテンツ反映) 主担当 / タスク T-1 ブログ投稿 / 競合リサーチ / モバイル・外出先対応 |
-
-### 外部AI統合（補完役割）
-
-| AI ツール | 役割 | 使用タイミング |
-| --- | --- | --- |
-| **GitHub Copilot** | VSCode内インライン補完・PR自動レビュー | コード補完 (`Ctrl+Enter`) / インラインChat (`Ctrl+I`) / `claude-agent-review.yml` PR審査 |
-| **Gemini Code Assist** | 長文コード理解・Google API統合・テスト生成 | Cloud Shell / JetBrains / VSCode で複雑な EF ロジック・Dart リファクタリング支援 |
-| **OpenAI CODEX** | アルゴリズム生成・コード変換・SQL最適化 | Supabase クエリ最適化 / Edge Function の複雑なビジネスロジック実装支援 |
-
-### AI選択フロー
-
-```text
-行レベル補完 (秒単位)        → GitHub Copilot (Ctrl+Enter)
-インライン修正 (分単位)       → GitHub Copilot Inline Chat (Ctrl+I)
-複雑なDart/Flutter実装       → Gemini Code Assist (長コンテキスト強み)
-アルゴリズム / SQL 最適化     → CODEX (コード特化強み)
-設計・戦略・長期判断          → Claude Code (Memory + ROADMAP統合)
-ブログ / 競合リサーチ / 調査  → Claude Code WEB版 + NotebookLM
-```
-
-### クオータ監視
-
-`quota-monitor.yml` (毎日 09:00 JST) が各ツールの使用状況を `ai_quota_usage` テーブルに記録。
-
-| ツール | 監視方法 | アラート閾値 |
-| --- | --- | --- |
-| Claude (Anthropic API) | `/v1/usage` API | 月次 $50 超過 |
-| OpenAI (CODEX) | `/v1/usage` API | 月次 $20 超過 |
-| Gemini Code Assist | Google Cloud Monitoring API | 月次クオータ 80% |
-| GitHub Copilot | GitHub `/user/copilot_billing` API | シート数上限近接 |
-
 | **GitHub Copilot (統合AI)** | VSCode 内インライン補完・チャット・PR レビュー / 全インスタンス横断支援 | Inline Chat: `I#` 接頭辞で簡易修正 / Copilot Chat: 複雑な判断・アーキテクチャ / `claude-agent-review.yml`: PR自動レビュー |
 
 **緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
@@ -250,11 +216,7 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 
 ---
 
-## 🤖 外部AI統合詳細（GitHub Copilot / Gemini Code Assist / CODEX）
-
-Claude Code 4インスタンスを主軸に、以下3ツールを補完役割で活用。Claude Code のトークンを「判断・設計・統合」に集中させ、反復的な補完・実装支援は外部AIに委譲する。
-
-### GitHub Copilot
+## 🤖 GitHub Copilot 統合（全インスタンス横断支援）
 
 GitHub Copilot は VS Code 内での **即座のコード補完・インライン Chat・PR 自動レビュー** を担当。Claude Code Schedule との役割分担で開発を加速。
 
@@ -347,48 +309,11 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 - [ ] 依頼のスコープ内の修正か？（Rule #6 シンプルさ優先）
 - [ ] 元のプロジェクト方針に一貫しているか？ （Notion/Supabase/Flutter Web 標準に従っているか）
 
-### Gemini Code Assist 使用ガイド
-
-**強み**: 長いコンテキスト（100K+）・Google API 知識・テスト自動生成
-
-```text
-// Gemini Code Assist で推奨する用途
-1. 長い Dart ファイルのリファクタリング (500行以上)
-2. Supabase Edge Function の Deno テスト生成
-3. Google Calendar / Firebase 連携の実装支援
-4. データモデル設計のレビューと改善提案
-
-// 使用禁止パターン
-❌ プロジェクト固有のルール (Rule #1-#19) を無視した提案を受け入れる
-❌ EFハードキャップ (50本) を超える新 EF 生成
-```
-
-**VS Code での設定**: 拡張機能「Gemini Code Assist」をインストール → Google アカウントでサインイン
-
-### OpenAI CODEX 使用ガイド
-
-**強み**: コード特化・SQL生成・アルゴリズム最適化・多言語変換
-
-```text
-// CODEX で推奨する用途
-1. Supabase PostgreSQL クエリの最適化 (N+1解消・インデックス設計)
-2. Python スクリプト (fetch_yt.py / notebooklm_research.py) の改善
-3. TypeScript Edge Function のアルゴリズム実装
-4. Dart ↔ TypeScript コード変換支援
-
-// API エンドポイント (Edge Function から呼び出す場合)
-POST https://api.openai.com/v1/chat/completions
-Authorization: Bearer $OPENAI_API_KEY
-model: "gpt-4.1" | "o4-mini" | "codex-mini-latest"
-```
-
-**Supabase Secret**: `OPENAI_API_KEY` を設定済みの場合、`ai-assistant` EF の CODEX モードで利用可能
-
 ---
 
-## ⚙️ GitHub Actions CI/CD（全20ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全19ワークフロー）
 
-**全20本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全19本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -754,10 +679,10 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windows版#63: 60社)
+#### 現在の登録プロバイダー (VSCode版#: 58社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, black_forest_labs, liquid_ai, black_forest_labs, liquid_ai
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
