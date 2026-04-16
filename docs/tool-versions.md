@@ -2,24 +2,24 @@
 
 > **更新ルール**: セッション開始時に `scripts/check_versions.py` を実行し、
 > バージョンが上がっていれば①この台帳を更新②制約解消チェック③役割分担見直しを行う。
-> WEB版は `check_versions.py` 実行不可 → WebFetch でリリースページを確認し手動更新。
+> WEB版は 2026-04-17 廃止 → 3インスタンス体制 (VSCode / Windowsアプリ / PowerShell) のみ。
 
 ---
 
-## 現在のバージョン (2026-04-16 時点)
+## 現在のバージョン (2026-04-17 時点)
 
 | ツール | 現在バージョン | 最終確認日 | 確認インスタンス |
 | --- | --- | --- | --- |
-| **Claude Code** (CLI) | `2.1.110` | 2026-04-16 | Windowsアプリ版 |
+| **Claude Code** (CLI) | `2.1.111` | 2026-04-17 | PowerShell版 |
 | **Claude Code** (VSCode ext) | `2.1.109` | 2026-04-16 | VSCode版 |
 | **Gemini Code Assist** (VSCode ext) | `2.78.0` | 2026-04-16 | VSCode版 |
 | **OpenAI ChatGPT** (VSCode ext) | `26.409.20454` | 2026-04-16 | VSCode版 |
 | **GitHub Copilot** (VSCode ext) | 未インストール | 2026-04-16 | VSCode版 |
 | **Dart/Flutter** (SDK) | `3.132.0` | 2026-04-16 | VSCode版 |
-| **Deno** | `2.6.5` | 2026-04-16 | Windowsアプリ版 |
+| **Deno** | `2.7.12` | 2026-04-17 | Windowsアプリ版 |
 | **Claude Sonnet** (API model) | `claude-sonnet-4-6` | 2026-04-16 | 全インスタンス |
-| **Claude Haiku** (API model) | `claude-haiku-4-5` | 2026-04-16 | PowerShell版 |
-| **Claude Opus** (API model) | `claude-opus-4` | 2026-04-16 | — |
+| **Claude Haiku** (API model) | `claude-haiku-4-5-20251001` | 2026-04-17 | PowerShell版 |
+| **Claude Opus** (API model) | `claude-opus-4-7` | 2026-04-17 | 全インスタンス (設計時) |
 
 ---
 
@@ -28,6 +28,10 @@
 | 日付 | ツール | 旧バージョン | 新バージョン | 制約解消確認 | 対応 |
 | --- | --- | --- | --- | --- | --- |
 | 2026-04-16 | Claude Code CLI | — | 2.1.110 | 初回記録 | — |
+| 2026-04-17 | Claude Code CLI | 2.1.110 | 2.1.111 | `/ultrareview`・`/effort xhigh`・`/less-permission-prompts`・PowerShell tool・Windows SessionStart hook修正 | INSTANCE_CONFIG.md line 85-90 に反映済 |
+| 2026-04-17 | Claude Opus (API) | `claude-opus-4` | `claude-opus-4-7` | Extended Thinking なし / Adaptive Thinking で `/effort xhigh` 対応 | 全インスタンス推奨プロンプトを Opus 4.7 に更新 |
+| 2026-04-17 | Claude Haiku (API) | `claude-haiku-4-5` | `claude-haiku-4-5-20251001` | `claude-3-haiku-20240307` 2026-04-19 廃止対応 | EF grep 確認済 (参照なし) |
+| 2026-04-17 | Deno | 2.6.5 | 2.7.12 | なし | EF互換確認 (deno lint 0エラー) |
 
 ---
 
