@@ -7,30 +7,51 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ---
 
-## 🔀 3インスタンス + マルチAI並行開発スコープ（WEB版廃止 2026-04-17）
+## 🔀 4インスタンス + Multi-AI 並行開発スコープ（2026-04-16 更新）
 
-| インスタンス | 担当範囲 (write 権限) | 専任ルール |
+### Claude Code 4インスタンス構成
+
+> **制約対応表**: WEB版(claude.ai/code)はローカルCLI時限あり—— `notebooklm`・`flutter analyze`・`deno lint`・ローカルPythonスクリプトは不可。WebSearch / WebFetch / GitHub MCP は利用可。
+
+| インスタンス | 担当範囲 (write 権限) | 専任ルール | 推奨モデル | 制約 |
+| --- | --- | --- | --- | --- |
+| **VSCode版** | `lib/` (Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) / `flutter analyze` + `deno lint` 0エラー | `claude-sonnet-4-6` | なし |
+| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` + **notebooklm CLI主担当** | Rule 10 (docs全件分析) / AI大学プロバイダー追加 / **Master Brain更新** | `claude-sonnet-4-6` | なし |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) / Scheduleタスク owner | `claude-haiku-4-5` (次元作業) or `sonnet-4-6` (設計) | なし |
+| **WEB版** | `docs/blog-drafts/` + `docs/competitor-reports/` + GitHub PR/Issues主担当 | Rule 11 (AI大学 WebSearch経由) / T-1 ブログ / 競合リサーチ / Code Review MCP | `claude-sonnet-4-6` | notebooklm・ローカルCLI **不可** |
+
+### 外部AI統合（補完役割）
+
+| AI ツール | 役割 | 使用タイミング |
 | --- | --- | --- |
-| **VSCode版 (Claude Code)** | `lib/` (Flutter UI・219ページ) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) 専任 / `flutter analyze` + `deno lint` 0エラー |
-| **Windowsアプリ版 (Claude Code)** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 |
-| **PowerShell版 (Claude Code)** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) 専任 / Schedule タスク owner / クォータ監視管理 / MCP設定管理 |
+| **GitHub Copilot** | VSCode内インライン補完・PR自動レビュー | コード補完 (`Ctrl+Enter`) / インラインChat (`Ctrl+I`) / `claude-agent-review.yml` PR審査 |
+| **Gemini Code Assist** | 長文コード理解・Google API統合・テスト生成 | Cloud Shell / JetBrains / VSCode で複雑な EF ロジック・Dart リファクタリング支援 |
+| **OpenAI CODEX** | アルゴリズム生成・コード変換・SQL最適化 | Supabase クエリ最適化 / Edge Function の複雑なビジネスロジック実装支援 |
+
+### AI選択フロー
+
+```text
+行レベル補完 (秒単位)        → GitHub Copilot (Ctrl+Enter)
+インライン修正 (分単位)       → GitHub Copilot Inline Chat (Ctrl+I)
+複雑なDart/Flutter実装       → Gemini Code Assist (長コンテキスト強み)
+アルゴリズム / SQL 最適化     → CODEX (コード特化強み)
+設計・戦略・長期判断          → Claude Code (Memory + ROADMAP統合)
+ブログ / 競合リサーチ       → Claude Code WEB版 (WebSearch/WebFetch)
+NotebookLM Deep Research  → Windowsアプリ版 (notebooklm CLI専任)
+```
+
+### クオータ監視
+
+`quota-monitor.yml` (毎日 09:00 JST) が各ツールの使用状況を `ai_quota_usage` テーブルに記録。
+
+| ツール | 監視方法 | アラート閾値 |
+| --- | --- | --- |
+| Claude (Anthropic API) | `/v1/usage` API | 月次 $50 超過 |
+| OpenAI (CODEX) | `/v1/usage` API | 月次 $20 超過 |
+| Gemini Code Assist | Google Cloud Monitoring API | 月次クオータ 80% |
+| GitHub Copilot | GitHub `/user/copilot_billing` API | シート数上限近接 |
+
 | **GitHub Copilot (統合AI)** | VSCode 内インライン補完・チャット・PR レビュー / 全インスタンス横断支援 | Inline Chat: `I#` 接頭辞で簡易修正 / Copilot Chat: 複雑な判断・アーキテクチャ / `claude-agent-review.yml`: PR自動レビュー |
-
-### フォールバック AI ツール (Claude MAX レート制限到達時のみ使用)
-
-> **通常運用**: Claude Code 3インスタンスのみ使用。フォールバックは Claude が 429 / 月次 $50 超過のときだけ発動。NotebookLM のみ制限に関係なく常時使用必須 (Rule 21)。
-
-| ツール | 発動条件 | ファイル種別 | 用途 |
-| --- | --- | --- | --- |
-| **Gemini Code Assist** | Claude 429 / $50超過 | `.dart` | Flutter/Dart IDE補完 (Google製言語に最適化) |
-| **CODEX CLI** (OpenAI) | Claude 429 / $50超過 | `.py` / `.ts` | Pythonスクリプト・TypeScript EF draft |
-| **GitHub Copilot** | Claude 429 / $50超過 + **常時PR自動レビュー** | `.yml` / `.sql` / `.md` | YAML補完・PR自動レビュー |
-| **NotebookLM** | **常時使用必須 (Rule 21)** | 全種別 | 3ファイル以上同時読み込み・URL分析・競合調査 |
-
-**フォールバック発動ルール**:
-1. `quota-monitor.yml` が月次閾値超過を検知 → `ai_quota_usage.alert=true`
-2. `cs-check.yml` 次回実行時に GitHub Issue 自動生成「⚠️ Claude レート制限到達」
-3. Issue 本文に「推奨フォールバック AI + ファイル種別対応表」を記載
 
 **緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
 
@@ -229,12 +250,14 @@ notion, evernote, moneyforward, x, animaworks, claude-code, codex, netkeiba, ope
 17. **毎セッション: GitHub Actions ワークフロー最適化チェック（PowerShell版 専任）** — PowerShell版が `.github/workflows/` を毎セッション見直す: (a) 常にエラーになるステップを無効化、(b) push + workflow_call 二重起動防止、(c) `continue-on-error: true` 乱用排除、(d) timeout-minutes 実態確認。**加えて全ブランチの CI 失敗を監視し `.github/ci-failures/<sha>.json` に記録する（他インスタンスは次セッション冒頭で確認）**。改善後は ROADMAP に記録する
 18. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（全インスタンス）** — `ai_university_content` の最新 `news` または NotebookLM Master Brain に蓄積した AI ニュースを開発に活かす。評価軸: (a) **モデルアップグレード** — 新モデルが利用可能なら既存 EF (`ai-assistant`/`daily-judgment`/`gemini-election-analysis` 等) のモデルパラメータを更新、(b) **新 API 機能取り込み** — 音声生成・リアルタイム検索・画像生成など新機能を既存機能に統合できないか検討、(c) **コスト最適化** — より安価なモデルが登場したらバッチ処理 EF への採用を検討、(d) **差別化機能のヒント** — 競合 AI の新機能からユーザー価値を逆算して未実装機能のアイデアを ROADMAP に追記。実施手順: `notebooklm ask "最新AIニュースから開発に使えそうな機能・APIを抽出して"` → 既存 EF との接続可能性を評価 → ROADMAP 追記 → 即対応可能なものは今セッションで実装
 19. **毎セッション: UI改善ツールチェーン実行（VSCode版 専任）** — VSCode版のみ必須。`Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて毎セッション UI を 1ページ以上改善する。**実施手順**: (1) `design-skills` サブエージェントで改善対象ページを `docs/DESIGN.md` と照合し「DESIGN.md 違反箇所・改善提案」を列挙、(2) **Figma MCP** でデザインコンポーネントを参照、(3) **AIDesigner MCP** でDesktop/Mobile 両対応改善案を生成、(4) **Nanobanana API** でデザインアセットを取得しコードに反映、(5) `lib/` に実装 → `flutter analyze 0エラー` → commit → ROADMAP 記録。**他2インスタンスはデザイン違反 lint レポート生成まで（コード修正は VSCode版 の cross-instance-pr へ）**。詳細: `docs/DESIGN_TOOLING_SETUP.md`
-20. **毎セッション: 6 MCP プラグイン活用（全インスタンス・必須）** — `.mcp.json` に設定済みの Playwright / Context7 / GitHub MCP / Magic / Code Review / Superpowers を積極的に使う。Rule 8 UI確認→Playwright自動スクリーンショット / 外部ライブラリ調査→Context7 / PR作成→GitHub MCP / 新UIウィジェット→Magic MCP / 実装後→Code Review MCP
-21. **毎回必須: NotebookLM 経由でトークン削減** — 全インスタンス (VSCode/Windowsアプリ/PowerShell版) に適用。(a) 3ファイル以上同時読み込み → `notebooklm source add` → `notebooklm ask`, (b) URL・競合サイト分析 → `notebooklm source add URL`, (c) 競合21社調査 → `notebooklm source add-research`, (d) ドキュメント全体俯瞰 → source追加後に要約, (e) セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須。Claude 直接処理は「判断・編集・統合」のみ。トークン節約効果 ~95%。| 22. **毎セッション冒頭: バージョン確認・制約解消チェック・Learning Mode** (Rule 22) — (1) `claude --version && npm show @anthropic-ai/claude-code dist-tags.latest` で確認。更新があれば `npm update -g @anthropic-ai/claude-code`。(2) **必ず `docs/INSTANCE_CONFIG.md` の「推奨プロンプト」セクションを参照**してセッション開始プロンプトをコピーして使う。(3) **Learning Mode**: git log -5 + MEMORY.md を読んでコンテキストを把握 → 3ファイル以上読む場合はNotebookLMに委譲。(4) バージョン更新があった場合: リリースノートで新機能確認 → INSTANCE_CONFIG.md を更新 → 役割分担を見直す。(5) フォールバックAI (Claude 429/$50超過時のみ): `.dart`→Gemini Code Assist / `.py`/`.ts`→CODEX CLI / `.yml`/`.sql`→GitHub Copilot。(6) Routines (Desktop専用): Windowsアプリ版が Pro:5回/日, Max:15回/日 の範囲でGHA代替として活用。(7) ultrathink/think deeply 等の拡張思考トリガーを各セッションで積極活用する
 
 ---
 
-## 🤖 GitHub Copilot 統合（全インスタンス横断支援）
+## 🤖 外部AI統合詳細（GitHub Copilot / Gemini Code Assist / CODEX）
+
+Claude Code 4インスタンスを主軸に、以下3ツールを補完役割で活用。Claude Code のトークンを「判断・設計・統合」に集中させ、反復的な補完・実装支援は外部AIに委譲する。
+
+### GitHub Copilot
 
 GitHub Copilot は VS Code 内での **即座のコード補完・インライン Chat・PR 自動レビュー** を担当。Claude Code Schedule との役割分担で開発を加速。
 
@@ -327,16 +350,53 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 - [ ] 依頼のスコープ内の修正か？（Rule #6 シンプルさ優先）
 - [ ] 元のプロジェクト方針に一貫しているか？ （Notion/Supabase/Flutter Web 標準に従っているか）
 
+### Gemini Code Assist 使用ガイド
+
+**強み**: 長いコンテキスト（100K+）・Google API 知識・テスト自動生成
+
+```text
+// Gemini Code Assist で推奨する用途
+1. 長い Dart ファイルのリファクタリング (500行以上)
+2. Supabase Edge Function の Deno テスト生成
+3. Google Calendar / Firebase 連携の実装支援
+4. データモデル設計のレビューと改善提案
+
+// 使用禁止パターン
+❌ プロジェクト固有のルール (Rule #1-#19) を無視した提案を受け入れる
+❌ EFハードキャップ (50本) を超える新 EF 生成
+```
+
+**VS Code での設定**: 拡張機能「Gemini Code Assist」をインストール → Google アカウントでサインイン
+
+### OpenAI CODEX 使用ガイド
+
+**強み**: コード特化・SQL生成・アルゴリズム最適化・多言語変換
+
+```text
+// CODEX で推奨する用途
+1. Supabase PostgreSQL クエリの最適化 (N+1解消・インデックス設計)
+2. Python スクリプト (fetch_yt.py / notebooklm_research.py) の改善
+3. TypeScript Edge Function のアルゴリズム実装
+4. Dart ↔ TypeScript コード変換支援
+
+// API エンドポイント (Edge Function から呼び出す場合)
+POST https://api.openai.com/v1/chat/completions
+Authorization: Bearer $OPENAI_API_KEY
+model: "gpt-4.1" | "o4-mini" | "codex-mini-latest"
+```
+
+**Supabase Secret**: `OPENAI_API_KEY` を設定済みの場合、`ai-assistant` EF の CODEX モードで利用可能
+
 ---
 
-## ⚙️ GitHub Actions CI/CD（全25ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全20ワークフロー）
 
-**全25本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全20本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
 | `ci.yml` | PR + push (staging/develop) ※main は deploy-prod が workflow_call で実行 | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
-| `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release / ⚠️ 2026-04-16: deno lint(no-unused-vars) + dart format(139files) + trailing_commas(5件) → PS版#本セッションで修正済み ✅ |
+| `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
 | `daily-report.yml` | 07:30 JST 毎日 | Supabase API + X投稿 + 競合モニタリング (Claude Scheduleの1.5時間前) |
@@ -354,12 +414,6 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 | `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (18プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
 | `ai-university-reminder.yml` | ⚠️ 新規 (2026-04-16) | AI大学学習リマインダー通知 (未実装学習者向け) |
 | `horse-racing-update.yml` | ⚠️ 新規 (2026-04-16) | 競馬AI予想パイプラインの定期更新 (JRA/NAR データ取得・モデル学習) |
-| `quota-monitor.yml` | 毎日 09:00 JST + dispatch | AI クォータ監視 (Claude/OpenAI/Gemini/Copilot) → `ai_quota_usage` UPSERT → 閾値超過時アラート |
-| `blog-draft.yml` | 毎日 07:00 JST + dispatch | 直近 git log → Claude API でドラフト自動生成 → commit → `blog-publish.yml` トリガー |
-| `blog-publish.yml (batch)` / `blog-batch-publish.yml` | workflow_dispatch | 未投稿ドラフト全件一括投稿 — `max_posts` / `dry_run` 入力 |
-| `blog-engagement.yml` | 毎日 01:00 UTC (10:00 JST) + dispatch | Qiita/dev.to エンゲージメント取得・重複削除・コメント自動返信 (Claude Haiku)・いいね者フォロー → `blog_engagement` テーブル |
-| `blog-backfill.yml` | workflow_dispatch | 過去ドラフトのフロントマター AI 生成 + 一括投稿 |
-| `blog-verify.yml` | workflow_dispatch | 投稿済み記事のバリデーション |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -369,7 +423,7 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在16本デプロイ済み) / 16本構成: standalone 5本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio/local-election-intelligence) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
+- EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在15本デプロイ済み) / 15本構成: standalone 4本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
@@ -467,10 +521,9 @@ web/sitemap.xml          # URL マップ
 
 | タスク / 課題 | 担当 | 優先度 | 詳細 |
 | --- | --- | --- | --- |
-| **PR #366: frosty-hamilton マージ** | PS版 | 🟡中 | Voice AI chat + conversation_messages migration + check_versions.py。CLAUDE.md / CV3 / ai-assistant.ts でコンフリクトあり → 手動解決後マージ |
 | **モバイルアプリ (iOS/Android) 対応** | VSCode版 | 🟡中 | Flutter モバイルビルド環境の整備と動作検証 |
 | **Notion API 連携のメモリ最適化** | Web版 | 🟡中 | `growth-import-preview` EF の再帰ブロック取得時のメモリ使用量最適化 |
-| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 67社目以降のプロバイダー（新興AI等）の追加評価 |
+| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 56社目以降のプロバイダー（Cohere standalone API, Voyage AI 等）の追加評価 |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 
@@ -516,28 +569,14 @@ web/sitemap.xml          # URL マップ
 - ✅ **第40弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-three-instance-parallel-dev-en.md` → dev.to
 - ✅ **第41弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita+dev.to
 - ✅ **第42弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-10-dns-domain-manager.md` → Qiita+dev.to
-- ✅ **第43弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-13-ai-university-41-providers-tabs.md` → Qiita+dev.to
-- ✅ **第44弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-12-horse-racing-ai-pipeline.md` → Qiita+dev.to
-- ✅ **第45弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-08-x-viral-pipeline-catalog-expansion.md` → Qiita+dev.to
-- ✅ **第46弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-07-ai-writing-assistant-upgrade.md` → Qiita+dev.to
-- ✅ **第47弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-06-public-guitar-gallery.md` → Qiita+dev.to
-- ✅ **第48弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-08-guitar-x-auto-post.md` → Qiita+dev.to
-- ✅ **第49弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-13-ai-university-54-providers-milestone.md` → Qiita+dev.to
-- ✅ **第50弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-13-claude-mem-persistent-memory.md` → Qiita+dev.to
-- ✅ **第51弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-10-budget-ai-advisor.md` → Qiita+dev.to
-- ✅ **第52弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-12-ai-university-34-providers.md` → Qiita+dev.to
-- ✅ **第53弾 投稿成功** (PS版セッション, 2026-04-17): WEB版廃止記事 → Qiita+dev.to
-- 🔄 **blog-batch-publish.yml 実行中** (VSCode版#81, 2026-04-17): 未投稿ドラフト21本を一括投稿中 (`blog-engagement.yml` も同時実行中)
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
-- ✅ **blog-publish.yml Step5 無限ループ修正** (VSCode版#81): frontmatter なしファイルも `_mark_published()` 4-case bash関数で処理済み。
 
-**次回候補**:
+**次回候補 (第13弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 高 | batch-publish 結果確認 (21本の成功/失敗確認) | Qiita/dev.to |
-| 中 | blog-engagement 結果確認 + `/blog-management` 画面で表示確認 | - |
-| 中 | その他 `docs/blog-drafts/` 残下書き | Qiita/dev.to |
+| 中 | `2026-04-08-guitar-x-auto-post.md` / その他蓄積下書き (52本) | Qiita/dev.to |
+| 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
@@ -708,10 +747,10 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Win版#本セッション: 66社)
+#### 現在の登録プロバイダー (Windows版#63: 60社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii, black_forest_labs, liquid_ai, snowflake, cognition, scale_ai, poolside
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
