@@ -1786,7 +1786,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   }
 
   Future<Set<String>> _syncLocalScoresToSupabase(
-      Set<String> providerIds) async {
+      Set<String> providerIds,
+  ) async {
     final synced = <String>{};
     for (final providerId in providerIds) {
       final ok = await _recordQuizScoreToSupabase(providerId);
