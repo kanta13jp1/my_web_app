@@ -336,6 +336,330 @@ serve(async (req: Request) => {
       }
 
 
+      // ─── Blog Management: Qiita / dev.to ─────────────────────────────────────
+
+      // blog.qiita_list — 自分の全記事一覧 (per_page最大100)
+      case "blog.qiita_list": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const page = Number(body.page ?? 1);
+        const perPage = Math.min(Number(body.per_page ?? 100), 100);
+        const qr = await fetch(
+          `https://qiita.com/api/v2/authenticated_user/items?page=${page}&per_page=${perPage}`,
+          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        );
+        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        const articles = await qr.json() as Array<{
+          id: string; title: string; url: string;
+          likes_count: number; comments_count: number;
+          created_at: string; tags: Array<{ name: string }>;
+        }>;
+        return json({ success: true, articles, total: articles.length });
+      }
+
+      // blog.qiita_comments — 記事のコメント一覧
+      case "blog.qiita_comments": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const itemId = String(body.item_id ?? "");
+        if (!itemId) return json({ error: "item_id required" }, 400);
+        const qr = await fetch(
+          `https://qiita.com/api/v2/items/${itemId}/comments`,
+          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        );
+        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        const comments = await qr.json() as Array<{
+          id: string; body: string; rendered_body: string;
+          created_at: string; user: { id: string; name: string; profile_image_url: string };
+        }>;
+        return json({ success: true, comments, item_id: itemId });
+      }
+
+      // blog.qiita_comment_post — コメントに返信 (Qiita では同記事へのコメント追加)
+      case "blog.qiita_comment_post": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const itemId = String(body.item_id ?? "");
+        const replyBody = String(body.body ?? "");
+        if (!itemId || !replyBody) return json({ error: "item_id and body required" }, 400);
+        const qr = await fetch("https://qiita.com/api/v2/comments", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${qiitaToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ item_id: itemId, body: replyBody }),
+        });
+        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        const comment = await qr.json();
+        return json({ success: true, comment });
+      }
+
+      // blog.qiita_likers — 記事にLGTMした人の一覧
+      case "blog.qiita_likers": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const itemId = String(body.item_id ?? "");
+        if (!itemId) return json({ error: "item_id required" }, 400);
+        const qr = await fetch(
+          `https://qiita.com/api/v2/items/${itemId}/likes`,
+          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        );
+        if (!qr.ok) return json({ error: `Qiita ${qr.status}` }, 502);
+        const likers = await qr.json() as Array<{ user: { id: string; name: string; profile_image_url: string } }>;
+        return json({ success: true, likers, item_id: itemId });
+      }
+
+      // blog.qiita_follow — ユーザーをフォロー
+      case "blog.qiita_follow": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const userId = String(body.user_id ?? "");
+        if (!userId) return json({ error: "user_id required" }, 400);
+        const qr = await fetch(
+          `https://qiita.com/api/v2/users/${userId}/following`,
+          {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${qiitaToken}` },
+          },
+        );
+        // 204 No Content = success
+        const ok = qr.status === 204 || qr.ok;
+        return json({ success: ok, status: qr.status, user_id: userId });
+      }
+
+      // blog.qiita_delete — 記事を削除
+      case "blog.qiita_delete": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const itemId = String(body.item_id ?? "");
+        if (!itemId) return json({ error: "item_id required" }, 400);
+        const qr = await fetch(
+          `https://qiita.com/api/v2/items/${itemId}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${qiitaToken}` },
+          },
+        );
+        return json({ success: qr.status === 204, status: qr.status, item_id: itemId });
+      }
+
+      // blog.qiita_update — 記事を更新 (内容訂正)
+      case "blog.qiita_update": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const itemId = String(body.item_id ?? "");
+        if (!itemId) return json({ error: "item_id required" }, 400);
+        const patchBody: Record<string, unknown> = {};
+        if (body.title) patchBody.title = String(body.title);
+        if (body.body) patchBody.body = String(body.body);
+        if (body.tags) patchBody.tags = (body.tags as string[]).map((t: string) => ({ name: t }));
+        const qr = await fetch(
+          `https://qiita.com/api/v2/items/${itemId}`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${qiitaToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(patchBody),
+          },
+        );
+        if (!qr.ok) return json({ error: `Qiita ${qr.status}: ${await qr.text()}` }, 502);
+        const updated = await qr.json() as { id: string; url: string; title: string };
+        return json({ success: true, item: { id: updated.id, url: updated.url, title: updated.title } });
+      }
+
+      // blog.devto_list — dev.to 全記事一覧
+      case "blog.devto_list": {
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
+        const page = Number(body.page ?? 1);
+        const perPage = Math.min(Number(body.per_page ?? 100), 1000);
+        const dr = await fetch(
+          `https://dev.to/api/articles/me?page=${page}&per_page=${perPage}`,
+          { headers: { "api-key": devtoKey } },
+        );
+        if (!dr.ok) return json({ error: `dev.to ${dr.status}: ${await dr.text()}` }, 502);
+        const articles = await dr.json() as Array<{
+          id: number; title: string; url: string;
+          public_reactions_count: number; comments_count: number;
+          published_at: string; tag_list: string[];
+        }>;
+        return json({ success: true, articles, total: articles.length });
+      }
+
+      // blog.sync_engagement — Qiita 全記事の likes/comments/likers を DB に同期
+      // body: { auto_reply?: bool, auto_follow?: bool, reply_template?: string }
+      case "blog.sync_engagement": {
+        const qiitaToken = Deno.env.get("QIITA_ACCESS_TOKEN") ?? "";
+        if (!qiitaToken) return json({ error: "QIITA_ACCESS_TOKEN not set" }, 500);
+        const autoReply = Boolean(body.auto_reply);
+        const autoFollow = Boolean(body.auto_follow);
+        const replyTemplate = String(
+          body.reply_template ?? "コメントありがとうございます！参考になれば幸いです。",
+        );
+
+        // 1. 全記事取得
+        const articlesRes = await fetch(
+          "https://qiita.com/api/v2/authenticated_user/items?page=1&per_page=100",
+          { headers: { Authorization: `Bearer ${qiitaToken}` } },
+        );
+        if (!articlesRes.ok) return json({ error: `Qiita list: ${articlesRes.status}` }, 502);
+        const articles = await articlesRes.json() as Array<{
+          id: string; title: string; url: string;
+          likes_count: number; comments_count: number;
+          page_views_count: number;
+        }>;
+
+        // 2. blog_engagement に UPSERT
+        const engRows = articles.map((a) => ({
+          platform: "qiita",
+          article_id: a.id,
+          title: a.title,
+          url: a.url,
+          likes_count: a.likes_count,
+          comments_count: a.comments_count,
+          views_count: a.page_views_count ?? 0,
+          updated_at: new Date().toISOString(),
+        }));
+        await admin.from("blog_engagement").upsert(engRows, {
+          onConflict: "platform,article_id",
+        });
+
+        let totalComments = 0, repliedCount = 0;
+        let totalLikers = 0, followedCount = 0;
+
+        // 3. 各記事のコメント・ライカーを取得
+        for (const article of articles) {
+          // comments
+          if (article.comments_count > 0) {
+            const cr = await fetch(
+              `https://qiita.com/api/v2/items/${article.id}/comments`,
+              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            );
+            if (cr.ok) {
+              const comments = await cr.json() as Array<{
+                id: string; body: string;
+                created_at: string; user: { id: string };
+              }>;
+              totalComments += comments.length;
+              for (const c of comments) {
+                // DB に upsert (既存は上書きしない → on conflict do nothing)
+                const { data: existing } = await admin
+                  .from("blog_comments")
+                  .select("replied")
+                  .eq("platform", "qiita")
+                  .eq("comment_id", c.id)
+                  .single();
+
+                const alreadyReplied = (existing as { replied?: boolean } | null)?.replied === true;
+                await admin.from("blog_comments").upsert({
+                  platform: "qiita",
+                  article_id: article.id,
+                  comment_id: c.id,
+                  author: c.user.id,
+                  body: c.body.replace(/<[^>]+>/g, ""),
+                  created_at: c.created_at,
+                  fetched_at: new Date().toISOString(),
+                  replied: alreadyReplied,
+                }, { onConflict: "platform,comment_id", ignoreDuplicates: true });
+
+                // auto-reply
+                if (autoReply && !alreadyReplied) {
+                  const rr = await fetch("https://qiita.com/api/v2/comments", {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${qiitaToken}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ item_id: article.id, body: replyTemplate }),
+                  });
+                  if (rr.ok) {
+                    await admin.from("blog_comments")
+                      .update({ replied: true, reply_text: replyTemplate, replied_at: new Date().toISOString() })
+                      .eq("platform", "qiita")
+                      .eq("comment_id", c.id);
+                    repliedCount++;
+                  }
+                }
+              }
+            }
+          }
+
+          // likers (LGTM)
+          if (article.likes_count > 0) {
+            const lr = await fetch(
+              `https://qiita.com/api/v2/items/${article.id}/likes`,
+              { headers: { Authorization: `Bearer ${qiitaToken}` } },
+            );
+            if (lr.ok) {
+              const likers = await lr.json() as Array<{ user: { id: string; name: string } }>;
+              totalLikers += likers.length;
+              for (const liker of likers) {
+                const uid = liker.user.id;
+                const { data: existingLiker } = await admin
+                  .from("blog_likers")
+                  .select("followed")
+                  .eq("article_id", article.id)
+                  .eq("qiita_user_id", uid)
+                  .single();
+
+                const alreadyFollowed = (existingLiker as { followed?: boolean } | null)?.followed === true;
+                await admin.from("blog_likers").upsert({
+                  article_id: article.id,
+                  qiita_user_id: uid,
+                  username: liker.user.name,
+                  followed: alreadyFollowed,
+                  fetched_at: new Date().toISOString(),
+                }, { onConflict: "article_id,qiita_user_id", ignoreDuplicates: true });
+
+                // auto-follow
+                if (autoFollow && !alreadyFollowed) {
+                  const fr = await fetch(
+                    `https://qiita.com/api/v2/users/${uid}/following`,
+                    { method: "PUT", headers: { Authorization: `Bearer ${qiitaToken}` } },
+                  );
+                  if (fr.status === 204 || fr.ok) {
+                    await admin.from("blog_likers")
+                      .update({ followed: true, followed_at: new Date().toISOString() })
+                      .eq("article_id", article.id)
+                      .eq("qiita_user_id", uid);
+                    followedCount++;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        return json({
+          success: true,
+          articles_synced: articles.length,
+          total_comments: totalComments,
+          replied: repliedCount,
+          total_likers: totalLikers,
+          followed: followedCount,
+          auto_reply: autoReply,
+          auto_follow: autoFollow,
+        });
+      }
+
+      // blog.devto_delete — dev.to 記事を削除 (unpublish)
+      case "blog.devto_delete": {
+        const devtoKey = Deno.env.get("DEVTO_API_KEY") ?? "";
+        if (!devtoKey) return json({ error: "DEVTO_API_KEY not set" }, 500);
+        const articleId = Number(body.article_id);
+        if (!articleId) return json({ error: "article_id required" }, 400);
+        // dev.to は物理削除不可 → unpublish で対応
+        const dr = await fetch(`https://dev.to/api/articles/${articleId}`, {
+          method: "PUT",
+          headers: { "api-key": devtoKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ article: { published: false } }),
+        });
+        return json({ success: dr.ok, status: dr.status, article_id: articleId });
+      }
+
       // ─── Study Reminders (AI大学 学習リマインダー) ────────────────────────────
       case "reminders.study": {
         // service_role authorization check
