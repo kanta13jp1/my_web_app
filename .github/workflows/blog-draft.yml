@@ -78,8 +78,11 @@ jobs:
           # 未投稿ドラフトが7本以上あれば生成不要 (1週間分のバッファ)
           UNPUBLISHED=$(find docs/blog-drafts/ -name "*.md" -type f | while read f; do
             if ! echo "$f" | grep -qE '/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$'; then
-              if ! grep -q "^published: true" "$f" 2>/dev/null && grep -q "^title:" "$f" 2>/dev/null; then
-                echo "$f"
+              if ! grep -q "^published: true" "$f" 2>/dev/null; then
+                # title: frontmatter または # 見出しがあれば投稿可能ドラフトとしてカウント
+                if grep -q "^title:" "$f" 2>/dev/null || grep -q "^# " "$f" 2>/dev/null; then
+                  echo "$f"
+                fi
               fi
             fi
           done | wc -l)
