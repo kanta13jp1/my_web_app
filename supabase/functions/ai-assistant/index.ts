@@ -127,6 +127,8 @@ const DEFAULT_MELCHIOR_MODEL = 'gpt-4o-mini';
 const DEFAULT_BALTHASAR_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_CASPER_MODEL = 'gemini-2.5-flash';
 const DEFAULT_SYNTHESIS_MODEL = 'claude-sonnet-4-6';
+// Extended Thinking / 複雑な推論タスク向け (2026-04-17: claude-opus-4-7 に更新)
+const DEFAULT_EXTENDED_THINKING_MODEL = 'claude-opus-4-7';
 
 const MAGI_NODE_PROFILES: MagiNodeProfile[] = [
     {

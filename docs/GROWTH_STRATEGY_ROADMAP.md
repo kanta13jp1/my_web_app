@@ -9069,3 +9069,44 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 1. 🔴 **AI大学 v2 実装開始**: `docs/superpowers/plans/2026-04-16-ai-university-v2.md` (Task 1: SQL migration) — Subagent-Driven or Inline Execution選択後に着手
 2. 🟡 **Rule 8 Web/モバイル表示チェック**: Playwright MCP で本番URL確認
 3. 🟢 **GROQ_API_KEY設定確認**: supabase secrets set GROQ_API_KEY=... (P3実装前に必要)
+
+---
+
+## Windowsアプリ版#Opus47対応 セッション記録 (2026-04-17)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **claude-opus-4-7 対応**: tool-versions.md作成 + INSTANCE_CONFIG/CLAUDE.md既更新確認 | ✅ |
+| 2 | **ai-assistant EF**: DEFAULT_EXTENDED_THINKING_MODEL = 'claude-opus-4-7' 定数追加 | ✅ |
+| 3 | **COMPRESSED_PROMPT_V3.md**: Opus 4.6 → Opus 4.7 残存参照2箇所修正 (WEB版行・Rule21) | ✅ |
+| 4 | **scripts/check_versions.py 強化版**: npm最新版取得 / リリースノートURL / devフロー組み込みチェックリスト / `--release-notes` フラグ追加 | ✅ |
+| 5 | **docs/tool-versions.md 新規作成**: リリースノート確認→devフロー組み込みマッピング追加、opus-4-7記録 | ✅ |
+| 6 | **役割分担更新**: Opus 4.7はExtended Thinking非対応 → ultrathink=Sonnet 4.6 を全インスタンスに明記 | ✅ |
+
+### 重要: claude-opus-4-7 仕様まとめ
+
+| 項目 | 内容 |
+|------|------|
+| **Extended Thinking** | ❌ 非対応 (ultrathink は Sonnet 4.6 で実行) |
+| **Adaptive Thinking** | ✅ 対応 |
+| **用途** | agentic coding・複雑設計・WEB版メインモデル |
+| **料金** | $5/$25 per MTok (Opus 4.6と同等) |
+
+### 修正ファイル
+
+- `supabase/functions/ai-assistant/index.ts` — DEFAULT_EXTENDED_THINKING_MODEL追加
+- `.github/COMPRESSED_PROMPT_V3.md` — Opus 4.6 → Opus 4.7 残存修正
+- `docs/tool-versions.md` — 新規作成 (mainブランチ初)
+- `scripts/check_versions.py` — 強化版 新規作成 (mainブランチ初)
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **221** / AI大学: **64社** / LP: 126のこと
+
+### 次回優先タスク (Win版)
+
+1. 🔴 **frosty-hamilton PRマージ確認**: バージョンチェックスクリプト等をmainに統合
+2. 🟡 **AI大学65社目**: Poolside AI (コーディング特化) / Scale AI 評価
+3. 🟢 **notebooklm Master Brain更新**: Opus 4.7対応内容を蓄積
