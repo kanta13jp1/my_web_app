@@ -311,9 +311,9 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全17ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全19ワークフロー）
 
-**全17本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全19本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -334,6 +334,8 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 | `ci-auto-fix.yml` | workflow_run: CI Checks 失敗時 | PR の `dart fix --apply` + `deno fmt` 自動修復コミット → 結果をPRにコメント |
 | `blog-publish.yml` | workflow_dispatch | 技術記事手動投稿 (Qiita/dev.to) — `draft_path` / `platforms` / `dry_run` 入力、投稿後 frontmatter `published:true` 更新 |
 | `ai-university-update.yml` | **2時間毎** + dispatch | AI大学コンテンツ自動更新 (18プロバイダー RSS → Supabase UPSERT → PR auto-merge)。Claude Schedule (4時間毎) が NotebookLM でリッチコンテンツを上書き |
+| `ai-university-reminder.yml` | ⚠️ 新規 (2026-04-16) | AI大学学習リマインダー通知 (未実装学習者向け) |
+| `horse-racing-update.yml` | ⚠️ 新規 (2026-04-16) | 競馬AI予想パイプラインの定期更新 (JRA/NAR データ取得・モデル学習) |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
