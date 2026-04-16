@@ -49,11 +49,19 @@ jobs:
         if: github.event_name == 'schedule'
         id: auto_select
         run: |
-          # docs/blog-drafts/ から published: false なドラフトを探す
-          DRAFT=$(find docs/blog-drafts/ -name "*.md" -type f | while read f; do
+          # docs/blog-drafts/ から published: false なドラフトを日付順(古い順)で探す
+          # タイトルのないdailyレポート(YYYY-MM-DD.md)はスキップ
+          DRAFT=$(find docs/blog-drafts/ -name "*.md" -type f | sort | while read f; do
+            # YYYY-MM-DD.md 形式の日次レポートはスキップ
+            if echo "$f" | grep -qE '/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$'; then
+              continue
+            fi
             if ! grep -q "^published: true" "$f" 2>/dev/null; then
-              echo "$f"
-              break
+              # タイトルが存在するか確認
+              if grep -q "^title:" "$f" 2>/dev/null; then
+                echo "$f"
+                break
+              fi
             fi
           done)
 
@@ -269,34 +277,40 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
-          BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git checkout -b "$BRANCH" origin/main
 
           sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
-          git add "$DRAFT_PATH"
-          if git diff --cached --quiet; then
-            echo "📝 変更なし — スキップ"
-            exit 0
-          fi
 
-          git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
-          git push origin "$BRANCH"
-
-          # NOTE: Scheduled実行時は GITHUB_TOKEN の制限により、自動マージはできない。
-          # BLOG_PAT シークレット (bypass 権限付き PAT) の設定を推奨。
-          # 現状は branch を push してジョブを成功扱いにする。
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "ℹ️ [SCHEDULED] ブランチ '$BRANCH' を push しました。"
-            echo "   マージは手動またはBLOG_PATで自動化："
-            echo "   git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+            # スケジュール実行: main に直接 push して published:true を確実に反映
+            git checkout main 2>/dev/null || git checkout -b main origin/main
+            git pull origin main --ff-only
+            sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
+            git add "$DRAFT_PATH"
+            if git diff --cached --quiet; then
+              echo "📝 変更なし — スキップ"
+              exit 0
+            fi
+            git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
+            git push origin HEAD:main
+            echo "✅ [SCHEDULED] $DRAFT_PATH を published:true に更新 → main push 完了"
           else
+            # 手動実行: ブランチ経由で PR (既存動作を維持)
+            BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+            git checkout -b "$BRANCH" origin/main
+            sed -i 's/^published: false/published: true/' "$DRAFT_PATH"
+            git add "$DRAFT_PATH"
+            if git diff --cached --quiet; then
+              echo "📝 変更なし — スキップ"
+              exit 0
+            fi
+            git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
+            git push origin "$BRANCH"
             echo "ℹ️ ブランチ '$BRANCH' を push しました。"
-            echo "   published:true マーク: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
-            echo "   (BLOG_PAT シークレット設定で自動化可能)"
+            echo "   マージ: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
           fi
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────

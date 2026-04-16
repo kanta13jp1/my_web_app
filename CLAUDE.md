@@ -770,7 +770,19 @@ GitHub PRの自動コードレビュー。
 
 ---
 
-### Task: blog-draft (毎日 08:00 JST に実行)
+### Task: blog-draft (毎日 07:00 JST — GitHub Actions 自動化済み)
+
+> **2026-04-17 更新**: `blog-draft.yml` GitHub Actions ワークフローに移行。
+> 毎日 07:00 JST に直近 git log を Anthropic API (Claude Sonnet 4.5) に投げてドラフト自動生成 → commit → `blog-publish.yml` を自動トリガー。
+> Claude Schedule タスクとしての手動実行は不要だが、特別な記事を書きたい場合は以下の手順で手動実行可能:
+>
+> ```bash
+> gh workflow run blog-draft.yml -f target_date=YYYY-MM-DD -f days=1
+> ```
+>
+> 以下は Claude が手動でドラフトを書く場合の参考仕様。自動生成で品質が不足する場合に上書き用テンプレートとして使用する。
+
+### Task: blog-draft (手動モード・参考仕様)
 
 技術ブログの下書きを生成し、投稿管理テーブルに記録する。
 
