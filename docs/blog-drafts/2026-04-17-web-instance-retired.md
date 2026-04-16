@@ -1,7 +1,7 @@
 ---
 title: "Claude Code マルチインスタンス並行開発で WEB版 を廃止した話 — 3インスタンス制への復帰"
 tags: Claude,buildinpublic,FlutterWeb,GitHub
-published: false
+published: true
 ---
 
 # Claude Code マルチインスタンス並行開発で WEB版 を廃止した話
