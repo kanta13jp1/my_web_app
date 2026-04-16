@@ -80,6 +80,7 @@ case "quota.alert": {
 - 展開可能な履歴テーブル: `quota.list` で30日分
 
 ### デザイントークン (docs/DESIGN.md 準拠)
+
 - 背景: `0xFF0A0A0A`
 - カード: `0xFF1A1A2E`
 - アクセント: `0xFFFF6B35` (orange)
@@ -139,3 +140,5 @@ import 'pages/admin/quota_dashboard_page.dart';
 - [ ] 4ツールのカードが表示される (データがなければ「データなし」表示)
 
 完了後: このファイルに `✅ 完了 (VSCode版#XX YYYY-MM-DD)` を追記してください。
+
+✅ 完了 (VSCode版#80 2026-04-17)

@@ -7,6 +7,7 @@ import '../widgets/schedule_task_monitor_card.dart';
 import '../widgets/competitor_monitoring_card.dart';
 import 'ai_secretary_page.dart';
 import 'admin/feedback_list_page.dart';
+import 'admin/quota_dashboard_page.dart';
 import 'cmo_page.dart';
 import 'note_list_page.dart';
 
@@ -1433,6 +1434,37 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      child: ListTile(
+                        leading: const Icon(
+                          Icons.monitor_heart,
+                          color: Color(0xFFFF6B35),
+                        ),
+                        title: const Text(
+                          'AI クォータ監視',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Claude / OpenAI / Gemini / Copilot の使用状況',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right,
+                          color: Colors.white54,
+                        ),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const QuotaDashboardPage(),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     _buildTodayRegistrationGoalCard(
                       todayViews: effectiveTodayViews,
                       todayRegistrations: todayRegistrations,

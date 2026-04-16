@@ -203,6 +203,46 @@ serve(async (req: Request) => {
         return json({ success: true, item });
       }
 
+      // ---- AI quota monitoring ----
+      case "quota.latest": {
+        const { data, error } = await admin
+          .from("ai_quota_usage")
+          .select("tool, checked_at, usage_json, alert")
+          .order("checked_at", { ascending: false })
+          .limit(20);
+        if (error) return json({ error: error.message }, 500);
+        const latest = new Map<string, unknown>();
+        for (const row of (data ?? [])) {
+          if (!latest.has(row.tool)) latest.set(row.tool, row);
+        }
+        return json({ success: true, data: Array.from(latest.values()) });
+      }
+
+      case "quota.list": {
+        const days = Number(body.days ?? 30);
+        const since = new Date(Date.now() - days * 86400_000)
+          .toISOString()
+          .slice(0, 10);
+        const { data, error } = await admin
+          .from("ai_quota_usage")
+          .select("*")
+          .gte("checked_at", since)
+          .order("checked_at", { ascending: false });
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, data });
+      }
+
+      case "quota.alert": {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data, error } = await admin
+          .from("ai_quota_usage")
+          .select("tool, usage_json, alert")
+          .eq("alert", true)
+          .eq("checked_at", today);
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, data });
+      }
+
       // ---- Edge function coverage ----
       case "ef.coverage": {
         const { data } = await admin
