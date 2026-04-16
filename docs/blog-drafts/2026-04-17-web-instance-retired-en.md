@@ -1,7 +1,7 @@
 ---
 title: "Why I Killed My 4th Claude Code Instance — Lessons from Multi-Agent Indie Dev"
 tags: claude,buildinpublic,webdev,productivity
-published: false
+published: true
 ---
 
 # Why I Killed My 4th Claude Code Instance

@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web × Supabase Edge Function で候補者Xハンドル・バイラル動画を選挙カードに統合した話"
 tags: Flutter,Supabase,個人開発,buildinpublic,選挙
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-02

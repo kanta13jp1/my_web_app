@@ -26,7 +26,7 @@ Supabase Edge Function (EF) の上限は**プロジェクトあたり99本**で�
 
 機能追加のたびにEFを1本ずつ作っていました。最初のころは「関心の分離」として良いプラクティスに見えましたが、気づくと:
 
-```
+```text
 get-home-dashboard
 notify-feature-request
 growth-weekly-digest
@@ -67,12 +67,13 @@ serve(async (req: Request) => {
 });
 ```
 
-### 最終的なhub構成 (15本体制)
+### 最終的なhub構成 (16本体制)
 
-```
-standalone (4本):
+```text
+standalone (5本):
   get-home-dashboard, ai-assistant,
-  growth-weekly-digest, guitar-recording-studio
+  growth-weekly-digest, guitar-recording-studio,
+  local-election-intelligence
 
 macro-hub (6本):
   core-hub      — 通知・メモ・フィードバック等
@@ -87,7 +88,7 @@ mega-hub (5本):
   social-commerce-hub, lifestyle-hub
 ```
 
-94本 → 15本 (**84%削減**)
+94本 → 16本 (**83%削減**)
 
 ---
 
@@ -95,7 +96,7 @@ mega-hub (5本):
 
 hub統合でEFを削除したとき、Dart側ではまだ旧EF名を呼んでいる箇所がありました。
 
-```
+```text
 Access to XMLHttpRequest at
 'https://xxx.supabase.co/functions/v1/growth-referral'
 has been blocked by CORS policy: Response to preflight request
@@ -119,7 +120,7 @@ grep -rn "廃止EF名" lib/ --include="*.dart"
 今回修正した廃止EF一覧 (計17本):
 
 | 廃止EF | 移行先 hub | アクション |
-|--------|-----------|-----------|
+| -------- | ----------- | ----------- |
 | growth-referral | growth-hub | referral.list/create |
 | growth-acquisition-signal | growth-hub | acquisition.track |
 | feature-request-manager | core-hub | feedback.submit |
@@ -203,7 +204,7 @@ if (!publicActions.includes(action)) {
 ## まとめ
 
 | 項目 | before | after |
-|-----|--------|-------|
+| ----- | -------- | ------- |
 | EF本数 | 94本 | 15本 |
 | 本番CORSエラー | 17本 | 0本 |
 | CI EF上限チェック | なし | 50本ハードキャップ |
@@ -220,4 +221,4 @@ Flutter × Supabase の個人開発でスケールするアーキテクチャを
 ---
 
 URL: https://my-web-app-b67f4.web.app/
-#FlutterWeb #Supabase #buildinpublic #個人開発
+FlutterWeb / Supabase / buildinpublic / 個人開発

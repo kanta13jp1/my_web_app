@@ -8,7 +8,7 @@ published: true
 
 ## タイトル案
 1. Flutter Webで「どの比較ページから登録したか」を追跡するCVRトラッキングを実装した話
-2. 14競合比較ページの流入をSupabase Edge Functionで計測する — route-level acquisition signal
+2. 21競合比較ページの流入をSupabase Edge Functionで計測する — route-level acquisition signal
 3. StatelessWidget→StatefulWidgetへの安全な移行と獲得シグナル記録パターン
 
 ## 投稿先候補
@@ -22,9 +22,9 @@ published: true
 
 ### はじめに
 
-自分株式会社 (https://my-web-app-b67f4.web.app/) はNotion・Evernote・Slack・MoneyForwardなど14の競合SaaSを代替するAI統合プラットフォームです。
+自分株式会社 (https://my-web-app-b67f4.web.app/) はNotion・Evernote・Slack・MoneyForwardなど21の競合SaaSを代替するAI統合プラットフォームです。
 
-各競合に対して `/vs-notion`、`/vs-slack` のような比較ページを14本用意しています。しかし「このページを見た人が実際に登録したのか？」を計測できていませんでした。
+各競合に対して `/vs-notion`、`/vs-slack` のような比較ページを21本用意しています。しかし「このページを見た人が実際に登録したのか？」を計測できていませんでした。
 
 今回、**比較ページ経由の CVR トラッキング** を実装しました。
 

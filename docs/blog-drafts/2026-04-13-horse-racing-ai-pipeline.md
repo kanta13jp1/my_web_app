@@ -67,13 +67,28 @@ switch (action) {
 
 ### 認証ゾーンの設計
 
-GitHub Actions から JWT なしで呼び出せるよう、`horseracing.today` と `horseracing.predictions` は `NO_AUTH_ACTIONS` に配置:
+GitHub Actions から JWT なしで呼び出せるよう、`horseracing.*` アクションは全て認証不要の「Stateless ゾーン」に配置しています。
+
+`tools-hub/index.ts` では `horseracing.` で始まるアクションを認証チェック (`getUserId`) より前のブロックで処理します:
 
 ```typescript
-const NO_AUTH_ACTIONS = ['horseracing.today', 'horseracing.predictions'];
+// ── Horse Racing 自動化パイプライン (auth不要 — GitHub Actions対応) ─────────
+if (action.startsWith("horseracing.")) {
+  switch (action) {
+    case "horseracing.today":     return await getHorseRacingToday(admin);
+    case "horseracing.predict_all": return await predictAllRaces(admin, body);
+    case "horseracing.predictions": return await getPredictions(admin, body);
+    case "horseracing.accuracy":  return await getAccuracyStats(admin);
+    // ... 計8アクション (list_races / store_results / register_race / stats)
+  }
+}
+
+// ↓ ここから先が認証必須ゾーン
+const userId = await getUserId(req);
+if (!userId) return json({ error: "Unauthorized" }, 401);
 ```
 
-当初 auth 必須ゾーンに入れていたため GitHub Actions から 401 エラーが発生。`no_auth` に移動して解消しました。
+当初 auth 必須ゾーンに混在していたため GitHub Actions から 401 エラーが発生。`horseracing.*` ブロックごと stateless セクションへ移動して解消しました。
 
 ### horse_results の 500 エラー解消
 

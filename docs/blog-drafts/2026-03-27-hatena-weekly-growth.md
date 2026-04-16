@@ -1,7 +1,7 @@
 ---
 title: "【週次成長記録】自分株式会社 Week 13 (2026-03-21〜2026-03-27) — Building in Public"
 tags: buildinpublic,個人開発,Flutter,Supabase,週次記録
-published: false
+published: true
 ---
 
 # 【週次成長記録】自分株式会社 Week 13 (2026-03-21 〜 2026-03-27)
