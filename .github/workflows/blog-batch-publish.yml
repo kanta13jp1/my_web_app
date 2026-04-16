@@ -92,8 +92,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git checkout main
-          git pull origin main --ff-only
+
+          # Use a unique branch to avoid protected-branch push restriction
+          BRANCH="blog-batch-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+          git checkout -b "$BRANCH" origin/main
 
           # Stage all modified draft files
           git add docs/blog-drafts/
@@ -102,8 +104,10 @@ jobs:
           else
             COUNT=$(git diff --cached --name-only | wc -l)
             git commit -m "docs: 一括投稿完了 ${COUNT}件 (batch-publish)"
-            git push origin HEAD:main
+            git push origin "$BRANCH"
             echo "✅ $COUNT ファイルを published:true に更新"
+            echo "   ブランチ: $BRANCH"
+            echo "   マージ: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
           fi
 
       - name: Summary

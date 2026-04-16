@@ -182,7 +182,7 @@ def main() -> int:
                 err = pdata.get("error", pdata.get("body", "unknown"))
                 print(f"  ❌ {platform}: {err}")
 
-        if any_ok or result.get("success"):
+        if any_ok:
             _mark_published(draft_path)
             success += 1
             print(f"  📝 Marked published: true")
