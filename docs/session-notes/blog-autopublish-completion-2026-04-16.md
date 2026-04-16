@@ -18,7 +18,7 @@
 
 ### 2. Auto-Select Unpublished Drafts
 
-**New Step**: "Auto-select unpublished draft (scheduled)" 
+**New Step**: "Auto-select unpublished draft (scheduled)"
 
 When the workflow runs on schedule (not manual trigger):
 - Searches `docs/blog-drafts/` for files with `published: false`
@@ -60,6 +60,7 @@ Daily at 21:00 JST (12:00 UTC):
 ## Current Limitations & Future Improvements
 
 ### ✅ Working
+
 - ✅ Scheduled cron trigger (daily at 21:00 JST)
 - ✅ Auto-select unpublished drafts
 - ✅ Qiita API integration (Japanese posts)
@@ -72,13 +73,14 @@ Daily at 21:00 JST (12:00 UTC):
 
 **Issue**: GitHub Actions `GITHUB_TOKEN` cannot bypass branch protection rules (require PR)
 
-**Current Solution**: 
+**Current Solution**:
 - Workflow creates branch `blog-publish/RUN_ID-DATE`
 - Commits `published: true` update
 - Pushes to origin
 - **User manually merges** branch to main OR
 
 **Recommended Solution** (for future):
+
 ```bash
 # Create BLOG_PAT secret (GitHub PAT with repo scope + branch protection bypass)
 # Then update Step 5 to:
@@ -86,6 +88,7 @@ git push origin HEAD:main  # Direct push to main
 ```
 
 ### 🔄 Next Iteration
+
 - Add BLOG_PAT secret to GitHub Actions
 - Automate branch merge to main
 - Add Slack notification on successful publish
@@ -96,6 +99,7 @@ git push origin HEAD:main  # Direct push to main
 ## Testing & Verification
 
 ### Manual Test (workflow_dispatch)
+
 ```bash
 # To test before waiting for schedule:
 # 1. Go to GitHub Actions → Blog Publish workflow
@@ -106,6 +110,7 @@ git push origin HEAD:main  # Direct push to main
 ```
 
 ### Automatic Test (scheduled)
+
 - Workflow will run tomorrow at 21:00 JST (12:00 UTC)
 - Check GitHub Actions logs for execution
 - Verify new articles appear on Qiita/dev.to
@@ -140,18 +145,18 @@ git push origin HEAD:main  # Direct push to main
 
 ## Deployment Notes
 
-1. **Secrets Status**: 
+1. **Secrets Status**:
    - ✅ `QIITA_ACCESS_TOKEN` configured (from Windows版#23)
    - ✅ `DEVTO_API_KEY` configured (from Windows版#23)
    - ✅ `SUPABASE_SERVICE_ROLE_KEY` exists
    - ⚠️ `BLOG_PAT` NOT configured (optional, for full automation)
 
-2. **First Scheduled Run**: 
+2. **First Scheduled Run**:
    - Will occur at next 12:00 UTC (tomorrow if committed before then)
    - Will auto-select first unpublished draft and publish
    - Monitor GitHub Actions logs for success/failure
 
-3. **Backward Compatibility**: 
+3. **Backward Compatibility**:
    - Manual `workflow_dispatch` still works as before
    - Users can still manually specify draft path, platforms, dry_run
    - No breaking changes to existing usage
@@ -183,4 +188,3 @@ The blog auto-publishing pipeline is now **complete and operational**:
 5. ✅ Proper error handling & logging
 
 **Next Deploy**: Commit to main branch. Scheduled runs begin immediately (next scheduled time).
-
