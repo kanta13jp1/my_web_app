@@ -129,12 +129,12 @@ jobs:
 
       - name: Check formatting
         run: dart format --set-exit-if-changed .
-        continue-on-error: true # エラーでも続行
+        continue-on-error: false  # Code formatting must be enforced (hard fail)
 
       - name: Run tests
         id: flutter_test
         run: flutter test --coverage
-        continue-on-error: true # エラーでも続行
+        continue-on-error: true  # Tests can be flaky; acceptable soft failure if most pass
 
       - name: Upload coverage to Codecov (optional)
         uses: codecov/codecov-action@v5
@@ -142,7 +142,7 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
-        continue-on-error: true
+        continue-on-error: true  # Codecov upload is optional; network failures acceptable
 
       #  修正: --no-tree-shake-icons を追加
       # workflow_call (deploy-prod) 経由の場合はビルドをスキップ — deploy-prod が再ビルドするため重複回避
