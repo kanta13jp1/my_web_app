@@ -81,8 +81,9 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
           controller: _tabController,
           tabs: [
             Tab(
-                icon: const Icon(Icons.inventory),
-                text: '在庫 (${_items.length})',),
+              icon: const Icon(Icons.inventory),
+              text: '在庫 (${_items.length})',
+            ),
             const Tab(icon: Icon(Icons.swap_horiz), text: '入出庫'),
           ],
         ),

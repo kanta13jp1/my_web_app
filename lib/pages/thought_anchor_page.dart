@@ -438,8 +438,9 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
               Text(
                 '開始: ${DateFormat('HH:mm').format(_sessionStartedAt!)}',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface,),
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ],
             if (_distractionNotes.isNotEmpty) ...[
@@ -492,7 +493,8 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +507,9 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           Text(
             '${DateFormat('yyyy/MM/dd HH:mm').format(record.completedAt)} / ${record.durationMinutes}分 / 退避 ${record.distractionCount}件',
             style: TextStyle(
-                fontSize: 12, color: Theme.of(context).colorScheme.onSurface,),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           if (record.whyNow.trim().isNotEmpty) ...[
             const SizedBox(height: 6),

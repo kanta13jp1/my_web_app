@@ -163,7 +163,10 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white,),)
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Text('保存'),
             ),
           ],
@@ -218,23 +221,28 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                 IconButton(
                   icon: const Icon(Icons.chevron_left, color: Colors.white),
                   onPressed: () {
-                    setState(() => _selectedDate =
-                        DateTime(_selectedDate.year, _selectedDate.month - 1),);
+                    setState(
+                      () => _selectedDate =
+                          DateTime(_selectedDate.year, _selectedDate.month - 1),
+                    );
                     _load();
                   },
                 ),
                 Text(
                   _monthLabel(_selectedDate),
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,),
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right, color: Colors.white),
                   onPressed: () {
-                    setState(() => _selectedDate =
-                        DateTime(_selectedDate.year, _selectedDate.month + 1),);
+                    setState(
+                      () => _selectedDate =
+                          DateTime(_selectedDate.year, _selectedDate.month + 1),
+                    );
                     _load();
                   },
                 ),
@@ -245,17 +253,23 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
           Expanded(
             child: _loading
                 ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFF6B35)),)
+                    child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
+                  )
                 : _events.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.calendar_month_outlined,
-                                color: Colors.white38, size: 48,),
+                            const Icon(
+                              Icons.calendar_month_outlined,
+                              color: Colors.white38,
+                              size: 48,
+                            ),
                             const SizedBox(height: 12),
-                            const Text('この月のイベントはありません',
-                                style: TextStyle(color: Colors.white38),),
+                            const Text(
+                              'この月のイベントはありません',
+                              style: TextStyle(color: Colors.white38),
+                            ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: _showAddDialog,
@@ -303,28 +317,41 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2,),
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: color.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text(cat,
-                                        style: TextStyle(
-                                            color: color, fontSize: 11,),),
+                                    child: Text(
+                                      cat,
+                                      style: TextStyle(
+                                        color: color,
+                                        fontSize: 11,
+                                      ),
+                                    ),
                                   ),
                                   if ((e['member'] as String? ?? '')
                                       .isNotEmpty) ...[
                                     const SizedBox(width: 8),
-                                    Text(e['member'] as String,
-                                        style: const TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12,),),
+                                    Text(
+                                      e['member'] as String,
+                                      style: const TextStyle(
+                                        color: Colors.white54,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ],
                                 ],
                               ),
-                              trailing: Text(dateStr,
-                                  style: const TextStyle(
-                                      color: Colors.white38, fontSize: 12,),),
+                              trailing: Text(
+                                dateStr,
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ),
                           );
                         },

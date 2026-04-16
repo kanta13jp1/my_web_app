@@ -121,15 +121,19 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text('統一地方選700 必達管理レポート',
-                        style: pw.TextStyle(font: ttfBold, fontSize: 18),),
                     pw.Text(
-                        '出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}',
-                        style: pw.TextStyle(
-                            font: ttfRegular,
-                            fontSize: 10,
-                            color: PdfColors.grey700,),
-                        textAlign: pw.TextAlign.right,),
+                      '統一地方選700 必達管理レポート',
+                      style: pw.TextStyle(font: ttfBold, fontSize: 18),
+                    ),
+                    pw.Text(
+                      '出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}',
+                      style: pw.TextStyle(
+                        font: ttfRegular,
+                        fontSize: 10,
+                        color: PdfColors.grey700,
+                      ),
+                      textAlign: pw.TextAlign.right,
+                    ),
                   ],
                 ),
                 pw.Divider(color: PdfColors.grey300),
@@ -274,7 +278,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 8,),
+                        vertical: 16,
+                        horizontal: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(8),
@@ -285,19 +291,30 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _buildSummaryItem('現職維持 合計',
-                                  totalRetain.toString(), Colors.blue.shade700,),
-                              _buildSummaryItem('新人擁立 合計', totalNew.toString(),
-                                  Colors.orange.shade700,),
-                              _buildSummaryItem('総合計', totalTarget.toString(),
-                                  Colors.indigo.shade700,),
+                              _buildSummaryItem(
+                                '現職維持 合計',
+                                totalRetain.toString(),
+                                Colors.blue.shade700,
+                              ),
+                              _buildSummaryItem(
+                                '新人擁立 合計',
+                                totalNew.toString(),
+                                Colors.orange.shade700,
+                              ),
+                              _buildSummaryItem(
+                                '総合計',
+                                totalTarget.toString(),
+                                Colors.indigo.shade700,
+                              ),
                             ],
                           ),
                           if (totalTarget < 700) ...[
                             const SizedBox(height: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 8, horizontal: 12,),
+                                vertical: 8,
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(8),
@@ -306,15 +323,19 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.warning_amber_rounded,
-                                      color: Colors.red.shade700, size: 16,),
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.red.shade700,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 8),
                                   Text(
                                     '必達目標(700名)まで あと ${700 - totalTarget}名 不足しています',
                                     style: TextStyle(
-                                        color: Colors.red.shade700,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,),
+                                      color: Colors.red.shade700,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -511,7 +532,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       child: Text(
                         '月次公認内定 進捗状況',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold,),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -552,15 +575,23 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   Widget _buildSummaryItem(String label, String value, Color color) {
     return Column(
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(value,
-            style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: color,),),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
       ],
     );
   }
@@ -597,10 +628,13 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     color:
                         p.endorsementConfirmed ? Colors.green : Colors.orange,
                   ),
-                  title: Text(p.prefecture,
-                      style: const TextStyle(fontWeight: FontWeight.bold),),
+                  title: Text(
+                    p.prefecture,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(
-                      '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',),
+                    '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',
+                  ),
                   trailing:
                       const Icon(Icons.edit, size: 16, color: Colors.grey),
                   onTap: () async {
@@ -622,7 +656,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                           Navigator.pop(context); // 一覧ダイアログを閉じる
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('データを更新しました。最新状態を反映します...'),),
+                              content: Text('データを更新しました。最新状態を反映します...'),
+                            ),
                           );
                           widget.onDataUpdated?.call();
                         }
@@ -651,14 +686,17 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
   }
 
   Widget _buildMonthlyTable(
-      List<String> sortedMonths, Map<String, Map<String, int>> stats,) {
+    List<String> sortedMonths,
+    Map<String, Map<String, int>> stats,
+  ) {
     if (sortedMonths.isEmpty) return const SizedBox.shrink();
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: ClipRRect(
@@ -671,13 +709,25 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
           columns: [
             DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
             DataColumn(
-                label: const Text('対象県連数'), numeric: true, onSort: _onSort,),
+              label: const Text('対象県連数'),
+              numeric: true,
+              onSort: _onSort,
+            ),
             DataColumn(
-                label: const Text('確定済み'), numeric: true, onSort: _onSort,),
+              label: const Text('確定済み'),
+              numeric: true,
+              onSort: _onSort,
+            ),
             DataColumn(
-                label: const Text('未確定'), numeric: true, onSort: _onSort,),
+              label: const Text('未確定'),
+              numeric: true,
+              onSort: _onSort,
+            ),
             DataColumn(
-                label: const Text('進捗率'), numeric: true, onSort: _onSort,),
+              label: const Text('進捗率'),
+              numeric: true,
+              onSort: _onSort,
+            ),
           ],
           rows: sortedMonths.map((month) {
             final s = stats[month]!;
@@ -696,15 +746,29 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       ? WidgetStateProperty.all(Colors.green.shade50)
                       : null,
               cells: [
-                DataCell(Text(month,
-                    style: const TextStyle(fontWeight: FontWeight.bold),),),
+                DataCell(
+                  Text(
+                    month,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
                 DataCell(Text(total.toString())),
-                DataCell(Text(confirmed.toString(),
+                DataCell(
+                  Text(
+                    confirmed.toString(),
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green,),),),
-                DataCell(Text(unconfirmed.toString(),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    unconfirmed.toString(),
                     style:
-                        TextStyle(color: unconfirmed > 0 ? Colors.red : null),),),
+                        TextStyle(color: unconfirmed > 0 ? Colors.red : null),
+                  ),
+                ),
                 DataCell(Text('$progress%')),
               ],
             );

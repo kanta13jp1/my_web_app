@@ -34,8 +34,10 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['transactions'] is List) {
-        setState(() => _transactions =
-            (data['transactions'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _transactions =
+              (data['transactions'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _transactions = data.cast<Map<String, dynamic>>());
       } else {
@@ -69,8 +71,11 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,

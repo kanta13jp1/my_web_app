@@ -36,8 +36,10 @@ class _CarbonFootprintTrackerPageState
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['records'] is List) {
-        setState(() =>
-            _records = (data['records'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () =>
+              _records = (data['records'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _records = data.cast<Map<String, dynamic>>());
       } else {

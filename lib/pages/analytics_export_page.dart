@@ -101,7 +101,9 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                       const Text(
                         'レポートタイプ',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16,),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -122,7 +124,9 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                       const Text(
                         'エクスポート形式',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16,),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
@@ -177,7 +181,9 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                               item['createdAt']?.toString().substring(0, 10) ??
                                   '',
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey,),
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         );

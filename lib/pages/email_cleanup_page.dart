@@ -348,7 +348,11 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     if (confirmed != true) return;
 
     try {
-      await _supabase.from('email_accounts').delete().eq('id', account['id']).select();
+      await _supabase
+          .from('email_accounts')
+          .delete()
+          .eq('id', account['id'])
+          .select();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -499,9 +503,11 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.mail_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.mail_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             const Text(
               'メールアカウントを登録して\n整理リマインダーを設定しましょう',
@@ -743,8 +749,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         Text(
           label,
           style: TextStyle(
-              fontSize: 10,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            fontSize: 10,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         Text(
           value,

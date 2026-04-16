@@ -114,7 +114,8 @@ class CommunityService {
           .from('user_follows')
           .delete()
           .eq('follower_id', userId)
-          .eq('following_id', followingId).select();
+          .eq('following_id', followingId)
+          .select();
 
       AppLogger.info('User $userId unfollowed $followingId');
     } catch (e, stackTrace) {
@@ -340,7 +341,11 @@ class CommunityService {
   /// コメントを削除
   Future<void> deleteComment(String commentId) async {
     try {
-      await _supabase.from('note_comments').delete().eq('id', commentId).select();
+      await _supabase
+          .from('note_comments')
+          .delete()
+          .eq('id', commentId)
+          .select();
       AppLogger.info('Comment $commentId deleted');
     } catch (e, stackTrace) {
       AppLogger.error(
@@ -382,7 +387,8 @@ class CommunityService {
           .from('note_likes')
           .delete()
           .eq('note_id', noteId)
-          .eq('user_id', userId).select();
+          .eq('user_id', userId)
+          .select();
 
       AppLogger.info('User $userId unliked note $noteId');
     } catch (e, stackTrace) {

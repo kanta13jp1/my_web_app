@@ -379,7 +379,8 @@ class PublicMemoService {
           .from('memo_likes')
           .delete()
           .eq('memo_id', memoId)
-          .eq('user_id', userId).select();
+          .eq('user_id', userId)
+          .select();
 
       // Decrement like count
       final memo = await _supabase

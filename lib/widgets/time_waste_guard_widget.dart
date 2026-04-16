@@ -264,8 +264,10 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(item.emoji,
-                              style: const TextStyle(fontSize: 16),),
+                          Text(
+                            item.emoji,
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             item.label,

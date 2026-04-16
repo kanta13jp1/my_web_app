@@ -204,9 +204,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                               ),
                               const SizedBox(height: 8),
                               Divider(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                              ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [

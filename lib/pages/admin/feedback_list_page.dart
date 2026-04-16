@@ -89,8 +89,10 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
             );
           }
         } catch (notifyErr) {
-          AppLogger.error('Failed to send release notification',
-              error: notifyErr,);
+          AppLogger.error(
+            'Failed to send release notification',
+            error: notifyErr,
+          );
           // 通知失敗はステータス変更の成功には影響させない
         }
       }
@@ -180,10 +182,10 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                         subtitle: Text(
                           '${timeago.format(date, locale: 'ja')} • $userId',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,),
+                            fontSize: 12,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         children: [
                           Padding(

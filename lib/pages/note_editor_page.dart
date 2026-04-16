@@ -1464,10 +1464,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                 : '無題';
                         return ListTile(
                           leading: const Icon(Icons.restore, size: 20),
-                          title: Text(title,
-                              maxLines: 1, overflow: TextOverflow.ellipsis,),
-                          subtitle: Text(dateStr,
-                              style: const TextStyle(fontSize: 12),),
+                          title: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            dateStr,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                           trailing: TextButton(
                             child: const Text('復元'),
                             onPressed: () async {
@@ -1477,7 +1482,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                 builder: (_) => AlertDialog(
                                   title: const Text('バージョンを復元しますか？'),
                                   content: Text(
-                                      '$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。',),
+                                    '$dateStr 時点の内容に戻します。現在の内容は自動で新しいバージョンとして保存されます。',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -2033,7 +2039,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 child: NoteImageDropZone(
                   onImageDropped: (bytes, fileName, mimeType) =>
                       _handlePastedImage(
-                          Uint8List.fromList(bytes), fileName, mimeType,),
+                    Uint8List.fromList(bytes),
+                    fileName,
+                    mimeType,
+                  ),
                   child: _showMarkdownPreview
                       ? ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _contentController,
@@ -2381,7 +2390,8 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
           .from('note_comments')
           .delete()
           .eq('id', commentId)
-          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '').select();
+          .eq('user_id', widget.supabase.auth.currentUser?.id ?? '')
+          .select();
       if (mounted) {
         setState(() => _comments.removeWhere((c) => c['id'] == commentId));
         widget.onCountChanged(_comments.length);
@@ -2434,8 +2444,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                 Text(
                   '${_comments.length}件',
                   style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                    fontSize: 13,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -2450,9 +2461,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           'コメントはまだありません\n最初のメモを追加しましょう',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       )
                     : ListView.separated(

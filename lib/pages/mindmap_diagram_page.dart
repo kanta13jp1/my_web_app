@@ -34,8 +34,10 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['diagrams'] is List) {
-        setState(() => _diagrams =
-            (data['diagrams'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _diagrams =
+              (data['diagrams'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _diagrams = data.cast<Map<String, dynamic>>());
       } else {

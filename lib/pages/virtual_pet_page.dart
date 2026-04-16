@@ -144,8 +144,11 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
-                            const Icon(Icons.pets,
-                                size: 64, color: Colors.orange,),
+                            const Icon(
+                              Icons.pets,
+                              size: 64,
+                              color: Colors.orange,
+                            ),
                             const SizedBox(height: 8),
                             Text(
                               _pet!['name']?.toString() ?? 'ペット',
@@ -162,7 +165,10 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                             const SizedBox(height: 16),
                             _buildStatBar('空腹', _pet!['hunger'], Colors.orange),
                             _buildStatBar(
-                                '幸福', _pet!['happiness'], Colors.pink,),
+                              '幸福',
+                              _pet!['happiness'],
+                              Colors.pink,
+                            ),
                             _buildStatBar('体力', _pet!['energy'], Colors.green),
                           ],
                         ),

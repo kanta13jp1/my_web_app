@@ -493,8 +493,9 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 Text(
                   note,
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               const SizedBox(height: 8),

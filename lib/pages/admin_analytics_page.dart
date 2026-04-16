@@ -518,7 +518,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final data = await _supabase
           .from('app_feedback')
           .select(
-              'id, category, content, status, user_email, github_issue_url, created_at',)
+            'id, category, content, status, user_email, github_issue_url, created_at',
+          )
           .order('created_at', ascending: false)
           .limit(50);
       if (mounted) {
@@ -1300,7 +1301,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           .toList();
 
       for (final dateKey in dateKeys) {
-        await _supabase.from('app_analytics').delete().eq('date', dateKey).select();
+        await _supabase
+            .from('app_analytics')
+            .delete()
+            .eq('date', dateKey)
+            .select();
       }
 
       if (mounted) {
@@ -1985,8 +1990,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             Text(
               'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
               style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2102,8 +2108,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           Text(
             label,
             style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -2249,8 +2256,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             Text(
               'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
               style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -2325,8 +2333,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Text(
             'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       );
@@ -3881,8 +3890,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          const Icon(Icons.public,
-                              size: 16, color: Colors.grey,),
+                          const Icon(
+                            Icons.public,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           const Text(
                             '公開プロフィール',
@@ -4546,7 +4558,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       final data = await _supabase
           .from('blog_posts')
           .select(
-              'id, title, status, target_platforms, draft_path, posted_at, url, created_at',)
+            'id, title, status, target_platforms, draft_path, posted_at, url, created_at',
+          )
           .order('created_at', ascending: false)
           .limit(20);
       if (mounted) {
@@ -5090,32 +5103,41 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(height: 12),
           if (_growthSummary == null && !_growthSummaryLoading)
-            const Text('データなし',
-                style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),)
+            const Text(
+              'データなし',
+              style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+            )
           else if (_growthSummary != null) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 10),
-            _growthStatRow('新規ユーザー', '${_growthSummary!['newUsers'] ?? 0}人',
-                const Color(0xFF6366F1),),
             _growthStatRow(
-                '累計ユーザー',
-                '${_growthSummary!['totalUsersEver'] ?? 0}人',
-                const Color(0xFF10B981),),
+              '新規ユーザー',
+              '${_growthSummary!['newUsers'] ?? 0}人',
+              const Color(0xFF6366F1),
+            ),
             _growthStatRow(
-                '成長シグナル',
-                '${_growthSummary!['acquisitionSignals'] ?? 0}件',
-                const Color(0xFFF59E0B),),
+              '累計ユーザー',
+              '${_growthSummary!['totalUsersEver'] ?? 0}人',
+              const Color(0xFF10B981),
+            ),
             _growthStatRow(
-                '紹介成立',
-                '${_growthSummary!['referralsCompleted'] ?? 0}件',
-                const Color(0xFFEC4899),),
+              '成長シグナル',
+              '${_growthSummary!['acquisitionSignals'] ?? 0}件',
+              const Color(0xFFF59E0B),
+            ),
             _growthStatRow(
-                'インポート試行',
-                '${_growthSummary!['importPreviews'] ?? 0}件',
-                const Color(0xFF0EA5E9),),
+              '紹介成立',
+              '${_growthSummary!['referralsCompleted'] ?? 0}件',
+              const Color(0xFFEC4899),
+            ),
+            _growthStatRow(
+              'インポート試行',
+              '${_growthSummary!['importPreviews'] ?? 0}件',
+              const Color(0xFF0EA5E9),
+            ),
           ],
         ],
       ),
@@ -5134,9 +5156,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: color,),),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -5157,8 +5184,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             // ヘッダー行
             Row(
               children: [
-                const Icon(Icons.feedback_outlined,
-                    color: Color(0xFF6366F1), size: 20,),
+                const Icon(
+                  Icons.feedback_outlined,
+                  color: Color(0xFF6366F1),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -5177,9 +5207,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     child: Text(
                       '未対応 $newCount',
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,),
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 const SizedBox(width: 8),
@@ -5248,7 +5279,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 label: Text('全${_appFeedbacks.length}件を管理する'),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 onPressed: () => Navigator.push(
                   context,
@@ -5309,9 +5341,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                Icon(categoryIcon,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                Icon(
+                  categoryIcon,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -5336,9 +5370,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ? '確認済'
                             : '対応完',
                     style: TextStyle(
-                        fontSize: 10,
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,),
+                      fontSize: 10,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -5348,7 +5383,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               Text(
                 'Issue: $issueUrl',
                 style: TextStyle(
-                    fontSize: 10, color: Theme.of(context).colorScheme.primary,),
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
@@ -5361,7 +5398,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     onPressed: () => _updateFeedbackStatus(id, 'reviewed'),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4,),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -5372,7 +5411,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     onPressed: () => _updateFeedbackStatus(id, 'implemented'),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4,),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       foregroundColor: Colors.green,

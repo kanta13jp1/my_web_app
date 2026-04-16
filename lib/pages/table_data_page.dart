@@ -408,7 +408,11 @@ class _TableDataPageState extends State<TableDataPage> {
   Future<void> _deleteRow(int index) async {
     final row = _rows[index];
     try {
-      await _db.from('user_table_rows').delete().eq('id', row['_id'] as String).select();
+      await _db
+          .from('user_table_rows')
+          .delete()
+          .eq('id', row['_id'] as String)
+          .select();
       if (mounted) setState(() => _rows.removeAt(index));
     } catch (_) {}
   }
@@ -613,8 +617,11 @@ class _TableDataPageState extends State<TableDataPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.table_chart_outlined,
-                size: 64, color: Colors.grey,),
+            const Icon(
+              Icons.table_chart_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
             const Text(
               'データベースがありません',
@@ -624,7 +631,8 @@ class _TableDataPageState extends State<TableDataPage> {
             Text(
               'Notionのような表形式でデータを管理できます',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -726,22 +734,26 @@ class _TableDataPageState extends State<TableDataPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              Icon(Icons.table_rows_outlined,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.outlineVariant,),
+              Icon(
+                Icons.table_rows_outlined,
+                size: 16,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${_rows.length} 件',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const Spacer(),
               Text(
                 '${cols.length} カラム',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -863,15 +875,17 @@ class _TableDataPageState extends State<TableDataPage> {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.add,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.outlineVariant,),
+                Icon(
+                  Icons.add,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   '行を追加',

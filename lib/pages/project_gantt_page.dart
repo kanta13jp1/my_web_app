@@ -115,8 +115,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('新規プロジェクト',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),),
+                    const Text(
+                      '新規プロジェクト',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _nameCtrl,
@@ -147,8 +149,12 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
                               underline: const SizedBox.shrink(),
                               isExpanded: true,
                               items: _statuses
-                                  .map((s) => DropdownMenuItem(
-                                      value: s, child: Text(s),),)
+                                  .map(
+                                    (s) => DropdownMenuItem(
+                                      value: s,
+                                      child: Text(s),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (v) => setState(() => _status = v!),
                             ),
@@ -166,7 +172,10 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white,),)
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Text('作成'),
                         ),
                       ],
@@ -181,11 +190,14 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
               child: _loading
                   ? const Center(
                       child:
-                          CircularProgressIndicator(color: Color(0xFFFF6B35)),)
+                          CircularProgressIndicator(color: Color(0xFFFF6B35)),
+                    )
                   : _projects.isEmpty
                       ? const Center(
-                          child: Text('プロジェクトはまだありません',
-                              style: TextStyle(color: Colors.white38),),
+                          child: Text(
+                            'プロジェクトはまだありません',
+                            style: TextStyle(color: Colors.white38),
+                          ),
                         )
                       : ListView.builder(
                           itemCount: _projects.length,
@@ -200,8 +212,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
                               child: ListTile(
                                 leading: CircleAvatar(
                                   backgroundColor: color.withValues(alpha: 0.2),
-                                  child: Icon(Icons.folder_outlined,
-                                      color: color, size: 20,),
+                                  child: Icon(
+                                    Icons.folder_outlined,
+                                    color: color,
+                                    size: 20,
+                                  ),
                                 ),
                                 title: Text(
                                   p['name'] as String? ?? '',
@@ -210,27 +225,41 @@ class _ProjectGanttPageState extends State<ProjectGanttPage> {
                                 subtitle: Text(
                                   p['description'] as String? ?? '',
                                   style: const TextStyle(
-                                      color: Colors.white54, fontSize: 12,),
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                  ),
                                 ),
                                 trailing: PopupMenuButton<String>(
                                   color: const Color(0xFF1E1E1E),
                                   icon: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4,),
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: color.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text(status,
-                                        style: TextStyle(
-                                            color: color, fontSize: 12,),),
+                                    child: Text(
+                                      status,
+                                      style: TextStyle(
+                                        color: color,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ),
                                   itemBuilder: (_) => _statuses
-                                      .map((s) => PopupMenuItem(
+                                      .map(
+                                        (s) => PopupMenuItem(
                                           value: s,
-                                          child: Text(s,
-                                              style: const TextStyle(
-                                                  color: Colors.white,),),),)
+                                          child: Text(
+                                            s,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      )
                                       .toList(),
                                   onSelected: (s) =>
                                       _updateStatus(p['id'].toString(), s),

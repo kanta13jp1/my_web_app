@@ -390,8 +390,10 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                       final uri = Uri.parse(
                         'https://twitter.com/intent/tweet?text=$encoded',
                       );
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication,);
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
                     },
                   ),
                 IconButton(

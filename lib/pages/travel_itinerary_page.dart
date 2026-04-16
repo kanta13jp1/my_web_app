@@ -100,8 +100,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['bookings'] is List) {
-        setState(() => _bookings =
-            (data['bookings'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _bookings =
+              (data['bookings'] as List).cast<Map<String, dynamic>>(),
+        );
       }
     } catch (_) {}
   }
@@ -114,8 +116,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(() => _packingItems =
-            (data['items'] as List).map((e) => e.toString()).toList(),);
+        setState(
+          () => _packingItems =
+              (data['items'] as List).map((e) => e.toString()).toList(),
+        );
       }
     } catch (_) {}
   }
@@ -405,11 +409,15 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetchTrips, child: const Text('再試行'),),
+                        onPressed: _fetchTrips,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -435,11 +443,15 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           children: [
             Icon(Icons.flight_takeoff, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('旅行プランがありません',
-                style: TextStyle(color: Colors.grey, fontSize: 16),),
+            Text(
+              '旅行プランがありません',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
             SizedBox(height: 8),
-            Text('右下の + から新しい旅行を作成してください',
-                style: TextStyle(color: Colors.grey),),
+            Text(
+              '右下の + から新しい旅行を作成してください',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -471,8 +483,11 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                 if (destination.isNotEmpty)
                   Row(
                     children: [
-                      const Icon(Icons.location_on,
-                          size: 14, color: Colors.grey,),
+                      const Icon(
+                        Icons.location_on,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 4),
                       Text(destination, style: const TextStyle(fontSize: 13)),
                     ],
@@ -581,22 +596,31 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: _bookingTypeColor(type).withValues(alpha: 0.15),
-              child: Icon(_bookingTypeIcon(type),
-                  color: _bookingTypeColor(type), size: 20,),
+              child: Icon(
+                _bookingTypeIcon(type),
+                color: _bookingTypeColor(type),
+                size: 20,
+              ),
             ),
             title:
                 Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(type,
-                    style: TextStyle(
-                        color: _bookingTypeColor(type), fontSize: 12,),),
+                Text(
+                  type,
+                  style: TextStyle(
+                    color: _bookingTypeColor(type),
+                    fontSize: 12,
+                  ),
+                ),
                 if (date.isNotEmpty)
                   Text(date, style: const TextStyle(fontSize: 12)),
                 if (confirmNo.isNotEmpty)
-                  Text('確認番号: $confirmNo',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),),
+                  Text(
+                    '確認番号: $confirmNo',
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
               ],
             ),
           ),
@@ -625,8 +649,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
         Expanded(
           child: _packingItems.isEmpty
               ? const Center(
-                  child: Text('持ち物リストがありません',
-                      style: TextStyle(color: Colors.grey),),
+                  child: Text(
+                    '持ち物リストがありません',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -663,15 +689,19 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('予算サマリー',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),),
+                  const Text(
+                    '予算サマリー',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _budgetStat(
-                          '総予算', '¥${_formatNum(totalBudget)}', Colors.blue,),
+                        '総予算',
+                        '¥${_formatNum(totalBudget)}',
+                        Colors.blue,
+                      ),
                       _budgetStat('支出', '¥${_formatNum(spent)}', Colors.red),
                       _budgetStat(
                         '残高',
@@ -736,9 +766,14 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Widget _budgetStat(String label, String value, Color color) {
     return Column(
       children: [
-        Text(value,
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: color,),),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );

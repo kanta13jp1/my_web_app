@@ -286,8 +286,10 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
               color: Colors.amber,
               size: 36,
             ),
-            title: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text(
               '${date.length >= 10 ? date.substring(0, 10) : date}'
               '${id.isNotEmpty ? "\nID: $id" : ""}',

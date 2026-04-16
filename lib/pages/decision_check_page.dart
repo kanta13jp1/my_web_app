@@ -347,8 +347,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 Text(
                   _categoryLabels[category] ?? category,
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const Spacer(),
                 PopupMenuButton<String>(
@@ -418,8 +419,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   DateTime.tryParse(createdAt)?.toLocal() ?? DateTime.now(),
                 ),
                 style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 10,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ],
@@ -451,9 +453,11 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.psychology_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,),
+          Icon(
+            Icons.psychology_outlined,
+            size: 64,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
           const SizedBox(height: 16),
           Text(
             '論理的に決断しよう',
@@ -468,8 +472,9 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
             '衝動的な決意の前に\nまずチェックしてみましょう',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

@@ -235,8 +235,9 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                 Text(
                   title,
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
                 Text(
                   value,

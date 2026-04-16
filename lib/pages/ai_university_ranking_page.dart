@@ -492,9 +492,7 @@ class _LocalProgressView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = requiresLogin
-        ? 'この端末では学習済みです'
-        : '学習記録を反映しています';
+    final title = requiresLogin ? 'この端末では学習済みです' : '学習記録を反映しています';
     final body = requiresLogin
         ? '$answeredCount社ぶんのクイズ達成はこの端末に保存されています。共有ランキングへ反映するにはログインが必要です。'
         : '$answeredCount社ぶんのクイズ達成を確認しました。共有ランキングへの反映を確認中です。右上の更新でもう一度お試しください。';

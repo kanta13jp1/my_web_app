@@ -252,7 +252,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
             .delete()
             .eq('user_id', userId)
             .eq('schedule_key', key)
-            .eq('completed_date', _todayStr).select();
+            .eq('completed_date', _todayStr)
+            .select();
       } else {
         await _supabase.from('prison_schedule_logs').insert({
           'user_id': userId,
@@ -452,8 +453,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
             Text(
               '返済率: $repaidPercent% (¥${_formatNumber(totalOriginal - totalDebt)} / ¥${_formatNumber(totalOriginal)})',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  fontSize: 12,),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 10),
             ClipRRect(
@@ -475,8 +477,9 @@ class _PrisonModePageState extends State<PrisonModePage> {
             Text(
               '日課遵守率: ${(scheduleProgress * 100).toInt()}%',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  fontSize: 12,),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 4),
             ClipRRect(

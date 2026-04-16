@@ -78,8 +78,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(() => _projects =
-            (data['projects'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _projects =
+              (data['projects'] as List).cast<Map<String, dynamic>>(),
+        );
       }
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'プロジェクトデータの取得に失敗しました: $e');
@@ -129,7 +131,9 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
             TextField(
               controller: _hoursCtrl,
               decoration: const InputDecoration(
-                  labelText: '作業時間 (例: 2.5)', suffixText: 'h',),
+                labelText: '作業時間 (例: 2.5)',
+                suffixText: 'h',
+              ),
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
             ),
@@ -142,11 +146,13 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('キャンセル'),),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('記録'),),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('記録'),
+          ),
         ],
       ),
     );
@@ -235,11 +241,15 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetchEntries, child: const Text('再試行'),),
+                        onPressed: _fetchEntries,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -291,8 +301,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                       color: Color(0xFF0EA5E9),
                     ),
                   ),
-                  Text(_viewLabel(_view),
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),),
+                  Text(
+                    _viewLabel(_view),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
             ],
@@ -362,9 +374,12 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (hours > 0)
-                              Text('${hours.toStringAsFixed(1)}h',
-                                  style: const TextStyle(
-                                      color: Color(0xFF0EA5E9),),),
+                              Text(
+                                '${hours.toStringAsFixed(1)}h',
+                                style: const TextStyle(
+                                  color: Color(0xFF0EA5E9),
+                                ),
+                              ),
                             if (memo.isNotEmpty)
                               Text(memo, style: const TextStyle(fontSize: 12)),
                           ],
@@ -375,7 +390,9 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                                     ? recordedAt.substring(0, 10)
                                     : recordedAt,
                                 style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey,),
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
                               )
                             : null,
                       ),
@@ -421,11 +438,15 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
               Row(
                 children: [
                   Expanded(
-                      child: Text(name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),),),
-                  Text('${hours.toStringAsFixed(1)}h',
-                      style:
-                          TextStyle(color: color, fontWeight: FontWeight.bold),),
+                    child: Text(
+                      name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Text(
+                    '${hours.toStringAsFixed(1)}h',
+                    style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),

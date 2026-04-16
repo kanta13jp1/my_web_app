@@ -421,8 +421,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 Text(
                   dateStr,
                   style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.outlineVariant,),
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                 ),
               ],
             ),
@@ -433,8 +434,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
               Text(
                 '📍 $ctx',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
             if (analysis != null) ...[

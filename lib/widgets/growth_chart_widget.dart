@@ -132,13 +132,15 @@ class GrowthChartWidget extends StatelessWidget {
                     show: true,
                     border: Border(
                       bottom: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
                       left: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
                     ),
                   ),
                   minX: 0,

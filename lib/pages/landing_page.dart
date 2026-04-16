@@ -864,8 +864,11 @@ $input
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.check_circle,
-                      size: 14, color: Color(0xFF22C55E),),
+                  const Icon(
+                    Icons.check_circle,
+                    size: 14,
+                    color: Color(0xFF22C55E),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '✓ 実装済み $_achievementCount件の機能',
@@ -969,11 +972,14 @@ $input
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
-              child: Text('𝕏',
-                  style: TextStyle(
-                      color: Color(0xFF1DA1F2),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,),),
+              child: Text(
+                '𝕏',
+                style: TextStyle(
+                  color: Color(0xFF1DA1F2),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -994,7 +1000,10 @@ $input
                 Text(
                   'フォロワーに紹介すると登録者が増えてサービスが成長します',
                   style: TextStyle(
-                      color: Color(0xFF71767B), fontSize: 11, height: 1.4,),
+                    color: Color(0xFF71767B),
+                    fontSize: 11,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -1007,12 +1016,15 @@ $input
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),),
+                borderRadius: BorderRadius.circular(20),
+              ),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('シェア',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),),
+            child: const Text(
+              'シェア',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
           ),
         ],
       ),
@@ -1558,8 +1570,11 @@ $input
           children: [
             Row(
               children: [
-                const Icon(Icons.rocket_launch,
-                    size: 16, color: Color(0xFF059669),),
+                const Icon(
+                  Icons.rocket_launch,
+                  size: 16,
+                  color: Color(0xFF059669),
+                ),
                 const SizedBox(width: 6),
                 const Text(
                   '今週の開発実績',
@@ -1584,8 +1599,11 @@ $input
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.check_circle,
-                        size: 14, color: Color(0xFF10B981),),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: Color(0xFF10B981),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -1597,7 +1615,9 @@ $input
                     Text(
                       a['date'] ?? '',
                       style: const TextStyle(
-                          fontSize: 10, color: Color(0xFF6B7280),),
+                        fontSize: 10,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
                   ],
                 ),
@@ -3182,7 +3202,8 @@ $input
                               : Icons.visibility,
                         ),
                         onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,),
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                         tooltip: _obscurePassword ? '表示' : '非表示',
                       ),
                       IconButton(

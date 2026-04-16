@@ -43,14 +43,20 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
     });
     try {
       final results = await Future.wait([
-        _supabase.functions.invoke('tools-hub',
-            body: {'action': 'habit.gamification.profile'},),
+        _supabase.functions.invoke(
+          'tools-hub',
+          body: {'action': 'habit.gamification.profile'},
+        ),
         _supabase.functions
             .invoke('tools-hub', body: {'action': 'habit.gamification.badges'}),
-        _supabase.functions.invoke('tools-hub',
-            body: {'action': 'habit.gamification.challenges'},),
-        _supabase.functions.invoke('tools-hub',
-            body: {'action': 'habit.gamification.leaderboard'},),
+        _supabase.functions.invoke(
+          'tools-hub',
+          body: {'action': 'habit.gamification.challenges'},
+        ),
+        _supabase.functions.invoke(
+          'tools-hub',
+          body: {'action': 'habit.gamification.leaderboard'},
+        ),
       ]);
       setState(() {
         final profileData = results[0].data;
@@ -181,19 +187,30 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
                       TextButton(
-                          onPressed: _fetchAll, child: const Text('再試行'),),
+                        onPressed: _fetchAll,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
               : Column(
                   children: [
-                    _buildProfileCard(level, totalXp, currentXp, nextLevelXp,
-                        streak, totalTasks,),
+                    _buildProfileCard(
+                      level,
+                      totalXp,
+                      currentXp,
+                      nextLevelXp,
+                      streak,
+                      totalTasks,
+                    ),
                     Expanded(
                       child: TabBarView(
                         controller: _tabController,
@@ -252,9 +269,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     Text(
                       '総XP: $totalXp',
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,),
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     LinearProgressIndicator(
@@ -279,12 +297,16 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _statChip(
-                  Icons.local_fire_department, '$streak日連続', Colors.orange,),
+                Icons.local_fire_department,
+                '$streak日連続',
+                Colors.orange,
+              ),
               _statChip(Icons.check_circle, '$totalTasks タスク', Colors.green),
               _statChip(
-                  Icons.stars,
-                  '${_badges.where((b) => b['earned'] == true).length}バッジ',
-                  Colors.amber,),
+                Icons.stars,
+                '${_badges.where((b) => b['earned'] == true).length}バッジ',
+                Colors.amber,
+              ),
             ],
           ),
         ],
@@ -298,8 +320,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       children: [
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 4),
-        Text(label,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
       ],
     );
   }
@@ -371,8 +395,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           ),
           const SizedBox(height: 8),
           if (earnedBadges.isNotEmpty) ...[
-            const Text('🏆 獲得済みバッジ',
-                style: TextStyle(fontWeight: FontWeight.w600),),
+            const Text(
+              '🏆 獲得済みバッジ',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -383,8 +409,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             ),
             const SizedBox(height: 16),
           ],
-          const Text('🔒 未獲得バッジ',
-              style: TextStyle(fontWeight: FontWeight.w600),),
+          const Text(
+            '🔒 未獲得バッジ',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -475,8 +503,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   ),
                 ),
               ),
-              title: Text('Lv$level ユーザー',
-                  style: const TextStyle(fontWeight: FontWeight.w600),),
+              title: Text(
+                'Lv$level ユーザー',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               subtitle: Text('🔥 $streak日連続'),
               trailing: Text(
                 '${xp}XP',

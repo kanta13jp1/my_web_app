@@ -209,7 +209,11 @@ class AttachmentService {
       await supabase.storage.from('attachments').remove([attachment.filePath]);
 
       // データベースから削除
-      await supabase.from('attachments').delete().eq('id', attachment.id).select();
+      await supabase
+          .from('attachments')
+          .delete()
+          .eq('id', attachment.id)
+          .select();
     } catch (e) {
       rethrow;
     }

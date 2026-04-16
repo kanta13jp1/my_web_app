@@ -317,8 +317,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   Text(
                     'MAGI秘書が画像からタスクを起案しました。',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Align(
@@ -499,9 +500,17 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                       Icons.calendar_view_week,
                     ),
                     _buildStrategyButton(
-                        context, '今月', 'month', Icons.calendar_month,),
+                      context,
+                      '今月',
+                      'month',
+                      Icons.calendar_month,
+                    ),
                     _buildStrategyButton(
-                        context, '今年', 'year', Icons.rocket_launch,),
+                      context,
+                      '今年',
+                      'year',
+                      Icons.rocket_launch,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),

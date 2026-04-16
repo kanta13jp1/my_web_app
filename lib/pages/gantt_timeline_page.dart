@@ -382,11 +382,16 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 8),
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _fetchProjects,
@@ -412,8 +417,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.view_timeline_outlined,
-                size: 64, color: Colors.grey,),
+            const Icon(
+              Icons.view_timeline_outlined,
+              size: 64,
+              color: Colors.grey,
+            ),
             const SizedBox(height: 16),
             const Text(
               'プロジェクトがありません',
@@ -588,7 +596,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
               )
             else
               ..._tasks.map(
-                  (task) => _buildGanttTaskRow(task as Map<String, dynamic>),),
+                (task) => _buildGanttTaskRow(task as Map<String, dynamic>),
+              ),
 
             const SizedBox(height: 80),
           ],
@@ -712,18 +721,22 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.calendar_today,
-                    size: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                Icon(
+                  Icons.calendar_today,
+                  size: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   startDate != null ? _formatDate(startDate) : '未設定',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
                 const SizedBox(width: 12),
-                Icon(Icons.timer,
-                    size: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                Icon(
+                  Icons.timer,
+                  size: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   '$durationDays日間',
@@ -779,8 +792,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.account_tree,
-                    color: Colors.deepOrange, size: 32,),
+                const Icon(
+                  Icons.account_tree,
+                  color: Colors.deepOrange,
+                  size: 32,
+                ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

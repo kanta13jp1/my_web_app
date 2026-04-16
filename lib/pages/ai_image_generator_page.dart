@@ -41,8 +41,9 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['images'] is List) {
-        setState(() =>
-            _images = (data['images'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _images = (data['images'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _images = data.cast<Map<String, dynamic>>());
       } else {

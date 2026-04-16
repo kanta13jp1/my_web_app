@@ -1907,7 +1907,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     .from('cfo_assets')
                     .delete()
                     .eq('user_id', userId)
-                    .eq('title', type).select();
+                    .eq('title', type)
+                    .select();
                 setState(() {
                   _setWatchlistEntries(watchlistEntries);
                   _assetTypes.remove(type);
@@ -2795,7 +2796,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .from('wealth_struggles')
           .delete()
           .eq('id', flowId)
-          .eq('user_id', userId).select();
+          .eq('user_id', userId)
+          .select();
 
       await _fetchRecentFlows();
       await _fetchTodayClosing();

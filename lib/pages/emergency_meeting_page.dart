@@ -1484,9 +1484,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       color: Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1496,9 +1497,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             Text(
                               '現在のモデル: ',
                               style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                             ),
                             Expanded(
                               child: Text(
@@ -1515,9 +1517,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         Text(
                           '利用可能なモデル一覧 (サポートメソッド):',
                           style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -2825,9 +2827,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             Text(
                               '使用モデル: ',
                               style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                             ),
                             Flexible(
                               child: Text(
@@ -2987,8 +2990,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     Text(
                       msg.role,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 12,),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

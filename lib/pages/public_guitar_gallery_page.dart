@@ -187,7 +187,8 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
             Text(
               'ギャラリーの読み込みに失敗しました',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -223,7 +224,8 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
             Text(
               'ギタースタジオで録音して公開しましょう！',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -507,14 +509,18 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant,),
+          Icon(
+            icon,
+            size: 12,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                fontSize: 11,),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              fontSize: 11,
+            ),
           ),
         ],
       ),

@@ -144,8 +144,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
               Icons.description,
               color: urgent ? Colors.red : Colors.blue,
             ),
-            title: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text(party.isNotEmpty ? party : status),
             trailing: expiry.isNotEmpty
                 ? Column(
@@ -220,8 +222,11 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                   ),
                 ),
                 secondary: priority == 'high'
-                    ? const Icon(Icons.priority_high,
-                        color: Colors.red, size: 18,)
+                    ? const Icon(
+                        Icons.priority_high,
+                        color: Colors.red,
+                        size: 18,
+                      )
                     : null,
               );
             },

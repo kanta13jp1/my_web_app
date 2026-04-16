@@ -164,7 +164,9 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                               item['createdAt']?.toString().substring(0, 10) ??
                                   '',
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey,),
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                         );

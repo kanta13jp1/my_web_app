@@ -130,7 +130,10 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white,),)
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Text('保存'),
           ),
         ],
@@ -176,17 +179,23 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
       ),
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFFF6B35)),)
+              child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
+            )
           : _cards.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.contact_mail_outlined,
-                          color: Colors.white38, size: 48,),
+                      const Icon(
+                        Icons.contact_mail_outlined,
+                        color: Colors.white38,
+                        size: 48,
+                      ),
                       const SizedBox(height: 12),
-                      const Text('名刺はまだありません',
-                          style: TextStyle(color: Colors.white38),),
+                      const Text(
+                        '名刺はまだありません',
+                        style: TextStyle(color: Colors.white38),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         onPressed: _showAddDialog,
@@ -219,26 +228,37 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                           child: Text(
                             initials,
                             style: const TextStyle(
-                                color: Color(0xFFFF6B35),
-                                fontWeight: FontWeight.bold,),
+                              color: Color(0xFFFF6B35),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         title: Text(
                           c['name'] as String? ?? '',
                           style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w600,),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if ((c['company'] as String? ?? '').isNotEmpty)
-                              Text(c['company'] as String,
-                                  style: const TextStyle(
-                                      color: Colors.white70, fontSize: 12,),),
+                              Text(
+                                c['company'] as String,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
                             if ((c['title'] as String? ?? '').isNotEmpty)
-                              Text(c['title'] as String,
-                                  style: const TextStyle(
-                                      color: Colors.white54, fontSize: 11,),),
+                              Text(
+                                c['title'] as String,
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 11,
+                                ),
+                              ),
                           ],
                         ),
                         isThreeLine:
@@ -249,11 +269,17 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             if ((c['email'] as String? ?? '').isNotEmpty)
-                              const Icon(Icons.email_outlined,
-                                  color: Colors.white38, size: 16,),
+                              const Icon(
+                                Icons.email_outlined,
+                                color: Colors.white38,
+                                size: 16,
+                              ),
                             if ((c['phone'] as String? ?? '').isNotEmpty)
-                              const Icon(Icons.phone_outlined,
-                                  color: Colors.white38, size: 16,),
+                              const Icon(
+                                Icons.phone_outlined,
+                                color: Colors.white38,
+                                size: 16,
+                              ),
                           ],
                         ),
                       ),

@@ -70,8 +70,11 @@ class _GrowthAutomationControllerPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -109,8 +112,10 @@ class _GrowthAutomationControllerPageState
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             trailing: Chip(
-                              label: Text(status,
-                                  style: const TextStyle(fontSize: 12),),
+                              label: Text(
+                                status,
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               backgroundColor: status == 'active'
                                   ? Colors.green.shade100
                                   : Theme.of(context)

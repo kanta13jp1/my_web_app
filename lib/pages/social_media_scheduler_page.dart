@@ -81,9 +81,13 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
                       child: Text('LinkedIn'),
                     ),
                     DropdownMenuItem(
-                        value: 'instagram', child: Text('Instagram'),),
+                      value: 'instagram',
+                      child: Text('Instagram'),
+                    ),
                     DropdownMenuItem(
-                        value: 'facebook', child: Text('Facebook'),),
+                      value: 'facebook',
+                      child: Text('Facebook'),
+                    ),
                   ],
                   onChanged: (v) =>
                       setDialogState(() => selectedPlatform = v ?? 'x'),

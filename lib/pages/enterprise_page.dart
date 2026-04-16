@@ -196,17 +196,30 @@ class _EnterprisePageState extends State<EnterprisePage> {
   Widget _buildCostSavingsSection(bool isMobile) {
     const tools = [
       _ToolCost(
-          name: 'Slack', icon: '💬', monthlyPerUser: 750, category: 'チャット',),
+        name: 'Slack',
+        icon: '💬',
+        monthlyPerUser: 750,
+        category: 'チャット',
+      ),
       _ToolCost(
-          name: 'Chatwork', icon: '💼', monthlyPerUser: 700, category: 'チャット',),
+        name: 'Chatwork',
+        icon: '💼',
+        monthlyPerUser: 700,
+        category: 'チャット',
+      ),
       _ToolCost(name: 'ジョブカン', icon: '📋', monthlyPerUser: 500, category: 'HR'),
       _ToolCost(
-          name: 'MoneyForward',
-          icon: '💰',
-          monthlyPerUser: 500,
-          category: '経費',),
+        name: 'MoneyForward',
+        icon: '💰',
+        monthlyPerUser: 500,
+        category: '経費',
+      ),
       _ToolCost(
-          name: 'Notion', icon: '📝', monthlyPerUser: 1650, category: 'ノート',),
+        name: 'Notion',
+        icon: '📝',
+        monthlyPerUser: 1650,
+        category: 'ノート',
+      ),
     ];
 
     final totalCost = tools.fold<int>(0, (sum, t) => sum + t.monthlyPerUser);
@@ -593,7 +606,9 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                            color: Color(0xFFFCA5A5), fontSize: 13,),
+                          color: Color(0xFFFCA5A5),
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 24),

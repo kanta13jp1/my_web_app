@@ -163,8 +163,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             leading: const CircleAvatar(
               child: Icon(Icons.play_circle),
             ),
-            title: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text(
               [
                 if (duration.isNotEmpty) duration,

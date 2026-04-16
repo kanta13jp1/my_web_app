@@ -348,7 +348,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
       await _supabase
           .from('payment_reminders')
           .delete()
-          .eq('id', reminder['id']).select();
+          .eq('id', reminder['id'])
+          .select();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -408,9 +409,11 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.payments_outlined,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.payments_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             const Text(
               '毎月の支払いを登録して\n忘れずにリマインドしましょう',
@@ -440,8 +443,11 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.account_balance_wallet,
-              color: Colors.white, size: 32,),
+          const Icon(
+            Icons.account_balance_wallet,
+            color: Colors.white,
+            size: 32,
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -613,9 +619,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                     Text(
                       '毎月$dueDay日',
                       style: TextStyle(
-                          fontSize: 11,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,),
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -625,8 +631,10 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             Row(
               children: [
                 if (method != null)
-                  _buildMiniTag(method,
-                      Theme.of(context).colorScheme.surfaceContainerHigh,),
+                  _buildMiniTag(
+                    method,
+                    Theme.of(context).colorScheme.surfaceContainerHigh,
+                  ),
                 const SizedBox(width: 6),
                 _buildMiniTag(
                   _categoryLabel(cat),
@@ -638,9 +646,9 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                     child: Text(
                       note,
                       style: TextStyle(
-                          fontSize: 10,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,),
+                        fontSize: 10,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),

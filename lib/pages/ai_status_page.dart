@@ -319,7 +319,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,),
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        ),
       ),
       child: InkWell(
         onTap: () => _testSingleModel(modelName),
@@ -722,8 +723,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
           child: Text(
             detail,
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
 
@@ -804,15 +806,18 @@ class _AiStatusPageState extends State<AiStatusPage> {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.timer_outlined,
-                  size: 12,
-                  color: Theme.of(context).colorScheme.outlineVariant,),
+              Icon(
+                Icons.timer_outlined,
+                size: 12,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
               const SizedBox(width: 4),
               Text(
                 '${(levelLatency / 1000).toStringAsFixed(2)}s',
                 style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

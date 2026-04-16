@@ -273,8 +273,9 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             '仕入れ・価格・人員配置を管理して\n経営感覚を身につけよう',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton.icon(
@@ -532,8 +533,9 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             Text(
               label,
               style: TextStyle(
-                  fontSize: 10,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 4),
             LinearProgressIndicator(
@@ -587,15 +589,17 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             Text(
               '👤 $customers人',
               style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
               '売上 ¥${fmt.format(revenue)}',
               style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(width: 12),
             Text(

@@ -118,7 +118,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   Future<void> _bootstrapCompany() async {
     final idea = _ideaController.text.trim();
     if (idea.isEmpty) {
-      setState(() => _errorMessage = 'Enter one sentence to describe the company.');
+      setState(
+          () => _errorMessage = 'Enter one sentence to describe the company.');
       return;
     }
 
@@ -188,7 +189,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             maxLines: 5,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
-              hintText: 'Example: Build an AI-native online school for Japanese startup founders.',
+              hintText:
+                  'Example: Build an AI-native online school for Japanese startup founders.',
               hintStyle: const TextStyle(color: Colors.white38),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.05),
@@ -303,9 +305,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                       : const Color(0xFF111827),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: selected
-                        ? const Color(0xFF60A5FA)
-                        : Colors.white12,
+                    color: selected ? const Color(0xFF60A5FA) : Colors.white12,
                   ),
                 ),
                 child: Column(
@@ -315,7 +315,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                       children: [
                         Expanded(
                           child: Text(
-                            metadata['company_name']?.toString() ?? 'Untitled company',
+                            metadata['company_name']?.toString() ??
+                                'Untitled company',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -334,7 +335,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                       metadata['summary']?.toString() ??
                           metadata['idea']?.toString() ??
                           '',
-                      style: const TextStyle(color: Colors.white70, height: 1.4),
+                      style:
+                          const TextStyle(color: Colors.white70, height: 1.4),
                     ),
                     const SizedBox(height: 10),
                     Row(
@@ -364,7 +366,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   }
 
   Widget _buildStatusChip(String status, bool passed) {
-    final Color tone = passed ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+    final Color tone =
+        passed ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -432,7 +435,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            metadata['offer']?.toString() ?? metadata['summary']?.toString() ?? '',
+            metadata['offer']?.toString() ??
+                metadata['summary']?.toString() ??
+                '',
             style: const TextStyle(color: Colors.white70, height: 1.5),
           ),
           const SizedBox(height: 16),
@@ -590,7 +595,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   ) {
     final managerNames = <String, String>{
       for (final manager in managers)
-        manager['id']?.toString() ?? '': manager['display_name']?.toString() ?? '-',
+        manager['id']?.toString() ?? '':
+            manager['display_name']?.toString() ?? '-',
     };
     final toolNames = <String, String>{
       for (final tool in tools)
@@ -683,7 +689,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  content.length > 220 ? '${content.substring(0, 220)}...' : content,
+                  content.length > 220
+                      ? '${content.substring(0, 220)}...'
+                      : content,
                   style: const TextStyle(color: Colors.white70, height: 1.5),
                 ),
               ],

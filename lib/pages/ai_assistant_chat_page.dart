@@ -243,7 +243,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             const SizedBox(width: 8),
             const Text(
               'AI アシスタント',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             if (_isListening) ...[
               const SizedBox(width: 8),
@@ -277,7 +278,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                   Expanded(
                     child: Text(
                       _interimText.isEmpty ? '音声を認識中...' : _interimText,
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ),
                 ],
@@ -455,7 +457,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             const SizedBox(width: 8),
             if (_speechSupported)
               ScaleTransition(
-                scale: _isListening ? _pulseAnim : const AlwaysStoppedAnimation(1.0),
+                scale: _isListening
+                    ? _pulseAnim
+                    : const AlwaysStoppedAnimation(1.0),
                 child: IconButton(
                   onPressed: _toggleVoice,
                   icon: Icon(
@@ -463,8 +467,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                     color: _isListening ? Colors.red : Colors.white54,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor:
-                        _isListening ? Colors.red.withAlpha(30) : Colors.transparent,
+                    backgroundColor: _isListening
+                        ? Colors.red.withAlpha(30)
+                        : Colors.transparent,
                   ),
                 ),
               ),

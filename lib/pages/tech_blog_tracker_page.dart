@@ -113,7 +113,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     final existing = _getTodayPost(platform);
     if (existing != null) {
       // 削除
-      await _supabase.from('tech_blog_posts').delete().eq('id', existing['id']).select();
+      await _supabase
+          .from('tech_blog_posts')
+          .delete()
+          .eq('id', existing['id'])
+          .select();
     } else {
       // 追加ダイアログ
       final result = await _showAddDialog(platform);
@@ -342,8 +346,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

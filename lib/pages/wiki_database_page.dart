@@ -52,8 +52,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           .invoke('enterprise-hub', body: {'action': 'wiki.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['pages'] is List) {
-        setState(() =>
-            _pages = (data['pages'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _pages = (data['pages'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _pages = []);
       }
@@ -116,11 +117,13 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('キャンセル'),),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('作成'),),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('作成'),
+          ),
         ],
       ),
     );
@@ -163,11 +166,13 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('キャンセル'),),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('追加'),),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('追加'),
+          ),
         ],
       ),
     );
@@ -231,11 +236,15 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetchPages, child: const Text('再試行'),),
+                        onPressed: _fetchPages,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -289,8 +298,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             child: ListTile(
               leading:
                   const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
-              title: Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),),
+              title: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               subtitle: createdAt.isNotEmpty
                   ? Text(
                       createdAt.length > 10
@@ -347,14 +358,16 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
           const Divider(height: 24),
           if (content.isNotEmpty) ...[
-            const Text('内容',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),),
+            const Text(
+              '内容',
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -372,8 +385,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             const SizedBox(height: 8),
             ..._children.map(
               (child) => ListTile(
-                leading: const Icon(Icons.subdirectory_arrow_right,
-                    color: Color(0xFF4F46E5),),
+                leading: const Icon(
+                  Icons.subdirectory_arrow_right,
+                  color: Color(0xFF4F46E5),
+                ),
                 title: Text(child['title']?.toString() ?? '無題'),
                 dense: true,
                 onTap: () {
@@ -391,8 +406,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           ],
           Row(
             children: [
-              const Text('テーブルデータ',
-                  style: TextStyle(fontWeight: FontWeight.bold),),
+              const Text(
+                'テーブルデータ',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _addTableRow(_selectedPageId!),
@@ -414,9 +431,11 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                 child: ListTile(
                   leading:
                       const Icon(Icons.data_array, color: Color(0xFF4F46E5)),
-                  title: Text(content2.length > 60
-                      ? '${content2.substring(0, 60)}...'
-                      : content2,),
+                  title: Text(
+                    content2.length > 60
+                        ? '${content2.substring(0, 60)}...'
+                        : content2,
+                  ),
                   subtitle: createdAt.isNotEmpty
                       ? Text(
                           createdAt.length > 10

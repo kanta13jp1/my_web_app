@@ -2319,8 +2319,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           Text(
             '物理的に使えなくして、他のことに没頭する。',
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -3052,8 +3053,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               Text(
                 '完了 $_completedTimeboxCount 回',
                 style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -3061,8 +3063,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           Text(
             '「動く」も「考える」も先に終了時刻を決めると、脱線から戻りやすくなります。',
             style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 10),
           _buildCriticalLockPanel(),
@@ -3098,8 +3101,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 Text(
                   'アルバム1枚=60分で読書。2枚集中したら30〜60分散歩して、次の店で繰り返す。',
                   style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -3435,9 +3439,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                             decoration: BoxDecoration(
                               border: Border(
                                 bottom: BorderSide(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .surfaceContainerHighest,),
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                ),
                                 left: isCurrentHour
                                     ? const BorderSide(
                                         color: Colors.blue,

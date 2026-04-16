@@ -52,8 +52,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['boards'] is List) {
-        setState(() =>
-            _boards = (data['boards'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _boards = (data['boards'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _boards = []);
       }
@@ -72,8 +73,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['templates'] is List) {
-        setState(() => _templates =
-            (data['templates'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _templates =
+              (data['templates'] as List).cast<Map<String, dynamic>>(),
+        );
       }
     } catch (_) {}
   }
@@ -126,8 +129,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                 autofocus: true,
               ),
               const SizedBox(height: 16),
-              const Text('テンプレートを選択 (任意)',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),),
+              const Text(
+                'テンプレートを選択 (任意)',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
               const SizedBox(height: 8),
               ...(_templates.map((tmpl) {
                 final tmplId = tmpl['id']?.toString() ?? '';
@@ -221,8 +226,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                 autofocus: true,
               ),
               const SizedBox(height: 12),
-              const Text('カラーを選択',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),),
+              const Text(
+                'カラーを選択',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -380,11 +387,15 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetchBoards, child: const Text('再試行'),),
+                        onPressed: _fetchBoards,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -408,11 +419,15 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
           children: [
             Icon(Icons.dashboard, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('ボードがありません',
-                style: TextStyle(color: Colors.grey, fontSize: 16),),
+            Text(
+              'ボードがありません',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
             SizedBox(height: 8),
-            Text('右下の + から新しいボードを作成してください',
-                style: TextStyle(color: Colors.grey),),
+            Text(
+              '右下の + から新しいボードを作成してください',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -499,8 +514,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                 children: [
                   Icon(Icons.dashboard_customize, color: color, size: 28),
                   const SizedBox(height: 8),
-                  Text(name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),),
+                  Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     desc,
@@ -551,8 +568,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                     children: [
                       const Icon(Icons.draw, size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
-                      const Text('ボードが空です',
-                          style: TextStyle(color: Colors.grey),),
+                      const Text(
+                        'ボードが空です',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: _addStickyNote,
@@ -595,12 +614,18 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
-                        leading: Icon(_elementIcon(type),
-                            color: const Color(0xFF6366F1),),
+                        leading: Icon(
+                          _elementIcon(type),
+                          color: const Color(0xFF6366F1),
+                        ),
                         title: Text(content.isNotEmpty ? content : '($type)'),
-                        trailing: Text(type,
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey,),),
+                        trailing: Text(
+                          type,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
                       ),
                     );
                   },

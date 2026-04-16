@@ -35,8 +35,10 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['members'] is List) {
-        setState(() =>
-            _members = (data['members'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () =>
+              _members = (data['members'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _members = data.cast<Map<String, dynamic>>());
       } else {

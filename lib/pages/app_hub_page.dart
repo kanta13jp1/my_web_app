@@ -85,11 +85,15 @@ class _AppHubPageState extends State<AppHubPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                          onPressed: _fetchData, child: const Text('再試行'),),
+                        onPressed: _fetchData,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -110,8 +114,10 @@ class _AppHubPageState extends State<AppHubPage> {
                     ),
                     const SizedBox(height: 16),
                     // カレンダーイベント
-                    Text('直近のイベント',
-                        style: Theme.of(context).textTheme.titleMedium,),
+                    Text(
+                      '直近のイベント',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     if (_events.isEmpty)
                       const Card(child: ListTile(title: Text('イベントなし')))

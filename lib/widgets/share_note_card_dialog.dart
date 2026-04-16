@@ -505,7 +505,8 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         color: color,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        ),
       ),
       child: Icon(
         icon,

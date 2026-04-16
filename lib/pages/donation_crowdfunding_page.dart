@@ -35,8 +35,10 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {
-        setState(() => _projects =
-            (data['projects'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _projects =
+              (data['projects'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _projects = data.cast<Map<String, dynamic>>());
       } else {

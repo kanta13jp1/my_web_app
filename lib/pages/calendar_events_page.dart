@@ -254,8 +254,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                         Text(
                           'この日のイベントはありません',
                           style: TextStyle(
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,),
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
                         ),
                       ],
                     ),

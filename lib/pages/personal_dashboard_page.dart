@@ -150,8 +150,11 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.grey,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,

@@ -160,7 +160,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             .from('daily_habit_logs')
             .delete()
             .eq('habit_id', habitId)
-            .eq('completed_date', _todayStr).select();
+            .eq('completed_date', _todayStr)
+            .select();
 
         // streak を減算
         final currentStreak = (habit['streak'] as int? ?? 0);
@@ -333,7 +334,11 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     );
     if (confirmed != true) return;
     try {
-      await _supabase.from('daily_habits').delete().eq('id', habit['id']).select();
+      await _supabase
+          .from('daily_habits')
+          .delete()
+          .eq('id', habit['id'])
+          .select();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -430,9 +435,11 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.repeat,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.repeat,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             const Text(
               '毎日やることを登録して\n習慣化しましょう',
@@ -686,8 +693,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 Text(
                   '🏆$bestStreak',
                   style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
               PopupMenuButton<String>(

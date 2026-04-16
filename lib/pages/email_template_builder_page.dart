@@ -66,7 +66,9 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
             : null,
         actions: [
           IconButton(
-              icon: const Icon(Icons.refresh), onPressed: _fetchTemplates,),
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchTemplates,
+          ),
         ],
       ),
       floatingActionButton: _selected == null
@@ -142,8 +144,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
                   '$usedCount 回',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const Text('使用',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),),
+                const Text(
+                  '使用',
+                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                ),
               ],
             ),
             onTap: () => setState(() => _selected = t),
@@ -173,8 +177,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    const Text('件名: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),),
+                    const Text(
+                      '件名: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     Expanded(child: Text(subject)),
                   ],
                 ),

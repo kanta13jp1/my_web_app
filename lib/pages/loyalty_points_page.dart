@@ -34,8 +34,10 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['history'] is List) {
-        setState(() =>
-            _history = (data['history'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () =>
+              _history = (data['history'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _history = data.cast<Map<String, dynamic>>());
       } else {
@@ -69,8 +71,11 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,

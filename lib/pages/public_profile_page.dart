@@ -284,14 +284,16 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               children: [
                 _StatChip(label: 'ノート数', value: '$_noteCount', isDark: isDark),
                 Container(
-                    width: 1,
-                    height: 32,
-                    color: isDark ? Colors.white12 : Colors.black12,),
+                  width: 1,
+                  height: 32,
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
                 _StatChip(label: 'ストリーク', value: '$_streak日', isDark: isDark),
                 Container(
-                    width: 1,
-                    height: 32,
-                    color: isDark ? Colors.white12 : Colors.black12,),
+                  width: 1,
+                  height: 32,
+                  color: isDark ? Colors.white12 : Colors.black12,
+                ),
                 _StatChip(label: '自分株式会社', value: '登録中', isDark: isDark),
               ],
             ),

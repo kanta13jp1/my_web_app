@@ -203,8 +203,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.history_edu,
-              size: 60, color: Theme.of(context).colorScheme.onSurface,),
+          Icon(
+            Icons.history_edu,
+            size: 60,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           const SizedBox(height: 24),
           const Text(
             '代表取締役 就任承諾書',
@@ -225,7 +228,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               border: Border.all(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,),
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Column(
@@ -296,8 +300,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
           Text(
             'まずこの3つから始めましょう',
             style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 28),
           ...steps.asMap().entries.map((entry) {

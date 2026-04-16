@@ -100,8 +100,9 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['events'] is List) {
-        setState(() =>
-            _events = (data['events'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _events = (data['events'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _events = data.cast<Map<String, dynamic>>());
       } else {
@@ -135,11 +136,15 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_errorMessage!,
-                          style: const TextStyle(color: Colors.red),),
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchEvents, child: const Text('再試行'),),
+                        onPressed: _fetchEvents,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -151,8 +156,9 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
                         final event = _events[index];
                         return ListTile(
                           leading: const Icon(Icons.event),
-                          title: Text(event['title']?.toString() ??
-                              'イベント ${index + 1}',),
+                          title: Text(
+                            event['title']?.toString() ?? 'イベント ${index + 1}',
+                          ),
                           subtitle: Text(event['date']?.toString() ?? ''),
                           trailing:
                               Text('残 ${event['tickets_remaining'] ?? 0}枚'),

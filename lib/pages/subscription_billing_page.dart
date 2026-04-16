@@ -86,7 +86,9 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                           const Text(
                             '現在のプラン',
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold,),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           if (_billingInfo != null) ...[

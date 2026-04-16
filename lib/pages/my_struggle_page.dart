@@ -354,7 +354,8 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,),
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        ),
       ),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -368,8 +369,9 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
         subtitle: Text(
           dateStr,
           style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).colorScheme.outlineVariant,),
+            fontSize: 11,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
         ),
         leading: const Text('📜', style: TextStyle(fontSize: 20)),
         children: [

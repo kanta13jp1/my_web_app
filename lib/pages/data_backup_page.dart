@@ -24,7 +24,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
     _ExportTarget('tasks', 'タスク', Icons.task, Colors.blue),
     _ExportTarget('habits', '習慣', Icons.loop, Colors.green),
     _ExportTarget(
-        'finances', '財務', Icons.account_balance_wallet, Colors.purple,),
+      'finances',
+      '財務',
+      Icons.account_balance_wallet,
+      Colors.purple,
+    ),
     _ExportTarget('blog_posts', 'ブログ', Icons.article, Colors.indigo),
   ];
 

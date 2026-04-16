@@ -400,8 +400,9 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                   Text(
                     deadline.substring(0, 10),
                     style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ],
@@ -420,8 +421,9 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               Text(
                 '$milestoneDone / $milestoneTotal マイルストーン完了',
                 style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ],
@@ -479,8 +481,11 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                       ),
                       const SizedBox(width: 8),
                       TextButton.icon(
-                        icon: const Icon(Icons.cancel,
-                            size: 16, color: Colors.red,),
+                        icon: const Icon(
+                          Icons.cancel,
+                          size: 16,
+                          color: Colors.red,
+                        ),
                         label: const Text(
                           'キャンセル',
                           style: TextStyle(color: Colors.red),
@@ -529,8 +534,11 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: Colors.red[300],),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red[300],
+                      ),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
@@ -573,7 +581,8 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
             Text(
               isCompleted ? '完了した目標はありません' : 'アクティブな目標がありません',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             if (!isCompleted) ...[
               const SizedBox(height: 16),

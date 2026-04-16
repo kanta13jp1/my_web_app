@@ -243,8 +243,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Text(
               _filter == 'unread' ? '未読通知はありません' : '通知はありません',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 16,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 16,
+              ),
             ),
           ],
         ),

@@ -141,7 +141,10 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
   }
 
   Widget _buildProgressCard(
-      BuildContext context, _ProfileData profile, int pct,) {
+    BuildContext context,
+    _ProfileData profile,
+    int pct,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final missingFields = profile.missingFields;
 
@@ -176,8 +179,11 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                           ? NetworkImage(profile.avatarUrl!)
                           : null,
                   child: profile.avatarUrl == null || profile.avatarUrl!.isEmpty
-                      ? const Icon(Icons.person,
-                          size: 20, color: Color(0xFF4338CA),)
+                      ? const Icon(
+                          Icons.person,
+                          size: 20,
+                          color: Color(0xFF4338CA),
+                        )
                       : null,
                 ),
                 const SizedBox(width: 10),

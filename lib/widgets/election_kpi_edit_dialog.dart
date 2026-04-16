@@ -28,17 +28,23 @@ class _ElectionKpiEditDialogState extends State<ElectionKpiEditDialog> {
   void initState() {
     super.initState();
     _retainTargetCtrl = TextEditingController(
-        text: widget.initialData['incumbent_retain_target']?.toString() ?? '0',);
+      text: widget.initialData['incumbent_retain_target']?.toString() ?? '0',
+    );
     _priorityMunicipalitiesCtrl = TextEditingController(
-        text: widget.initialData['priority_municipalities']?.toString() ?? '0',);
+      text: widget.initialData['priority_municipalities']?.toString() ?? '0',
+    );
     _newTargetCtrl = TextEditingController(
-        text: widget.initialData['new_candidates_target']?.toString() ?? '0',);
+      text: widget.initialData['new_candidates_target']?.toString() ?? '0',
+    );
     _newActualCtrl = TextEditingController(
-        text: widget.initialData['new_candidates_actual']?.toString() ?? '0',);
+      text: widget.initialData['new_candidates_actual']?.toString() ?? '0',
+    );
     _endorsementTimingCtrl = TextEditingController(
-        text: widget.initialData['endorsement_timing']?.toString() ?? '',);
+      text: widget.initialData['endorsement_timing']?.toString() ?? '',
+    );
     _supportVisitsCtrl = TextEditingController(
-        text: widget.initialData['support_visits']?.toString() ?? '0',);
+      text: widget.initialData['support_visits']?.toString() ?? '0',
+    );
   }
 
   @override
@@ -132,7 +138,10 @@ class _ElectionKpiEditDialogState extends State<ElectionKpiEditDialog> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2,),)
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
               : const Text('保存'),
         ),
       ],

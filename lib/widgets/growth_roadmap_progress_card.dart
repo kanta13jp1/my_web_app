@@ -120,8 +120,11 @@ class _GrowthRoadmapProgressCardState extends State<GrowthRoadmapProgressCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.flag_outlined,
-                  size: 18, color: Color(0xFF6366F1),),
+              const Icon(
+                Icons.flag_outlined,
+                size: 18,
+                color: Color(0xFF6366F1),
+              ),
               const SizedBox(width: 8),
               const Text(
                 'GROWTH ROADMAP',

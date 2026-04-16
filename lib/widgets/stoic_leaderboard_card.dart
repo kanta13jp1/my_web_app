@@ -96,8 +96,10 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
                   ),
                 )
               : _leaderboard.isEmpty
-                  ? Text('まだデータがありません。最初のランカーになりましょう！',
-                      style: TextStyle(color: subColor),)
+                  ? Text(
+                      'まだデータがありません。最初のランカーになりましょう！',
+                      style: TextStyle(color: subColor),
+                    )
                   : ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),

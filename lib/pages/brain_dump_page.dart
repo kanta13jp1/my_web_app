@@ -153,8 +153,12 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                               underline: const SizedBox.shrink(),
                               isExpanded: true,
                               items: _categories
-                                  .map((c) => DropdownMenuItem(
-                                      value: c, child: Text(c),),)
+                                  .map(
+                                    (c) => DropdownMenuItem(
+                                      value: c,
+                                      child: Text(c),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (v) =>
                                   setState(() => _selectedCategory = v!),
@@ -173,7 +177,10 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white,),)
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
                               : const Text('追加'),
                         ),
                       ],
@@ -221,11 +228,16 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                             subtitle: Text(
                               item['category'] as String? ?? '',
                               style: const TextStyle(
-                                  color: Color(0xFFFF6B35), fontSize: 12,),
+                                color: Color(0xFFFF6B35),
+                                fontSize: 12,
+                              ),
                             ),
                             trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline,
-                                  color: Colors.white38, size: 18,),
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.white38,
+                                size: 18,
+                              ),
                               onPressed: () => _delete(item['id'].toString()),
                             ),
                           ),

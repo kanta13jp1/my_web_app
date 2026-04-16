@@ -75,8 +75,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['domains'] is List) {
-        setState(() =>
-            _domains = (data['domains'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () =>
+              _domains = (data['domains'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _domains = []);
       }
@@ -101,8 +103,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['records'] is List) {
-        setState(() =>
-            _records = (data['records'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () =>
+              _records = (data['records'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _records = []);
       }
@@ -127,8 +131,9 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['ssl'] is List) {
-        setState(() =>
-            _sslStatus = (data['ssl'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _sslStatus = (data['ssl'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _sslStatus = []);
       }
@@ -461,8 +466,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
           children: [
             Icon(Icons.language, size: 64, color: colorScheme.outlineVariant),
             const SizedBox(height: 16),
-            Text('ドメインが登録されていません',
-                style: TextStyle(color: colorScheme.outline),),
+            Text(
+              'ドメインが登録されていません',
+              style: TextStyle(color: colorScheme.outline),
+            ),
             const SizedBox(height: 8),
             FilledButton.icon(
               onPressed: _showAddDomainDialog,
@@ -584,8 +591,11 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.dns,
-                              size: 64, color: colorScheme.outlineVariant,),
+                          Icon(
+                            Icons.dns,
+                            size: 64,
+                            color: colorScheme.outlineVariant,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'DNSレコードがありません',
@@ -625,7 +635,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                                 Text(
                                   record['value']?.toString() ?? '',
                                   style: TextStyle(
-                                      color: colorScheme.onSurfaceVariant,),
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 Text(
                                   'TTL: ${record['ttl'] ?? 3600}s',
@@ -637,8 +648,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                               ],
                             ),
                             trailing: IconButton(
-                              icon: Icon(Icons.delete_outline,
-                                  color: colorScheme.error,),
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: colorScheme.error,
+                              ),
                               tooltip: 'レコードを削除',
                               onPressed: () =>
                                   _confirmDeleteRecord(recordId, domainId),
@@ -667,8 +680,11 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline,
-                size: 64, color: colorScheme.outlineVariant,),
+            Icon(
+              Icons.lock_outline,
+              size: 64,
+              color: colorScheme.outlineVariant,
+            ),
             const SizedBox(height: 16),
             Text('SSL情報がありません', style: TextStyle(color: colorScheme.outline)),
             const SizedBox(height: 8),

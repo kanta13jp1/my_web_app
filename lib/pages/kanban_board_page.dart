@@ -355,9 +355,11 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.drag_indicator,
-                size: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.drag_indicator,
+              size: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -372,9 +374,11 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
               ),
             ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              icon: Icon(
+                Icons.more_vert,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               padding: EdgeInsets.zero,
               itemBuilder: (_) => [
                 if (currentCol != _colTodo)

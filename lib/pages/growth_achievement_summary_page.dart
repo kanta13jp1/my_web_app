@@ -55,7 +55,11 @@ class _GrowthAchievementSummaryPageState
   }
 
   Widget _buildStatCard(
-      String label, dynamic value, IconData icon, Color color,) {
+    String label,
+    dynamic value,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -69,8 +73,9 @@ class _GrowthAchievementSummaryPageState
                 Text(
                   label,
                   style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),

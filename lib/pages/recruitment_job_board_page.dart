@@ -152,8 +152,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 color: status == 'open' ? Colors.green : Colors.grey,
               ),
             ),
-            title: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Text(
               [
                 if (dept.isNotEmpty) dept,

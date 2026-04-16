@@ -118,8 +118,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  Future<void> _addItem(
-      {String? presetName, String? presetCat, int? presetDays,}) async {
+  Future<void> _addItem({
+    String? presetName,
+    String? presetCat,
+    int? presetDays,
+  }) async {
     final nameCtrl = TextEditingController(text: presetName ?? '');
     final qtyCtrl = TextEditingController(text: '1');
     final unitCtrl = TextEditingController();
@@ -388,7 +391,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
   Future<void> _deleteItem(Map<String, dynamic> item) async {
     try {
-      await _supabase.from('shopping_items').delete().eq('id', item['id']).select();
+      await _supabase
+          .from('shopping_items')
+          .delete()
+          .eq('id', item['id'])
+          .select();
       await _load();
     } catch (e) {
       if (mounted) {
@@ -477,9 +484,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.shopping_cart_outlined,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.shopping_cart_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',

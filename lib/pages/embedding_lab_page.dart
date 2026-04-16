@@ -282,7 +282,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white,),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Icon(Icons.memory),
             label: const Text('Embedding を生成'),
@@ -304,8 +306,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,),
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                ),
               ),
               child: SingleChildScrollView(
                 child: SelectableText(
@@ -483,7 +485,8 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       '2つのテキストを入力して\n類似度を計算しましょう',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.outlineVariant,),
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                     ),
                   ],
                 ),

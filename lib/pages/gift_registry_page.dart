@@ -34,8 +34,9 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['gifts'] is List) {
-        setState(() =>
-            _gifts = (data['gifts'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _gifts = (data['gifts'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _gifts = data.cast<Map<String, dynamic>>());
       } else {

@@ -245,7 +245,8 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
           .from('team_memberships')
           .delete()
           .eq('team_id', teamId)
-          .eq('user_id', userId).select();
+          .eq('user_id', userId)
+          .select();
       await _loadTeams();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -336,21 +337,25 @@ class _OwnedTeamsTab extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.group_outlined,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.group_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               'まだチームがありません',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               '右下のボタンから最初のチームを作成しましょう',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 13,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -396,21 +401,25 @@ class _MemberTeamsTab extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+            Icon(
+              Icons.people_outline,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               '参加中のチームはありません',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               '招待コードを使ってチームに参加できます',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 13,),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
             ),
           ],
         ),
@@ -460,7 +469,8 @@ class _TeamCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-            color: Theme.of(context).colorScheme.surfaceContainerHigh,),
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -534,8 +544,9 @@ class _TeamCard extends StatelessWidget {
               Text(
                 description,
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 14,),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
             ],
             if (isOwner && inviteCode.isNotEmpty) ...[
@@ -547,8 +558,8 @@ class _TeamCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color:
-                          Theme.of(context).colorScheme.surfaceContainerHigh,),
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -693,8 +704,9 @@ class _JoinTeamDialogState extends State<_JoinTeamDialog> {
           Text(
             'チームオーナーから招待コードを受け取り、入力してください。',
             style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,),
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           TextField(

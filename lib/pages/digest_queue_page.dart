@@ -573,8 +573,8 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                     child: Text(
                       '・${item.title}',
                       style: TextStyle(
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
@@ -660,7 +660,8 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   Text(
                     _formatDate(item.createdAt),
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

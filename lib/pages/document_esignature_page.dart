@@ -167,8 +167,10 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
               color: pending ? Colors.orange : Colors.green,
               size: 32,
             ),
-            title: Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold),),
+            title: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

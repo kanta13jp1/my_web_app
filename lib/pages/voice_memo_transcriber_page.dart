@@ -49,8 +49,9 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
           .invoke('media-hub', body: {'action': 'transcribe.list'});
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
-        setState(() =>
-            _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _memos = []);
       }
@@ -77,8 +78,9 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['memos'] is List) {
-        setState(() =>
-            _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _memos = (data['memos'] as List).cast<Map<String, dynamic>>(),
+        );
       } else {
         setState(() => _memos = []);
       }
@@ -126,11 +128,13 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('キャンセル'),),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('キャンセル'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('保存'),),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('保存'),
+          ),
         ],
       ),
     );
@@ -270,12 +274,15 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(_errorMessage!,
-                                style: const TextStyle(color: Colors.red),),
+                            Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
                             const SizedBox(height: 8),
                             ElevatedButton(
-                                onPressed: _fetchMemos,
-                                child: const Text('再試行'),),
+                              onPressed: _fetchMemos,
+                              child: const Text('再試行'),
+                            ),
                           ],
                         ),
                       )
@@ -284,11 +291,16 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.mic_none,
-                                    size: 64, color: Colors.grey,),
+                                const Icon(
+                                  Icons.mic_none,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
                                 const SizedBox(height: 16),
-                                const Text('音声メモがありません',
-                                    style: TextStyle(color: Colors.grey),),
+                                const Text(
+                                  '音声メモがありません',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
                                   onPressed: _addMemo,
@@ -362,9 +374,13 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (summary.isNotEmpty) ...[
-                    const Text('AI要約',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12,),),
+                    const Text(
+                      'AI要約',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Container(
                       width: double.infinity,
@@ -379,9 +395,13 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                     const SizedBox(height: 8),
                   ],
                   if (transcript.isNotEmpty) ...[
-                    const Text('文字起こし',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 12,),),
+                    const Text(
+                      '文字起こし',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Container(
                       width: double.infinity,

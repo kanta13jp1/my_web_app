@@ -87,8 +87,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
           _svgPreview = data['svg']?.toString();
         });
       } else {
-        setState(() => _errorMessage =
-            (data as Map<String, dynamic>?)?['error']?.toString() ?? 'プレビュー失敗',);
+        setState(
+          () => _errorMessage =
+              (data as Map<String, dynamic>?)?['error']?.toString() ??
+                  'プレビュー失敗',
+        );
       }
     } catch (e) {
       setState(() => _errorMessage = 'プレビュー取得エラー: $e');
@@ -130,7 +133,8 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
           _fetchRecentRuns();
         } else {
           setState(
-              () => _errorMessage = data['error']?.toString() ?? 'キャンペーン失敗',);
+            () => _errorMessage = data['error']?.toString() ?? 'キャンペーン失敗',
+          );
         }
       }
     } catch (e) {
@@ -144,8 +148,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon,
-            size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant,),
+        Icon(
+          icon,
+          size: 13,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         const SizedBox(width: 3),
         Text(
           value,

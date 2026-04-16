@@ -193,7 +193,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
       ['.yml / .sql / .md', 'GitHub Copilot'],
     ];
     return Table(
-      border: TableBorder.all(color: Colors.white12, borderRadius: BorderRadius.circular(4)),
+      border: TableBorder.all(
+          color: Colors.white12, borderRadius: BorderRadius.circular(4)),
       columnWidths: const {0: FixedColumnWidth(120), 1: FlexColumnWidth()},
       children: rows.map((r) {
         return TableRow(
@@ -266,7 +267,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withAlpha(30),
                     borderRadius: BorderRadius.circular(20),
@@ -276,7 +278,9 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isAlert ? Icons.error_outline : Icons.check_circle_outline,
+                        isAlert
+                            ? Icons.error_outline
+                            : Icons.check_circle_outline,
                         color: statusColor,
                         size: 14,
                       ),
@@ -316,7 +320,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                     if (limit > 0) ...[
                       Text(
                         ' / \$${limit.toStringAsFixed(0)}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 14),
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 14),
                       ),
                     ],
                     const SizedBox(width: 16),
@@ -324,7 +329,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   if (tokens != null)
                     Text(
                       '${_formatTokens(tokens)} tokens',
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style:
+                          const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                 ],
               ),
@@ -413,10 +419,12 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
           },
           children: [
             TableRow(
-              decoration: const BoxDecoration(color: Color(0xFF1A1A1A)), // surface1
+              decoration:
+                  const BoxDecoration(color: Color(0xFF1A1A1A)), // surface1
               children: ['ツール', '日付', '金額', 'アラート'].map((h) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                   child: Text(
                     h,
                     style: const TextStyle(
@@ -430,7 +438,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
             ),
             ..._history.take(50).map((row) {
               final tool = row['tool'] as String? ?? '';
-              final date = (row['checked_at'] as String? ?? '').substring(0, 10);
+              final date =
+                  (row['checked_at'] as String? ?? '').substring(0, 10);
               final usage = row['usage_json'] as Map<String, dynamic>? ?? {};
               final cost = (usage['cost_usd'] as num?)?.toDouble() ?? 0.0;
               final isAlert = row['alert'] == true;
@@ -440,7 +449,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   _tableCell(date),
                   _tableCell('\$${cost.toStringAsFixed(2)}'),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                     child: Icon(
                       isAlert ? Icons.warning_amber : Icons.check,
                       color: isAlert ? _alertRed : _okGreen,

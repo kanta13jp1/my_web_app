@@ -164,7 +164,8 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                                         title: Text(
                                           row.entries
                                               .map(
-                                                  (e) => '${e.key}: ${e.value}',)
+                                                (e) => '${e.key}: ${e.value}',
+                                              )
                                               .join(' | '),
                                         ),
                                       ),

@@ -34,8 +34,9 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['items'] is List) {
-        setState(() =>
-            _items = (data['items'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _items = (data['items'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _items = data.cast<Map<String, dynamic>>());
       } else {

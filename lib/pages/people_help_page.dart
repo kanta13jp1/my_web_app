@@ -188,9 +188,9 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                     Text(
                       'Track PTO requests, date ranges, and approval status in one place.',
                       style: TextStyle(
-                          height: 1.5,
-                          color:
-                              Theme.of(context).colorScheme.onSurfaceVariant,),
+                        height: 1.5,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

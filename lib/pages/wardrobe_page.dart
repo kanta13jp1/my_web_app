@@ -214,7 +214,11 @@ class _WardrobePageState extends State<WardrobePage>
       ),
     );
     if (ok == true) {
-      await _supabase.from('wardrobe_items').delete().eq('id', item.id).select();
+      await _supabase
+          .from('wardrobe_items')
+          .delete()
+          .eq('id', item.id)
+          .select();
       _fetchItems();
     }
   }
@@ -322,8 +326,9 @@ class _WardrobePageState extends State<WardrobePage>
               Text(
                 '${filtered.length}件',
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 12,),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -348,9 +353,10 @@ class _WardrobePageState extends State<WardrobePage>
                           Text(
                             '衣類を追加してください',
                             style: TextStyle(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -396,9 +402,9 @@ class _WardrobePageState extends State<WardrobePage>
                     color: _colorToFlutter(item.color),
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,),
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -457,8 +463,9 @@ class _WardrobePageState extends State<WardrobePage>
               Text(
                 item.memo!,
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 12,),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
             ],
             const SizedBox(height: 8),
@@ -658,8 +665,9 @@ class _WardrobePageState extends State<WardrobePage>
                   Text(
                     '${longUnused.length}件の衣類が半年以上着用されていません',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
                   ),
                   if (longUnused.isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -721,9 +729,9 @@ class _WardrobePageState extends State<WardrobePage>
                       Text(
                         '+${longUnused.length - 5}件...',
                         style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: 12,),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
                       ),
                   ],
                 ],
@@ -803,10 +811,13 @@ class _WardrobePageState extends State<WardrobePage>
               color: color,
             ),
           ),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,),),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       );
 

@@ -108,8 +108,11 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.account_tree_outlined,
-                              size: 48, color: Colors.grey,),
+                          Icon(
+                            Icons.account_tree_outlined,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                           SizedBox(height: 8),
                           Text(
                             'テンプレートはありません',

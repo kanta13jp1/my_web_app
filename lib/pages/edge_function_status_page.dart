@@ -576,9 +576,9 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                       Text(
                         description,
                         style: TextStyle(
-                            fontSize: 11,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,),
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       if (uiLabel != null) ...[
                         const SizedBox(height: 3),

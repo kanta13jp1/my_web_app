@@ -34,8 +34,10 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['reservations'] is List) {
-        setState(() => _reservations =
-            (data['reservations'] as List).cast<Map<String, dynamic>>(),);
+        setState(
+          () => _reservations =
+              (data['reservations'] as List).cast<Map<String, dynamic>>(),
+        );
       } else if (data is List) {
         setState(() => _reservations = data.cast<Map<String, dynamic>>());
       } else {

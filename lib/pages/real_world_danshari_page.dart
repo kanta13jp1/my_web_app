@@ -169,7 +169,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   child: Text(
                     'ここに写真が表示されます',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),

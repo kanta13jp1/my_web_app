@@ -71,8 +71,11 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red,),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -106,7 +109,8 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                               child: Text(
                                 id.toUpperCase().substring(0, 1),
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold,),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             title: Text(

@@ -353,10 +353,11 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       final file = XFile.fromData(bytes, mimeType: mimeType, name: fileName);
       await SharePlus.instance.share(
         ShareParams(
-            files: [file],
-            fileNameOverrides: [fileName],
-            text: text,
-            subject: fileName,),
+          files: [file],
+          fileNameOverrides: [fileName],
+          text: text,
+          subject: fileName,
+        ),
       );
       return true;
     } catch (e) {
@@ -1249,7 +1250,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
 
   /// Float32 PCM → 16-bit WAV バイト列にエンコード
   Uint8List _encodeWav(
-      List<Float32List> channels, int sampleRate, int numChannels,) {
+    List<Float32List> channels,
+    int sampleRate,
+    int numChannels,
+  ) {
     final length = channels[0].length;
     final byteRate = sampleRate * numChannels * 2; // 16-bit = 2 bytes
     final dataSize = length * numChannels * 2;
@@ -1596,8 +1600,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
-        title: const Text('🎸 ギター練習レポート',
-            style: TextStyle(fontWeight: FontWeight.bold),),
+        title: const Text(
+          '🎸 ギター練習レポート',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
       ),
       body: _isLoadingSharedRecording
@@ -1609,8 +1615,11 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.music_off,
-                          size: 56, color: Colors.white24,),
+                      const Icon(
+                        Icons.music_off,
+                        size: 56,
+                        color: Colors.white24,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         _sharedRecordingError ?? '公開録音を読み込めませんでした',
@@ -1646,7 +1655,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           Text(
             title,
             style: const TextStyle(
-                color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold,),
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
@@ -1658,7 +1670,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             alignment: WrapAlignment.center,
             children: [
               _buildShareBadge(
-                  Icons.timer, _formatDuration(Duration(seconds: duration)),),
+                Icons.timer,
+                _formatDuration(Duration(seconds: duration)),
+              ),
               _buildShareBadge(Icons.album, _presetLabel(preset)),
               _buildShareBadge(Icons.speed, '$bpm BPM'),
             ],
@@ -1708,18 +1722,24 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   children: [
                     Icon(Icons.auto_awesome, color: Color(0xFF818CF8)),
                     SizedBox(width: 8),
-                    Text('AIコーチからのアドバイス',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,),),
+                    Text(
+                      'AIコーチからのアドバイス',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 Text(
                   advice,
                   style: const TextStyle(
-                      color: Colors.white70, fontSize: 15, height: 1.6,),
+                    color: Colors.white70,
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
                 ),
               ],
             ),
@@ -1730,8 +1750,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           // CTA（Call To Action）
           const Divider(color: Colors.white12),
           const SizedBox(height: 24),
-          const Text('あなたの演奏もAIに分析してもらいませんか？',
-              style: TextStyle(color: Colors.white70),),
+          const Text(
+            'あなたの演奏もAIに分析してもらいませんか？',
+            style: TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () {
@@ -2288,8 +2310,11 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.auto_awesome,
-                        color: Color(0xFF1DA1F2), size: 16,),
+                    const Icon(
+                      Icons.auto_awesome,
+                      color: Color(0xFF1DA1F2),
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     const Expanded(
                       child: Text(
@@ -2306,7 +2331,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           .pushNamed('/public-guitar-gallery'),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4,),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -2488,8 +2515,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Text('公開する',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),),
+              const Text(
+                '公開する',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
               const SizedBox(width: 8),
               Switch(
                 value: _isPublic,
@@ -2946,25 +2975,33 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       const CircleAvatar(
                         backgroundColor: Color(0xFFE94560),
                         radius: 18,
-                        child: Icon(Icons.music_note,
-                            color: Colors.white, size: 18,),
+                        child: Icon(
+                          Icons.music_note,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(title,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,),),
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               '${_formatDuration(Duration(seconds: duration))} • ${_presetLabel(preset)}'
                               '${bpm > 0 ? ' • ${bpm}BPM' : ''}'
                               '${tuning.isNotEmpty ? ' • $tuning' : ''}',
                               style: const TextStyle(
-                                  color: Colors.white54, fontSize: 12,),
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -2972,24 +3009,37 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       if (isPublicRec)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
-                          child: Icon(Icons.public,
-                              color: Colors.white38, size: 16,),
+                          child: Icon(
+                            Icons.public,
+                            color: Colors.white38,
+                            size: 16,
+                          ),
                         ),
                       if (likes > 0)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.favorite,
-                                color: Color(0xFFE94560), size: 14,),
+                            const Icon(
+                              Icons.favorite,
+                              color: Color(0xFFE94560),
+                              size: 14,
+                            ),
                             const SizedBox(width: 2),
-                            Text('$likes',
-                                style: const TextStyle(
-                                    color: Colors.white54, fontSize: 12,),),
+                            Text(
+                              '$likes',
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert,
-                            color: Colors.white38, size: 20,),
+                        icon: const Icon(
+                          Icons.more_vert,
+                          color: Colors.white38,
+                          size: 20,
+                        ),
                         color: const Color(0xFF16213E),
                         onSelected: (value) {
                           if (value == 'delete' && recordingId.isNotEmpty) {
@@ -2998,9 +3048,12 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         },
                         itemBuilder: (_) => [
                           const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('削除',
-                                  style: TextStyle(color: Colors.redAccent),),),
+                            value: 'delete',
+                            child: Text(
+                              '削除',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -3014,14 +3067,20 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           .map(
                             (t) => Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2,),
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white12,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text('#$t',
-                                  style: const TextStyle(
-                                      color: Colors.white38, fontSize: 11,),),
+                              child: Text(
+                                '#$t',
+                                style: const TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: 11,
+                                ),
+                              ),
                             ),
                           )
                           .toList(),
@@ -3068,15 +3127,19 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     children: [
                       IconButton(
                         onPressed: () => _playSavedRecording(r),
-                        icon: const Icon(Icons.play_circle_fill,
-                            color: Color(0xFF4CAF50),),
+                        icon: const Icon(
+                          Icons.play_circle_fill,
+                          color: Color(0xFF4CAF50),
+                        ),
                         visualDensity: VisualDensity.compact,
                         tooltip: '再生',
                       ),
                       IconButton(
                         onPressed: () => _downloadSavedRecording(r),
-                        icon: const Icon(Icons.download_outlined,
-                            color: Colors.white70,),
+                        icon: const Icon(
+                          Icons.download_outlined,
+                          color: Colors.white70,
+                        ),
                         visualDensity: VisualDensity.compact,
                         tooltip: 'ダウンロード',
                       ),
@@ -3091,10 +3154,15 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       ),
                       if (recordingId.isNotEmpty) ...[
                         IconButton(
-                          onPressed: () => _postToX(title, recordingId,
-                              isPublic: isPublicRec,),
-                          icon: const Icon(Icons.open_in_new,
-                              color: Color(0xFF1DA1F2),),
+                          onPressed: () => _postToX(
+                            title,
+                            recordingId,
+                            isPublic: isPublicRec,
+                          ),
+                          icon: const Icon(
+                            Icons.open_in_new,
+                            color: Color(0xFF1DA1F2),
+                          ),
                           visualDensity: VisualDensity.compact,
                           tooltip: 'Xに投稿',
                         ),
@@ -3122,12 +3190,16 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           child: Text(
                             '$plays plays',
                             style: const TextStyle(
-                                color: Colors.white24, fontSize: 11,),
+                              color: Colors.white24,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4,),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white10,
                           borderRadius: BorderRadius.circular(12),
@@ -3135,7 +3207,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         child: Text(
                           exportFormat.toUpperCase(),
                           style: const TextStyle(
-                              color: Colors.white54, fontSize: 10,),
+                            color: Colors.white54,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
                     ],
@@ -3264,7 +3338,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             Row(
               children: [
                 Expanded(
-                    child: _statCard('総録音数', '$totalRecordings', Icons.mic),),
+                  child: _statCard('総録音数', '$totalRecordings', Icons.mic),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
@@ -3279,8 +3354,12 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             Row(
               children: [
                 Expanded(
-                    child: _statCard(
-                        'よく使うジャンル', _presetLabel(favoritePreset), Icons.album,),),
+                  child: _statCard(
+                    'よく使うジャンル',
+                    _presetLabel(favoritePreset),
+                    Icons.album,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _statCard(
@@ -3365,9 +3444,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 const Text(
                   'AIギターコーチ',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,),
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -3383,16 +3463,23 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Color(0xFF7C3AED),),)
+                            strokeWidth: 2,
+                            color: Color(0xFF7C3AED),
+                          ),
+                        )
                       : const Icon(Icons.psychology),
-                  label: Text(_isLoadingAI
-                      ? '分析中...'
-                      : (_aiAnalysis != null ? '再分析する' : '練習を分析する'),),
+                  label: Text(
+                    _isLoadingAI
+                        ? '分析中...'
+                        : (_aiAnalysis != null ? '再分析する' : '練習を分析する'),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: const Color(0xFF7C3AED),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12,),
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ],
@@ -3458,11 +3545,14 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             children: [
               Icon(icon, color: const Color(0xFF7C3AED), size: 20),
               const SizedBox(width: 8),
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,),),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -3475,8 +3565,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   Widget _aiInsights() {
     final insights = (_aiAnalysis!['insights'] as List?) ?? [];
     if (insights.isEmpty) {
-      return const Text('データが不足しています。録音を増やしましょう！',
-          style: TextStyle(color: Colors.white54),);
+      return const Text(
+        'データが不足しています。録音を増やしましょう！',
+        style: TextStyle(color: Colors.white54),
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3487,14 +3579,20 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('• ',
-                      style: TextStyle(color: Color(0xFF7C3AED), fontSize: 16),),
+                  const Text(
+                    '• ',
+                    style: TextStyle(color: Color(0xFF7C3AED), fontSize: 16),
+                  ),
                   Expanded(
-                      child: Text('$i',
-                          style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              height: 1.4,),),),
+                    child: Text(
+                      '$i',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3525,21 +3623,31 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     width: 24,
                     height: 24,
                     decoration: const BoxDecoration(
-                        shape: BoxShape.circle, color: Color(0xFF7C3AED),),
+                      shape: BoxShape.circle,
+                      color: Color(0xFF7C3AED),
+                    ),
                     child: Center(
-                        child: Text('${entry.key + 1}',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,),),),
+                      child: Text(
+                        '${entry.key + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                      child: Text('${entry.value}',
-                          style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                              height: 1.4,),),),
+                    child: Text(
+                      '${entry.value}',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -3575,30 +3683,44 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2,),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE94560),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(duration,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,),),
+                      child: Text(
+                        duration,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                        child: Text(title,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,),),),
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                Text(desc,
-                    style: const TextStyle(
-                        color: Colors.white54, fontSize: 12, height: 1.4,),),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
               ],
             ),
           );
@@ -3613,7 +3735,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Color(0xFFE94560),),)
+                      strokeWidth: 2,
+                      color: Color(0xFFE94560),
+                    ),
+                  )
                 : const Icon(Icons.playlist_add, size: 18),
             label: Text(_isAddingToKanban ? '追加中...' : 'カンバンボード（To Do）にすべて追加'),
             style: OutlinedButton.styleFrom(
@@ -3656,14 +3781,17 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('カンバンボードに練習メニューを追加しました！🎸'),
-            backgroundColor: Color(0xFF4CAF50),),
+          content: Text('カンバンボードに練習メニューを追加しました！🎸'),
+          backgroundColor: Color(0xFF4CAF50),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text('タスクの追加に失敗しました: $e'), backgroundColor: Colors.red,),
+          content: Text('タスクの追加に失敗しました: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isAddingToKanban = false);
@@ -3698,14 +3826,19 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ),
       child: Column(
         children: [
-          Text(value,
-              style: const TextStyle(
-                  color: Color(0xFF7C3AED),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,),),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF7C3AED),
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white38, fontSize: 10),
+          ),
         ],
       ),
     );

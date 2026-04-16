@@ -83,8 +83,11 @@ class ThoughtInterruptQuickWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.psychology_alt,
-                  size: 16, color: Color(0xFF4338CA),),
+              const Icon(
+                Icons.psychology_alt,
+                size: 16,
+                color: Color(0xFF4338CA),
+              ),
               const SizedBox(width: 6),
               const Text(
                 '今の衝動を即排除',
