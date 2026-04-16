@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web × Supabase で Duolingo競合・競馬AIパイプライン・CRM管理を1日で実装した話"
 tags: Flutter,Supabase,個人開発,buildinpublic,AI予想
-published: false
+published: true
 ---
 
 # ブログ下書き 2026-04-03
