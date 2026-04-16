@@ -329,9 +329,9 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 
 ---
 
-## ⚙️ GitHub Actions CI/CD（全20ワークフロー）
+## ⚙️ GitHub Actions CI/CD（全25ワークフロー）
 
-**全20本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
+**全25本に完備済み**: `concurrency:` + `timeout-minutes:` + `$GITHUB_STEP_SUMMARY` + `permissions:`
 
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
@@ -355,6 +355,11 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 | `ai-university-reminder.yml` | ⚠️ 新規 (2026-04-16) | AI大学学習リマインダー通知 (未実装学習者向け) |
 | `horse-racing-update.yml` | ⚠️ 新規 (2026-04-16) | 競馬AI予想パイプラインの定期更新 (JRA/NAR データ取得・モデル学習) |
 | `quota-monitor.yml` | 毎日 09:00 JST + dispatch | AI クォータ監視 (Claude/OpenAI/Gemini/Copilot) → `ai_quota_usage` UPSERT → 閾値超過時アラート |
+| `blog-draft.yml` | 毎日 07:00 JST + dispatch | 直近 git log → Claude API でドラフト自動生成 → commit → `blog-publish.yml` トリガー |
+| `blog-publish.yml (batch)` / `blog-batch-publish.yml` | workflow_dispatch | 未投稿ドラフト全件一括投稿 — `max_posts` / `dry_run` 入力 |
+| `blog-engagement.yml` | 毎日 01:00 UTC (10:00 JST) + dispatch | Qiita/dev.to エンゲージメント取得・重複削除・コメント自動返信 (Claude Haiku)・いいね者フォロー → `blog_engagement` テーブル |
+| `blog-backfill.yml` | workflow_dispatch | 過去ドラフトのフロントマター AI 生成 + 一括投稿 |
+| `blog-verify.yml` | workflow_dispatch | 投稿済み記事のバリデーション |
 
 **dependabot**: Actions + pub + pip を毎週月曜自動PR (`flutter-version: '3.38.x'`)
 
@@ -364,7 +369,7 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 - セキュリティ: 読み取り専用4本に `persist-credentials: false` (edge-function-audit / dependency-audit / cron-batch / claude-agent-review) / `ci.yml` に Firebase/Google 認証ファイル検出
 - 堅牢性: Slack webhook `--max-time 10 || true` / 全3環境の notify に `continue-on-error: true`
 - ビルド統一: 全環境 `--no-tree-shake-icons` 適用
-- EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在15本デプロイ済み) / 15本構成: standalone 4本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
+- EF 管理: **ハードキャップ50本以下** (Tier1/Tier2廃止 / 現在16本デプロイ済み) / 16本構成: standalone 5本(get-home-dashboard/ai-assistant/growth-weekly-digest/guitar-recording-studio/local-election-intelligence) + macro-hub 6本(core/growth/ai/admin/app/schedule) + mega-hub 5本(tools/media/enterprise/social-commerce/lifestyle) / 新規機能は必ず既存hubのaction追加で対応
 - **Claude Managed Agents 統合** (`claude-agent-review.yml`): static解析では検出できないルール違反・EF上限・アーキテクチャを PR 毎に自動レビュー
 - **フィードバックパイプライン** (`feedback-issue-resolved.yml`): Issue クローズ → HTML comment から `feature_request_id`/`app_feedback_id` 抽出 → PR cross-reference 取得 → リリース通知メール
 
@@ -465,7 +470,7 @@ web/sitemap.xml          # URL マップ
 | **PR #366: frosty-hamilton マージ** | PS版 | 🟡中 | Voice AI chat + conversation_messages migration + check_versions.py。CLAUDE.md / CV3 / ai-assistant.ts でコンフリクトあり → 手動解決後マージ |
 | **モバイルアプリ (iOS/Android) 対応** | VSCode版 | 🟡中 | Flutter モバイルビルド環境の整備と動作検証 |
 | **Notion API 連携のメモリ最適化** | Web版 | 🟡中 | `growth-import-preview` EF の再帰ブロック取得時のメモリ使用量最適化 |
-| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 56社目以降のプロバイダー（Cohere standalone API, Voyage AI 等）の追加評価 |
+| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 67社目以降のプロバイダー（新興AI等）の追加評価 |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 
@@ -521,14 +526,18 @@ web/sitemap.xml          # URL マップ
 - ✅ **第50弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-13-claude-mem-persistent-memory.md` → Qiita+dev.to
 - ✅ **第51弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-10-budget-ai-advisor.md` → Qiita+dev.to
 - ✅ **第52弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-12-ai-university-34-providers.md` → Qiita+dev.to
+- ✅ **第53弾 投稿成功** (PS版セッション, 2026-04-17): WEB版廃止記事 → Qiita+dev.to
+- 🔄 **blog-batch-publish.yml 実行中** (VSCode版#81, 2026-04-17): 未投稿ドラフト21本を一括投稿中 (`blog-engagement.yml` も同時実行中)
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
+- ✅ **blog-publish.yml Step5 無限ループ修正** (VSCode版#81): frontmatter なしファイルも `_mark_published()` 4-case bash関数で処理済み。
 
-**次回候補 (第13弾以降)**:
+**次回候補**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 中 | `2026-04-08-guitar-x-auto-post.md` / その他蓄積下書き (52本) | Qiita/dev.to |
-| 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
+| 高 | batch-publish 結果確認 (21本の成功/失敗確認) | Qiita/dev.to |
+| 中 | blog-engagement 結果確認 + `/blog-management` 画面で表示確認 | - |
+| 中 | その他 `docs/blog-drafts/` 残下書き | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
