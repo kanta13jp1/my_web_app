@@ -163,6 +163,7 @@ import 'package:my_web_app/pages/guitar_recording_studio_page.dart';
 import 'package:my_web_app/pages/public_guitar_gallery_page.dart';
 import 'package:my_web_app/pages/music_collaboration_page.dart';
 import 'package:my_web_app/pages/event_ticketing_page.dart';
+import 'package:my_web_app/pages/ai_assistant_chat_page.dart';
 import 'package:my_web_app/pages/ai_writing_assistant_page.dart';
 import 'package:my_web_app/pages/wiki_database_page.dart';
 import 'package:my_web_app/pages/time_tracker_page.dart';
@@ -685,6 +686,10 @@ class MyApp extends StatelessWidget {
           case '/quota-dashboard':
             return MaterialPageRoute(
               builder: (_) => const QuotaDashboardPage(),
+            );
+          case '/ai-assistant-chat':
+            return MaterialPageRoute(
+              builder: (_) => const AiAssistantChatPage(),
             );
           case '/categories':
             return MaterialPageRoute(
