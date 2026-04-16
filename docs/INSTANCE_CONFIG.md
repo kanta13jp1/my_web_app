@@ -1,7 +1,7 @@
 # インスタンス設定・制約カタログ — 自分株式会社 マルチAI開発ガイド
 
 **作成**: 2026-04-16 (VSCode版#79)
-**最終更新**: 2026-04-17 (PowerShell版 — Opus 4.7対応・ultrathink=Sonnet 4.6への移行・Haiku 3廃止警告・全インスタンスモデル推奨更新)
+**最終更新**: 2026-04-17 (VSCode版 — Opus 4.7 全面反映: Adaptive Thinking行・ultrathinkタスクのモデル修正・WEB版プロンプト更新)
 **更新責任者**: 制約を発見したインスタンスが随時更新。構造変更は PowerShell版 が担当。
 
 > **このドキュメントの目的**: 各AIインスタンスの「できること・できないこと」を一元管理し、
@@ -22,8 +22,9 @@ echo "現在: $CURRENT / 最新: $LATEST"
 
 ```text
 
-**現在の確認済みバージョン**: `2.1.110` (確認日: 2026-04-16, PowerShell版)
+**現在の確認済みバージョン**: `2.1.111` (確認日: 2026-04-17, PowerShell版)
 > `/doctor` 実行済み: playwright MCP 重複エントリを修正 (local scope削除, project scope `.mcp.json` に統一)
+> v2.1.111 新機能: /ultrareview / /effort xhigh / /less-permission-prompts / PowerShell tool / Windows hook修正
 
 ### Step 2: バージョン更新があった場合 — 必須アクション
 
@@ -63,11 +64,11 @@ codex --version 2>/dev/null || echo "codex: not installed"
 
 ```text
 
-**現在の確認済みバージョン (2026-04-16)**:
+**現在の確認済みバージョン (2026-04-17)**:
 
 | ツール | バージョン | 状態 |
 | --- | --- | --- |
-| Claude Code CLI | 2.1.110 | ✅ 最新 |
+| Claude Code CLI | 2.1.111 | ✅ 最新 |
 | GitHub Copilot CLI | — | ❌ 未インストール |
 | Codex CLI (OpenAI) | — | ❌ 未インストール |
 | Gemini Code Assist | VS Code拡張で確認 | VSCode インスタンスで確認 |
@@ -83,9 +84,15 @@ codex --version 2>/dev/null || echo "codex: not installed"
 
 | バージョン | 機能名 | 概要 | 開発フロー組み込み | 担当インスタンス |
 | --- | --- | --- | --- | --- |
-| **2026-04-16** | **Claude Opus 4.7 🆕 (`claude-opus-4-7`)** | Opus 4.6 後継。agentic coding 大幅強化。**Extended Thinking なし** / Adaptive Thinking あり。同価格 ($5/$25/MTok)。学習 Jan 2026 | ✅ 全インスタンスで Opus 4.6 → Opus 4.7 に切替。ultrathink は Sonnet 4.6 で | 全インスタンス |
+| **2.1.111** | **`/ultrareview` 🆕** | 並列マルチエージェントによる包括的クラウドコードレビュー。`/ultrareview` (現ブランチ) or `/ultrareview <PR#>` | ✅ 実装後のコードレビューステップとして全インスタンスで活用。PR作成前の必須チェックに推奨 | 全インスタンス |
+| **2.1.111** | **Opus 4.7 `/effort xhigh` 🆕** | Adaptive Thinking の新 effort レベル (high と max の間)。`/effort` コマンドでインタラクティブスライダー | ✅ Opus 4.7 + 高精度推論が必要な場面で `/effort xhigh` を使用 | 全インスタンス (Opus 4.7使用時) |
+| **2.1.111** | **`/less-permission-prompts` 🆕** | トランスクリプトをスキャンして読み取り専用操作の許可リストを自動提案 → `.claude/settings.json` に追加 | ⚠️ 要実行: PowerShell版で `/less-permission-prompts` 実行 → settings.json 更新 | PowerShell版 |
+| **2.1.111** | **PowerShell tool 🆕** | Windows で PowerShell ツールが段階的ロールアウト。`CLAUDE_CODE_USE_POWERSHELL_TOOL=1` でオプトイン | ⚠️ 要検討: PowerShell版で `$env:CLAUDE_CODE_USE_POWERSHELL_TOOL=1` 設定してテスト | PowerShell版 |
+| **2.1.111** | **Windows SessionStart hook 修正 🆕** | `CLAUDE_ENV_FILE` と SessionStart hook が Windows で正常動作するよう修正 | ✅ 既存 hooks の動作改善を確認 | 全インスタンス |
+| **2.1.111** | **Auto theme 🆕** | "Auto (match terminal)" テーマ。ターミナルのダーク/ライトモードに自動同期 | ⚠️ 任意: `/config` → theme → "Auto" | ローカルインスタンス |
+| **2026-04-16** | **Claude Opus 4.7 (`claude-opus-4-7`)** | Opus 4.6 後継。agentic coding 大幅強化。**Extended Thinking なし** / Adaptive Thinking あり。同価格 ($5/$25/MTok)。学習 Jan 2026 | ✅ 全インスタンスで Opus 4.6 → Opus 4.7 に切替。ultrathink は Sonnet 4.6 で | 全インスタンス |
 | **2026-04-19** | **Haiku 3 廃止 ⚠️ (`claude-3-haiku-20240307`)** | 2026-04-19 退役。EF に参照があれば即 `claude-haiku-4-5-20251001` へ移行 | ✅ EF に参照なし (grep 確認済み) | VSCode版が確認 |
-| **2.1.108** | **`/recap` 🆕 公式 Learning Mode** | セッション開始時に `/recap` → 前セッション作業サマリーを自動生成。**WEB版でも動作** | ✅ 全推奨プロンプト Step 1 に追加済み | 全インスタンス |
+| **2.1.108** | **`/recap` 公式 Learning Mode** | セッション開始時に `/recap` → 前セッション作業サマリーを自動生成。**WEB版でも動作** | ✅ 全推奨プロンプト Step 1 に追加済み | 全インスタンス |
 | **2.1.108** | **`ENABLE_PROMPT_CACHING_1H` 🆕** | キャッシュTTL を5分→1時間に延長。長いセッションのトークンコスト最適化 | ⚠️ 要設定: ローカル `.env` or shell profile | ローカルインスタンス |
 | **2.1.105** | **PreCompact hook 🆕** | コンパクション前にフック実行。`exit 2` でブロック → 記憶消失防止 | ⚠️ 要設定: `.claude/hooks/pre-compact` 追加検討 | 全インスタンス |
 | **2.1.105** | **`/proactive` (= `/loop` alias) 🆕** | `/loop` の別名。会話内で反復タスクを起動しやすい | ✅ 利用可能 | 全インスタンス |
@@ -95,7 +102,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 | **2.1.98** | **Monitor tool 🆕** | バックグラウンドスクリプトのイベントをストリーミング監視 | ✅ GHA 長時間ジョブ監視に活用可 | ローカルインスタンス |
 | 2.1.x (2026-04) | **Routines** | Desktop版専用サーバーレス自動化スケジューラ | ✅ 組み込み済み (Windowsアプリ版専任) | Windowsアプリ版 |
 | 2.1.x (2026-04) | **Extended Thinking (ultrathink)** | 5段階思考トリガー (`think`〜`ultrathink`) | ✅ 各推奨プロンプトに追加済み | 全インスタンス |
-| 2.1.x (2026) | **Adaptive Thinking** | Opus 4.6/Sonnet 4.6 が effort 値に応じて思考量を自動調整 | ✅ WEB版 Opus 4.6 使用に反映済み | 全インスタンス |
+| 2.1.x (2026) | **Adaptive Thinking** | Opus 4.7/Sonnet 4.6 が effort 値に応じて思考量を自動調整 | ✅ WEB版 Opus 4.7 使用に反映済み | 全インスタンス |
 | 2.1.x (2026) | **Cross-session Memory** | セッション間でユーザー情報・設計方針を記憶 | ✅ `memory/` + NotebookLM Master Brain で実装済み | 全インスタンス |
 | — | *(次のバージョン更新時に追記)* | | | |
 
@@ -152,8 +159,8 @@ git log --oneline -5
 | --- | --- | --- |
 | 定型実装 (lint修正・minor bug fix) | Sonnet 4.6 | なし (デフォルト) |
 | 新機能設計・EF実装 | Sonnet 4.6 | `think deeply` |
-| アーキテクチャ判断・大規模リファクタ | Opus 4.6 | `ultrathink` |
-| 競合調査・戦略判断 (WEB版向け) | **Opus 4.6** | `ultrathink` |
+| アーキテクチャ判断・大規模リファクタ | Sonnet 4.6 | `ultrathink` |
+| 競合調査・戦略判断 (WEB版向け) | Sonnet 4.6 | `ultrathink` |
 | NotebookLM連携 (ローカル版) | Sonnet 4.6 | — (NotebookLMが重い処理を担当) |
 | `/recap` 後の方針決定 | Sonnet 4.6 | `think` | |
 
@@ -221,13 +228,15 @@ git log --oneline -5
 | Playwright MCP | ⚠️ 要確認 | — | MCP設定が共有されている場合のみ可 |
 | Skills (スラッシュコマンド) | ⚠️ 一部制限 | 2026-04-16 | 一部未対応あり |
 | `--teleport` CLI→Web | ❌ **不可** | 2026-04-16 | 逆方向 (Web→CLI) は可 |
-| デフォルトモデル | **Opus 4.7** 🆕 | 2026-04-17 | Opus 4.6より agentic coding 強化。**ultrathinkは Sonnet 4.6で** |
+| `/ultrareview` | ✅ **可** 🆕 | 2026-04-17 | `/ultrareview` or `/ultrareview <PR#>` でクラウドレビュー |
+| `/effort xhigh` (Opus 4.7) | ✅ **可** 🆕 | 2026-04-17 | Adaptive Thinking 最大 effort |
+| デフォルトモデル | **Opus 4.7** | 2026-04-17 | agentic coding 強化。**ultrathinkは Sonnet 4.6で** |
 
 **WEB版の役割 (制約を踏まえた最適分担)**:
 - WebSearch/WebFetch での AI プロバイダー調査・競合分析
-- GitHub MCP 経由の PR コードレビュー・Issue 管理
+- GitHub MCP 経由の PR コードレビュー + `/ultrareview <PR#>` での深掘りレビュー
 - ブログ英語版生成・品質レビュー
-- **Opus 4.7** でのアーキテクチャレビュー (agentic coding 強化・実行不要の純粋推論タスク)
+- **Opus 4.7 + `/effort xhigh`** でのアーキテクチャレビュー (agentic coding 強化・実行不要の純粋推論タスク)
 - Extended Thinking が必要な場合のみ: **Sonnet 4.6 + ultrathink** に切替
 - `docs/research/` へのリサーチ成果物保存 (GitHub MCP 経由)
 
@@ -239,7 +248,7 @@ git log --oneline -5
 
 | モデルID | 状態 | 用途 | context | 出力上限 | 特徴 |
 | --- | --- | --- | --- | --- | --- |
-| `claude-opus-4-7` 🆕 | **✅ 最新** | 複雑な設計判断・agentic coding | 1M tokens | 128K | 最高品質。Extended Thinking **なし**。Adaptive Thinking あり。学習 Jan 2026 |
+| `claude-opus-4-7` | **✅ 最新推奨** | 複雑な設計判断・agentic coding | 1M tokens | 128K | Extended Thinking **なし**。Adaptive Thinking あり (`/effort xhigh` で最大)。学習 Jan 2026 |
 | `claude-sonnet-4-6` | ✅ 現役 | **日常の実装 (デフォルト推奨)** + ultrathink | 1M tokens | 64K | Extended Thinking ✅ Adaptive Thinking ✅ |
 | `claude-haiku-4-5-20251001` | ✅ 現役 | 定型ルーティン・クイックチェック | 200K tokens | 64K | 高速・低コスト。Extended Thinking ✅ |
 | `claude-opus-4-6` | ⚠️ レガシー | 移行対象 → Opus 4.7 を使用 | 1M tokens | 128K | 2026年中サポート継続 |
@@ -247,6 +256,23 @@ git log --oneline -5
 
 > **⚠️ 重要: Extended Thinking (ultrathink) は Opus 4.7 では動作しない。**
 > ultrathink が必要な場面は `claude-sonnet-4-6` を使用すること。
+> Opus 4.7 の高精度推論には `/effort xhigh` (Adaptive Thinking 最大) を使用。
+
+### Opus 4.7 Adaptive Thinking — `/effort` スライダー (v2.1.111+)
+
+```text
+/effort          # インタラクティブスライダー (矢印キーで選択)
+```
+
+| Effort レベル | 用途 |
+| --- | --- |
+| `low` | 定型処理・確認作業 |
+| `medium` | 通常の実装タスク |
+| `high` | 複雑な設計・EF実装 |
+| `xhigh` 🆕 | **アーキテクチャ設計・競合戦略** (high と max の間) |
+| `max` | 最大精度が必要な判断 |
+
+> Adaptive Thinking は Opus 4.7 + Sonnet 4.6 で動作。指定なしで自動調整。
 
 ### 拡張思考 (Extended Thinking) トリガー
 
@@ -261,6 +287,16 @@ git log --oneline -5
 | `think very hard` | Lv.4 | アーキテクチャ設計・大規模リファクタ |
 | `ultrathink` | Lv.5 (最大) | 全体設計・競合戦略。**Sonnet 4.6 で実行** |
 
+### `/ultrareview` — 包括的コードレビュー (v2.1.111+)
+
+```bash
+/ultrareview           # 現ブランチの変更をレビュー
+/ultrareview 123       # PR#123 をレビュー
+```
+
+並列マルチエージェントでセキュリティ・パフォーマンス・ロジックを同時分析。
+**推奨タイミング**: EF 実装後・PR 作成前・UI 大規模変更後。
+
 ### `/fast` モード
 
 `/fast` コマンドで現在のモデルの **出力速度を向上** させる。モデルは変わらない。
@@ -268,13 +304,13 @@ git log --oneline -5
 
 ### インスタンス別モード推奨 (2026-04-17 更新)
 
-| インスタンス | 通常タスク | 複雑タスク | Extended Thinking | 備考 |
+| インスタンス | 通常タスク | 複雑タスク | Extended Thinking | Adaptive (Opus 4.7) |
 | --- | --- | --- | --- | --- |
-| **VSCode版** | Sonnet 4.6 + `think deeply` | **Opus 4.7** (agentic coding) | Sonnet 4.6 + `ultrathink` | 新ページ・EF実装 |
-| **VSCode版 (定型)** | Sonnet 4.6 + `/fast` | — | — | lint fix・token置換 |
-| **Windowsアプリ版** | Sonnet 4.6 | Sonnet 4.6 + `think` | Sonnet 4.6 + `ultrathink` | docs更新・provider追加 |
-| **PowerShell版** | Sonnet 4.6 + `think deeply` | **Opus 4.7** (CI/CD設計) | Sonnet 4.6 + `ultrathink` | |
-| **WEB版** | **Opus 4.7** (adaptive thinking) | **Opus 4.7** | Sonnet 4.6 + `ultrathink` | agentic coding強化・CLI不可の分補完 |
+| **VSCode版** | Sonnet 4.6 + `think deeply` | **Opus 4.7** + `/effort high` | Sonnet 4.6 + `ultrathink` | `/effort xhigh` でアーキテクチャ設計 |
+| **VSCode版 (定型)** | Sonnet 4.6 + `/fast` | — | — | — |
+| **Windowsアプリ版** | Sonnet 4.6 | **Opus 4.7** + `/effort high` | Sonnet 4.6 + `ultrathink` | docs設計・provider選定 |
+| **PowerShell版** | Sonnet 4.6 + `think deeply` | **Opus 4.7** + `/effort high` | Sonnet 4.6 + `ultrathink` | CI/CD設計 |
+| **WEB版** | **Opus 4.7** | **Opus 4.7** + `/effort xhigh` | Sonnet 4.6 + `ultrathink` | 競合分析・アーキテクチャ |
 
  ---
 
@@ -523,16 +559,19 @@ git log --oneline -5
 【Step 3: 今日のタスク候補 (優先度順)】
 1. Rule 17: GH Actions 全ワークフロー健全確認
    gh run list --limit 20 --json name,status,conclusion | ConvertFrom-Json
-2. docs/INSTANCE_CONFIG.md 更新 (制約変化・バージョン変更・推奨プロンプト更新)
-3. T-1: 未投稿ブログのディスパッチ
+2. /less-permission-prompts で許可リスト最適化 (v2.1.111+)
+   → .claude/settings.json に読み取り専用操作を自動追加
+3. docs/INSTANCE_CONFIG.md 更新 (制約変化・バージョン変更・推奨プロンプト更新)
+4. T-1: 未投稿ブログのディスパッチ
    gh workflow run blog-publish.yml -f draft_path="docs/blog-drafts/YYYY-MM-DD.md" -f platforms="qiita,devto"
-4. cross-instance-prs/ の pending 確認・マージ依頼処理
+5. /ultrareview で最新PRの包括的レビュー実施
 
 【推奨思考モード & モデル選択】
-Rule 17 定期チェック:       Sonnet 4.6 通常モード
-CI/CD ワークフロー設計:     Opus 4.7 + "think deeply"
-全体アーキテクチャ設計:     Sonnet 4.6 + "ultrathink"
-INSTANCE_CONFIG.md 更新:    Sonnet 4.6 通常モード
+Rule 17 定期チェック:          Sonnet 4.6 通常モード
+CI/CD ワークフロー設計:        Opus 4.7 + /effort high
+全体アーキテクチャ設計:        Opus 4.7 + /effort xhigh
+ultrathink (Extended Thinking): Sonnet 4.6 + "ultrathink"
+INSTANCE_CONFIG.md 更新:       Sonnet 4.6 通常モード
 
 【フォールバックAI (Claude 429時のみ)】
 .yml/.sql/.md → GitHub Copilot (gh extension install github/gh-copilot)
@@ -543,11 +582,11 @@ INSTANCE_CONFIG.md 更新:    Sonnet 4.6 通常モード
 
 ```text
 このインスタンスはWEB版Claude Code (claude.ai/code) です。
-モデル: Opus 4.7 🆕 (agentic coding強化・CLI不可の分、思考力で補完)
+モデル: Opus 4.7 (agentic coding強化・CLI不可の分、思考力で補完)
 
-【制約サマリー (2026-04-16 確認済み)】
+【制約サマリー (2026-04-17 更新)】
 ❌ 使用不可: notebooklm CLI / flutter analyze / deno lint / gh CLI / git CLI / ローカルFS / Hooks / Routines
-✅ 使用可能: /recap / WebSearch / WebFetch / GitHub MCP / Playwright MCP / Skills / Opus 4.6
+✅ 使用可能: /recap / /ultrareview / /effort xhigh / WebSearch / WebFetch / GitHub MCP / Playwright MCP / Skills / Opus 4.7
 
 【Step 0: /recap — 公式 Learning Mode (WEB版でも動作!)】
 /recap
@@ -567,15 +606,18 @@ GitHub MCP: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
    → GitHub MCP で最新コードを確認 → 改善提案を docs/research/ に保存
 2. WebSearch で AI大学新規プロバイダー候補を3軸評価
    → GitHub MCP push_files で docs/research/YYYY-MM-DD-providers.md に保存
-3. GitHub MCP でオープンPRのコードレビュー
-   → list_pull_requests → pull_request_read → pull_request_review_write
+3. オープンPRのコードレビュー
+   → /ultrareview (並列マルチエージェント・WEB版でも動作) または
+   → GitHub MCP: list_pull_requests → pull_request_read → pull_request_review_write
 4. 競合21社最新動向調査 → docs/research/YYYY-MM-DD-competitors.md に保存
 5. ブログ英語版の品質レビュー・改善 (GitHub MCP で draft 確認 → 改善提案)
 
 【モデル設定 (2026-04-17 更新)】
 通常・複雑分析:  このセッションは Opus 4.7 を使用してください。
+高負荷タスク:    /effort xhigh (v2.1.111新設・high と max の中間。Opus 4.7 + Adaptive Thinking)
+                 → アーキテクチャレビュー・複雑なロジック設計に使用
 Extended Thinking が必要な場合: Sonnet 4.6 に切り替えて "ultrathink" を含めてください。
-⚠️ Opus 4.7 + ultrathink は Extended Thinking を起動しません。
+⚠️ Opus 4.7 + ultrathink は Extended Thinking を起動しません。Adaptive Thinking (/effort) を使うこと。
 
 【GitHub MCP 使用チートシート】
 コミット確認: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
@@ -752,3 +794,4 @@ PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-
 | 2026-04-16 | 大幅改訂。WEB版制約詳細化・Learning Mode追加・フォールバックAI詳細・全インスタンス推奨プロンプト更新・制約解消フロー追加 | PowerShell版 |
 | 2026-04-16 | v2.1.110 対応。/recap公式Learning Mode追加・新機能追跡ログ(v2.1.97-110)・全推奨プロンプトに/recap追加・Gemini Code Assist推奨プロンプト追加・制約KaizenループDoc追加・playwright MCP重複修正記録 | PowerShell版 |
 | 2026-04-17 | Opus 4.7 対応。全インスタンスモデル推奨を Opus 4.7 に更新。ultrathink = Sonnet 4.6 必須に明記。Haiku 3 廃止(2026-04-19)警告追加。EF grep でモデル参照なし確認済み | PowerShell版 |
+| 2026-04-17 | v2.1.111 対応。/ultrareview・/effort xhigh・/less-permission-prompts・PowerShell tool・Windows SessionStart hook修正 を新機能追跡ログに追記。全インスタンス推奨プロンプトに /ultrareview・/effort xhigh 追加。WEB版推奨プロンプト Step 3 に /ultrareview 追加。モデル設定に /effort xhigh ガイダンス追加 | PowerShell版 |
