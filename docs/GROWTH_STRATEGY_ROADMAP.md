@@ -1,7 +1,7 @@
 # æˆé•·æˆ¦ç•¥ãƒ­ãƒ¼ãƒ‰ãƒãƒƒãƒ— - è‡ªåˆ†æ ªå¼ä¼šç¤¾
 
 ä½œæˆæ—¥: 2025-11-10
-æœ€çµ‚æ›´æ–°: 2026-04-16 VSCodeç‰ˆ#76 (ãƒ‡ã‚¶ã‚¤ãƒ³ãƒˆãƒ¼ã‚¯ãƒ³çµ±ä¸€ãƒ»horse_racing_predictor_page.dart ä¿®æ­£)
+æœ€çµ‚æ›´æ–°: 2026-04-16 VSCodeç‰ˆ#77 (æŠ€è¡“è¨˜äº‹æŠ•ç¨¿5æœ¬ãƒ»ã‚»ãƒƒã‚·ãƒ§ãƒ³è¨˜éŒ²æ›´æ–°)
 ç¾æ™‚ç‚¹ã®ç™»éŒ²è€…æ•°: 4äºº
 æœ€é‡è¦ç›®çš„: Notionãƒ»EverNoteãƒ»MoneyForwardãƒ»Xãƒ»Animaworksãƒ»Claude Codeãƒ»Codexãƒ»netkeibaãƒ»OpenClawãƒ»Claude Coworkãƒ»Chatworkãƒ»Slackãƒ»ã‚¸ãƒ§ãƒ–ã‚«ãƒ³ãƒ»Amazonãƒ»Googleãƒ»Microsoftãƒ»Discordãƒ»LINEãƒ»Facebookãƒ»Livenãƒ»GitHub ã‚’ä¸Šå›ã‚‹è¦æ¨¡ã®çŸ¥çš„ç”Ÿç”£ãƒ»è³‡ç”£ç®¡ç†ãƒ»SNS çµ±åˆãƒ—ãƒ©ãƒƒãƒˆãƒ•ã‚©ãƒ¼ãƒ ã‚’ä½œã‚‹
 é‹ç”¨åŸå‰‡: flutter analyze ã‚’å¸¸ã« 0 ã«ä¿ã¡ã€è¤‡é›‘ãªå‡¦ç†ã¯å¯èƒ½ãªé™ã‚Š Supabase Edge Function ã¸ç§»ã™
@@ -8775,3 +8775,27 @@ WebSearch ã¨å°‚é–€åˆ†æã«ã‚ˆã‚Šã€ä»¥ä¸‹ã®å€™è£œã‚’è©•ä¾¡:
 1. ğŸŸ¡ **ãƒ–ãƒ­ã‚°æŠ•ç¨¿ç¬¬13å¼¾ä»¥é™**: è“„ç©æ¸ˆã¿ã®ä¸‹æ›¸ã 52 æœ¬ã‹ã‚‰ç¶™ç¶šæŠ•ç¨¿
 2. ğŸŸ¢ **Web/ãƒ¢ãƒã‚¤ãƒ«è¡¨ç¤ºãƒã‚§ãƒƒã‚¯** (Rule #16): https://my-web-app-b67f4.web.app/ ã® AIå¤§å­¦ãƒ©ãƒ³ã‚­ãƒ³ã‚°ç”»é¢ç¢ºèª
 3. ğŸŸ¢ **æœ¬ç•ª DB migration é©ç”¨**: Supabase prod ã« `supabase db push` ã‚’å®Ÿè¡Œã—ã€Core/Cerebras/Prover ã‚’æœ‰åŠ¹åŒ–
+
+
+## VSCode”Å#77 ‹Zp‹L–“Še (2026-04-16)
+
+### À{“à—e
+
+**ƒ^ƒXƒN T-1 —DæÀs**: ’~Ï‰º‘‚« 52 –{‚©‚ç 5 –{‚ğ blog-publish.yml ‚Å Qiita ‚É“Še
+
+| “Še‡ | ‰º‘‚«ƒtƒ@ƒCƒ‹ | ”}‘Ì | ƒXƒe[ƒ^ƒX |
+| --- | --- | --- | --- |
+| ‘æ43’e | 2026-04-13-ai-university-41-providers-tabs.md | Qiita | ? “ŠeŠJn |
+| ‘æ44’e | 2026-04-12-horse-racing-ai-pipeline.md | Qiita | ? “ŠeŠJn |
+| ‘æ45’e | 2026-04-08-x-viral-pipeline-catalog-expansion.md | Qiita | ? “ŠeŠJn |
+| ‘æ46’e | 2026-04-07-ai-writing-assistant-upgrade.md | Qiita | ? “ŠeŠJn |
+| ‘æ47’e | 2026-04-06-public-guitar-gallery.md | Qiita | ? “ŠeŠJn |
+
+### Ÿ‰ñƒ^ƒXƒNŒó•â
+
+1. **Web/ƒ‚ƒoƒCƒ‹•\¦ƒ`ƒFƒbƒN (Rule #16)**: https://my-web-app-b67f4.web.app/ ‚Ìå—vƒy[ƒW‚ğŠm”FEC³
+2. **CI/CD ƒ[ƒNƒtƒ[Å“K‰» (Rule #17)**: PowerShell”Å‚Å GitHub Actions ‚ğŒ©’¼‚µE‰ü‘P
+3. **AI‘åŠwƒvƒƒoƒCƒ_[’Ç‰ÁŒŸ“¢ (Rule #15)**: V‹KƒvƒƒoƒCƒ_[Œó•â‚ğ•]‰¿E’Ç‰Á
+4. **UI‰ü‘Pƒc[ƒ‹ƒ`ƒF[ƒ“ (Rule #19)**: design-skills ƒTƒuƒG[ƒWƒFƒ“ƒg‚Å 1 ƒy[ƒWˆÈã‰ü‘P
+5. **’~Ï‰º‘‚«“ŠeŒp‘± (ƒ^ƒXƒN T-1)**: c‚è 47 –{‚Ì‹L–“Še
+
