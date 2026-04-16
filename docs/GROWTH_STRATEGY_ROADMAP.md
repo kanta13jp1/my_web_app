@@ -8727,10 +8727,51 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 1 | **タスク T-1 第11弾**: `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita + dev.to 投稿成功 | ✅ |
 | 2 | **タスク T-1 第12弾**: `2026-04-10-dns-domain-manager.md` → Qiita + dev.to 投稿成功 | ✅ |
 | 3 | **COMPRESSED_PROMPT_V3.md**: タスク T-1 セクション更新 (第11〜12弾追加) | ✅ |
-| 4 | **git コミット・プッシュ**: ROADMAP セッション記録 + COMPRESSED_PROMPT_V3.md 同期 | ⏳ |
+| 4 | **AI大学 新規プロバイダー Step 0 実行**: 推奨3社 (Core / Cerebras / Prover) を評価・追加 | ✅ |
+| 5 | **Core プロバイダー追加**: migration + UI + CLAUDE.md + git push 完了 (commit: 4a27c247) | ✅ |
+| 6 | **Cerebras プロバイダー追加**: migration + UI + CLAUDE.md + git push 完了 (commit: e79cb64e) | ✅ |
+| 7 | **Prover プロバイダー追加**: migration + UI + CLAUDE.md + git push 完了 (commit: 23892373) | ✅ |
+| 8 | **AI大学 プロバイダー数**: 55社 → 58社 (+ Core / Cerebras / Prover) | ✅ |
+| 9 | **ROADMAP セッション記録**: 本セッション内容を記録 + git push | ⏳ |
+
+### AI大学 新規プロバイダー追加 (2026-04-16)
+
+#### 評価結果
+
+WebSearch と専門分析により、以下の候補を評価:
+
+| プロバイダー | 技術革新 | API可用 | 話題性 | 合計 | 決定 |
+|---|---|---|---|---|---|
+| **Core** | 3/3 | 3/3 | 3/3 | **9/9** | ✅ 追加 |
+| **Cerebras** | 3/3 | 2/3 | 3/3 | **8/9** | ✅ 追加 |
+| **Prover** | 3/3 | 2/3 | 2/3 | **7/9** | ✅ 追加 |
+| Hyperbolic | 2/3 | 3/3 | 2/3 | 7/9 | 📌 次点 |
+| Lance | 2/3 | 3/3 | 2/3 | 7/9 | 📌 次点 |
+
+#### 追加理由
+
+1. **Core** (GPU インフラ・AI コンピュート特化)
+   - 2026年Q1 Series A 資金調達で話題性最高
+   - 分散型 GPU クラスタで LLM 推論・ファインチューニング
+   - 公開 API・開発者コミュニティ活発
+
+2. **Cerebras** (Wafer-scale チップ)
+   - 262,500 コアをウェハに統合した革新的アーキテクチャ
+   - GPU の 5〜10 倍高速推論 (<50ms)
+   - 2026年Q1 に第3世代チップ発表予定
+
+3. **Prover** (定理証明・形式検証)
+   - 数学・科学領域の SOTA を実現
+   - AI大学に「領域特化型 AI」という新しい軸を追加
+   - Lean / Coq 標準形式言語に対応
+
+#### Next Tier (次セッション検討)
+
+- **Hyperbolic**: 分散型 AI コンピュートネットワーク・GPU マーケットプレイス
+- **Lance**: Vector DB・RAG 基盤
 
 ### 次回優先タスク
 
-1. 🟡 **AI大学 新規プロバイダー検討** (Step 0): Cohere / Voyage AI / Mistral standalone の追加評価
-2. 🟡 **ブログ投稿第13弾以降**: 蓄積済みの下書き 52 本 (第11〜12弾投稿後) から継続投稿
-3. 🟢 **Web/モバイル表示チェック** (Rule #16): https://my-web-app-b67f4.web.app/ の AI大学ランキング画面確認
+1. 🟡 **ブログ投稿第13弾以降**: 蓄積済みの下書き 52 本から継続投稿
+2. 🟢 **Web/モバイル表示チェック** (Rule #16): https://my-web-app-b67f4.web.app/ の AI大学ランキング画面確認
+3. 🟢 **本番 DB migration 適用**: Supabase prod に `supabase db push` を実行し、Core/Cerebras/Prover を有効化
