@@ -8970,3 +8970,40 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 1. VSCode版: `ai_assistant_chat_page.dart` 実装 (Web Speech API + チャットUI)
 2. VSCode版: LPに「音声AIアシスタント」追加
 3. quota-monitor.yml: `GOOGLE_AI_API_KEY`と`OPENAI_API_KEY`のGitHub Secrets設定 (TODO: 手動)
+
+---
+
+## PowerShell版 セッション記録 (2026-04-17)
+
+### 実施内容: 優先タスク自動実行 — CI修正・T-1投稿・PR処理・Rule17
+
+**実施タスク一覧**:
+
+1. **🔴 blog_corrections RLS修正** (`fix: profiles→user_profiles 42P01再発`)
+   - `supabase/migrations/20260417130000_create_blog_corrections.sql` の `profiles` → `user_profiles` 修正
+   - deploy-prod が継続失敗していた根本原因を解消
+
+2. **🟡 T-1 第39弾投稿** (blog-publish dispatch)
+   - 日本語: `2026-04-17-web-instance-retired.md` → Qiita + dev.to
+   - 英語: `2026-04-17-web-instance-retired-en.md` → dev.to
+   - blog-publish.yml: success ✅
+
+3. **🟡 PR #366 マージ** (Voice AI Chat + 会話記憶)
+   - コンフリクト解消 (ROADMAP/COMPRESSED_PROMPT/CLAUDE.md → theirs)
+   - rebase force-push → 自動マージ完了
+   - 新規ファイル: `docs/instance-constraints.md`, `scripts/check_versions.py`, `scripts/update_*.py`
+
+4. **🟡 Dependabot PRs マージ** (#329 #328 #299)
+   - `actions/github-script` v7→v9, `softprops/action-gh-release` v2→v3 等
+
+5. **🟡 Rule 17 ワークフロー修正** (3ファイル)
+   - `cron-batch.yml`: schedule cron を削除 (コメントだけで実際は毎6時間実行されていた)
+   - `blog-batch-publish.yml`: `timeout-minutes: 120 → 20`
+   - `ai-university-update.yml`: `cancel-in-progress: true → false`
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | deploy-prod 成功確認 (blog_corrections migration適用) | 自動 |
+| 🟡 | cron-batch.yml: SUPABASE_SERVICE_ROLE_KEY/GEMINI_API_KEY Secrets設定後 schedule 復活 | 手動 |
+| 🟢 | 古いworktreeクリーンアップ (.claude/worktrees/ 6件) | PS版 |
