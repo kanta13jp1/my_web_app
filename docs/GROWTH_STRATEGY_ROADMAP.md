@@ -9162,3 +9162,34 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | 第59・60弾 Qiita リトライ (翌日 2026-04-18以降) | PS版 |
 | 🟡 | 第63弾以降 EN版作成+投稿 | PS版 |
 | 🟡 | Rule 17 GH Actions確認 | PS版 |
+
+### PS版セッション記録 #88 (2026-04-17)
+
+**担当**: PS版 (T-1 投稿バッチ + dart format修正)
+
+### 完了タスク
+
+1. **dart format CI修正** (d3273020) — gemini_university_v2_page / ai_fsrs_service / ai_learner_profile_service
+
+2. **T-1 第63弾 dev.to投稿成功** `2026-04-12-ai-university-34-providers.md`
+   - dev.to: https://dev.to/kanta13jp1/building-an-ai-learning-platform-for-34-providers-in-flutter-web-supabase-auto-updated-every-2-kb9
+
+3. **T-1 第64弾 dev.to投稿成功** `2026-04-13-ai-university-41-providers-tabs.md`
+   - dev.to: https://dev.to/kanta13jp1/from-34-to-41-ai-providers-notion-style-tab-blocks-in-flutter-web-2n2a
+
+4. **EN版新規作成 2件**
+   - `2026-04-12-ai-university-34-providers-en.md`
+   - `2026-04-13-ai-university-41-providers-tabs-en.md`
+
+5. **Qiita rate limit**: 第59弾リトライも429継続 → 2026-04-18以降に持ち越し
+
+### 残タスク
+- 第59・60・63・64弾 Qiita リトライ (2026-04-18以降)
+- `naughty-noether-010feb` worktree 手動削除
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
+| 🟡 | 第65弾以降 新記事投稿 | PS版 |
+| 🟡 | Rule 17 GH Actions確認 | PS版 |
