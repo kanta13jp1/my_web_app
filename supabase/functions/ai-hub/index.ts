@@ -835,6 +835,11 @@ serve(async (req: Request) => {
       "challenges.list",
       "trigger.analyze", "analyze.reality",
       "company_builder.list", "company_builder.get", "company_builder.bootstrap",
+      // AI大学 v2 (P1〜P4)
+      "quiz.fsrs_next", "quiz.fsrs_grade",
+      "learner.update_profile",
+      "quiz.evaluate", "quiz.explain",
+      "voice.tts", "voice.stt",
     ];
     if (authRequired.includes(action) && !userId) {
       return json({ error: "Unauthorized" }, 401);
@@ -1268,6 +1273,232 @@ serve(async (req: Request) => {
           correct_count: correctCount,
           total_providers: totalProviders,
         });
+      }
+
+      // ── AI大学 v2: FSRS スペース反復 ────────────────────────────────────
+      case "quiz.fsrs_next": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const provider = String(body.provider ?? "");
+        const limit = Number(body.limit ?? 10);
+        const { data, error } = await supabase
+          .from("ai_university_fsrs_cards")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("provider", provider)
+          .lte("due_date", new Date().toISOString())
+          .order("due_date", { ascending: true })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, cards: data ?? [] });
+      }
+
+      case "quiz.fsrs_grade": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const questionId = String(body.question_id ?? "");
+        const provider = String(body.provider ?? "");
+        const grade = Number(body.grade ?? 3);
+        const { data: existing } = await supabase
+          .from("ai_university_fsrs_cards")
+          .select("stability, reps, lapses")
+          .eq("user_id", userId)
+          .eq("provider", provider)
+          .eq("question_id", questionId)
+          .maybeSingle();
+        const currentStability = (existing?.stability as number) ?? 1.0;
+        const reps = ((existing?.reps as number) ?? 0) + 1;
+        const lapses = grade === 1 ? ((existing?.lapses as number) ?? 0) + 1 : ((existing?.lapses as number) ?? 0);
+        let newStability = currentStability;
+        let daysUntilNext = 1;
+        if (grade === 1) { newStability = Math.max(currentStability * 0.5, 0.5); daysUntilNext = 1; }
+        else if (grade === 2) { newStability = currentStability * 0.8; daysUntilNext = Math.max(newStability, 1); }
+        else if (grade === 3) { daysUntilNext = Math.max(currentStability, 1); }
+        else { newStability = currentStability * 1.3; daysUntilNext = Math.max(newStability * 1.3, 1); }
+        const nextDue = new Date();
+        nextDue.setDate(nextDue.getDate() + Math.round(daysUntilNext));
+        const state = grade === 1 ? "relearning" : reps > 2 ? "review" : "learning";
+        const { error } = await supabase
+          .from("ai_university_fsrs_cards")
+          .upsert({
+            user_id: userId,
+            provider,
+            question_id: questionId,
+            due_date: nextDue.toISOString(),
+            stability: newStability,
+            reps,
+            lapses,
+            last_review: new Date().toISOString(),
+            state,
+          }, { onConflict: "user_id,provider,question_id" });
+        if (error) return json({ error: error.message }, 500);
+        return json({ success: true, next_due: nextDue.toISOString(), stability: newStability });
+      }
+
+      // ── AI大学 v2: Memory Agent ──────────────────────────────────────────
+      case "learner.update_profile": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const sessionSummary = String(body.session_summary ?? "");
+        const scores = body.scores ?? [];
+        const claudeKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+        if (!claudeKey) return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
+        const prompt = `学習セッションのデータから構造化プロファイルを抽出してください。
+セッションサマリー: ${sessionSummary}
+スコアデータ: ${JSON.stringify(scores).slice(0, 2000)}
+弱点プロバイダー・得意プロバイダー・学習スタイルをJSONで返してください。
+形式: {"weak_providers":["..."],"strong_providers":["..."],"preferred_style":"visual|text|voice","insights":"..."}`;
+        const claudeResp = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": claudeKey,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 512,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        const claudeData = await claudeResp.json() as Record<string, unknown>;
+        const rawText = (claudeData.content as Array<{text: string}>)?.[0]?.text ?? "{}";
+        let profileJson: Record<string, unknown> = {};
+        try { profileJson = JSON.parse(rawText.replace(/```json\n?|\n?```/g, "").trim()); } catch { /* malformed */ }
+        const { data: existingProfile } = await supabase
+          .from("ai_university_learner_profiles")
+          .select("total_sessions")
+          .eq("user_id", userId)
+          .maybeSingle();
+        await supabase.from("ai_university_learner_profiles").upsert({
+          user_id: userId,
+          weak_providers: profileJson.weak_providers ?? [],
+          strong_providers: profileJson.strong_providers ?? [],
+          preferred_style: profileJson.preferred_style ?? "text",
+          profile_json: profileJson,
+          total_sessions: ((existingProfile?.total_sessions as number) ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id" });
+        return json({ success: true, profile_json: profileJson });
+      }
+
+      // ── AI大学 v2: Hybrid LLM ────────────────────────────────────────────
+      case "quiz.evaluate": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const question = String(body.question ?? "");
+        const userAnswer = String(body.user_answer ?? "");
+        const correctAnswer = String(body.correct_answer ?? "");
+        const groqKey = Deno.env.get("GROQ_API_KEY") ?? "";
+        if (!groqKey) return json({ error: "GROQ_API_KEY not configured" }, 503);
+        const groqResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${groqKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            max_tokens: 100,
+            temperature: 0,
+            messages: [{
+              role: "user",
+              content: `問題: ${question}\n模範回答: ${correctAnswer}\nユーザー回答: ${userAnswer}\n\n評価: {"result":"correct|incorrect|partial","confidence":0-100}`,
+            }],
+            response_format: { type: "json_object" },
+          }),
+        }).catch(() => null);
+        if (!groqResp || !groqResp.ok) {
+          const isCorrect = userAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
+          return json({ success: true, result: isCorrect ? "correct" : "incorrect", confidence: 100, fallback: true });
+        }
+        const groqData = await groqResp.json() as Record<string, unknown>;
+        const raw = (groqData.choices as Array<{message: {content: string}}>)?.[0]?.message?.content ?? '{"result":"incorrect","confidence":0}';
+        let evaluation: Record<string, unknown> = { result: "incorrect", confidence: 0 };
+        try { evaluation = JSON.parse(raw); } catch { /* use default */ }
+        return json({ success: true, ...evaluation });
+      }
+
+      case "quiz.explain": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const question = String(body.question ?? "");
+        const userAnswer = String(body.user_answer ?? "");
+        const correctAnswer = String(body.correct_answer ?? "");
+        const provider = String(body.provider ?? "");
+        const claudeKey = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
+        if (!claudeKey) return json({ error: "ANTHROPIC_API_KEY not configured" }, 503);
+        const prompt = `${provider} についての問題で不正解でした。わかりやすく詳細に解説してください。
+問題: ${question}
+正解: ${correctAnswer}
+ユーザーの回答: ${userAnswer}
+なぜ正解がそうなるのか、関連する背景知識も含めて日本語で300字以内で説明してください。`;
+        const claudeResp2 = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": claudeKey,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 512,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        const claudeData2 = await claudeResp2.json() as Record<string, unknown>;
+        const explanation = (claudeData2.content as Array<{text: string}>)?.[0]?.text ?? "解説を生成できませんでした。";
+        return json({ success: true, explanation });
+      }
+
+      // ── AI大学 v2: Voice ─────────────────────────────────────────────────
+      case "voice.tts": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const text = String(body.text ?? "").slice(0, 5000);
+        const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
+        const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
+        if (!elevenKey) return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
+        const ttsResp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: "POST",
+          headers: { "xi-api-key": elevenKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        });
+        if (!ttsResp.ok) {
+          const errText = await ttsResp.text();
+          return json({ error: `ElevenLabs error: ${errText}` }, 502);
+        }
+        const audioBuffer = await ttsResp.arrayBuffer();
+        const bytes = new Uint8Array(audioBuffer);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const base64Audio = btoa(binary);
+        return json({ success: true, audio_base64: base64Audio, content_type: "audio/mpeg" });
+      }
+
+      case "voice.stt": {
+        if (!userId) return json({ error: "Unauthorized" }, 401);
+        const audioBase64 = String(body.audio_base64 ?? "");
+        const language = String(body.language ?? "ja");
+        const deepgramKey = Deno.env.get("DEEPGRAM_API_KEY") ?? "";
+        if (!deepgramKey) return json({ error: "DEEPGRAM_API_KEY not configured" }, 503);
+        let audioBytes: Uint8Array;
+        try {
+          audioBytes = Uint8Array.from(atob(audioBase64), (c) => c.charCodeAt(0));
+        } catch {
+          return json({ error: "Invalid base64 audio data" }, 400);
+        }
+        const dgResp = await fetch(
+          `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
+          {
+            method: "POST",
+            headers: { "Authorization": `Token ${deepgramKey}`, "Content-Type": "audio/webm" },
+            body: audioBytes,
+          },
+        );
+        if (!dgResp.ok) {
+          const errText = await dgResp.text();
+          return json({ error: `Deepgram error: ${errText}` }, 502);
+        }
+        const dgData = await dgResp.json() as Record<string, unknown>;
+        const transcript = ((dgData.results as Record<string, unknown>)?.channels as Array<Record<string, unknown>>)?.[0]?.alternatives as Array<{transcript: string}>;
+        const transcriptText = transcript?.[0]?.transcript ?? "";
+        return json({ success: true, transcript: transcriptText });
       }
 
       default:
