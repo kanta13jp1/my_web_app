@@ -100,7 +100,17 @@ CREATE TABLE IF NOT EXISTS abstinence_slips (
 現状は SharedPreferences (ローカル) に保存しているが、
 パターン分析にはサーバーサイドに移行する必要がある。
 
-## 実装担当
+## 実装状況 (2026-04-16 更新)
+
+| タスク | 担当 | 状態 |
+|--------|------|------|
+| `abstinence_slips` テーブル | Windows版 | ✅ 完了 (`20260411002400_create_abstinence_slips.sql`) |
+| 思考妨害パターン診断UI (4質問) | VSCode版 | ✅ 完了 (`thought_interrupt_diagnosis_page.dart` + LP#78) |
+| リアルタイム介入ウィジェット | VSCode版 | ✅ 完了 (`lib/widgets/thought_interrupt_quick_widget.dart`) |
+| 週次スリップパターンレポート | VSCode版 | ✅ 完了 (`weekly_slip_report_page.dart` + LP#79) |
+| AI 介入提案 (slip パターン渡し) | Web版 | 🟢 低優先度・未実装 |
+
+## 実装担当 (参考)
 
 | タスク | 担当 |
 |--------|------|
