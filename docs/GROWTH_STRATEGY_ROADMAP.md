@@ -9137,3 +9137,28 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | cross-instance-pr voice_ai_chat_ui → VSCode版実装 | VSCode版 |
 | 🟡 | Rule 10 docs 全件分析 | PS版 |
 | 🟡 | 第63弾以降 (41社タブ・34社) EN版作成+投稿 | PS版 |
+
+### PS版セッション記録 #87 (2026-04-17)
+
+**担当**: PS版 (Rule 10 docs修正)
+
+### 完了タスク
+
+1. **Rule 10 docs修正 3件** (5ddce941)
+   - `CI_CD_GUIDE.md`: "17ワークフロー" → "25ワークフロー"
+   - `BACKEND_MIGRATION_PLAN.md`: "241本完全実施済み" → "241本計画→15本本番デプロイ済み"
+   - `GEMINI_MIGRATION_GUIDE.md`: "ステータス: 実装待ち" → "✅ 完了 (2026年)"
+
+2. **memory更新**: PS#84〜86セッション記録・rate limit教訓保存
+
+### 残タスク
+- 第59・60弾 Qiita リトライ (2026-04-18以降)
+- 第63弾以降: `2026-04-13-ai-university-41-providers-tabs.md` + EN作成
+- `naughty-noether-010feb` worktree 手動削除 (Permission denied)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60弾 Qiita リトライ (翌日 2026-04-18以降) | PS版 |
+| 🟡 | 第63弾以降 EN版作成+投稿 | PS版 |
+| 🟡 | Rule 17 GH Actions確認 | PS版 |
