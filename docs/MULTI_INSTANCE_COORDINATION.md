@@ -13,7 +13,7 @@
 | **VSCode版** | `lib/` (Dart/Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` / `deno lint 0エラー` |
 | **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / クォータ監視管理 / MCP設定管理 / 全ブランチ CI 監視 |
-| **WEB版 (復活)** | `docs/blog-drafts/` + `docs/research/` | Rule 21 NotebookLM Deep Research 専任 / ブログ英語翻訳・品質レビュー / AI大学コンテンツ調査 |
+| **WEB版** | `docs/blog-drafts/` + `docs/research/` | WebSearch/WebFetch **直接リサーチ専任** (notebooklm CLI 不可) / GitHub MCP PR・Issue管理 / ブログ英語翻訳・品質レビュー / **Opus 4.7** でアーキテクチャレビュー |
 
 ### フォールバック AI ツール (Claude 制限時のみ)
 

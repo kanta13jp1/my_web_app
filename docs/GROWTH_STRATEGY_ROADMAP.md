@@ -9110,3 +9110,38 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 1. 🔴 **frosty-hamilton PRマージ確認**: バージョンチェックスクリプト等をmainに統合
 2. 🟡 **AI大学65社目**: Poolside AI (コーディング特化) / Scale AI 評価
 3. 🟢 **notebooklm Master Brain更新**: Opus 4.7対応内容を蓄積
+
+---
+
+## Windowsアプリ版#Opus47-2 セッション記録 (2026-04-17)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **Rule 22 (バージョンチェック)**: 変更なし。claude-opus-4-7台帳確認 ✅ | ✅ |
+| 2 | **Rule 10 docs修正**: INSTANCE_CONFIG "(明日)" → "(2026-04-19 退役)" / MULTI_INSTANCE_COORDINATION WEB版行修正 | ✅ |
+| 3 | **cross-instance-pr処理**: 20260417_opus47_multi_instance_update.md — MULTI_INSTANCE_COORDINATION直接修正で完了 | ✅ |
+| 4 | **AI大学 66社達成**: Scale AI (data/EGP/Scale Labs) + Poolside AI (Malibu/Point コーディング特化LLM) 追加 | ✅ |
+| 5 | **COMPRESSED_PROMPT_V3更新**: 64社→66社 (scale_ai, poolside追加) | ✅ |
+
+### 新規ファイル
+
+- `supabase/migrations/20260417090000_seed_scale_ai_ai_university.sql` — Scale AI (EGP/Evaluation/Labs)
+- `supabase/migrations/20260417091000_seed_poolside_ai_university.sql` — Poolside (Malibu/Point, AWS Bedrock)
+
+### 修正ファイル
+
+- `docs/INSTANCE_CONFIG.md:255` — `(明日)` 削除 → `2026-04-19 退役`
+- `docs/MULTI_INSTANCE_COORDINATION.md:16` — WEB版行 notebooklm不可・Opus 4.7明記
+- `.github/COMPRESSED_PROMPT_V3.md` — プロバイダーリスト 64→66社
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **221** / AI大学: **66社** / LP: 126のこと
+
+### 次回優先タスク (Win版)
+
+1. 🟡 **AI大学67社目以降**: Harvey AI (法律特化) / Typeface (企業コンテンツAI) / Writer standalone API を評価
+2. 🟢 **notebooklm Master Brain更新**: 今セッション追加プロバイダー情報を蓄積
+3. 🟢 **Haiku 3廃止対応確認** (2026-04-19): EFに参照なし確認済みだが念のため当日再確認

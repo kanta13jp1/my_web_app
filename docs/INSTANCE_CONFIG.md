@@ -252,7 +252,7 @@ git log --oneline -5
 | `claude-sonnet-4-6` | ✅ 現役 | **日常の実装 (デフォルト推奨)** + ultrathink | 1M tokens | 64K | Extended Thinking ✅ Adaptive Thinking ✅ |
 | `claude-haiku-4-5-20251001` | ✅ 現役 | 定型ルーティン・クイックチェック | 200K tokens | 64K | 高速・低コスト。Extended Thinking ✅ |
 | `claude-opus-4-6` | ⚠️ レガシー | 移行対象 → Opus 4.7 を使用 | 1M tokens | 128K | 2026年中サポート継続 |
-| `claude-3-haiku-20240307` | ❌ **廃止** | **2026-04-19 (明日) 退役** | — | — | **即座に Haiku 4.5 へ移行** |
+| `claude-3-haiku-20240307` | ❌ **廃止** | **2026-04-19 退役** | — | — | **即座に Haiku 4.5 へ移行** |
 
 > **⚠️ 重要: Extended Thinking (ultrathink) は Opus 4.7 では動作しない。**
 > ultrathink が必要な場面は `claude-sonnet-4-6` を使用すること。
