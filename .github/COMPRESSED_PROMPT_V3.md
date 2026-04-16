@@ -336,7 +336,7 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 | ワークフロー | トリガー | 特記事項 |
 | --- | --- | --- |
 | `ci.yml` | PR + push (staging/develop) ※main は deploy-prod が workflow_call で実行 | flutter analyze **強制** + deno lint **強制** + EF未分類警告 |
-| `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release |
+| `deploy-prod.yml` | push → main | CI再利用 + バージョン自動生成 + GitHub Release / ⚠️ 2026-04-16: deno lint(no-unused-vars) + dart format(139files) + trailing_commas(5件) → PS版#本セッションで修正済み ✅ |
 | `deploy-staging.yml` | push → staging | CI再利用 + staging channel デプロイ |
 | `deploy-dev.yml` | push → develop | CI再利用 + dev channel デプロイ |
 | `daily-report.yml` | 07:30 JST 毎日 | Supabase API + X投稿 + 競合モニタリング (Claude Scheduleの1.5時間前) |
@@ -462,6 +462,7 @@ web/sitemap.xml          # URL マップ
 
 | タスク / 課題 | 担当 | 優先度 | 詳細 |
 | --- | --- | --- | --- |
+| **PR #366: frosty-hamilton マージ** | PS版 | 🟡中 | Voice AI chat + conversation_messages migration + check_versions.py。CLAUDE.md / CV3 / ai-assistant.ts でコンフリクトあり → 手動解決後マージ |
 | **モバイルアプリ (iOS/Android) 対応** | VSCode版 | 🟡中 | Flutter モバイルビルド環境の整備と動作検証 |
 | **Notion API 連携のメモリ最適化** | Web版 | 🟡中 | `growth-import-preview` EF の再帰ブロック取得時のメモリ使用量最適化 |
 | **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 56社目以降のプロバイダー（Cohere standalone API, Voyage AI 等）の追加評価 |

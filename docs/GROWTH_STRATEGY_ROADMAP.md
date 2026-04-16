@@ -6431,6 +6431,7 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
   - CLAUDE.md 実装ロードマップ: 全行を完了ステータスに修正
 
 ### 技術的発見
+
 - Write tool で絵文字多用ファイルを書くと 1 byte になる silent fail → `wc -c` で検証必須
 - TS2367: literal type と `""` の比較は `: string` アノテーションで回避
 
@@ -6542,7 +6543,7 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 ### T-1 累積実績 (2026-04-12)
 
 | 弾 | 記事 | Qiita | dev.to |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 第1弾 | CS自動化 | ✅ | ✅ |
 | 第2弾 | 通知センター | ✅ | ✅ |
 | 第3弾 | notification-center | ✅ | ✅ |
@@ -6938,7 +6939,7 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - LP: 130のこと (Baidu PR未処理で実質131のこと予定)
 - ページ数: 215 (brain_dump / project_gantt / business_card_manager / family_calendar 追加)
 - EF deployed: 99本 (Tier1上限)
-- AI大学プロバイダー UI: 17社対応 (gemini_university_v2_page.dart _providerMeta)
+- AI大学プロバイダー UI: 17社対応 (gemini_university_v2_page.dart_providerMeta)
 - ユーザー数: 4人
 
 ### 2026-04-16 セッション実装済み (全7タスク完了)
@@ -6967,7 +6968,7 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 - **スキップ理由**: Step 3 ブラウザ表示確認後に design-skills サブエージェント呼び出しとして計画。本セッションでは lint 0 エラー達成を優先
 - **次セッション対応**: `/design-skills` ページまたはホーム画面のデザイン監査を実施
 
-#### Step 5: docs/ 全件分析 ✅ 
+#### Step 5: docs/ 全件分析 ✅
 
 - **実施**: docs/ の 5 主要ファイルを分析 (CICD_SETUP_GUIDE, CONTRIBUTING, MULTI_INSTANCE_COORDINATION, README, DESIGN_TOOLING_SETUP)
 - **結果**: ✅ 全ファイル最新・矛盾なし
@@ -7094,6 +7095,7 @@ agent-hub POST {action:runtime_cycle} ← agent-runtime-cycle
 ## VSCode版 #60 (2026-04-12) — EF Tier2全統合: mega-hub 5本でaction分岐
 
 ### 目標
+
 Supabase EF 上限99本の中で、Tier2の全150本をTier1デプロイ済みにする。
 action分岐パターンで5つのmega-hubに統合。
 
@@ -7128,6 +7130,7 @@ action分岐パターンで5つのmega-hubに統合。
 ## VSCode版 #61 (2026-04-12) — EFハードキャップ50本 + Tier1/Tier2廃止
 
 ### 目標
+
 EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15hubで管理。
 
 ### 実施内容
@@ -7164,8 +7167,9 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - スケジュールヘルス: ✅ 正常 (24時間で7コミット確認)
 
 **競合動向サマリー**:
+
 | 競合 | 更新内容 | 自分株式会社への影響 |
-|-----|---------|-------------------|
+| ----- | --------- | ------------------- |
 | Notion | 4/10タブカスタマイズ・4/9カバーアート・4/6デスクトップ音声入力・3.4ダッシュボードビュー | パーソナルダッシュボード機能の実装を検討 |
 | Slack | MCP サーバー公開 (Claude/Cursor 対応)・Semantic Search Pro 拡張 | tools-hub に send-to-slack アクション追加の好機 |
 | GitHub | Copilot Autopilot Public Preview・ネスト型サブエージェント・Rubber Duck (+75%推論) | ai-assistant EF の品質向上で対抗 |
@@ -7184,7 +7188,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | lifestyle-hub/index.ts 実装 (29本Tier2統合: fitness/recipe/travel/IoT/notification等) | ✅ |
 | 2 | PS版#44 rebase + hub endpoint へのDart呼び出し修正 | ✅ |
 | 3 | viral_ad_campaign_page: viral-growth-engine/viral-ad-generator → growth-hub | ✅ |
@@ -7208,7 +7212,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | get-support-tickets: reply-support-request の POST ロジックを吸収 | ✅ |
 | 2 | get-public-memo-ogp: get-public-memo-preview の JSON SEO メタデータを吸収 (?action=preview) | ✅ |
 | 3 | development-achievements: development-stats の get_stats アクションを吸収 | ✅ |
@@ -7234,7 +7238,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | CORS修正: growth-referral → growth-hub (referral.list) × 4ファイル | ✅ |
 | 2 | CORS修正: growth-acquisition-signal → growth-hub (acquisition.track) × 2ファイル | ✅ |
 | 3 | CORS修正: feature-request-manager → core-hub (feedback.submit) | ✅ |
@@ -7261,7 +7265,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | PS版#45完了確認: 廃止EF→hub Dart移行12ファイル既コミット済み | ✅ |
 | 2 | referral_page.dart / growth_mission_service.dart 既修正確認 | ✅ |
 | 3 | flutter analyze 0エラー確認 | ✅ |
@@ -7284,7 +7288,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Dart EF移行: viral_ad_campaign_page.dart (growth-hub対応) | ✅ |
 | 2 | Dart EF移行: admin_analytics_page.dart (8箇所hub対応) | ✅ |
 | 3 | Dart EF移行: competitor_monitoring_card.dart (admin-hub対応) | ✅ |
@@ -7309,7 +7313,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 追記: Reka AI 20社目追加完了 (同セッション)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 9 | AI大学20社目: Reka AI (動画理解・OpenAI互換API) migration seed | ✅ |
 | 10 | cross-instance-pr: VSCode版向けReka UI追加依頼 | ✅ |
 | 11 | docs Rule #10: 3件数値修正 (EF 250本→15本/Tier廃止/workflow 17→18本) | ✅ |
@@ -7321,7 +7325,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | AI大学21社目: Aleph Alpha (欧州AI主権・GDPR準拠・AtMan説明可能AI) migration seed | ✅ |
 | 2 | AI大学22社目: Together AI (200+OSSモデル・Fine-tuning・OpenAI互換) migration seed | ✅ |
 | 3 | cross-instance-pr 2件: aleph_alpha_provider_ui / together_ai_provider_ui (VSCode版待ち) | ✅ |
@@ -7344,7 +7348,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | AI大学23社目: Fireworks AI (高速推論・Function Calling・FLUX画像生成) migration seed | ✅ |
 | 2 | AI大学24社目: Replicate (FLUX/SD/Whisper/MusicGen・モデルホスティング) migration seed | ✅ |
 | 3 | cross-instance-pr 2件: fireworks_ai_provider_ui / replicate_provider_ui (VSCode版待ち) | ✅ |
@@ -7367,7 +7371,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 作業内容
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | AI大学25社目: Writer (Palmyra LLM・Knowledge Graph・ビジネスAI特化) migration seed | ✅ |
 | 2 | AI大学26社目: AI21 Labs (Jamba 256K・SSM+Transformer・MoE) migration seed | ✅ |
 | 3 | cross-instance-pr 2件: writer_provider_ui / ai21_provider_ui (VSCode版待ち) | ✅ |
@@ -7393,7 +7397,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: CORS全解消 — 廃止EF 10本→hub移行
 
 | 廃止EF | 移行先 | アクション |
-|--------|--------|-----------|
+| -------- | -------- | ----------- |
 | weather-widget | tools-hub | get_weather |
 | wiki-database | enterprise-hub | wiki.* |
 | voice-memo-transcriber | media-hub | transcribe.* |
@@ -7424,7 +7428,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: Rule17 CI/CDビルド最適化 + T-1第8弾記事作成 + blog-publish.yml修復
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | ci.yml: Tier1/Tier2廃止→ハードキャップ50本チェック (continue-on-error: false) | ✅ |
 | 2 | T-1第8弾: `docs/blog-drafts/2026-04-12-ai-university-20-providers-hub-architecture.md` 作成 | ✅ |
 | 3 | schedule-hub: `blog.auto_publish` action追加 + publicActions認証バイパス修正 | ✅ |
@@ -7451,7 +7455,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 Voyage AI・ElevenLabs 追加 (27・28社目)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Voyage AI (voyage) migration: `20260412018000_seed_voyage_ai_university.sql` | ✅ |
 | 2 | ElevenLabs (elevenlabs) migration: `20260412019000_seed_elevenlabs_ai_university.sql` | ✅ |
 | 3 | cross-instance-pr: `20260412_voyage_provider_ui.md` (VSCode版向けUI追加依頼) | ✅ |
@@ -7491,7 +7495,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 OpenRouter・Ollama 追加 (29・30社目)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | OpenRouter (openrouter) migration: `20260412020000_seed_openrouter_ai_university.sql` | ✅ |
 | 2 | Ollama (ollama) migration: `20260412021000_seed_ollama_ai_university.sql` | ✅ |
 | 3 | cross-instance-pr: `20260412_openrouter_provider_ui.md` | ✅ |
@@ -7531,7 +7535,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 Runway・Suno AI 追加 (31・32社目) — 動画・音楽モダリティ解禁
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Runway (runway) migration: `20260412022000_seed_runway_ai_university.sql` | ✅ |
 | 2 | Suno AI (suno) migration: `20260412023000_seed_suno_ai_university.sql` | ✅ |
 | 3 | cross-instance-pr: `20260412_runway_provider_ui.md` | ✅ |
@@ -7564,7 +7568,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: T-1 第9・10弾投稿 + blog-publish.yml Step5修正
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | T-1第9弾: `docs/blog-drafts/2026-04-12-cors-fix-ef-hub-migration.md` 作成 | ✅ |
 | 2 | T-1第9弾: Qiita/dev.to 投稿成功 | ✅ |
 | 3 | T-1第10弾: `docs/blog-drafts/2026-04-09-pomodoro-focus-timer.md` Qiita/dev.to 投稿成功 | ✅ |
@@ -7599,7 +7603,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: T-1 第11弾投稿 + wrap-up完了
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | MEMORY.md index更新 (feedback_success/project_20260412_ps47) | ✅ |
 | 2 | project_20260412_ps47.md 作成 | ✅ |
 | 3 | T-1第11弾: `docs/blog-drafts/2026-04-11-personal-dashboard-notion-competitor.md` dispatch | ✅ |
@@ -7630,7 +7634,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 Ideogram・Udio 追加 (33・34社目)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Ideogram (ideogram) migration: `20260412026000_seed_ideogram_ai_university.sql` | ✅ |
 | 2 | Udio (udio) migration: `20260412027000_seed_udio_ai_university.sql` | ✅ |
 | 3 | cross-instance-pr: `20260412_ideogram_provider_ui.md` | ✅ |
@@ -7655,7 +7659,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: docs Rule #10 + COMPRESSED_PROMPT 整合性修正 (migration追加一時停止)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 25件 pending 確認 → migration追加を一時停止 | ✅ |
 | 2 | docs/MULTI_INSTANCE_COORDINATION.md: 211ページ→215ページ修正 | ✅ |
 | 3 | COMPRESSED_PROMPT_V3.md: Rule7「EF上限99本」→「ハードキャップ50本」に修正 | ✅ |
@@ -7680,7 +7684,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: T-1 連続投稿10本 (第12〜21弾) + Rule17確認
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Rule17: 全ワークフロー健全性確認 (infra/ai-university/edge-audit 全て成功) | ✅ |
 | 2 | T-1第12弾: dns-domain-manager.md Qiita/dev.to投稿 | ✅ |
 | 3 | T-1第13弾: budget-ai-advisor.md Qiita/dev.to投稿 | ✅ |
@@ -7727,7 +7731,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 pika + assemblyai 追加 (37-38社目)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 0件確認 (luma+kling UI処理済み) → migration続行 | ✅ |
 | 2 | `pika` (Pika Labs) seed migration 作成 (032000) | ✅ |
 | 3 | `assemblyai` (AssemblyAI) seed migration 作成 (033000) | ✅ |
@@ -7753,7 +7757,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 luma + kling 追加 (35-36社目) — migration再開
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 0件確認 → migration再開判断 | ✅ |
 | 2 | `luma` (Luma AI) seed migration 作成 (030000) | ✅ |
 | 3 | `kling` (Kling AI) seed migration 作成 (031000) | ✅ |
@@ -7778,7 +7782,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: docs Rule#10 全件クリーン (technical 4件 + user-docs 1件アーカイブ化)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 25件 pending 確認 → migration追加一時停止継続 | ✅ |
 | 2 | docs/technical/VIRAL_GROWTH / THOUGHT_INTERRUPT 確認 → 現役ドキュメント・クリーン | ✅ |
 | 3 | `BACKEND_MIGRATION_ROADMAP_DETAILED.md` アーカイブノーティス追加 | ✅ |
@@ -7791,7 +7795,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### docs/technical/ 全件確認完了
 
 | ファイル | 状態 |
-|---------|------|
+| --------- | ------ |
 | BACKEND_MIGRATION_PLAN.md | ✅ 既アーカイブ (#28) |
 | BACKEND_MIGRATION_ROADMAP_DETAILED.md | ✅ アーカイブ化 (#56) |
 | BRANCH_PROTECTION_SETUP.md | ✅ 現役 |
@@ -7824,7 +7828,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: docs Rule#10 (roadmaps/technical 3件アーカイブ化) + Rule#18 (AIモデル確認)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 25件 pending 確認 → migration追加一時停止継続 | ✅ |
 | 2 | `COMPETITOR_ANALYSIS_2025.md` アーカイブノーティス追加 | ✅ |
 | 3 | `BUSINESS_OPERATIONS_PLAN.md` アーカイブノーティス追加 | ✅ |
@@ -7849,7 +7853,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学次候補評価 (discovery mode) + docs全件鮮度確認
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 25件 pending 確認 → migration追加一時停止継続 | ✅ |
 | 2 | ai-university-add-provider discovery mode: 新候補6社を3軸評価 | ✅ |
 | 3 | Luma AI(9/9) → Kling AI(8/9) → Pika(7/9) を次回追加推奨候補として確定 | ✅ |
@@ -7873,7 +7877,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: docs全件鮮度確認 (migration一時停止継続)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 25件 pending 確認 → migration追加一時停止継続 | ✅ |
 | 2 | docs/CONTRIBUTING.md 鮮度確認 → 問題なし | ✅ |
 | 3 | docs/DESIGN_TOOLING_SETUP.md 鮮度確認 → 問題なし | ✅ |
@@ -7898,7 +7902,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: T-1残り全投稿 + 新記事執筆 + actions/checkout v6対応 + blog-publish競合修正
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Rule17: 全ワークフロー健全性確認 | ✅ |
 | 2 | T-1残り6本バッチdispatch (2026-03-28/31系) | ✅ |
 | 3 | T-1新記事執筆: blog-publish自動化記事 (GitHub Actions × Supabase) | ✅ |
@@ -7933,7 +7937,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: 競馬AI自動予想パイプライン実装
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | DB migration: horse_races/horse_entries/horse_predictions/horse_results/horse_accuracy_stats | ✅ |
 | 2 | tools-hub EF: horseracing.today/predict_all/predictions/store_results/accuracy (8 actions更新) | ✅ |
 | 3 | scripts/fetch_horse_racing.py: netkeiba.com スクレイパー (stdlib only) | ✅ |
@@ -7963,7 +7967,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: Rule18 モデル確認 + growth-hub 実データ対応 + docs全件分析
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Rule18: ai-assistant EF claude-haiku-4-5-20251001 確認 (HEAD済み) | ✅ |
 | 2 | growth-hub roadmap.progress 実データ対応 (_applyAchievements + growth_plans テーブル) | ✅ |
 | 3 | deno lint 272ファイル 0エラー確認 | ✅ |
@@ -7990,7 +7994,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: T-1 6本dispatch + 新記事2本執筆・投稿 + Rule17確認
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | Rule17: 全ワークフロー健全性確認 | ✅ |
 | 2 | 3ドラフトにfrontmatter追加 (zenn-schedule/edge-functions-cicd/cvr-tracking) | ✅ |
 | 3 | T-1第29・30・31弾: 3ドラフト Qiita/dev.to投稿成功 | ✅ |
@@ -8027,7 +8031,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 twelve_labs 追加 (39社目) + cohere 既存コンテンツ更新
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 1件 (pika+assemblyai) 確認 → migration続行判断 | ✅ |
 | 2 | `twelve_labs` (Twelve Labs) seed migration 作成 (034000) | ✅ |
 | 3 | `cohere` 既登録確認 → ON CONFLICT DO UPDATE で既存コンテンツ更新 (035000) | ✅ |
@@ -8058,7 +8062,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | markdownlint 0エラー化 (MD060 compact + cross-instance-prs ignore) | ✅ |
 | 2 | Rule 10: docs/ 全件分析 → 全ファイルクリーン確認 | ✅ |
 | 3 | Rule 19: design-skills指摘8件修正 (AI大学ページ design token適用) | ✅ |
@@ -8094,7 +8098,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | 日次レポート生成 (`docs/daily-reports/2026-04-13.md`) | ✅ |
 | 2 | 競合モニタリングレポート生成 (`docs/competitor-reports/2026-04-13.md`) | ✅ |
 | 3 | viral-growth-engine `auto_post_now` 実行 | ⚠️ 接続ブロック |
@@ -8123,7 +8127,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了: AI大学 qwen + moonshot 追加 (40-41社目)
 
 | # | 作業内容 | 状態 |
-|---|---------|------|
+| --- | --------- | ------ |
 | 1 | cross-instance-prs 28件確認 → 全件 `done` → pending 0件 → migration続行 | ✅ |
 | 2 | `qwen` (Alibaba Cloud) seed migration 作成 (036000) | ✅ |
 | 3 | `moonshot` (Moonshot AI / Kimi) seed migration 作成 (037000) | ✅ |
@@ -8133,7 +8137,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 今セッションの追加プロバイダー
 
 | # | provider | 評価 | 特徴 |
-|---|---------|------|------|
+| --- | --------- | ------ | ------ |
 | 40 | `qwen` (Alibaba Cloud) | 7/9 | Qwen2.5-72B OSS最強クラス・DashScope API・29言語 |
 | 41 | `moonshot` (Moonshot AI) | 6/9 | Kimi 128K超長文・PDF直接処理・OpenAI互換 |
 
@@ -8155,7 +8159,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | ノートエディタ `/tabs` コマンド追加 (Notion 3.4 パリティ) | ✅ (af20e484) |
 | 2 | AI大学 Qwen + Moonshot UI 追加 (40-41社目) | ✅ (af20e484) |
 | 3 | tools-hub `slack.post` / `slack.search` アクション追加 | ✅ |
@@ -8183,7 +8187,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | deploy-prod SQLSTATE 42P10 修正 (UNIQUE制約追加 migration) | ✅ (eaf7f673) |
 | 2 | setup-python v5→v6 Node.js 24対応 (3ワークフロー) | ✅ (d9d16835) |
 | 3 | T-1第33弾: AI大学40社+deployfix記事 Qiita/dev.to 投稿 | ✅ 投稿完了 |
@@ -8191,10 +8195,12 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | docs Rule10 全件クリーン確認 (CICD_SETUP_GUIDE等) | ✅ |
 
 ### T-1 第33弾 投稿URL
+
 - Qiita: https://qiita.com/kanta13jp1/items/3c22818934c7f1beae25
 - dev.to: https://dev.to/kanta13jp1/aida-xue-40she-ti-zhi-wan-cheng-supabase-on-conflictben-fan-depuroizhang-hai-woxiu-zheng-sitahua-3ddh
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **41社** / LP: 126のこと
 - GitHub Actions ワークフロー: **18本** (全て正常稼働)
 - deploy-prod: **成功** (UNIQUE制約修正後)
@@ -8212,7 +8218,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule10 docs全件分析 (Explore委譲) — 3件の修正点を検出 | ✅ |
 | 2 | docs/README.md: 4インスタンス→3インスタンス修正 | ✅ (c7ecdd59) |
 | 3 | docs/CICD_SETUP_GUIDE.md: 18本→17本修正 | ✅ (c7ecdd59) |
@@ -8222,15 +8228,18 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 7 | COMPRESSED_PROMPT_V3: プロバイダー数 41→43社 更新 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **43社** / LP: 126のこと
 - GitHub Actions ワークフロー: **17本** (3インスタンス体制)
 - 次回migration番号帯: 040000〜
 
 ### 追加プロバイダー詳細
+
 - **Midjourney**: 画像生成AIの代名詞。V6/V7・Niji(アニメ)・Omni Reference機能。1600万人超の有料ユーザー
 - **Hailuo AI (MiniMax)**: 動画(Director Model/Subject Reference)+音声TTS+100万tokenLLM。国際API提供済み
 
 ### 次回Windows版優先タスク
+
 - 🟡 AI大学 44-45社目候補: 01.AI (Yi-series) / Adobe Firefly / Character.ai
 - 🟢 cross-instance-pr 処理後の確認 (VSCode版 UI更新後)
 - 🟢 Rule10 継続 (docs/cross-instance-prs/ 整理)
@@ -8242,7 +8251,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule10 docs全件分析 (Explore委譲) — 全クリーン | ✅ |
 | 2 | Discovery評価: Adobe Firefly(9/9)・01.AI(7/9) → 採用 / Character.ai(5/9) → 見送り | ✅ |
 | 3 | AI大学44社目: Adobe Firefly seed migration 追加 | ✅ (8ae886d0) |
@@ -8252,15 +8261,18 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 7 | cross-instance-pr: VSCode版(UI追加)・PS版(yml更新) へ依頼 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **45社** / LP: 126のこと
 - GitHub Actions ワークフロー: **17本**
 - 次回migration番号帯: 042000〜
 
 ### 追加プロバイダー詳細
+
 - **Adobe Firefly**: 商業利用安全な生成AI(スコア9/9)。Photoshop/Illustrator深統合。Firefly API公開済み
 - **01.AI (Yi)**: 李開復創業(スコア7/9)。OpenAI互換API。Yi-Lightning $0.14/100万token超低コスト
 
 ### 次回Windows版優先タスク
+
 - 🟡 AI大学 46-47社目候補: Coze (ByteDance) / Poe (Quora) / Apple Intelligence
 - 🟢 cross-instance-pr 処理後の確認 (VSCode版 UI更新後 → 45社UIを確認)
 - 🟢 Rule10 継続 (毎セッション)
@@ -8272,22 +8284,25 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | NAR EUC-JP 文字化け根本解消: `errors="replace"` 確定デコード | ✅ (c8f75a71) |
 | 2 | デバッグ print 文 3行を削除 | ✅ (c8f75a71) |
 | 3 | 前セッションの失敗コミット (9f3b4523) を正しく上書き | ✅ |
 
 ### 技術的詳細
+
 - **問題**: `raw.decode("euc-jp")` strict → UnicodeDecodeError → UTF-8 フォールスルー → CJK Extension A ゴミ文字
 - **解決**: `if "nar.netkeiba.com/race/" in url: return raw.decode("euc-jp", errors="replace")`
 - **URL識別**: `/race/` パスで shutuba/result ページを特定 (race list は `/top/` で UTF-8)
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: 45社 / LP: 126のこと
 - horse-racing-update.yml: 毎時00分 UTC 自動実行 (NAR 15場 + JRA 10場)
 - NAR文字化け: 根本解消済み (次回GH Actions実行でクリーンデータ生成)
 
 ### 次回VSCode版優先タスク
+
 - 🔴 AI大学 45社 UI追加 (cross-instance-pr pending確認)
 - 🟡 COMPRESSED_PROMPT_V3 数値同期 (AI大学45社・219ページ)
 - 🟢 horse_racing 次回GH Actions実行後の文字化け解消確認
@@ -8299,7 +8314,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule10 docs全件クリーン確認 | ✅ |
 | 2 | AI大学46社目: Coze (ByteDance) seed migration | ✅ (05df3b35) |
 | 3 | AI大学47社目: Apple Intelligence seed migration | ✅ (05df3b35) |
@@ -8307,10 +8322,12 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | cross-instance-pr: VSCode版+PS版へ依頼 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **47社** / LP: 126のこと
 - 次回migration番号帯: 044000〜
 
 ### 次回Windows版優先タスク
+
 - 🟡 AI大学 48-49社目候補: Samsung Galaxy AI / Inflection Pi / Databricks DBRX
 - 🟢 cross-instance-pr 処理確認
 
@@ -8319,7 +8336,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | 01AI・Coze migration の bash quoting artifact 修正 (2箇所+6箇所→`''`) | ✅ (8677971d) |
 | 2 | blog-publish.yml Step3/4/6/JobSummary のシェルクォーティング根本修正 | ✅ (c6c6d5d5) |
 | 3 | T-1第34弾 再dispatch・dev.to公開完了 | ✅ published |
@@ -8327,13 +8344,16 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | deploy-prod migration artifact 全件クリーン確認 | ✅ ALL CLEAN |
 
 ### 技術メモ
+
 - blog-publish.yml: `${{ steps.meta.outputs.title }}` を `run:` 内の bash 文字列に直接展開すると title 内の `"` が bash 構文エラーを引き起こす → `env:` ブロック経由で安全に渡す
 - SQL migration: bash quoting pattern `'"'"'` は PostgreSQL で SQLSTATE 42601 → `''` に置換
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: 47社 / LP: 126のこと
 
 ### 次回PowerShell版優先タスク
+
 - 🔴 deploy-prod in_progress 完了確認 → 失敗なら追加調査
 - 🟡 Rule 17 継続監視: ai-university-update.yml qwen/moonshot RSS追加検討
 - 🟢 T-1 第35弾記事候補: blog-publish.yml クォーティング修正の技術記事
@@ -8345,17 +8365,19 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule10 docs全件クリーン確認 | ✅ |
 | 2 | AI大学48社目: Databricks (DBRX) seed migration | ✅ (fbbdef0f) |
 | 3 | AI大学49社目: Samsung Galaxy AI seed migration | ✅ (fbbdef0f) |
 | 4 | CLAUDE.md + COMPRESSED_PROMPT_V3: 47→49社 | ✅ (fbbdef0f) |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **49社** / LP: 126のこと
 - 次回migration: 046000〜
 
 ### 次回Windows版優先タスク
+
 - 🔴 AI大学 50社目 (キリ番) — 候補: Anthropic系Tools/Cursor/Vercel AI SDK
 - 🟢 cross-instance-pr 処理確認
 
@@ -8366,16 +8388,18 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | cross-instance-prs 5件処理 (Win#58/#59/#61/#62/#63) | ✅ (a1e16945) |
 | 2 | AI大学 47社 UI完成: pika/assemblyai/twelve_labs/midjourney/hailuo/adobe_firefly/01ai/coze/apple | ✅ (a1e16945) |
-| 3 | gemini_university_v2_page.dart: _providerMeta + _Quiz + _fallback 各9エントリ追加 | ✅ |
+| 3 | gemini_university_v2_page.dart:_providerMeta + _Quiz +_fallback 各9エントリ追加 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **DB 52社 / UI 47社** / LP: 126のこと
 - cross-instance-prs: 0件 pending (5件 done 完了)
 
 ### 次回VSCode版優先タスク
+
 - 🔴 AI大学 48-52社 UI追加 (databricks/samsung/zhipu/character_ai/inflection — cross-instance-pr確認)
 - 🟡 Rule 19: UI改善 (design-skills + Figma MCP)
 - 🟢 Rule 16: 本番表示チェック
@@ -8387,7 +8411,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | AI大学53社目 Allen AI (OLMo-2) 追加 — Paul Allen設立・完全OSS・GPT-4クラス (7/9) | ✅ |
 | 2 | AI大学54社目 Naver (HyperCLOVA X) 追加 — 韓国最大・LINE日本展開・100言語 (6/9) | ✅ |
 | 3 | cross-instance-pr: allenai/naver UI追加をVSCode版に依頼 | ✅ |
@@ -8395,10 +8419,12 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | CLAUDE.md / COMPRESSED_PROMPT_V3.md: 52社→54社 更新 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / AI大学: **DB 54社 / UI 47社** (VSCode版が追加次第UI対応)
 - cross-instance-prs pending: 7件 (VSCode版向け: midjourney/hailuo/adobe_firefly/01ai/coze/apple/databricks/samsung/zhipu/character_ai/inflection/allenai/naver)
 
 ### 次回候補 (55社目以降)
+
 - TII Falcon (falcon): UAE政府支援・Falcon-180B商用無料 (5/9 — 様子見)
 - Kakao (KoGPT): 韓国SNS最大手・カカオトーク統合 (5/9)
 - LG AI Research (EXAONE): 韓国製造業AI・マルチモーダル (5/9)
@@ -8411,7 +8437,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule 17: 全ワークフロー健全確認 — 8本全て success/skipped | ✅ |
 | 2 | deploy-prod 24339196557: 10:44 JST 完全成功確認 (SQLSTATE 42601 危機解消) | ✅ |
 | 3 | T-1第35弾 EN記事作成: blog-publish automation (GitHub Actions × Supabase) | ✅ |
@@ -8420,14 +8446,17 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 6 | AI大学学習リマインダーワークフロー新規作成 (毎日09:00 JST) | ✅ |
 
 ### 成果物
+
 - dev.to T-1第35弾: https://dev.to/kanta13jp1/how-i-published-21-technical-articles-in-one-day-using-github-actions-supabase-8cm
 - .github/workflows/ai-university-reminder.yml: 新規追加 (notification-center send_study_reminders)
 
 ### 現状数値
+
 - EF: 15本 / AI大学: DB 54社 / UI 47社 / Workflows: 20本
 - T-1: 第35弾投稿完了
 
 ### 次回PS版優先タスク
+
 - T-1 第36弾: EF hub統合アーキテクチャ記事 (250本→15本への大移行) JP + EN
 - github-issue-fix.yml 最適化確認
 - ai-university-reminder ドライラン実行確認
@@ -8439,16 +8468,18 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | cross-instance-prs 7件処理 (Win#64-#67) | ✅ (9dd62054/411b0de6) |
 | 2 | AI大学 DB 54社 = UI 54社 完全同期達成 | ✅ |
 | 3 | 追加 UI: databricks/samsung/zhipu/character_ai/inflection/allenai/naver | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: **DB 54社 = UI 54社** / LP: 126のこと
 - cross-instance-prs: 1件 pending (horse_prev_race_ui — 馬カード前走情報表示)
 
 ### 次回VSCode版優先タスク
+
 - 🟡 horse_prev_race_ui 処理 (馬カードに prev_finish/age_sex/horse_weight 追加表示)
 - 🟢 Rule 16: 本番表示チェック (AI大学 54社タブ確認)
 - 🟢 Rule 19: UI改善
@@ -8460,17 +8491,19 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | cross-instance-pr 20260413_horse_prev_race_ui.md 処理 | ✅ (3f04deaa) |
 | 2 | 競馬予想ページ: 馬カードに前走情報・馬体重・年齢性別追加 | ✅ |
 | 3 | 前走着順の色分け (1着=金/2-3着=緑/4-5着=薄白/その他=グレー) | ✅ |
 | 4 | flutter analyze 0エラー確認 | ✅ |
 
 ### 現状数値
+
 - EF: 15本 / ページ数: 219 / AI大学: DB 54社 = UI 54社 / LP: 126のこと
 - cross-instance-prs: 0件 pending
 
 ### 次回VSCode版優先タスク
+
 - 🟢 Rule 16: 本番表示チェック (競馬予想ページ・AI大学 54社タブ確認)
 - 🟢 Rule 19: UI改善 (LP / ホーム)
 - 🟢 COMPRESSED_PROMPT_V3 数値同期確認
@@ -8482,21 +8515,24 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule 17: 8ワークフロー全て healthy 確認 | ✅ |
 | 2 | T-1第36弾 JP+EN記事作成: 3インスタンス並行Claude Code開発 | ✅ |
 | 3 | T-1第36弾 dispatch: Qiita+dev.to 同時投稿成功 (11:54 JST) | ✅ |
 | 4 | COMPRESSED_PROMPT_V3.md: 第34-36弾 投稿記録追加 | ✅ |
 
 ### 成果物
+
 - Qiita T-1第36弾: https://qiita.com/kanta13jp1/items/cd4ba18c7329700edf80
 - dev.to T-1第36弾: https://dev.to/kanta13jp1/running-3-parallel-claude-code-instances-to-triple-my-solo-dev-velocity-2g2p
 
 ### 現状数値
+
 - EF: 15本 / AI大学: DB 54社 / UI 54社 / Workflows: 20本
 - T-1: 第36弾投稿完了
 
 ### 次回PS版優先タスク
+
 - T-1 第37弾: AI大学54社達成マイルストーン記事 JP+EN
 - ai-university-reminder dry_run手動実行で対象ユーザー数確認
 - deploy-prod 安定性継続監視
@@ -8508,20 +8544,23 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | セッション再開: git status確認・VSCode版#70(競馬前走UI)完了確認 | ✅ |
 | 2 | AI大学55社目 Adept AI (ACT/Fuyu) migration追加 | ✅ |
 | 3 | CLAUDE.md / COMPRESSED_PROMPT_V3.md: 55社に更新 | ✅ |
 | 4 | cross-instance-pr: Adept AIのUI追加依頼 (VSCode版宛) | ✅ |
 
 ### 成果物
+
 - migration: `20260413052000_seed_adept_ai_university.sql`
 - cross-instance-pr: `docs/cross-instance-prs/20260413_adept_provider_ui.md`
 
 ### 現状数値
+
 - EF: 15本 / AI大学: DB 55社 / UI 54社 (Adept pending) / Workflows: 20本
 
 ### 次回Windows版優先タスク
+
 - AI大学 56社目以降: Kakao KoGPT / LG EXAONE / Cohere Command R+ 候補
 - Rule 10: docs/ 戦略ドキュメント確認 (毎セッション必須)
 
@@ -8532,7 +8571,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | blog-publish branches 4本バッチマージ (published:true更新) | ✅ |
 | 2 | T-1第37弾 JP+EN記事作成: AI大学54社達成マイルストーン | ✅ |
 | 3 | T-1第37弾 dispatch: Qiita+dev.to 同時投稿成功 (14:37 JST) | ✅ |
@@ -8540,15 +8579,18 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | ai-university-reminder dry_run確認: HTTP 200 eligible=0 (正常動作) | ✅ |
 
 ### 成果物
+
 - Qiita T-1第37弾: https://qiita.com/kanta13jp1/items/b5870d38756aa0a30897
 - dev.to T-1第37弾: https://dev.to/kanta13jp1/building-an-ai-learning-platform-with-54-providers-in-3-days-flutter-supabase-4263
 - ai-university-reminder: schedule-hub reminders.study に修正・正常稼働確認
 
 ### 現状数値
+
 - EF: 16本 (local-election-intelligence追加分) / AI大学: DB 54社 / Workflows: 20本
 - T-1: 第37弾投稿完了
 
 ### 次回PS版優先タスク
+
 - T-1 第38弾: 次の技術記事 (競馬AI自動予想パイプライン候補)
 - blog-publish branches 残34本のバッチマージ
 - Rule 17 継続監視
@@ -8560,21 +8602,24 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | Rule 17: 9ワークフロー全て healthy 確認 (WF failure handler skipped=正常) | ✅ |
 | 2 | blog-publish branch 1本マージ (T-1第37弾 published:true) | ✅ |
 | 3 | T-1第38弾 JP+EN記事作成: 競馬AI予想パイプライン | ✅ |
 | 4 | T-1第38弾 dispatch: Qiita+dev.to 同時投稿成功 (14:48 JST) | ✅ |
 
 ### 成果物
+
 - Qiita T-1第38弾: https://qiita.com/kanta13jp1/items/6ba7c8b2d333fe45487a
 - dev.to T-1第38弾: https://dev.to/kanta13jp1/building-a-fully-automated-horse-racing-ai-prediction-pipeline-with-flutter-supabase-22p4
 
 ### 現状数値
+
 - EF: 16本 / AI大学: DB 54社 / UI 54社 / Workflows: 20本
 - T-1: 第38弾投稿完了
 
 ### 次回PS版優先タスク
+
 - T-1 第39弾: GitHub Actions CI最適化記事 (25分→効率化) JP+EN
 - blog-publish 残ブランチ バッチマージ
 - Rule 17 継続監視
@@ -8586,7 +8631,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | AI大学55社目 Adept AI の UI表示設定・クイズ・フォールバック追加 | ✅ |
 | 2 | `AiUniversityHomeCard` を DB件数ベース表示へ更新し、旧「9社以上」表記を解消 | ✅ |
 | 3 | `user_manual_page.dart` のホーム最上部導線を AI大学バナー基準へ更新 | ✅ |
@@ -8594,11 +8639,13 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 | 5 | Rule 18: NotebookLM で最新AIニュース取得を試行 | ⚠️ `notebooklm login` 期限切れで未実施 |
 
 ### 現状数値
+
 - ページ数: 219
 - AI大学: DB 55社 / UI 55社
 - ホーム AI大学バナー: DB登録件数に追従する表示へ更新
 
 ### 次回VSCode版優先タスク
+
 - 🟢 Rule 16: 本番表示チェック (ホーム / AI大学 / ランキング)
 - 🟡 Rule 19: ホーム / AI大学バナーのモバイル余白と文言AB改善
 - 🟡 Rule 18: `notebooklm login` 後に最新AIニュース3件を ROADMAP へ反映
@@ -8610,7 +8657,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | `growth-import-preview` の Notion API ロジックを `notion_api.ts` に分離 | ✅ |
 | 2 | Notion ページ本文の再帰ブロック取得・pagination 対応を追加 | ✅ |
 | 3 | Notion API 429 rate limit 用 retry/backoff を追加 | ✅ |
@@ -8625,11 +8672,13 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - `markdownlint` 実行済み (pass)
 
 ### 現状メモ
+
 - Notion API preview はページ本文の1階層取得から、子ブロック再帰取得に拡張
 - 429 応答時は `Retry-After` 優先で待機し、再試行後に継続
 - 深すぎるネストとブロック総数は preview 応答性を守るため warnings 付きで打ち切る
 
 ### 次回VSCode版優先タスク
+
 - 🟢 Rule 16: import ページを含む本番表示チェック
 - 🟡 import preview warnings を UI 上でより読みやすく整理
 - 🟡 Rule 18: `notebooklm login` 後に最新AIニュース3件を ROADMAP へ反映
@@ -8641,7 +8690,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|------|------|
+| --- | ------ | ------ |
 | 1 | ユーザー実行の `notebooklm login` 成功を確認 | ✅ |
 | 2 | NotebookLM CLI で `list` / `use` / `source add-research` / `source list` を再試行 | ✅ |
 | 3 | NotebookLM notebook単位 RPC エラーを確認し、Rule 18 は公式ソース fallback で継続 | ✅ |
@@ -8694,7 +8743,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `.github/COMPRESSED_PROMPT_V3.md` を 100 行ずつ再読し、VSCode スコープと Rule 18 / Rule 19 / Master Brain 手順を再確認 | ✅ |
 | 2 | Master Brain memory を再確認し、NotebookLM 再認証後も notebook 単位 RPC エラーが残っている状況を引き継ぎ | ✅ |
 | 3 | `analyze-reality` / `ai-writing-assistant` / `enterprise-hub` / `guitar-recording-studio` の `gemini-2.0-flash` 呼び出しを `gemini-2.5-flash` に更新 | ✅ |
@@ -8726,7 +8775,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `.github/COMPRESSED_PROMPT_V3.md` を再読し、Rule 15 / Rule 16 / Rule 19 の今回優先事項を整理 | ✅ |
 | 2 | Master Brain memory と ROADMAP 末尾を確認し、前回の Gemini 更新後に続けるべき VSCode スコープ作業を確認 | ✅ |
 | 3 | `AiUniversityHomeCard` を新規ユーザー / 継続ユーザーで出し分ける CTA に再設計 | ✅ |
@@ -8758,7 +8807,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | `.github/COMPRESSED_PROMPT_V3.md` と ROADMAP 末尾を再確認し、VSCode 直近優先を `AI大学ランキング` UI 改善と判断 | ✅ |
 | 2 | `lib/pages/ai_university_ranking_page.dart` をホームカード準拠の Orange + Indigo ダークトークンへ全面刷新 | ✅ |
 | 3 | ヒーロー要約、メトリクスタイル、空状態、エラー状態、ランキングカードをモバイルでも崩れにくい構成へ再設計 | ✅ |
@@ -8786,7 +8835,6 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟡 AI大学ランキング画面の実データ表示を本番で確認し、必要なら余白・折返し・点数列の視認性を微調整
 - 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
 
-
 ## セッション記録 (2026-04-16 Gemini CLI)
 
 - ✅ markdownlint エラー修正 (docs/session-notes/ 配下)
@@ -8800,7 +8848,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 ### 完了タスク
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **タスク T-1 第11弾**: `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita + dev.to 投稿成功 | ✅ |
 | 2 | **タスク T-1 第12弾**: `2026-04-10-dns-domain-manager.md` → Qiita + dev.to 投稿成功 | ✅ |
 | 3 | **COMPRESSED_PROMPT_V3.md**: タスク T-1 セクション更新 (第11〜12弾追加) | ✅ |
@@ -8818,7 +8866,7 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 WebSearch と専門分析により、以下の候補を評価:
 
 | プロバイダー | 技術革新 | API可用 | 話題性 | 合計 | 決定 |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | **Core** | 3/3 | 3/3 | 3/3 | **9/9** | ✅ 追加 |
 | **Cerebras** | 3/3 | 2/3 | 3/3 | **8/9** | ✅ 追加 |
 | **Prover** | 3/3 | 2/3 | 2/3 | **7/9** | ✅ 追加 |
@@ -8853,7 +8901,6 @@ WebSearch と専門分析により、以下の候補を評価:
 2. 🟢 **Web/モバイル表示チェック** (Rule #16): https://my-web-app-b67f4.web.app/ の AI大学ランキング画面確認
 3. 🟢 **本番 DB migration 適用**: Supabase prod に `supabase db push` を実行し、Core/Cerebras/Prover を有効化
 
-
 ## VSCode��#77 �Z�p�L�����e (2026-04-16)
 
 ### ���{���e
@@ -8876,17 +8923,14 @@ WebSearch と専門分析により、以下の候補を評価:
 4. **UI���P�c�[���`�F�[�� (Rule #19)**: design-skills �T�u�G�[�W�F���g�� 1 �y�[�W�ȏ���P
 5. **�~�ω��������e�p�� (�^�X�N T-1)**: �c�� 47 �{�̋L�����e
 
-
-
-**Rule 15 �ǉ��L�^**: �V�K�v���o�C�_�[���� WebSearch + ��僊�T�[�`�ŕ]���BDarkbloom (�I���f�o�C�XAI/Mac���_) �𐄏��E���Z�b�V�����Œǉ������\��B
-
+**Rule 15 �ǉ��L�^**: �V�K�v���o�C�*�[���� WebSearch + ��僊�T�[�`�ŕ]���BDarkbloom (�I���f�o�C�XAI/Mac���*) �𐄏��E���Z�b�V�����Œǉ������\��B
 
 ## Windows版#63 セッション記録 (2026-04-16)
 
 ### 実施内容
 
 | # | 作業 | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **Rule 10**: docs/ 戦略ドキュメント全件分析 — 矛盾3件修正 | ✅ |
 | 2 | docs/README.md 最終更新日: 2026-04-12 → 2026-04-16 | ✅ |
 | 3 | docs/CICD_SETUP_GUIDE.md: ワークフロー数 17本 → 19本 に更新 | ✅ |
@@ -8899,7 +8943,7 @@ WebSearch と専門分析により、以下の候補を評価:
 ### 新規プロバイダー選定理由
 
 | プロバイダー | キー | 選定理由 |
-|---|---|---|
+| --- | --- | --- |
 | Lmsys / Chatbot Arena | lmsys | Chatbot Arenaで業界標準Eloベンチマーク運営・透明性・教育価値最高 |
 | Falcon (TII) | falcon_tii | UAE発・Apache 2.0完全オープン・ローカルデプロイ学習に最適 |
 
@@ -8908,13 +8952,12 @@ WebSearch と専門分析により、以下の候補を評価:
 - cross-instance-pr 発行: VSCode版に lmsys/falcon_tii の UI追加を依頼
 - docs/ 追加確認: CONTRIBUTING.md の Flutter SDK バージョン照合
 
-
 ## Windows版#64 セッション記録 (2026-04-16)
 
 ### 実施内容: 4インスタンス + Multi-AI体制 + クォータ監視 構築
 
 | # | 作業 | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **4インスタンス体制へ移行**: WEB版 (claude.ai/code) 復活 — ブログ/競合リサーチ担当 | ✅ |
 | 2 | **外部AI統合**: Gemini Code Assist + OpenAI CODEX + GitHub Copilot 役割定義 | ✅ |
 | 3 | COMPRESSED_PROMPT_V3.md: 3インスタンス→4インスタンス + AI振り分けフロー追加 | ✅ |
@@ -8926,7 +8969,7 @@ WebSearch と専門分析により、以下の候補を評価:
 ### Multi-AI 役割分担 (確定版)
 
 | ツール | 役割 | 閾値アラート |
-|---|---|---|
+| --- | --- | --- |
 | Claude Code VSCode版 | Flutter UI + EF + Rule16/19 | — |
 | Claude Code Windowsアプリ版 | docs + migrations + Rule10 | — |
 | Claude Code PowerShell版 | CI/CD + workflows + Rule17 | — |
@@ -8954,7 +8997,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **タスク T-1 第48〜52弾**: 5本 Qiita+dev.to 投稿成功 | ✅ |
 | 2 | **Rule 15 AI大学 新規2社追加**: Black Forest Labs + Liquid AI (58社→60社) | ✅ |
 | 3 | **Rule 8 本番確認 + CORS修正**: growth-acquisition-report→growth-hub 移行 | ✅ |
@@ -8963,7 +9006,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### AI大学 新規プロバイダー追加 (2026-04-16 VSCode版#78)
 
 | プロバイダー | 技術革新 | API可用 | 話題性 | 合計 | 決定 |
-|---|---|---|---|---|---|
+| --- | --- | --- | --- | --- | --- |
 | **Black Forest Labs** | 3/3 | 3/3 | 3/3 | **9/9** | ✅ 追加 |
 | **Liquid AI** | 3/3 | 2/3 | 2/3 | **7/9** | ✅ 追加 |
 | Hyperbolic | 2/3 | 3/3 | 2/3 | 7/9 | 📌 次点 |
@@ -8972,13 +9015,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - gradient:  → 、 →  (heroGradient 準拠)
 - boxShadow: インディゴグロー  追加 (AI機能識別)
--  →  (2箇所)
+- →  (2箇所)
 - accent:  →  (indigoLight → indigo 本値)
 
 ### CORS バグ修正
 
--  (deleted EF) への呼び出しを  に移行
--  L872 修正
+- (deleted EF) への呼び出しを  に移行
+- L872 修正
 
 ### 次回優先タスク
 
@@ -8994,7 +9037,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **4インスタンス体制確立**: WEB版 (claude.ai/code) 復活・役割分担明確化 | ✅ |
 | 2 | **フォールバック AI 統合**: Gemini Code Assist / CODEX CLI / GitHub Copilot (Claude 429時のみ) | ✅ |
 | 3 | **Rule 21 追加**: NotebookLM 必須活用 (3ファイル以上・URL分析・競合調査) | ✅ |
@@ -9019,7 +9062,6 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 3. 🟢 **WEB版インスタンス起動**: claude.ai/code でブログ英語翻訳 + NotebookLM Deep Research 開始
 4. 🟢 **horse-racing-update.yml 修正確認**: actions/checkout@v4→v6 適用済みか再確認
 
-
 ---
 
 ## Windowsアプリ版#本セッション セッション記録 (2026-04-17)
@@ -9027,7 +9069,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **バージョンチェック** (check_versions.py実行): バージョン変更なし、制約解消不要 | ✅ |
 | 2 | **Rule 10 docs全件分析**: README.md (3インスタンス→4インスタンス修正) / COMPRESSED_PROMPT_V3プロバイダーリスト重複修正 (black_forest_labs/liquid_ai重複削除 + lmsys/falcon_tii追加) | ✅ |
 | 3 | **AI大学 62社→64社**: Snowflake (Cortex AI + Arctic) + Cognition (Devin 自律AIエンジニア) 追加 | ✅ |
@@ -9077,7 +9119,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **claude-opus-4-7 対応**: tool-versions.md作成 + INSTANCE_CONFIG/CLAUDE.md既更新確認 | ✅ |
 | 2 | **ai-assistant EF**: DEFAULT_EXTENDED_THINKING_MODEL = 'claude-opus-4-7' 定数追加 | ✅ |
 | 3 | **COMPRESSED_PROMPT_V3.md**: Opus 4.6 → Opus 4.7 残存参照2箇所修正 (WEB版行・Rule21) | ✅ |
@@ -9088,7 +9130,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 重要: claude-opus-4-7 仕様まとめ
 
 | 項目 | 内容 |
-|------|------|
+| ------ | ------ |
 | **Extended Thinking** | ❌ 非対応 (ultrathink は Sonnet 4.6 で実行) |
 | **Adaptive Thinking** | ✅ 対応 |
 | **用途** | agentic coding・複雑設計・WEB版メインモデル |
@@ -9118,7 +9160,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **Rule 22 (バージョンチェック)**: 変更なし。claude-opus-4-7台帳確認 ✅ | ✅ |
 | 2 | **Rule 10 docs修正**: INSTANCE_CONFIG "(明日)" → "(2026-04-19 退役)" / MULTI_INSTANCE_COORDINATION WEB版行修正 | ✅ |
 | 3 | **cross-instance-pr処理**: 20260417_opus47_multi_instance_update.md — MULTI_INSTANCE_COORDINATION直接修正で完了 | ✅ |
@@ -9153,7 +9195,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **cross-instance-pr処理**: `20260416_quota_dashboard_ui.md` — admin-hub quota.* + QuotaDashboardPage 実装 | ✅ |
 | 2 | **Voice AI チャットページ**: `ai_assistant_chat_page.dart` — Web Speech API + my_agent.chat (Gemini) | ✅ |
 | 3 | **Rule 16**: Playwright MCP browser 不可 (セッション内クローズ) → スキップ | ⚠️ |
@@ -9181,3 +9223,38 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 2. 🟡 **Rule 16 再試行**: 次セッション開始時にPlaywright MCPでスクリーンショット確認
 3. 🟡 **AI大学 v2 Task 2-3**: ai-hub FSRS actions + learner.update_profile (Claude Sonnet)
 4. 🟢 **T-1 技術記事**: Voice AI チャット + quota dashboard 実装記録をQiita/dev.toへ投稿
+---
+
+## セッション記録: PowerShell版#本セッション (2026-04-17)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **Rule 22**: v2.1.111確認済み・INSTANCE_CONFIG.md更新完了 | ✅ |
+| 2 | **Rule 17**: 全20本チェック — 19本OK、deploy-staging.yml continue-on-error 4本(許容範囲) | ✅ |
+| 3 | **deploy-prod CI修正**: deno lint(no-unused-vars) + dart format(139files) + trailing_commas(5件) | ✅ 3コミット |
+| 4 | **quota-monitor調査**: 過去の失敗は古い式エラー — cd0f1ed5で修正済み。スケジュール実行は未確認(次回09:00 JST) | ✅ |
+| 5 | **frosty-hamilton PR作成**: PR #366 — Voice AI chat + conversation_messages migration + scripts/ | ✅ |
+| 6 | **T-1スケジュール確認**: 第52弾完了済み / 未投稿候補34本確認 / 次候補要frontmatter整備 | ✅ |
+
+### コミット
+
+- `fix: deno lint no-unused-vars — DEFAULT_EXTENDED_THINKING_MODEL`
+- `style: dart format 139ファイル一括フォーマット`
+- `fix: require_trailing_commas 5件 + dart format 3件`
+- `docs: INSTANCE_CONFIG.md v2.1.111対応`
+- `docs: COMPRESSED_PROMPT_V3.md deploy-prod修正記録 + PR#366追加`
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **223** / AI大学: **66社** / LP: 126のこと
+- T-1: **第52弾完了** / 未投稿候補: ~34本 (frontmatter整備が必要なものあり)
+
+### 次回優先タスク (PowerShell版)
+
+1. 🔴 **deploy-prod CI確認**: dart format/trailing_comma修正後のCI通過を確認
+2. 🔴 **PR #366 コンフリクト解決**: frosty-hamilton ✕ main のマージ (ai-assistant.ts / CLAUDE.md / CV3)
+3. 🟡 **quota-monitor スケジュール実行確認**: 次回09:00 JST通過を確認
+4. 🟡 **T-1 第53弾**: 未投稿候補にfrontmatter追加して dispatch
+5. 🟢 **`/less-permission-prompts` 実行**: settings.json 許可リスト最適化 (v2.1.111新機能)
