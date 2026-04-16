@@ -1,7 +1,7 @@
-# 3インスタンス並列開発 — 競合防止ガイド
+# 4インスタンス + マルチAI並行開発 — 競合防止ガイド
 
 作成日: 2026-03-30
-最終更新: 2026-04-13 (PS#52 — Web版廃止・Windowsアプリ版移行)
+最終更新: 2026-04-16 (PS#本セッション — WEB版復活・フォールバックAI統合・Rule 21追加)
 管理: PowerShell インスタンス (全体管理)
 
 ---
@@ -12,7 +12,19 @@
 | --- | --- | --- |
 | **VSCode版** | `lib/` (Dart/Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` / `deno lint 0エラー` |
 | **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 |
-| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / Tier 昇格判定 / MCP設定管理 / 全ブランチ CI 監視 |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / クォータ監視管理 / MCP設定管理 / 全ブランチ CI 監視 |
+| **WEB版 (復活)** | `docs/blog-drafts/` + `docs/research/` | Rule 21 NotebookLM Deep Research 専任 / ブログ英語翻訳・品質レビュー / AI大学コンテンツ調査 |
+
+### フォールバック AI ツール (Claude 制限時のみ)
+
+> 通常は Claude Code 4インスタンスのみ使用。Claude 429 / 月次 $50 超過時のみフォールバック発動。
+
+| ツール | 発動条件 | ファイル種別 |
+| --- | --- | --- |
+| Gemini Code Assist | Claude 429 / $50超過 | `.dart` |
+| CODEX CLI (OpenAI) | Claude 429 / $50超過 | `.py` / `.ts` |
+| GitHub Copilot | Claude 429 / $50超過 + 常時PRレビュー | `.yml` / `.sql` / `.md` |
+| NotebookLM | **常時使用必須 (Rule 21)** | 全種別 (3ファイル以上/URL分析/競合調査) |
 
 ### 緊急横断権限（Blocking 解消）
 
@@ -29,6 +41,7 @@
 | VSCode版 | `docs/` (DESIGN.md は own), `.github/` |
 | Windowsアプリ版 | `lib/`, `supabase/functions/`, `.github/` |
 | PowerShell版 | `lib/`, `supabase/functions/`, `docs/` (MULTI_INSTANCE_COORDINATION.md は own) |
+| WEB版 | `lib/`, `supabase/`, `.github/`, `docs/` (blog-drafts/ と research/ は own) |
 
 ### 全インスタンス共有領域（例外）
 

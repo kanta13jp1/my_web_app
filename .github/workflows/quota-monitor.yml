@@ -24,10 +24,10 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -206,9 +206,9 @@ jobs:
           EOF
 
       - name: Save quota data to Supabase
-        if: ${{ github.event.inputs.dry_run != 'true' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        if: ${{ github.event.inputs.dry_run != 'true' }}
         env:
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_USAGE: ${{ steps.anthropic.outputs.usage_json }}
           OPENAI_USAGE: ${{ steps.openai.outputs.usage_json }}
           COPILOT_USAGE: ${{ steps.copilot.outputs.usage_json }}
@@ -218,7 +218,7 @@ jobs:
           import os, requests, json
           from datetime import date
 
-          service_key = os.environ['SUPABASE_SERVICE_KEY']
+          service_key = os.environ['SUPABASE_SERVICE_ROLE_KEY']
           base_url = 'https://smmkxxavexumewbfaqpy.supabase.co/rest/v1/ai_quota_usage'
           headers = {
               'apikey': service_key,
