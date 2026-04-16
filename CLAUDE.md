@@ -97,12 +97,40 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
+14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — 以下の条件に該当する場合は Claude 直接処理禁止。`notebooklm` CLI 経由で処理する:
+   - 3ファイル以上同時読み込み → `notebooklm source add` → `notebooklm ask`
+   - URL・競合サイト分析 → `notebooklm source add URL`
+   - 競合21社調査 → `notebooklm source add-research`
+   - ドキュメント全体俯瞰 → NotebookLM source 追加後に要約
+   - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
+   
+   Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
+   **WEB版インスタンス**が Deep Research 専任として `docs/research/` に成果物を保存する。
+
 ---
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
 **設計思想**: 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
 Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
+
+### フォールバック AI ツール (Claude MAX レート制限到達時のみ使用)
+
+> **通常運用**: Claude Code 4インスタンス (VSCode / Windowsアプリ / PowerShell / WEB版) のみ使用。
+> フォールバックは Claude が **429 エラー / 月次 $50 超過** のときだけ発動。
+> NotebookLM のみ制限に関係なく **常時使用必須 (Rule 21)**。
+
+| ツール | 発動条件 | ファイル種別 | 用途 |
+| --- | --- | --- | --- |
+| **Gemini Code Assist** | Claude 429 / $50超過 | `.dart` | Flutter/Dart IDE補完 (Google製言語に最適化) |
+| **CODEX CLI** (OpenAI) | Claude 429 / $50超過 | `.py` / `.ts` | Pythonスクリプト・TypeScript EF draft |
+| **GitHub Copilot** | Claude 429 / $50超過 + **常時PR自動レビュー** | `.yml` / `.sql` / `.md` | YAML補完・PR自動レビュー |
+| **NotebookLM** | **常時使用必須 (Rule 21)** | 全種別 | 3ファイル以上同時読み込み・URL分析・競合21社調査 |
+
+**フォールバック発動ルール**:
+1. `quota-monitor.yml` が月次閾値超過を検知 → `ai_quota_usage.alert=true` 書き込み
+2. `cs-check.yml` 次回実行時に GitHub Issue 自動生成「⚠️ Claude レート制限到達」
+3. Issue 本文に「推奨フォールバック AI + ファイル種別対応表」を記載して手動切替を案内
 
 ### マルチエージェント協調パターン (新機能設計時に参照)
 
@@ -112,7 +140,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **3インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell) / `ai-university-update.yml` (41プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell/WEB版) / `ai-university-update.yml` (41プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
