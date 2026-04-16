@@ -9007,3 +9007,35 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | deploy-prod 成功確認 (blog_corrections migration適用) | 自動 |
 | 🟡 | cron-batch.yml: SUPABASE_SERVICE_ROLE_KEY/GEMINI_API_KEY Secrets設定後 schedule 復活 | 手動 |
 | 🟢 | 古いworktreeクリーンアップ (.claude/worktrees/ 6件) | PS版 |
+
+---
+
+## PS版セッション記録 #83 (2026-04-17)
+
+**担当**: PS版 (CI/CD・Rule 17・ブログ投稿)
+
+### 完了タスク
+
+1. **test 1.30.0 CI互換性バグ修正** (2e7a0774)
+   - Dependabot PR #300 が `test 1.30.0` を merge → Flutter 3.38.10 の `test_api 0.7.7` と非互換
+   - `git revert 7045e7f7` で `test ^1.25.8` / lock 1.26.3 に戻す
+   - `flutter pub get` 解決 → CI pass → deploy-prod in_progress
+
+2. **CI失敗 Issues 一括クローズ** (46件: #334〜#383)
+   - deploy-prod 失敗ループで自動生成された Issue を全件クローズ
+
+3. **Voice AI Chat ブログ投稿** (T-1第54弾後続)
+   - `2026-04-17-voice-ai-chat-conversation-memory.md` → Qiita dispatch
+   - `2026-04-17-voice-ai-chat-conversation-memory-en.md` → dev.to dispatch
+
+4. **2026-04-13 ブログ全件確認**: 11ファイル全て `published: true` 確認済み
+
+### deploy-prod 状態
+- Run 24531252746: CI pass ✅ → Deploy in_progress (2026-04-17 05:14 JST時点)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🟡 | deploy-prod 最終結果確認 | PS版 |
+| 🟡 | cron-batch.yml: Secrets設定後 schedule 復活 | 手動 |
+| 🟢 | worktree 6件クリーンアップ | PS版 |
