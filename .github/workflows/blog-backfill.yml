@@ -1,0 +1,122 @@
+name: Blog Backfill (未投稿ドラフトの一括処理)
+
+# title 無しの古いドラフトにAIでfrontmatterを追加し、Qiita+dev.toに順次投稿する
+# 手動実行のみ。大量投稿になるため慎重に使うこと。
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '実行モード'
+        type: choice
+        options:
+          - add_frontmatter_only     # AIでfrontmatter追加してcommitするのみ
+          - publish_only              # 既にtitle有りの未投稿ドラフトを順次投稿
+          - add_and_publish           # 両方 (最も自動)
+        default: 'add_frontmatter_only'
+      max_posts:
+        description: '最大投稿本数 (安全策・デフォルト5)'
+        required: false
+        default: '5'
+      interval_seconds:
+        description: '投稿間隔秒 (dev.to レート制限対策)'
+        required: false
+        default: '60'
+
+concurrency:
+  group: blog-backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write  # blog-publish.yml を dispatch するため
+
+jobs:
+  backfill:
+    name: Backfill unpublished drafts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: pip install requests
+
+      # ── Step 1: frontmatter 追加 ────────────────────────────────
+      - name: Add frontmatter to legacy drafts
+        if: github.event.inputs.mode != 'publish_only'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 scripts/backfill_blog_frontmatter.py
+
+      - name: Commit frontmatter additions
+        if: github.event.inputs.mode != 'publish_only'
+        run: |
+          git config user.name "kanta13jp1"
+          git config user.email "kanta13jp1@users.noreply.github.com"
+          git add docs/blog-drafts/*.md
+          if git diff --cached --quiet; then
+            echo "ℹ️ No frontmatter changes to commit"
+          else
+            git commit -m "自動: 過去ドラフトにfrontmatter追加 (AI生成)"
+            git push origin HEAD:main
+            echo "✅ Committed frontmatter additions"
+          fi
+
+      # ── Step 2: 順次投稿 (add_and_publish or publish_only) ──────
+      - name: Sequential publish
+        if: github.event.inputs.mode != 'add_frontmatter_only'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_POSTS: ${{ github.event.inputs.max_posts || '5' }}
+          INTERVAL: ${{ github.event.inputs.interval_seconds || '60' }}
+        run: |
+          # 最新の状態を引く
+          git pull origin main || true
+
+          # 未投稿ドラフト (title あり・YYYY-MM-DD.md除外) を古い順に列挙
+          DRAFTS=$(find docs/blog-drafts/ -name "*.md" -type f | sort | while read f; do
+            # YYYY-MM-DD.md は除外
+            if echo "$f" | grep -qE '/[0-9]{4}-[0-9]{2}-[0-9]{2}\.md$'; then continue; fi
+            # 英語版のみは除外
+            if echo "$f" | grep -q '\-en\.md$'; then continue; fi
+            if ! grep -q "^published: true" "$f" && grep -q "^title:" "$f"; then
+              echo "$f"
+            fi
+          done)
+
+          COUNT=0
+          echo "$DRAFTS" | while read DRAFT_JA; do
+            if [ -z "$DRAFT_JA" ]; then continue; fi
+            COUNT=$((COUNT + 1))
+            if [ "$COUNT" -gt "$MAX_POSTS" ]; then
+              echo "🛑 Reached max_posts=$MAX_POSTS — stopping"
+              break
+            fi
+
+            DRAFT_EN=$(echo "$DRAFT_JA" | sed 's/\.md$/-en.md/')
+            ARGS="-f draft_path=$DRAFT_JA"
+            PLATFORMS="qiita"
+            if [ -f "$DRAFT_EN" ]; then
+              ARGS="$ARGS -f draft_path_en=$DRAFT_EN"
+              PLATFORMS="qiita,devto"
+            fi
+            ARGS="$ARGS -f platforms=$PLATFORMS -f dry_run=false"
+
+            echo "[$COUNT] 📤 Triggering: $DRAFT_JA (platforms=$PLATFORMS)"
+            gh workflow run blog-publish.yml $ARGS
+            if [ "$COUNT" -lt "$MAX_POSTS" ]; then
+              echo "   ⏸️ sleep $INTERVAL seconds..."
+              sleep "$INTERVAL"
+            fi
+          done
+
+          echo "✅ Backfill dispatch complete (processed up to $MAX_POSTS drafts)"
