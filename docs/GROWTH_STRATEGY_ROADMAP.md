@@ -8987,3 +8987,35 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 3. 🟢 **本番 DB migration 適用**: Supabase prod に Black Forest Labs / Liquid AI を有効化
 4. 🟢 **Rule 17 GH Actions 最適化**: 次回 PowerShell インスタンスで実施
 
+---
+
+## PowerShell版#本セッション セッション記録 (2026-04-16)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **4インスタンス体制確立**: WEB版 (claude.ai/code) 復活・役割分担明確化 | ✅ |
+| 2 | **フォールバック AI 統合**: Gemini Code Assist / CODEX CLI / GitHub Copilot (Claude 429時のみ) | ✅ |
+| 3 | **Rule 21 追加**: NotebookLM 必須活用 (3ファイル以上・URL分析・競合調査) | ✅ |
+| 4 | **quota-monitor.yml 修正**: checkout v6 / setup-python v6 / SUPABASE_SERVICE_ROLE_KEY 統一 | ✅ |
+| 5 | **COMPRESSED_PROMPT_V3.md 更新**: 4インスタンス表・フォールバックAI節・Rule 21・WF数20本 | ✅ |
+| 6 | **CLAUDE.md 更新**: Multi-AI ワークフロー節にフォールバックAI表・4インスタンス更新 | ✅ |
+| 7 | **MULTI_INSTANCE_COORDINATION.md 更新**: 4インスタンス体制・WEB版スコープ追加 | ✅ |
+| 8 | **docs/research/ 新設**: WEB版 NotebookLM Deep Research 成果物置き場 | ✅ |
+| 9 | **cross-instance-pr 発行**: VSCode版へ admin-hub quota.* + QuotaDashboardPage 実装依頼 | ✅ |
+
+### 新規ファイル
+
+- `.github/workflows/quota-monitor.yml` — 毎日 09:00 JST / 4ツール監視 / Supabase UPSERT
+- `supabase/migrations/20260416130000_create_ai_quota_usage.sql` — ai_quota_usage テーブル
+- `docs/research/README.md` — WEB版専用スコープ
+- `docs/cross-instance-prs/20260416_quota_dashboard_ui.md` — VSCode版への委譲
+
+### 次回優先タスク (PS版)
+
+1. 🟡 **Rule 17 全20本確認**: quota-monitor.yml 追加後の全ワークフロー健全確認
+2. 🟢 **VSCode版 quota dashboard 実装完了待ち**: cross-instance-pr レビュー・マージ
+3. 🟢 **WEB版インスタンス起動**: claude.ai/code でブログ英語翻訳 + NotebookLM Deep Research 開始
+4. 🟢 **horse-racing-update.yml 修正確認**: actions/checkout@v4→v6 適用済みか再確認
+
