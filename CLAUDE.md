@@ -105,7 +105,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
 
    Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
-   **WEB版インスタンス**は `notebooklm` CLI 不可のため WebSearch/WebFetch + Opus 4.6 ultrathink で代替し `docs/research/` に成果物を保存する。
+   **WEB版インスタンス**は `notebooklm` CLI 不可のため WebSearch/WebFetch + **Opus 4.7** で代替し `docs/research/` に成果物を保存する。Extended Thinking (ultrathink) が必要な場合は **Sonnet 4.6** に切り替えること (Opus 4.7 は Extended Thinking 非対応)。
 
 15. **毎セッション冒頭: /recap + バージョン確認・リリースノート確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
 
@@ -177,7 +177,18 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    # リリースノート: https://cloud.google.com/code/docs/vscode/release-notes
    ```
 
+   **利用可能モデル (2026-04-17 更新)**:
+
+   | モデル | ID | 用途 | 備考 |
+   | --- | --- | --- | --- |
+   | **Opus 4.7** 🆕 | `claude-opus-4-7` | **推奨**: agentic coding・複雑設計 | Extended Thinking なし。Adaptive Thinking あり |
+   | **Sonnet 4.6** | `claude-sonnet-4-6` | 日常実装・ultrathink使用時 | Extended Thinking ✅ |
+   | **Haiku 4.5** | `claude-haiku-4-5-20251001` | 定型処理 | Extended Thinking ✅ |
+   | ~~Opus 4.6~~ | ~~`claude-opus-4-6`~~ | レガシー → Opus 4.7 へ移行 | |
+   | ~~Haiku 3~~ | ~~`claude-3-haiku-20240307`~~ | **2026-04-19 廃止** | Haiku 4.5 へ移行 |
+
    **拡張思考トリガー** (プロンプトに含めて起動):
+   > ⚠️ **Opus 4.7 は Extended Thinking 非対応。ultrathink を使う場合は Sonnet 4.6 を使用。**
 
    | キーワード | 思考レベル | 使いどき |
    | --- | --- | --- |
@@ -185,7 +196,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    | `think deeply` | Lv.2 | 中程度の設計判断 |
    | `think harder` | Lv.3 | 複雑なバグ・パフォーマンス |
    | `think very hard` | Lv.4 | アーキテクチャ設計 |
-   | `ultrathink` | Lv.5 (最大) | 全体設計・競合戦略 |
+   | `ultrathink` | Lv.5 (最大) | 全体設計・競合戦略 (**Sonnet 4.6 で実行**) |
 
    **Routines** (Windowsアプリ版 Desktop 専用): `code.claude.com/docs/en/routines` 参照。GitHub Actions の代替として積極活用する (Pro:5回/日, Max:15回/日)。
 
