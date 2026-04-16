@@ -1,7 +1,7 @@
 ---
 title: "Building a Fully Automated Horse Racing AI Prediction Pipeline with Flutter + Supabase"
 tags: Flutter,Supabase,buildinpublic,MachineLearning,automation
-published: false
+published: true
 ---
 
 # Building a Fully Automated Horse Racing AI Prediction Pipeline with Flutter + Supabase

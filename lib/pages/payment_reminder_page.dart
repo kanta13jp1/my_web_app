@@ -348,7 +348,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
       await _supabase
           .from('payment_reminders')
           .delete()
-          .eq('id', reminder['id']);
+          .eq('id', reminder['id']).select();
       await _load();
     } catch (e) {
       if (mounted) {

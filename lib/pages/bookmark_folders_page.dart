@@ -162,7 +162,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       await _supabase.from('bookmark_folders').delete().eq(
             'id',
             folder['id'],
-          );
+          ).select();
       await _load();
     } catch (e) {
       if (mounted) {

@@ -8708,3 +8708,15 @@ EFを50本以下に削減し、Tier1/Tier2分類を完全廃止。全機能を15
 - 🟢 Rule 16: import ページを含む本番表示チェックを Web / モバイル両方で実施
 - 🟡 AI大学ランキング画面の実データ表示を本番で確認し、必要なら余白・折返し・点数列の視認性を微調整
 - 🟡 NotebookLM CLI の notebook単位 RPC エラー原因を確認し、Master Brain 深掘り調査を再開
+
+
+## セッション記録 (2026-04-16 Gemini CLI)
+
+- ✅ markdownlint エラー修正 (docs/session-notes/ 配下)
+- ✅ タスク T-1: 第37弾 技術記事投稿 (2026-04-13-horse-racing-ai-pipeline.md) を Qiita と dev.to に実投稿完了
+- ✅ COMPRESSED_PROMPT_V3.md の「タスク T-1」セクションを更新し、第37弾の投稿完了を記録
+
+- ?? �o�O�C��: Flutter Web �� Supabase �� .delete() �� HTTP 204 No Content ��Ԃ����ہAdart2js �� minified:aAx (String) �ƌ�F���� List<dynamic>? �L���X�g�Ɏ��s����N���b�V��������
+- ??? �O���[�o���Ή�: lib/ �ȉ��̂��ׂĂ� .delete().eq(...) (�v35�ӏ�) �� .select() ��t�^����C���X�N���v�g�����s���A��O�����
+- ? 429 �G���[����: i-assistant �� 429 �G���[�� Gemini API �̃��[�g���~�b�g���߁i�o�b�N�I�t�Ď��s�j�ɂ����̂ŁA�t�����g�G���h���Ő������n���h�����O����Ă��邱�Ƃ��m�F
+

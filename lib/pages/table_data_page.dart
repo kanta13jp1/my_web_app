@@ -222,7 +222,7 @@ class _TableDataPageState extends State<TableDataPage> {
     );
     if (ok != true) return;
     try {
-      await _db.from('user_tables').delete().eq('id', table.id);
+      await _db.from('user_tables').delete().eq('id', table.id).select();
       if (mounted) {
         setState(() {
           _tables.removeWhere((t) => t.id == table.id);
@@ -408,7 +408,7 @@ class _TableDataPageState extends State<TableDataPage> {
   Future<void> _deleteRow(int index) async {
     final row = _rows[index];
     try {
-      await _db.from('user_table_rows').delete().eq('id', row['_id'] as String);
+      await _db.from('user_table_rows').delete().eq('id', row['_id'] as String).select();
       if (mounted) setState(() => _rows.removeAt(index));
     } catch (_) {}
   }

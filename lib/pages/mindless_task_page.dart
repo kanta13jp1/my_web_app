@@ -2423,7 +2423,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   }
 
   Future<void> _deleteTask(int id) async {
-    await _supabase.from('mindless_tasks').delete().eq('id', id);
+    await _supabase.from('mindless_tasks').delete().eq('id', id).select();
     await _removeCompletionForTask(id);
     _loadTasks();
   }

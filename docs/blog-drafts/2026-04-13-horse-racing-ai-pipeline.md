@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で競馬AI予想パイプラインを全自動化した話 — JRA+NAR両対応・前走情報まで実装"
 tags: Flutter,Supabase,個人開発,buildinpublic,機械学習
-published: false
+published: true
 ---
 
 # Flutter × Supabase で競馬AI予想パイプラインを全自動化した話 — JRA+NAR両対応・前走情報まで実装

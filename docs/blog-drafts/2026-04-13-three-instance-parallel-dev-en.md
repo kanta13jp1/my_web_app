@@ -1,7 +1,7 @@
 ---
 title: "Running 3 Parallel Claude Code Instances to Triple My Solo Dev Velocity"
 tags: ClaudeCode,buildinpublic,Flutter,Supabase,productivity
-published: false
+published: true
 ---
 
 # Running 3 Parallel Claude Code Instances to Triple My Solo Dev Velocity

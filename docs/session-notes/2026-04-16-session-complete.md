@@ -11,6 +11,7 @@
 ## ✅ 完了タスク
 
 ### タスク #1: Copilot Inline Chat 検証
+
 **状態**: ✅ 完了  
 **実装**: horse_racing_predictor_page.dart（1019行）  
 **改善内容**:
@@ -30,10 +31,12 @@
 ---
 
 ### タスク #2: UI改善 (Rule #19) — ホーム画面デザイン統一
+
 **状態**: ✅ 第1段階完了 (スペーシング統一は次回)  
 **実装**: home_page.dart (3900+ 行)  
 
 #### 第1段階: 最優先改善
+
 1. ✅ **AppBar グラデーション削除** (DESIGN.md ダークテーマ統一)
    - 複雑な LinearGradient 削除
    - `backgroundColor: const Color(0xFF1A1A1A)` に固定
@@ -51,6 +54,7 @@
    - DESIGN.md 標準 (8/12/16/24/999) に統一
 
 #### design-skills サブエージェント 分析
+
 - 優先度表レポート: 11項目
   - 🔴 HIGH(2): 背景色 + AppBar
   - 🟠 MID(6): 間隔・半径・色・パディング・文字スタイル
@@ -66,6 +70,7 @@
 ---
 
 ### タスク #3: AI大学 Step A — ホームカード ストリーク表示
+
 **状態**: ✅ 既に実装済み  
 **実装**: lib/widgets/ai_university_home_card.dart (520行)
 
@@ -75,6 +80,7 @@
 3. ✅ シェア機能にもストリーク情報統合 (`$_currentStreak日連続`)
 
 **実装詳細**:
+
 ```dart
 final streakRow = await _supabase
     .from('ai_university_streaks')
@@ -99,6 +105,7 @@ _buildMetricTile(
 ---
 
 ### タスク #4: QA Gate 5項目チェック
+
 **状態**: ✅ 全項目OK
 
 | No. | 項目 | 検証内容 | 結果 |
@@ -138,11 +145,13 @@ _buildMetricTile(
 ## 📝 学習・改善ポイント
 
 ### ✅ 効果的だったアプローチ
+
 - **design-skills サブエージェント** → 機械的な DESIGN.md 違反検出 & 優先度自動化
 - **Copilot Inline Chat** (`Ctrl+I`) → 5-20分の focused improvement 向き
 - **多段階タスク分割** → Token budget管理・集中力維持
 
 ### 🟢 次回改善提案
+
 - スペーシング統一は `multi_replace_string_in_file` でまとめて 1回で処理 (20+ 修正)
 - design-skills 後に AIDesigner MCP で Desktop/Mobile 両視点の案を生成
 - Web/Mobile 実機テスト (Rule #8) を改善後に必ず実施

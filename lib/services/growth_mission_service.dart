@@ -620,7 +620,8 @@ $inviteUrl
         await client
             .from('guest_presence')
             .delete()
-            .eq('session_id', sessionId);
+            .eq('session_id', sessionId)
+            .select();
       } else {
         await client.from('guest_presence').upsert(
           <String, dynamic>{

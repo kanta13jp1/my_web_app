@@ -234,7 +234,7 @@ class ProfileService {
   /// プロフィールを削除
   Future<bool> deleteProfile(String userId) async {
     try {
-      await _supabase.from('user_profiles').delete().eq('user_id', userId);
+      await _supabase.from('user_profiles').delete().eq('user_id', userId).select();
 
       AppLogger.info('Profile deleted for user $userId');
       return true;

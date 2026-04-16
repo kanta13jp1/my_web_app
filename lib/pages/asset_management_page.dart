@@ -1907,7 +1907,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     .from('cfo_assets')
                     .delete()
                     .eq('user_id', userId)
-                    .eq('title', type);
+                    .eq('title', type).select();
                 setState(() {
                   _setWatchlistEntries(watchlistEntries);
                   _assetTypes.remove(type);
@@ -2151,7 +2151,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Future<void> _deleteSubscription(String id) async {
-    await _supabase.from('subscriptions').delete().eq('id', id);
+    await _supabase.from('subscriptions').delete().eq('id', id).select();
     _fetchSubscriptions();
     await _fetchTodayClosing();
   }
@@ -2795,7 +2795,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           .from('wealth_struggles')
           .delete()
           .eq('id', flowId)
-          .eq('user_id', userId);
+          .eq('user_id', userId).select();
 
       await _fetchRecentFlows();
       await _fetchTodayClosing();

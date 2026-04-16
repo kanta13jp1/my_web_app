@@ -252,7 +252,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
             .delete()
             .eq('user_id', userId)
             .eq('schedule_key', key)
-            .eq('completed_date', _todayStr);
+            .eq('completed_date', _todayStr).select();
       } else {
         await _supabase.from('prison_schedule_logs').insert({
           'user_id': userId,
