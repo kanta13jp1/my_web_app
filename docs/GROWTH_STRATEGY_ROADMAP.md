@@ -9253,8 +9253,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### 次回優先タスク (PowerShell版)
 
-1. 🔴 **deploy-prod CI確認**: dart format/trailing_comma修正後のCI通過を確認
+1. 🔴 **deploy-prod CI確認**: 新run `24524412781` (b8bca877) の完了を確認 — 全チェック通過後にPR #366へ
 2. 🔴 **PR #366 コンフリクト解決**: frosty-hamilton ✕ main のマージ (ai-assistant.ts / CLAUDE.md / CV3)
 3. 🟡 **quota-monitor スケジュール実行確認**: 次回09:00 JST通過を確認
-4. 🟡 **T-1 第53弾**: 未投稿候補にfrontmatter追加して dispatch
+4. ✅ **T-1 第53弾完了**: Qiita https://qiita.com/kanta13jp1/items/c6ee22c28d83903e6c3f / dev.to https://dev.to/kanta13jp1/why-i-killed-my-4th-claude-code-instance-lessons-from-multi-agent-indie-dev-2l1h
 5. 🟢 **`/less-permission-prompts` 実行**: settings.json 許可リスト最適化 (v2.1.111新機能)
