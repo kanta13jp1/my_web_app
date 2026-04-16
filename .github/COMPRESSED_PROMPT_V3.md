@@ -623,12 +623,15 @@ web/sitemap.xml          # URL マップ
 - ✅ **第67弾 dev.to成功** (PS版#90, 2026-04-17): `2026-04-07-ai-writing-assistant-upgrade.md` → dev.to: https://dev.to/kanta13jp1/one-edge-function-three-ai-writers-meeting-minutes-x-threads-blog-drafts-4pfh
 - ✅ **第68弾 dev.to成功** (PS版#90, 2026-04-17): `2026-04-02-gantt-timeline.md` → dev.to: https://dev.to/kanta13jp1/building-a-gantt-chart-that-beats-notions-timeline-view-flutter-web-supabase-226a
 
-**次回候補 (第69弾以降)**:
+- ✅ **第69弾 dev.to成功** (PS版#91, 2026-04-17): `2026-04-04-goal-tracker-bookmark-sync.md` → dev.to: https://dev.to/kanta13jp1/goal-tracker-bookmark-sync-in-one-day-flutter-333-buildcontext-trap-edge-function-first-39i3
+- ✅ **第70弾 dev.to成功** (PS版#91, 2026-04-17): `2026-04-08-x-viral-pipeline-catalog-expansion.md` → dev.to: https://dev.to/kanta13jp1/building-a-viral-loop-guitar-recording-auto-post-to-x-fire-and-forget-pattern-1i0n
+
+**次回候補 (第71弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 2026-04-18以降 |
-| 🟡 | 未投稿JA記事 EN版作成+dev.to投稿 (残45件) | dev.to |
+| 🟡 | 未投稿JA記事 EN版作成+dev.to投稿 (残43件) | dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

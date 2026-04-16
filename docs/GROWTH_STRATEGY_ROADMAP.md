@@ -9306,3 +9306,70 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
 | 🟡 | 第69弾以降 未投稿JA記事EN版作成+dev.to (残45件) | PS版 |
+
+---
+
+### VSCode版セッション記録 #84 (2026-04-17)
+
+**担当**: VSCode版 (Rule 8/9/10/11/12/16 実行)
+
+### 完了タスク
+
+1. **dart format CI修正** — ai_university_voice_page.dart フォーマット修正 (Deploy to Production: failure → pass)
+
+2. **Rule 9: GHA ワークフロー最適化チェック** — 25本全確認
+   - 問題なし: duplicate trigger なし / timeout適切 / continue-on-error 9件は全て正当
+   
+3. **Rule 10: docs全件分析 → 2件修正**
+   - `docs/CICD_SETUP_GUIDE.md`: GHA 20本 → 25本 (実際の本数)
+   - `CLAUDE.md`: EF standalone 4本計15本 → 5本計16本 (get-home-dashboard等5本が正)
+
+4. **Rule 11: AI大学コンテンツ → ai-hub モデル更新**
+   - `quiz.explain` + `learner.update_profile`: claude-sonnet-4-5 → claude-sonnet-4-6
+
+5. **Rule 12: UI改善 — voice_page デザイントークン 5件修正**
+   - primary CTA: indigo(#3D5AFE) → orange(#FF6B35) [DESIGN.md準拠]
+   - 不正解フィードバック: orange → red(#E53935) [error color意味論]
+   - AppBar: elevation:0 + 1px区切り線追加
+   - pagePadding: 20 → 16px (4pxグリッド)
+   - surface color: 0x1A2E → surface1(0x1A1A)/surface2(0x1E1E) トークン修正
+
+6. **Rule 16: Playwright チェック** — ブラウザセッション切れで未完了
+   - Deploy 21:56:25 in_progress (CI実行中)
+
+### 残タスク
+- Deploy完了後に手動で `/ai-university-voice` を `https://my-web-app-b67f4.web.app/#/ai-university-voice` で確認
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Deploy完了後 `/ai-university-voice` 動作確認 | VSCode版 |
+| 🟡 | FSRS migration Supabase 本番 apply 確認 | VSCode版 |
+| 🟡 | growth-acquisition-report CORS エラー調査 (廃止EF残骸) | VSCode版 |
+| 🟡 | AI大学 v2 Groq モデル llama-4-scout 検討 | PS版 |
+
+### PS版セッション記録 #91 (2026-04-17)
+
+**担当**: PS版 (T-1 投稿バッチ続き)
+
+### 完了タスク
+
+1. **T-1 第59弾 Qiitaリトライ** → 429継続 (2026-04-18以降持ち越し)
+
+2. **T-1 第69弾 dev.to投稿成功** `2026-04-04-goal-tracker-bookmark-sync.md`
+   - dev.to: https://dev.to/kanta13jp1/goal-tracker-bookmark-sync-in-one-day-flutter-333-buildcontext-trap-edge-function-first-39i3
+
+3. **T-1 第70弾 dev.to投稿成功** `2026-04-08-x-viral-pipeline-catalog-expansion.md`
+   - dev.to: https://dev.to/kanta13jp1/building-a-viral-loop-guitar-recording-auto-post-to-x-fire-and-forget-pattern-1i0n
+
+4. **EN版新規作成 2件**
+   - `2026-04-04-goal-tracker-bookmark-sync-en.md` (Flutter 3.33 BuildContext + Edge Function First)
+   - `2026-04-08-x-viral-pipeline-catalog-expansion-en.md` (fire-and-forget X viral loop)
+
+**本日累計 (2026-04-17)**: 第59〜70弾 (dev.to 12本投稿 / Qiita 429ブロック中)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
+| 🟡 | 第71弾以降 未投稿JA記事EN版作成+dev.to (残43件) | PS版 |
