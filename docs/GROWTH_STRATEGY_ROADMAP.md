@@ -9311,3 +9311,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 3. 🟡 **batch publish 結果確認**: 21本のうち何本成功したか、失敗したものは手動投稿
 4. 🟡 **blog-engagement.yml 定期実行**: daily schedule (10:00 JST) が正常に動くか確認
 5. 🟢 **schedule-hub blog.sync_engagement アクション確認**: EFが blog_engagement と連携できるか
+
+---
+
+## VSCode版#82 セッション記録 (2026-04-17)
+
+### 実施内容
+
+- **COMPRESSED_PROMPT_V3.md 更新**: WF数20→25・EF16本・standalone5本・AI大学67社目以降・T-1第53弾
+- **blog-batch-publish.yml GH006 修正**: 保護ブランチ直接push → unique branch + 手動マージ方式
+- **batch_publish.py バグ修正**: `any_ok or result.get("success")` → `any_ok` (Qiita 429時の誤マーク防止)
+- **settings.local.json 全ツール自動承認**: Bash/Read/Write/Edit/Glob/Grep/WebFetch/WebSearch/Agent/TodoWrite/Skill 追加
+- **blog-engagement.yml 確認**: run #24525802467 ✅ success (dev.toコメント返信動作確認)
+- **ブログ整合性監査 完了** (前セッション継続): 4ファイル修正・markdownlint 0エラー
+
+### コミット
+
+- `81a09397` chore: COMPRESSED_PROMPT_V3.md更新 — WF数20→25・EF16本・5本standalone・T-1第53弾追加
+- `9ca3e2dc` fix: blog-batch-publish GH006保護ブランチ直接push修正 + batch_publish.py ok:false誤マーク修正
+
+### 次回優先タスク
+
+1. 🔴 **AI大学 v2 計画実装開始**: 66社の学習コンテンツ品質向上・クイズ強化
+2. 🟡 **blog-batch-publish 再実行**: 残存 published:false ファイルの投稿 (Qiita 429で失敗した1本含む)
+3. 🟡 **T-1 第54弾記事**: 新規技術記事執筆・Qiita+dev.to投稿
+4. 🟢 **LP 126→130のこと追加**: 新機能説明の追加
+5. 🟢 **Rule 19 UI改善**: Figma/AIDesigner MCP でホーム画面・AI大学ページ改善
