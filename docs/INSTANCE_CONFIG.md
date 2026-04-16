@@ -231,6 +231,7 @@ git log --oneline -5
 | `/ultrareview` | ✅ **可** 🆕 | 2026-04-17 | `/ultrareview` or `/ultrareview <PR#>` でクラウドレビュー |
 | `/effort xhigh` (Opus 4.7) | ✅ **可** 🆕 | 2026-04-17 | Adaptive Thinking 最大 effort |
 | デフォルトモデル | **Opus 4.7** | 2026-04-17 | agentic coding 強化。**ultrathinkは Sonnet 4.6で** |
+| **GitHub MCP 安定性** | ⚠️ **不安定** | 2026-04-17 | セッション内で1〜3回の切断が発生する場合あり。並列MCP呼び出しは避け逐次実行を推奨。v2.1.110の "MCP tool calls hanging" 修正はローカル版向けで WEB版は別 |
 
 **WEB版の役割 (制約を踏まえた最適分担)**:
 - WebSearch/WebFetch での AI プロバイダー調査・競合分析
@@ -595,7 +596,16 @@ INSTANCE_CONFIG.md 更新:       Sonnet 4.6 通常モード
 【Step 1: バージョン・制約変更確認】
 WebFetch: https://github.com/anthropics/claude-code/releases
 → WEB版で新機能が利用可能になっていないか確認
-→ 制約解消があれば GitHub MCP push_files で docs/INSTANCE_CONFIG.md を更新
+→ 制約解消があれば GitHub MCP issue_write で Issue を作成してください:
+   タイトル: "[制約変更] WEB版で XXX が使用可能になった"
+⚠️ docs/INSTANCE_CONFIG.md を直接 push_files で更新しないこと (PowerShell版 の担当)
+
+【GitHub MCP 使用上の注意 — 必読】
+⚠️ 並列実行禁止: 複数の GitHub MCP 操作を同時に実行しない ("Stream idle timeout" の原因)
+⚠️ 逐次実行: 1操作ごとに完了を確認してから次の操作へ
+⚠️ 切断時の対応: MCP切断が発生したら再接続を待ち (自動再接続)、その後1操作ずつ再開
+⚠️ INSTANCE_CONFIG.md は直接 push_files しない → Issue 経由で PowerShell版に依頼
+⚠️ 書き込み権限: docs/blog-drafts/ と docs/research/ のみ。docs/ 直下は読み取り専用
 
 【Step 2: Learning Mode — 並行インスタンス確認】
 GitHub MCP: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
@@ -629,9 +639,11 @@ PR確認:       pull_request_read({pullRequestNumber: 123})
 Issue作成:    issue_write({owner:"kanta13jp1", repo:"my_web_app", title:"...", body:"..."})
 
 【制約発見時の記録手順】
-1. GitHub MCP push_files で docs/INSTANCE_CONFIG.md を更新
-2. Issue 作成: タイトル "[制約変更] WEB版で XXX が [使用可/不可] になった"
-   → PowerShell版が次セッションで INSTANCE_CONFIG.md の role 分担を見直す
+⚠️ docs/INSTANCE_CONFIG.md は WEB版が直接編集しないこと (PowerShell版 の write 権限)
+1. GitHub MCP issue_write で Issue を作成:
+   タイトル: "[制約変更] WEB版で XXX が [使用可/不可] になった"
+   ボディ: 制約の詳細・発見日・代替手段・影響範囲
+   → PowerShell版が次セッションで INSTANCE_CONFIG.md を更新し、役割分担を見直す
 
 ```text
 
