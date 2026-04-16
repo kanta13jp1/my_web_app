@@ -8948,3 +8948,42 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - GitHub Secrets に `GOOGLE_AI_API_KEY` / `OPENAI_API_KEY` 追加を検討 (quota-monitor有効化)
 - WEB版インスタンスに担当タスク引継ぎ (blog-drafts / competitor-reports)
+
+## VSCode版#78 セッション記録 (2026-04-16)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **タスク T-1 第48〜52弾**: 5本 Qiita+dev.to 投稿成功 | ✅ |
+| 2 | **Rule 15 AI大学 新規2社追加**: Black Forest Labs + Liquid AI (58社→60社) | ✅ |
+| 3 | **Rule 8 本番確認 + CORS修正**: growth-acquisition-report→growth-hub 移行 | ✅ |
+| 4 | **Rule 19 UI改善**: AI大学ホームカード デザイントークン5箇所修正 | ✅ |
+
+### AI大学 新規プロバイダー追加 (2026-04-16 VSCode版#78)
+
+| プロバイダー | 技術革新 | API可用 | 話題性 | 合計 | 決定 |
+|---|---|---|---|---|---|
+| **Black Forest Labs** | 3/3 | 3/3 | 3/3 | **9/9** | ✅ 追加 |
+| **Liquid AI** | 3/3 | 2/3 | 2/3 | **7/9** | ✅ 追加 |
+| Hyperbolic | 2/3 | 3/3 | 2/3 | 7/9 | 📌 次点 |
+
+### Rule 19 UI修正詳細 (ai_university_home_card.dart)
+
+- gradient:  → 、 →  (heroGradient 準拠)
+- boxShadow: インディゴグロー  追加 (AI機能識別)
+-  →  (2箇所)
+- accent:  →  (indigoLight → indigo 本値)
+
+### CORS バグ修正
+
+-  (deleted EF) への呼び出しを  に移行
+-  L872 修正
+
+### 次回優先タスク
+
+1. 🟡 **ブログ投稿第53弾以降**: 残り約42本の下書きから継続投稿
+2. 🟢 **AI大学 Hyperbolic 追加**: 次点 (7/9) のプロバイダー
+3. 🟢 **本番 DB migration 適用**: Supabase prod に Black Forest Labs / Liquid AI を有効化
+4. 🟢 **Rule 17 GH Actions 最適化**: 次回 PowerShell インスタンスで実施
+
