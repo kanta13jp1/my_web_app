@@ -600,14 +600,20 @@ web/sitemap.xml          # URL マップ
 - ✅ **第54弾 投稿成功** (PS版#83, 2026-04-17): `2026-04-17-voice-ai-chat-conversation-memory.md` → Qiita+dev.to
 - ✅ **第55弾 投稿成功** (PS版#84, 2026-04-17): `2026-04-13-claude-mem-persistent-memory.md` → Qiita: https://qiita.com/kanta13jp1/items/d157ccf8a081f14dcd79 / dev.to: https://dev.to/kanta13jp1/adding-persistent-memory-to-claude-code-with-claude-mem-plus-a-diy-lightweight-alternative-2pgb
 - ✅ **第56弾 投稿成功** (PS版#84, 2026-04-17): `2026-04-13-ai-university-54-providers-milestone.md` → Qiita: https://qiita.com/kanta13jp1/items/336edeef74459c3c061e / dev.to: https://dev.to/kanta13jp1/building-an-ai-learning-platform-with-54-providers-in-3-days-flutter-supabase-2l06
+- ✅ **第57弾 投稿成功** (PS版#85, 2026-04-17): `2026-04-12-ai-university-40-providers-deploy-fix.md` → Qiita: https://qiita.com/kanta13jp1/items/75df563eeaf92b222743 / dev.to: https://dev.to/kanta13jp1/how-a-missing-unique-constraint-broke-our-production-supabase-deploy-postgresql-on-conflict-3i9a
+- ✅ **第58弾 投稿成功** (PS版#85, 2026-04-17): `2026-04-10-budget-ai-advisor.md` → Qiita: https://qiita.com/kanta13jp1/items/548a75bbc309488d8d98 / dev.to: https://dev.to/kanta13jp1/building-a-moneyforward-beating-ai-budget-advisor-in-flutter-web-supabase-claude-3b9f
+- ⚠️ **第59弾 Qiita 429 要リトライ** (PS版#85): `2026-04-12-blog-publish-automation-github-actions.md` / dev.to版 EN未作成
+- ⚠️ **第60弾 Qiita 429 要リトライ** (PS版#85): `2026-04-12-horse-racing-ai-pipeline.md` / dev.to版 EN未作成
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第56弾以降)**:
+**次回候補 (第61弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 中 | `2026-04-08-guitar-x-auto-post.md` / その他蓄積下書き (52本) | Qiita/dev.to |
-| 中 | その他 `docs/blog-drafts/` 下書き (54本蓄積中) | Qiita/dev.to |
+| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾リトライ) | Qiita (rate limit解除後) |
+| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾リトライ) | Qiita (rate limit解除後) |
+| 中 | `2026-04-13-ai-university-41-providers-tabs.md` | Qiita/dev.to |
+| 中 | `2026-04-12-ai-university-34-providers.md` | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

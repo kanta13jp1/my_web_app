@@ -9077,3 +9077,36 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - `2026-04-13-ai-university-54-providers-milestone.md` → Qiita: https://qiita.com/kanta13jp1/items/336edeef74459c3c061e
 - dev.to: https://dev.to/kanta13jp1/building-an-ai-learning-platform-with-54-providers-in-3-days-flutter-supabase-2l06
 - worktree 3本クリーンアップ完了 (blissful-nightingale / agent-a3283e81 / blissful-stonebraker)
+
+### PS版セッション記録 #85 (2026-04-17)
+
+**担当**: PS版 (T-1 投稿バッチ・EN版作成)
+
+### 完了タスク
+
+1. **T-1 第57弾** `2026-04-12-ai-university-40-providers-deploy-fix.md`
+   - Qiita: https://qiita.com/kanta13jp1/items/75df563eeaf92b222743
+   - dev.to (EN作成): https://dev.to/kanta13jp1/how-a-missing-unique-constraint-broke-our-production-supabase-deploy-postgresql-on-conflict-3i9a
+
+2. **T-1 第58弾** `2026-04-10-budget-ai-advisor.md`
+   - Qiita: https://qiita.com/kanta13jp1/items/548a75bbc309488d8d98
+   - dev.to (EN作成): https://dev.to/kanta13jp1/building-a-moneyforward-beating-ai-budget-advisor-in-flutter-web-supabase-claude-3b9f
+
+3. **EN版新規作成 2件**
+   - `2026-04-12-ai-university-40-providers-deploy-fix-en.md`
+   - `2026-04-10-budget-ai-advisor-en.md`
+
+4. **Qiita 429 rate limit 確認** - 短時間に4本超投稿すると約1時間ブロック
+   - 第59弾 `2026-04-12-blog-publish-automation-github-actions.md` → 要リトライ
+   - 第60弾 `2026-04-12-horse-racing-ai-pipeline.md` → 要リトライ
+
+### 教訓
+- Qiita rate limit: 連続投稿は4本程度で429。1時間以上待機が必要
+- EN版ドラフトは事前コミット必須 (未コミットではGHA checkoutで参照不可)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59〜60弾 Qiita リトライ (1時間後以降) | PS版 |
+| 🔴 | cross-instance-pr voice_ai_chat_ui → VSCode版 | VSCode版 |
+| 🟡 | 第61弾以降バッチ投稿 (34/41社記事) | PS版 |
