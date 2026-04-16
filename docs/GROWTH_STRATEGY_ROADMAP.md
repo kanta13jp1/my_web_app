@@ -9193,3 +9193,65 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
 | 🟡 | 第65弾以降 新記事投稿 | PS版 |
 | 🟡 | Rule 17 GH Actions確認 | PS版 |
+
+---
+
+### VSCode版セッション記録 #83 (2026-04-17)
+
+**担当**: VSCode版 (AI大学 v2 全実装)
+
+### 完了タスク
+
+1. **DB マイグレーション 2本作成**
+   - `20260417000001_create_ai_university_fsrs_cards.sql` — FSRS カードテーブル (RLS + UNIQUE制約)
+   - `20260417000002_create_ai_university_learner_profiles.sql` — 学習者プロファイルテーブル + ai_university_scores に voice_mode/groq_routed カラム追加
+
+2. **ai-hub EF に 7アクション追加** (EFハードキャップ遵守: 15本維持)
+   - `quiz.fsrs_next` — 次回復習カード取得
+   - `quiz.fsrs_grade` — FSRS採点 (stability/due_date更新)
+   - `learner.update_profile` — Claude Sonnet で学習者プロファイル抽出
+   - `quiz.evaluate` — Groq llama-3.3-70b-versatile で高速採点 + fallback
+   - `quiz.explain` — Claude Sonnet で300字解説生成
+   - `voice.tts` — ElevenLabs multilingual v2 TTS → base64音声
+   - `voice.stt` — Deepgram nova-2 STT → transcript
+
+3. **Flutter サービス層 2本作成**
+   - `lib/services/ai_fsrs_service.dart` — FSRS grade/getNextCards/nextDueLabel
+   - `lib/services/ai_learner_profile_service.dart` — Claude Sonnet プロファイル抽出
+
+4. **テスト 4本追加**
+   - `test/ai_fsrs_service_test.dart` — FSRS アルゴリズム unit tests
+
+5. **gemini_university_v2_page.dart 強化**
+   - FSRS グレーディング統合 (_awardQuizPoints で gradeCard grade=3)
+   - 不正解時: Groq evaluate → grade=1 → Claude explain → 解説カード表示
+   - FSRS 次回復習バッジ widget
+
+6. **ai_university_voice_page.dart 新規作成**
+   - プロバイダー選択 → ai_university_content から概要取得
+   - ElevenLabs TTS → HTMLAudioElement data URL 再生
+   - テキスト入力回答 → quiz.evaluate → FSRS → quiz.explain
+   - `/ai-university-voice` ルート追加 (main.dart)
+
+7. **ai_university_home_card.dart に「音声で学ぶ」ボタン追加**
+
+8. **最終検証**: flutter analyze 0エラー / deno lint 0エラー
+
+### 主な技術的知見
+
+- **Web音声再生**: Blob API + toJS は複雑 → `data:audio/mpeg;base64,` URL で HTMLAudioElement に直接セット
+- **HTMLAudioElement.onended**: `package:web` では JSFunction型 → EventStream なので `.listen()` 不可 → イベント監視削除
+- **Dart 末尾カンマ lint**: `invoke('ai-hub', body: {...},)` — 名前付き引数の末尾カンマ必須
+- **FSRS 実装**: stability × repeatability × grade係数でdue_dateを計算、DB UPSERT で永続化
+
+### 残タスク (次回 VSCode版)
+- Playwright MCP で音声学習ページの動作確認 (Rule 16)
+- FSRS カードのマイグレーション Supabase 本番適用確認
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Playwright: `/ai-university-voice` 動作確認 | VSCode版 |
+| 🟡 | FSRS migration 本番適用確認 | VSCode版 |
+| 🟡 | AI大学 v2 学習リマインダーバッチ設定 | PS版 |
+| 🔵 | 他ユーザー学習状況表示 | VSCode版 |
