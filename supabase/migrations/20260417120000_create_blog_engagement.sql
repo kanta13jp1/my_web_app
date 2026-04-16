@@ -59,15 +59,15 @@ CREATE POLICY "service_role_all_likers" ON blog_likers
 -- ─── Admin read access ──────────────────────────────────────────
 CREATE POLICY "admin_read_engagement" ON blog_engagement
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    EXISTS (SELECT 1 FROM user_profiles up WHERE up.user_id = auth.uid() AND up.is_admin = true)
   );
 
 CREATE POLICY "admin_read_comments" ON blog_comments
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    EXISTS (SELECT 1 FROM user_profiles up WHERE up.user_id = auth.uid() AND up.is_admin = true)
   );
 
 CREATE POLICY "admin_read_likers" ON blog_likers
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    EXISTS (SELECT 1 FROM user_profiles up WHERE up.user_id = auth.uid() AND up.is_admin = true)
   );
