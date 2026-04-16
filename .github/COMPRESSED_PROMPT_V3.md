@@ -325,7 +325,7 @@ Copilot からの提案を `accept` する前に必ず以下を確認:
 | `cs-check.yml` | 毎時 :07 | CS自動対応 + PR自動レビュー + ヘルスチェック |
 | `edge-function-audit.yml` | 毎時 :47 | EF UI導線カバレッジチェック + GitHub Issue自動生成 (timeout 10分) |
 | `infra-health-check.yml` | 毎時 :37 | Firebase + 重要EF 6件監視 |
-| `cron-batch.yml` | ⛔ 無効化済み (if:false + schedule削除) | Python分析バッチ — シークレット未設定で毎回エラーのため無効化。手動dispatch のみ残存 |
+| `cron-batch.yml` | 毎6時間 (10:00/16:00/22:00/04:00 JST) + dispatch | Python分析バッチ — schedule 復活済み (PS#本セッション, 2026-04-16)。`SUPABASE_SERVICE_ROLE_KEY` / `GEMINI_API_KEY` シークレット要確認 |
 | `dependency-audit.yml` | 月曜 08:00 JST | `pub outdated` + Deno import 固定チェック + **Deno std 古バージョン検出** + **pubspec.yaml 未固定パッケージ検出** |
 | `claude-agent-review.yml` | PR (main/staging/develop) | **Claude Managed Agents** — PRオープン即時AIレビュー (`ANTHROPIC_API_KEY` 必須) |
 | `feedback-issue-resolved.yml` | issues: [closed] | `user-feedback` ラベル Issue クローズ → `notify-feature-request` EF でリリース通知メール |

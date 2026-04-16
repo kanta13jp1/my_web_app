@@ -21,6 +21,9 @@ concurrency:
   group: ai-university-reminder
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   send-reminders:
     name: Send Study Reminders
