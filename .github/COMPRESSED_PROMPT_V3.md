@@ -566,6 +566,16 @@ web/sitemap.xml          # URL マップ
 - ✅ **第40弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-three-instance-parallel-dev-en.md` → dev.to
 - ✅ **第41弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita+dev.to
 - ✅ **第42弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-10-dns-domain-manager.md` → Qiita+dev.to
+- ✅ **第43弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-13-ai-university-41-providers-tabs.md` → Qiita+dev.to
+- ✅ **第44弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-12-horse-racing-ai-pipeline.md` → Qiita+dev.to
+- ✅ **第45弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-08-x-viral-pipeline-catalog-expansion.md` → Qiita+dev.to
+- ✅ **第46弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-07-ai-writing-assistant-upgrade.md` → Qiita+dev.to
+- ✅ **第47弾 投稿成功** (VSCode版#77, 2026-04-16): `2026-04-06-public-guitar-gallery.md` → Qiita+dev.to
+- ✅ **第48弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-08-guitar-x-auto-post.md` → Qiita+dev.to
+- ✅ **第49弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-13-ai-university-54-providers-milestone.md` → Qiita+dev.to
+- ✅ **第50弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-13-claude-mem-persistent-memory.md` → Qiita+dev.to
+- ✅ **第51弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-10-budget-ai-advisor.md` → Qiita+dev.to
+- ✅ **第52弾 投稿成功** (VSCode版#78, 2026-04-16): `2026-04-12-ai-university-34-providers.md` → Qiita+dev.to
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
 **次回候補 (第13弾以降)**:
