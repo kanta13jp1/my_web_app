@@ -596,9 +596,12 @@ web/sitemap.xml          # URL マップ
 - ✅ **第40弾 投稿成功** (Gemini CLI, 本セッション): `2026-04-13-three-instance-parallel-dev-en.md` → dev.to
 - ✅ **第41弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-11-personal-dashboard-notion-competitor.md` → Qiita+dev.to
 - ✅ **第42弾 投稿成功** (VSCode版#77 Design-Skills, 2026-04-16): `2026-04-10-dns-domain-manager.md` → Qiita+dev.to
+- ✅ **第43〜53弾**: 各インスタンスで投稿済み (詳細は GROWTH_STRATEGY_ROADMAP.md 参照)
+- ✅ **第54弾 投稿成功** (PS版#83, 2026-04-17): `2026-04-17-voice-ai-chat-conversation-memory.md` → Qiita+dev.to
+- ✅ **第55弾 投稿成功** (PS版#84, 2026-04-17): `2026-04-13-claude-mem-persistent-memory.md` → Qiita: https://qiita.com/kanta13jp1/items/d157ccf8a081f14dcd79 / dev.to: https://dev.to/kanta13jp1/adding-persistent-memory-to-claude-code-with-claude-mem-plus-a-diy-lightweight-alternative-2pgb
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第13弾以降)**:
+**次回候補 (第56弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
