@@ -9411,3 +9411,30 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | Deploy完了後 音声ページ動作確認 | VSCode版 |
 | 🟡 | growth-acquisition-report CORS調査 | VSCode版 |
 | 🟡 | FSRS migration 本番 apply 確認 | VSCode版 |
+
+---
+
+## Windowsアプリ版 セッション 2026-04-17 (worktree blissful-nightingale-9170ec)
+
+### 完了タスク
+1. **P1: Deploy-prod 復旧確認** — run 24531252746 success (2e7a0774 test 1.30.0 revert有効)。CI失敗15本 Issue は既に自動クローズ済 (残open: #365のみ)
+2. **P2: Issue #365 v2.1.111 反映** — INSTANCE_CONFIG.md PS版 2026-04-17 反映済確認 + COMPRESSED_PROMPT_V3.md 7fc37a88 で 3インスタンス・v2.1.111 機能反映 + cross-instance-pr 作成 + Issue #365 closed
+3. **P3: T-1 blog 次弾投稿** — `2026-04-17-web-instance-retired-en.md` dev.to 投稿成功 (<https://dev.to/kanta13jp1/why-i-killed-my-4th-claude-code-instance-lessons-from-multi-agent-indie-dev-453m>) / Qiita 429 rate limit
+4. **P4 Rule14**: tool-versions.md を 2.1.111 + Opus 4.7 + Deno 2.7.12 に更新 (PR #388)
+5. **P4 Rule8**: Playwright で本番 Desktop/Mobile ホーム表示確認 — 2件 EF auth 401 検出 (core-hub/growth-hub 匿名401 = 想定内)
+6. **P4 Rule10**: docs/ 戦略文書6本分析 — instance-constraints.md に廃止notice追加 (段階的廃止中 → INSTANCE_CONFIG.md 一本化) (PR #388)
+
+### 発見事項
+- Deploy-prod は 2e7a0774 (test 1.30.0 revert) で完全復旧
+- worktree `blissful-nightingale-9170ec` は git worktree 未登録 — phantom path だった (実際は main repo 直接編集となった)
+- 並行インスタンス (PS版#86) が同時に COMPRESSED_PROMPT_V3.md を v2.1.111 反映済 — 競合回避成功
+
+### 次回優先タスク
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | PR #388 マージ確認 | PS版 |
+| 🟡 | instance-constraints.md 完全撤廃判断 | PS版 |
+| 🟡 | `/less-permission-prompts` 実行で settings.json 最適化 | PS版 |
+| 🟡 | `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` テスト | PS版 |
+| 🟢 | AI大学 67-69社候補評価 (Harvey AI/Typeface/Writer) | Windows版 |
+| 🟢 | Mobile FAB overlap (ホーム) 修正 | VSCode版 |
