@@ -620,14 +620,15 @@ web/sitemap.xml          # URL マップ
 - ✅ **第65弾 dev.to成功** (PS版#89, 2026-04-17): `2026-03-31-embedding-similarity.md` → dev.to: https://dev.to/kanta13jp1/building-a-text-similarity-lab-with-gemini-embeddings-flutter-web-cosine-similarity-visualizer-3bno
 - ✅ **第66弾 dev.to成功** (PS版#89, 2026-04-17): `2026-03-28-edge-functions-cicd.md` → dev.to: https://dev.to/kanta13jp1/how-i-deploy-36-supabase-edge-functions-via-github-actions-with-4-parallel-claude-code-instances-46g7
 
-**次回候補 (第67弾以降)**:
+- ✅ **第67弾 dev.to成功** (PS版#90, 2026-04-17): `2026-04-07-ai-writing-assistant-upgrade.md` → dev.to: https://dev.to/kanta13jp1/one-edge-function-three-ai-writers-meeting-minutes-x-threads-blog-drafts-4pfh
+- ✅ **第68弾 dev.to成功** (PS版#90, 2026-04-17): `2026-04-02-gantt-timeline.md` → dev.to: https://dev.to/kanta13jp1/building-a-gantt-chart-that-beats-notions-timeline-view-flutter-web-supabase-226a
+
+**次回候補 (第69弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾Qiitaリトライ) | Qiita 2026-04-18以降 |
-| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾Qiitaリトライ) | Qiita 2026-04-18以降 |
-| 🟡 | `2026-04-12-ai-university-34-providers.md` (第63弾Qiitaリトライ) | Qiita 2026-04-18以降 |
-| 🟡 | `2026-04-13-ai-university-41-providers-tabs.md` (第64弾Qiitaリトライ) | Qiita 2026-04-18以降 |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 2026-04-18以降 |
+| 🟡 | 未投稿JA記事 EN版作成+dev.to投稿 (残45件) | dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

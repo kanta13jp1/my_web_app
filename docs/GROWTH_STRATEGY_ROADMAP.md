@@ -9280,3 +9280,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
 | 🟡 | 第67弾以降 未投稿ドラフトからEN版作成+dev.to投稿 | PS版 |
 | 🟡 | `2026-04-17-web-instance-retired.md` Qiitaリトライ | PS版翌日 |
+
+### PS版セッション記録 #90 (2026-04-17)
+
+**担当**: PS版 (T-1 投稿バッチ続き)
+
+### 完了タスク
+
+1. **T-1 第59弾 Qiitaリトライ** → 429継続 (2026-04-18以降持ち越し)
+
+2. **T-1 第67弾 dev.to投稿成功** `2026-04-07-ai-writing-assistant-upgrade.md`
+   - dev.to: https://dev.to/kanta13jp1/one-edge-function-three-ai-writers-meeting-minutes-x-threads-blog-drafts-4pfh
+
+3. **T-1 第68弾 dev.to投稿成功** `2026-04-02-gantt-timeline.md`
+   - dev.to: https://dev.to/kanta13jp1/building-a-gantt-chart-that-beats-notions-timeline-view-flutter-web-supabase-226a
+
+4. **EN版新規作成 2件**
+   - `2026-04-07-ai-writing-assistant-upgrade-en.md`
+   - `2026-04-02-gantt-timeline-en.md`
+
+**今セッション累計**: 第63〜68弾 (6本 dev.to投稿)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
+| 🟡 | 第69弾以降 未投稿JA記事EN版作成+dev.to (残45件) | PS版 |
