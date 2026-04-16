@@ -97,6 +97,13 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
+14. **制約・仕様変更を即記録（全インスタンス・必須）** — どのインスタンスでも新しい制約・モデル変更・モード仕様を発見したら即座に以下を実施する:
+   1. `docs/instance-constraints.md` の「制約発見ログ」に追記 (`| 日付 | インスタンス | 制約内容 | 代替手段 | セッション名 |`)
+   2. `.github/COMPRESSED_PROMPT_V3.md` の該当インスタンス行の制約列を更新
+   3. `memory/feedback_correction_YYYYMMDD.md` に記録
+   4. `docs/cross-instance-prs/YYYYMMDD_constraint.md` で他インスタンスへ周知
+   **対象範囲**: Claude モデル制限・WEB版の新たな不可操作・MCP ツール制限・GitHub Actions の仕様変更・外部AI (Copilot/Gemini/CODEX) のモデル変更すべてを含む
+
 ---
 
 ## Multi-AI ワークフロー（毎回必ず実行）

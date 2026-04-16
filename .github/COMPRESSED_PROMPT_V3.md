@@ -9,55 +9,71 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ## 🔀 4インスタンス + Multi-AI 並行開発スコープ（2026-04-16 更新）
 
+> 詳細制約ログ・最新機能・次回推奨プロンプト: **`docs/instance-constraints.md`** 参照。
+> 新制約発見時はそのファイルに即追記し、この表の制約列も同時更新すること。
+
 ### Claude Code 4インスタンス構成
 
-> **制約対応表**: WEB版(claude.ai/code)はローカルCLI時限あり—— `notebooklm`・`flutter analyze`・`deno lint`・ローカルPythonスクリプトは不可。WebSearch / WebFetch / GitHub MCP は利用可。
-
-| インスタンス | 担当範囲 (write 権限) | 専任ルール | 推奨モデル | 制約 |
+| インスタンス | 担当範囲 | 推奨モデル | 推奨モード | 主な制約 |
 | --- | --- | --- | --- | --- |
-| **VSCode版** | `lib/` (Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 (表示チェック+修正) / Rule 19 (UI改善) / `flutter analyze` + `deno lint` 0エラー | `claude-sonnet-4-6` | なし |
-| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` + **notebooklm CLI主担当** | Rule 10 (docs全件分析) / AI大学プロバイダー追加 / **Master Brain更新** | `claude-sonnet-4-6` | なし |
-| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 (CI/CD最適化) / Scheduleタスク owner | `claude-haiku-4-5` (次元作業) or `sonnet-4-6` (設計) | なし |
-| **WEB版** | `docs/blog-drafts/` + `docs/competitor-reports/` + GitHub PR/Issues主担当 | Rule 11 (AI大学 WebSearch経由) / T-1 ブログ / 競合リサーチ / Code Review MCP | `claude-sonnet-4-6` | notebooklm・ローカルCLI **不可** |
+| **VSCode版** | `lib/` + `supabase/functions/` + `docs/DESIGN.md` | `claude-sonnet-4-6` | 通常。複雑UI設計時 **Extended Thinking** | なし |
+| **Windowsアプリ版** | `docs/` + `supabase/migrations/` + notebooklm CLI専任 | `claude-sonnet-4-6` | 通常 + CAVEMAN | `PYTHONUTF8=1` 必須 / xlsxロック注意 |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` | 定型: `haiku-4-5` / 設計: `sonnet-4-6` | `/fast` (定型) / 通常 (設計) | GHA `${{}}` は env:ブロック経由 |
+| **WEB版** | `docs/blog-drafts/` + `docs/competitor-reports/` + GitHub PR/Issues | `claude-sonnet-4-6` | **Projects + Memory + Learning Mode** | notebooklm / flutter analyze / deno lint / ローカルCLI 不可 |
 
-### 外部AI統合（補完役割）
+### Claude 最新機能 活用ガイド
 
-| AI ツール | 役割 | 使用タイミング |
+| 機能 | 対応インスタンス | 使い所 |
 | --- | --- | --- |
-| **GitHub Copilot** | VSCode内インライン補完・PR自動レビュー | コード補完 (`Ctrl+Enter`) / インラインChat (`Ctrl+I`) / `claude-agent-review.yml` PR審査 |
-| **Gemini Code Assist** | 長文コード理解・Google API統合・テスト生成 | Cloud Shell / JetBrains / VSCode で複雑な EF ロジック・Dart リファクタリング支援 |
-| **OpenAI CODEX** | アルゴリズム生成・コード変換・SQL最適化 | Supabase クエリ最適化 / Edge Function の複雑なビジネスロジック実装支援 |
+| **Extended Thinking** | VSCode / Windowsアプリ | 複雑UI設計・DB schema・アーキテクチャ決定。`claude-opus-4` 推奨 |
+| **Projects機能** | WEB版 (claude.ai専用) | プロジェクト文脈・CLAUDE.md・履歴をセッション越えで永続化 |
+| **Memory機能** | WEB版 (claude.ai専用) | ユーザー設定・プロジェクトコンテキスト・よく使うパターンを記憶 |
+| **Learning Mode** | WEB版 (Projects経由) | Projectsにリポジトリマップ・CLAUDE.mdを読ませると次回からコンテキスト初期化不要 |
+| **Interleaved Thinking** | 全インスタンス | ツール実行中にも思考を継続。多ステップタスクで自動適用 |
+| **CAVEMANモード** | Windowsアプリ / PowerShell 主体 | コミュニケーショントークン～75%削減 |
+
+### 外部AI 最新モデル・機能
+
+| AI | 最新モデル | 主な機能 | このプロジェクトでの用途 |
+| --- | --- | --- | --- |
+| **GitHub Copilot** | GPT-4o / Claude Sonnet / Gemini Pro 選择可 | Inline補完 / Copilot Edits (複数ファイル同時編集) / Copilot Workspace (Issue→PR自動) / `@workspace` | VSCode版: EditsでFlutter多ファイル編集 / PS版: `gh copilot suggest` |
+| **Gemini Code Assist** | Gemini 2.5 Pro (2Mトークン) / Flash | Agent mode / Flutter/Dart特化 / 大規模リファクタ | EF全体横断分析 / Dart大規模リファクタ |
+| **OpenAI CODEX** | o3 (最強推論) / o4-mini (高速低コスト) / Codex CLI | SQL最適化 / アルゴリズム / ターミナル直実行 | Supabaseクエリ最適化 / PS版: `codex` CLI |
 
 ### AI選択フロー
 
 ```text
-行レベル補完 (秒単位)        → GitHub Copilot (Ctrl+Enter)
-インライン修正 (分単位)       → GitHub Copilot Inline Chat (Ctrl+I)
-複雑なDart/Flutter実装       → Gemini Code Assist (長コンテキスト強み)
-アルゴリズム / SQL 最適化     → CODEX (コード特化強み)
-設計・戦略・長期判断          → Claude Code (Memory + ROADMAP統合)
-ブログ / 競合リサーチ       → Claude Code WEB版 (WebSearch/WebFetch)
-NotebookLM Deep Research  → Windowsアプリ版 (notebooklm CLI専任)
+行レベル補完                  -> GitHub Copilot Inline (Ctrl+Enter)
+複数ファイル同時編集 (VSCode)    -> Copilot Edits
+複雑なDart/Flutter              -> Gemini 2.5 Pro (長コンテキスト+Flutter特化)
+SQL / アルゴリズム最適化          -> CODEX o3/o4-mini
+設計・戦略・長期判断            -> Claude Code (Memory + ROADMAP)
+複雑な推論・アーキテクチャ       -> Claude Extended Thinking (opus/sonnet)
+ブログ / 競合リサーチ           -> WEB版 (WebSearch/WebFetch/Projects)
+NotebookLM Deep Research      -> Windowsアプリ版専任 (notebooklm CLI)
+Issue -> PR 全自動              -> Copilot Workspace
 ```
 
-### クオータ監視
+### 制約発見時の更新フロー（全インスタンス共通）
 
-`quota-monitor.yml` (毎日 09:00 JST) が各ツールの使用状況を `ai_quota_usage` テーブルに記録。
+```text
+Step 1: docs/instance-constraints.md の「制約発見ログ」に追記
+Step 2: この表の制約列を更新
+Step 3: memory/feedback_correction_YYYYMMDD.md に記録
+Step 4: cross-instance-pr で他インスタンスへ周知
+```
 
-| ツール | 監視方法 | アラート閾値 |
+### クオータ監視 (quota-monitor.yml 毎日 09:00 JST)
+
+| ツール | 監視方法 | アラート閃値 |
 | --- | --- | --- |
-| Claude (Anthropic API) | `/v1/usage` API | 月次 $50 超過 |
-| OpenAI (CODEX) | `/v1/usage` API | 月次 $20 超過 |
-| Gemini Code Assist | Google Cloud Monitoring API | 月次クオータ 80% |
-| GitHub Copilot | GitHub `/user/copilot_billing` API | シート数上限近接 |
+| Claude (Anthropic API) | `/v1/usage` | 月次 $50 |
+| OpenAI (CODEX) | `/v1/usage` | 月次 $20 |
+| Gemini Code Assist | Google Cloud Monitoring | 月次クオータ 80% |
+| GitHub Copilot | `/user/copilot_billing` | シート数上限近接 |
 
-| **GitHub Copilot (統合AI)** | VSCode 内インライン補完・チャット・PR レビュー / 全インスタンス横断支援 | Inline Chat: `I#` 接頭辞で簡易修正 / Copilot Chat: 複雑な判断・アーキテクチャ / `claude-agent-review.yml`: PR自動レビュー |
-
-**緊急横断権限**: blocking が発生し他インスタンスを待てない場合、`docs/cross-instance-prs/YYYYMMDD_<内容>.md` に変更提案をコミット可。担当インスタンスが次セッションで採否を判断してマージする。
-
-**競合回避パターン（必須）**: `git stash → git pull --rebase origin main → git push origin main → git stash pop`
-衝突時: `git checkout --theirs <file>` → `git add` → `git rebase --continue`
-
+**緊急横断権限**: blocking 時は `docs/cross-instance-prs/YYYYMMDD_<内容>.md` に提案をコミット。担当インスタンスが次セッションで採否。
+**競合回避パターン**: `git stash -> git pull --rebase origin main -> git push -> git stash pop`
 ---
 
 ## 🏆 競合21社（全機能を統合して超える）
