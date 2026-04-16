@@ -1,7 +1,7 @@
 # インスタンス設定・制約カタログ — 自分株式会社 マルチAI開発ガイド
 
 **作成**: 2026-04-16 (VSCode版#79)
-**最終更新**: 2026-04-17 (VSCode版 — Opus 4.7 全面反映: Adaptive Thinking行・ultrathinkタスクのモデル修正・WEB版プロンプト更新)
+**最終更新**: 2026-04-17 (Windowsアプリ版 — WEB版廃止・3インスタンス制に統一)
 **更新責任者**: 制約を発見したインスタンスが随時更新。構造変更は PowerShell版 が担当。
 
 > **このドキュメントの目的**: 各AIインスタンスの「できること・できないこと」を一元管理し、
@@ -38,15 +38,13 @@ echo "現在: $CURRENT / 最新: $LATEST"
 | 確認項目 | 対応アクション |
 | --- | --- |
 | **新機能追加** | 本ドキュメント「新機能追跡ログ」に追記 → 開発フローへの組み込み可否を判断 → 有用なら CLAUDE.md の該当 Rule に追記 or 新 Rule 追加 |
-| **WEB版制約の解消** | 下記 WEB版制約カタログの該当行を削除 → WEB版推奨プロンプトを更新 → 役割分担を見直す |
-| **ローカル版の制約解消** | 同様に制約カタログを更新 → 推奨プロンプトを更新 |
+| **ローカル版の制約解消** | 制約カタログを更新 → 推奨プロンプトを更新 |
 | **新モデル追加** | 「利用可能モデル」表を更新 → インスタンス別モデル推奨を見直し |
 | **Routines 上限変更** | Routines セクションの上限数値を更新 |
 | **新モード追加 (Learning Mode 等)** | 「モード・モデル指定ガイド」に追記 → 推奨プロンプトを更新 |
 
 **制約解消時の役割分担見直し例**:
-- WEB版で `git CLI` が使えるようになった → PowerShell版との役割重複を整理
-- WEB版で `notebooklm` が使えるようになった → Rule 21 の WEB版制限を解除
+- 新ツールが使えるようになった → 推奨プロンプトを更新し役割分担を見直す
 
 ### Step 3: フォールバックAIツールのバージョン確認
 
@@ -92,7 +90,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 | **2.1.111** | **Auto theme 🆕** | "Auto (match terminal)" テーマ。ターミナルのダーク/ライトモードに自動同期 | ⚠️ 任意: `/config` → theme → "Auto" | ローカルインスタンス |
 | **2026-04-16** | **Claude Opus 4.7 (`claude-opus-4-7`)** | Opus 4.6 後継。agentic coding 大幅強化。**Extended Thinking なし** / Adaptive Thinking あり。同価格 ($5/$25/MTok)。学習 Jan 2026 | ✅ 全インスタンスで Opus 4.6 → Opus 4.7 に切替。ultrathink は Sonnet 4.6 で | 全インスタンス |
 | **2026-04-19** | **Haiku 3 廃止 ⚠️ (`claude-3-haiku-20240307`)** | 2026-04-19 退役。EF に参照があれば即 `claude-haiku-4-5-20251001` へ移行 | ✅ EF に参照なし (grep 確認済み) | VSCode版が確認 |
-| **2.1.108** | **`/recap` 公式 Learning Mode** | セッション開始時に `/recap` → 前セッション作業サマリーを自動生成。**WEB版でも動作** | ✅ 全推奨プロンプト Step 1 に追加済み | 全インスタンス |
+| **2.1.108** | **`/recap` 公式 Learning Mode** | セッション開始時に `/recap` → 前セッション作業サマリーを自動生成 | ✅ 全推奨プロンプト Step 1 に追加済み | 全インスタンス |
 | **2.1.108** | **`ENABLE_PROMPT_CACHING_1H` 🆕** | キャッシュTTL を5分→1時間に延長。長いセッションのトークンコスト最適化 | ⚠️ 要設定: ローカル `.env` or shell profile | ローカルインスタンス |
 | **2.1.105** | **PreCompact hook 🆕** | コンパクション前にフック実行。`exit 2` でブロック → 記憶消失防止 | ⚠️ 要設定: `.claude/hooks/pre-compact` 追加検討 | 全インスタンス |
 | **2.1.105** | **`/proactive` (= `/loop` alias) 🆕** | `/loop` の別名。会話内で反復タスクを起動しやすい | ✅ 利用可能 | 全インスタンス |
@@ -102,7 +100,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 | **2.1.98** | **Monitor tool 🆕** | バックグラウンドスクリプトのイベントをストリーミング監視 | ✅ GHA 長時間ジョブ監視に活用可 | ローカルインスタンス |
 | 2.1.x (2026-04) | **Routines** | Desktop版専用サーバーレス自動化スケジューラ | ✅ 組み込み済み (Windowsアプリ版専任) | Windowsアプリ版 |
 | 2.1.x (2026-04) | **Extended Thinking (ultrathink)** | 5段階思考トリガー (`think`〜`ultrathink`) | ✅ 各推奨プロンプトに追加済み | 全インスタンス |
-| 2.1.x (2026) | **Adaptive Thinking** | Opus 4.7/Sonnet 4.6 が effort 値に応じて思考量を自動調整 | ✅ WEB版 Opus 4.7 使用に反映済み | 全インスタンス |
+| 2.1.x (2026) | **Adaptive Thinking** | Opus 4.7/Sonnet 4.6 が effort 値に応じて思考量を自動調整 | ✅ 全インスタンスで反映済み | 全インスタンス |
 | 2.1.x (2026) | **Cross-session Memory** | セッション間でユーザー情報・設計方針を記憶 | ✅ `memory/` + NotebookLM Master Brain で実装済み | 全インスタンス |
 | — | *(次のバージョン更新時に追記)* | | | |
 
@@ -111,7 +109,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 ## Learning Mode — コードベース学習システム
 
 **v2.1.108 で `/recap` コマンドが追加され、公式の Learning Mode が実装された。**
-セッション開始時に `/recap` を実行すると前回の作業サマリーが自動生成される。**WEB版でも動作する。**
+セッション開始時に `/recap` を実行すると前回の作業サマリーが自動生成される。
 
 ### `/recap` — 公式 Learning Mode (v2.1.108+)
 
@@ -121,17 +119,17 @@ codex --version 2>/dev/null || echo "codex: not installed"
 ```text
 
 - セッション復帰時に「前回何をしていたか」を即座に把握できる
-- 全インスタンス共通で動作 (WEB版 ✅ / ローカル版 ✅)
+- 全インスタンス共通で動作
 - 設定: `/config` → `recap` を有効化
 
 ### 4層学習アーキテクチャ (更新版)
 
-| 層 | 仕組み | タイミング | WEB版可否 |
-| --- | --- | --- | --- |
-| **L0: 公式リキャップ** | `/recap` — 前セッション作業サマリーを自動生成 | セッション開始時に手動実行 | ✅ 可 |
-| **L1: セッション内リアルタイム** | claude-mem (SQLite + Gemini圧縮) — ツール呼び出しを自動記録 | 自動 (hooks) | ❌ 不可 |
-| **L2: セッション間永続** | `memory/` mdファイル — 成功/失敗パターン・プロジェクト状態 | `/wrap-up` 時 | ❌ 不可 (GitHub MCP経由で参照可) |
-| **L3: プロジェクト横断深層** | NotebookLM Master Brain — アーキテクチャ決定・競合調査 | `/wrap-up` 時に source add | ❌ 不可 |
+| 層 | 仕組み | タイミング |
+| --- | --- | --- |
+| **L0: 公式リキャップ** | `/recap` — 前セッション作業サマリーを自動生成 | セッション開始時に手動実行 |
+| **L1: セッション内リアルタイム** | claude-mem (SQLite + Gemini圧縮) — ツール呼び出しを自動記録 | 自動 (hooks) |
+| **L2: セッション間永続** | `memory/` mdファイル — 成功/失敗パターン・プロジェクト状態 | `/wrap-up` 時 |
+| **L3: プロジェクト横断深層** | NotebookLM Master Brain — アーキテクチャ決定・競合調査 | `/wrap-up` 時に source add |
 
 ### セッション開始時の「Learning Mode」手順 (全インスタンス共通)
 
@@ -147,7 +145,7 @@ git log --oneline -5
 
 # Step 3: 作業ファイルのコンテキストを読む (ローカル: 3ファイル未満なら直接Read/3以上はNotebookLM)
 # ローカル: notebooklm use jibun-master-brain && notebooklm ask "今日の作業コンテキスト"
-# WEB版: GitHub MCP → list_commits で直近コミットを確認
+# 3ファイル以上: notebooklm use jibun-master-brain && notebooklm ask "今日の作業コンテキスト"
 
 # Step 4: MEMORY.md の pending タスクを確認して今日の作業を決定
 
@@ -160,7 +158,7 @@ git log --oneline -5
 | 定型実装 (lint修正・minor bug fix) | Sonnet 4.6 | なし (デフォルト) |
 | 新機能設計・EF実装 | Sonnet 4.6 | `think deeply` |
 | アーキテクチャ判断・大規模リファクタ | Sonnet 4.6 | `ultrathink` |
-| 競合調査・戦略判断 (WEB版向け) | Sonnet 4.6 | `ultrathink` |
+| 競合調査・戦略判断 | Sonnet 4.6 | `ultrathink` |
 | NotebookLM連携 (ローカル版) | Sonnet 4.6 | — (NotebookLMが重い処理を担当) |
 | `/recap` 後の方針決定 | Sonnet 4.6 | `think` | |
 
@@ -205,41 +203,6 @@ git log --oneline -5
 | notebooklm CLI | ✅ 可 | 2026-04-16 | |
 | Routines | ❌ 不可 | 2026-04-16 | ターミナル版、Desktop不可 |
 | デフォルトモデル | Sonnet 4.6 | — | |
-
-### Claude Code WEB版 (claude.ai/code) ← **制約多数・要確認**
-
-> WEB版の制約はバージョン更新で解消される場合あり。毎セッション開始時に確認して更新する。
-
-**確認済み制約一覧** (2026-04-16 調査):
-
-| 機能 | 状態 | 確認日 | 代替手段 |
-| --- | --- | --- | --- |
-| notebooklm CLI | ❌ **不可** | 2026-04-16 | WebSearch + WebFetch で直接リサーチ |
-| flutter analyze | ❌ **不可** | 2026-04-16 | コード読んで静的チェックのみ |
-| deno lint | ❌ **不可** | 2026-04-16 | VSCode版に依頼 (cross-instance-pr) |
-| gh CLI | ❌ **不可** | 2026-04-16 | **GitHub MCP** を使用 |
-| git CLI | ❌ **不可** | 2026-04-16 | **GitHub MCP** (push_files 等) |
-| ローカルファイルシステム | ❌ **不可** | 2026-04-16 | GitHub リポジトリ経由のみ |
-| ローカルHooks | ❌ **不可** | 2026-04-16 | — |
-| Routines | ❌ **不可** | 2026-04-16 | Windowsアプリ版が担当 |
-| WebSearch | ✅ **可** | 2026-04-16 | Deep Research の代替として活用 |
-| WebFetch | ✅ **可** | 2026-04-16 | URL調査・競合分析に活用 |
-| GitHub MCP | ✅ **可** | 2026-04-16 | PR作成・Issue管理・コードレビュー |
-| Playwright MCP | ⚠️ 要確認 | — | MCP設定が共有されている場合のみ可 |
-| Skills (スラッシュコマンド) | ⚠️ 一部制限 | 2026-04-16 | 一部未対応あり |
-| `--teleport` CLI→Web | ❌ **不可** | 2026-04-16 | 逆方向 (Web→CLI) は可 |
-| `/ultrareview` | ✅ **可** 🆕 | 2026-04-17 | `/ultrareview` or `/ultrareview <PR#>` でクラウドレビュー |
-| `/effort xhigh` (Opus 4.7) | ✅ **可** 🆕 | 2026-04-17 | Adaptive Thinking 最大 effort |
-| デフォルトモデル | **Opus 4.7** | 2026-04-17 | agentic coding 強化。**ultrathinkは Sonnet 4.6で** |
-| **GitHub MCP 安定性** | ⚠️ **不安定** | 2026-04-17 | セッション内で1〜3回の切断が発生する場合あり。並列MCP呼び出しは避け逐次実行を推奨。v2.1.110の "MCP tool calls hanging" 修正はローカル版向けで WEB版は別 |
-
-**WEB版の役割 (制約を踏まえた最適分担)**:
-- WebSearch/WebFetch での AI プロバイダー調査・競合分析
-- GitHub MCP 経由の PR コードレビュー + `/ultrareview <PR#>` での深掘りレビュー
-- ブログ英語版生成・品質レビュー
-- **Opus 4.7 + `/effort xhigh`** でのアーキテクチャレビュー (agentic coding 強化・実行不要の純粋推論タスク)
-- Extended Thinking が必要な場合のみ: **Sonnet 4.6 + ultrathink** に切替
-- `docs/research/` へのリサーチ成果物保存 (GitHub MCP 経由)
 
  ---
 
@@ -311,7 +274,6 @@ git log --oneline -5
 | **VSCode版 (定型)** | Sonnet 4.6 + `/fast` | — | — | — |
 | **Windowsアプリ版** | Sonnet 4.6 | **Opus 4.7** + `/effort high` | Sonnet 4.6 + `ultrathink` | docs設計・provider選定 |
 | **PowerShell版** | Sonnet 4.6 + `think deeply` | **Opus 4.7** + `/effort high` | Sonnet 4.6 + `ultrathink` | CI/CD設計 |
-| **WEB版** | **Opus 4.7** | **Opus 4.7** + `/effort xhigh` | Sonnet 4.6 + `ultrathink` | 競合分析・アーキテクチャ |
 
  ---
 
@@ -346,22 +308,11 @@ git log --oneline -5
 | **モデル** | Sonnet 4.6 (通常) / **Opus 4.7** (ワークフロー設計) / Sonnet 4.6 + `ultrathink` (全体設計) |
 | **禁止** | `lib/` · `supabase/functions/` |
 
-### WEB版 (claude.ai/code)
-
-| 項目 | 内容 |
-| --- | --- |
-| **Write 権限** | `docs/blog-drafts/` + `docs/research/` (GitHub MCP 経由) |
-| **専任ルール** | WebSearch/WebFetch 直接リサーチ / GitHub MCP PR・Issue管理 / Opus 4.7 での純粋推論タスク |
-| **モデル** | **Opus 4.7** (agentic coding強化・CLI不可の分補完) / 拡張思考時は Sonnet 4.6 + `ultrathink` |
-| **制約** | notebooklm・flutter analyze・deno lint・gh・git CLI 全て不可 |
-| **代替** | GitHub MCP (gh代替) / WebSearch+WebFetch (notebooklm代替) |
-| **禁止** | CLI依存タスク全般 |
-
  ---
 
 ## フォールバックAI詳細設定 (Claude レート制限到達時のみ)
 
-> **通常運用**: Claude Code 4インスタンスのみ使用。
+> **通常運用**: Claude Code 3インスタンスのみ使用。
 > フォールバックは `quota-monitor.yml` が $50超過/429 を検知した場合のみ発動。
 
 ### GitHub Copilot (常時 PR 自動レビュー + フォールバック)
@@ -578,74 +529,6 @@ INSTANCE_CONFIG.md 更新:       Sonnet 4.6 通常モード
 .yml/.sql/.md → GitHub Copilot (gh extension install github/gh-copilot)
 .py/.ts → codex
 ```
-
-### WEB版 推奨プロンプト
-
-```text
-このインスタンスはWEB版Claude Code (claude.ai/code) です。
-モデル: Opus 4.7 (agentic coding強化・CLI不可の分、思考力で補完)
-
-【制約サマリー (2026-04-17 更新)】
-❌ 使用不可: notebooklm CLI / flutter analyze / deno lint / gh CLI / git CLI / ローカルFS / Hooks / Routines
-✅ 使用可能: /recap / /ultrareview / /effort xhigh / WebSearch / WebFetch / GitHub MCP / Playwright MCP / Skills / Opus 4.7
-
-【Step 0: /recap — 公式 Learning Mode (WEB版でも動作!)】
-/recap
-→ 前セッションのサマリーを確認。WEB版唯一の公式セッション記憶復元手段
-
-【Step 1: バージョン・制約変更確認】
-WebFetch: https://github.com/anthropics/claude-code/releases
-→ WEB版で新機能が利用可能になっていないか確認
-→ 制約解消があれば GitHub MCP issue_write で Issue を作成してください:
-   タイトル: "[制約変更] WEB版で XXX が使用可能になった"
-⚠️ docs/INSTANCE_CONFIG.md を直接 push_files で更新しないこと (PowerShell版 の担当)
-
-【GitHub MCP 使用上の注意 — 必読】
-⚠️ 並列実行禁止: 複数の GitHub MCP 操作を同時に実行しない ("Stream idle timeout" の原因)
-⚠️ 逐次実行: 1操作ごとに完了を確認してから次の操作へ
-⚠️ 切断時の対応: MCP切断が発生したら再接続を待ち (自動再接続)、その後1操作ずつ再開
-⚠️ INSTANCE_CONFIG.md は直接 push_files しない → Issue 経由で PowerShell版に依頼
-⚠️ 書き込み権限: docs/blog-drafts/ と docs/research/ のみ。docs/ 直下は読み取り専用
-
-【Step 2: Learning Mode — 並行インスタンス確認】
-GitHub MCP: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
-→ 直近5コミットで VSCode版・PS版・Windowsアプリ版の作業を把握
-
-【Step 3: 今日のタスク候補 (優先度順)】
-1. Opus 4.7 でアーキテクチャレビュー (agentic coding強化・実行不要の純粋推論タスク)
-   → GitHub MCP で最新コードを確認 → 改善提案を docs/research/ に保存
-2. WebSearch で AI大学新規プロバイダー候補を3軸評価
-   → GitHub MCP push_files で docs/research/YYYY-MM-DD-providers.md に保存
-3. オープンPRのコードレビュー
-   → /ultrareview (並列マルチエージェント・WEB版でも動作) または
-   → GitHub MCP: list_pull_requests → pull_request_read → pull_request_review_write
-4. 競合21社最新動向調査 → docs/research/YYYY-MM-DD-competitors.md に保存
-5. ブログ英語版の品質レビュー・改善 (GitHub MCP で draft 確認 → 改善提案)
-
-【モデル設定 (2026-04-17 更新)】
-通常・複雑分析:  このセッションは Opus 4.7 を使用してください。
-高負荷タスク:    /effort xhigh (v2.1.111新設・high と max の中間。Opus 4.7 + Adaptive Thinking)
-                 → アーキテクチャレビュー・複雑なロジック設計に使用
-Extended Thinking が必要な場合: Sonnet 4.6 に切り替えて "ultrathink" を含めてください。
-⚠️ Opus 4.7 + ultrathink は Extended Thinking を起動しません。Adaptive Thinking (/effort) を使うこと。
-
-【GitHub MCP 使用チートシート】
-コミット確認: list_commits({owner:"kanta13jp1", repo:"my_web_app", perPage:5})
-PR一覧:       list_pull_requests({state:"open"})
-PR確認:       pull_request_read({pullRequestNumber: 123})
-レビュー:     pull_request_review_write({pullRequestNumber:123, body:"...", event:"COMMENT"})
-ファイル保存: push_files({owner:"kanta13jp1", repo:"my_web_app", branch:"main",
-              files:[{path:"docs/research/YYYY.md", content:"..."}], message:"research: ..."})
-Issue作成:    issue_write({owner:"kanta13jp1", repo:"my_web_app", title:"...", body:"..."})
-
-【制約発見時の記録手順】
-⚠️ docs/INSTANCE_CONFIG.md は WEB版が直接編集しないこと (PowerShell版 の write 権限)
-1. GitHub MCP issue_write で Issue を作成:
-   タイトル: "[制約変更] WEB版で XXX が [使用可/不可] になった"
-   ボディ: 制約の詳細・発見日・代替手段・影響範囲
-   → PowerShell版が次セッションで INSTANCE_CONFIG.md を更新し、役割分担を見直す
-
-```text
 
 ### CODEX CLI 使用時プロンプト (Claude 429時のフォールバック)
 

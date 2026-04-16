@@ -97,7 +97,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
    - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
 
-14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — **ローカルCLIがあるインスタンス (VSCode/Windowsアプリ/PowerShell版) のみ適用**。WEB版は `notebooklm` CLI が使用不可のため代わりに WebSearch/WebFetch を使用する。
+14. **毎回必須: NotebookLM 経由でトークン削減 (Rule 21)** — 全インスタンス (VSCode/Windowsアプリ/PowerShell版) に適用。
    - 3ファイル以上同時読み込み → `notebooklm source add` → `notebooklm ask`
    - URL・競合サイト分析 → `notebooklm source add URL`
    - 競合21社調査 → `notebooklm source add-research`
@@ -105,7 +105,6 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - セッション終了時 → `notebooklm source add ./memory/*.md` で Master Brain 蓄積必須
 
    Claude 直接処理は「判断・編集・統合」のみに限定。トークン節約効果 ~95%。
-   **WEB版インスタンス**は `notebooklm` CLI 不可のため WebSearch/WebFetch + **Opus 4.7** で代替し `docs/research/` に成果物を保存する。Extended Thinking (ultrathink) が必要な場合は **Sonnet 4.6** に切り替えること (Opus 4.7 は Extended Thinking 非対応)。
 
 15. **毎セッション冒頭: /recap + バージョン確認・リリースノート確認・制約解消チェック (Rule 22)** — 詳細は `docs/INSTANCE_CONFIG.md` を参照。
 
@@ -116,7 +115,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    ```
 
    セッション開始時に必ず `/recap` を実行し、前回の作業サマリーを確認してから作業開始する。
-   **WEB版でも動作する。** CLI が使えない WEB版では `/recap` が唯一の前セッション文脈確認手段。
+   全インスタンス共通で動作する。
 
    **Step 1: バージョン確認 (ローカルインスタンスのみ)**
 
@@ -145,7 +144,6 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    | 確認項目 | 対応 |
    | --- | --- |
    | **新機能追加** | `docs/INSTANCE_CONFIG.md` の「新機能」セクションに追記 → 開発フローへの組み込み可否を判断 → 有用であれば即 CLAUDE.md の該当 Rule に追記 |
-   | **WEB版制約の解消** | `docs/INSTANCE_CONFIG.md` の WEB版制約カタログを更新 → WEB版の役割分担を見直し |
    | **他インスタンス制約の変化** | 同様に制約カタログを更新 |
    | **Routines 上限変更** | `docs/INSTANCE_CONFIG.md` の Routines セクションを更新 |
    | **モデル追加** | `docs/INSTANCE_CONFIG.md` の「利用可能モデル」表を更新 |
@@ -209,7 +207,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 
 ### フォールバック AI ツール (Claude MAX レート制限到達時のみ使用)
 
-> **通常運用**: Claude Code 4インスタンス (VSCode / Windowsアプリ / PowerShell / WEB版) のみ使用。
+> **通常運用**: Claude Code 3インスタンス (VSCode / Windowsアプリ / PowerShell) のみ使用。
 > フォールバックは Claude が **429 エラー / 月次 $50 超過** のときだけ発動。
 > NotebookLM のみ制限に関係なく **常時使用必須 (Rule 21)**。
 
@@ -233,7 +231,7 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | --- | --- | --- |
 | **Generator-Verifier** | 品質が最重要。評価基準を明文化できる | `claude-agent-review.yml` (PR生成→Claudeレビュー) / `ci-auto-fix.yml` (修正→CI再実行) / `/deep-research` (NotebookLM生成→Claude統合) |
 | **Orchestrator-Subagent** | タスク分解が明確。サブタスクが短時間で完結 | `cs-check.yml` (FAQ返信/バグ修正/エスカレーション) / `github-issue-fix.yml` (Issue一覧→1件ずつ処理) / Claude Code Schedule (計画→実行→コミット) |
-| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **4インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell/WEB版) / `ai-university-update.yml` (41プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
+| **Agent Teams** | 並行独立した長時間タスク。成果物が互いに干渉しない | **3インスタンス並行開発** (VSCode/Windowsアプリ/PowerShell) / `ai-university-update.yml` (66プロバイダー 2時間毎 RSS) + Claude Schedule (4時間毎 NotebookLM Deep Research) |
 | **Message Bus** | イベント駆動。エコシステムが成長する | `workflow-failure-handler.yml` (失敗イベント→Issue→`cs-check`) / `feedback-issue-resolved.yml` (Issueクローズ→通知メール) / `edge-function-audit.yml` (EF未接続→Issue→`github-issue-fix`) |
 | **Shared State** | エージェントが互いの発見を活用。単一障害点を避けたい | `memory/` + NotebookLM Master Brain (セッション横断知識) / Supabase DB (全EFが読み書き) / `COMPRESSED_PROMPT_V3.md` (全インスタンス共有状態) |
 
