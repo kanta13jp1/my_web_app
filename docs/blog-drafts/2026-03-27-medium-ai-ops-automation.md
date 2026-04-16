@@ -1,3 +1,9 @@
+---
+title: "Building a Self-Operating SaaS: How AI Runs My Company While I Sleep"
+tags: Flutter,Supabase,buildinpublic,SaaS,automation
+published: false
+---
+
 # Building a Self-Operating SaaS: How AI Runs My Company While I Sleep
 
 ## Target

@@ -1,3 +1,9 @@
+---
+title: "Flutter Web × Gemini AIで過去の選挙結果を自動取得・可視化する実装解説"
+tags: Flutter,Supabase,個人開発,buildinpublic,GeminiAPI
+published: false
+---
+
 # ブログ下書き 2026-03-31
 
 ## タイトル案

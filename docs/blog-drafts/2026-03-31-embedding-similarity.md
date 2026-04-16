@@ -1,3 +1,9 @@
+---
+title: "Gemini Embeddings × Flutter Web で「Embedding Lab」テキスト類似度ツールを実装した話"
+tags: Flutter,Supabase,個人開発,buildinpublic,GeminiAPI
+published: false
+---
+
 # ブログ下書き 2026-03-31
 
 ## タイトル案

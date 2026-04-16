@@ -1,3 +1,9 @@
+---
+title: "Flutter × Supabase で目標管理 + ブックマーク同期を1日で実装した話"
+tags: Flutter,Supabase,個人開発,buildinpublic,Dart
+published: false
+---
+
 # ブログ下書き 2026-04-04
 
 ## タイトル案

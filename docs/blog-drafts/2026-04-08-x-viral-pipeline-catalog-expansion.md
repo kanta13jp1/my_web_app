@@ -1,3 +1,9 @@
+---
+title: "Flutter × Supabase Edge Function でギター録音をXに自動投稿するバイラルパイプラインを実装した話"
+tags: Flutter,Supabase,個人開発,buildinpublic,バイラル
+published: false
+---
+
 # ブログ下書き 2026-04-08
 
 ## タイトル案

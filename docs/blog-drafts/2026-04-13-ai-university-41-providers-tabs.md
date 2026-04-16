@@ -1,3 +1,9 @@
+---
+title: "Flutter × Supabase でAI大学41社体制 + Notionライク タブブロック機能を実装した話"
+tags: Flutter,Supabase,個人開発,buildinpublic,AI大学
+published: false
+---
+
 # blog draft 2026-04-13
 
 ## title candidates

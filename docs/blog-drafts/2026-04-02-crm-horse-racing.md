@@ -1,3 +1,9 @@
+---
+title: "Flutter Web で CRM営業パイプラインと競馬AI予想を同時実装した話 — Salesforce・netkeiba競合へ挑む"
+tags: Flutter,Supabase,個人開発,buildinpublic,競馬AI
+published: false
+---
+
 # Flutter WebでCRM営業パイプラインと競馬予想AIを同時実装した話 — Salesforce・netkeiba競合へ挑む
 
 tags: FlutterWeb, Supabase, CRM, 競馬予想, EdgeFunction, buildinpublic
