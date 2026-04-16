@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Check for duplicate issue
         id: check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const runId = context.payload.workflow_run.id;
@@ -52,7 +52,7 @@ jobs:
       - name: Create GitHub Issue
         id: create
         if: steps.check.outputs.exists == 'false'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const run = context.payload.workflow_run;

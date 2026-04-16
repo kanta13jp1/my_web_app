@@ -25,7 +25,7 @@ jobs:
       # ── Step 1: 失敗PRの情報取得 ─────────────────────────────────────────
       - name: Step 1 - 失敗PRを特定
         id: pr_info
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const run = context.payload.workflow_run;
@@ -150,7 +150,7 @@ jobs:
       # ── Step 7: PRにコメント ─────────────────────────────────────────────
       - name: Step 7 - PRにコメント投稿
         if: steps.pr_info.outputs.has_pr == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const committed  = '${{ steps.commit.outputs.committed }}';
