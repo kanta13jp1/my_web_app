@@ -418,8 +418,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       ),
                       if (!isCompact)
                         IconButton(
-                          icon: Icon(Icons.share,
-                              color: Colors.white.withValues(alpha: 0.7)),
+                          icon: Icon(
+                            Icons.share,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                           tooltip: '共有',
                           onPressed: _share,
                         ),
@@ -431,8 +433,10 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: IconButton(
-                          icon: Icon(Icons.share,
-                              color: Colors.white.withValues(alpha: 0.7)),
+                          icon: Icon(
+                            Icons.share,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                           tooltip: '共有',
                           onPressed: _share,
                         ),

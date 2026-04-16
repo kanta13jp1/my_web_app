@@ -119,7 +119,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     final idea = _ideaController.text.trim();
     if (idea.isEmpty) {
       setState(
-          () => _errorMessage = 'Enter one sentence to describe the company.');
+        () => _errorMessage = 'Enter one sentence to describe the company.',
+      );
       return;
     }
 

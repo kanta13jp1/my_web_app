@@ -194,7 +194,9 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
     ];
     return Table(
       border: TableBorder.all(
-          color: Colors.white12, borderRadius: BorderRadius.circular(4)),
+        color: Colors.white12,
+        borderRadius: BorderRadius.circular(4),
+      ),
       columnWidths: const {0: FixedColumnWidth(120), 1: FlexColumnWidth()},
       children: rows.map((r) {
         return TableRow(
@@ -321,7 +323,9 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                       Text(
                         ' / \$${limit.toStringAsFixed(0)}',
                         style: const TextStyle(
-                            color: Colors.white54, fontSize: 14),
+                          color: Colors.white54,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                     const SizedBox(width: 16),
