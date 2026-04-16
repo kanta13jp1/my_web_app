@@ -81,7 +81,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
   }
 
   Future<void> _delete(String id) async {
-    await _supabase.from('brain_dump_items').delete().eq('id', id);
+    await _supabase.from('brain_dump_items').delete().eq('id', id).select();
     await _load();
   }
 

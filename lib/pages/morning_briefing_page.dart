@@ -811,8 +811,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       await Supabase.instance.client
           .from('daily_subtasks')
           .delete()
-          .eq('todo_id', id);
-      await Supabase.instance.client.from('daily_todos').delete().eq('id', id);
+          .eq('todo_id', id).select();
+      await Supabase.instance.client.from('daily_todos').delete().eq('id', id).select();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -937,7 +937,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
   }
 
   Future<void> deleteSubtask(String id) async {
-    await Supabase.instance.client.from('daily_subtasks').delete().eq('id', id);
+    await Supabase.instance.client.from('daily_subtasks').delete().eq('id', id).select();
   }
 
   Future<void> editTodo(
@@ -5212,7 +5212,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       await Supabase.instance.client
           .from('someday_tasks')
           .delete()
-          .eq('id', id);
+          .eq('id', id).select();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -5264,7 +5264,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       await Supabase.instance.client
           .from('someday_tasks')
           .delete()
-          .eq('id', id);
+          .eq('id', id).select();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

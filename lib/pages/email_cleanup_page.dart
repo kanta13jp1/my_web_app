@@ -348,7 +348,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     if (confirmed != true) return;
 
     try {
-      await _supabase.from('email_accounts').delete().eq('id', account['id']);
+      await _supabase.from('email_accounts').delete().eq('id', account['id']).select();
       await _load();
     } catch (e) {
       if (mounted) {

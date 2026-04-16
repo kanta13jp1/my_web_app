@@ -1299,7 +1299,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           .toList();
 
       for (final dateKey in dateKeys) {
-        await _supabase.from('app_analytics').delete().eq('date', dateKey);
+        await _supabase.from('app_analytics').delete().eq('date', dateKey).select();
       }
 
       if (mounted) {

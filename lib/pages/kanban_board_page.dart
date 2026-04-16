@@ -111,7 +111,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
 
   Future<void> _delete(String id) async {
     try {
-      await _supabase.from('someday_tasks').delete().eq('id', id);
+      await _supabase.from('someday_tasks').delete().eq('id', id).select();
       await _load();
     } catch (_) {}
   }
