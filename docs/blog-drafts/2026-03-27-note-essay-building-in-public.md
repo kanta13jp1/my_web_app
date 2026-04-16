@@ -1,7 +1,7 @@
 ---
 title: "21の競合SaaSを1つに統合するアプリを個人で作っている話"
 tags: Flutter,Supabase,個人開発,buildinpublic,SaaS
-published: false
+published: true
 ---
 
 # 21の競合SaaSを1つに統合するアプリを個人で作っている話
