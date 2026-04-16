@@ -185,7 +185,7 @@ $$,
 'https://cognition.ai/blog',
 '2026-04-16', 4)
 
-ON CONFLICT (provider, category, title) DO UPDATE
+ON CONFLICT (provider, category) DO UPDATE
   SET content = EXCLUDED.content,
       source_url = EXCLUDED.source_url,
       published_at = EXCLUDED.published_at,
