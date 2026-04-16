@@ -614,14 +614,17 @@ web/sitemap.xml          # URL マップ
 - ⚠️ **Qiita 日次rate limit**: 2026-04-17 に4本投稿後に429。翌日リトライ (第59・60弾 Qiita未投稿)
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第63弾以降)**:
+- ✅ **第63弾 dev.to成功** / Qiita 429 (PS版#88, 2026-04-17): `2026-04-12-ai-university-34-providers.md` → dev.to: https://dev.to/kanta13jp1/building-an-ai-learning-platform-for-34-providers-in-flutter-web-supabase-auto-updated-every-2-kb9
+- ✅ **第64弾 dev.to成功** / Qiita 429 (PS版#88, 2026-04-17): `2026-04-13-ai-university-41-providers-tabs.md` → dev.to: https://dev.to/kanta13jp1/from-34-to-41-ai-providers-notion-style-tab-blocks-in-flutter-web-2n2a
+
+**次回候補 (第65弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾Qiitaリトライ) | Qiita翌日以降 |
-| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾Qiitaリトライ) | Qiita翌日以降 |
-| 中 | `2026-04-13-ai-university-41-providers-tabs.md` + EN作成 | Qiita/dev.to |
-| 中 | `2026-04-12-ai-university-34-providers.md` + EN作成 | Qiita/dev.to |
+| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾Qiitaリトライ) | Qiita 2026-04-18以降 |
+| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾Qiitaリトライ) | Qiita 2026-04-18以降 |
+| 🟡 | `2026-04-12-ai-university-34-providers.md` (第63弾Qiitaリトライ) | Qiita 2026-04-18以降 |
+| 🟡 | `2026-04-13-ai-university-41-providers-tabs.md` (第64弾Qiitaリトライ) | Qiita 2026-04-18以降 |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

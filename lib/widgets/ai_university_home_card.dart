@@ -645,6 +645,25 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                             ),
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        TextButton.icon(
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            '/ai-university-voice',
+                          ),
+                          icon: const Icon(
+                            Icons.mic,
+                            size: 16,
+                            color: Color(0xFF3D5AFE),
+                          ),
+                          label: const Text(
+                            '音声で学ぶ',
+                            style: TextStyle(
+                              color: Color(0xFF3D5AFE),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                 ],
