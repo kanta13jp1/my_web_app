@@ -102,6 +102,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF39B5F0),
     officialUrl: 'https://dashboard.cohere.com/',
   ),
+  'core': _ProviderMeta(
+    name: 'Core',
+    emoji: '⚙️',
+    color: const Color(0xFF00BFFF),
+    officialUrl: 'https://www.coreweave.com/',
+  ),
   'perplexity': _ProviderMeta(
     name: 'Perplexity',
     emoji: '🔍',
@@ -874,6 +880,31 @@ Embed + Rerank + Command R+ の組み合わせが業界最高水準のRAGを実�
 - 無料トライアル枠あり
 
 [Cohere Dashboard](https://dashboard.cohere.com/)
+''',
+  'core': '''
+# Core (CoreWeave) — GPU インフラ AI コンピュート
+
+Core は分散型 GPU クラスタを活用した LLM 推論・ファインチューニングに特化したクラウドプロバイダーです。
+超低レイテンシーと価格競争力で、スタートアップから大企業まで対応します。
+
+## 主要コンピュートエンジン
+- vLLM (高スループット推論・<10ms)
+- TensorRT-LLM (超低レイテンシー・<5ms)
+- SGLang (複雑クエリ・フロー制御)
+- Llama.cpp (軽量実行)
+
+## 対応 GPU
+- NVIDIA H200 / H100 (最高性能)
+- L40S (推論最適化)
+- AMD MI300X (ROCm対応)
+
+## 特徴
+- API シンプル (OpenAI互換)
+- 従量課金・短期契約対応
+- 複数リージョン・24/7 SLA
+- 日本サポート対応中
+
+[CoreWeave 公式](https://www.coreweave.com/)
 ''',
   'amazon': '''
 # Amazon Bedrock / Nova — マルチモデル AI プラットフォーム
@@ -1700,7 +1731,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     await prefs.setString(_prefsKey, _answeredQuizzes.join(','));
   }
 
-  Future<Set<String>> _syncLocalScoresToSupabase(Set<String> providerIds) async {
+  Future<Set<String>> _syncLocalScoresToSupabase(
+      Set<String> providerIds) async {
     final synced = <String>{};
     for (final providerId in providerIds) {
       final ok = await _recordQuizScoreToSupabase(providerId);
@@ -2147,8 +2179,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
-                  const Icon(Icons.warning_amber,
-                      color: Color(0xFFFFC107), size: 18,),
+                  const Icon(
+                    Icons.warning_amber,
+                    color: Color(0xFFFFC107),
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
@@ -2404,8 +2439,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 ),
                 if (answered) ...[
                   const SizedBox(width: 8),
-                  const Icon(Icons.check_circle,
-                      color: Color(0xFF4CAF50), size: 18,),
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF4CAF50),
+                    size: 18,
+                  ),
                   const Text(
                     ' +50pt',
                     style: TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
