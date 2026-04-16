@@ -1,7 +1,7 @@
 # CI/CD Pipeline Guide
 
 > **⚠️ アーカイブ済 (2026-04-12 Windows版#56 確認)**: このドキュメントは 2025年11月時点の CI/CD 設計書です。
-> 現在の最新 CI/CD 構成（17ワークフロー）は `.github/COMPRESSED_PROMPT_V3.md` の「GitHub Actions CI/CD」セクションを参照してください。
+> 現在の最新 CI/CD 構成（25ワークフロー）は `.github/COMPRESSED_PROMPT_V3.md` の「GitHub Actions CI/CD」セクションを参照してください。
 
 このドキュメントでは、プロジェクトのCI/CDパイプラインの概要、ブランチ戦略、開発フローについて説明します。
 
