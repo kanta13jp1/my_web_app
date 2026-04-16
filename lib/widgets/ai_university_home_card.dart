@@ -321,9 +321,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Color(0xFF101216),
+                    Color(0xFF1A1A2E),
                     Color(0xFF16213E),
-                    Color(0xFF2A1B12),
+                    Color(0xFF0A1A3E),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
@@ -333,6 +333,11 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                    blurRadius: 32,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -413,7 +418,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       ),
                       if (!isCompact)
                         IconButton(
-                          icon: const Icon(Icons.share, color: Colors.white70),
+                          icon: Icon(Icons.share, color: Colors.white.withValues(alpha: 0.7)),
                           tooltip: '共有',
                           onPressed: _share,
                         ),
@@ -425,7 +430,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: IconButton(
-                          icon: const Icon(Icons.share, color: Colors.white70),
+                          icon: Icon(Icons.share, color: Colors.white.withValues(alpha: 0.7)),
                           tooltip: '共有',
                           onPressed: _share,
                         ),
@@ -453,7 +458,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: Icons.hub_outlined,
                           label: '掲載AI',
                           value: providerCountText,
-                          accent: const Color(0xFF7986CB),
+                          accent: const Color(0xFF3D5AFE),
                         ),
                       ),
                       SizedBox(
