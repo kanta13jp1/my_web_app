@@ -9373,3 +9373,41 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
 | 🟡 | 第71弾以降 未投稿JA記事EN版作成+dev.to (残43件) | PS版 |
+
+---
+
+### VSCode版セッション記録 #84 (2026-04-17)
+
+**担当**: VSCode版 (Rule 8/9/10/11/12 実行)
+
+### 完了タスク
+
+1. **dart format CI修正** — ai_university_voice_page.dart フォーマット修正 (Deploy to Production: failure → pass)
+
+2. **Rule 9: GHA ワークフロー最適化チェック** — 25本全確認・問題なし
+
+3. **Rule 10: docs全件分析 → 2件修正**
+   - `docs/CICD_SETUP_GUIDE.md`: GHA 20本 → 25本
+   - `CLAUDE.md`: EF standalone 4本計15本 → 5本計16本
+
+4. **Rule 11: ai-hub モデル更新** — quiz.explain: claude-sonnet-4-5 → 4-6
+
+5. **Rule 12: voice_page デザイントークン 5件修正**
+   - primary CTA: indigo → orange (#FF6B35) [DESIGN.md準拠]
+   - 不正解フィードバック: orange → red (#E53935)
+   - AppBar: elevation:0 + 1px区切り線
+   - pagePadding: 20 → 16px (4pxグリッド)
+   - surface color: DESIGN.mdトークン修正
+
+6. **Rule 16: Playwright チェック** — ブラウザセッション切れで未完了 (Deploy 実行中)
+
+### 残タスク
+- Deploy完了後に `/ai-university-voice` を手動確認
+- growth-acquisition-report CORS エラー調査
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Deploy完了後 音声ページ動作確認 | VSCode版 |
+| 🟡 | growth-acquisition-report CORS調査 | VSCode版 |
+| 🟡 | FSRS migration 本番 apply 確認 | VSCode版 |
