@@ -34,7 +34,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   static const _card = Color(0xFF1A1A2E);
   static const _orange = Color(0xFFFF6B35);
   static const _userBubble = Color(0xFFFF6B35);
-  static const _aiBubble = Color(0xFF1F2041);
+  static const _aiBubble = Color(0xFF1E1E1E); // surface2
 
   @override
   void initState() {
@@ -373,7 +373,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             const SizedBox(width: 8),
             const CircleAvatar(
               radius: 16,
-              backgroundColor: Color(0xFF2A1A0E),
+              backgroundColor: Color(0xFF2A2A2A), // surface3
               child: Icon(Icons.person, size: 18, color: _orange),
             ),
           ],
@@ -445,7 +445,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                     vertical: 10,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFF0D0D1F),
+                  fillColor: const Color(0xFF2A2A2A), // surface3
                 ),
                 onSubmitted: (_) => _sendMessage(),
                 maxLines: 3,
@@ -527,7 +527,7 @@ class _TypingDotsState extends State<_TypingDots>
       builder: (_, __) {
         return Text(
           '●' * _dotCount.value,
-          style: const TextStyle(color: Colors.white54, fontSize: 14, letterSpacing: 4),
+          style: const TextStyle(color: Colors.white54, fontSize: 14),
         );
       },
     );

@@ -21,8 +21,8 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
   static const _bg = Color(0xFF0A0A0A);
   static const _card = Color(0xFF1A1A2E);
   static const _orange = Color(0xFFFF6B35);
-  static const _alertRed = Color(0xFFFF4444);
-  static const _okGreen = Color(0xFF44BB88);
+  static const _alertRed = Color(0xFFE53935); // DESIGN.md red
+  static const _okGreen = Color(0xFF4CAF50); // DESIGN.md green
 
   // ツールの表示名マッピング
   static const _toolNames = {
@@ -413,7 +413,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
           },
           children: [
             TableRow(
-              decoration: const BoxDecoration(color: Color(0xFF0D0D1F)),
+              decoration: const BoxDecoration(color: Color(0xFF1A1A1A)), // surface1
               children: ['ツール', '日付', '金額', 'アラート'].map((h) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
