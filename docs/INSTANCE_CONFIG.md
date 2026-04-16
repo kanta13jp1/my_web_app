@@ -8,7 +8,7 @@
 > セッション冒頭の自動確認と役割分担の最適化に使用する。
 > **毎セッション冒頭に必ずこのドキュメントを参照して推奨プロンプトを確認すること。**
 
- --- 
+ ---
 
 ## Rule 22: セッション開始チェックリスト（毎セッション必須）
 
@@ -19,7 +19,8 @@ CURRENT=$(claude --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
 LATEST=$(npm show @anthropic-ai/claude-code dist-tags.latest)
 echo "現在: $CURRENT / 最新: $LATEST"
 [ "$CURRENT" != "$LATEST" ] && npm update -g @anthropic-ai/claude-code && echo "更新完了"
-```
+
+```text
 
 **現在の確認済みバージョン**: `2.1.110` (確認日: 2026-04-16, PowerShell版)
 > `/doctor` 実行済み: playwright MCP 重複エントリを修正 (local scope削除, project scope `.mcp.json` に統一)
@@ -30,7 +31,8 @@ echo "現在: $CURRENT / 最新: $LATEST"
 # WebFetch でリリースノートを確認
 # URL: https://github.com/anthropics/claude-code/releases
 # または: https://claudefa.st/blog/guide/changelog
-```
+
+```text
 
 | 確認項目 | 対応アクション |
 | --- | --- |
@@ -58,7 +60,8 @@ codex --version 2>/dev/null || echo "codex: not installed"
 
 # Gemini Code Assist: VS Code 拡張 → "Google Cloud Code" → バージョン確認
 # リリースノート: https://cloud.google.com/code/docs/vscode/release-notes
-```
+
+```text
 
 **現在の確認済みバージョン (2026-04-16)**:
 
@@ -74,7 +77,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 更新があった場合は本ドキュメント末尾の「変更ログ」に追記し、
 影響を受ける推奨プロンプトを更新して git push する (PowerShell版 が担当)。
 
- --- 
+ ---
 
 ## 新機能追跡ログ（バージョン更新時に追記）
 
@@ -94,7 +97,7 @@ codex --version 2>/dev/null || echo "codex: not installed"
 | 2.1.x (2026) | **Cross-session Memory** | セッション間でユーザー情報・設計方針を記憶 | ✅ `memory/` + NotebookLM Master Brain で実装済み | 全インスタンス |
 | — | *(次のバージョン更新時に追記)* | | | |
 
- --- 
+ ---
 
 ## Learning Mode — コードベース学習システム
 
@@ -103,9 +106,10 @@ codex --version 2>/dev/null || echo "codex: not installed"
 
 ### `/recap` — 公式 Learning Mode (v2.1.108+)
 
-```
+```text
 /recap
-```
+
+```text
 
 - セッション復帰時に「前回何をしていたか」を即座に把握できる
 - 全インスタンス共通で動作 (WEB版 ✅ / ローカル版 ✅)
@@ -137,7 +141,8 @@ git log --oneline -5
 # WEB版: GitHub MCP → list_commits で直近コミットを確認
 
 # Step 4: MEMORY.md の pending タスクを確認して今日の作業を決定
-```
+
+```text
 
 ### Learning Mode でのモデル活用指針
 
@@ -150,7 +155,7 @@ git log --oneline -5
 | NotebookLM連携 (ローカル版) | Sonnet 4.6 | — (NotebookLMが重い処理を担当) |
 | `/recap` 後の方針決定 | Sonnet 4.6 | `think` | |
 
- --- 
+ ---
 
 ## インスタンス制約カタログ（確認済み）
 
@@ -223,7 +228,7 @@ git log --oneline -5
 - Opus 4.6 + ultrathink でのアーキテクチャレビュー (実行不要の純粋推論タスク)
 - `docs/research/` へのリサーチ成果物保存 (GitHub MCP 経由)
 
- --- 
+ ---
 
 ## モード・モデル指定ガイド
 
@@ -261,7 +266,7 @@ git log --oneline -5
 | **PowerShell版** | Sonnet 4.6 + `think deeply` | Opus 4.6 + `ultrathink` | CI/CD設計 |
 | **WEB版** | **Opus 4.6** + `think deeply` | **Opus 4.6** + `ultrathink` | CLI不可の分、思考力で補完 |
 
- --- 
+ ---
 
 ## インスタンス別 役割分担 (確定版 2026-04-16)
 
@@ -305,7 +310,7 @@ git log --oneline -5
 | **代替** | GitHub MCP (gh代替) / WebSearch+WebFetch (notebooklm代替) |
 | **禁止** | CLI依存タスク全般 |
 
- --- 
+ ---
 
 ## フォールバックAI詳細設定 (Claude レート制限到達時のみ)
 
@@ -326,9 +331,11 @@ git log --oneline -5
 | リリースノート | https://github.blog/changelog/ (copilot で検索) | |
 
 **インストール手順** (未インストールの場合):
+
 ```bash
 gh extension install github/gh-copilot
-```
+
+```text
 
 ### CODEX CLI (OpenAI) フォールバック
 
@@ -341,9 +348,11 @@ gh extension install github/gh-copilot
 | リリースノート | https://github.com/openai/codex/releases | |
 
 **インストール手順** (未インストールの場合):
+
 ```bash
 npm install -g @openai/codex
-```
+
+```text
 
 **CODEX 使用時の注意**:
 - プロジェクトコンテキストが限定的 → 編集対象ファイル + 関連型定義を手動貼り付け
@@ -361,7 +370,7 @@ npm install -g @openai/codex
 | バージョン確認 | VS Code Extensions パネルで確認 | |
 | リリースノート | https://cloud.google.com/code/docs/vscode/release-notes | |
 
- --- 
+ ---
 
 ## Routines 詳細設定 (Windowsアプリ版専任)
 
@@ -369,9 +378,10 @@ npm install -g @openai/codex
 
 Routines は Claude Code Desktop の自動化機能。**PC をオフにしても Anthropic クラウドで実行**。
 
-```
+```text
 Routine = プロンプト + リポジトリ + コネクター + トリガー
-```
+
+```text
 
 **トリガー**: スケジュール (毎時/毎日/毎週) / API 呼び出し / GitHub イベント
 
@@ -393,7 +403,7 @@ Routine = プロンプト + リポジトリ + コネクター + トリガー
 
 **→ Windowsアプリ版が次セッションで Routines 設定を実施すること**
 
- --- 
+ ---
 
 ## 各インスタンス推奨プロンプト (毎セッション冒頭に使用)
 
@@ -401,7 +411,7 @@ Routine = プロンプト + リポジトリ + コネクター + トリガー
 
 ### VSCode版 推奨プロンプト
 
-```
+```text
 このインスタンスはVSCode版です。担当: lib/ + supabase/functions/
 
 【Step 0: /recap — 公式 Learning Mode】
@@ -438,11 +448,12 @@ export ENABLE_PROMPT_CACHING_1H=1
 【フォールバックAI (Claude 429時のみ)】
 .dart → Gemini Code Assist (VS Code: Cmd+Shift+P → "Gemini: Start Chat")
 .py/.ts → codex (npm install -g @openai/codex でインストール後)
-```
+
+```text
 
 ### Windowsアプリ版 推奨プロンプト
 
-```
+```text
 このインスタンスはWindowsアプリ版 (Claude Code Desktop) です。担当: docs/ + supabase/migrations/
 
 【Step 0: /recap — 公式 Learning Mode】
@@ -476,11 +487,12 @@ provider追加 + docs修正: 通常モード (PYTHONUTF8=1 必須)
 【フォールバックAI (Claude 429時のみ)】
 .dart → Gemini Code Assist (Desktop版 VS Code 拡張)
 .py/.ts → codex
-```
+
+```text
 
 ### PowerShell版 推奨プロンプト
 
-```
+```text
 このインスタンスはPowerShell版です。担当: .github/workflows/ + INSTANCE_CONFIG.md
 
 【Step 0: /recap — 公式 Learning Mode】
@@ -514,11 +526,12 @@ INSTANCE_CONFIG.md 更新: 通常モード
 【フォールバックAI (Claude 429時のみ)】
 .yml/.sql/.md → GitHub Copilot (gh extension install github/gh-copilot)
 .py/.ts → codex
-```
+
+```text
 
 ### WEB版 推奨プロンプト
 
-```
+```text
 このインスタンスはWEB版Claude Code (claude.ai/code) です。
 モデル: Opus 4.6 (CLI不可の分、思考力で補完)
 
@@ -566,7 +579,8 @@ Issue作成:    issue_write({owner:"kanta13jp1", repo:"my_web_app", title:"...",
 1. GitHub MCP push_files で docs/INSTANCE_CONFIG.md を更新
 2. Issue 作成: タイトル "[制約変更] WEB版で XXX が [使用可/不可] になった"
    → PowerShell版が次セッションで INSTANCE_CONFIG.md の role 分担を見直す
-```
+
+```text
 
 ### CODEX CLI 使用時プロンプト (Claude 429時のフォールバック)
 
@@ -575,7 +589,7 @@ Issue作成:    issue_write({owner:"kanta13jp1", repo:"my_web_app", title:"...",
 > **リリースノート**: https://github.com/openai/codex/releases
 > **対象ファイル**: `.py` / `.ts` のみ。`.dart` は Gemini Code Assist を使用
 
-```
+```text
 Claude が 429 エラーのため CODEX CLI で続行します。
 
 【プロジェクトコンテキスト (必ず冒頭に貼り付け)】
@@ -583,7 +597,7 @@ Claude が 429 エラーのため CODEX CLI で続行します。
 プロジェクト: Flutter Web + Supabase (自分株式会社)
 技術: Flutter (Dart) + Deno Edge Functions (TypeScript) + Python スクリプト
 ルール: flutter analyze 0エラー / deno lint 0エラー / ダミーデータ禁止 / EF 50本以下
- --- 
+ ---
 
 【対象ファイルの現在の内容】
 [ここにファイル内容を貼り付け — 関連型定義・import も含める]
@@ -595,7 +609,8 @@ Claude が 429 エラーのため CODEX CLI で続行します。
 1. VSCode版 Claude Code で flutter analyze (Dart変更時)
 2. VSCode版 Claude Code で deno lint (TypeScript EF変更時)
 3. 実装をClaude Code にコミット依頼
-```
+
+```text
 
 ### GitHub Copilot 使用時プロンプト (PR Review + フォールバック)
 
@@ -604,7 +619,7 @@ Claude が 429 エラーのため CODEX CLI で続行します。
 > **リリースノート**: https://github.blog/changelog/ (copilot で検索)
 > **推奨モデル**: Auto (GPT-4.1 / Claude Sonnet 4.6 自動選択) または Claude Sonnet 4.6 固定
 
-```
+```text
 # PR自動レビュー (常時稼働 — claude-agent-review.yml の補完として)
 以下の観点でこのPRをレビューしてください:
 - セキュリティ: SQL injection / XSS / 認証漏れ / シークレットハードコーディング
@@ -615,12 +630,13 @@ Claude が 429 エラーのため CODEX CLI で続行します。
 モデル選択: Auto
 Agent Mode: 有効化推奨 (複数ファイル横断レビュー)
 
- --- 
+ ---
 # フォールバック (Claude 429時 — .yml/.sql/.md ファイル)
 対象: [ファイルパス]
 タスク: [変更内容]
 プロジェクトコンテキスト: Flutter Web + Supabase / GitHub Actions / PostgreSQL
-```
+
+```text
 
 ### Gemini Code Assist 使用時プロンプト (Flutter/Dart + フォールバック)
 
@@ -630,7 +646,7 @@ Agent Mode: 有効化推奨 (複数ファイル横断レビュー)
 > **推奨モデル**: Gemini 2.5 Pro (VS Code 拡張設定から変更可)
 > **対象ファイル**: `.dart` (Flutter/Dart に最適化)
 
-```
+```text
 # 通常使用: Claude Code と並行してIDE補完として利用
 # VS Code: Cmd+Shift+P → "Gemini Code Assist: Start Chat"
 
@@ -653,9 +669,10 @@ Agent Mode: 有効化推奨 (複数ファイル横断レビュー)
 【完了後】
 1. flutter analyze でエラーを確認
 2. Claude Code (VSCode版) にコミット依頼
-```
 
- --- 
+```text
+
+ ---
 
 ## 制約発見・解消時の更新手順
 
@@ -669,7 +686,8 @@ memory/feedback_correction_YYYYMMDD_[instance].md
 
 # 制約解消
 memory/feedback_success_YYYYMMDD_[instance].md
-```
+
+```text
 
 ### 2. 本ドキュメントを更新
 
@@ -682,17 +700,18 @@ memory/feedback_success_YYYYMMDD_[instance].md
 
 ```markdown
 # cross-instance-prs/YYYYMMDD_role_update.md を作成して PowerShell版に通知
-```
+
+```text
 
 ### 4. COMPRESSED_PROMPT_V3.md の分担表を更新
 
 PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-pr 経由で依頼)
 
- --- 
+ ---
 
 ## 制約 Kaizen ループ (毎セッション)
 
-```
+```text
 セッション開始
     ↓
 /recap + /doctor + バージョン確認
@@ -709,9 +728,10 @@ PowerShell版 が担当 (緊急時は任意インスタンスが cross-instance-
     ↓
 セッション終了: /wrap-up
     → 制約変化・新機能発見 を memory/ に保存
-```
 
- --- 
+```text
+
+ ---
 
 ## 変更ログ
 
