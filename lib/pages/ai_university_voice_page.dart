@@ -61,13 +61,11 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         return;
       }
       final content = rows.first['content'] as String? ?? '';
-      final excerpt = content
-          .replaceAll(RegExp(r'#+ '), '')
-          .replaceAll('**', '');
+      final excerpt =
+          content.replaceAll(RegExp(r'#+ '), '').replaceAll('**', '');
       setState(
-        () => _questionText = excerpt.length > 200
-            ? '${excerpt.substring(0, 200)}...'
-            : excerpt,
+        () => _questionText =
+            excerpt.length > 200 ? '${excerpt.substring(0, 200)}...' : excerpt,
       );
       await _playTts(_questionText);
     } catch (e) {
@@ -78,10 +76,13 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
   Future<void> _playTts(String text) async {
     setState(() => _ttsStatus = 'loading');
     try {
-      final resp = await _supabase.functions.invoke('ai-hub', body: {
-        'action': 'voice.tts',
-        'text': text,
-      },);
+      final resp = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'voice.tts',
+          'text': text,
+        },
+      );
       final data = resp.data as Map<String, dynamic>?;
       final base64Audio = data?['audio_base64'] as String? ?? '';
       if (base64Audio.isEmpty) {
@@ -102,15 +103,22 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
     if (answer.trim().isEmpty) return;
     setState(() => _feedbackText = '評価中...');
     try {
-      final resp = await _supabase.functions.invoke('ai-hub', body: {
-        'action': 'quiz.evaluate',
-        'question': _questionText,
-        'user_answer': answer,
-        'correct_answer': _questionText,
-      },);
+      final resp = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'quiz.evaluate',
+          'question': _questionText,
+          'user_answer': answer,
+          'correct_answer': _questionText,
+        },
+      );
       final data = resp.data as Map<String, dynamic>?;
       final result = data?['result'] as String? ?? 'incorrect';
-      final grade = result == 'correct' ? 3 : result == 'partial' ? 2 : 1;
+      final grade = result == 'correct'
+          ? 3
+          : result == 'partial'
+              ? 2
+              : 1;
       final fsrsResult = await _fsrsService.gradeCard(
         provider: _selectedProvider,
         questionId: '${_selectedProvider}_voice',
@@ -120,13 +128,16 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       if (result == 'correct') {
         setState(() => _feedbackText = '正解！次回: $nextDueLabel');
       } else {
-        final explResp = await _supabase.functions.invoke('ai-hub', body: {
-          'action': 'quiz.explain',
-          'question': _questionText,
-          'user_answer': answer,
-          'correct_answer': _questionText,
-          'provider': _selectedProvider,
-        },);
+        final explResp = await _supabase.functions.invoke(
+          'ai-hub',
+          body: {
+            'action': 'quiz.explain',
+            'question': _questionText,
+            'user_answer': answer,
+            'correct_answer': _questionText,
+            'provider': _selectedProvider,
+          },
+        );
         final explData = explResp.data as Map<String, dynamic>?;
         final explanation = explData?['explanation'] as String? ?? '';
         setState(
