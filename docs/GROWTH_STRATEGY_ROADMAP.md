@@ -9255,3 +9255,28 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🟡 | FSRS migration 本番適用確認 | VSCode版 |
 | 🟡 | AI大学 v2 学習リマインダーバッチ設定 | PS版 |
 | 🔵 | 他ユーザー学習状況表示 | VSCode版 |
+
+### PS版セッション記録 #89 (2026-04-17)
+
+**担当**: PS版 (T-1 投稿バッチ続き)
+
+### 完了タスク
+
+1. **T-1 第59弾 Qiitaリトライ** → 429継続 (翌日以降持ち越し)
+
+2. **T-1 第65弾 dev.to投稿成功** `2026-03-31-embedding-similarity.md`
+   - dev.to: https://dev.to/kanta13jp1/building-a-text-similarity-lab-with-gemini-embeddings-flutter-web-cosine-similarity-visualizer-3bno
+
+3. **T-1 第66弾 dev.to投稿成功** `2026-03-28-edge-functions-cicd.md`
+   - dev.to: https://dev.to/kanta13jp1/how-i-deploy-36-supabase-edge-functions-via-github-actions-with-4-parallel-claude-code-instances-46g7
+
+4. **EN版新規作成 2件**
+   - `2026-03-31-embedding-similarity-en.md` (Gemini Embeddings + cosine similarity)
+   - `2026-03-28-edge-functions-cicd-en.md` (4-instance parallel dev + EF CI/CD)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
+| 🟡 | 第67弾以降 未投稿ドラフトからEN版作成+dev.to投稿 | PS版 |
+| 🟡 | `2026-04-17-web-instance-retired.md` Qiitaリトライ | PS版翌日 |

@@ -617,7 +617,10 @@ web/sitemap.xml          # URL マップ
 - ✅ **第63弾 dev.to成功** / Qiita 429 (PS版#88, 2026-04-17): `2026-04-12-ai-university-34-providers.md` → dev.to: https://dev.to/kanta13jp1/building-an-ai-learning-platform-for-34-providers-in-flutter-web-supabase-auto-updated-every-2-kb9
 - ✅ **第64弾 dev.to成功** / Qiita 429 (PS版#88, 2026-04-17): `2026-04-13-ai-university-41-providers-tabs.md` → dev.to: https://dev.to/kanta13jp1/from-34-to-41-ai-providers-notion-style-tab-blocks-in-flutter-web-2n2a
 
-**次回候補 (第65弾以降)**:
+- ✅ **第65弾 dev.to成功** (PS版#89, 2026-04-17): `2026-03-31-embedding-similarity.md` → dev.to: https://dev.to/kanta13jp1/building-a-text-similarity-lab-with-gemini-embeddings-flutter-web-cosine-similarity-visualizer-3bno
+- ✅ **第66弾 dev.to成功** (PS版#89, 2026-04-17): `2026-03-28-edge-functions-cicd.md` → dev.to: https://dev.to/kanta13jp1/how-i-deploy-36-supabase-edge-functions-via-github-actions-with-4-parallel-claude-code-instances-46g7
+
+**次回候補 (第67弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
