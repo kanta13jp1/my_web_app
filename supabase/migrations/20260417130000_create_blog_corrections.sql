@@ -30,12 +30,12 @@ CREATE POLICY "service_role_all_corrections" ON blog_corrections
 
 CREATE POLICY "admin_read_corrections" ON blog_corrections
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    EXISTS (SELECT 1 FROM user_profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
 CREATE POLICY "admin_update_corrections" ON blog_corrections
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = true)
+    EXISTS (SELECT 1 FROM user_profiles WHERE id = auth.uid() AND is_admin = true)
   );
 
 COMMENT ON TABLE blog_corrections IS
