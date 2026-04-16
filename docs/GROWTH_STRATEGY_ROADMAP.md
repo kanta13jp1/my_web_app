@@ -7040,7 +7040,7 @@ Web版スコープ (EF のみ) のため、UI 目視確認は対象外。
 
 ### 統合詳細 (action分岐パターン)
 
-```
+```text
 schedule-manager ?action=monitor  ← schedule-task-monitor  (実行ログ一覧)
 schedule-manager ?action=health   ← schedule-health-check  (健全性チェック)
 schedule-manager ?action=results  ← schedule-result-tracker(結果追跡)
@@ -7069,7 +7069,7 @@ schedule-manager ?action=log_*    ← schedule-execution-logger (実行記録)
 
 ### EF統合詳細
 
-```
+```text
 agent-hub ?action=departments     ← agent-department-manager
 agent-hub ?action=performance     ← agent-performance-monitor
 agent-hub ?action=personality     ← agent-personality
@@ -9230,7 +9230,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 実施内容
 
 | # | タスク | 状態 |
-|---|---|---|
+| --- | --- | --- |
 | 1 | **Rule 22**: v2.1.111確認済み・INSTANCE_CONFIG.md更新完了 | ✅ |
 | 2 | **Rule 17**: 全20本チェック — 19本OK、deploy-staging.yml continue-on-error 4本(許容範囲) | ✅ |
 | 3 | **deploy-prod CI修正**: deno lint(no-unused-vars) + dart format(139files) + trailing_commas(5件) | ✅ 3コミット |
