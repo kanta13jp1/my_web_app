@@ -9145,3 +9145,39 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 1. 🟡 **AI大学67社目以降**: Harvey AI (法律特化) / Typeface (企業コンテンツAI) / Writer standalone API を評価
 2. 🟢 **notebooklm Master Brain更新**: 今セッション追加プロバイダー情報を蓄積
 3. 🟢 **Haiku 3廃止対応確認** (2026-04-19): EFに参照なし確認済みだが念のため当日再確認
+
+---
+
+## VSCode版#80 (2026-04-17)
+
+### 実施内容
+
+| # | タスク | 状態 |
+|---|---|---|
+| 1 | **cross-instance-pr処理**: `20260416_quota_dashboard_ui.md` — admin-hub quota.* + QuotaDashboardPage 実装 | ✅ |
+| 2 | **Voice AI チャットページ**: `ai_assistant_chat_page.dart` — Web Speech API + my_agent.chat (Gemini) | ✅ |
+| 3 | **Rule 16**: Playwright MCP browser 不可 (セッション内クローズ) → スキップ | ⚠️ |
+| 4 | **Rule 19**: design-skills agent審査 → 5件デザイントークン違反を新規ページで修正 | ✅ |
+
+### 新規ファイル
+
+- `lib/pages/admin/quota_dashboard_page.dart` — AI クォータ監視ダッシュボード (4ツール・進捗バー・アラート)
+- `lib/pages/ai_assistant_chat_page.dart` — Voice AI チャット (Web Speech API・my_agent.chat)
+
+### 修正ファイル
+
+- `supabase/functions/admin-hub/index.ts` — quota.latest / quota.list / quota.alert アクション追加
+- `lib/pages/admin_analytics_page.dart` — AI クォータ監視ナビカード追加
+- `lib/main.dart` — /quota-dashboard / /ai-assistant-chat ルート追加
+- デザイントークン修正 (surface2/surface3/green/red/letterSpacing)
+
+### 現在の数値サマリー
+
+- EF: **15本** / ページ数: **223** / AI大学: **66社** / LP: 126のこと
+
+### 次回優先タスク (VSCode版)
+
+1. 🔴 **AI大学 v2 Task 1**: SQL migrations (fsrs_cards + learner_profiles) — APIキー不要・即着手可能
+2. 🟡 **Rule 16 再試行**: 次セッション開始時にPlaywright MCPでスクリーンショット確認
+3. 🟡 **AI大学 v2 Task 2-3**: ai-hub FSRS actions + learner.update_profile (Claude Sonnet)
+4. 🟢 **T-1 技術記事**: Voice AI チャット + quota dashboard 実装記録をQiita/dev.toへ投稿
