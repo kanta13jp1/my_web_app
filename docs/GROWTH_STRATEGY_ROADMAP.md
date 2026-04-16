@@ -9462,3 +9462,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ (2026-04-18以降) | PS版 |
 | 🟡 | 第73弾以降 未投稿JA記事EN版作成+dev.to (残41件) | PS版 |
+
+---
+
+## 競合モニタリング 2026-04-17 (自動)
+
+### 重要トピック
+
+1. **Claude Opus 4.7 リリース (4/16)** — コーディング+13%・高解像度ビジョン3.75MP対応。`ai-assistant` EFのモデル更新を検討。
+2. **OpenAI Codex スーパーアプリ化** — バックグラウンドPC操作・インブラウザ・画像生成・111プラグイン。差別化戦略強化が必要。
+3. **MoneyForward AI Cowork 7月予定** — 自律バックオフィスAI。当社の個人ライフ管理フォーカスで差別化。
+4. **Notion Workers for Agents** — 開発者プレビュー。AI×バックエンドコード実行の競合動向を注視。
+5. **OpenClaw Active Memory** — claude-mem競合。当社はFSRS+MemoryAgentで差別化済み。
+
+詳細: `docs/competitor-reports/2026-04-17.md`
