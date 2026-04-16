@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:web/web.dart' as web_api;
+import '../services/ai_fsrs_service.dart';
+import '../services/ai_learner_profile_service.dart';
 import '../services/gamification_service.dart';
 import '../services/theme_service.dart';
 import 'ai_university_ranking_page.dart';
@@ -1731,6 +1733,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final Set<String> _answeredQuizzes = {};
   static const String _prefsKey = 'ai_univ_answered_quizzes';
   final _shareCardKey = GlobalKey();
+  final _fsrsService = AiFsrsService();
+  final _learnerProfileService = AiLearnerProfileService();
+  final Map<String, DateTime> _fsrsNextDue = {};
+  final Map<String, String> _quizExplanations = {};
+  final Map<String, bool> _quizEvaluating = {};
 
   @override
   void initState() {
@@ -2160,6 +2167,22 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         // スコア保存失敗はサイレント — ローカルの SharedPreferences は保持済み
       }
     }
+    // FSRS grade=3 (Good) で次回出題日を記録
+    final result = await _fsrsService.gradeCard(
+      provider: providerId,
+      questionId: providerId,
+      grade: 3,
+    );
+    if (mounted) {
+      setState(() => _fsrsNextDue[providerId] = result.nextDue);
+    }
+    // Memory Agent プロファイル更新 (バックグラウンド)
+    _learnerProfileService.updateProfile(
+      sessionSummary: 'クイズ正解: $providerId',
+      scores: [
+        {'provider': providerId, 'correct': true},
+      ],
+    ).ignore();
   }
 
   @override
@@ -2523,22 +2546,140 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   ),
                   onPressed: answered
                       ? null
-                      : () {
+                      : () async {
                           if (i == quiz.correct) {
-                            _awardQuizPoints(providerId);
+                            await _awardQuizPoints(providerId);
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('不正解。もう一度試してください。'),
-                                duration: Duration(seconds: 2),
-                              ),
+                            final result = await _fsrsService.gradeCard(
+                              provider: providerId,
+                              questionId: providerId,
+                              grade: 1,
                             );
+                            if (mounted) {
+                              setState(() {
+                                _fsrsNextDue[providerId] = result.nextDue;
+                                _quizEvaluating[providerId] = true;
+                              });
+                            }
+                            try {
+                              final resp = await _supabase.functions.invoke(
+                                'ai-hub',
+                                body: {
+                                  'action': 'quiz.explain',
+                                  'question': quiz.question,
+                                  'user_answer': quiz.options[i],
+                                  'correct_answer': quiz.options[quiz.correct],
+                                  'provider': providerId,
+                                },
+                              );
+                              final data = resp.data as Map<String, dynamic>?;
+                              final explanation =
+                                  data?['explanation'] as String? ?? '';
+                              if (mounted) {
+                                setState(() {
+                                  _quizExplanations[providerId] = explanation;
+                                  _quizEvaluating[providerId] = false;
+                                });
+                              }
+                            } catch (_) {
+                              if (mounted) {
+                                setState(
+                                  () => _quizEvaluating[providerId] = false,
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('不正解。もう一度試してください。'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            }
                           }
                         },
                   child: Text('${_optionLabel(i)}  ${quiz.options[i]}'),
                 ),
               );
             }),
+            // FSRS 次回出題バッジ
+            if (_fsrsNextDue.containsKey(providerId)) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  '次回: ${AiFsrsService.nextDueLabel(_fsrsNextDue[providerId]!)}',
+                  style: const TextStyle(
+                    color: Color(0xFF3D5AFE),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+            // Claude 解説カード
+            if (_quizEvaluating[providerId] == true) ...[
+              const SizedBox(height: 8),
+              const Row(
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text('解説を生成中...', style: TextStyle(fontSize: 12)),
+                ],
+              ),
+            ] else if (_quizExplanations.containsKey(providerId)) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Color(0xFFFF6B35),
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          '解説',
+                          style: TextStyle(
+                            color: Color(0xFFFF6B35),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _quizExplanations[providerId]!,
+                      style: const TextStyle(fontSize: 13, height: 1.6),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

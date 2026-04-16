@@ -35,11 +35,14 @@ class AiFsrsService {
 
   Future<List<FsrsCard>> getNextCards(String provider, {int limit = 10}) async {
     try {
-      final response = await _supabase.functions.invoke('ai-hub', body: {
-        'action': 'quiz.fsrs_next',
-        'provider': provider,
-        'limit': limit,
-      },);
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'quiz.fsrs_next',
+          'provider': provider,
+          'limit': limit,
+        },
+      );
       final data = response.data as Map<String, dynamic>?;
       if (data == null || data['success'] != true) return [];
       final cards = data['cards'] as List<dynamic>? ?? [];
@@ -57,12 +60,15 @@ class AiFsrsService {
     required int grade,
   }) async {
     try {
-      final response = await _supabase.functions.invoke('ai-hub', body: {
-        'action': 'quiz.fsrs_grade',
-        'provider': provider,
-        'question_id': questionId,
-        'grade': grade,
-      },);
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'quiz.fsrs_grade',
+          'provider': provider,
+          'question_id': questionId,
+          'grade': grade,
+        },
+      );
       final data = response.data as Map<String, dynamic>?;
       final nextDueStr = data?['next_due'] as String? ?? '';
       final stability = (data?['stability'] as num?)?.toDouble() ?? 1.0;
@@ -71,7 +77,10 @@ class AiFsrsService {
           : DateTime.now().add(const Duration(days: 1));
       return (nextDue: nextDue, stability: stability);
     } catch (_) {
-      return (nextDue: DateTime.now().add(const Duration(days: 1)), stability: 1.0);
+      return (
+        nextDue: DateTime.now().add(const Duration(days: 1)),
+        stability: 1.0
+      );
     }
   }
 

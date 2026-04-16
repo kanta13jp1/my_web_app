@@ -30,11 +30,14 @@ class AiLearnerProfileService {
     required List<Map<String, dynamic>> scores,
   }) async {
     try {
-      final response = await _supabase.functions.invoke('ai-hub', body: {
-        'action': 'learner.update_profile',
-        'session_summary': sessionSummary,
-        'scores': scores,
-      },);
+      final response = await _supabase.functions.invoke(
+        'ai-hub',
+        body: {
+          'action': 'learner.update_profile',
+          'session_summary': sessionSummary,
+          'scores': scores,
+        },
+      );
       final data = response.data as Map<String, dynamic>?;
       if (data == null || data['success'] != true) return null;
       final pj = data['profile_json'] as Map<String, dynamic>? ?? {};
