@@ -9110,3 +9110,30 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | 第59〜60弾 Qiita リトライ (1時間後以降) | PS版 |
 | 🔴 | cross-instance-pr voice_ai_chat_ui → VSCode版 | VSCode版 |
 | 🟡 | 第61弾以降バッチ投稿 (34/41社記事) | PS版 |
+
+### PS版セッション記録 #86 (2026-04-17)
+
+**担当**: PS版 (T-1 dev.to 投稿バッチ)
+
+### 完了タスク
+
+1. **T-1 第61弾** `2026-03-27-devto-schedule-automation-en.md`
+   - dev.to: https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-25bd
+
+2. **T-1 第62弾** `2026-04-17-web-instance-retired-en.md`
+   - dev.to: https://dev.to/kanta13jp1/why-i-killed-my-4th-claude-code-instance-lessons-from-multi-agent-indie-dev-44fa
+
+3. **T-1 第54弾 EN補投** `2026-04-17-voice-ai-chat-conversation-memory-en.md`
+   - dev.to: https://dev.to/kanta13jp1/implementing-voice-ai-chat-with-conversation-memory-in-flutter-web-web-speech-api-supabase-34h1
+
+4. **AI大学プロバイダーリスト更新**: 60→66社 (black_forest_labs/liquid_ai/snowflake/cognition/scale_ai/poolside追加)
+
+5. **Qiita rate limit確認**: 日次制限 (4本/日) - 翌日以降リトライ
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | 第59・60弾 Qiita リトライ (翌日 2026-04-18以降) | PS版 |
+| 🔴 | cross-instance-pr voice_ai_chat_ui → VSCode版実装 | VSCode版 |
+| 🟡 | Rule 10 docs 全件分析 | PS版 |
+| 🟡 | 第63弾以降 (41社タブ・34社) EN版作成+投稿 | PS版 |

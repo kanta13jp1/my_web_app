@@ -7,28 +7,33 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 
 ---
 
-## 🔀 4インスタンス + Multi-AI 並行開発スコープ（2026-04-16 更新）
+## 🔀 3インスタンス + Multi-AI 並行開発スコープ（2026-04-17 更新 — WEB版廃止 / v2.1.111対応）
 
-> 詳細制約ログ・最新機能・次回推奨プロンプト: **`docs/instance-constraints.md`** 参照。
+> 詳細制約ログ・最新機能・次回推奨プロンプト: **`docs/INSTANCE_CONFIG.md`** 参照（正式版。`docs/instance-constraints.md` は段階的廃止中）。
 > 新制約発見時はそのファイルに即追記し、この表の制約列も同時更新すること。
 
-### Claude Code 4インスタンス構成
+### Claude Code 3インスタンス構成 (WEB版 2026-04-17 廃止)
 
 | インスタンス | 担当範囲 | 推奨モデル | 推奨モード | 主な制約 |
 | --- | --- | --- | --- | --- |
-| **VSCode版** | `lib/` + `supabase/functions/` + `docs/DESIGN.md` | `claude-sonnet-4-6` | 通常。複雑UI設計時 **Extended Thinking** | なし |
-| **Windowsアプリ版** | `docs/` + `supabase/migrations/` + notebooklm CLI専任 | `claude-sonnet-4-6` | 通常 + CAVEMAN | `PYTHONUTF8=1` 必須 / xlsxロック注意 |
-| **PowerShell版** | `.github/workflows/` + `.mcp.json` | 定型: `haiku-4-5` / 設計: `sonnet-4-6` | `/fast` (定型) / 通常 (設計) | GHA `${{}}` は env:ブロック経由 |
-| **WEB版** | `docs/blog-drafts/` + `docs/competitor-reports/` + GitHub PR/Issues | `claude-sonnet-4-6` | **Projects + Memory + Learning Mode** | notebooklm / flutter analyze / deno lint / ローカルCLI 不可 |
+| **VSCode版** | `lib/` + `supabase/functions/` + `docs/DESIGN.md` | `claude-opus-4-7` (設計) / `claude-sonnet-4-6` (通常) | 通常 / `/effort high` / Sonnet 4.6 + `ultrathink` | なし |
+| **Windowsアプリ版** | `docs/` + `supabase/migrations/` + notebooklm CLI専任 | `claude-opus-4-7` (設計) / `claude-sonnet-4-6` (通常) | 通常 + CAVEMAN / Routines活用 | `PYTHONUTF8=1` 必須 / xlsxロック注意 |
+| **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/INSTANCE_CONFIG.md` | 定型: `haiku-4-5` / 設計: `claude-opus-4-7` | `/fast` (定型) / `/effort high` (設計) | GHA `${{}}` は env:ブロック経由 |
+| ~~**WEB版**~~ | **廃止 (2026-04-17)** — GitHub MCP 不安定・境界違反 → 3インスタンス制に統一 | — | — | — |
 
-### Claude 最新機能 活用ガイド
+### Claude 最新機能 活用ガイド (v2.1.111 対応・2026-04-17 更新)
 
 | 機能 | 対応インスタンス | 使い所 |
 | --- | --- | --- |
-| **Extended Thinking** | VSCode / Windowsアプリ | 複雑UI設計・DB schema・アーキテクチャ決定。`claude-opus-4` 推奨 |
-| **Projects機能** | WEB版 (claude.ai専用) | プロジェクト文脈・CLAUDE.md・履歴をセッション越えで永続化 |
-| **Memory機能** | WEB版 (claude.ai専用) | ユーザー設定・プロジェクトコンテキスト・よく使うパターンを記憶 |
-| **Learning Mode** | WEB版 (Projects経由) | Projectsにリポジトリマップ・CLAUDE.mdを読ませると次回からコンテキスト初期化不要 |
+| **Opus 4.7 `/effort xhigh`** 🆕 | 全インスタンス | Adaptive Thinking の新 effortレベル (high と max の間)。アーキテクチャ設計・競合戦略で使用 |
+| **`/ultrareview`** 🆕 | 全インスタンス | 並列マルチエージェントによる包括的コードレビュー。EF実装後・PR作成前の必須チェックに推奨 (`gh pr review` 代替) |
+| **`/less-permission-prompts`** 🆕 | PowerShell版 | トランスクリプトスキャン→`.claude/settings.json` 自動許可リスト提案 |
+| **PowerShell tool** 🆕 | PowerShell版 | `CLAUDE_CODE_USE_POWERSHELL_TOOL=1` でオプトイン (段階ロールアウト) |
+| **Windows SessionStart hook 修正** 🆕 | Windowsアプリ版 | `CLAUDE_ENV_FILE` と SessionStart hook が Windows で正常動作 |
+| **Extended Thinking (ultrathink)** | VSCode / Windowsアプリ / PowerShell | 複雑UI設計・DB schema・アーキテクチャ決定。**`claude-sonnet-4-6` 必須** (Opus 4.7 は非対応) |
+| **Adaptive Thinking** | 全インスタンス | `claude-opus-4-7` + `/effort` で思考量自動調整 |
+| **`/recap`** (v2.1.108+) | 全インスタンス | セッション開始時に前セッション作業サマリー自動生成 |
+| **Routines** | Windowsアプリ版専任 | Desktop版専用サーバーレススケジューラ (Max 15回/日) |
 | **Interleaved Thinking** | 全インスタンス | ツール実行中にも思考を継続。多ステップタスクで自動適用 |
 | **CAVEMANモード** | Windowsアプリ / PowerShell 主体 | コミュニケーショントークン～75%削減 |
 
@@ -49,7 +54,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 SQL / アルゴリズム最適化          -> CODEX o3/o4-mini
 設計・戦略・長期判断            -> Claude Code (Memory + ROADMAP)
 複雑な推論・アーキテクチャ       -> Claude Extended Thinking (opus/sonnet)
-ブログ / 競合リサーチ           -> WEB版 (WebSearch/WebFetch/Projects)
+ブログ / 競合リサーチ           -> Windowsアプリ版 (WebSearch/WebFetch + notebooklm CLI)
 NotebookLM Deep Research      -> Windowsアプリ版専任 (notebooklm CLI)
 Issue -> PR 全自動              -> Copilot Workspace
 ```
@@ -70,7 +75,6 @@ Step 4: cross-instance-pr で他インスタンスへ周知
 | インスタンス | 実行コマンド | 更新時のアクション |
 | --- | --- | --- |
 | VSCode / Windowsアプリ / PowerShell | `PYTHONUTF8=1 python3 scripts/check_versions.py` | 制約解消チェックリストを確認し `docs/tool-versions.md` を更新 |
-| WEB版 | WebFetch でリリースページを確認 | GitHub MCP 経由で `docs/tool-versions.md` を手動更新 |
 
 **新モデルリリース時**: `ai-assistant` EF の `DEFAULT_SYNTHESIS_MODEL` + 各 EF のモデルパラメータを更新する。
 
@@ -604,17 +608,20 @@ web/sitemap.xml          # URL マップ
 - ✅ **第58弾 投稿成功** (PS版#85, 2026-04-17): `2026-04-10-budget-ai-advisor.md` → Qiita: https://qiita.com/kanta13jp1/items/548a75bbc309488d8d98 / dev.to: https://dev.to/kanta13jp1/building-a-moneyforward-beating-ai-budget-advisor-in-flutter-web-supabase-claude-3b9f
 - ✅ **第59弾 dev.to成功** / Qiita 429継続 (PS版#85, 2026-04-17): `2026-04-12-blog-publish-automation-github-actions.md` → dev.to: https://dev.to/kanta13jp1/how-i-published-21-technical-articles-in-one-day-using-github-actions-supabase-4585
 - ✅ **第60弾 dev.to成功** / Qiita 429継続 (PS版#85, 2026-04-17): `2026-04-12-horse-racing-ai-pipeline.md` → dev.to: https://dev.to/kanta13jp1/building-a-fully-automated-horse-racing-ai-prediction-pipeline-with-flutter-supabase-21b2
+- ✅ **第61弾 dev.to成功** (PS版#86, 2026-04-17): `2026-03-27-devto-schedule-automation-en.md` → dev.to: https://dev.to/kanta13jp1/how-i-automated-cs-bug-fixes-and-competitor-monitoring-with-claude-code-schedule-25bd
+- ✅ **第62弾 dev.to成功** (PS版#86, 2026-04-17): `2026-04-17-web-instance-retired-en.md` → dev.to: https://dev.to/kanta13jp1/why-i-killed-my-4th-claude-code-instance-lessons-from-multi-agent-indie-dev-44fa
+- ✅ **第54弾 EN補投** (PS版#86, 2026-04-17): `2026-04-17-voice-ai-chat-conversation-memory-en.md` → dev.to: https://dev.to/kanta13jp1/implementing-voice-ai-chat-with-conversation-memory-in-flutter-web-web-speech-api-supabase-34h1
 - ⚠️ **Qiita 日次rate limit**: 2026-04-17 に4本投稿後に429。翌日リトライ (第59・60弾 Qiita未投稿)
 - ⚠️ **blog-publish.yml Step5**: GITHUB_TOKEN はブランチ保護 (require PR) をバイパス不可。published:true 更新は手動マージが必要。BLOG_PAT シークレット設定で完全自動化可能。
 
-**次回候補 (第61弾以降)**:
+**次回候補 (第63弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾リトライ) | Qiita (rate limit解除後) |
-| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾リトライ) | Qiita (rate limit解除後) |
-| 中 | `2026-04-13-ai-university-41-providers-tabs.md` | Qiita/dev.to |
-| 中 | `2026-04-12-ai-university-34-providers.md` | Qiita/dev.to |
+| 🔴 | `2026-04-12-blog-publish-automation-github-actions.md` (第59弾Qiitaリトライ) | Qiita翌日以降 |
+| 🔴 | `2026-04-12-horse-racing-ai-pipeline.md` (第60弾Qiitaリトライ) | Qiita翌日以降 |
+| 中 | `2026-04-13-ai-university-41-providers-tabs.md` + EN作成 | Qiita/dev.to |
+| 中 | `2026-04-12-ai-university-34-providers.md` + EN作成 | Qiita/dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
