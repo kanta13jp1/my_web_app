@@ -2360,7 +2360,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   '${m.emoji} ${m.name}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: learned ? Colors.white : Colors.white.withValues(alpha: 0.38),
+                    color: learned
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: 0.38),
                     fontWeight: learned ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
