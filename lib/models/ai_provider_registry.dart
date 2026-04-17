@@ -154,7 +154,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.apiKeyRequired,
     envKeyName: 'SAMBANOVA_API_KEY',
     entryPoint: '(未実装 — OpenAI 互換・SN50 RDU)',
-    note: '$5 Free Credit あり',
+    note: r'$5 Free Credit あり',
   ),
   AiProviderEntry(
     id: 'openrouter',
