@@ -2729,6 +2729,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ),
           ),
           IconButton(
+            icon: const Icon(Icons.fact_check_outlined),
+            tooltip: '実装ステータス一覧',
+            onPressed: () =>
+                Navigator.pushNamed(context, '/ai-provider-status'),
+          ),
+          IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'シェアカード',
             onPressed: _showShareCardDialog,

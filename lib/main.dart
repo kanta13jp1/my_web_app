@@ -89,6 +89,7 @@ import 'package:my_web_app/pages/settings_page.dart';
 import 'package:my_web_app/pages/stats_page.dart';
 import 'package:my_web_app/pages/team_workspace_page.dart';
 import 'package:my_web_app/pages/ai_status_page.dart';
+import 'package:my_web_app/pages/ai_provider_status_page.dart';
 import 'package:my_web_app/pages/asset_management_page.dart';
 import 'package:my_web_app/pages/cfo_office_page.dart';
 import 'package:my_web_app/pages/cho_office_page.dart';
@@ -728,6 +729,10 @@ class MyApp extends StatelessWidget {
           case '/ai-status':
             return MaterialPageRoute(
               builder: (_) => const AiStatusPage(),
+            );
+          case '/ai-provider-status':
+            return MaterialPageRoute(
+              builder: (_) => const AiProviderStatusPage(),
             );
           case '/asset-management':
             return MaterialPageRoute(
