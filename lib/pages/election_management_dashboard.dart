@@ -32,7 +32,7 @@ class _ElectionManagementDashboardState
     try {
       // Edge Function経由でAI検索・整形された最新の実データを取得
       final response = await Supabase.instance.client.functions.invoke(
-        'fetch-local-politicians',
+        'gemini-election-analysis',
       );
       final data = response.data;
       if (mounted && data != null) {
