@@ -10128,5 +10128,38 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### 現在の数値 (2026-04-17 15:10 JST)
 - T-1: 第104弾 (dev.to投稿済み) + 105弾下書き完成
-- AI大学: 74社 (tencent + bytedance 追加・UI同期済み)
+- AI大学: 76社 (inception_labs + world_labs 追加)
 - deploy-prod: SUCCESS ✅ / orphan branches: 0
+
+### セッション記録: Windowsアプリ版#72 (2026-04-17 15:25 JST)
+
+**AI大学 75-76社目: Inception Labs + World Labs 追加 (フロンティア AI)**
+
+1. **新規プロバイダー (2026年最新 AI)**
+   - **Inception Labs** (inception_labs)
+     - 世界初の商用 拡散 LLM (dLLM)
+     - Mercury 2 (2026/02): 史上最速の Reasoning LLM (5〜10x高速)
+     - OpenAI互換 API / Azure AI Foundry / Free 10M tokens
+   - **World Labs** (world_labs)
+     - Fei-Fei Li (AIの母) 創業・$1B 調達
+     - World API (2026/01): Large World Models で 3D 世界生成
+     - USD/glTF 出力・Embodied AI/ロボット訓練支援
+
+2. **更新ファイル**
+   - `supabase/migrations/20260417100000_seed_inception_labs_ai_university.sql`
+   - `supabase/migrations/20260417101000_seed_world_labs_ai_university.sql`
+   - `CLAUDE.md` / `.github/COMPRESSED_PROMPT_V3.md` — 76社表記
+   - `.github/workflows/ai-university-update.yml` — 静的seed コメント
+   - `docs/cross-instance-prs/20260417_inception_worldlabs_ui.md`
+
+3. **Multi-Instance 競合確認**
+   - VSCode版#88 ✅: 74社UI同期完了 / cross-instance-prs 0件化
+   - PS版#106 ✅: T-1 第104弾 dev.to投稿完了
+   - Windows版#72 ✅: 75-76社追加 (本セッション)
+   - 競合なし
+
+4. **次回候補**
+   - Alibaba Tongyi (Wanxiang画像など Qwen 以外のブランド)
+   - Huawei Pangu (中国 BAT 残り 1社)
+   - Magic.dev (100M context LTM-2 enterprise)
+   - Physical Intelligence (ロボット基盤 π モデル)
