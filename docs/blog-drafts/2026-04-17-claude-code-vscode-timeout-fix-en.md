@@ -1,7 +1,7 @@
 ---
 title: "Claude Code VSCode Extension 60s Timeout: It Wasn't the MCPs"
 tags: ClaudeCode,VSCode,debugging,AI,productivity
-published: false
+published: true
 ---
 
 # Claude Code VSCode Extension 60s Timeout: It Wasn't the MCPs

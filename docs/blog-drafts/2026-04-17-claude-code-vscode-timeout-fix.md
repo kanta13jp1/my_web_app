@@ -1,7 +1,7 @@
 ---
 title: "Claude Code VSCode拡張 60秒タイムアウトの真犯人 — MCP削除より先に確認すべきこと"
 tags: ClaudeCode,VSCode,個人開発,AI,デバッグ
-published: false
+published: true
 ---
 
 # Claude Code VSCode拡張 60秒タイムアウトの真犯人
