@@ -9808,3 +9808,44 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### 残作業
 - 🔴 Qiita リトライ: 第59・60・63・64・98〜101弾 → 15:00 UTC以降
+
+---
+
+## VSCode版#87 セッション記録 (2026-04-17 12:00 JST)
+
+### 完了タスク
+
+1. **インスタンス競合確認 (Rule 9)**
+   - VSCode=`lib/` / PS=`.github/workflows/` / Windows=`docs/`
+   - cross-instance-prs: `20260417_edge_functions_inventory_16_update.md` (Windows版スコープ・スキップ)
+   - 競合なし
+
+2. **AI大学 Flutter UI 同期 — 8社追加 (Rule 11)**
+   - `gemini_university_v2_page.dart`: LMSYS/Falcon/FLUX/Liquid/Snowflake/Cognition(Devin)/Scale/Poolside
+   - `_providerMeta` + `_quizzes` + `_fallback` 3セクションに追加
+   - DB 66社 ↔ Flutter UI 66社 完全同期
+
+3. **Rule 11: モデルバージョン確認**
+   - claude-sonnet-4-6 / claude-opus-4-7 / gemini-2.5-flash / claude-haiku-4-5-20251001 全最新 ✅
+
+4. **Rule 12: AI大学ページ DESIGN.md トークン違反3件修正**
+   - AppBar bg: `0xFF1A0A2E` → `0xFF0A0A0A` (surface0)
+   - シェアカード gradient: `0xFF1A0A2E/0xFF0D1B3E` → `0xFF0A0A0A/0xFF1A1A1A` (surface0/1)
+   - h2/h3 Markdown: `0xFFE0E0E0/0xFFBDBDBD` → `0xFFB0BEC5/0xFF90A4AE` (DESIGN.md secondary)
+
+5. **flutter analyze 0エラー確認** ✅ (gemini_university_v2_page.dart: No issues found)
+
+### Auto Mode 設定
+- 全インスタンスでツール承認バイパス設定。次回セッションも継続
+
+### 現在の数値
+- AI大学: 66社 (DB + UI 完全同期)
+- EF: 16本 / GHA: 25本 / Flutterページ: ~225ページ
+
+### 次回優先タスク
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Playwright /ai-university-voice 視覚確認 | VSCode版 |
+| 🟡 | FSRS 音声モード統合 (音声回答 → FSRS grade → 次回出題) | VSCode版 |
+| 🟡 | CI テスト13件失敗調査 | VSCode版 |
+| 🟡 | docs/technical/EDGE_FUNCTIONS_INVENTORY.md 15→16本修正 | Windows版 |
