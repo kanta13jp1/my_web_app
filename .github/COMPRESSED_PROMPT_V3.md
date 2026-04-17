@@ -554,7 +554,7 @@ web/sitemap.xml          # URL マップ
 | --- | --- | --- | --- |
 | **モバイルアプリ (iOS/Android) 対応** | VSCode版 | 🟡中 | Flutter モバイルビルド環境の整備と動作検証 |
 | **Notion API 連携のメモリ最適化** | Web版 | 🟡中 | `growth-import-preview` EF の再帰ブロック取得時のメモリ使用量最適化 |
-| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 56社目以降のプロバイダー（Cohere standalone API, Voyage AI 等）の追加評価 |
+| **AI大学 新規プロバイダー検討** | Windows版 | 🟢低 | 79社目以降のプロバイダー（Reflection AI 公開時・AMI Labs API公開時・Muse Spark 等）の追加評価 |
 
 ### CI/CD改善 #C1: 2026-03-27 日次レポート分析からの反映 (PowerShell版#21, 2026-04-11)
 
