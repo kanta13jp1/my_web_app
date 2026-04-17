@@ -9694,3 +9694,26 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 候補: `2026-03-31-embedding-similarity.md` / `2026-03-28-edge-functions-cicd.md`
 - 🟡 Scale AI / Poolside AI (新規追加分) の Flutter UI 追加 (gemini_university_v2_page.dart の `_providerMeta`)
 - 🟢 FSRS 音声モード統合: Web Speech API 回答 → FSRS grade → 次回出題日計算
+
+---
+
+## PS版#99 セッション記録 (2026-04-17 11:00 JST)
+
+### 完了タスク
+
+1. **Issues #384・#386・#387 クローズ (Rule 17)**
+   - 全3件: 2026-04-17 06:xx JST の dart format CI失敗 (既修正済みの誤検知)
+   - `gh issue close` + 解決コメント投稿
+
+2. **T-1 第98弾: FSRS記事 dev.to 投稿成功**
+   - `2026-04-17-fsrs-spaced-repetition-ai-university-en.md` → dev.to 200 OK
+   - URL: https://dev.to/kanta13jp1/implementing-fsrs-spaced-repetition-in-flutter-supabase-adding-memory-science-to-an-ai-learning-9eg
+   - VSCode#85 作成の JA/EN ドラフト・migration をコミット (a753d09b)
+
+3. **COMPRESSED_PROMPT_V3 T-1 テーブル更新**
+   - 第97弾 (Voice AI) + 第98弾 (FSRS) を ✅ 記録
+   - 次回候補テーブルを第99弾以降に更新
+
+### 残作業
+- 🔴 Qiita リトライ: 第59・60・63・64・98弾 → 15:00 UTC (00:00 JST) 以降
+- 🟡 Scale AI / Poolside AI Flutter UI追加 (VSCode版スコープ)
