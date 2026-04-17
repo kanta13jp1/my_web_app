@@ -2450,14 +2450,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         mainAxisSize: MainAxisSize.min,
         children: [
           // ヘッダー
-          const Row(
+          Row(
             children: [
-              Text('🎓', style: TextStyle(fontSize: 32)),
-              SizedBox(width: 8),
+              const Text('🎓', style: TextStyle(fontSize: 32)),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'AI 大学',
                     style: TextStyle(
                       color: Colors.white,
@@ -2467,14 +2467,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   ),
                   Text(
                     '自分株式会社',
-                    style: TextStyle(color: Colors.white60, fontSize: 11),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 14),
-          const Divider(color: Colors.white24),
+          Divider(color: Colors.white.withValues(alpha: 0.24)),
           const SizedBox(height: 14),
           // 達成数メッセージ
           Text(
@@ -2483,7 +2486,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              height: 1.3,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 16),
@@ -2863,7 +2866,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 if (updatedAt != null)
                   Text(
                     updatedAt,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
                   ),
                 if (rows == null || rows.isEmpty)
                   const Text(
@@ -3044,7 +3050,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: m.color.withValues(alpha: 0.39)),
-                    minimumSize: const Size(double.infinity, 40),
+                    minimumSize: const Size(double.infinity, 44),
                     alignment: Alignment.centerLeft,
                   ),
                   onPressed: answered
