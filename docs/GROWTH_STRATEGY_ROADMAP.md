@@ -10385,3 +10385,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - registry更新 + ai-university-update.yml RSS行追加 + CLAUDE.md / COMPRESSED_PROMPT_V3 リスト + "78社"参照 2箇所更新
 - flutter analyze 0エラー維持 / deno lint clean
 - cross-instance-prs: wbs_gantt + wbs_progress_notice は upstream が先行 done/移動済み
+
+### Rule 17 WF health check (2026-04-18 VSCode版#90)
+- 全WF success率: deploy-prod 0/11 → **修正済み** / ai-university-update 0/1 → **修正済み**
+- 修正1: project_gantt_page.dart:982 require_trailing_commas → dart format後commit (e635883c)
+- 修正2: ai-university-update.yml checkout token追加 — GH006根本修正 (d9934bd4)
+- flutter analyze: ローカル0エラー確認済み
+- orphan branches: 全パターン0件 (クリーン)
