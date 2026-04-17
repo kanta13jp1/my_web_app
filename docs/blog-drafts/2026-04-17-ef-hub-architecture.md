@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Function 50本制限を突破する Hub-and-Action アーキテクチャ"
 tags: Flutter,Supabase,buildinpublic,個人開発,アーキテクチャ
-published: false
+published: true
 ---
 
 # Supabase Edge Function 50本制限を突破する Hub-and-Action アーキテクチャ
