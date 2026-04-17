@@ -10225,3 +10225,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 2. `2026-04-17-tencent-bytedance-ai-university.md` (第105弾 JA)
 3. `2026-04-17-inception-worldlabs-ai-university.md` (第106弾 JA)
 4. `2026-04-17-runware-sonic-ai-university.md` (第107弾 JA)
+
+---
+
+## PS版#110 セッション記録 (2026-04-17 17:15 JST)
+
+### T-1 第108弾: SambaNova RDU GPU-Free AI — dev.to投稿成功
+- **dev.to URL**: https://dev.to/kanta13jp1/sambanova-gpu-free-ai-inference-at-5x-speed-ai-university-update-78-providers-43c9
+- Windows版#74 cross-instance-pr (sambanova_ui) → VSCode版pending継続
+- cs-check orphan 1本削除 (cs-check-2026-04-17-16-24553890073)
+
+### 次回 Qiita リトライ予定 (2026-04-18 00:00 JST以降)
+1. `2026-04-17-claude-code-vscode-timeout-fix.md` (第104弾 JA)
+2. `2026-04-17-tencent-bytedance-ai-university.md` (第105弾 JA)
+3. `2026-04-17-inception-worldlabs-ai-university.md` (第106弾 JA)
+4. `2026-04-17-runware-sonic-ai-university.md` (第107弾 JA)
