@@ -392,7 +392,7 @@ class _WbsTab extends StatelessWidget {
         const _SectionHeader(label: 'リリースマイルストーン', icon: Icons.flag_outlined),
         const SizedBox(height: 8),
         if (milestones.isEmpty)
-          _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           SizedBox(
             height: 140,
@@ -426,7 +426,7 @@ class _WbsTab extends StatelessWidget {
 
         // ── カテゴリ別タスク ───────────────────────────────────────────────
         if (grouped.isEmpty)
-          _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           ...grouped.entries.map(
             (entry) => _CategorySection(
@@ -453,8 +453,8 @@ class _OverallProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -497,7 +497,7 @@ class _OverallProgressCard extends StatelessWidget {
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4)),
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4),),
                 ),
                 child: Text(
                   '${progress.toStringAsFixed(0)}%',
@@ -537,8 +537,11 @@ class _MilestoneCard extends StatelessWidget {
   final DateTime now;
   final List<WbsTask> tasks;
 
-  const _MilestoneCard(
-      {required this.milestone, required this.now, required this.tasks,});
+  const _MilestoneCard({
+    required this.milestone,
+    required this.now,
+    required this.tasks,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -564,9 +567,10 @@ class _MilestoneCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                  milestone.achieved ? Icons.check_circle : Icons.flag_outlined,
-                  color: milestone.color,
-                  size: 18,),
+                milestone.achieved ? Icons.check_circle : Icons.flag_outlined,
+                color: milestone.color,
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -645,26 +649,31 @@ class _FilterRow extends StatelessWidget {
       child: Row(
         children: [
           _chip('全て', null, filterInstance, onFilterInstance,
-              const Color(0xFFFF6B35)),
+              const Color(0xFFFF6B35),),
           const SizedBox(width: 6),
           _chip('VSCode', 'vscode', filterInstance, onFilterInstance,
-              const Color(0xFF007ACC)),
+              const Color(0xFF007ACC),),
           const SizedBox(width: 6),
           _chip('Windows', 'windows', filterInstance, onFilterInstance,
-              const Color(0xFF00BCF2)),
+              const Color(0xFF00BCF2),),
           const SizedBox(width: 6),
           _chip('PowerShell', 'ps', filterInstance, onFilterInstance,
-              const Color(0xFF4B0082)),
+              const Color(0xFF4B0082),),
           const SizedBox(width: 12),
           const Text('│', style: TextStyle(color: Color(0xFF333333))),
           const SizedBox(width: 12),
           _chip('全版', null, filterMilestone, onFilterMilestone,
-              const Color(0xFF707070)),
+              const Color(0xFF707070),),
           ...milestones.map((m) {
             return Padding(
               padding: const EdgeInsets.only(left: 6),
               child: _chip(
-                  m.name, m.code, filterMilestone, onFilterMilestone, m.color,),
+                m.name,
+                m.code,
+                filterMilestone,
+                onFilterMilestone,
+                m.color,
+              ),
             );
           }),
         ],
@@ -673,7 +682,7 @@ class _FilterRow extends StatelessWidget {
   }
 
   Widget _chip(String label, String? value, String? current,
-      ValueChanged<String?> onTap, Color color) {
+      ValueChanged<String?> onTap, Color color,) {
     final selected = current == value;
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
@@ -704,10 +713,11 @@ class _CategorySection extends StatelessWidget {
   final String categoryIcon;
   final List<WbsTask> tasks;
 
-  const _CategorySection(
-      {required this.category,
-      required this.categoryIcon,
-      required this.tasks,});
+  const _CategorySection({
+    required this.category,
+    required this.categoryIcon,
+    required this.tasks,
+  });
 
   double get _avgProgress {
     if (tasks.isEmpty) return 0;
@@ -941,14 +951,16 @@ class _MyProjectsTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   TextField(
-                      controller: nameCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: _inputDec('プロジェクト名'),),
+                    controller: nameCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDec('プロジェクト名'),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
-                      controller: descCtrl,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: _inputDec('説明 (任意)'),),
+                    controller: descCtrl,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: _inputDec('説明 (任意)'),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
@@ -956,8 +968,7 @@ class _MyProjectsTab extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border:
-                                Border.all(color: const Color(0xFF333333)),
+                            border: Border.all(color: const Color(0xFF333333)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButton<String>(
@@ -968,7 +979,7 @@ class _MyProjectsTab extends StatelessWidget {
                             isExpanded: true,
                             items: statuses
                                 .map((s) =>
-                                    DropdownMenuItem(value: s, child: Text(s)))
+                                    DropdownMenuItem(value: s, child: Text(s),))
                                 .toList(),
                             onChanged: (v) => onStatusChanged(v!),
                           ),
@@ -1044,10 +1055,13 @@ class _MyProjectsTab extends StatelessWidget {
                                 color: const Color(0xFF1E1E1E),
                                 icon: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4,),
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                      color: c.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(4),),
+                                    color: c.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
                                   child: Text(
                                     s,
                                     style: TextStyle(color: c, fontSize: 12),

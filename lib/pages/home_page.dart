@@ -4444,7 +4444,7 @@ abstinence_slip_details: $slipDetailsText
                                     'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
                                     style: TextStyle(
                                         color: Colors.white
-                                            .withValues(alpha: 0.7)),
+                                            .withValues(alpha: 0.7),),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
@@ -4518,7 +4518,7 @@ abstinence_slip_details: $slipDetailsText
                                     '未配分ギャップや公認内定の遅れを可視化します。',
                                     style: TextStyle(
                                         color: Colors.white
-                                            .withValues(alpha: 0.7)),
+                                            .withValues(alpha: 0.7),),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
