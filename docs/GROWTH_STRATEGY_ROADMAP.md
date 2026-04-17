@@ -9491,10 +9491,24 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - T-1 第79弾: PersonalDashboard FractionallySizedBox (`2026-04-11`) → dev.to dispatched
 - T-1 第80弾: DNS/DomainManager TabController FAB (`2026-04-10`) → dev.to dispatched
 
+---
+
+## PS版#94 セッション記録 (2026-04-17 09:20 JST)
+
+### 完了タスク
+- T-1 第81-86弾 EN → dev.to 投稿成功 (6本)
+  - 第81: <https://dev.to/kanta13jp1/travel-planner-whiteboard-recipe-manager-in-flutter-web-radiolisttile-migration-const-50nl>
+  - 第82: <https://dev.to/kanta13jp1/building-a-public-guitar-gallery-with-4-users-action-extension-pattern-viral-design-fln>
+  - 第83: <https://dev.to/kanta13jp1/sm-2-spaced-repetition-in-deno-flashcard-ui-in-flutter-web-building-a-duolingo-competitor-4e82>
+  - 第84: <https://dev.to/kanta13jp1/ai-university-3-file-pattern-to-add-any-ai-provider-offline-fallback-content-24c3>
+  - 第85: <https://dev.to/kanta13jp1/guitar-recording-auto-post-to-x-oauth-10a-server-side-twitter-intent-fallback-3hib>
+  - 第86: <https://dev.to/kanta13jp1/crm-pipeline-horse-racing-ai-in-flutter-web-lead-scoring-formula-kanban-with-5653>
+- dev.to 429 Rate Limit 発見: 6本連続投稿で2本が429 → 30秒-20分待機でリトライ成功
+
 ### 次回優先タスク
 - 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (= JST 翌日0:00) 以降
-- 🟡 T-1 第81弾以降: 残JA記事のEN版作成・投稿継続
-  - 候補: `2026-04-03-travel-whiteboard-recipe.md` / `2026-04-06-public-guitar-gallery.md`
+- 🟡 T-1 第87弾以降: 残JA記事のEN版作成・投稿継続
+- 🟡 Rule 9 GHA 最適化: workflow-failure-handler skip率確認・timeout適正化
 
 ---
 
