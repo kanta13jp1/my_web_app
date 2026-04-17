@@ -446,6 +446,42 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0F172A),
     officialUrl: 'https://poolside.ai/',
   ),
+  'harvey': _ProviderMeta(
+    name: 'Harvey AI',
+    emoji: '⚖️',
+    color: const Color(0xFF2C5282),
+    officialUrl: 'https://www.harvey.ai/',
+  ),
+  'manus': _ProviderMeta(
+    name: 'Manus AI',
+    emoji: '🤖',
+    color: const Color(0xFF553C9A),
+    officialUrl: 'https://manus.im/',
+  ),
+  'hedra': _ProviderMeta(
+    name: 'Hedra AI',
+    emoji: '🎭',
+    color: const Color(0xFF9C4DCC),
+    officialUrl: 'https://www.hedra.com/',
+  ),
+  'heygen': _ProviderMeta(
+    name: 'HeyGen',
+    emoji: '🎬',
+    color: const Color(0xFF1976D2),
+    officialUrl: 'https://www.heygen.com/',
+  ),
+  'recraft': _ProviderMeta(
+    name: 'Recraft',
+    emoji: '🎨',
+    color: const Color(0xFFE74C3C),
+    officialUrl: 'https://www.recraft.ai/',
+  ),
+  'krea': _ProviderMeta(
+    name: 'Krea',
+    emoji: '⚡',
+    color: const Color(0xFF7B68EE),
+    officialUrl: 'https://www.krea.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -848,6 +884,36 @@ final Map<String, _Quiz> _quizzes = {
   'poolside': _Quiz(
     question: 'Poolside AI が特化しているドメインは？',
     options: ['医療診断', '金融予測', 'ソフトウェアエンジニアリング（コーディング）', '音楽生成'],
+    correct: 2,
+  ),
+  'harvey': _Quiz(
+    question: 'Harvey AI が最も強みを持つ分野はどれですか？',
+    options: ['ゲーム開発', '法律・リーガルサービス', '医療診断', '動画生成'],
+    correct: 1,
+  ),
+  'manus': _Quiz(
+    question: 'Manus AI の最大の特徴は何ですか？',
+    options: ['画像生成の高品質さ', 'コード補完の速さ', '複雑タスクの自律実行', '音声合成の自然さ'],
+    correct: 2,
+  ),
+  'hedra': _Quiz(
+    question: 'Hedra AI の Character-3 の最大の特徴は何ですか？',
+    options: ['高解像度画像生成', '音声・画像・テキストを同時処理するオムニモーダルAI', '最安値の動画生成', '最多言語対応'],
+    correct: 1,
+  ),
+  'heygen': _Quiz(
+    question: 'HeyGen が対応している言語数はどのくらいですか？',
+    options: ['30言語', '50言語', '100言語', '175言語'],
+    correct: 3,
+  ),
+  'recraft': _Quiz(
+    question: 'Recraft V4 が他の画像生成モデルと決定的に差別化している要素は？',
+    options: ['高速推論', '編集可能なSVGベクター生成', 'ゼロショット翻訳', '3Dメッシュ生成'],
+    correct: 1,
+  ),
+  'krea': _Quiz(
+    question: 'Krea AI のリアルタイム画像生成の応答速度は？',
+    options: ['約1秒', '約500ms', '約50ms以下', '約10秒'],
     correct: 2,
   ),
 };
@@ -1917,6 +1983,85 @@ Devin (Cognition) と並ぶ「AI ソフトウェアエンジニア」分野の�
 - **Point**: 高速・軽量コーディングモデル
 
 [公式サイト](https://poolside.ai/)
+''',
+  'harvey': '''
+## Harvey AI — 法律・プロフェッショナルサービス特化AI
+
+世界トップ法律事務所が採用するリーガルAIプラットフォーム。評価額 \$11B (2026年)。
+
+## 主要機能
+- **契約レビュー**: 大量契約書の自動審査・リスク抽出
+- **法的リサーチ**: 判例・法令の高精度検索
+- **デューデリジェンス**: M&A時の大量文書処理自動化
+
+## 実績
+- Am Law 100 の 50%+ が採用
+- A&O Shearman・PwC・EY が導入済み
+
+[公式サイト](https://www.harvey.ai/)
+''',
+  'manus': '''
+## Manus AI — 汎用AIエージェント
+
+世界初の真の汎用AIエージェント。タスクを計画・分解・並列実行する。
+
+## 特徴
+- **自律実行**: Webブラウジング・コード実行・ファイル操作を自律的にこなす
+- **並列処理**: 複数サブタスクを同時進行
+- **Meta買収**: \$2-3B で買収済み (2026年)
+
+[公式サイト](https://manus.im/)
+''',
+  'hedra': '''
+## Hedra AI — リアルタイム会話型アバター動画
+
+Character-3 (オムニモーダルモデル) で業界最高精度の口唇同期を実現。
+
+## 特徴
+- **Character-3**: 音声・画像・テキストを1モデルで同時処理するオムニモーダルAI
+- **低価格**: \$0.05/分
+- **実績**: a16z \$44M調達・3M+ ユーザー
+
+[公式サイト](https://www.hedra.com/)
+''',
+  'heygen': '''
+## HeyGen — ビジネス向けAIアバター動画
+
+15秒録画でスタジオ品質動画を生成。175言語のリップシンク翻訳対応。
+
+## 主要機能
+- **AIアバター**: 自分の分身を作成して繰り返し利用
+- **多言語翻訳**: 175言語でリップシンク
+- **MCP統合**: Claude Code との連携対応
+
+## 実績
+- G2 2025年最速成長製品賞 #1
+- 100K+ 企業採用
+
+[公式サイト](https://www.heygen.com/)
+''',
+  'recraft': '''
+## Recraft AI — プロ向けベクター画像生成
+
+世界唯一レベルのSVGベクター生成に特化。V4でMidjourney・DALL·Eを超えた。
+
+## モデルラインアップ
+- **V4 / V4 Pro**: ラスター画像 (1MP / 4MP)
+- **V4 Vector / Vector Pro**: 編集可能なSVGベクター
+
+[公式サイト](https://www.recraft.ai/)
+''',
+  'krea': '''
+## Krea AI — リアルタイム画像・動画生成
+
+50ms以下のリアルタイム生成 + 40以上のモデル集約プラットフォーム。
+
+## 主要機能
+- **Krea Realtime 14B**: オープンソース動画モデル
+- **Node Editor**: 生成チェーンをGUIで構築
+- **リアルタイム**: 描画・入力に即応する50ms以下の応答
+
+[公式サイト](https://www.krea.ai/)
 ''',
 };
 
