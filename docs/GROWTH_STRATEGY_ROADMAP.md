@@ -10399,3 +10399,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - registry: arcee_ai を notImplemented → apiKeyRequired (ARCEE_API_KEY 要設定)
 - cross-instance-prs 2件 stale root 削除 (wbs_gantt + wbs_progress_notice)
 - flutter analyze 0エラー / deno lint clean
+
+### PS版#108 ai-hub provider.chat 6社追加 (2026-04-18 00:15)
+- supabase/functions/ai-hub/index.ts: PROVIDER_CONFIGS 14→20プロバイダー
+  - cerebras (llama-3.3-70b) / nvidia NIM (llama-3.1-70b) / moonshot Kimi (moonshot-v1-8k)
+  - ai21 Jamba (jamba-1.5-mini) / 01.AI Yi (yi-lightning) / Zhipu GLM (glm-4-flash)
+- lib/models/ai_provider_registry.dart: 6社 notImplemented→apiKeyRequired
+- 残タスク: Supabase Secrets に CEREBRAS/NVIDIA/MOONSHOT/AI21/YI/ZHIPU_API_KEY 追加 (ユーザー対応)
