@@ -10392,3 +10392,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 修正2: ai-university-update.yml checkout token追加 — GH006根本修正 (d9934bd4)
 - flutter analyze: ローカル0エラー確認済み
 - orphan branches: 全パターン0件 (クリーン)
+
+### Windowsアプリ版#75b 完了 (2026-04-18 00:20)
+- AI大学 UI 80社完全同期: _providerMeta / _quizzes / _fallback に lightricks + arcee_ai 追加
+- ai-hub provider.chat: arcee_ai OpenAI 互換で登録 (8社目 OpenAI-compat)
+- registry: arcee_ai を notImplemented → apiKeyRequired (ARCEE_API_KEY 要設定)
+- cross-instance-prs 2件 stale root 削除 (wbs_gantt + wbs_progress_notice)
+- flutter analyze 0エラー / deno lint clean

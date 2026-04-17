@@ -525,8 +525,9 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'arcee_ai',
     displayName: 'Arcee AI Trinity',
-    status: AiProviderStatus.notImplemented,
-    entryPoint: '(未実装 — OpenAI 互換・米国発 Apache 2.0)',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'ARCEE_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: r'Mini $0.045/$0.15 per 1M · OpenRouter 無料枠あり',
   ),
 ];

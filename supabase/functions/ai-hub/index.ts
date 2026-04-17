@@ -116,6 +116,14 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  arcee_ai: {
+    displayName: "Arcee AI Trinity",
+    envKey: "ARCEE_API_KEY",
+    chatUrl: "https://api.arcee.ai/v1/chat/completions",
+    defaultModel: "trinity-mini",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
   fireworks_ai: {
     displayName: "Fireworks AI",
     envKey: "FIREWORKS_API_KEY",
@@ -1607,7 +1615,7 @@ serve(async (req: Request) => {
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
       case "provider.chat": {
         // 汎用プロバイダー呼び出し (AI大学80社の実装済みAIに統一インターフェースで話しかける)
-        // 対応: OpenAI互換 7社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together)
+        // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");
         const messages = Array.isArray(body.messages) ? body.messages : null;
