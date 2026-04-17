@@ -10424,3 +10424,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - registry + UI (_providerMeta/_quizzes/_fallback) + ai-university-update.yml RSS 2行追加
 - CLAUDE.md / COMPRESSED_PROMPT リスト + "80社" 参照 2箇所更新
 - flutter analyze 0エラー / deno lint clean / dart format pass
+
+### VSCode版#90 セッション2 (2026-04-18)
+- FSRS due-cards統合: tab listener + getNextCards + 今日の復習バッジ (70%→90%)
+- DESIGN.md準拠: gemini_university_v2_page.dart — BlueGrey系色→トークン色4件修正
+- WBS FSRS進捗: 70%→90% 更新
+- deploy-prod CI: format差分(gantt)はWindowsアプリ版が修正済み(4293f85a) / 新規run実行中
