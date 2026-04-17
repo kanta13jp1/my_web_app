@@ -10461,3 +10461,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 旧失敗2件: Check formatting (gantt trailing comma) — Windowsアプリ版#75b が修正済み (4293f85a)
 - orphan branches: 全パターン0件 (クリーン)
 - Horse Racing cancelled: concurrency正常動作
+### Windowsアプリ版#78 完了 (2026-04-18 01:50) — ai-assistant 429 緩和策
+- ブラウザ console に ai-assistant 400/429 連続エラー確認 → 調査
+- Flutter サーキットブレイカー `AiQuotaGuard` 実装 (lib/services/ai_service.dart)
+  - 429 検知で 60秒 cooldown / 期間中の invoke を即座に例外
+  - `FunctionException.details` + 生メッセージ両方で quota パターン検知
+- quota-monitor.yml dispatch 実行 (run ID 24576623713)
+- インシデントレポート docs/incident-reports/2026-04-18-ai-assistant-429.md 作成
+  - 上流プロバイダー Secrets 残高確認手順
+  - ai_quota_usage テーブル確認コマンド
+  - フォールバック強化の中長期方針
+- flutter analyze 0エラー / 制約: 直接 invoke 17ページは guard未経由 (リファクタ要)

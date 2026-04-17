@@ -20,6 +20,48 @@ class AIServiceException implements Exception {
   String toString() => message;
 }
 
+/// グローバル 429 サーキットブレイカー
+///
+/// 上流 API (OpenAI/Anthropic/Gemini) が quota 枯渇すると ai-assistant EF が
+/// 連続的に 429 を返す。Flutter 側で複数コンポーネントが同時呼び出しすると
+/// リクエストが雪崩式に増え UX が崩壊する。
+///
+/// 最後の 429 発生時刻を記録し、cooldown 中の呼び出しを即座に例外で弾くことで
+/// API への無駄な再試行を防ぐ。
+class AiQuotaGuard {
+  static DateTime? _lastQuotaErrorAt;
+  static const Duration _cooldown = Duration(seconds: 60);
+
+  /// 429 を検知した際に呼び出す
+  static void markQuotaExceeded() {
+    _lastQuotaErrorAt = DateTime.now();
+    AppLogger.warning(
+      'AiQuotaGuard: quota exceeded — cooldown ${_cooldown.inSeconds}s',
+    );
+  }
+
+  /// cooldown 中なら true
+  static bool get isCoolingDown {
+    final ts = _lastQuotaErrorAt;
+    if (ts == null) return false;
+    return DateTime.now().difference(ts) < _cooldown;
+  }
+
+  /// cooldown 残り秒数 (UI 表示用)
+  static int get remainingSeconds {
+    final ts = _lastQuotaErrorAt;
+    if (ts == null) return 0;
+    final elapsed = DateTime.now().difference(ts);
+    final remaining = _cooldown - elapsed;
+    return remaining.isNegative ? 0 : remaining.inSeconds;
+  }
+
+  /// テスト用リセット
+  static void reset() {
+    _lastQuotaErrorAt = null;
+  }
+}
+
 /// AI 機能を提供するサービス
 class AIService {
   final SupabaseClient _supabase;
@@ -128,6 +170,16 @@ class AIService {
     AppLogger.debug('Calling Supabase Function: $functionName');
     AppLogger.debug('Request Body: $body');
 
+    // サーキットブレイカー: 直近 429 検知中はリクエストを送らず即座に例外
+    if (AiQuotaGuard.isCoolingDown) {
+      final sec = AiQuotaGuard.remainingSeconds;
+      throw AIServiceException(
+        'AI 呼び出しを一時停止しています (quota 回復待ち・残り $sec 秒)',
+        errorType: 'RATE_LIMIT',
+        retryAfter: sec.toString(),
+      );
+    }
+
     try {
       final response = await _supabase.functions.invoke(
         functionName,
@@ -190,15 +242,32 @@ class AIService {
         final errorType = details['errorType'] as String?;
         final retryAfter = details['retryAfter']?.toString();
 
+        // 429 / quota / rate limit を検知して circuit breaker を作動
+        final isQuota = errorType == 'RATE_LIMIT' ||
+            RegExp(r'quota|rate.?limit|429', caseSensitive: false)
+                .hasMatch(errorMessage);
+        if (isQuota) {
+          AiQuotaGuard.markQuotaExceeded();
+        }
+
         throw AIServiceException(
           errorMessage,
-          errorType: errorType,
+          errorType: isQuota ? 'RATE_LIMIT' : errorType,
           retryAfter: retryAfter,
         );
       }
 
-      // details が読めない場合もカスタム例外へ包む
-      throw AIServiceException('Supabase Function エラー: ${e.toString()}');
+      // details が読めない場合も 429 メッセージなら guard 作動
+      final msgStr = e.toString();
+      if (RegExp(r'429|quota|rate.?limit', caseSensitive: false)
+          .hasMatch(msgStr)) {
+        AiQuotaGuard.markQuotaExceeded();
+        throw AIServiceException(
+          'AI API quota を超過しました (上流プロバイダー側で課金要確認)',
+          errorType: 'RATE_LIMIT',
+        );
+      }
+      throw AIServiceException('Supabase Function エラー: $msgStr');
     } on PostgrestException catch (e) {
       AppLogger.error('PostgrestException ($functionName): ${e.message}');
       throw AIServiceException('Postgrest error: ${e.message}');
