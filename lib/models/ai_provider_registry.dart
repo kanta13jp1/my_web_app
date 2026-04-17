@@ -63,7 +63,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (82社, 2026-04-18時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (84社, 2026-04-18時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -208,7 +208,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Hugging Face',
     status: AiProviderStatus.apiKeyRequired,
     envKeyName: 'HUGGINGFACE_TOKEN',
-    entryPoint: '(未実装)',
+    entryPoint: 'ai-hub:provider.chat (Inference API・PS版#110で追加)',
   ),
 
   // ===== 以下、未実装 (実装候補・優先度評価中) =====
@@ -535,7 +535,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'MiniMax (Hailuo)',
     status: AiProviderStatus.apiKeyRequired,
     envKeyName: 'MINIMAX_API_KEY',
-    entryPoint: '(未実装 — OpenAI 互換・音声+動画+音楽統合)',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換・PS版#110で追加)',
     note: 'M2.5-Lightning 月100万tok free・香港上場',
   ),
   AiProviderEntry(
@@ -544,6 +544,20 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: '(未実装 — 軽量 VLM 9B MoE・Apache 2.0)',
     note: r'$0.30/$2.50 per 1M · 画像=729 tok',
+  ),
+  AiProviderEntry(
+    id: 'rakuten_ai',
+    displayName: 'Rakuten AI 3.0',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 700B MoE 日本最大級・Apache 2.0)',
+    note: 'HuggingFace無料・Rakuten AI Gateway商談ベース',
+  ),
+  AiProviderEntry(
+    id: 'pfn',
+    displayName: 'Preferred Networks (PLaMo)',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 100% 日本製 foundation model)',
+    note: 'エンタープライズ商談・研究者無料枠あり',
   ),
 ];
 

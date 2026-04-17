@@ -542,6 +542,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF8B5CF6),
     officialUrl: 'https://moondream.ai/',
   ),
+  'rakuten_ai': _ProviderMeta(
+    name: 'Rakuten AI 3.0',
+    emoji: '🎌',
+    color: const Color(0xFFBF0000),
+    officialUrl: 'https://huggingface.co/Rakuten',
+  ),
+  'pfn': _ProviderMeta(
+    name: 'PFN (PLaMo)',
+    emoji: '🗾',
+    color: const Color(0xFF0BAF55),
+    officialUrl: 'https://www.preferred.jp/en/business/genai',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1038,6 +1050,26 @@ final Map<String, _Quiz> _quizzes = {
       'MoE 9B(2B active) / 729 tokens',
       'Transformer 70B / 1024 tokens',
       'CNN 500M / 256 tokens',
+    ],
+    correct: 1,
+  ),
+  'rakuten_ai': _Quiz(
+    question: 'Rakuten AI 3.0 のパラメータ数・ライセンス・プロジェクトは?',
+    options: [
+      '70B / MIT / Llama派生',
+      '700B MoE / Apache 2.0 / GENIAC',
+      '8B / GPL / 独自',
+      '100B / Proprietary / 楽天独自',
+    ],
+    correct: 1,
+  ),
+  'pfn': _Quiz(
+    question: 'Preferred Networks の日本製 LLM ブランド名と独自 AI チップは?',
+    options: [
+      'Tunnel / A100',
+      'PLaMo / MN-Core',
+      'Chainer / TPU',
+      'Sakana / Groq',
     ],
     correct: 1,
   ),
@@ -2338,6 +2370,53 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 - 画像 1枚 = **729 tokens** 固定
 - Free Tier \$5 / 月 (約 20,000 画像)
 - OSS ローカル実行は完全無料 (Apache 2.0)
+''',
+  'rakuten_ai': '''
+# Rakuten AI 3.0
+
+楽天グループが **GENIAC (METI + NEDO)** プロジェクトの一環として開発した、**日本国内最大級 700B MoE** ファウンデーションモデル。2026/3/17 に **Apache 2.0** で公開。
+
+## モデル
+- **Rakuten AI 3.0** — 700B MoE / 日本語特化 / Apache 2.0
+- **Rakuten AI 2.0** — 8x7B MoE (前世代)
+- **Rakuten AI 7B-Instruct** — 軽量 SFT 版
+
+## 強み
+- 日本最大級の国産 MoE
+- **GENIAC 選定** で政府お墨付き
+- **Apache 2.0** で商用無制限
+- 関西弁・敬語・業界用語に強い
+- 楽天 1.5億ユーザー基盤の実戦投入
+
+## 入手
+- HuggingFace `Rakuten/*` で全ウェイト無料公開
+- Rakuten AI Gateway API はエンタープライズ商談
+''',
+  'pfn': '''
+# Preferred Networks (PLaMo)
+
+東京発の日本 AI・ML リーディングカンパニー (2014設立)。Chainer 開発元として知られ、**100% 日本製 foundation model「PLaMo™」** を展開。
+
+## モデル
+- **PLaMo Prime** — 100B+ 日本語フラッグシップ
+- **PLaMo 2** (8B/13B) — 中規模汎用
+- **PLaMo Translate** — 日↔英/中 翻訳特化 (SOTA)
+- **PLaMo Lite** (2B) — エッジ・モバイル
+
+## 独自インフラ
+- **MN-Core** — PFN 自社設計 AI チップ (PLaMo 推論用)
+- GPU非依存で推論コスト削減
+
+## 強み
+- **100% 日本語スクラッチ学習** (fine-tune ではない)
+- 金融・医療・製造・自動車の業界特化版あり
+- 東大・京大との共同研究出力
+- GENIAC 金融ベンチマーク SOTA
+
+## 入手
+- PLaMo API (エンタープライズ商談)
+- PLaMo Chat (B2B assistant)
+- 研究者無料枠 (大学・NPO)
 ''',
 };
 

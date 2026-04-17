@@ -10446,3 +10446,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - DESIGN.md準拠: gemini_university_v2_page.dart — BlueGrey系色→トークン色4件修正
 - WBS FSRS進捗: 70%→90% 更新
 - deploy-prod CI: format差分(gantt)はWindowsアプリ版が修正済み(4293f85a) / 新規run実行中
+
+### Windowsアプリ版#77 完了 (2026-04-18 01:00)
+- AI大学 Step 0 discovery #3: Rakuten AI 3.0 (9/9) + PFN PLaMo (9/9) 日本発AI強化
+- AI大学 82→84社: Rakuten AI 3.0 (700B MoE Apache 2.0 GENIAC) + PFN (PLaMo 100B+ 100%日本製 MN-Core独自チップ)
+- migration 2本 + registry + UI + ai-university-update RSS 2行
+- ai-university-add-provider skill 強化: registry/UI/ai-hub/N社参照手順を skill 化 (14 Step 明文化)
+- flutter analyze 0エラー / deno lint clean / dart format pass
