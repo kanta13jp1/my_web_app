@@ -1,7 +1,7 @@
 ---
 title: "Expanding Jibun Corp's AI Hub to 25 Providers — Qwen, Inflection, AllenAI, HuggingFace & MiniMax"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Expanding Jibun Corp's AI Hub to 25 Providers

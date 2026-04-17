@@ -1,7 +1,7 @@
 ---
 title: "自分株式会社のAIハブが25プロバイダーに拡張 — Qwen/Inflection/AllenAI/HuggingFace/MiniMax追加"
 tags: Flutter,Supabase,AI,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # 自分株式会社のAIハブが25プロバイダーに拡張
