@@ -494,6 +494,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6366F1),
     officialUrl: 'https://www.doubao.com/',
   ),
+  'inception_labs': _ProviderMeta(
+    name: 'Inception (Mercury)',
+    emoji: '💨',
+    color: const Color(0xFF00BFA5),
+    officialUrl: 'https://www.inceptionlabs.ai/',
+  ),
+  'world_labs': _ProviderMeta(
+    name: 'World Labs',
+    emoji: '🌍',
+    color: const Color(0xFF2E7D32),
+    officialUrl: 'https://www.worldlabs.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -937,6 +949,21 @@ final Map<String, _Quiz> _quizzes = {
     question: 'ByteDance Seed 2.0 が採用する主要設計コンセプトは？',
     options: ['超大規模パラメータ', 'Agent Era (自律タスク実行)', 'マルチランゲージ特化', '長コンテキスト'],
     correct: 1,
+  ),
+  'inception_labs': _Quiz(
+    question: 'Inception Labs の Mercury が採用する革新的な LLM アーキテクチャは？',
+    options: [
+      'Autoregressive Transformer',
+      'Diffusion LLM (dLLM)',
+      'Mixture of Experts',
+      'State Space Model',
+    ],
+    correct: 1,
+  ),
+  'world_labs': _Quiz(
+    question: 'World Labs を創業した「AIの母」と呼ばれる研究者は？',
+    options: ['Geoffrey Hinton', 'Yann LeCun', 'Fei-Fei Li', 'Andrew Ng'],
+    correct: 2,
   ),
 };
 
@@ -2109,6 +2136,30 @@ TikTok運営 ByteDance の AI ブランド。Doubao 2.0 は「Agent Era」特化
 - 業界最安値級 API (GPT-5.2比 3.7倍安)
 
 [公式サイト](https://www.doubao.com/)
+''',
+  'inception_labs': '''
+## Inception Labs (Mercury) — 世界初の商用拡散LLM
+
+世界初の商用 **拡散 LLM (dLLM)**。トークン並列生成で従来 LLM より 5〜10倍高速。
+
+## モデルラインアップ
+- **Mercury 2** (2026/02): 史上最速の Reasoning LLM
+- 128K context / OpenAI互換API
+- Free tier: 10M tokens/月 / Azure AI Foundry 提供
+
+[公式サイト](https://www.inceptionlabs.ai/)
+''',
+  'world_labs': '''
+## World Labs — Fei-Fei Li 創業の空間知能AI
+
+「AIの母」Fei-Fei Li 創業。**Large World Models (LWM)** で 3D 世界を生成する空間知能 AI。
+
+## 主要機能
+- **World API** (2026/01): テキスト/画像/動画→3D 世界生成
+- USD / glTF など業界標準フォーマット出力
+- \$1B 調達・Embodied AI/ロボット訓練支援
+
+[公式サイト](https://www.worldlabs.ai/)
 ''',
 };
 
