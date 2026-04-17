@@ -9734,3 +9734,35 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 残作業
 - 🔴 Qiita リトライ: 第59・60・63・64・98・99弾 → 15:00 UTC以降
 - 🟡 gemini_university_v2_page.dart の新プロバイダー (lmsys/falcon_tii/black_forest_labs/liquid_ai/snowflake/cognition/scale_ai/poolside) コミット → VSCode版スコープ
+
+---
+
+## VSCode版#86 セッション記録 (2026-04-17 11:30 JST)
+
+### 完了タスク
+
+1. **インスタンス競合確認 (Rule 9)**
+   - VSCode: `lib/` + `supabase/functions/` / PS: `.github/workflows/` / Windows: `docs/` + `migrations/`
+   - cross-instance-prs 全2件 done 確認。競合なし
+   - COMPRESSED_PROMPT_V3.md v2.1.111反映済み (Windows版が実施)
+
+2. **AI大学 8社 Flutter UI追加 (Rule 8 + 11)**
+   - `gemini_university_v2_page.dart` の `_providerMeta` + `_quizzes` + `_fallback` に追加
+   - 追加8社: LMSYS/Chatbot Arena・Falcon TII・Black Forest Labs (FLUX)・Liquid AI・Snowflake AI・Cognition (Devin)・Scale AI・Poolside AI
+   - DB移行済みプロバイダーとUI同期完了 → 66社全てUIサポート済み
+
+3. **CLAUDE.md プロバイダーリスト 66社更新**
+   - 60社 → 66社に追記 (8社追加)
+
+### 現在の数値
+- AI大学: 66社 (DB + UI 全同期)
+- EF: 16本 (ハードキャップ50本内)
+- GHA: 25本
+
+### 次回優先タスク
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Playwright ブラウザ再起動して /ai-university-voice 視覚確認 | VSCode版 |
+| 🟡 | flutter analyze 0エラー確認 (gemini_university_v2_page.dart 変更後) | VSCode版 |
+| 🟡 | FSRS 音声モード統合: Web Speech API 回答 → FSRS grade → 次回出題日 | VSCode版 |
+| 🟢 | CI テスト13件失敗調査 | VSCode版 |
