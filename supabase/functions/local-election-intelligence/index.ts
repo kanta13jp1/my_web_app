@@ -15,6 +15,8 @@ const OFFICIAL_2023_FIRST_HALF_URL =
 const OFFICIAL_2023_SECOND_HALF_URL =
   "https://new-kokumin.jp/news/election/20230423_1";
 const ELECTION_SCHEDULE_URL = "https://go2senkyo.com/schedule";
+const NEW_KOKUMIN_ELECTIONS_URL =
+  "https://local-elections.new-kokumin.jp/electionslist/";
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 14;
@@ -942,24 +944,73 @@ async function fetchScheduleOverviewEntries(
     ...[...years].map(scheduleUrlForYear),
   ];
 
-  const pages = await Promise.all(
-    urls.map(async (url) => {
-      try {
-        return await fetchText(url);
-      } catch (error) {
-        console.error(`Failed to fetch schedule page ${url}:`, error);
-        return "";
-      }
-    }),
-  );
+  const [go2senkyoPages, newKokuminEntries] = await Promise.all([
+    Promise.all(
+      urls.map(async (url) => {
+        try {
+          return await fetchText(url);
+        } catch (error) {
+          console.error(`Failed to fetch schedule page ${url}:`, error);
+          return "";
+        }
+      }),
+    ),
+    fetchNewKokuminScheduleEntries(),
+  ]);
 
-  return pages.flatMap((html) =>
+  const go2senkyoEntries = go2senkyoPages.flatMap((html) =>
     html === "" ? [] : parseScheduleOverviewEntries(html)
   );
+
+  return mergeScheduleOverviewEntries(go2senkyoEntries, newKokuminEntries);
 }
 
 function scheduleUrlForYear(year: number): string {
   return `${ELECTION_SCHEDULE_URL}/${year}`;
+}
+
+interface NewKokuminElection {
+  post_id: string;
+  pref: string;
+  election_name: string;
+  featured: boolean;
+  notice_day: string;
+  vote_day: string;
+  period_end_day: string;
+  deadline: string;
+}
+
+async function fetchNewKokuminScheduleEntries(): Promise<
+  ScheduleOverviewEntry[]
+> {
+  let html: string;
+  try {
+    html = await fetchText(NEW_KOKUMIN_ELECTIONS_URL);
+  } catch (error) {
+    console.error("Failed to fetch new-kokumin elections page:", error);
+    return [];
+  }
+  const match = html.match(/var elections = (\[[\s\S]*?\]);/);
+  if (!match) {
+    console.error("Could not extract elections array from new-kokumin page");
+    return [];
+  }
+  let data: NewKokuminElection[];
+  try {
+    data = JSON.parse(match[1]) as NewKokuminElection[];
+  } catch (error) {
+    console.error("Failed to parse new-kokumin elections JSON:", error);
+    return [];
+  }
+  return data
+    .filter((item) => item.vote_day !== "" || item.period_end_day !== "")
+    .map((item) => ({
+      electionName: item.election_name,
+      prefecture: item.pref,
+      voteDate: (item.vote_day || item.period_end_day).replace(/\//g, "-"),
+      detailUrl:
+        `https://local-elections.new-kokumin.jp/form/?post_id=${item.post_id}`,
+    }));
 }
 
 function buildManualScheduledCandidates(
