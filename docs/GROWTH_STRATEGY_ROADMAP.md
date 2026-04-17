@@ -10406,3 +10406,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - ai21 Jamba (jamba-1.5-mini) / 01.AI Yi (yi-lightning) / Zhipu GLM (glm-4-flash)
 - lib/models/ai_provider_registry.dart: 6社 notImplemented→apiKeyRequired
 - 残タスク: Supabase Secrets に CEREBRAS/NVIDIA/MOONSHOT/AI21/YI/ZHIPU_API_KEY 追加 (ユーザー対応)
+
+### PS版#109 ai-hub 23プロバイダー + WBS更新 (2026-04-18 00:30)
+- supabase/functions/ai-hub/index.ts: 20→23プロバイダー
+  - qwen: Alibaba DashScope国際版 (qwen-plus)
+  - inflection: Inflection Pi (inflection_3_pi)
+  - allenai: Allen AI OLMo (OLMo-2-0325-32B-Instruct)
+- lib/models/ai_provider_registry.dart: 3社 notImplemented→apiKeyRequired
+- WBS migration: CI修正完了 / provider.chat 30%進捗 / Rule17完了記録
+- 残タスク: Supabase Secrets に DASHSCOPE/INFLECTION/ALLENAI_API_KEY 追加 (ユーザー対応)
+- 次フェーズ候補: huggingface/replicate/ibm/oracle/adept (API形式要調査)
