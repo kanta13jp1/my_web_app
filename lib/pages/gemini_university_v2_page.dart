@@ -167,7 +167,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
   'aleph_alpha': _ProviderMeta(
     name: 'Aleph Alpha',
     emoji: '🇩🇪',
-    color: const Color(0xFF1A1A2E),
+    color: const Color(0xFF4A90D9),
     officialUrl: 'https://docs.aleph-alpha.com/',
   ),
   'baidu': _ProviderMeta(
@@ -245,7 +245,7 @@ final Map<String, _ProviderMeta> _providerMeta = {
   'udio': _ProviderMeta(
     name: 'Udio',
     emoji: '🎸',
-    color: const Color(0xFF1A1A2E),
+    color: const Color(0xFF9B59B6),
     officialUrl: 'https://www.udio.com/',
   ),
   'voyage': _ProviderMeta(
@@ -2360,7 +2360,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   '${m.emoji} ${m.name}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: learned ? Colors.white : Colors.white38,
+                    color: learned ? Colors.white : Colors.white.withValues(alpha: 0.38),
                     fontWeight: learned ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -2738,7 +2738,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   // MarkdownBody 共通スタイル (ダーク専用)
   static final MarkdownStyleSheet _mdStyle = MarkdownStyleSheet(
-    p: const TextStyle(color: Colors.white, height: 1.6),
+    p: const TextStyle(color: Colors.white, height: 1.7),
     h1: const TextStyle(
       color: Colors.white,
       fontSize: 20,
