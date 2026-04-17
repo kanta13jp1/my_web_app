@@ -47,7 +47,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   late final TabController _tabController;
 
   bool _isLoading = false;
-  bool _isPredicting = false;
+  // _isPredicting / _runAiPredictions は UI 契機の AI 予想実行を廃止したため削除
+  // AI 予想は .github/workflows/horse-racing-update.yml (毎時 cron) で自動実行
   String? _error;
   ErrorType? _errorType;
   RaceType _selectedRaceType = RaceType.all;
@@ -124,40 +125,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     }
   }
 
-  Future<void> _runAiPredictions() async {
-    setState(() => _isPredicting = true);
-    try {
-      final r = await _supabase.functions.invoke(
-        'tools-hub',
-        body: {'action': 'horseracing.predict_all', 'date': _selectedDate},
-      );
-      final data = r.data;
-      final count = (data is Map) ? (data['count'] as num?)?.toInt() ?? 0 : 0;
-      final msg = (data is Map) ? (data['message'] as String?) ?? '' : '';
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              count > 0
-                  ? '$count件のAI予想を生成しました'
-                  : msg.isNotEmpty
-                      ? msg
-                      : '予想済みまたは対象レースなし',
-            ),
-            backgroundColor: count > 0 ? Colors.green : null,
-          ),
-        );
-      }
-      await _loadAll();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('AI予想失敗: $e')));
-      }
-    } finally {
-      if (mounted) setState(() => _isPredicting = false);
-    }
-  }
+  // _runAiPredictions 削除: AI予想はバッチ (horse-racing-update.yml 毎時 cron) 専任
+  // ユーザー要望 2026-04-18: UI 契機の予想実行を廃止
 
   void _pickDate() async {
     final picked = await showDatePicker(
@@ -208,26 +177,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ],
         ),
         actions: [
-          if (_isPredicting)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            Tooltip(
-              message: 'AI 3連単予想を実行',
-              child: IconButton(
-                icon: const Icon(
-                  Icons.psychology,
-                  color: Color(0xFFFF6B35),
-                ),
-                onPressed: _runAiPredictions,
+          const Padding(
+            padding: EdgeInsets.all(12),
+            child: Tooltip(
+              message: 'AI予想はバッチ処理 (毎時自動) で生成されます',
+              child: Icon(
+                Icons.auto_awesome,
+                color: Color(0xFFFF6B35),
               ),
             ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadAll,
@@ -341,10 +300,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                       const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _isPredicting ? null : _runAiPredictions,
-                        icon: const Icon(Icons.psychology),
-                        label: const Text('AI予想を今すぐ実行'),
+                      const Text(
+                        'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
+                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
@@ -366,23 +325,19 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           Container(
             color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.info_outline,
                   color: Color(0xFFFF6B35),
                   size: 16,
                 ),
-                const SizedBox(width: 8),
-                const Expanded(
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
-                    'AI予想未実行 — 右上の脳アイコンで3連単予想を生成',
+                    'AI予想はバッチ処理 (毎時 cron) で自動生成されます。次回実行までお待ちください。',
                     style: TextStyle(color: Color(0xFFFF6B35), fontSize: 12),
                   ),
-                ),
-                TextButton(
-                  onPressed: _isPredicting ? null : _runAiPredictions,
-                  child: const Text('予想実行'),
                 ),
               ],
             ),
@@ -401,6 +356,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Widget _buildRaceCard(Map<String, dynamic> race) {
     final raceName = race['race_name'] as String? ?? 'レース';
     final venue = race['venue'] as String?;
+    final raceNumber = (race['race_number'] as num?)?.toInt();
     final courseType = race['course_type'] as String? ?? '芝';
     final distance = (race['distance'] as num?)?.toInt();
     final grade = race['grade'] as String? ?? '';
@@ -457,12 +413,39 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
             ),
           ),
-          title: Text(
-            raceName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+          title: Row(
+            children: [
+              if (raceNumber != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '${raceNumber}R',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: Text(
+                  raceName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           subtitle: Text(
             [

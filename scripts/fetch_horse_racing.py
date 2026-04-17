@@ -639,6 +639,7 @@ def _fetch_entries_for_source(
             "race_name": race_name,
             "race_date": target_date,
             "venue": venue_info.get("venue"),
+            "race_number": venue_info.get("race_number"),
             "post_time": post_time,
             "course_type": course_type,
             "distance": distance,
