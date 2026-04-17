@@ -80,7 +80,9 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     displayName: "xAI Grok",
     envKey: "XAI_API_KEY",
     chatUrl: "https://api.x.ai/v1/chat/completions",
-    defaultModel: "grok-2-latest",
+    // 2026-04 時点 xAI 現行モデル. grok-2-latest は廃止 (Model not found エラー).
+    // grok-4-1-fast-non-reasoning: 2M context / 低コスト / 非推論用途向け.
+    defaultModel: "grok-4-1-fast-non-reasoning",
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
