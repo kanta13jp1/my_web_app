@@ -9995,3 +9995,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
    - Viggle AI (リアルタイムキャラクター動画・viral特化)
    - Magic.dev (100M token LTM-2 / 長コンテキストコーディング)
    - Descript / Synthesia (音声合成アバター分野強化)
+
+---
+
+### Rule 17 WF health check (2026-04-17 14:47)
+- 全 WF success率: 9/10 WF 正常 (User Feedback Resolved は skipped=正常)
+- 失敗 WF: Deploy to Production (1件) — ai-hub bundling 時に esm.sh 522 (CDN transient エラー)。新push後の run がqueued済み、次回は自動回復見込み
+- orphan blog-publish branches: 0 (クリーン)
+- 修正済み: なし (transient エラーのため対応不要)
+
+### VSCode版#88 完了 (2026-04-17 14:47)
+- AI大学 72社 UI同期: harvey/manus/hedra/heygen/recraft/krea を _providerMeta・_quizzes・_fallback に追加
+- Windows版#68-70 cross-instance-prs 3件 done 移動
+- flutter analyze 0エラー確認済み
