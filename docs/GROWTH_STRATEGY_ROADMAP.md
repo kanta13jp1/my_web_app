@@ -9766,3 +9766,24 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🟡 | flutter analyze 0エラー確認 (gemini_university_v2_page.dart 変更後) | VSCode版 |
 | 🟡 | FSRS 音声モード統合: Web Speech API 回答 → FSRS grade → 次回出題日 | VSCode版 |
 | 🟢 | CI テスト13件失敗調査 | VSCode版 |
+
+---
+
+## PS版#101 セッション記録 (2026-04-17 11:15 JST)
+
+### 完了タスク
+
+1. **T-1 第100弾: ブログ自動投稿パイプライン記事**
+   - JA: `2026-04-17-blog-automation-pipeline.md`
+   - EN: `2026-04-17-blog-automation-pipeline-en.md`
+   - dev.to 投稿成功: https://dev.to/kanta13jp1/automating-technical-blog-publishing-github-actions-supabase-edge-function-pipeline-2a87
+
+2. **Deploy failure 診断 (Rule 17)**
+   - 原因: `esm.sh 522` 一時的CDN障害 (`get-home-dashboard/index.ts`)
+   - コード問題ではない。VSCode版の `gemini_university_v2_page.dart` コミット (6f192cd3) をプッシュして再デプロイ起動
+
+3. **COMPRESSED_PROMPT_V3 T-1テーブル更新** (第100弾 ✅ / 第101弾以降)
+
+### 残作業
+- 🔴 Qiita リトライ: 第59・60・63・64・98・99・100弾 → 15:00 UTC以降
+- 🟡 次T-1記事ネタ: FSRS home card integration / AI大学 8社providerMeta追加
