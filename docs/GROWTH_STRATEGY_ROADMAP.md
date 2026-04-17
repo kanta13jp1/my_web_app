@@ -10365,3 +10365,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI プロバイダー一覧ページ確認 (PS版/Windows版が先行実装済み — 78社分ステータス表示・provider.chat連携)
 - Rule12 home_page.dart: Colors.white70→withValues 20件・white24→withValues 1件・fontSize9.5→10・height1.1→1.4
 - flutter analyze 0エラー維持
+
+### Rule 17 WF health check (2026-04-17 23:55 PS版)
+- 全WF success率: CS Check 2/2 ✅ / Edge Function UI Audit 1/1 ✅ / Horse Racing 1/1 ✅ / Infra Health 1/1 ✅ / Workflow Failure Handler 9/13
+- 失敗WF: Deploy to Production 0/11 — 原因: flutter analyze error (trailing commas + const constructors) → **即修正完了**
+  - home_page.dart:4447,4521 require_trailing_commas → 修正
+  - project_gantt_page.dart:395,429 prefer_const_constructors (_EmptyCard) → 修正
+  - project_gantt_page.dart:456,457 prefer_const_constructors/literals (LinearGradient) → 修正
+  - project_gantt_page.dart:500,648-662,676,971 require_trailing_commas → 修正
+- 失敗WF: AI大学コンテンツ更新 1/1 — 原因: GH006 (BYPASS_RULES secret未設定) → **ユーザー対応待ち**
+- orphan branches: 0件 (全パターンクリーン)
+- cross-instance-prs: 2件 done/移動 (wbs_gantt + wbs_progress_notice)
+- commit: 95d9be79 fix: home_page + gantt trailing commas + const constructors
