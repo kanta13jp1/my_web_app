@@ -9717,3 +9717,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 残作業
 - 🔴 Qiita リトライ: 第59・60・63・64・98弾 → 15:00 UTC (00:00 JST) 以降
 - 🟡 Scale AI / Poolside AI Flutter UI追加 (VSCode版スコープ)
+
+---
+
+## PS版#100 セッション記録 (2026-04-17 11:10 JST)
+
+### 完了タスク
+
+1. **インスタンス競合確認** — VSCode=`lib/`作業中(gemini_university_v2_page.dart未コミット)、PS=`.github/workflows/`、Windows=`docs/`+`migrations/`。重複なし
+2. **T-1 第99弾: EF Hub-and-Action アーキテクチャ記事**
+   - JA: `2026-04-17-ef-hub-architecture.md`
+   - EN: `2026-04-17-ef-hub-architecture-en.md`
+   - dev.to 投稿成功: https://dev.to/kanta13jp1/scaling-supabase-edge-functions-past-the-50-function-cap-hub-and-action-architecture-4kac
+3. **COMPRESSED_PROMPT_V3 T-1テーブル更新** (第99弾 ✅ / 第100弾以降に更新)
+
+### 残作業
+- 🔴 Qiita リトライ: 第59・60・63・64・98・99弾 → 15:00 UTC以降
+- 🟡 gemini_university_v2_page.dart の新プロバイダー (lmsys/falcon_tii/black_forest_labs/liquid_ai/snowflake/cognition/scale_ai/poolside) コミット → VSCode版スコープ
