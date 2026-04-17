@@ -30,6 +30,137 @@ function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+// AI大学プロバイダー統一呼び出し設定 (Phase 2)
+// OpenAI 互換 + 独自 API の chat completion エンドポイントを束ねる
+type ProviderConfig = {
+  displayName: string;
+  envKey: string;
+  chatUrl: string;
+  defaultModel: string;
+  extraHeaders?: Record<string, string>;
+  buildBody: (messages: unknown[], model: string) => Record<string, unknown>;
+  parseResponse: (data: unknown) => string;
+};
+
+function pick(obj: unknown, ...path: (string | number)[]): unknown {
+  let cur: unknown = obj;
+  for (const key of path) {
+    if (cur === null || cur === undefined) return undefined;
+    if (typeof key === "number" && Array.isArray(cur)) {
+      cur = cur[key];
+    } else if (typeof cur === "object") {
+      cur = (cur as Record<string, unknown>)[String(key)];
+    } else {
+      return undefined;
+    }
+  }
+  return cur;
+}
+
+const OPENAI_COMPAT_BODY = (messages: unknown[], model: string) => ({
+  model,
+  messages,
+  max_tokens: 512,
+  temperature: 0.7,
+});
+const OPENAI_COMPAT_PARSE = (data: unknown): string =>
+  String(pick(data, "choices", 0, "message", "content") ?? "");
+
+const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
+  // OpenAI 互換グループ (7社)
+  openai: {
+    displayName: "OpenAI",
+    envKey: "OPENAI_API_KEY",
+    chatUrl: "https://api.openai.com/v1/chat/completions",
+    defaultModel: "gpt-4o-mini",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  x: {
+    displayName: "xAI Grok",
+    envKey: "XAI_API_KEY",
+    chatUrl: "https://api.x.ai/v1/chat/completions",
+    defaultModel: "grok-2-latest",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  deepseek: {
+    displayName: "DeepSeek",
+    envKey: "DEEPSEEK_API_KEY",
+    chatUrl: "https://api.deepseek.com/v1/chat/completions",
+    defaultModel: "deepseek-chat",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  groq: {
+    displayName: "Groq",
+    envKey: "GROQ_API_KEY",
+    chatUrl: "https://api.groq.com/openai/v1/chat/completions",
+    defaultModel: "llama-3.3-70b-versatile",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  sambanova: {
+    displayName: "SambaNova",
+    envKey: "SAMBANOVA_API_KEY",
+    chatUrl: "https://api.sambanova.ai/v1/chat/completions",
+    defaultModel: "Meta-Llama-3.3-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  openrouter: {
+    displayName: "OpenRouter",
+    envKey: "OPENROUTER_API_KEY",
+    chatUrl: "https://openrouter.ai/api/v1/chat/completions",
+    defaultModel: "openai/gpt-4o-mini",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  fireworks_ai: {
+    displayName: "Fireworks AI",
+    envKey: "FIREWORKS_API_KEY",
+    chatUrl: "https://api.fireworks.ai/inference/v1/chat/completions",
+    defaultModel: "accounts/fireworks/models/llama-v3p3-70b-instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  together_ai: {
+    displayName: "Together AI",
+    envKey: "TOGETHER_API_KEY",
+    chatUrl: "https://api.together.xyz/v1/chat/completions",
+    defaultModel: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  mistral: {
+    displayName: "Mistral AI",
+    envKey: "MISTRAL_API_KEY",
+    chatUrl: "https://api.mistral.ai/v1/chat/completions",
+    defaultModel: "mistral-small-latest",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  perplexity: {
+    displayName: "Perplexity",
+    envKey: "PERPLEXITY_API_KEY",
+    chatUrl: "https://api.perplexity.ai/chat/completions",
+    defaultModel: "sonar",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  // Cohere も Bearer + body スキーマが OpenAI 非互換
+  cohere: {
+    displayName: "Cohere",
+    envKey: "COHERE_API_KEY",
+    chatUrl: "https://api.cohere.com/v2/chat",
+    defaultModel: "command-r-plus-08-2024",
+    buildBody: (messages, model) => ({ model, messages }),
+    parseResponse: (data) =>
+      String(pick(data, "message", "content", 0, "text") ?? ""),
+  },
+  // anthropic / google は ai-assistant (MAGI) 経由で既に利用可能なので provider.chat の対象外
+};
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -1444,6 +1575,72 @@ serve(async (req: Request) => {
       }
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
+      case "provider.chat": {
+        // 汎用プロバイダー呼び出し (AI大学78社の実装済みAIに統一インターフェースで話しかける)
+        // 対応: OpenAI互換 7社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together)
+        //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
+        const providerId = String(body.provider ?? "");
+        const messages = Array.isArray(body.messages) ? body.messages : null;
+        const userMsg = String(body.message ?? "");
+        if (!providerId) return json({ error: "provider required" }, 400);
+        if (!messages && !userMsg) return json({ error: "messages or message required" }, 400);
+        const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+
+        const cfg = PROVIDER_CONFIGS[providerId];
+        if (!cfg) {
+          return json({ success: false, status: "notImplemented", message: `Provider "${providerId}" はまだ実装されていません。` }, 400);
+        }
+        const apiKey = Deno.env.get(cfg.envKey) ?? "";
+        if (!apiKey) {
+          return json({ success: false, status: "apiKeyRequired", secret_needed: cfg.envKey, message: `Supabase Secret ${cfg.envKey} を設定してください。` });
+        }
+
+        try {
+          const resp = await fetch(cfg.chatUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+              ...(cfg.extraHeaders ?? {}),
+            },
+            body: JSON.stringify(cfg.buildBody(finalMessages, String(body.model ?? cfg.defaultModel))),
+          });
+          const respText = await resp.text();
+          if (!resp.ok) {
+            // Free tier / 課金制限検知
+            if (respText.includes("paid_plan_required") || respText.includes("payment_required") ||
+                resp.status === 402 || respText.includes("insufficient_quota") ||
+                respText.includes("billing") || respText.includes("credit")) {
+              return json({ success: false, status: "paidPlanRequired", provider: providerId, message: `${cfg.displayName} はプロバイダー側で課金が必要です。`, detail: respText.slice(0, 300) });
+            }
+            return json({ success: false, status: "error", provider: providerId, http_status: resp.status, detail: respText.slice(0, 500) }, 502);
+          }
+          let data: unknown;
+          try {
+            data = JSON.parse(respText);
+          } catch {
+            return json({ success: true, provider: providerId, status: "implemented", text: respText.slice(0, 2000) });
+          }
+          const content = cfg.parseResponse(data);
+          const modelUsed = pick(data, "model");
+          return json({ success: true, provider: providerId, status: "implemented", text: content, model: modelUsed ?? cfg.defaultModel });
+        } catch (e) {
+          return json({ success: false, status: "error", provider: providerId, message: String(e) }, 500);
+        }
+      }
+
+      case "provider.list": {
+        // UIから呼ばれる: 各プロバイダーのEnv有無だけ返す (APIコールなし・安全)
+        const result: Record<string, { envConfigured: boolean; displayName: string }> = {};
+        for (const [id, cfg] of Object.entries(PROVIDER_CONFIGS)) {
+          result[id] = {
+            envConfigured: (Deno.env.get(cfg.envKey) ?? "") !== "",
+            displayName: cfg.displayName,
+          };
+        }
+        return json({ success: true, providers: result });
+      }
+
       case "voice.tts": {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const text = String(body.text ?? "").slice(0, 5000);
