@@ -1,7 +1,7 @@
 ---
 title: "Automating Technical Blog Publishing: GitHub Actions + Supabase Edge Function Pipeline"
 tags: Flutter,Supabase,buildinpublic,DevOps,automation
-published: false
+published: true
 ---
 
 # Automating Technical Blog Publishing: GitHub Actions + Supabase Edge Function Pipeline

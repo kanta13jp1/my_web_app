@@ -1,7 +1,7 @@
 ---
 title: "Scaling Supabase Edge Functions Past the 50-Function Cap: Hub-and-Action Architecture"
 tags: Flutter,Supabase,buildinpublic,Dart,architecture
-published: false
+published: true
 ---
 
 # Scaling Supabase Edge Functions Past the 50-Function Cap: Hub-and-Action Architecture

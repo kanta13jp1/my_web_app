@@ -1,7 +1,7 @@
 ---
 title: "Implementing FSRS Spaced Repetition in Flutter + Supabase — Adding Memory Science to an AI Learning App"
 tags: Flutter,Supabase,buildinpublic,webdev,machinelearning
-published: false
+published: true
 ---
 
 # Implementing FSRS Spaced Repetition in Flutter + Supabase

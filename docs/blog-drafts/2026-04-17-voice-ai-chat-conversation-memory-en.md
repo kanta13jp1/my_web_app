@@ -1,7 +1,7 @@
 ---
 title: "Implementing Voice AI Chat with Conversation Memory in Flutter Web — Web Speech API + Supabase"
 tags: Flutter,Supabase,WebSpeechAPI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Implementing Voice AI Chat with Conversation Memory in Flutter Web
