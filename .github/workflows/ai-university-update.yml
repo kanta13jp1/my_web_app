@@ -101,7 +101,6 @@ jobs:
 
       # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
       - name: Step 3 - Append to daily report and commit to main
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
