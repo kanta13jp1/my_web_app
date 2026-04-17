@@ -9606,17 +9606,42 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Rule 17: GHA全ワークフロー健全確認 (失敗0件/50runs)
 - EN バックログ完全クリア: 全publishable JA記事のEN版作成・投稿済み
 
----
-
-## PS版#94並列 セッション記録 (2026-04-17 続き — objective-cannon worktree)
-
-### 完了タスク
-- T-1 第97弾: Voice AI Chat Conversation Memory (Web Speech API + Supabase) → dev.to 投稿成功
-  - <https://dev.to/kanta13jp1/implementing-voice-ai-chat-with-conversation-memory-in-flutter-web-web-speech-api-supabase-1b12>
-- Rule 9 追加最適化: `.github/*.md` / ISSUE_TEMPLATE / PULL_REQUEST_TEMPLATE を deploy-prod paths-ignore に追加
-  - `.github/COMPRESSED_PROMPT_V3.md` への docs-only push が deploy を trigger しなくなる
-
 ### 次回優先タスク
 - 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
 - 🟡 新規記事執筆: 2026-04-17以降の新機能を対象に次の記事ドラフト
-- 🟡 Rule 9 継続: その他 workflow の concurrency / timeout 見直し
+
+---
+
+### VSCode版セッション記録 #85 (2026-04-17)
+
+**担当**: VSCode版 (Rule 8/9/10/11/12/16 実行 続き)
+
+### 完了タスク
+
+1. **growth-acquisition-report CORS修正**
+   - `edge_function_status_page.dart` + `edge_function_summary_card.dart` から廃止EF名を削除
+   - `growth-hub` エントリに統合 (テストボタン誤呼び出し防止)
+
+2. **Deploy to Production: success** (01:20 UTC)
+   - AI大学 v2 全実装・dart format修正・DESIGN.md準拠デザイン修正がデプロイ済み
+   - FSRS migrations (`20260417000001/2`) `supabase db push --include-all` で自動適用
+
+3. **音声学習ページ確認**
+   - LP正常ロード (WebFetch確認)
+   - route `/ai-university-voice` コード上登録済み・deploy済み
+   - Playwright browser session closed → 次回手動確認
+
+4. **horse_racing_predictor statuscode 調査** — 問題なし
+   - `msg.contains('statuscode')` は `toLowerCase()` 後のマッチ → 正常
+   - flutter analyze: No issues found
+
+### 残タスク
+- Playwright を再起動して `/ai-university-voice` の視覚確認
+- Deploy 01:53 in_progress (CORS fix + モデル更新を含む)
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Playwright 再起動して音声ページ視覚確認 | VSCode版 |
+| 🟡 | AI大学 v2 学習リマインダーバッチ設定 | PS版 |
+| 🟡 | テスト 13件失敗調査 (pre-existing?) | VSCode版 |

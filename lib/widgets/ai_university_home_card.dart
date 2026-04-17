@@ -26,6 +26,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
   int _currentStreak = 0;
   int _badgeCount = 0;
   int _providerCount = 0;
+  int _dueCardCount = 0;
   DateTime? _latestContentUpdatedAt;
   static const String _prefsKey = 'ai_univ_answered_quizzes';
 
@@ -109,12 +110,19 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
           .select('id')
           .eq('user_id', user.id)
           .count(CountOption.exact);
+      final dueCardRow = await _supabase
+          .from('ai_university_fsrs_cards')
+          .select('id')
+          .eq('user_id', user.id)
+          .lte('due_date', DateTime.now().toIso8601String())
+          .count(CountOption.exact);
       if (mounted) {
         setState(() {
           // リモート記録があればローカルより優先 (クロスデバイス対応)
           if (remoteCount > _answeredCount) _answeredCount = remoteCount;
           _currentStreak = (streakRow?['current_streak'] as num?)?.toInt() ?? 0;
           _badgeCount = badgeRow.count;
+          _dueCardCount = dueCardRow.count;
         });
       }
     } catch (_) {
@@ -391,6 +399,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                                   label: _buildRefreshLabel(),
                                   color: const Color(0xFFFFC107),
                                 ),
+                                if (_dueCardCount > 0)
+                                  _buildStatusPill(
+                                    icon: Icons.replay_rounded,
+                                    label: '復習 $_dueCardCount問',
+                                    color: const Color(0xFF3D5AFE),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 6),
@@ -588,6 +602,25 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         ),
                       ),
                     ),
+                    if (_dueCardCount > 0) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _openUniversity,
+                          icon: const Icon(Icons.replay_rounded),
+                          label: Text('復習する ($_dueCardCount問)'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF3D5AFE),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
