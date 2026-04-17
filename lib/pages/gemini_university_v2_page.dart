@@ -398,6 +398,54 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF9370DB),
     officialUrl: 'https://www.prover.io/',
   ),
+  'lmsys': _ProviderMeta(
+    name: 'LMSYS / Chatbot Arena',
+    emoji: '🏆',
+    color: const Color(0xFF1E40AF),
+    officialUrl: 'https://lmsys.org/',
+  ),
+  'falcon_tii': _ProviderMeta(
+    name: 'Falcon (TII)',
+    emoji: '🦅',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://falconllm.tii.ae/',
+  ),
+  'black_forest_labs': _ProviderMeta(
+    name: 'Black Forest Labs (FLUX)',
+    emoji: '🌲',
+    color: const Color(0xFF111827),
+    officialUrl: 'https://blackforestlabs.ai/',
+  ),
+  'liquid_ai': _ProviderMeta(
+    name: 'Liquid AI',
+    emoji: '💧',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://liquid.ai/',
+  ),
+  'snowflake': _ProviderMeta(
+    name: 'Snowflake AI',
+    emoji: '❄️',
+    color: const Color(0xFF29B5E8),
+    officialUrl: 'https://www.snowflake.com/en/data-cloud/cortex/',
+  ),
+  'cognition': _ProviderMeta(
+    name: 'Cognition AI (Devin)',
+    emoji: '🤖',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://cognition.ai/',
+  ),
+  'scale_ai': _ProviderMeta(
+    name: 'Scale AI',
+    emoji: '⚖️',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://scale.com/',
+  ),
+  'poolside': _ProviderMeta(
+    name: 'Poolside AI',
+    emoji: '🏊',
+    color: const Color(0xFF0F172A),
+    officialUrl: 'https://poolside.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -746,6 +794,46 @@ final Map<String, _Quiz> _quizzes = {
     question: 'Prover が特化している領域として正しいのは？',
     options: ['定理証明・形式検証・数学的正確性保証', '画像生成', 'リアルタイムWeb検索', '音声合成'],
     correct: 0,
+  ),
+  'lmsys': _Quiz(
+    question: 'LMSYS の Chatbot Arena が採用しているモデル評価方式は？',
+    options: ['自動スコアリング', 'Elo レーティング (人間ブラインド比較)', 'MMLU ベンチマーク', 'API コスト比較'],
+    correct: 1,
+  ),
+  'falcon_tii': _Quiz(
+    question: 'Falcon LLM を開発した TII の所在国は？',
+    options: ['米国', '英国', 'UAE（アラブ首長国連邦）', 'ドイツ'],
+    correct: 2,
+  ),
+  'black_forest_labs': _Quiz(
+    question: 'Black Forest Labs が開発した画像生成モデルシリーズは？',
+    options: ['DALL-E', 'Midjourney', 'FLUX', 'Stable Diffusion XL'],
+    correct: 2,
+  ),
+  'liquid_ai': _Quiz(
+    question: 'Liquid AI の LFM（Liquid Foundation Models）の特徴として正しいのは？',
+    options: ['Transformer アーキテクチャ踏襲', '液体状態機械ベースの新アーキテクチャ', 'GPT-4 のファインチューニング', '画像専用モデル'],
+    correct: 1,
+  ),
+  'snowflake': _Quiz(
+    question: 'Snowflake Cortex AI の主な特徴は？',
+    options: ['画像生成特化', 'SNS 投稿自動化', 'データウェアハウスと密接に統合されたエンタープライズ AI', 'ゲーム AI'],
+    correct: 2,
+  ),
+  'cognition': _Quiz(
+    question: 'Cognition AI の代表製品「Devin」の特徴は？',
+    options: ['テキスト翻訳 AI', '自律的に GitHub Issue から PR まで完結させる AI ソフトウェアエンジニア', '音楽生成 AI', '画像編集 AI'],
+    correct: 1,
+  ),
+  'scale_ai': _Quiz(
+    question: 'Scale AI が主に提供するサービスは？',
+    options: ['クラウドホスティング', 'AI モデル訓練用の高品質データ収集・アノテーション', 'SNS プラットフォーム', '量子コンピューティング'],
+    correct: 1,
+  ),
+  'poolside': _Quiz(
+    question: 'Poolside AI が特化しているドメインは？',
+    options: ['医療診断', '金融予測', 'ソフトウェアエンジニアリング（コーディング）', '音楽生成'],
+    correct: 2,
   ),
 };
 
@@ -1707,6 +1795,113 @@ Prover は定理証明（Theorem Proving）と形式検証（Formal Verification
 - **飛行制御システム**: FAA等による形式検証対応
 
 [公式サイト](https://www.prover.io/)
+''',
+  'lmsys': '''
+## LMSYS / Chatbot Arena — AIモデル公正評価の世界標準
+
+LMSYS Org (UC Berkeley) は Chatbot Arena を運営する学術研究グループ。
+人間によるブラインド比較で GPT / Claude / Gemini を公平に評価し、Elo レーティングを公開。
+AI業界で最も信頼される独立ベンチマークとして機能している。
+
+## 主要成果
+- **Chatbot Arena**: 人間ブラインド比較で Elo 評価（世界標準ランキング）
+- **Vicuna**: LLaMA ベースの高性能オープンソースチャットモデル
+- **SGLang**: 構造化生成のための高速推論フレームワーク
+
+[公式サイト](https://lmsys.org/)
+''',
+  'falcon_tii': '''
+## Falcon LLM (TII) — UAE発のオープンウェイトLLM
+
+Technology Innovation Institute (TII, UAE) が開発した完全オープンウェイト LLM。
+Apache 2.0 ライセンスで商用利用可能。RefinedWeb（厳選 Web データ）で学習し、
+2023年公開当初はオープンソース最高峰の Elo スコアを達成した。
+
+## モデルラインアップ
+- **Falcon 180B**: 最大フラッグシップモデル
+- **Falcon 40B / 7B**: 推論効率重視モデル
+- **Falcon 3**: 最新世代（Mamba アーキテクチャ対応）
+
+[公式サイト](https://falconllm.tii.ae/)
+''',
+  'black_forest_labs': '''
+## Black Forest Labs (FLUX) — ドイツ発の画像生成革命
+
+Stability AI 元コアチームが2024年に創業。FLUX シリーズは DALL-E 3 / Midjourney に
+匹敵する品質を実現し、設立数ヶ月で開発者コミュニティから絶大な支持を獲得。
+
+## FLUX モデル
+- **FLUX.1 [pro]**: 最高品質・商用 API 提供
+- **FLUX.1 [dev]**: 研究・非商用オープンウェイト
+- **FLUX.1 [schnell]**: 高速生成（Apache 2.0）
+
+[公式サイト](https://blackforestlabs.ai/)
+''',
+  'liquid_ai': '''
+## Liquid AI — MIT発の次世代アーキテクチャ LFM
+
+MIT 研究室発のボストンスタートアップ（2023年設立）。Transformer に依存しない
+液体状態機械（Liquid State Machine）ベースの LFM を開発。長文脈・時系列処理で
+Transformer より高い計算効率を実現。\$250M 調達済み。
+
+## モデルラインアップ
+- **LFM-40B**: フラッグシップモデル
+- **LFM-7B / 3B / 1B**: エッジ向け軽量モデル群
+
+[公式サイト](https://liquid.ai/)
+''',
+  'snowflake': '''
+## Snowflake AI — エンタープライズデータAIのリーダー
+
+クラウドデータプラットフォームにAIを深く統合した Snowflake。SQL・Python・
+データウェアハウスと密接に連携し、ガバナンスを保ちながら AI を活用できる点が最大の特徴。
+
+## 主要サービス
+- **Cortex AI**: データウェアハウス内でのネイティブ AI 実行
+- **Arctic**: Snowflake 独自の Enterprise 特化 LLM
+- **Cortex Search / Analyst**: RAG・自然言語 SQL クエリ
+
+[公式サイト](https://www.snowflake.com/en/data-cloud/cortex/)
+''',
+  'cognition': '''
+## Cognition AI (Devin) — 世界初の自律AIソフトウェアエンジニア
+
+2023年創業のサンフランシスコスタートアップ。代表製品 **Devin** は
+GitHub Issue・Jira チケットから PR まで自律的に完結させる世界初の AI エンジニア。
+SWE-bench で前世代を大幅に上回るスコアを達成し、\$175M を調達。
+
+## 主な能力
+- バグ修正・機能実装・テスト作成を自律実行
+- ターミナル・ブラウザ・エディタを横断して作業
+- Slack / GitHub と直接連携
+
+[公式サイト](https://cognition.ai/)
+''',
+  'scale_ai': '''
+## Scale AI — AI業界の「縁の下の力持ち」
+
+GPT-4 / Claude / Gemini など主要 LLM のトレーニングデータを手掛ける
+AI データインフラ企業。高品質なアノテーション・RLHF データで現代 AI の基盤を支える。
+
+## 主要サービス
+- **Generative AI Platform**: LLM トレーニング用データ生成・評価
+- **RLHF データ**: 人間フィードバック強化学習用データ
+- **Scale Donovan**: 国防・政府向け AI 意思決定プラットフォーム
+
+[公式サイト](https://scale.com/)
+''',
+  'poolside': '''
+## Poolside AI — ソフトウェア開発専用の次世代LLM
+
+コーディング能力に特化したフロンティアモデルを開発するスタートアップ。
+Devin (Cognition) と並ぶ「AI ソフトウェアエンジニア」分野のパイオニア。
+独自アーキテクチャにより汎用 LLM を超えるコーディング精度を実現。
+
+## モデルラインアップ
+- **Malibu**: フラッグシップコーディングモデル
+- **Point**: 高速・軽量コーディングモデル
+
+[公式サイト](https://poolside.ai/)
 ''',
 };
 
