@@ -506,6 +506,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF2E7D32),
     officialUrl: 'https://www.worldlabs.ai/',
   ),
+  'runware': _ProviderMeta(
+    name: 'Runware (Sonic)',
+    emoji: '⚡',
+    color: const Color(0xFF5E17EB),
+    officialUrl: 'https://runware.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -963,6 +969,11 @@ final Map<String, _Quiz> _quizzes = {
   'world_labs': _Quiz(
     question: 'World Labs を創業した「AIの母」と呼ばれる研究者は？',
     options: ['Geoffrey Hinton', 'Yann LeCun', 'Fei-Fei Li', 'Andrew Ng'],
+    correct: 2,
+  ),
+  'runware': _Quiz(
+    question: 'Runware の中核技術 Sonic Inference Engine の強みは?',
+    options: ['最大コンテキスト長', 'GPU不要CPU推論', '既存比30-40%高速・5-10倍安', '完全無料'],
     correct: 2,
   ),
 };
@@ -2160,6 +2171,17 @@ TikTok運営 ByteDance の AI ブランド。Doubao 2.0 は「Agent Era」特化
 - \$1B 調達・Embodied AI/ロボット訓練支援
 
 [公式サイト](https://www.worldlabs.ai/)
+''',
+  'runware': '''
+# Runware (Sonic Inference Engine)
+
+**「One API for all AI」** 推論統合基盤。画像・動画・音声・3Dを単一APIで扱う。
+
+- **Sonic Inference Engine®**: 既存比30-40%高速・5-10倍低コスト
+- 400,000+ モデル対応 (FLUX / DALL-E / Kling / Veo / Hailuo / Seedance等)
+- \$50M Series A (2025/12 Dawn Capital/Comcast)
+- 従量課金: 画像 \$0.0006〜 / 動画 \$0.14〜 (サブスク不要)
+- 公式: https://runware.ai/
 ''',
 };
 
