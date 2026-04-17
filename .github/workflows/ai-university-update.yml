@@ -26,6 +26,8 @@ jobs:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.BYPASS_RULES || github.token }}
 
       # ── Step 2: 各プロバイダーの RSS から最新ニュースを取得・UPSERT ──────
       - name: Step 2 - Fetch and upsert AI provider news
@@ -99,7 +101,6 @@ jobs:
 
       # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
       - name: Step 3 - Append to daily report and commit to main
-        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
