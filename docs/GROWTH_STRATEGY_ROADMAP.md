@@ -10425,6 +10425,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - CLAUDE.md / COMPRESSED_PROMPT リスト + "80社" 参照 2箇所更新
 - flutter analyze 0エラー / deno lint clean / dart format pass
 
+### Rule 17 WF health check (2026-04-18 01:10)
+- 全 WF: Deploy to Production 2失敗(古いコミット起因 dart format) / 他全WF success
+- 失敗原因: project_gantt_page.dart format — VSCode版#90(4293f85a)で修正済み / 旧runの遺物
+- 最新run 24574775227: format修正後コミット(70525d3b)でCI実行中
+- orphan branches: 全パターン0件 (blog-publish/cs-check/ai-university-update/daily-report 全0)
+- 修正済み: ai-hub 25プロバイダー push完了 / deno lint clean / flutter analyze 0エラー
+
 ### PS版#110 ai-hub 25プロバイダー達成 (2026-04-18)
 - supabase/functions/ai-hub/index.ts: 23→25プロバイダー
   - huggingface: HuggingFace Inference API (meta-llama/Llama-3.3-70B-Instruct)
