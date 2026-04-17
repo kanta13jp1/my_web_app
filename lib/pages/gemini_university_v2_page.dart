@@ -2299,6 +2299,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   final Map<String, DateTime> _fsrsNextDue = {};
   final Map<String, String> _quizExplanations = {};
   final Map<String, bool> _quizEvaluating = {};
+  final Map<String, List<FsrsCard>> _fsrsDue = {};
+  final Set<String> _fsrsDueRequested = {};
 
   @override
   void initState() {
@@ -2346,6 +2348,16 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         await prefs.setString(_prefsKey, merged.join(','));
       }
     }
+  }
+
+  void _loadFsrsDue(String provider) {
+    if (_fsrsDueRequested.contains(provider)) return;
+    _fsrsDueRequested.add(provider);
+    _fsrsService.getNextCards(provider, limit: 5).then((cards) {
+      if (mounted && cards.isNotEmpty) {
+        setState(() => _fsrsDue[provider] = cards);
+      }
+    });
   }
 
   Future<void> _saveAnsweredQuizzes() async {
@@ -2662,6 +2674,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
       _tabController?.dispose();
       final tc = TabController(length: providers.length, vsync: this);
+      tc.addListener(() {
+        if (!tc.indexIsChanging && tc.index < providers.length) {
+          _loadFsrsDue(providers[tc.index]);
+        }
+      });
+      if (providers.isNotEmpty) _loadFsrsDue(providers[0]);
       if (mounted) {
         setState(() {
           _providers = providers;
@@ -3067,6 +3085,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     if (quiz == null) return const SizedBox.shrink();
 
     final answered = _answeredQuizzes.contains(providerId);
+    final dueCards = _fsrsDue[providerId] ?? [];
 
     return Card(
       color: m.color.withValues(alpha: 0.10),
@@ -3079,6 +3098,38 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (dueCards.isNotEmpty) ...[
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.refresh,
+                      color: Color(0xFFFF6B35),
+                      size: 15,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '今日の復習 ${dueCards.length}件',
+                      style: const TextStyle(
+                        color: Color(0xFFFF6B35),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             Row(
               children: [
                 Icon(Icons.quiz, color: m.color),
