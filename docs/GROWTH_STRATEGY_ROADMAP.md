@@ -10101,3 +10101,32 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - T-1: 第104弾 (dev.to投稿済み)
 - AI大学: 74社
 - EF: 16本 / orphan branches: 0
+
+### セッション記録: PowerShell版#107 (2026-04-17 15:10 JST)
+
+**deploy-prod 修復 + T-1 ブログ下書き2本作成**
+
+1. **deploy-prod 修復確認**
+   - 失敗原因: Flutter 3.38.7(local) vs 3.38.10(CI) dart format 差異
+   - VSCode版#88 が `f4d834df` で修正済み → run 24550644850 SUCCESS ✅
+   - Issue #393 / #394 クローズ完了
+
+2. **T-1 ブログ下書き作成 (Qiita リトライ待機用)**
+   - `2026-04-17-tencent-bytedance-ai-university.md` (JA+EN)
+   - 内容: Tencent Hunyuan (389B MoE / 80B画像 / HunyuanVideo) + ByteDance Doubao 解説
+
+3. **VSCode版#88 完了確認**
+   - tencent/bytedance _providerMeta + _fallback + quiz 追加 (commit a14f2605)
+   - cross-instance-pr done アーカイブ済み
+
+4. **次回タスク**
+   - **Qiita リトライ**: 2026-04-18 00:00 JST 以降に4本ずつ
+     - 優先: `2026-04-17-claude-code-vscode-timeout-fix.md` (hot topic)
+     - 次: `2026-04-17-tencent-bytedance-ai-university.md`
+     - 以降: 第59・60・63・64弾 JA版バックログ
+   - AI大学 75-76社目候補: Viggle AI / Magic.dev / Synthesia
+
+### 現在の数値 (2026-04-17 15:10 JST)
+- T-1: 第104弾 (dev.to投稿済み) + 105弾下書き完成
+- AI大学: 74社 (tencent + bytedance 追加・UI同期済み)
+- deploy-prod: SUCCESS ✅ / orphan branches: 0
