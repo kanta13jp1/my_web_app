@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'docs/**'
+      - 'memory/**'
+      - '*.md'
+      - '.claude/**'
   workflow_dispatch:
 
 concurrency:
