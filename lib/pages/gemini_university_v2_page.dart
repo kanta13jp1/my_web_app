@@ -812,7 +812,12 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'liquid_ai': _Quiz(
     question: 'Liquid AI の LFM（Liquid Foundation Models）の特徴として正しいのは？',
-    options: ['Transformer アーキテクチャ踏襲', '液体状態機械ベースの新アーキテクチャ', 'GPT-4 のファインチューニング', '画像専用モデル'],
+    options: [
+      'Transformer アーキテクチャ踏襲',
+      '液体状態機械ベースの新アーキテクチャ',
+      'GPT-4 のファインチューニング',
+      '画像専用モデル',
+    ],
     correct: 1,
   ),
   'snowflake': _Quiz(
@@ -822,12 +827,22 @@ final Map<String, _Quiz> _quizzes = {
   ),
   'cognition': _Quiz(
     question: 'Cognition AI の代表製品「Devin」の特徴は？',
-    options: ['テキスト翻訳 AI', '自律的に GitHub Issue から PR まで完結させる AI ソフトウェアエンジニア', '音楽生成 AI', '画像編集 AI'],
+    options: [
+      'テキスト翻訳 AI',
+      '自律的に GitHub Issue から PR まで完結させる AI ソフトウェアエンジニア',
+      '音楽生成 AI',
+      '画像編集 AI',
+    ],
     correct: 1,
   ),
   'scale_ai': _Quiz(
     question: 'Scale AI が主に提供するサービスは？',
-    options: ['クラウドホスティング', 'AI モデル訓練用の高品質データ収集・アノテーション', 'SNS プラットフォーム', '量子コンピューティング'],
+    options: [
+      'クラウドホスティング',
+      'AI モデル訓練用の高品質データ収集・アノテーション',
+      'SNS プラットフォーム',
+      '量子コンピューティング',
+    ],
     correct: 1,
   ),
   'poolside': _Quiz(
