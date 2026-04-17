@@ -1,7 +1,7 @@
 ---
 title: "技術ブログ自動投稿パイプライン — GitHub Actions × Supabase EF で Qiita/dev.to を自動化した"
 tags: Flutter,Supabase,buildinpublic,個人開発,自動化
-published: false
+published: true
 ---
 
 # 技術ブログ自動投稿パイプライン — GitHub Actions × Supabase EF で Qiita/dev.to を自動化した
