@@ -2136,7 +2136,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1A0A2E), Color(0xFF0D1B3E)],
+          colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A)],
         ),
       ),
       child: Column(
@@ -2396,7 +2396,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 大学'),
-        backgroundColor: const Color(0xFF1A0A2E),
+        backgroundColor: const Color(0xFF0A0A0A),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -2585,12 +2585,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontWeight: FontWeight.bold,
     ),
     h2: const TextStyle(
-      color: Color(0xFFE0E0E0),
+      color: Color(0xFFB0BEC5),
       fontSize: 17,
       fontWeight: FontWeight.bold,
     ),
     h3: const TextStyle(
-      color: Color(0xFFBDBDBD),
+      color: Color(0xFF90A4AE),
       fontSize: 15,
       fontWeight: FontWeight.w600,
     ),
