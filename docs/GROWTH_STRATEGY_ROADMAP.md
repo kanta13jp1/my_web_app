@@ -10432,6 +10432,19 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branches: 全パターン0件 (blog-publish/cs-check/ai-university-update/daily-report 全0)
 - 修正済み: ai-hub 25プロバイダー push完了 / deno lint clean / flutter analyze 0エラー
 
+### PS版#111 ai-hub 27プロバイダー + Rule17 + T-1第111弾 (2026-04-18)
+- ai-hub Phase5: 25→27プロバイダー
+  - reka: Reka Flash-3 (OpenAI互換 / マルチモーダル)
+  - writer: Writer Palmyra-X5 (OpenAI互換 / エンタープライズ文章生成)
+- registry: reka/writer notImplemented→apiKeyRequired (REKA_API_KEY / WRITER_API_KEY)
+- ci: ai-university-update Step3 continue-on-error=true (GH006 BYPASS_RULES未設定時の失敗抑制)
+- 地方選スケジュール: new-kokumin.jp/electionslist/ 追加 (1014件/全47都道府県)
+- Rule17: orphan 0件 / ai-university-update GH006→continue-on-error修正
+- T-1第111弾: dev.to 投稿成功
+  - https://dev.to/kanta13jp1/jibun-corps-ai-hub-reaches-27-providers-adding-reka-flash-3-writer-palmyra-x5-2acl
+- 残タスク: Supabase Secrets に REKA_API_KEY / WRITER_API_KEY 追加 (ユーザー対応)
+- 次フェーズ候補: databricks/naver/coze (API形式要調査)
+
 ### PS版#110 ai-hub 25プロバイダー達成 + T-1第110弾 (2026-04-18)
 - supabase/functions/ai-hub/index.ts: 23→25プロバイダー
   - huggingface: HuggingFace Inference API (meta-llama/Llama-3.3-70B-Instruct)
