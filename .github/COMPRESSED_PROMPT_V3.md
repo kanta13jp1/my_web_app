@@ -637,16 +637,16 @@ web/sitemap.xml          # URL マップ
 - ✅ **第79弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-11-personal-dashboard-notion-competitor.md` → FractionallySizedBox棒グラフ
 - ✅ **第80弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-10-dns-domain-manager.md` → TabController FAB + colorSchemeトークン
 
-**次回候補 (第93弾以降)**:
+**次回候補 (第95弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 2026-04-18以降 (15:00 UTC) |
 | 🟡 | 残JA記事のEN版作成+dev.to投稿 (継続中) | dev.to |
-| ✅ | 第89弾 app-feedback SECURITY DEFINER → success | dev.to |
-| ✅ | 第90弾 Notion JSONB database → success | dev.to |
 | ✅ | 第91弾 horse-racing hub/NO_AUTH/Promise.all → success | dev.to |
 | ✅ | 第92弾 categories ilike filter → success | dev.to |
+| ✅ | 第93弾 emoji-reactions IP-hash UNIQUE toggle → success | dev.to |
+| ✅ | 第94弾 CVR JSONB dashboard + LinearProgressIndicator → success | dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 

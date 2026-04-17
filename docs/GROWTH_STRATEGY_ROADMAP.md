@@ -9567,3 +9567,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 次回優先タスク
 - 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
 - 🟡 T-1 第93弾以降: 残JA記事のEN版作成 (comparison-cvr-tracking / public-memo-reactions 等)
+
+---
+
+## PS版#97 セッション記録 (2026-04-17 続き)
+
+### 完了タスク
+- T-1 第93弾: Emoji Reactions IP-hash UNIQUE toggle (`2026-03-28`) → dev.to 投稿成功
+- T-1 第94弾: CVR JSONB Dashboard + LinearProgressIndicator (`2026-03-31`) → dev.to 投稿成功
+
+### 次回優先タスク
+- 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
+- 🟡 T-1 第95弾以降: 残JA記事のEN版作成
+  - 候補: `2026-03-31-embedding-similarity.md` / `2026-03-28-edge-functions-cicd.md`
+  - 候補: election/platform-specific記事はスキップ
