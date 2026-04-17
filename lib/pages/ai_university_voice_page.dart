@@ -85,14 +85,32 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
       );
       final data = resp.data as Map<String, dynamic>?;
       final base64Audio = data?['audio_base64'] as String? ?? '';
+      final fallback = data?['fallback'] as String? ?? '';
       if (base64Audio.isEmpty) {
+        // ElevenLabs 利用不可 (free-tier制限等) → ブラウザ内蔵の Web Speech API を利用
+        if (fallback == 'webspeech') {
+          _speakViaWebSpeech(text);
+          return;
+        }
         setState(() => _ttsStatus = 'error');
         return;
       }
-      // data URL で直接再生 (Blob/toJS 不要)
       _audio = web_api.HTMLAudioElement();
       _audio!.src = 'data:audio/mpeg;base64,$base64Audio';
       _audio!.play();
+      setState(() => _ttsStatus = 'playing');
+    } catch (_) {
+      setState(() => _ttsStatus = 'error');
+    }
+  }
+
+  void _speakViaWebSpeech(String text) {
+    try {
+      final utter = web_api.SpeechSynthesisUtterance(text);
+      utter.lang = 'ja-JP';
+      utter.rate = 1.0;
+      web_api.window.speechSynthesis.cancel();
+      web_api.window.speechSynthesis.speak(utter);
       setState(() => _ttsStatus = 'playing');
     } catch (_) {
       setState(() => _ttsStatus = 'error');

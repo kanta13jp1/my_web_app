@@ -1449,7 +1449,9 @@ serve(async (req: Request) => {
         const text = String(body.text ?? "").slice(0, 5000);
         const voiceId = String(body.voice_id ?? "21m00Tcm4TlvDq8ikWAM");
         const elevenKey = Deno.env.get("ELEVENLABS_API_KEY") ?? "";
-        if (!elevenKey) return json({ error: "ELEVENLABS_API_KEY not configured" }, 503);
+        if (!elevenKey) {
+          return json({ success: false, fallback: "webspeech", text, reason: "ELEVENLABS_API_KEY not configured" });
+        }
         const ttsResp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: "POST",
           headers: { "xi-api-key": elevenKey, "Content-Type": "application/json" },
@@ -1461,7 +1463,11 @@ serve(async (req: Request) => {
         });
         if (!ttsResp.ok) {
           const errText = await ttsResp.text();
-          return json({ error: `ElevenLabs error: ${errText}` }, 502);
+          // Free-tier / paid-plan-required → フォールバックで Web Speech API 利用を UI に通知
+          if (errText.includes("paid_plan_required") || errText.includes("payment_required")) {
+            return json({ success: false, fallback: "webspeech", text, reason: "elevenlabs_paid_plan_required" });
+          }
+          return json({ error: `ElevenLabs error: ${errText}`, fallback: "webspeech", text }, 502);
         }
         const audioBuffer = await ttsResp.arrayBuffer();
         const bytes = new Uint8Array(audioBuffer);
