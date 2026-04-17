@@ -139,16 +139,14 @@ jobs:
             echo "ERREOF" >> $GITHUB_OUTPUT
           fi
 
-      - name: Step 3/6 - CS ノート記録 & PR作成・マージ
+      - name: Step 3/6 - CS ノート記録 & main直接push
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
-          RUN_ID="${{ github.run_id }}"
           FILEPATH="docs/cs-notes/${DATETIME}.md"
-          BRANCH="cs-check-${DATETIME}-${RUN_ID}"
 
           mkdir -p docs/cs-notes
 
@@ -180,7 +178,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git fetch origin main
-          git checkout -b "$BRANCH" origin/main
+          git checkout main
+          git reset --hard origin/main
           git add docs/cs-notes/
           if git diff --cached --quiet; then
             echo "📝 変更なし — スキップ"
@@ -188,19 +187,8 @@ jobs:
           fi
 
           git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
-          git push origin "$BRANCH"
-
-          set +e
-          PR_URL=$(gh pr create \
-            --title "自動: CS チェック ${DATETIME}:00" \
-            --body "CS自動チェック結果 (GitHub Actions)" \
-            --base main \
-            --head "$BRANCH")
-          if [ -n "$PR_URL" ]; then
-            gh pr merge "$PR_URL" --squash --delete-branch --yes 2>&1 && \
-              echo "✅ マージ完了" || echo "⚠️ 手動マージが必要: $PR_URL"
-          fi
-          set -e
+          git push origin main
+          echo "✅ main直接push完了"
 
       - name: Record to schedule_task_runs
         if: always()
