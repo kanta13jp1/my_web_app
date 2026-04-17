@@ -393,7 +393,8 @@ class _WbsTab extends StatelessWidget {
         const SizedBox(height: 8),
         if (milestones.isEmpty)
           const _EmptyCard(
-              message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)',)
+            message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)',
+          )
         else
           SizedBox(
             height: 140,
