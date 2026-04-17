@@ -628,13 +628,23 @@ web/sitemap.xml          # URL マップ
 
 - ✅ **第71弾 dev.to成功** (PS版#92, 2026-04-17): `2026-04-01-focus-timer-ai-writing.md` → dev.to: https://dev.to/kanta13jp1/building-forest-grammarly-competitors-in-flutter-web-pomodoro-timer-ai-writing-assistant-1m43
 - ✅ **第72弾 dev.to成功** (PS版#92, 2026-04-17): `2026-04-03-gamification-code-realestate.md` → dev.to: https://dev.to/kanta13jp1/3-features-in-one-day-gamification-code-playground-real-estate-tracker-flutter-supabase-564e
+- ✅ **第73弾 dev.to成功** (PS版#93, 2026-04-17): `2026-04-05-calendar-view-guitar-studio.md` → TableCalendar O(1)イベントルックアップ
+- ✅ **第74弾 dev.to成功** (PS版#93, 2026-04-17): `2026-03-31-notification-center.md` → RLS user_id IS NULLブロードキャスト
+- ✅ **第75弾 dev.to成功** (PS版#93, 2026-04-17): `2026-04-01-workflow-automation-video-meeting.md` → AIワークフロー/SNS/ビデオ会議
+- ✅ **第76弾 dev.to成功** (PS版#93, 2026-04-17): `2026-04-02-wiki-timetracker-voicememo.md` → Wiki/TimeTracker/VoiceMemo
+- ✅ **第77弾 dev.to成功** (PS版#93, 2026-04-17): `2026-04-09-pomodoro-focus-timer.md` → CustomPainter円形タイマー
+- ✅ **第78弾 dev.to成功** (PS版#93, 2026-04-17): `2026-04-12-cors-fix-ef-hub-migration.md` → EF 94→15本hub統合
+- ✅ **第79弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-11-personal-dashboard-notion-competitor.md` → FractionallySizedBox棒グラフ
+- ✅ **第80弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-10-dns-domain-manager.md` → TabController FAB + colorSchemeトークン
 
-**次回候補 (第73弾以降)**:
+**次回候補 (第81弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
-| 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 2026-04-18以降 |
-| 🟡 | 未投稿JA記事 EN版作成+dev.to投稿 (残41件) | dev.to |
+| 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 2026-04-18以降 (15:00 UTC) |
+| 🟡 | `2026-04-03-travel-whiteboard-recipe.md` EN版 | dev.to |
+| 🟡 | `2026-04-06-public-guitar-gallery.md` EN版 | dev.to |
+| 🟡 | `2026-04-12-ai-university-20-providers-hub-architecture.md` EN版 | dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
