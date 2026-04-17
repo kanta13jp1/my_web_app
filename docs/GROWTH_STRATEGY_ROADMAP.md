@@ -10197,3 +10197,31 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - CLAUDE.md モデル推奨: VSCode版/Windowsアプリ版を claude-haiku-4-5 (Auto Mode) に更新
 - cross-instance-prs 2件アーカイブ (runware_ui / haiku45_model_update)
 - flutter analyze 0エラー維持
+
+---
+
+## PS版#109 セッション記録 (2026-04-17 16:10 JST)
+
+### deploy-prod: esm.sh 522 transient error → rerun SUCCESS
+- 失敗 run 24551846736: `Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522`
+- rerun 24552218981 → SUCCESS ✅
+
+### T-1 第106弾・107弾 dev.to投稿成功
+- **第106弾 Inception Labs + World Labs** (AI大学76社)
+  - https://dev.to/kanta13jp1/frontier-ai-2026-diffusion-llm-spatial-intelligence-ai-university-update-76-providers-426c
+- **第107弾 Runware Sonic Inference Engine** (AI大学77社)
+  - https://dev.to/kanta13jp1/runware-one-api-for-all-ai-modalities-ai-university-update-77-providers-48n4
+
+### cs-check orphan branches 470本 一括削除
+- 2026-03-28〜2026-04-17 蓄積分を全削除
+- orphan branches: 0本 (blog-publish / cs-check 両方クリーン)
+
+### Rule 17 WF健全性 (15:30→16:10更新)
+- deploy-prod: esm.sh transient → rerun解決 ✅
+- orphan branches: 0本確認
+
+### 次回 Qiita リトライ予定 (2026-04-18 00:00 JST以降)
+1. `2026-04-17-claude-code-vscode-timeout-fix.md` (第104弾 JA)
+2. `2026-04-17-tencent-bytedance-ai-university.md` (第105弾 JA)
+3. `2026-04-17-inception-worldlabs-ai-university.md` (第106弾 JA)
+4. `2026-04-17-runware-sonic-ai-university.md` (第107弾 JA)
