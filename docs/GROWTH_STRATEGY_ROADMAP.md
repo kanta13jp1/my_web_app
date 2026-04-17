@@ -10333,3 +10333,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - cs-check: BYPASS_RULES設定時はremote URL PAT injection でブランチ保護を突破、未設定時はfallback
 - 全WF health: cs-check直近run SUCCESS確認 (24559961468)
 - TODO: `BYPASS_RULES` secret (PAT with bypass permissions) を GitHub Settings > Secrets で設定すること
+
+### PS版#106 ai-hub 502修正 (2026-04-17 19:20)
+- 根本原因: ai-hub FSRS/MemoryAgent case blocks が未定義 `supabase` 変数を参照 → ReferenceError → 502
+- 修正: `supabase` → `admin` (ai_university_fsrs_cards / ai_university_learner_profiles テーブルアクセス)
+- 追加修正: company_id spread順序 (TS2783/TS2785) を逆転
+- deno check 0エラー確認後 push → deploy-prod 実行中
