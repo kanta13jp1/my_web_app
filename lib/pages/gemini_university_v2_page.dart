@@ -2689,7 +2689,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           const SizedBox(height: 12),
           const Text(
             'my-web-app-b67f4.web.app',
-            style: TextStyle(color: Colors.white60, fontSize: 10),
+            style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 10),
           ),
         ],
       ),
@@ -2902,7 +2902,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           tabAlignment: TabAlignment.start,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
+          unselectedLabelColor: const Color(0xFFB0B0B0),
           tabs: _providers.map((id) {
             final m = _meta(id);
             return Tab(text: '${m.emoji} ${m.name}');
@@ -3028,7 +3028,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 if (rows == null || rows.isEmpty)
                   const Text(
                     'フォールバック表示',
-                    style: TextStyle(color: Colors.white60, fontSize: 11),
+                    style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 11),
                   ),
               ],
             ),
@@ -3053,12 +3053,12 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontWeight: FontWeight.bold,
     ),
     h2: const TextStyle(
-      color: Color(0xFFB0BEC5),
+      color: Color(0xFFB0B0B0),
       fontSize: 17,
       fontWeight: FontWeight.bold,
     ),
     h3: const TextStyle(
-      color: Color(0xFF90A4AE),
+      color: Color(0xFF707070),
       fontSize: 15,
       fontWeight: FontWeight.w600,
     ),
