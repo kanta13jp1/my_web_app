@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.BYPASS_RULES }}
 
       - name: Step 1 - 未返信サポートチケット取得
         id: tickets

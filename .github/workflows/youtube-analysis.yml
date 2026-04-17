@@ -24,6 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          token: ${{ secrets.BYPASS_RULES }}
           fetch-depth: 1
 
       - name: Setup Python
