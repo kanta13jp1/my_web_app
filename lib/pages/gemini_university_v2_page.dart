@@ -482,6 +482,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7B68EE),
     officialUrl: 'https://www.krea.ai/',
   ),
+  'tencent': _ProviderMeta(
+    name: 'Tencent Hunyuan',
+    emoji: '🐉',
+    color: const Color(0xFF1E88E5),
+    officialUrl: 'https://hunyuan.tencent.com/',
+  ),
+  'bytedance': _ProviderMeta(
+    name: 'ByteDance Doubao',
+    emoji: '🎵',
+    color: const Color(0xFF6366F1),
+    officialUrl: 'https://www.doubao.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -915,6 +927,16 @@ final Map<String, _Quiz> _quizzes = {
     question: 'Krea AI のリアルタイム画像生成の応答速度は？',
     options: ['約1秒', '約500ms', '約50ms以下', '約10秒'],
     correct: 2,
+  ),
+  'tencent': _Quiz(
+    question: 'Tencent Hunyuan-Large のコンテキスト長は？',
+    options: ['32K', '128K', '256K', '1M'],
+    correct: 2,
+  ),
+  'bytedance': _Quiz(
+    question: 'ByteDance Seed 2.0 が採用する主要設計コンセプトは？',
+    options: ['超大規模パラメータ', 'Agent Era (自律タスク実行)', 'マルチランゲージ特化', '長コンテキスト'],
+    correct: 1,
   ),
 };
 
@@ -2062,6 +2084,31 @@ Character-3 (オムニモーダルモデル) で業界最高精度の口唇同�
 - **リアルタイム**: 描画・入力に即応する50ms以下の応答
 
 [公式サイト](https://www.krea.ai/)
+''',
+  'tencent': '''
+## Tencent Hunyuan — テキスト・画像・動画・3D 全モダリティ OSS
+
+中国 Tencent の AI 基盤モデルブランド。OSS 最大級のモデルを全モダリティで公開。
+
+## モデルラインアップ
+- **Hunyuan-Large**: 389B MoE LLM / 256K context
+- **Hunyuan Image 3.0**: 80B 世界最大OSS画像モデル
+- **HunyuanVideo**: 13B+ OSS動画モデル
+- **Hunyuan 3D 2.0**: 1枚画像→3D生成
+
+[公式サイト](https://hunyuan.tencent.com/)
+''',
+  'bytedance': '''
+## ByteDance Doubao — TikTok運営の次世代AIエージェント
+
+TikTok運営 ByteDance の AI ブランド。Doubao 2.0 は「Agent Era」特化の次世代モデル。
+
+## モデルラインアップ
+- **Seed 2.0 Pro/Lite/Mini/Code**: 4種類の基盤モデル
+- **Seedance 2.0**: TikTok統合動画生成
+- 業界最安値級 API (GPT-5.2比 3.7倍安)
+
+[公式サイト](https://www.doubao.com/)
 ''',
 };
 
