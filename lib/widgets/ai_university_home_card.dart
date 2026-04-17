@@ -270,7 +270,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
                 ),

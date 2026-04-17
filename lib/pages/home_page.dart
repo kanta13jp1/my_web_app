@@ -1614,7 +1614,7 @@ abstinence_slip_details: $slipDetailsText
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = Color.alphaBlend(
       command.color.withValues(alpha: isDark ? 0.2 : 0.12),
-      isDark ? const Color(0xFF0F172A) : Colors.white,
+      isDark ? const Color(0xFF1A1A1A) : Colors.white,
     );
     final textColor = isDark ? Colors.white : Colors.black87;
 
@@ -2035,7 +2035,7 @@ abstinence_slip_details: $slipDetailsText
 
     final baseColor = Color.alphaBlend(
       color.withValues(alpha: isDark ? 0.18 : 0.1),
-      isDark ? const Color(0xFF111827) : Colors.white,
+      isDark ? const Color(0xFF1E1E1E) : Colors.white,
     );
 
     return Container(
@@ -2134,7 +2134,7 @@ abstinence_slip_details: $slipDetailsText
     final helper = achieved
         ? 'このまま維持して、次の1件は短く終わるタスクから取ります。'
         : 'あと ${goal.remainingCount}件で前日超えです。5分で終わるものから先に片付けます。';
-    final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     return Container(
       key: const Key('home_completion_goal_card'),
@@ -2279,7 +2279,7 @@ abstinence_slip_details: $slipDetailsText
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF1F2937), Color(0xFF111827)]
+              ? const [Color(0xFF1F2937), Color(0xFF1E1E1E)]
               : const [Color(0xFFFFFBFB), Color(0xFFFFF3F2)],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -2523,7 +2523,7 @@ abstinence_slip_details: $slipDetailsText
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? const [Color(0xFF111827), Color(0xFF172033)]
+              ? const [Color(0xFF1E1E1E), Color(0xFF172033)]
               : const [Color(0xFFFFFFFF), Color(0xFFF6FAFF)],
         ),
         borderRadius: BorderRadius.circular(18),
@@ -3531,7 +3531,7 @@ abstinence_slip_details: $slipDetailsText
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF111827) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -4443,8 +4443,9 @@ abstinence_slip_details: $slipDetailsText
                                   subtitle: Text(
                                     'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
                                     style: TextStyle(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.7),),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
+                                    ),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
@@ -4517,8 +4518,9 @@ abstinence_slip_details: $slipDetailsText
                                     '県連別の純増配分と月次KPIをまとめて管理し、'
                                     '未配分ギャップや公認内定の遅れを可視化します。',
                                     style: TextStyle(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.7),),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
+                                    ),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
@@ -5146,7 +5148,7 @@ abstinence_slip_details: $slipDetailsText
     required VoidCallback onTap,
     Widget? bottomWidget,
   }) {
-    final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
+    final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.65);
@@ -5400,7 +5402,7 @@ abstinence_slip_details: $slipDetailsText
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF111827) : const Color(0xFFF0F1F3),
+            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F1F3),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark
@@ -6389,7 +6391,7 @@ abstinence_slip_details: $slipDetailsText
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.6);
-    final base = isDark ? const Color(0xFF111827) : Colors.white;
+    final base = isDark ? const Color(0xFF1E1E1E) : Colors.white;
 
     return Container(
       decoration: BoxDecoration(
