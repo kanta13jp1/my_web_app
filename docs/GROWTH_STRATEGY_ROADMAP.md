@@ -9936,3 +9936,33 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | Qiita リトライ (第59-103弾) | PS版 |
 | 🟡 | Rule 18: AI大学コンテンツ活用 → EF統合検討 | Windows版 |
 | 🟢 | AI大学 71社目候補 (Physical Intelligence / Replit / Synthesia) | Windows版 |
+
+### Rule 17 WF health check (2026-04-17 12:10 JST / PS版#104)
+- Deploy: 最新 SUCCESS ✅ (過去3失敗は02:32 UTC時点の旧コードによるもの・修正済)
+- Blog Publish: 最新2回 SUCCESS ✅ (1失敗はGH006 Step5 fix前の歴史的失敗)
+- orphan blog-publish branches: 0本 ✅ クリーン
+- AI大学更新 / CS Check / EF Audit / Horse Racing / Infra Health Check: 全SUCCESS ✅
+- 修正不要: 全WF現在正常動作中
+
+### セッション記録: PS版#104 (2026-04-17 12:15 JST)
+
+**Rule 17 + Qiita 4本リトライ完了**
+
+1. **Rule 17 WF Health Check**
+   - Deploy: 最新 SUCCESS ✅ (過去3失敗=旧コード由来・修正済)
+   - Blog Publish: 最新2回 SUCCESS ✅ (1失敗=GH006 fix前の歴史的失敗)
+   - orphan blog-publish branches: 0本 ✅
+   - AI大学更新 / CS Check / EF Audit / Infra Health: 全SUCCESS ✅
+
+2. **Qiita リトライ 4本完了** (platforms=qiita dispatch)
+   - 2026-04-17-quota-dashboard-ai-usage.md → https://qiita.com/kanta13jp1/items/8085eee7d308f7bc1f3b ✅
+   - 2026-04-17-fsrs-home-card-due-count.md → https://qiita.com/kanta13jp1/items/3d992bce8172de425c83 ✅
+   - 2026-04-17-voice-ai-chat-conversation-memory.md → https://qiita.com/kanta13jp1/items/a4f8c9ff6aa16c1765a5 ✅
+   - 2026-04-17-ai-university-provider-meta.md → https://qiita.com/kanta13jp1/items/bea38da3e04767a3a1fc ✅
+
+### 残Qiitaリトライ待機中
+第59・60・63・64・98-99弾 JA版 → 次回 15:00 UTC (2026-04-18 00:00 JST) 以降に4本ずつ dispatch
+
+### 現在の数値
+- T-1: 第103弾 (Qiita #100-103 本日投稿済み)
+- AI大学: 70社
