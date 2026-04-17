@@ -23,7 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          token: ${{ secrets.BYPASS_RULES }}
           fetch-depth: 200
 
       # ── Step 1: 日次メトリクス取得 ──────────────────────────────────────────

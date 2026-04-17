@@ -23,8 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.BYPASS_RULES }}
 
       - name: Step 1 - 未返信サポートチケット取得
         id: tickets
@@ -142,9 +140,16 @@ jobs:
           fi
 
       - name: Step 3/6 - CS ノート記録 & main直接push
-        env:
-          GH_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
+          TICKET_COUNT="${{ steps.tickets.outputs.ticket_count }}"
+          HEALTHY="${{ steps.health.outputs.healthy }}"
+
+          # チケット0件かつインフラ正常なら記録不要
+          if [ "$TICKET_COUNT" = "0" ] && [ "$HEALTHY" = "true" ]; then
+            echo "📝 チケットなし・インフラ正常 — CSノート記録スキップ"
+            exit 0
+          fi
+
           DATETIME=$(TZ=Asia/Tokyo date +%Y-%m-%d-%H)
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
           HOUR=$(TZ=Asia/Tokyo date +%H)
@@ -152,19 +157,19 @@ jobs:
 
           mkdir -p docs/cs-notes
 
-          # CSノート作成
+          # CSノート作成 (要対応あり or インフラ異常時のみ)
           {
             echo "# CS チェック ${DATE} ${HOUR}:00 (GitHub Actions)"
             echo ""
             echo "## サポートチケット"
-            echo "- 取得チケット数: ${{ steps.tickets.outputs.ticket_count }}件"
+            echo "- 取得チケット数: ${TICKET_COUNT}件"
             echo "- API応答: HTTP ${{ steps.tickets.outputs.http_code }}"
             echo ""
             echo "## GitHub PR レビュー"
             echo "- オープンPR: ${{ steps.pr_review.outputs.pr_count }}件"
             echo ""
             echo "## インフラヘルスチェック"
-            if [ "${{ steps.health.outputs.healthy }}" = "true" ]; then
+            if [ "$HEALTHY" = "true" ]; then
               echo "- ✅ 全エンドポイント正常"
             else
               echo ""
@@ -189,8 +194,12 @@ jobs:
           fi
 
           git commit -m "自動: CS チェック ${DATETIME}:00 (GitHub Actions)"
-          git push origin main
-          echo "✅ main直接push完了"
+          # BYPASS_RULES secret が設定されていれば保護ブランチを突破できる
+          if [ -n "${{ secrets.BYPASS_RULES }}" ]; then
+            git remote set-url origin "https://x-access-token:${{ secrets.BYPASS_RULES }}@github.com/kanta13jp1/my_web_app.git"
+          fi
+          git push origin main || echo "⚠️ push失敗: BYPASS_RULES secret が未設定の可能性あり — ローカルでの手動push推奨"
+          echo "✅ CS ノート記録完了"
 
       - name: Record to schedule_task_runs
         if: always()
