@@ -2,7 +2,7 @@
 date: 2026-04-17
 from: Windowsアプリ版#70
 to: VSCode版
-status: pending
+status: done
 priority: medium
 ---
 
