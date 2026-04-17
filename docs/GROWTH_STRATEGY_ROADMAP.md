@@ -10494,3 +10494,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - DESIGN.md準拠: home_page (surface2/surface1) + ai_university_home_card (fontSize16) + gemini_university_v2 (4色修正)
 - Rule17: deploy-prod ✅ / ai-university-update GH006修正 (checkout token追加)
 - WBS更新: FSRS 70%→90% / DESIGN.md準拠 55%→60%
+
+### PS版#112 完了 (2026-04-18) — CORS修正 + migration衝突修正
+- fetch-local-politicians CORS → gemini-election-analysis に修正 (廃止EF参照)
+  - election_management_dashboard.dart 1行fix
+- migration timestamp衝突修正: 20260418040000_seed_pfn (→041000) でdeploy-prod再実行
+- Rule17: orphan 0件 / deploy-prod rerun中
