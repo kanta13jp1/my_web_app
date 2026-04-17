@@ -76,9 +76,6 @@ analyzer:
     - "**/*.freezed.dart"
     - "build/**"
     - ".dart_tool/**"
-    # TODO(PS版): project_gantt_page.dart を dart 3.6 互換フォーマットで再整形後に外す
-    # 現状 curly_braces_in_flow_control_structures + require_trailing_commas 30+件
-    - "lib/pages/project_gantt_page.dart"
 
 linter:
   rules:

@@ -1,10 +1,12 @@
-// AI大学 プロバイダーの実装ステータス管理レジストリ
-//
-// 4ステータス:
-// - notImplemented: EF/UI で呼び出し未実装
-// - implemented: 呼び出し可能 (APIキー設定済み・無料枠で動作)
-// - apiKeyRequired: 実装済みだが Supabase Secrets に APIキー追加が必要
-// - paidPlanRequired: 実装済みだがプロバイダー側の有料プラン契約が必要
+/// AI大学 プロバイダーの実装ステータス管理レジストリ
+///
+/// 4ステータス:
+/// - notImplemented: EF/UI で呼び出し未実装
+/// - implemented: 呼び出し可能 (APIキー設定済み・無料枠で動作)
+library;
+
+/// - apiKeyRequired: 実装済みだが Supabase Secrets に APIキー追加が必要
+/// - paidPlanRequired: 実装済みだがプロバイダー側の有料プラン契約が必要
 
 enum AiProviderStatus {
   notImplemented,

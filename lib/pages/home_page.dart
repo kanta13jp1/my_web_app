@@ -4440,9 +4440,11 @@ abstinence_slip_details: $slipDetailsText
                                       color: Colors.white,
                                     ),
                                   ),
-                                  subtitle: const Text(
+                                  subtitle: Text(
                                     'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
-                                    style: TextStyle(color: Color(0xB3FFFFFF)),
+                                    style: TextStyle(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.7)),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
@@ -4511,10 +4513,12 @@ abstinence_slip_details: $slipDetailsText
                                       color: Colors.white,
                                     ),
                                   ),
-                                  subtitle: const Text(
+                                  subtitle: Text(
                                     '県連別の純増配分と月次KPIをまとめて管理し、'
                                     '未配分ギャップや公認内定の遅れを可視化します。',
-                                    style: TextStyle(color: Color(0xB3FFFFFF)),
+                                    style: TextStyle(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.7)),
                                   ),
                                   trailing: const Icon(
                                     Icons.arrow_forward_ios,
@@ -7028,11 +7032,11 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Text(
                         'ギター録音スタジオ 🎸',
@@ -7046,10 +7050,13 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
                       _MainFeatureBadge(),
                     ],
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
                     'スマホで演奏を録音・保存・メトロノーム・コード辞典・AI分析',
-                    style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
