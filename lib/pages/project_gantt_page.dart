@@ -165,7 +165,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _loadWbs();
     _loadProjects();
   }
@@ -286,6 +286,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           unselectedLabelColor: const Color(0xFF707070),
           tabs: const [
             Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
+            Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
             Tab(icon: Icon(Icons.folder_outlined), text: 'マイプロジェクト'),
           ],
         ),
@@ -301,6 +302,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             filterMilestone: _filterMilestone,
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
+          ),
+          _GanttTimelineTab(
+            milestones: _milestones,
+            tasks: _tasks,
+            loading: _loadingWbs,
           ),
           _MyProjectsTab(
             projects: _projects,
@@ -1146,6 +1152,661 @@ class _MyProjectsTab extends StatelessWidget {
           borderSide: const BorderSide(color: Color(0xFFFF6B35)),
         ),
       );
+}
+
+// ── MS Project 風ガントチャートタイムライン ─────────────────────────────────
+
+class _GanttTimelineTab extends StatefulWidget {
+  final List<WbsMilestone> milestones;
+  final List<WbsTask> tasks;
+  final bool loading;
+
+  const _GanttTimelineTab({
+    required this.milestones,
+    required this.tasks,
+    required this.loading,
+  });
+
+  @override
+  State<_GanttTimelineTab> createState() => _GanttTimelineTabState();
+}
+
+class _GanttTimelineTabState extends State<_GanttTimelineTab> {
+  static const _leftPanelWidth = 340.0;
+  static const _rowHeight = 32.0;
+  static const _headerHeight = 56.0;
+  static const _dayWidth = 6.0;
+  static const _bgColor = Color(0xFF0F0F14);
+  static const _panelColor = Color(0xFF1A1A24);
+  static const _gridLine = Color(0xFF2A2A36);
+  static const _todayColor = Color(0xFFFF6B35);
+
+  final _leftScroll = ScrollController();
+  final _rightScroll = ScrollController();
+  final _timelineHScroll = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 左右の垂直スクロールを同期
+    _leftScroll.addListener(() {
+      if (_rightScroll.hasClients &&
+          _rightScroll.offset != _leftScroll.offset) {
+        _rightScroll.jumpTo(_leftScroll.offset);
+      }
+    });
+    _rightScroll.addListener(() {
+      if (_leftScroll.hasClients && _leftScroll.offset != _rightScroll.offset) {
+        _leftScroll.jumpTo(_rightScroll.offset);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _leftScroll.dispose();
+    _rightScroll.dispose();
+    _timelineHScroll.dispose();
+    super.dispose();
+  }
+
+  DateTime get _timelineStart {
+    // 今日の 30日前 を起点 (過去タスクも若干見える)
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, 1).subtract(const Duration(days: 30));
+  }
+
+  DateTime get _timelineEnd {
+    if (widget.milestones.isEmpty) {
+      return DateTime.now().add(const Duration(days: 210));
+    }
+    final latest = widget.milestones
+        .map((m) => m.targetDate)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+    // 最終マイルストーン +30日
+    return latest.add(const Duration(days: 30));
+  }
+
+  int get _totalDays => _timelineEnd.difference(_timelineStart).inDays;
+  double get _timelineWidth => _totalDays * _dayWidth;
+
+  /// 指定日付のタイムライン上の X 座標
+  double _dateToX(DateTime date) {
+    final days = date.difference(_timelineStart).inDays;
+    return days * _dayWidth;
+  }
+
+  List<WbsTask> get _orderedTasks {
+    final list = [...widget.tasks];
+    list.sort((a, b) {
+      // カテゴリ順 → 開始日順
+      final catCmp = a.categoryOrder.compareTo(b.categoryOrder);
+      if (catCmp != 0) return catCmp;
+      final aStart = a.startDate ?? _timelineStart;
+      final bStart = b.startDate ?? _timelineStart;
+      return aStart.compareTo(bStart);
+    });
+    return list;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
+      );
+    }
+    final tasks = _orderedTasks;
+    if (tasks.isEmpty) {
+      return const _EmptyCard(
+        message: 'タスクデータがありません\n(WBS migration 適用後に表示されます)',
+      );
+    }
+
+    return Container(
+      color: _bgColor,
+      child: Column(
+        children: [
+          _buildHeader(tasks.length),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 左パネル (# / タスク名 / 担当)
+                SizedBox(
+                  width: _leftPanelWidth,
+                  child: Column(
+                    children: [
+                      _buildLeftColumnHeader(),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: _leftScroll,
+                          itemCount: tasks.length,
+                          itemExtent: _rowHeight,
+                          itemBuilder: (_, i) => _buildLeftRow(i, tasks[i]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 右タイムライン (横スクロール)
+                Expanded(
+                  child: Scrollbar(
+                    controller: _timelineHScroll,
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: _timelineHScroll,
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: _timelineWidth,
+                        child: Column(
+                          children: [
+                            _buildMonthHeader(),
+                            Expanded(
+                              child: Stack(
+                                children: [
+                                  // グリッド + Today ライン
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: _GanttGridPainter(
+                                        start: _timelineStart,
+                                        end: _timelineEnd,
+                                        dayWidth: _dayWidth,
+                                        todayX: _dateToX(DateTime.now()),
+                                      ),
+                                    ),
+                                  ),
+                                  // タスクバー行
+                                  ListView.builder(
+                                    controller: _rightScroll,
+                                    itemCount: tasks.length,
+                                    itemExtent: _rowHeight,
+                                    itemBuilder: (_, i) =>
+                                        _buildTimelineRow(i, tasks[i]),
+                                  ),
+                                  // マイルストーンの縦線 + 菱形
+                                  ...widget.milestones.map(_buildMilestoneMark),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(int taskCount) {
+    return Container(
+      color: _panelColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.table_chart_outlined,
+            color: Color(0xFFFF6B35),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'プロジェクトタイムライン',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$taskCount タスク',
+            style: const TextStyle(color: Color(0xFF808090), fontSize: 12),
+          ),
+          const Spacer(),
+          Container(
+            width: 10,
+            height: 10,
+            color: _todayColor,
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            '今日',
+            style: TextStyle(color: Color(0xFFB0B0C0), fontSize: 11),
+          ),
+          const SizedBox(width: 16),
+          _legendSwatch(const Color(0xFF4CAF50), '完了'),
+          const SizedBox(width: 8),
+          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
+          const SizedBox(width: 8),
+          _legendSwatch(const Color(0xFF707080), '未着手'),
+        ],
+      ),
+    );
+  }
+
+  Widget _legendSwatch(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 18,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Color(0xFFB0B0C0), fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLeftColumnHeader() {
+    return Container(
+      height: _headerHeight,
+      color: _panelColor,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: const Row(
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              '#',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              'タスク名',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 70,
+            child: Text(
+              '担当',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLeftRow(int index, WbsTask task) {
+    final isEven = index % 2 == 0;
+    return Container(
+      decoration: BoxDecoration(
+        color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+        border: const Border(
+          bottom: BorderSide(color: _gridLine, width: 0.5),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: Color(0xFF808090),
+                fontSize: 11,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          // チェックボックス (完了状態)
+          Icon(
+            task.status == 'completed'
+                ? Icons.check_box
+                : Icons.check_box_outline_blank,
+            size: 14,
+            color: task.status == 'completed'
+                ? const Color(0xFF4CAF50)
+                : const Color(0xFF606070),
+          ),
+          const SizedBox(width: 6),
+          // カテゴリ絵文字
+          Text(task.categoryIcon, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              task.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(
+            width: 70,
+            child: _instanceBadge(task),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _instanceBadge(WbsTask task) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: task.instanceColor.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _shortInstance(task.instance),
+        style: TextStyle(
+          color: task.instanceColor,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  String _shortInstance(String i) => switch (i) {
+        'vscode' => 'VSCode',
+        'windows' => 'Windows',
+        'ps' => 'PowerShell',
+        _ => 'ALL',
+      };
+
+  Widget _buildMonthHeader() {
+    return Container(
+      height: _headerHeight,
+      color: _panelColor,
+      child: CustomPaint(
+        painter: _MonthHeaderPainter(
+          start: _timelineStart,
+          end: _timelineEnd,
+          dayWidth: _dayWidth,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineRow(int index, WbsTask task) {
+    final start = task.startDate;
+    final end = task.endDate;
+    if (start == null || end == null) {
+      return const SizedBox.shrink();
+    }
+    final x = _dateToX(start);
+    final w = (_dateToX(end) - x).clamp(_dayWidth, double.infinity);
+    final progressW = w * (task.progress / 100.0);
+
+    return Container(
+      decoration: BoxDecoration(
+        color:
+            index % 2 == 0 ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            left: x,
+            top: 8,
+            child: Container(
+              width: w.toDouble(),
+              height: _rowHeight - 16,
+              decoration: BoxDecoration(
+                color: task.statusColor.withValues(alpha: 0.25),
+                border: Border.all(color: task.statusColor, width: 1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Stack(
+                children: [
+                  // 進捗塗り
+                  Container(
+                    width: progressW.toDouble(),
+                    decoration: BoxDecoration(
+                      color: task.statusColor,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(2),
+                        bottomLeft: Radius.circular(2),
+                      ),
+                    ),
+                  ),
+                  if (w > 40)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${task.progress}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMilestoneMark(WbsMilestone m) {
+    final x = _dateToX(m.targetDate);
+    return Positioned(
+      left: x - 6,
+      top: 0,
+      bottom: 0,
+      child: IgnorePointer(
+        child: Column(
+          children: [
+            Transform.rotate(
+              angle: 0.785,
+              child: Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(top: 2),
+                color: m.color,
+              ),
+            ),
+            Expanded(
+              child: Container(
+                width: 1,
+                color: m.color.withValues(alpha: 0.35),
+                margin: const EdgeInsets.only(left: 4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GanttGridPainter extends CustomPainter {
+  final DateTime start;
+  final DateTime end;
+  final double dayWidth;
+  final double todayX;
+
+  _GanttGridPainter({
+    required this.start,
+    required this.end,
+    required this.dayWidth,
+    required this.todayX,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final weekend = Paint()..color = const Color(0xFF181822);
+    final weekLine = Paint()..color = const Color(0xFF22222E);
+    final monthLine = Paint()..color = const Color(0xFF3A3A48);
+
+    var day = start;
+    var x = 0.0;
+    while (day.isBefore(end)) {
+      // 週末ハイライト
+      if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
+        canvas.drawRect(
+          Rect.fromLTWH(x, 0, dayWidth, size.height),
+          weekend,
+        );
+      }
+      // 月の切り替わりで太線
+      if (day.day == 1) {
+        canvas.drawLine(
+          Offset(x, 0),
+          Offset(x, size.height),
+          monthLine,
+        );
+      } else if (day.weekday == DateTime.monday) {
+        canvas.drawLine(
+          Offset(x, 0),
+          Offset(x, size.height),
+          weekLine,
+        );
+      }
+      day = day.add(const Duration(days: 1));
+      x += dayWidth;
+    }
+    // Today ライン
+    final todayPaint = Paint()
+      ..color = const Color(0xFFFF6B35)
+      ..strokeWidth = 1.5;
+    canvas.drawLine(
+      Offset(todayX, 0),
+      Offset(todayX, size.height),
+      todayPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _GanttGridPainter oldDelegate) =>
+      oldDelegate.todayX != todayX ||
+      oldDelegate.start != start ||
+      oldDelegate.end != end;
+}
+
+class _MonthHeaderPainter extends CustomPainter {
+  final DateTime start;
+  final DateTime end;
+  final double dayWidth;
+
+  _MonthHeaderPainter({
+    required this.start,
+    required this.end,
+    required this.dayWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()..color = const Color(0xFF3A3A48);
+
+    // 月ヘッダー (上段)
+    DateTime monthCursor = DateTime(start.year, start.month, 1);
+    while (monthCursor.isBefore(end)) {
+      final monthStart = monthCursor.isAfter(start) ? monthCursor : start;
+      final nextMonth = DateTime(monthCursor.year, monthCursor.month + 1, 1);
+      final monthEnd = nextMonth.isBefore(end) ? nextMonth : end;
+      final xStart = monthStart.difference(start).inDays * dayWidth;
+      final xEnd = monthEnd.difference(start).inDays * dayWidth;
+      final width = xEnd - xStart;
+
+      // 月ラベル
+      final tp = TextPainter(
+        text: TextSpan(
+          text:
+              '${monthCursor.year}/${monthCursor.month.toString().padLeft(2, '0')}',
+          style: const TextStyle(
+            color: Color(0xFFE0E0EA),
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout(minWidth: 0, maxWidth: width);
+      if (width > 40) {
+        tp.paint(canvas, Offset(xStart + 6, 8));
+      }
+
+      // 月境界線
+      canvas.drawLine(
+        Offset(xEnd, 0),
+        Offset(xEnd, size.height),
+        line,
+      );
+
+      monthCursor = nextMonth;
+    }
+
+    // 日/週ヘッダー (下段)
+    const weekLabelStyle = TextStyle(
+      color: Color(0xFF909098),
+      fontSize: 9,
+    );
+    DateTime day = start;
+    double x = 0;
+    while (day.isBefore(end)) {
+      if (day.weekday == DateTime.monday && dayWidth >= 5) {
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '${day.day}',
+            style: weekLabelStyle,
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, Offset(x + 1, 30));
+      }
+      day = day.add(const Duration(days: 1));
+      x += dayWidth;
+    }
+
+    // ヘッダー下の太線
+    final bottomLinePaint = Paint()..color = const Color(0xFF3A3A48);
+    canvas.drawLine(
+      Offset(0, size.height - 1),
+      Offset(size.width, size.height - 1),
+      bottomLinePaint,
+    );
+    // 月/日セクション境界
+    final midLinePaint = Paint()..color = const Color(0xFF2A2A36);
+    canvas.drawLine(
+      const Offset(0, 26),
+      Offset(size.width, 26),
+      midLinePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MonthHeaderPainter oldDelegate) =>
+      oldDelegate.start != start || oldDelegate.end != end;
 }
 
 class _SectionHeader extends StatelessWidget {
