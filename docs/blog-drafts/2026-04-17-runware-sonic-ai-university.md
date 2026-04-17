@@ -1,7 +1,7 @@
 ---
 title: "Runware Sonic でマルチモーダル推論を30〜40%高速化 — AI大学77社目"
 tags: AI,LLM,個人開発,Flutter,buildinpublic
-published: false
+published: true
 ---
 
 # Runware Sonic Inference Engine — AI大学77社目追加
