@@ -128,8 +128,8 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 
 | インスタンス | 推奨モデル | 推奨モード | 主な制約 |
 | --- | --- | --- | --- |
-| **VSCode版** | `claude-sonnet-4-6` | 通常 (Flutter解析は深い思考要) | なし |
-| **Windowsアプリ版** | `claude-sonnet-4-6` | 通常 + CAVEMAN節約 | なし。`PYTHONUTF8=1` 必須 |
+| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | なし |
+| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | なし。`PYTHONUTF8=1` 必須 |
 | **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | なし |
 | **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
 
