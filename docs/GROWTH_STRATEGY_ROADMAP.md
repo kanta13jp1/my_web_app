@@ -9965,4 +9965,33 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### 現在の数値
 - T-1: 第103弾 (Qiita #100-103 本日投稿済み)
-- AI大学: 70社
+- AI大学: 72社 (Windows版#70で Recraft + Krea 追加)
+
+### セッション記録: Windowsアプリ版#70 (2026-04-17 12:55 JST)
+
+**AI大学 71-72社目: Recraft AI + Krea AI 追加**
+
+1. **新規プロバイダー追加 (発見モード → 追加モード)**
+   - **Recraft AI** (recraft)
+     - 2026年2月リリースの V4 でMidjourney/DALL·E を画像ベンチで超える評価
+     - 唯一のプロダクショングレード SVG ベクター生成モデル
+     - Free プランから公開 API アクセス可能
+   - **Krea AI** (krea)
+     - 50ms 以下のリアルタイム画像生成・Web カメラ入力対応
+     - Krea Realtime 14B オープンソース動画モデル
+     - 40+ モデル集約プラットフォーム (Flux/Kling/Wan/SD3)
+
+2. **更新ファイル**
+   - `supabase/migrations/20260417096000_seed_recraft_ai_university.sql` (新規)
+   - `supabase/migrations/20260417097000_seed_krea_ai_university.sql` (新規)
+   - `CLAUDE.md` — 登録プロバイダーリストに追加
+   - `.github/COMPRESSED_PROMPT_V3.md` — 72社表記に更新
+   - `.github/workflows/ai-university-update.yml` — 静的seedコメントに追加
+
+3. **Cross-Instance PR**
+   - `docs/cross-instance-prs/20260417_recraft_krea_ui.md` — VSCode版へUI追加依頼 (_providerMeta + _fallback + _quizzes)
+
+4. **次回検討候補**
+   - Viggle AI (リアルタイムキャラクター動画・viral特化)
+   - Magic.dev (100M token LTM-2 / 長コンテキストコーディング)
+   - Descript / Synthesia (音声合成アバター分野強化)
