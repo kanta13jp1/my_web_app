@@ -284,6 +284,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
+          DRAFT_PATH_EN="${{ github.event.inputs.draft_path_en }}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -292,6 +293,7 @@ jobs:
           # published マーカー付与 (frontmatter あり/なし両対応)
           _mark_published() {
             local f="$1"
+            if [ -z "$f" ] || [ ! -f "$f" ]; then return; fi
             if grep -q "^published: false" "$f"; then
               # 通常ケース: published: false → true
               sed -i 's/^published: false/published: true/' "$f"
@@ -311,34 +313,24 @@ jobs:
             fi
           }
 
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            # スケジュール実行: main に直接 push して published:true を確実に反映
-            git checkout main 2>/dev/null || git checkout -b main origin/main
-            git pull origin main --ff-only
-            _mark_published "$DRAFT_PATH"
-            git add "$DRAFT_PATH"
-            if git diff --cached --quiet; then
-              echo "📝 変更なし — スキップ"
-              exit 0
-            fi
-            git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
-            git push origin HEAD:main
-            echo "✅ [SCHEDULED] $DRAFT_PATH を published:true に更新 → main push 完了"
-          else
-            # 手動実行: ブランチ経由で PR (既存動作を維持)
-            BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
-            git checkout -b "$BRANCH" origin/main
-            _mark_published "$DRAFT_PATH"
-            git add "$DRAFT_PATH"
-            if git diff --cached --quiet; then
-              echo "📝 変更なし — スキップ"
-              exit 0
-            fi
-            git commit -m "docs: ブログ記事投稿完了 $(basename $DRAFT_PATH)"
-            git push origin "$BRANCH"
-            echo "ℹ️ ブランチ '$BRANCH' を push しました。"
-            echo "   マージ: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+          # schedule / workflow_dispatch 両方とも main に直接 push
+          # (workflow_dispatch で branch 経由だと orphan branch が大量に残存する問題があったため統一)
+          git checkout main 2>/dev/null || git checkout -b main origin/main
+          git pull origin main --ff-only
+          _mark_published "$DRAFT_PATH"
+          _mark_published "$DRAFT_PATH_EN"
+          git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
+          if git diff --cached --quiet; then
+            echo "📝 変更なし — スキップ"
+            exit 0
           fi
+          COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
+          if [ -n "$DRAFT_PATH_EN" ]; then
+            COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
+          fi
+          git commit -m "$COMMIT_MSG"
+          git push origin HEAD:main
+          echo "✅ $DRAFT_PATH + ${DRAFT_PATH_EN:-none} を published:true に更新 → main push 完了"
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
