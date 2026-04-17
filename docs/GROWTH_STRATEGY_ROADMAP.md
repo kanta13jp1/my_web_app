@@ -10325,3 +10325,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branch 全パターン 0件確認 (blog-publish/cs-check/ai-university-update/daily-report/youtube-analysis/claude)
 - 全WF health: CS Check 1失敗(修正前run)・他全 success
 - Qiita backlog: 0件 (全JA drafts published:true)
+
+### PS版#105 cs-check 修正完了 (2026-04-17 19:15)
+- BYPASS_RULES secret 未設定発覚: checkout token変更が "Input required not supplied" エラーを引き起こしていた
+- 修正内容: 4WFのcheckout token: BYPASS_RULESを削除 → デフォルトGITHUB_TOKENに戻す
+- cs-check改善: チケット0件かつインフラ正常時はcs-notes記録・pushをスキップ (毎時の無駄なpush排除)
+- cs-check: BYPASS_RULES設定時はremote URL PAT injection でブランチ保護を突破、未設定時はfallback
+- 全WF health: cs-check直近run SUCCESS確認 (24559961468)
+- TODO: `BYPASS_RULES` secret (PAT with bypass permissions) を GitHub Settings > Secrets で設定すること
