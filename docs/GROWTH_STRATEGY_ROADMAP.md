@@ -9879,3 +9879,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🟡 | CI テスト13件失敗調査・修正 | VSCode版 |
 | 🟡 | orphan blog-publish ブランチ70本クリーンアップ | PS版 |
 | 🟡 | docs/technical/EDGE_FUNCTIONS_INVENTORY.md 15→16本修正 | Windows版 |
+
+### Rule 17 WF health check (2026-04-17 12:00 JST)
+- 全 WF success率: Deploy 3/13成功 (trailing comma fix後 ✅) / Blog 8/9成功
+- 失敗 WF:
+  - Deploy: dart format 不一致 (VSCode#85 trailing comma修正で解消 ✅)
+  - blog-publish Step5: GH006 protected branch → branch経由で回避済み ✅
+- orphan blog-publish branches: 69本 → 0本 (全クリーンアップ完了 ✅)
+- 修正済み: orphan 69本削除・EN frontmatter補完確認
