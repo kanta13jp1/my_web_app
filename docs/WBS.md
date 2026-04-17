@@ -1,8 +1,16 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-17 PS版#107  
+> **最終更新**: 2026-04-17 Windows版#74 (PS版#107 の WBS を進捗反映)  
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
-> **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000)
+> **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
+
+## マイルストーン概要 (ユーザー可視)
+
+| | α版 | β版 | 最終版 v1.0 |
+|---|---|---|---|
+| **目標日** | 2026-05-31 | 2026-07-31 | 2026-10-31 |
+| **残日数** | 44日 | 105日 | 197日 |
+| **ユーザー目標** | 50人 | 500人 | 5,000人 |
 
 ---
 
@@ -64,7 +72,7 @@
 | タスク | 担当 | 状態 | 進捗 | α/β/v1 |
 |---|---|---|---|---|
 | ai-hub 502エラー根本修正 | PS | ✅完了 | 100% | α |
-| ai-hub provider.chat 全対応 | PS | 🟡進行中 | 20% | β |
+| ai-hub provider.chat 全対応 | PS+Win | 🟡進行中 | 20% | β | (13/78社実装 — Windows#74で OpenAI互換8+独自3+特殊2 追加)
 | AIアシスタント Opus4.7/Sonnet4.6更新 | VSCode | 🟡進行中 | 80% | α |
 | 画像生成統合 | PS | ⚪未着手 | 0% | v1 |
 | マルチモーダルAI | VSCode | ⚪未着手 | 0% | v1 |
@@ -144,3 +152,30 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - **ROADMAP**: `docs/GROWTH_STRATEGY_ROADMAP.md`
 - **DESIGN.md**: `docs/DESIGN.md`
 - **COMPRESSED_PROMPT**: `.github/COMPRESSED_PROMPT_V3.md`
+
+---
+
+## 直近完了項目 (2026-04-17 Windows版#74)
+
+- ✅ AI大学 77→78社 (SambaNova SN50 RDU 追加) — α達成度+1.3%
+- ✅ AIプロバイダー実装ステータス一覧ページ (Phase 1)
+- ✅ provider.chat 13社対応 (OpenAI互換8 + Mistral/Perplexity/Cohere + Anthropic/Gemini 特殊認証)
+- ✅ ElevenLabs 課金制限 → Web Speech API 自動フォールバック
+- ✅ ルーチン2スキル追加: `cross-instance-pr` / `session-start-check`
+- ✅ ai-hub 502 transient incident report
+- ✅ Rule 10 docs stale 数値修正 (56社目→79社目以降)
+- ✅ Rule 11 モデル landscape 調査 (GPT-5.4/Gemini 3.1/Opus 4.7)
+- ✅ Rule 14 ツールバージョン全最新確認
+
+## 次セッション着手推奨 (α版 44日前)
+
+**最優先 (α阻害)**:
+1. PS版: BYPASS_RULES secret 設定 (ユーザー対応必要)
+2. VSCode版: DESIGN.md準拠 55%→60% (α目標)
+3. Windows版: AI大学 78社 → quiz/fallback 充実化
+4. 全インスタンス: ユーザー数 50人達成ドライブ (現在 8% = 4人)
+
+**α版確実化タスク**:
+- flutter analyze 0エラー常時維持 (現 85%)
+- deploy-prod 成功率 100%維持
+- オンボーディング最適化 (現 10%)
