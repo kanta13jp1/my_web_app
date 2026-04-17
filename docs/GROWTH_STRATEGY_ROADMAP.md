@@ -10416,3 +10416,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - WBS migration: CI修正完了 / provider.chat 30%進捗 / Rule17完了記録
 - 残タスク: Supabase Secrets に DASHSCOPE/INFLECTION/ALLENAI_API_KEY 追加 (ユーザー対応)
 - 次フェーズ候補: huggingface/replicate/ibm/oracle/adept (API形式要調査)
+
+### Windowsアプリ版#76 完了 (2026-04-18 00:40)
+- AI大学 Step 0 discovery #2: MiniMax (9/9) + Moondream (8/9) 推奨確定
+- AI大学 80→82社: MiniMax (中国発マルチモーダル・香港上場・MCP公式) + Moondream (VLM 9B MoE・Apache 2.0)
+- migration 2本: 20260418010000_seed_minimax + 20260418020000_seed_moondream
+- registry + UI (_providerMeta/_quizzes/_fallback) + ai-university-update.yml RSS 2行追加
+- CLAUDE.md / COMPRESSED_PROMPT リスト + "80社" 参照 2箇所更新
+- flutter analyze 0エラー / deno lint clean / dart format pass

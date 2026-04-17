@@ -63,7 +63,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (80社, 2026-04-17時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (82社, 2026-04-18時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -529,6 +529,21 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     envKeyName: 'ARCEE_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: r'Mini $0.045/$0.15 per 1M · OpenRouter 無料枠あり',
+  ),
+  AiProviderEntry(
+    id: 'minimax',
+    displayName: 'MiniMax (Hailuo)',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'MINIMAX_API_KEY',
+    entryPoint: '(未実装 — OpenAI 互換・音声+動画+音楽統合)',
+    note: 'M2.5-Lightning 月100万tok free・香港上場',
+  ),
+  AiProviderEntry(
+    id: 'moondream',
+    displayName: 'Moondream VLM',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 軽量 VLM 9B MoE・Apache 2.0)',
+    note: r'$0.30/$2.50 per 1M · 画像=729 tok',
   ),
 ];
 

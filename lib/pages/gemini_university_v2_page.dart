@@ -530,6 +530,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF1E40AF),
     officialUrl: 'https://www.arcee.ai/trinity',
   ),
+  'minimax': _ProviderMeta(
+    name: 'MiniMax (Hailuo)',
+    emoji: '🌊',
+    color: const Color(0xFF00B4D8),
+    officialUrl: 'https://www.minimax.io',
+  ),
+  'moondream': _ProviderMeta(
+    name: 'Moondream VLM',
+    emoji: '🌙',
+    color: const Color(0xFF8B5CF6),
+    officialUrl: 'https://moondream.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1011,6 +1023,21 @@ final Map<String, _Quiz> _quizzes = {
       'Apache 2.0 / 米国',
       'GPL / 英国',
       'Proprietary / カナダ',
+    ],
+    correct: 1,
+  ),
+  'minimax': _Quiz(
+    question: 'MiniMax の 2026年1月の主要イベントは?',
+    options: ['創業', '香港証券取引所 IPO', 'ナスダック上場', '倒産'],
+    correct: 1,
+  ),
+  'moondream': _Quiz(
+    question: 'Moondream 3 のアーキテクチャと画像1枚あたりのトークン数は?',
+    options: [
+      'Dense 1.8B / 512 tokens',
+      'MoE 9B(2B active) / 729 tokens',
+      'Transformer 70B / 1024 tokens',
+      'CNN 500M / 256 tokens',
     ],
     correct: 1,
   ),
@@ -2268,6 +2295,49 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 - Mini \$0.045/\$0.15 per 1M tokens・OpenRouter 無料枠あり
 - MergeKit (50k+ stars) 公式サポート
 - 米国発 → 政府 / 金融 / 医療での採用容易
+''',
+  'minimax': '''
+# MiniMax (Hailuo)
+
+中国・上海発のマルチモーダル AI 企業。2026年1月に **香港証券取引所に上場**。
+
+## 最新モデル (2026)
+- **MiniMax-M2.7** (Mar 2026) — 256K context / フラッグシップ
+- **MiniMax-M2.5** (Feb 2026) — 汎用モデル
+- **MiniMax-M2.5-Lightning** — 超高速・低コスト (\$0.10/1M input)
+
+## マルチモーダル統合
+- **Hailuo Video** — テキスト→1080p動画 (\$0.10/秒)
+- **Hailuo Voice** — TTS + Voice Cloning (50+ 声質)
+- **Music API** — 歌詞+BGM 同時生成
+
+## 強み
+- OpenAI 互換 API + **MCP 公式サーバー**
+- 超長コンテキスト 200K+ tokens
+- 日中英 ネイティブ対応
+- Free Tier: M2.5-Lightning 月 100万 tokens
+''',
+  'moondream': '''
+# Moondream VLM
+
+軽量・高性能 Vision-Language Model 専業スタートアップ。**Apache 2.0 OSS** + Cloud API の両対応。
+
+## モデル
+- **Moondream 3 Preview** (2025/10 リリース) — 9B MoE / 2B active
+- **Moondream 2** (1.8B) — エッジ / 組込み向け OSS
+- **Detect** — 精密バウンディングボックス物体検出
+
+## 機能
+- **VQA** (画像質問応答・日本語対応)
+- **OCR** (手書き・印刷・多言語)
+- **Object Detection** (商用可)
+- **Captioning** (自動タイトル生成)
+
+## 料金
+- \$0.30 / 1M input · \$2.50 / 1M output
+- 画像 1枚 = **729 tokens** 固定
+- Free Tier \$5 / 月 (約 20,000 画像)
+- OSS ローカル実行は完全無料 (Apache 2.0)
 ''',
 };
 

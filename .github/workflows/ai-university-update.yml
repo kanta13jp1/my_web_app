@@ -83,6 +83,8 @@ jobs:
           upsert_provider "nvidia"      "https://blogs.nvidia.com/feed/"                      "NVIDIA"
           upsert_provider "lightricks"  "https://www.lightricks.com/blog/feed"                "Lightricks LTX-2"
           upsert_provider "arcee_ai"    "https://www.arcee.ai/blog/rss.xml"                   "Arcee AI Trinity"
+          upsert_provider "minimax"     "https://www.minimax.io/blog/rss.xml"                 "MiniMax Hailuo"
+          upsert_provider "moondream"   "https://moondream.ai/blog/rss.xml"                   "Moondream VLM"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
