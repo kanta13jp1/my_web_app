@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で FSRS スペース反復学習を実装した — AI大学に記憶科学を組み込む"
 tags: Flutter,Supabase,個人開発,機械学習,buildinpublic
-published: false
+published: true
 ---
 
 # Flutter × Supabase で FSRS スペース反復学習を実装した
