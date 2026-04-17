@@ -392,7 +392,8 @@ class _WbsTab extends StatelessWidget {
         const _SectionHeader(label: 'リリースマイルストーン', icon: Icons.flag_outlined),
         const SizedBox(height: 8),
         if (milestones.isEmpty)
-          const _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(
+              message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           SizedBox(
             height: 140,
@@ -497,7 +498,8 @@ class _OverallProgressCard extends StatelessWidget {
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4),),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
+                  ),
                 ),
                 child: Text(
                   '${progress.toStringAsFixed(0)}%',
@@ -648,22 +650,47 @@ class _FilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _chip('全て', null, filterInstance, onFilterInstance,
-              const Color(0xFFFF6B35),),
+          _chip(
+            '全て',
+            null,
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFFF6B35),
+          ),
           const SizedBox(width: 6),
-          _chip('VSCode', 'vscode', filterInstance, onFilterInstance,
-              const Color(0xFF007ACC),),
+          _chip(
+            'VSCode',
+            'vscode',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF007ACC),
+          ),
           const SizedBox(width: 6),
-          _chip('Windows', 'windows', filterInstance, onFilterInstance,
-              const Color(0xFF00BCF2),),
+          _chip(
+            'Windows',
+            'windows',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF00BCF2),
+          ),
           const SizedBox(width: 6),
-          _chip('PowerShell', 'ps', filterInstance, onFilterInstance,
-              const Color(0xFF4B0082),),
+          _chip(
+            'PowerShell',
+            'ps',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF4B0082),
+          ),
           const SizedBox(width: 12),
           const Text('│', style: TextStyle(color: Color(0xFF333333))),
           const SizedBox(width: 12),
-          _chip('全版', null, filterMilestone, onFilterMilestone,
-              const Color(0xFF707070),),
+          _chip(
+            '全版',
+            null,
+            filterMilestone,
+            onFilterMilestone,
+            const Color(0xFF707070),
+          ),
           ...milestones.map((m) {
             return Padding(
               padding: const EdgeInsets.only(left: 6),
@@ -681,8 +708,13 @@ class _FilterRow extends StatelessWidget {
     );
   }
 
-  Widget _chip(String label, String? value, String? current,
-      ValueChanged<String?> onTap, Color color,) {
+  Widget _chip(
+    String label,
+    String? value,
+    String? current,
+    ValueChanged<String?> onTap,
+    Color color,
+  ) {
     final selected = current == value;
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
@@ -978,8 +1010,12 @@ class _MyProjectsTab extends StatelessWidget {
                             underline: const SizedBox.shrink(),
                             isExpanded: true,
                             items: statuses
-                                .map((s) =>
-                                    DropdownMenuItem(value: s, child: Text(s),))
+                                .map(
+                                  (s) => DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  ),
+                                )
                                 .toList(),
                             onChanged: (v) => onStatusChanged(v!),
                           ),
