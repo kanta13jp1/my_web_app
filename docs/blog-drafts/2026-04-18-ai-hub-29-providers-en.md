@@ -1,7 +1,7 @@
 ---
 title: "Jibun Corp's AI Hub Reaches 29 Providers — Adding Meta Llama API & Nebius AI Studio"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Jibun Corp's AI Hub Reaches 29 Providers

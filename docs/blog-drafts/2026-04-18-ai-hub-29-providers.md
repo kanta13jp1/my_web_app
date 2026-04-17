@@ -1,7 +1,7 @@
 ---
 title: "AIハブ29プロバイダーへ拡張 — Meta Llama API・Nebius AI Studio 追加"
 tags: Flutter,Supabase,AI,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # AIハブ29プロバイダーへ拡張
