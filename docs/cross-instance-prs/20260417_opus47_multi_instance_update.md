@@ -3,7 +3,7 @@
 **依頼元**: VSCode版 (2026-04-17)
 **宛先**: PowerShell版 (docs/MULTI_INSTANCE_COORDINATION.md 担当)
 **優先度**: 🟡 高
-**状態**: pending
+**状態**: ✅ 完了 (Windowsアプリ版#本セッション 2026-04-17)
 
 ---
 
