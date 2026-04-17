@@ -10360,3 +10360,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - lib/pages/project_gantt_page.dart: 全面刷新 (マイルストーン + WBSタスク + カテゴリ別進捗)
 - docs/cross-instance-prs/20260417_wbs_gantt.md: 全インスタンスへWBS周知
 - deploy-prod トリガー済み
+
+### VSCode版#91 完了 (2026-04-17 18:00)
+- AI プロバイダー一覧ページ確認 (PS版/Windows版が先行実装済み — 78社分ステータス表示・provider.chat連携)
+- Rule12 home_page.dart: Colors.white70→withValues 20件・white24→withValues 1件・fontSize9.5→10・height1.1→1.4
+- flutter analyze 0エラー維持
