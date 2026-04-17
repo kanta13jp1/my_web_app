@@ -20,9 +20,9 @@ const NEW_KOKUMIN_ELECTIONS_URL =
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 14;
-const SCHEDULE_WINDOW_DAYS = 60;
+const SCHEDULE_WINDOW_DAYS = 90;
 const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
-const SCHEDULE_MAX_ENTRIES = 100;
+const SCHEDULE_MAX_ENTRIES = 200;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -969,17 +969,6 @@ function scheduleUrlForYear(year: number): string {
   return `${ELECTION_SCHEDULE_URL}/${year}`;
 }
 
-interface NewKokuminElection {
-  post_id: string;
-  pref: string;
-  election_name: string;
-  featured: boolean;
-  notice_day: string;
-  vote_day: string;
-  period_end_day: string;
-  deadline: string;
-}
-
 async function fetchNewKokuminScheduleEntries(): Promise<
   ScheduleOverviewEntry[]
 > {
@@ -990,27 +979,64 @@ async function fetchNewKokuminScheduleEntries(): Promise<
     console.error("Failed to fetch new-kokumin elections page:", error);
     return [];
   }
-  const match = html.match(/var elections = (\[[\s\S]*?\]);/);
-  if (!match) {
-    console.error("Could not extract elections array from new-kokumin page");
-    return [];
+  return parseNewKokuminElectionListHtml(html);
+}
+
+function parseNewKokuminElectionListHtml(html: string): ScheduleOverviewEntry[] {
+  const entries: ScheduleOverviewEntry[] = [];
+  const prefSectionRegex =
+    /<section[^>]+class="[^"]*\bpref-section\b[^"]*"[^>]*>([\s\S]*?)<\/section>/gi;
+  for (const sectionMatch of html.matchAll(prefSectionRegex)) {
+    const sectionHtml = sectionMatch[1] ?? "";
+    const prefTitleMatch = sectionHtml.match(
+      /<h2[^>]+class="[^"]*pref-section-title[^"]*"[^>]*>([\s\S]*?)<\/h2>/i,
+    );
+    const prefecture = normalizeWhitespace(
+      decodeHtml(stripTags(prefTitleMatch?.[1] ?? "")),
+    ).trim();
+    if (!isPrefectureName(prefecture)) continue;
+
+    const itemRegex =
+      /<li[^>]+class="[^"]*\belection-item\b[^"]*"[^>]*>([\s\S]*?)<\/li>/gi;
+    for (const itemMatch of sectionHtml.matchAll(itemRegex)) {
+      const itemHtml = itemMatch[1] ?? "";
+      const nameMatch = itemHtml.match(
+        /<p[^>]+class="[^"]*election-item-name[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
+      );
+      const electionName = normalizeWhitespace(
+        decodeHtml(stripTags(nameMatch?.[1] ?? "")),
+      ).trim();
+      if (!electionName) continue;
+
+      const datesMatch = itemHtml.match(
+        /<p[^>]+class="[^"]*election-item-dates[^"]*"[^>]*>([\s\S]*?)<\/p>/i,
+      );
+      const datesText = normalizeWhitespace(
+        decodeHtml(stripTags(datesMatch?.[1] ?? "")),
+      );
+      const voteDate = extractNewKokuminVoteDate(datesText);
+      if (!voteDate) continue;
+
+      const linkMatch = itemHtml.match(
+        /href="(https?:\/\/local-elections\.new-kokumin\.jp\/form\/[^"]+)"/i,
+      );
+      const detailUrl = linkMatch?.[1]?.trim() ?? "";
+      entries.push({ electionName, prefecture, voteDate, detailUrl });
+    }
   }
-  let data: NewKokuminElection[];
-  try {
-    data = JSON.parse(match[1]) as NewKokuminElection[];
-  } catch (error) {
-    console.error("Failed to parse new-kokumin elections JSON:", error);
-    return [];
-  }
-  return data
-    .filter((item) => item.vote_day !== "" || item.period_end_day !== "")
-    .map((item) => ({
-      electionName: item.election_name,
-      prefecture: item.pref,
-      voteDate: (item.vote_day || item.period_end_day).replace(/\//g, "-"),
-      detailUrl:
-        `https://local-elections.new-kokumin.jp/form/?post_id=${item.post_id}`,
-    }));
+  return entries;
+}
+
+function extractNewKokuminVoteDate(datesText: string): string {
+  const voteMatch = datesText.match(
+    /投開票[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
+  );
+  if (voteMatch?.[1]) return extractIsoDate(voteMatch[1]);
+  const termMatch = datesText.match(
+    /任期満了[：:]\s*(\d{4}年\d{1,2}月\d{1,2}日)/,
+  );
+  if (termMatch?.[1]) return extractIsoDate(termMatch[1]);
+  return "";
 }
 
 function buildManualScheduledCandidates(
