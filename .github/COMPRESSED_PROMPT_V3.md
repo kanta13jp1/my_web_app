@@ -821,7 +821,7 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 #### 現在の登録プロバイダー (Windows版#63: 60社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii, black_forest_labs, liquid_ai, snowflake, cognition, scale_ai, poolside
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii, black_forest_labs, liquid_ai, snowflake, cognition, scale_ai, poolside, harvey, manus
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。

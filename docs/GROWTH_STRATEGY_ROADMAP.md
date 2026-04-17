@@ -9887,3 +9887,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - blog-publish Step5: GH006 protected branch → branch経由で回避済み ✅
 - orphan blog-publish branches: 69本 → 0本 (全クリーンアップ完了 ✅)
 - 修正済み: orphan 69本削除・EN frontmatter補完確認
+
+### セッション記録: Windowsアプリ版#68 (2026-04-17 12:00 JST)
+
+**AI大学 67-68社目追加 (Harvey AI + Manus AI)**
+
+1. **Harvey AI** (`harvey`) — 法律・プロフェッショナルサービス特化AI
+   - $11B評価・Am Law 100の50%超採用・PwCグローバル展開
+   - migration: `20260417092000_seed_harvey_ai_university.sql`
+2. **Manus AI** (`manus`) — 世界初の汎用AIエージェント (Meta買収済み)
+   - 自律的マルチステップタスク実行・Manus API公開・GoHighLevel統合
+   - migration: `20260417093000_seed_manus_ai_university.sql`
+3. **CLAUDE.md + COMPRESSED_PROMPT_V3.md** — プロバイダーリスト 66→68社に更新
+4. **cross-instance-pr** — VSCode版へUI追加依頼 (`docs/cross-instance-prs/20260417_harvey_manus_ui.md`)
+
+### 現在の数値
+- AI大学: 68社 (DB migration済み / UI同期はVSCode版待ち)
+- EF: 16本 / GHA: 25本
+
+### 次回優先タスク
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Harvey/Manus UI追加 (`_providerMeta`, `_fallback`, `_quizzes`) | VSCode版 |
+| 🔴 | Qiita リトライ (第59/60/63/64/98-103弾) | PS版 |
+| 🟡 | CI テスト失敗調査 | VSCode版 |
+| 🟡 | docs/technical/EDGE_FUNCTIONS_INVENTORY.md 15→16本修正 | Windows版 |
+| 🟢 | AI大学 69-70社目候補検討 (Replit AI / Hedra AI / Cursor) | Windows版 |

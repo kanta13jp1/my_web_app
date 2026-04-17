@@ -1,6 +1,6 @@
 # Supabase Edge Functions 一覧
 
-**最終更新**: 2026-04-12  
+**最終更新**: 2026-04-17  
 **ステータス**: ✅ 全 Edge Functions に UI 実装済み (2026-04-05 VSCode#3 にてゼロ達成)
 
 > ⚠️ **注意**: このドキュメントは概要のみ記録するスナップショットです。  
@@ -23,8 +23,8 @@ Edge Functions の一覧・UI 接続状況・操作手順は以下で確認:
 
 ## 概要統計 (2026-04-12 時点)
 
-- **デプロイ済み関数数**: **15本** (ハードキャップ50本以下 / Tier1/Tier2分類は廃止済み)
-  - standalone 4本: get-home-dashboard / ai-assistant / growth-weekly-digest / guitar-recording-studio
+- **デプロイ済み関数数**: **16本** (ハードキャップ50本以下 / Tier1/Tier2分類は廃止済み)
+  - standalone 5本: get-home-dashboard / ai-assistant / growth-weekly-digest / guitar-recording-studio / local-election-intelligence
   - macro-hub 6本: core-hub / growth-hub / ai-hub / admin-hub / app-hub / schedule-hub
   - mega-hub 5本: tools-hub / media-hub / enterprise-hub / social-commerce-hub / lifestyle-hub
 - **UI カバレッジ**: **100%** (UI 実装が必要なものはすべて対応済み)
