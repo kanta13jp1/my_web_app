@@ -10287,3 +10287,26 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - cross-instance-pr: `20260417_sambanova_ui.md` (→ VSCode版 UI同期依頼)
 - Rule 10 docs分析: COMPRESSED_PROMPT_V3.md L557「56社目以降」→「79社目以降」修正
 - Rule 14 ツールバージョン: 全最新確認
+- PS版#110 が T-1 第108弾 SambaNova 記事を dev.to 投稿成功 (連携成功)
+
+### Rule 11 AI news → dev workflow (Windows版#74 記録)
+
+**モデル landscape 調査 (2026-04-17 WebSearch)**:
+- **Claude Sonnet 4.7**: 存在せず (Sonnet 4.6 が最新・Sonnet 4.8 はソースコードリーク段階・5月予定)
+- **Claude Opus 4.7**: 2026-04-16 リリース済 (既に `ai-assistant/index.ts` の DEFAULT_EXTENDED_THINKING_MODEL で採用済)
+- **GPT-5.4**: 2026-03-05 リリース (Standard/Thinking/Pro/Mini/Nano 5バリアント)
+  - gpt-5.4 Standard: $2.50/M in・$15/M out (vs gpt-4o $2.50/M in・$10/M out — 出力50%高)
+  - gpt-5.4-mini: $0.75/M in・$4.50/M out (vs gpt-4o-mini $0.15/M in・$0.60/M out — 5倍高)
+  - gpt-5.4-nano: $0.20/M in・$1.25/M out (API-only・gpt-4o-mini代替候補)
+- **Gemini 3.1 Pro**: 2026-04 リリース・model ID `gemini-3.1-pro-preview` ($2/M in・$12/M out)
+- **Grok 4.20**: 2026-03-03 リリース (API料金 agent tools 最大50%割引)
+
+**既存 EF モデル採用状況**:
+- `ai-assistant/index.ts`: Balthasar=claude-sonnet-4-6 ✅ / Casper=gemini-2.5-flash (3.1-flash検討余地) / Melchior=gpt-4o-mini
+- `ai-search/index.ts`: gpt-4o-mini
+- `ai-hub/index.ts:919`: gpt-4o-mini (要約用)
+- `local-election-intelligence/index.ts:1354`: gpt-4o-mini
+- `_shared/viral-growth.ts:112`: gpt-4o-mini
+
+**判定**: 現状維持推奨。gpt-5.4-nano は gpt-4o-mini より ~33%高で新機能分の価値測定にベンチマーク必要。Claude 側は既に最新。Gemini 3.1 Flash は gemini-2.5-flash の直接後継候補だが料金要確認。
+**次回アクション**: PS版 or VSCode版 でベンチマーク (精度・レイテンシ・コスト) 後にモデル更新判断。本セッションでは production EF 変更なし (Rule 6 シンプルさ優先)。
