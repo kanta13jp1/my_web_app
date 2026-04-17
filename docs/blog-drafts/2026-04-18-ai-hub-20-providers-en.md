@@ -1,7 +1,7 @@
 ---
 title: "Expanding Jibun Corp's AI Hub to 20 Providers — Including Cerebras Ultra-Fast Inference & Chinese AI"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Expanding Jibun Corp's AI Hub to 20 Providers

@@ -1,7 +1,7 @@
 ---
 title: "自分株式会社のAIハブが20プロバイダーに拡張 — Cerebras超高速推論・中国系AI3社も対応"
 tags: Flutter,Supabase,AI,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # 自分株式会社のAIハブが20プロバイダーに拡張
