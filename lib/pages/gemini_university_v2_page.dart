@@ -512,6 +512,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF5E17EB),
     officialUrl: 'https://runware.ai/',
   ),
+  'sambanova': _ProviderMeta(
+    name: 'SambaNova',
+    emoji: '🔴',
+    color: const Color(0xFFE03E3E),
+    officialUrl: 'https://sambanova.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -974,6 +980,11 @@ final Map<String, _Quiz> _quizzes = {
   'runware': _Quiz(
     question: 'Runware の中核技術 Sonic Inference Engine の強みは?',
     options: ['最大コンテキスト長', 'GPU不要CPU推論', '既存比30-40%高速・5-10倍安', '完全無料'],
+    correct: 2,
+  ),
+  'sambanova': _Quiz(
+    question: 'SambaNova の独自チップ設計思想は？',
+    options: ['GPU', 'TPU', 'RDU (Reconfigurable Dataflow Unit)', 'NPU'],
     correct: 2,
   ),
 };
@@ -2182,6 +2193,21 @@ TikTok運営 ByteDance の AI ブランド。Doubao 2.0 は「Agent Era」特化
 - \$50M Series A (2025/12 Dawn Capital/Comcast)
 - 従量課金: 画像 \$0.0006〜 / 動画 \$0.14〜 (サブスク不要)
 - 公式: https://runware.ai/
+''',
+  'sambanova': '''
+# SambaNova
+
+RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高速・3倍コスト効率を実現する米国スタートアップ。
+
+## 主要技術
+- **SN50 チップ** (2026-02 リリース)
+- SambaNova Cloud (OpenAI 互換 API)
+- Llama 405B を 200+ tokens/sec で提供
+
+## 強み
+- 開発者 Free Tier \$5 credit
+- Meta / AWS / Intel 戦略提携
+- \$350M追加調達・オンプレミス SambaNova Suite
 ''',
 };
 
