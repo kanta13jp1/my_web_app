@@ -518,6 +518,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFE03E3E),
     officialUrl: 'https://sambanova.ai/',
   ),
+  'lightricks': _ProviderMeta(
+    name: 'Lightricks LTX-2',
+    emoji: '🎬',
+    color: const Color(0xFFFF4D6D),
+    officialUrl: 'https://ltx.io/model/ltx-2',
+  ),
+  'arcee_ai': _ProviderMeta(
+    name: 'Arcee AI Trinity',
+    emoji: '🇺🇸',
+    color: const Color(0xFF1E40AF),
+    officialUrl: 'https://www.arcee.ai/trinity',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -986,6 +998,21 @@ final Map<String, _Quiz> _quizzes = {
     question: 'SambaNova の独自チップ設計思想は？',
     options: ['GPU', 'TPU', 'RDU (Reconfigurable Dataflow Unit)', 'NPU'],
     correct: 2,
+  ),
+  'lightricks': _Quiz(
+    question: 'Lightricks LTX-2 が業界で唯一ネイティブ対応する機能は?',
+    options: ['4Kだけ', '音声+映像 同時生成', '無制限長動画', 'リアルタイム3D'],
+    correct: 1,
+  ),
+  'arcee_ai': _Quiz(
+    question: 'Arcee AI Trinity シリーズのライセンスと出身国は?',
+    options: [
+      'MIT / 中国',
+      'Apache 2.0 / 米国',
+      'GPL / 英国',
+      'Proprietary / カナダ',
+    ],
+    correct: 1,
   ),
 };
 
@@ -2208,6 +2235,39 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 - 開発者 Free Tier \$5 credit
 - Meta / AWS / Intel 戦略提携
 - \$350M追加調達・オンプレミス SambaNova Suite
+''',
+  'lightricks': '''
+# Lightricks LTX-2
+
+イスラエル発クリエイティブAI企業。2026年1月に **LTX-2 (22B)** を4K音声+映像同期生成できるOSSモデルとして公開。
+
+## 主要技術
+- **音声+映像同期生成** (業界唯一のネイティブ対応 OSS)
+- **4K 解像度**・60秒超の長尺動画
+- **30倍高速**推論 (民生 GPU で動作)
+
+## 強み
+- セルフサーブAPI (ltx.io) + Fal / Replicate / ComfyUI 連携
+- OpenRAIL-M ライセンス (ARR \$10M 未満は商用無料)
+- HuggingFace `Lightricks/LTX-2` で全ウェイト公開
+- LoRA 公式トレーナー同梱
+''',
+  'arcee_ai': '''
+# Arcee AI Trinity
+
+米国フロリダ発の **完全オープンソース・ファンデーションモデル** 企業。2026年4月に **Trinity-Large-Thinking (399B sparse MoE)** を Apache 2.0 で公開。
+
+## ラインナップ
+- **Trinity Nano** (6B A1B MoE) — エッジ / オフライン
+- **Trinity Mini** (26B A3B MoE) — エージェント / ツール呼び出し
+- **Trinity Large** (400B A13B MoE) — フロンティア級
+- **Trinity-Large-Thinking** (399B) — Chain-of-Thought 推論特化
+
+## 強み
+- **Apache 2.0** / OpenAI 互換 API
+- Mini \$0.045/\$0.15 per 1M tokens・OpenRouter 無料枠あり
+- MergeKit (50k+ stars) 公式サポート
+- 米国発 → 政府 / 金融 / 医療での採用容易
 ''',
 };
 
