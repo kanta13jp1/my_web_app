@@ -295,17 +295,13 @@ jobs:
             local f="$1"
             if [ -z "$f" ] || [ ! -f "$f" ]; then return; fi
             if grep -q "^published: false" "$f"; then
-              # 通常ケース: published: false → true
               sed -i 's/^published: false/published: true/' "$f"
             elif grep -q "^published:" "$f"; then
-              # 既に published: true など → 変更不要 (何もしない)
               :
             elif head -1 "$f" | grep -q "^---"; then
-              # frontmatter あり・published 行なし → 最初の --- の直後に挿入
               sed -i '0,/^---$/!b; /^---$/{ n; /^published:/!{ i published: true
               } }' "$f"
             else
-              # frontmatter なし (# 見出しのみ) → 先頭に最小 frontmatter を追記
               TMP=$(mktemp)
               printf -- "---\npublished: true\n---\n" > "$TMP"
               cat "$f" >> "$TMP"
@@ -313,24 +309,51 @@ jobs:
             fi
           }
 
-          # schedule / workflow_dispatch 両方とも main に直接 push
-          # (workflow_dispatch で branch 経由だと orphan branch が大量に残存する問題があったため統一)
-          git checkout main 2>/dev/null || git checkout -b main origin/main
-          git pull origin main --ff-only
-          _mark_published "$DRAFT_PATH"
-          _mark_published "$DRAFT_PATH_EN"
-          git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
-          if git diff --cached --quiet; then
-            echo "📝 変更なし — スキップ"
-            exit 0
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # スケジュール実行: main に直接 push (schedule は branch protection bypass 済み)
+            git checkout main 2>/dev/null || git checkout -b main origin/main
+            git pull origin main --ff-only
+            _mark_published "$DRAFT_PATH"
+            _mark_published "$DRAFT_PATH_EN"
+            git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
+            if git diff --cached --quiet; then
+              echo "📝 変更なし — スキップ"
+              exit 0
+            fi
+            COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
+            [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
+            git commit -m "$COMMIT_MSG"
+            git push origin HEAD:main
+            echo "✅ [SCHEDULED] published:true に更新 → main push 完了"
+          else
+            # 手動実行: branch 経由 (branch protection により main 直push 不可 = GH006)
+            BRANCH="blog-publish/${{ github.run_id }}-$(TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S')"
+            git checkout -b "$BRANCH" origin/main
+            _mark_published "$DRAFT_PATH"
+            _mark_published "$DRAFT_PATH_EN"
+            git add "$DRAFT_PATH" ${DRAFT_PATH_EN:+"$DRAFT_PATH_EN"}
+            if git diff --cached --quiet; then
+              echo "📝 変更なし — スキップ"
+              exit 0
+            fi
+            COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
+            [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
+            git commit -m "$COMMIT_MSG"
+            git push origin "$BRANCH"
+
+            # PR を作成 (PAT があれば自動merge、なければ手動マージ待ち)
+            if [ -n "${{ secrets.GH_PAT_BLOG_MERGE }}" ]; then
+              gh auth login --with-token <<< "${{ secrets.GH_PAT_BLOG_MERGE }}"
+              PR_URL=$(gh pr create --base main --head "$BRANCH" \
+                --title "$COMMIT_MSG" \
+                --body "Auto-merge by blog-publish workflow (published:true frontmatter update)" 2>&1 | tail -1)
+              echo "📝 PR作成: $PR_URL"
+              gh pr merge "$BRANCH" --auto --squash --delete-branch 2>&1 | head -3
+            else
+              echo "ℹ️ ブランチ '$BRANCH' を push しました (GH_PAT_BLOG_MERGE 未設定のため手動マージ)。"
+              echo "   マージ: git fetch origin $BRANCH && git merge origin/$BRANCH && git push origin main"
+            fi
           fi
-          COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
-          if [ -n "$DRAFT_PATH_EN" ]; then
-            COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
-          fi
-          git commit -m "$COMMIT_MSG"
-          git push origin HEAD:main
-          echo "✅ $DRAFT_PATH + ${DRAFT_PATH_EN:-none} を published:true に更新 → main push 完了"
 
       # ── Step 6: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 6 - schedule_task_runs 記録
