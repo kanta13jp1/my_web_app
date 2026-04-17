@@ -1,7 +1,7 @@
 ---
 title: "FSRS 復習カウンターをホームカードに統合 — Flutter × Supabase リテンション設計"
 tags: Flutter,Supabase,buildinpublic,個人開発,Dart
-published: false
+published: true
 ---
 
 # FSRS 復習カウンターをホームカードに統合 — Flutter × Supabase リテンション設計
