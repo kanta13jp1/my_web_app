@@ -1,7 +1,7 @@
 ---
 title: "China's AI Giants: Adding Tencent Hunyuan & ByteDance Doubao to AI University (74 Providers)"
 tags: AI,LLM,buildinpublic,webdev,Flutter
-published: false
+published: true
 ---
 
 # China's AI Giants: Tencent Hunyuan & ByteDance Doubao — AI University Update

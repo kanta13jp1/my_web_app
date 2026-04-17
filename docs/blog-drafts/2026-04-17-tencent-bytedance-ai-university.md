@@ -1,7 +1,7 @@
 ---
 title: "中国 AI 最前線 — Tencent Hunyuan と ByteDance Doubao を AI大学に追加 (74社目)"
 tags: AI,LLM,個人開発,Flutter,Supabase
-published: false
+published: true
 ---
 
 # 中国 AI 最前線 — Tencent Hunyuan と ByteDance Doubao を AI大学に追加
