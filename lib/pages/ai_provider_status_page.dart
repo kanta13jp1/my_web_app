@@ -332,6 +332,8 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
   bool _supportsTestCall(AiProviderEntry entry) {
     const supported = {
       'openai',
+      'anthropic',
+      'google',
       'x',
       'deepseek',
       'groq',

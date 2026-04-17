@@ -158,7 +158,37 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     parseResponse: (data) =>
       String(pick(data, "message", "content", 0, "text") ?? ""),
   },
-  // anthropic / google は ai-assistant (MAGI) 経由で既に利用可能なので provider.chat の対象外
+  // Anthropic は x-api-key ヘッダ認証 — provider.chat ハンドラ側で Authorization を抑制する
+  anthropic: {
+    displayName: "Anthropic Claude",
+    envKey: "ANTHROPIC_API_KEY",
+    chatUrl: "https://api.anthropic.com/v1/messages",
+    defaultModel: "claude-haiku-4-5-20251001",
+    buildBody: (messages, model) => ({
+      model,
+      max_tokens: 512,
+      messages: (messages as { role: string; content: string }[]).filter(
+        (m) => m.role !== "system",
+      ),
+    }),
+    parseResponse: (data) => String(pick(data, "content", 0, "text") ?? ""),
+  },
+  // Google Gemini は Bearer ではなく ?key=xxx クエリ認証 — provider.chat で特殊分岐
+  google: {
+    displayName: "Google Gemini",
+    envKey: "GEMINI_API_KEY",
+    chatUrl:
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    defaultModel: "gemini-2.5-flash",
+    buildBody: (messages, _model) => ({
+      contents: (messages as { role: string; content: string }[]).map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }],
+      })),
+    }),
+    parseResponse: (data) =>
+      String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
+  },
 };
 
 function asString(value: unknown): string {
@@ -1596,10 +1626,19 @@ serve(async (req: Request) => {
         }
 
         try {
-          const resp = await fetch(cfg.chatUrl, {
+          // 認証方式はプロバイダーごとに異なる
+          let authHeaders: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
+          let fetchUrl = cfg.chatUrl;
+          if (providerId === "anthropic") {
+            authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
+          } else if (providerId === "google") {
+            authHeaders = {};
+            fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
+          }
+          const resp = await fetch(fetchUrl, {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${apiKey}`,
+              ...authHeaders,
               "Content-Type": "application/json",
               ...(cfg.extraHeaders ?? {}),
             },
@@ -1704,91 +1743,6 @@ serve(async (req: Request) => {
         return json({ success: true, transcript: transcriptText });
       }
 
-      // ── AI プロバイダー試用チャット ────────────────────────────────────────
-      case "provider.chat": {
-        const provider = String(body.provider ?? "");
-        const message = String(body.message ?? "").slice(0, 2000);
-        if (!message) return json({ error: "message required" }, 400);
-
-        if (provider === "google") {
-          const key = Deno.env.get("GEMINI_API_KEY") ?? "";
-          if (!key) return json({ error: "GEMINI_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: message }] }] }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const text = ((d.candidates as Array<Record<string, unknown>>)?.[0]?.content as Record<string, unknown>)?.parts as Array<{text: string}>;
-          return json({ success: true, response: text?.[0]?.text ?? "No response", model: "gemini-2.0-flash" });
-        }
-
-        if (provider === "anthropic") {
-          const key = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
-          if (!key) return json({ error: "ANTHROPIC_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-            body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 1024, messages: [{ role: "user", content: message }] }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const content = d.content as Array<{text: string}>;
-          return json({ success: true, response: content?.[0]?.text ?? "No response", model: "claude-haiku-4-5" });
-        }
-
-        if (provider === "groq") {
-          const key = Deno.env.get("GROQ_API_KEY") ?? "";
-          if (!key) return json({ error: "GROQ_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: message }], max_tokens: 1024 }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const choices = d.choices as Array<Record<string, unknown>>;
-          return json({ success: true, response: (choices?.[0]?.message as Record<string, unknown>)?.content ?? "No response", model: "llama-3.3-70b" });
-        }
-
-        if (provider === "openai") {
-          const key = Deno.env.get("OPENAI_API_KEY") ?? "";
-          if (!key) return json({ error: "OPENAI_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: message }], max_tokens: 1024 }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const choices = d.choices as Array<Record<string, unknown>>;
-          return json({ success: true, response: (choices?.[0]?.message as Record<string, unknown>)?.content ?? "No response", model: "gpt-4o-mini" });
-        }
-
-        if (provider === "deepseek") {
-          const key = Deno.env.get("DEEPSEEK_API_KEY") ?? "";
-          if (!key) return json({ error: "DEEPSEEK_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch("https://api.deepseek.com/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: message }], max_tokens: 1024 }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const choices = d.choices as Array<Record<string, unknown>>;
-          return json({ success: true, response: (choices?.[0]?.message as Record<string, unknown>)?.content ?? "No response", model: "deepseek-chat" });
-        }
-
-        if (provider === "mistral") {
-          const key = Deno.env.get("MISTRAL_API_KEY") ?? "";
-          if (!key) return json({ error: "MISTRAL_API_KEY not configured", needs_key: true }, 503);
-          const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ model: "mistral-small-latest", messages: [{ role: "user", content: message }], max_tokens: 1024 }),
-          });
-          const d = await r.json() as Record<string, unknown>;
-          const choices = d.choices as Array<Record<string, unknown>>;
-          return json({ success: true, response: (choices?.[0]?.message as Record<string, unknown>)?.content ?? "No response", model: "mistral-small" });
-        }
-
-        return json({ error: `provider '${provider}' is not yet integrated for chat`, not_integrated: true }, 501);
-      }
 
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
