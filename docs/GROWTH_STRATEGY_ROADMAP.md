@@ -9645,3 +9645,22 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🔴 | Playwright 再起動して音声ページ視覚確認 | VSCode版 |
 | 🟡 | AI大学 v2 学習リマインダーバッチ設定 | PS版 |
 | 🟡 | テスト 13件失敗調査 (pre-existing?) | VSCode版 |
+
+---
+
+### VSCode版セッション記録 #85 (2026-04-17)
+
+**担当**: VSCode版 (CORS修正・Deploy確認・音声ページ確認)
+
+### 完了タスク
+
+1. **growth-acquisition-report CORS修正** — 廃止EFをメタデータから削除、growth-hubエントリに統合
+2. **Deploy to Production: success** (01:20 UTC) — 音声ページ・FSRS migration 全デプロイ完了
+3. **音声学習ページ確認** — LP正常ロード確認、route登録済み・deploy済み
+4. **horse_racing_predictor statuscode調査** — 問題なし
+
+**次回優先タスク**:
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Playwright 再起動して音声ページ視覚確認 | VSCode版 |
+| 🟡 | テスト13件失敗調査 | VSCode版 |
