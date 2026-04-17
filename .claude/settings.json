@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(notebooklm use *)",
+      "Bash(PYTHONUTF8=1 notebooklm use *)",
+      "Bash(notebooklm status)",
+      "Bash(PYTHONUTF8=1 notebooklm status)",
+      "Bash(notebooklm list *)",
+      "Bash(PYTHONUTF8=1 notebooklm list *)",
+      "Bash(notebooklm skill *)",
+      "Bash(PYTHONUTF8=1 notebooklm skill *)",
+      "Bash(flutter analyze)",
+      "Bash(flutter analyze *)",
+      "Bash(dart format --output=none *)",
+      "Bash(PYTHONUTF8=1 python3 scripts/check_versions.py*)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh workflow list *)",
+      "Bash(gh workflow view *)",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_console_messages",
+      "mcp__plugin_claude-mem_mcp-search__smart_outline",
+      "mcp__plugin_claude-mem_mcp-search__smart_search",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "mcp__plugin_claude-mem_mcp-search__get_observations",
+      "mcp__plugin_claude-mem_mcp-search__timeline"
+    ]
+  }
+}

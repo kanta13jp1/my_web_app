@@ -10178,3 +10178,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 次回 Qiita リトライ予定 (2026-04-18 00:00 JST以降)
 1. `2026-04-17-claude-code-vscode-timeout-fix.md` (第104弾 JA)
 2. `2026-04-17-tencent-bytedance-ai-university.md` (第105弾 JA)
+
+---
+
+### Rule 17 WF health check (2026-04-17 15:30)
+- 全 WF success率: 9/9 正常 (Deploy 失敗は旧run/dart format修正前。PS版#107でSUCCESS確認済み)
+- 失敗 WF: Deploy to Production 1件 — dart format CI (修正済み f4d834df)
+- orphan blog-publish branches: 0 (クリーン)
+- permissions.allow: 16エントリ追加 (flutter analyze / dart format --output=none / MCP playwright/claude-mem)
+
+### VSCode版#89 完了 (2026-04-17 15:30)
+- AI大学 76社UI同期: inception_labs/world_labs 追加
+- .claude/settings.json: 16パーミッション追加 (Auto Mode同等)
+- cross-instance-prs: 0件 (クリーン)
