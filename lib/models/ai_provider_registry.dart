@@ -230,7 +230,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'nvidia',
     displayName: 'NVIDIA',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'ibm',
@@ -270,7 +270,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'ai21',
     displayName: 'AI21 Labs',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'voyage',
@@ -336,7 +336,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'moonshot',
     displayName: 'Moonshot Kimi',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'midjourney',
@@ -357,7 +357,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: '01ai',
     displayName: '01.AI',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'coze',
@@ -383,7 +383,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'zhipu',
     displayName: 'Zhipu GLM',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'character_ai',
@@ -413,7 +413,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'cerebras',
     displayName: 'Cerebras',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'prover',

@@ -197,6 +197,54 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     parseResponse: (data) =>
       String(pick(data, "candidates", 0, "content", "parts", 0, "text") ?? ""),
   },
+  cerebras: {
+    displayName: "Cerebras",
+    envKey: "CEREBRAS_API_KEY",
+    chatUrl: "https://api.cerebras.ai/v1/chat/completions",
+    defaultModel: "llama-3.3-70b",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  nvidia: {
+    displayName: "NVIDIA NIM",
+    envKey: "NVIDIA_API_KEY",
+    chatUrl: "https://integrate.api.nvidia.com/v1/chat/completions",
+    defaultModel: "meta/llama-3.1-70b-instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  moonshot: {
+    displayName: "Moonshot (Kimi)",
+    envKey: "MOONSHOT_API_KEY",
+    chatUrl: "https://api.moonshot.cn/v1/chat/completions",
+    defaultModel: "moonshot-v1-8k",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  ai21: {
+    displayName: "AI21 Jamba",
+    envKey: "AI21_API_KEY",
+    chatUrl: "https://api.ai21.com/studio/v1/chat/completions",
+    defaultModel: "jamba-1.5-mini",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  "01ai": {
+    displayName: "01.AI (Yi)",
+    envKey: "YI_API_KEY",
+    chatUrl: "https://api.lingyiwanwu.com/v1/chat/completions",
+    defaultModel: "yi-lightning",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  zhipu: {
+    displayName: "Zhipu AI (GLM)",
+    envKey: "ZHIPU_API_KEY",
+    chatUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+    defaultModel: "glm-4-flash",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {
