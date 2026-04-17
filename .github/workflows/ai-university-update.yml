@@ -26,8 +26,6 @@ jobs:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.BYPASS_RULES || github.token }}
 
       # ── Step 2: 各プロバイダーの RSS から最新ニュースを取得・UPSERT ──────
       - name: Step 2 - Fetch and upsert AI provider news
@@ -103,6 +101,7 @@ jobs:
       - name: Step 3 - Append to daily report and commit to main
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
           SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
@@ -146,6 +145,7 @@ jobs:
           fi
 
           git commit -m "自動: AI大学コンテンツ更新 ${TODAY}"
+          git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin main
           echo "✅ main直接push完了"
 
