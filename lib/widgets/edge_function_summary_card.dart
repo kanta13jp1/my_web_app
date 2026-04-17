@@ -1581,6 +1581,14 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/app-hub',
       'アプリハブページ',
     ),
+    // 追加 (cs-check 自動連携 2026-04-17)
+    _FnDef(
+      'growth-acquisition-report',
+      '成長獲得レポート (成長施策の効果集計)',
+      true,
+      '/growth-acquisition-report',
+      '成長獲得レポートページ',
+    ),
     // 追加 (cs-check 自動連携 2026-04-12)
     _FnDef(
       'financial-report',
