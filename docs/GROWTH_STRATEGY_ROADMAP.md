@@ -10008,3 +10008,33 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI大学 72社 UI同期: harvey/manus/hedra/heygen/recraft/krea を _providerMeta・_quizzes・_fallback に追加
 - Windows版#68-70 cross-instance-prs 3件 done 移動
 - flutter analyze 0エラー確認済み
+
+### セッション記録: PowerShell版#105 (2026-04-17 14:48 JST)
+
+**Rule 17 補完 + Cross-instance-prs アーカイブ**
+
+1. **VSCode拡張 60秒タイムアウト根本原因特定・修正**
+   - 真犯人: `~/.claude/settings.json` の `sleep 600 && exit 2` SessionStart hook
+   - `asyncRewake: true` は VSCode拡張 2.1.112 で非尊重 → 600秒 subprocess ブロック
+   - MCPは全て NONBLOCKING (playwright/magic/github/code-review 削除は効果なし)
+   - 修正: sleep hook 削除。`.mcp.json` 全復元完了
+   - memory: `feedback_correction_20260417_vscode_timeout.md` 保存済み
+
+2. **Deploy to Production 再実行**
+   - 失敗原因: `ai-hub` bundling 時 esm.sh 522 (transient CDN エラー)
+   - `gh run rerun 24549098616 --failed` で再実行 → run 24549900637 進行中
+
+3. **Cross-instance-prs 3件 done アーカイブ**
+   - `20260417_harvey_manus_ui.md` → done (VSCode版#88 完了確認)
+   - `20260417_hedra_heygen_ui.md` → done (VSCode版#88 完了確認)
+   - `20260417_recraft_krea_ui.md` → done (VSCode版#88 完了確認)
+   - commit: `6b6422d6`
+
+4. **残タスク (次回)**
+   - Qiita リトライ: 第59・60・63・64・98-99弾 JA版 → 2026-04-18 00:00 JST 以降 (15:00 UTC)
+   - AI大学 73-74社目候補: Viggle AI / Magic.dev / Synthesia
+
+### 現在の数値
+- T-1: 第103弾
+- AI大学: 72社 (recraft, krea が最新)
+- EF: 16本 / orphan branches: 0
