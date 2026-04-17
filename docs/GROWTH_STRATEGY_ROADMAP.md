@@ -10075,3 +10075,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
    - PS版#104: Rule17 + Qiita リトライ完了 ✅
    - Windows版#71: 73-74社追加 (本セッション)
    - 競合なし
+
+### セッション記録: PowerShell版#106 (2026-04-17 14:55 JST)
+
+**T-1 第104弾 + deploy-prod 再実行**
+
+1. **T-1 第104弾: Claude Code VSCode timeout fix**
+   - JA: `2026-04-17-claude-code-vscode-timeout-fix.md`
+   - EN: `2026-04-17-claude-code-vscode-timeout-fix-en.md`
+   - dev.to: https://dev.to/kanta13jp1/claude-code-vscode-extension-60s-timeout-it-wasnt-the-mcps-47ja ✅
+   - orphan branch マージ・削除完了
+
+2. **状態確認**
+   - AI大学: 74社 (CLAUDE.md + COMPRESSED_PROMPT_V3.md 更新済み by Windows版#71)
+   - cross-instance-prs: tencent_bytedance_ui.md → VSCode版 pending
+   - deploy-prod (run 24549900637): 進行中 (esm.sh 522 再実行)
+   - Issue #393: deploy-prod 成功時に自動クローズ見込み
+
+3. **次回タスク**
+   - Qiita リトライ: 第59・60・63・64・98-99弾 + 第104弾 JA → 2026-04-18 00:00 JST 以降
+   - VSCode版: tencent/bytedance _providerMeta + _fallback + quiz 追加
+   - AI大学 75-76社目候補: Viggle AI / Magic.dev / Synthesia
+
+### 現在の数値
+- T-1: 第104弾 (dev.to投稿済み)
+- AI大学: 74社
+- EF: 16本 / orphan branches: 0
