@@ -367,7 +367,7 @@ class _WbsTab extends StatelessWidget {
         const _SectionHeader(label: 'リリースマイルストーン', icon: Icons.flag_outlined),
         const SizedBox(height: 8),
         if (milestones.isEmpty)
-          _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           SizedBox(
             height: 140,
@@ -394,13 +394,13 @@ class _WbsTab extends StatelessWidget {
 
         // ── カテゴリ別タスク ───────────────────────────────────────────────
         if (grouped.isEmpty)
-          _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           ...grouped.entries.map((entry) => _CategorySection(
                 category: entry.key,
                 tasks: entry.value,
                 categoryIcon: entry.value.isNotEmpty ? entry.value.first.categoryIcon : '📋',
-              )),
+              ),),
       ],
     );
   }
@@ -417,8 +417,8 @@ class _OverallProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF1A1A2E), const Color(0xFF16213E)],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -723,14 +723,20 @@ class _TaskRow extends StatelessWidget {
           ],
           if (task.endDate != null) ...[
             const SizedBox(height: 4),
-            Row(children: [
-              const Icon(Icons.calendar_today_outlined, size: 10, color: Color(0xFF505050)),
-              const SizedBox(width: 4),
-              Text(
-                '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2,'0')}/${task.endDate!.day.toString().padLeft(2,'0')}',
-                style: const TextStyle(color: Color(0xFF505050), fontSize: 10),
-              ),
-            ]),
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 10,
+                  color: Color(0xFF505050),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2,'0')}/${task.endDate!.day.toString().padLeft(2,'0')}',
+                  style: const TextStyle(color: Color(0xFF505050), fontSize: 10),
+                ),
+              ],
+            ),
           ],
         ],
       ),
@@ -874,11 +880,20 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.label, required this.icon});
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-        Icon(icon, color: const Color(0xFFFF6B35), size: 18),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-      ]);
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, color: const Color(0xFFFF6B35), size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      );
 }
 
 class _EmptyCard extends StatelessWidget {

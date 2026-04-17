@@ -230,7 +230,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'ibm', displayName: 'IBM', status: AiProviderStatus.notImplemented),
+      id: 'ibm', displayName: 'IBM', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'sakana',
       displayName: 'Sakana AI',
@@ -247,7 +247,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'reka', displayName: 'Reka AI', status: AiProviderStatus.notImplemented),
+      id: 'reka', displayName: 'Reka AI', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'aleph_alpha',
       displayName: 'Aleph Alpha',
@@ -280,14 +280,14 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'suno', displayName: 'Suno', status: AiProviderStatus.notImplemented),
+      id: 'suno', displayName: 'Suno', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'ideogram',
       displayName: 'Ideogram',
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'udio', displayName: 'Udio', status: AiProviderStatus.notImplemented),
+      id: 'udio', displayName: 'Udio', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'luma',
       displayName: 'Luma AI',
@@ -299,7 +299,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'pika', displayName: 'Pika', status: AiProviderStatus.notImplemented),
+      id: 'pika', displayName: 'Pika', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'assemblyai',
       displayName: 'AssemblyAI',
@@ -337,9 +337,9 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: '01ai', displayName: '01.AI', status: AiProviderStatus.notImplemented),
+      id: '01ai', displayName: '01.AI', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
-      id: 'coze', displayName: 'Coze', status: AiProviderStatus.notImplemented),
+      id: 'coze', displayName: 'Coze', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'apple',
       displayName: 'Apple Intelligence',
@@ -462,7 +462,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
       status: AiProviderStatus.notImplemented,
   ),
   AiProviderEntry(
-      id: 'krea', displayName: 'Krea', status: AiProviderStatus.notImplemented),
+      id: 'krea', displayName: 'Krea', status: AiProviderStatus.notImplemented,),
   AiProviderEntry(
       id: 'tencent',
       displayName: 'Tencent Hunyuan',
