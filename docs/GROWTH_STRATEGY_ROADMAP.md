@@ -10349,3 +10349,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   (google/anthropic/groq/openai/deepseek/mistral 対応)
 - lib/main.dart + gemini_university_v2_page.dart: ルート・ナビゲーション追加 (重複解消)
 - deploy-prod トリガー済み
+
+### PS版#107 WBS + ガントチャート実装 (2026-04-17 22:30)
+- docs/WBS.md: 全インスタンス共有WBSドキュメント作成
+- wbs_milestones + wbs_tasks テーブル (migration 20260417180000/190000)
+  - α版: 2026-05-31 (50ユーザー目標)
+  - β版: 2026-07-31 (500ユーザー目標)
+  - 最終版 v1.0: 2026-10-31 (5,000ユーザー目標)
+  - 8カテゴリ・40タスク・進捗バー
+- lib/pages/project_gantt_page.dart: 全面刷新 (マイルストーン + WBSタスク + カテゴリ別進捗)
+- docs/cross-instance-prs/20260417_wbs_gantt.md: 全インスタンスへWBS周知
+- deploy-prod トリガー済み
