@@ -9787,3 +9787,24 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### 残作業
 - 🔴 Qiita リトライ: 第59・60・63・64・98・99・100弾 → 15:00 UTC以降
 - 🟡 次T-1記事ネタ: FSRS home card integration / AI大学 8社providerMeta追加
+
+---
+
+## PS版#102 セッション記録 (2026-04-17 11:30 JST)
+
+### 完了タスク
+
+1. **T-1 第101弾: DB駆動動的タブ AI大学記事**
+   - JA: `2026-04-17-ai-university-provider-meta.md`
+   - EN: `2026-04-17-ai-university-provider-meta-en.md`
+   - dev.to 投稿成功: https://dev.to/kanta13jp1/zero-config-new-ai-provider-tabs-db-driven-dynamic-tabs-in-flutter-supabase-27c6
+
+2. **Deploy failure 再診断 + 修正 (Rule 17)**
+   - 02:02: esm.sh 522 CDN障害 (一時的)
+   - 02:16: gemini_university_v2_page.dart dart format 未適用 → VSCode版#86が修正・プッシュ
+   - 02:29: blog-publish.yml改善コミット → 新デプロイ起動中
+
+3. **COMPRESSED_PROMPT_V3 T-1テーブル更新** (第101弾 ✅ / 第102弾以降)
+
+### 残作業
+- 🔴 Qiita リトライ: 第59・60・63・64・98〜101弾 → 15:00 UTC以降
