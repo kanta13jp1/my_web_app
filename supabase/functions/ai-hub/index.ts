@@ -270,6 +270,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  huggingface: {
+    displayName: "Hugging Face",
+    envKey: "HUGGINGFACE_TOKEN",
+    chatUrl: "https://api-inference.huggingface.co/v1/chat/completions",
+    defaultModel: "meta-llama/Llama-3.3-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  minimax: {
+    displayName: "MiniMax",
+    envKey: "MINIMAX_API_KEY",
+    chatUrl: "https://api.minimax.chat/v1/chat/completions",
+    defaultModel: "MiniMax-Text-01",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {
