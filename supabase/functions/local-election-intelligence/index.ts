@@ -20,9 +20,15 @@ const NEW_KOKUMIN_ELECTIONS_URL =
 const TARGET_LOCAL_MEMBERS = 700;
 const BASELINE_CURRENT_LOCAL_MEMBERS = 340;
 const SCHEDULE_PAST_DAYS = 14;
+// ユーザー要件: 最低でも 1ヶ月分 (30日) の地方選予定を取得する。
+// new-kokumin は 1,014件のデータを返すため cap に余裕を持たせる。
+// PS版#112: window 60→90 / cap 100→200
+// Win版#80: cap 200→300 + SCHEDULE_MIN_WINDOW_DAYS=30 の最低保証を追加
 const SCHEDULE_WINDOW_DAYS = 90;
 const SCHEDULE_DETAIL_WINDOW_DAYS = 14;
-const SCHEDULE_MAX_ENTRIES = 200;
+const SCHEDULE_MAX_ENTRIES = 300;
+// 最低保証日数 (これを下回る window は使わない)
+const SCHEDULE_MIN_WINDOW_DAYS = 30;
 
 const JP_LOCAL_ASSEMBLY_MEMBERS = "\u5730\u65b9\u81ea\u6cbb\u4f53\u8b70\u54e1";
 const JP_PLANNED_CANDIDATES = "\u5019\u88dc\u4e88\u5b9a\u8005";
@@ -864,7 +870,9 @@ async function fetchUpcomingLocalElectionSchedules(
 ): Promise<LocalElectionScheduleEntry[]> {
   const today = startOfDay(new Date());
   const earliestDate = addDays(today, -SCHEDULE_PAST_DAYS);
-  const latestDate = addDays(today, SCHEDULE_WINDOW_DAYS);
+  // 最低保証日数 (SCHEDULE_MIN_WINDOW_DAYS) を下限として最終日を決定
+  const windowDays = Math.max(SCHEDULE_WINDOW_DAYS, SCHEDULE_MIN_WINDOW_DAYS);
+  const latestDate = addDays(today, windowDays);
   const detailCutoffDate = addDays(today, SCHEDULE_DETAIL_WINDOW_DAYS);
   const overviewEntries = mergeScheduleOverviewEntries(
     await fetchScheduleOverviewEntries(earliestDate, latestDate),

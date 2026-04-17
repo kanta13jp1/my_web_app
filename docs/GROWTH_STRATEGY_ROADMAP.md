@@ -10500,3 +10500,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - election_management_dashboard.dart 1行fix
 - migration timestamp衝突修正: 20260418040000_seed_pfn (→041000) でdeploy-prod再実行
 - Rule17: orphan 0件 / deploy-prod rerun中
+### Windowsアプリ版#79 完了 (2026-04-18 02:10) — ガントチャート MS Project 風UI
+- /project-gantt に 3タブ目「タイムライン」追加
+- MS Project 風レイアウト実装
+  - 左パネル (340px 固定): # / チェックボックス / カテゴリ絵文字 / タスク名 / 担当バッジ
+  - 右タイムライン (横スクロール): 月ヘッダー + 日付目盛 + 週末ハイライト + Today線 + タスクバー + マイルストーン菱形
+  - 垂直スクロール左右同期 (ScrollController 相互 jumpTo)
+  - CustomPaint で グリッド + 月ヘッダー描画
+- URL: https://my-web-app-b67f4.web.app/project-gantt (ハッシュなし・# は不要)
+- 既存「開発WBS」「マイプロジェクト」タブは維持 (TabController length 2→3)
+- flutter analyze 0エラー / deploy-prod 自動走行中
