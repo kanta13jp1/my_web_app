@@ -1,7 +1,7 @@
 ---
 title: "SambaNova: GPU-Free AI Inference at 5x Speed — AI University Update (78 Providers)"
 tags: AI,LLM,buildinpublic,webdev,hardware
-published: false
+published: true
 ---
 
 # SambaNova: GPU-Free AI Inference — AI University Update (78 Providers)

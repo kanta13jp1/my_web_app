@@ -1,7 +1,7 @@
 ---
 title: "SambaNova — GPU不要のAI推論チップで5倍速を実現 (AI大学78社目)"
 tags: AI,LLM,個人開発,Flutter,buildinpublic
-published: false
+published: true
 ---
 
 # SambaNova — GPU に依存しない AI 推論の新潮流
