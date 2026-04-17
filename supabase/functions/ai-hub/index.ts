@@ -286,6 +286,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  reka: {
+    displayName: "Reka AI",
+    envKey: "REKA_API_KEY",
+    chatUrl: "https://api.reka.ai/v1/chat/completions",
+    defaultModel: "reka-flash-3",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  writer: {
+    displayName: "Writer Palmyra",
+    envKey: "WRITER_API_KEY",
+    chatUrl: "https://api.writer.com/v1/chat",
+    defaultModel: "palmyra-x5",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {

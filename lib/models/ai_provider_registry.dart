@@ -255,7 +255,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'reka',
     displayName: 'Reka AI',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'REKA_API_KEY',
   ),
   AiProviderEntry(
     id: 'aleph_alpha',
@@ -265,7 +266,8 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'writer',
     displayName: 'Writer',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'WRITER_API_KEY',
   ),
   AiProviderEntry(
     id: 'ai21',
