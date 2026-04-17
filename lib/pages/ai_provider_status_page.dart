@@ -279,11 +279,11 @@ class _ProviderCard extends StatelessWidget {
 
   const _ProviderCard({required this.provider, this.onTry});
 
-  static _statusConfig(ProviderStatus s) => switch (s) {
-    ProviderStatus.implemented   => (label: '実装済み',              color: Color(0xFF4CAF50)),
-    ProviderStatus.needsApiKey   => (label: 'APIキー設定が必要',      color: Color(0xFFFFC107)),
-    ProviderStatus.needsPayment  => (label: 'プロバイダーに課金が必要', color: Color(0xFF3D5AFE)),
-    ProviderStatus.notImplemented=> (label: '未実装',                color: Color(0xFF707070)),
+  static ({String label, Color color}) _statusConfig(ProviderStatus s) => switch (s) {
+    ProviderStatus.implemented   => (label: '実装済み',              color: const Color(0xFF4CAF50)),
+    ProviderStatus.needsApiKey   => (label: 'APIキー設定が必要',      color: const Color(0xFFFFC107)),
+    ProviderStatus.needsPayment  => (label: 'プロバイダーに課金が必要', color: const Color(0xFF3D5AFE)),
+    ProviderStatus.notImplemented=> (label: '未実装',                color: const Color(0xFF707070)),
   };
 
   @override
