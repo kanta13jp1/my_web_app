@@ -9913,3 +9913,26 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🟡 | CI テスト失敗調査 | VSCode版 |
 | 🟡 | docs/technical/EDGE_FUNCTIONS_INVENTORY.md 15→16本修正 | Windows版 |
 | 🟢 | AI大学 69-70社目候補検討 (Replit AI / Hedra AI / Cursor) | Windows版 |
+
+### セッション記録: Windowsアプリ版#69 (2026-04-17 12:30 JST)
+
+**AI大学 69-70社目追加 (Hedra AI + HeyGen)**
+
+1. **Hedra AI** (`hedra`) — リアルタイム会話型アバター動画 (Character-3・a16z $44M・3M+ユーザー)
+   - migration: `20260417094000_seed_hedra_ai_university.sql`
+2. **HeyGen** (`heygen`) — ビジネス向けAIアバター動画 (100K+企業・175言語・G2 #1急成長)
+   - migration: `20260417095000_seed_heygen_ai_university.sql`
+3. **プロバイダーリスト** 68→70社に更新 (CLAUDE.md + COMPRESSED_PROMPT_V3.md)
+4. **cross-instance-pr done** — EDGE_FUNCTIONS_INVENTORY 16本修正 (前セッション完了済)
+
+### 現在の数値
+- AI大学: 70社 (DB migration済み / UI同期はVSCode版待ち)
+- EF: 16本 / GHA: 25本
+
+### 次回優先タスク
+| 優先度 | タスク | 担当 |
+| --- | --- | --- |
+| 🔴 | Hedra/HeyGen + Harvey/Manus UI追加 | VSCode版 |
+| 🔴 | Qiita リトライ (第59-103弾) | PS版 |
+| 🟡 | Rule 18: AI大学コンテンツ活用 → EF統合検討 | Windows版 |
+| 🟢 | AI大学 71社目候補 (Physical Intelligence / Replit / Synthesia) | Windows版 |
