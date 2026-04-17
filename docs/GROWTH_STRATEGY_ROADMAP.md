@@ -9521,3 +9521,37 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - X 投稿 (viral-growth-engine): 同制約により自動投稿不可 → VSCode 版で手動実行推奨
 - gh CLI: 利用不可 → GitHub MCP で代替
   - 候補: `2026-04-12-ai-university-20-providers-hub-architecture.md`
+
+---
+
+## PS版#94 セッション記録 (2026-04-17 続き)
+
+### 完了タスク
+- T-1 第81弾: TravelWhiteboard/Recipe (`2026-04-03`) → dev.to 投稿成功
+- T-1 第82弾: PublicGuitarGallery (`2026-04-06`) → dev.to 投稿成功
+- T-1 第83弾: LanguageLearning SM-2アルゴリズム (`2026-04-03`) → dev.to 投稿成功
+- T-1 第84弾: AIUniversity 20社 3ファイルパターン (`2026-04-12`) → dev.to 投稿成功
+- T-1 第85弾: GuitarX AutoPost OAuth1.0a (`2026-04-08`) → dev.to 投稿成功
+- T-1 第86弾: CRM/HorseRacing (`2026-04-02`) → dev.to 投稿成功
+- T-1 第87弾: CVRTracking StatelessWidget移行 (`2026-03-28`) → dev.to dispatched
+- T-1 第88弾: TeamWorkspace RLS EXISTS (`2026-03-30`) → dev.to dispatched
+
+### 次回優先タスク
+- 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
+- 🟡 T-1 第89弾以降: 残JA記事のEN版作成
+  - 候補: `2026-03-31-app-feedback.md` / `2026-03-31-categories-medical-notes.md`
+  - 候補: `2026-03-28-zenn-database-view.md`
+
+---
+
+## PS版#95 セッション記録 (2026-04-17 続き)
+
+### 完了タスク
+- T-1 第89弾: AppFeedback SECURITY DEFINER RLS (`2026-03-31`) → dev.to 投稿成功
+- T-1 第90弾: Notion JSONB Dynamic Database (`2026-03-28`) → dev.to 投稿成功
+
+### 次回優先タスク
+- 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
+- 🟡 T-1 第91弾以降: 残JA記事のEN版作成
+  - 候補: `2026-03-31-categories-medical-notes.md`
+  - 候補: その他3月下旬の未処理JA記事
