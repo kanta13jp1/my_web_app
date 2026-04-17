@@ -10425,6 +10425,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - CLAUDE.md / COMPRESSED_PROMPT リスト + "80社" 参照 2箇所更新
 - flutter analyze 0エラー / deno lint clean / dart format pass
 
+### PS版#110 ai-hub 25プロバイダー達成 (2026-04-18)
+- supabase/functions/ai-hub/index.ts: 23→25プロバイダー
+  - huggingface: HuggingFace Inference API (meta-llama/Llama-3.3-70B-Instruct)
+  - minimax: MiniMax Text-01 (OpenAI互換)
+- lib/models/ai_provider_registry.dart: 両社とも既に apiKeyRequired → 変更不要
+- WBS migration: 20260418030000 — provider.chat 35%進捗
+- 残タスク: Supabase Secrets に HUGGINGFACE_TOKEN / MINIMAX_API_KEY 追加 (ユーザー対応)
+- 次フェーズ候補: reka/replicate/ibm/adept (API形式要調査)
+
 ### VSCode版#90 セッション2 (2026-04-18)
 - FSRS due-cards統合: tab listener + getNextCards + 今日の復習バッジ (70%→90%)
 - DESIGN.md準拠: gemini_university_v2_page.dart — BlueGrey系色→トークン色4件修正
