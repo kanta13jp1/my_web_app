@@ -1,7 +1,7 @@
 ---
 title: "DB駆動タブで新AIプロバイダーをゼロコード追加 — Flutter × Supabase 動的タブ設計"
 tags: Flutter,Supabase,buildinpublic,個人開発,Dart
-published: false
+published: true
 ---
 
 # DB駆動タブで新AIプロバイダーをゼロコード追加 — Flutter × Supabase 動的タブ設計
