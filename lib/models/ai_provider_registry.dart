@@ -220,7 +220,18 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'meta',
     displayName: 'Meta Llama',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'LLAMA_API_KEY',
+    entryPoint: 'ai-hub (provider.chat)',
+    note: 'api.llama.com — Llama-4-Scout-17B-16E-Instruct',
+  ),
+  AiProviderEntry(
+    id: 'nebius',
+    displayName: 'Nebius AI Studio',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'NEBIUS_API_KEY',
+    entryPoint: 'ai-hub (provider.chat)',
+    note: 'Yandex傘下・欧州GPU クラウド — api.studio.nebius.com',
   ),
   AiProviderEntry(
     id: 'amazon',

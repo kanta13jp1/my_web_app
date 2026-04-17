@@ -302,6 +302,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  meta: {
+    displayName: "Meta Llama",
+    envKey: "LLAMA_API_KEY",
+    chatUrl: "https://api.llama.com/v1/chat/completions",
+    defaultModel: "Llama-4-Scout-17B-16E-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  nebius: {
+    displayName: "Nebius AI Studio",
+    envKey: "NEBIUS_API_KEY",
+    chatUrl: "https://api.studio.nebius.com/v1/chat/completions",
+    defaultModel: "meta-llama/Llama-3.3-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {
