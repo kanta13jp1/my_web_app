@@ -10036,5 +10036,42 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### 現在の数値
 - T-1: 第103弾
-- AI大学: 72社 (recraft, krea が最新)
+- AI大学: 74社 (tencent, bytedance が最新)
 - EF: 16本 / orphan branches: 0
+
+### セッション記録: Windowsアプリ版#71 (2026-04-17 14:50 JST)
+
+**AI大学 73-74社目: Tencent (Hunyuan) + ByteDance (Doubao) 追加**
+
+1. **新規プロバイダー追加 (中国 BAT/TikTok 補完)**
+   - **Tencent Hunyuan** (tencent)
+     - 中国 Tencent の AI 基盤モデル
+     - Hunyuan-Large 389B MoE / 256K context (OSS最大級)
+     - Hunyuan Image 3.0 (80B 世界最大OSS画像) / HunyuanVideo (13B+) / 3D 2.0
+   - **ByteDance Doubao** (bytedance)
+     - TikTok運営 ByteDance の AI ブランド
+     - Doubao 2.0 (2026/02) "Agent Era" 特化
+     - Seed 2.0 Pro/Lite/Mini/Code + Seedance 2.0 動画
+     - 業界最安値級 API (GPT-5.2 比 3.7倍安)
+
+2. **更新ファイル**
+   - `supabase/migrations/20260417098000_seed_tencent_ai_university.sql` (新規)
+   - `supabase/migrations/20260417099000_seed_bytedance_ai_university.sql` (新規)
+   - `CLAUDE.md` — 登録プロバイダーリスト 72→74社
+   - `.github/COMPRESSED_PROMPT_V3.md` — 74社表記に更新
+   - `.github/workflows/ai-university-update.yml` — 静的seed コメント追加
+
+3. **Cross-Instance PR**
+   - `docs/cross-instance-prs/20260417_tencent_bytedance_ui.md` — VSCode版 UI 追加依頼
+
+4. **次回検討候補**
+   - Alibaba Tongyi (qwen は alibaba 製造元・別ブランド)
+   - Huawei Pangu (中国 BAT 残り 1社)
+   - Inception Labs (Diffusion LLM 注目株)
+   - World Labs (Fei-Fei Li の 3D 空間 AI)
+
+5. **Multi-Instance タスク競合確認**
+   - VSCode版#88: 72社UI同期完了 ✅ (harvey/manus/hedra/heygen/recraft/krea)
+   - PS版#104: Rule17 + Qiita リトライ完了 ✅
+   - Windows版#71: 73-74社追加 (本セッション)
+   - 競合なし
