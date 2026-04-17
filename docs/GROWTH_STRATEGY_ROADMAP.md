@@ -9606,6 +9606,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Rule 17: GHA全ワークフロー健全確認 (失敗0件/50runs)
 - EN バックログ完全クリア: 全publishable JA記事のEN版作成・投稿済み
 
+---
+
+## PS版#94並列 セッション記録 (2026-04-17 続き — objective-cannon worktree)
+
+### 完了タスク
+- T-1 第97弾: Voice AI Chat Conversation Memory (Web Speech API + Supabase) → dev.to 投稿成功
+  - <https://dev.to/kanta13jp1/implementing-voice-ai-chat-with-conversation-memory-in-flutter-web-web-speech-api-supabase-1b12>
+- Rule 9 追加最適化: `.github/*.md` / ISSUE_TEMPLATE / PULL_REQUEST_TEMPLATE を deploy-prod paths-ignore に追加
+  - `.github/COMPRESSED_PROMPT_V3.md` への docs-only push が deploy を trigger しなくなる
+
 ### 次回優先タスク
 - 🔴 Qiita リトライ (第59・60・63・64弾) → 15:00 UTC (JST翌日0:00) 以降
 - 🟡 新規記事執筆: 2026-04-17以降の新機能を対象に次の記事ドラフト
+- 🟡 Rule 9 継続: その他 workflow の concurrency / timeout 見直し
