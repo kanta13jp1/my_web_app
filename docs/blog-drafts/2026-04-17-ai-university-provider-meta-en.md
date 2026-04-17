@@ -1,7 +1,7 @@
 ---
 title: "Zero-Config New AI Provider Tabs: DB-Driven Dynamic Tabs in Flutter + Supabase"
 tags: Flutter,Supabase,buildinpublic,Dart,AI
-published: false
+published: true
 ---
 
 # Zero-Config New AI Provider Tabs: DB-Driven Dynamic Tabs in Flutter + Supabase
