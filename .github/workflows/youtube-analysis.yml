@@ -58,20 +58,19 @@ jobs:
           echo "tsv_updated=true" >> $GITHUB_OUTPUT
           echo "📊 updated_table.tsv 更新完了"
 
-      # ── Step 3: コミット → PR作成・マージ ──────────────────────────────────
-      - name: Step 3 - コミット & PR作成・マージ
+      # ── Step 3: コミット → main直接push ──────────────────────────────────
+      - name: Step 3 - コミット & main直接push
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
-          RUN_ID="${{ github.run_id }}"
-          BRANCH="youtube-analysis-${DATE}-${RUN_ID}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git fetch origin main
-          git checkout -b "$BRANCH" origin/main
+          git checkout main
+          git reset --hard origin/main
 
           # TSVのみコミット (yt_results.json はランタイム一時ファイル)
           git add updated_table.tsv
@@ -82,19 +81,8 @@ jobs:
 
           VIDEOS="${{ steps.fetch.outputs.videos_fetched }}"
           git commit -m "自動: YouTube分析スナップショット ${DATE} (${VIDEOS}件)"
-          git push origin "$BRANCH"
-
-          set +e
-          PR_URL=$(gh pr create \
-            --title "自動: YouTube分析 ${DATE}" \
-            --body "YouTube チャンネル分析スナップショット (GitHub Actions run #${RUN_ID})" \
-            --base main \
-            --head "$BRANCH")
-          if [ -n "$PR_URL" ]; then
-            gh pr merge "$PR_URL" --squash --delete-branch --yes 2>&1 && \
-              echo "✅ マージ完了" || echo "⚠️ 手動マージが必要: $PR_URL"
-          fi
-          set -e
+          git push origin main
+          echo "✅ main直接push完了"
 
       # ── Step 4: schedule_task_runs 記録 ────────────────────────────────────
       - name: Step 4 - schedule_task_runs 記録

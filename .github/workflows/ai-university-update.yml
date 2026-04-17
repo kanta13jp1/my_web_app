@@ -92,19 +92,19 @@ jobs:
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 
       # ── Step 3: 日次レポートへ追記 + PR 経由コミット ─────────────────────
-      - name: Step 3 - Append to daily report and commit via PR
+      - name: Step 3 - Append to daily report and commit to main
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           TODAY=$(TZ=Asia/Tokyo date +'%Y-%m-%d')
-          BRANCH="ai-university-update/${TODAY}-$(date +%H%M%S)"
           SUCCESS_COUNT="${{ steps.update.outputs.success_count }}"
           FAILED="${{ steps.update.outputs.failed_providers }}"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin main
-          git checkout -b "$BRANCH" origin/main
+          git checkout main
+          git reset --hard origin/main
 
           # 日次レポートが存在しない場合は作成
           REPORT="docs/daily-reports/${TODAY}.md"
@@ -138,19 +138,8 @@ jobs:
           fi
 
           git commit -m "自動: AI大学コンテンツ更新 ${TODAY}"
-          git push origin "$BRANCH"
-
-          set +e
-          PR_URL=$(gh pr create \
-            --title "自動: AI大学コンテンツ更新 ${TODAY}" \
-            --body "ai-university-update ワークフローによる自動コンテンツ更新 (${SUCCESS_COUNT}/${{ steps.update.outputs.total_providers }} 成功)" \
-            --base main \
-            --head "$BRANCH")
-          if [ -n "$PR_URL" ]; then
-            gh pr merge "$PR_URL" --squash --delete-branch --yes 2>&1 && \
-              echo "✅ マージ完了" || echo "⚠️ 手動マージが必要: $PR_URL"
-          fi
-          set -e
+          git push origin main
+          echo "✅ main直接push完了"
 
       # ── Step 4: schedule_task_runs 記録 ─────────────────────────────────
       - name: Step 4 - Record to schedule_task_runs
