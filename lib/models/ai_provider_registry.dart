@@ -331,7 +331,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'qwen',
     displayName: 'Alibaba Qwen',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'moonshot',
@@ -393,12 +393,12 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'inflection',
     displayName: 'Inflection Pi',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'allenai',
     displayName: 'Allen AI (OLMo)',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
   ),
   AiProviderEntry(
     id: 'naver',

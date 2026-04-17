@@ -245,6 +245,31 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  qwen: {
+    displayName: "Alibaba Qwen",
+    envKey: "DASHSCOPE_API_KEY",
+    chatUrl:
+      "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
+    defaultModel: "qwen-plus",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  inflection: {
+    displayName: "Inflection Pi",
+    envKey: "INFLECTION_API_KEY",
+    chatUrl: "https://api.inflection.ai/v1/chat/completions",
+    defaultModel: "inflection_3_pi",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  allenai: {
+    displayName: "Allen AI (OLMo)",
+    envKey: "ALLENAI_API_KEY",
+    chatUrl: "https://olmo-community.api.allenai.org/v1/chat/completions",
+    defaultModel: "allenai/OLMo-2-0325-32B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {
