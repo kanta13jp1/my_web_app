@@ -2078,7 +2078,9 @@ abstinence_slip_details: $slipDetailsText
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black54,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -2094,7 +2096,9 @@ abstinence_slip_details: $slipDetailsText
                   detail,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -2218,7 +2222,8 @@ abstinence_slip_details: $slipDetailsText
             detail,
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
             ),
           ),
           const SizedBox(height: 8),
@@ -2226,7 +2231,8 @@ abstinence_slip_details: $slipDetailsText
             value: goal.progress,
             minHeight: 8,
             borderRadius: BorderRadius.circular(999),
-            backgroundColor: isDark ? Colors.white.withValues(alpha: 0.24) : Colors.white,
+            backgroundColor:
+                isDark ? Colors.white.withValues(alpha: 0.24) : Colors.white,
             color: accent,
           ),
           const SizedBox(height: 8),
@@ -2234,7 +2240,8 @@ abstinence_slip_details: $slipDetailsText
             helper,
             style: TextStyle(
               fontSize: 12,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
             ),
           ),
           const SizedBox(height: 10),
@@ -2349,7 +2356,8 @@ abstinence_slip_details: $slipDetailsText
                     '${snapshot.abstinenceFocusCount > activeLabels.length ? ' ほか' : ''}',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
             ),
           ),
           const SizedBox(height: 10),
@@ -2402,7 +2410,9 @@ abstinence_slip_details: $slipDetailsText
                   key: const Key('home_abstinence_discipline_summary'),
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -2445,7 +2455,9 @@ abstinence_slip_details: $slipDetailsText
                   Text(
                     '切断サイン: $primarySignal',
                     style: TextStyle(
-                      color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black87,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2735,7 +2747,8 @@ abstinence_slip_details: $slipDetailsText
                                   ? matchesFilter
                                       ? (status.label == '未設定'
                                           ? (isDark
-                                              ? Colors.white.withValues(alpha: 0.7)
+                                              ? Colors.white
+                                                  .withValues(alpha: 0.7)
                                               : Colors.black87)
                                           : accentColor)
                                       : isDark
@@ -4430,7 +4443,8 @@ abstinence_slip_details: $slipDetailsText
                                   subtitle: Text(
                                     'AI参謀と連携し、地域特性を踏まえた勝利戦略を立案します。',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   trailing: const Icon(
@@ -4504,7 +4518,8 @@ abstinence_slip_details: $slipDetailsText
                                     '県連別の純増配分と月次KPIをまとめて管理し、'
                                     '未配分ギャップや公認内定の遅れを可視化します。',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   trailing: const Icon(
@@ -5134,8 +5149,9 @@ abstinence_slip_details: $slipDetailsText
     Widget? bottomWidget,
   }) {
     final baseColor = isDark ? const Color(0xFF111827) : Colors.white;
-    final labelColor =
-        isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.65);
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.7)
+        : Colors.black.withValues(alpha: 0.65);
     final titleColor = isDark ? Colors.white : Colors.black87;
 
     return Material(
@@ -5261,8 +5277,9 @@ abstinence_slip_details: $slipDetailsText
     _OfficeKpiMetricItem metric,
     bool isDark,
   ) {
-    final labelColor =
-        isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.6);
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.7)
+        : Colors.black.withValues(alpha: 0.6);
     final valueColor = isDark ? Colors.white : Colors.black87;
 
     return Padding(
@@ -5305,8 +5322,9 @@ abstinence_slip_details: $slipDetailsText
       spots.add(FlSpot(i.toDouble(), series[i].count.toDouble()));
     }
     final lineColor = isDark ? Colors.pinkAccent : Colors.pink;
-    final labelColor =
-        isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.6);
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.7)
+        : Colors.black.withValues(alpha: 0.6);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -5808,7 +5826,9 @@ abstinence_slip_details: $slipDetailsText
                         _formatCompactYen(wasteValue),
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : Colors.black54,
                         ),
                         textAlign: TextAlign.right,
                       );
@@ -5824,7 +5844,9 @@ abstinence_slip_details: $slipDetailsText
                         _formatManLabel(value),
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : Colors.black54,
                         ),
                       );
                     },
@@ -5850,7 +5872,9 @@ abstinence_slip_details: $slipDetailsText
                           DateFormat('M/d').format(points[index].date),
                           style: TextStyle(
                             fontSize: 10,
-                            color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : Colors.black54,
                           ),
                         ),
                       );
@@ -6120,7 +6144,9 @@ abstinence_slip_details: $slipDetailsText
                           Text(
                             _formatYen(breakdownEntries[i].value),
                             style: TextStyle(
-                              color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.7)
+                                  : Colors.black54,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -6178,7 +6204,8 @@ abstinence_slip_details: $slipDetailsText
             title,
             style: TextStyle(
               fontSize: 12,
-              color: isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
+              color:
+                  isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black54,
             ),
           ),
           const SizedBox(height: 4),
@@ -6361,8 +6388,9 @@ abstinence_slip_details: $slipDetailsText
     IconData icon,
     Color color,
   ) {
-    final labelColor =
-        isDark ? Colors.white.withValues(alpha: 0.7) : Colors.black.withValues(alpha: 0.6);
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.7)
+        : Colors.black.withValues(alpha: 0.6);
     final base = isDark ? const Color(0xFF111827) : Colors.white;
 
     return Container(

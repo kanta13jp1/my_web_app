@@ -181,10 +181,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   Future<void> _loadWbs() async {
     setState(() => _loadingWbs = true);
     try {
-      final mData = await _supabase
-          .from('wbs_milestones')
-          .select()
-          .order('target_date');
+      final mData =
+          await _supabase.from('wbs_milestones').select().order('target_date');
       final tData = await _supabase
           .from('wbs_tasks')
           .select()
@@ -192,8 +190,12 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           .order('status');
       if (mounted) {
         setState(() {
-          _milestones = (mData as List).map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>)).toList();
-          _tasks = (tData as List).map((e) => WbsTask.fromMap(e as Map<String, dynamic>)).toList();
+          _milestones = (mData as List)
+              .map((e) => WbsMilestone.fromMap(e as Map<String, dynamic>))
+              .toList();
+          _tasks = (tData as List)
+              .map((e) => WbsTask.fromMap(e as Map<String, dynamic>))
+              .toList();
         });
       }
     } catch (_) {
@@ -214,7 +216,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
           .eq('user_id', user.id)
           .order('created_at', ascending: false)
           .limit(50);
-      if (mounted) setState(() => _projects = List<Map<String, dynamic>>.from(data as List));
+      if (mounted)
+        setState(
+            () => _projects = List<Map<String, dynamic>>.from(data as List));
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loadingProjects = false);
@@ -238,7 +242,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
       _descCtrl.clear();
       await _loadProjects();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('保存失敗: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('保存失敗: $e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -255,13 +261,17 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('開発ロードマップ & WBS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('開発ロードマップ & WBS',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: '更新',
-            onPressed: () { _loadWbs(); _loadProjects(); },
+            onPressed: () {
+              _loadWbs();
+              _loadProjects();
+            },
           ),
         ],
         bottom: TabBar(
@@ -328,8 +338,10 @@ class _WbsTab extends StatelessWidget {
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
-        if (filterInstance != null && t.instance != filterInstance) return false;
-        if (filterMilestone != null && t.milestoneCode != filterMilestone) return false;
+        if (filterInstance != null && t.instance != filterInstance)
+          return false;
+        if (filterMilestone != null && t.milestoneCode != filterMilestone)
+          return false;
         return true;
       }).toList();
 
@@ -343,13 +355,15 @@ class _WbsTab extends StatelessWidget {
 
   double _overallProgress(List<WbsTask> taskList) {
     if (taskList.isEmpty) return 0;
-    return taskList.map((t) => t.progress).reduce((a, b) => a + b) / taskList.length;
+    return taskList.map((t) => t.progress).reduce((a, b) => a + b) /
+        taskList.length;
   }
 
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B35)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFFF6B35)));
     }
 
     final now = DateTime.now();
@@ -360,14 +374,16 @@ class _WbsTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         // ── 全体進捗 ──────────────────────────────────────────────────────
-        _OverallProgressCard(progress: overallProgress, taskCount: tasks.length),
+        _OverallProgressCard(
+            progress: overallProgress, taskCount: tasks.length),
         const SizedBox(height: 16),
 
         // ── マイルストーン ─────────────────────────────────────────────────
         const _SectionHeader(label: 'リリースマイルストーン', icon: Icons.flag_outlined),
         const SizedBox(height: 8),
         if (milestones.isEmpty)
-          const _EmptyCard(message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
+          const _EmptyCard(
+              message: 'マイルストーンデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
           SizedBox(
             height: 140,
@@ -375,13 +391,15 @@ class _WbsTab extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               itemCount: milestones.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (_, i) => _MilestoneCard(milestone: milestones[i], now: now, tasks: tasks),
+              itemBuilder: (_, i) => _MilestoneCard(
+                  milestone: milestones[i], now: now, tasks: tasks),
             ),
           ),
         const SizedBox(height: 20),
 
         // ── フィルター ────────────────────────────────────────────────────
-        const _SectionHeader(label: 'WBSタスク', icon: Icons.account_tree_outlined),
+        const _SectionHeader(
+            label: 'WBSタスク', icon: Icons.account_tree_outlined),
         const SizedBox(height: 8),
         _FilterRow(
           filterInstance: filterInstance,
@@ -396,11 +414,15 @@ class _WbsTab extends StatelessWidget {
         if (grouped.isEmpty)
           const _EmptyCard(message: 'WBSデータを読み込み中...\n(DBマイグレーション適用後に表示されます)')
         else
-          ...grouped.entries.map((entry) => _CategorySection(
-                category: entry.key,
-                tasks: entry.value,
-                categoryIcon: entry.value.isNotEmpty ? entry.value.first.categoryIcon : '📋',
-              ),),
+          ...grouped.entries.map(
+            (entry) => _CategorySection(
+              category: entry.key,
+              tasks: entry.value,
+              categoryIcon: entry.value.isNotEmpty
+                  ? entry.value.first.categoryIcon
+                  : '📋',
+            ),
+          ),
       ],
     );
   }
@@ -436,19 +458,31 @@ class _OverallProgressCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('自分株式会社 開発WBS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('$taskCount タスク', style: const TextStyle(color: Color(0xFF707070), fontSize: 12)),
+                    const Text('自分株式会社 開発WBS',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
+                    Text('$taskCount タスク',
+                        style: const TextStyle(
+                            color: Color(0xFF707070), fontSize: 12)),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.4)),
+                  border: Border.all(
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.4)),
                 ),
-                child: Text('${progress.toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFFFF6B35), fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Text('${progress.toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                        color: Color(0xFFFF6B35),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
               ),
             ],
           ),
@@ -458,12 +492,14 @@ class _OverallProgressCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress / 100,
               backgroundColor: const Color(0xFF2A2A2A),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
               minHeight: 8,
             ),
           ),
           const SizedBox(height: 8),
-          const Text('Flutter Web + Supabase + 3インスタンス並行開発', style: TextStyle(color: Color(0xFF707070), fontSize: 11)),
+          const Text('Flutter Web + Supabase + 3インスタンス並行開発',
+              style: TextStyle(color: Color(0xFF707070), fontSize: 11)),
         ],
       ),
     );
@@ -475,13 +511,16 @@ class _MilestoneCard extends StatelessWidget {
   final DateTime now;
   final List<WbsTask> tasks;
 
-  const _MilestoneCard({required this.milestone, required this.now, required this.tasks});
+  const _MilestoneCard(
+      {required this.milestone, required this.now, required this.tasks});
 
   @override
   Widget build(BuildContext context) {
     final days = milestone.daysLeft(now);
-    final milestoneTasks = tasks.where((t) => t.milestoneCode == milestone.code).toList();
-    final completedCount = milestoneTasks.where((t) => t.status == 'completed').length;
+    final milestoneTasks =
+        tasks.where((t) => t.milestoneCode == milestone.code).toList();
+    final completedCount =
+        milestoneTasks.where((t) => t.status == 'completed').length;
     final totalCount = milestoneTasks.length;
     final taskProgress = totalCount > 0 ? completedCount / totalCount : 0.0;
 
@@ -498,24 +537,39 @@ class _MilestoneCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(milestone.achieved ? Icons.check_circle : Icons.flag_outlined, color: milestone.color, size: 18),
+              Icon(
+                  milestone.achieved ? Icons.check_circle : Icons.flag_outlined,
+                  color: milestone.color,
+                  size: 18),
               const SizedBox(width: 6),
-              Expanded(child: Text(milestone.name, style: TextStyle(color: milestone.color, fontWeight: FontWeight.bold, fontSize: 15))),
+              Expanded(
+                  child: Text(milestone.name,
+                      style: TextStyle(
+                          color: milestone.color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15))),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             milestone.achieved
                 ? '🎉 達成済み'
-                : days > 0 ? 'あと $days 日' : '⚠️ 期限超過',
+                : days > 0
+                    ? 'あと $days 日'
+                    : '⚠️ 期限超過',
             style: TextStyle(
-              color: milestone.achieved ? const Color(0xFF4CAF50) : days < 14 ? const Color(0xFFE53935) : const Color(0xFFB0B0B0),
+              color: milestone.achieved
+                  ? const Color(0xFF4CAF50)
+                  : days < 14
+                      ? const Color(0xFFE53935)
+                      : const Color(0xFFB0B0B0),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 2),
-          Text('目標: ${milestone.goalUsers}ユーザー', style: const TextStyle(color: Color(0xFF707070), fontSize: 11)),
+          Text('目標: ${milestone.goalUsers}ユーザー',
+              style: const TextStyle(color: Color(0xFF707070), fontSize: 11)),
           const Spacer(),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
@@ -527,7 +581,8 @@ class _MilestoneCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text('$completedCount / $totalCount タスク完了', style: const TextStyle(color: Color(0xFF707070), fontSize: 10)),
+          Text('$completedCount / $totalCount タスク完了',
+              style: const TextStyle(color: Color(0xFF707070), fontSize: 10)),
         ],
       ),
     );
@@ -555,21 +610,27 @@ class _FilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          _chip('全て', null, filterInstance, onFilterInstance, const Color(0xFFFF6B35)),
+          _chip('全て', null, filterInstance, onFilterInstance,
+              const Color(0xFFFF6B35)),
           const SizedBox(width: 6),
-          _chip('VSCode', 'vscode', filterInstance, onFilterInstance, const Color(0xFF007ACC)),
+          _chip('VSCode', 'vscode', filterInstance, onFilterInstance,
+              const Color(0xFF007ACC)),
           const SizedBox(width: 6),
-          _chip('Windows', 'windows', filterInstance, onFilterInstance, const Color(0xFF00BCF2)),
+          _chip('Windows', 'windows', filterInstance, onFilterInstance,
+              const Color(0xFF00BCF2)),
           const SizedBox(width: 6),
-          _chip('PowerShell', 'ps', filterInstance, onFilterInstance, const Color(0xFF4B0082)),
+          _chip('PowerShell', 'ps', filterInstance, onFilterInstance,
+              const Color(0xFF4B0082)),
           const SizedBox(width: 12),
           const Text('│', style: TextStyle(color: Color(0xFF333333))),
           const SizedBox(width: 12),
-          _chip('全版', null, filterMilestone, onFilterMilestone, const Color(0xFF707070)),
+          _chip('全版', null, filterMilestone, onFilterMilestone,
+              const Color(0xFF707070)),
           ...milestones.map((m) {
             return Padding(
               padding: const EdgeInsets.only(left: 6),
-              child: _chip(m.name, m.code, filterMilestone, onFilterMilestone, m.color),
+              child: _chip(
+                  m.name, m.code, filterMilestone, onFilterMilestone, m.color),
             );
           }),
         ],
@@ -577,7 +638,8 @@ class _FilterRow extends StatelessWidget {
     );
   }
 
-  Widget _chip(String label, String? value, String? current, ValueChanged<String?> onTap, Color color) {
+  Widget _chip(String label, String? value, String? current,
+      ValueChanged<String?> onTap, Color color) {
     final selected = current == value;
     return GestureDetector(
       onTap: () => onTap(selected ? null : value),
@@ -585,11 +647,16 @@ class _FilterRow extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
+          color:
+              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: selected ? color : const Color(0xFF333333)),
         ),
-        child: Text(label, style: TextStyle(color: selected ? color : const Color(0xFF707070), fontSize: 12, fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
+        child: Text(label,
+            style: TextStyle(
+                color: selected ? color : const Color(0xFF707070),
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
       ),
     );
   }
@@ -600,7 +667,10 @@ class _CategorySection extends StatelessWidget {
   final String categoryIcon;
   final List<WbsTask> tasks;
 
-  const _CategorySection({required this.category, required this.categoryIcon, required this.tasks});
+  const _CategorySection(
+      {required this.category,
+      required this.categoryIcon,
+      required this.tasks});
 
   double get _avgProgress {
     if (tasks.isEmpty) return 0;
@@ -624,7 +694,12 @@ class _CategorySection extends StatelessWidget {
             children: [
               Text(categoryIcon, style: const TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
-              Expanded(child: Text(category, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14))),
+              Expanded(
+                  child: Text(category,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14))),
               const SizedBox(width: 8),
               SizedBox(
                 width: 80,
@@ -633,13 +708,18 @@ class _CategorySection extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: avg / 100,
                     backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
+                    valueColor:
+                        const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
                     minHeight: 6,
                   ),
                 ),
               ),
               const SizedBox(width: 6),
-              Text('${avg.toStringAsFixed(0)}%', style: const TextStyle(color: Color(0xFFFF6B35), fontSize: 12, fontWeight: FontWeight.bold)),
+              Text('${avg.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold)),
             ],
           ),
         ),
@@ -674,10 +754,14 @@ class _TaskRow extends StatelessWidget {
                 child: Text(
                   task.title,
                   style: TextStyle(
-                    color: task.status == 'completed' ? const Color(0xFF707070) : Colors.white,
+                    color: task.status == 'completed'
+                        ? const Color(0xFF707070)
+                        : Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    decoration: task.status == 'completed' ? TextDecoration.lineThrough : null,
+                    decoration: task.status == 'completed'
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ),
@@ -688,7 +772,11 @@ class _TaskRow extends StatelessWidget {
                   color: task.instanceColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text(task.instanceLabel, style: TextStyle(color: task.instanceColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                child: Text(task.instanceLabel,
+                    style: TextStyle(
+                        color: task.instanceColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600)),
               ),
               const SizedBox(width: 4),
               Container(
@@ -697,7 +785,11 @@ class _TaskRow extends StatelessWidget {
                   color: task.statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text(task.statusLabel, style: TextStyle(color: task.statusColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                child: Text(task.statusLabel,
+                    style: TextStyle(
+                        color: task.statusColor,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -711,13 +803,15 @@ class _TaskRow extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: task.progress / 100,
                       backgroundColor: const Color(0xFF2A2A2A),
-                      valueColor: AlwaysStoppedAnimation<Color>(task.statusColor),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(task.statusColor),
                       minHeight: 4,
                     ),
                   ),
                 ),
                 const SizedBox(width: 6),
-                Text('${task.progress}%', style: TextStyle(color: task.statusColor, fontSize: 10)),
+                Text('${task.progress}%',
+                    style: TextStyle(color: task.statusColor, fontSize: 10)),
               ],
             ),
           ],
@@ -732,8 +826,9 @@ class _TaskRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2,'0')}/${task.endDate!.day.toString().padLeft(2,'0')}',
-                  style: const TextStyle(color: Color(0xFF505050), fontSize: 10),
+                  '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
+                  style:
+                      const TextStyle(color: Color(0xFF505050), fontSize: 10),
                 ),
               ],
             ),
@@ -786,25 +881,38 @@ class _MyProjectsTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('新規プロジェクト', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  const Text('新規プロジェクト',
+                      style: TextStyle(color: Colors.white70, fontSize: 12)),
                   const SizedBox(height: 8),
-                  TextField(controller: nameCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDec('プロジェクト名')),
+                  TextField(
+                      controller: nameCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDec('プロジェクト名')),
                   const SizedBox(height: 8),
-                  TextField(controller: descCtrl, style: const TextStyle(color: Colors.white), decoration: _inputDec('説明 (任意)')),
+                  TextField(
+                      controller: descCtrl,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDec('説明 (任意)')),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(border: Border.all(color: const Color(0xFF333333)), borderRadius: BorderRadius.circular(8)),
+                          decoration: BoxDecoration(
+                              border:
+                                  Border.all(color: const Color(0xFF333333)),
+                              borderRadius: BorderRadius.circular(8)),
                           child: DropdownButton<String>(
                             value: status,
                             dropdownColor: const Color(0xFF1E1E1E),
                             style: const TextStyle(color: Colors.white),
                             underline: const SizedBox.shrink(),
                             isExpanded: true,
-                            items: statuses.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                            items: statuses
+                                .map((s) =>
+                                    DropdownMenuItem(value: s, child: Text(s)))
+                                .toList(),
                             onChanged: (v) => onStatusChanged(v!),
                           ),
                         ),
@@ -812,9 +920,15 @@ class _MyProjectsTab extends StatelessWidget {
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: saving ? null : onSave,
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B35), foregroundColor: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF6B35),
+                            foregroundColor: Colors.white),
                         child: saving
-                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
                             : const Text('作成'),
                       ),
                     ],
@@ -826,9 +940,12 @@ class _MyProjectsTab extends StatelessWidget {
           const SizedBox(height: 12),
           Expanded(
             child: loading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B35)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFF6B35)))
                 : projects.isEmpty
-                    ? const Center(child: Text('プロジェクトはまだありません', style: TextStyle(color: Colors.white38)))
+                    ? const Center(
+                        child: Text('プロジェクトはまだありません',
+                            style: TextStyle(color: Colors.white38)))
                     : ListView.builder(
                         itemCount: projects.length,
                         itemBuilder: (_, i) {
@@ -841,19 +958,34 @@ class _MyProjectsTab extends StatelessWidget {
                             child: ListTile(
                               leading: CircleAvatar(
                                 backgroundColor: c.withValues(alpha: 0.2),
-                                child: Icon(Icons.folder_outlined, color: c, size: 20),
+                                child: Icon(Icons.folder_outlined,
+                                    color: c, size: 20),
                               ),
-                              title: Text(p['name'] as String? ?? '', style: const TextStyle(color: Colors.white)),
-                              subtitle: Text(p['description'] as String? ?? '', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                              title: Text(p['name'] as String? ?? '',
+                                  style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(p['description'] as String? ?? '',
+                                  style: const TextStyle(
+                                      color: Colors.white54, fontSize: 12)),
                               trailing: PopupMenuButton<String>(
                                 color: const Color(0xFF1E1E1E),
                                 icon: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: c.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
-                                  child: Text(s, style: TextStyle(color: c, fontSize: 12)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                      color: c.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(4)),
+                                  child: Text(s,
+                                      style: TextStyle(color: c, fontSize: 12)),
                                 ),
-                                itemBuilder: (_) => statuses.map((st) => PopupMenuItem(value: st, child: Text(st, style: const TextStyle(color: Colors.white)))).toList(),
-                                onSelected: (st) => onUpdateStatus(p['id'].toString(), st),
+                                itemBuilder: (_) => statuses
+                                    .map((st) => PopupMenuItem(
+                                        value: st,
+                                        child: Text(st,
+                                            style: const TextStyle(
+                                                color: Colors.white))))
+                                    .toList(),
+                                onSelected: (st) =>
+                                    onUpdateStatus(p['id'].toString(), st),
                               ),
                             ),
                           );
@@ -868,9 +1000,15 @@ class _MyProjectsTab extends StatelessWidget {
   InputDecoration _inputDec(String hint) => InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white38),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF333333))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF333333))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFFF6B35))),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF333333))),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFFF6B35))),
       );
 }
 
@@ -904,7 +1042,12 @@ class _EmptyCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
-        child: Text(message, style: const TextStyle(color: Color(0xFF707070), fontSize: 13), textAlign: TextAlign.center),
+        decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2A2A2A))),
+        child: Text(message,
+            style: const TextStyle(color: Color(0xFF707070), fontSize: 13),
+            textAlign: TextAlign.center),
       );
 }
