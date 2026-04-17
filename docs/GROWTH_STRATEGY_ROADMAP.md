@@ -10163,3 +10163,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
    - Huawei Pangu (中国 BAT 残り 1社)
    - Magic.dev (100M context LTM-2 enterprise)
    - Physical Intelligence (ロボット基盤 π モデル)
+
+---
+
+## PS版#108 セッション記録 (2026-04-17 15:30 JST)
+
+### T-1 第105弾: Tencent Hunyuan + ByteDance Doubao — AI大学74社 → dev.to投稿成功
+
+- **dev.to URL**: https://dev.to/kanta13jp1/chinas-ai-giants-adding-tencent-hunyuan-bytedance-doubao-to-ai-university-74-providers-3fdi
+- **JA版 Qiita**: リトライ待ち (2026-04-18 00:00 JST以降)
+- orphan branch `blog-publish/24551269197-20260417-152846` → マージ + 削除完了
+- AI大学: 76社 (Windows版#72 で Inception Labs + World Labs 追加済み)
+
+### 次回 Qiita リトライ予定 (2026-04-18 00:00 JST以降)
+1. `2026-04-17-claude-code-vscode-timeout-fix.md` (第104弾 JA)
+2. `2026-04-17-tencent-bytedance-ai-university.md` (第105弾 JA)
