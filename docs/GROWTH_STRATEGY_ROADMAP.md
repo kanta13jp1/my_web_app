@@ -10377,3 +10377,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branches: 0件 (全パターンクリーン)
 - cross-instance-prs: 2件 done/移動 (wbs_gantt + wbs_progress_notice)
 - commit: 95d9be79 fix: home_page + gantt trailing commas + const constructors
+
+### Windowsアプリ版#75 完了 (2026-04-18 00:00)
+- AI大学 Step 0 discovery: Lightricks LTX-2 (9/9) + Arcee AI Trinity (9/9) 推奨確定
+- AI大学 78→80社: Lightricks (22B 4K 音声+映像 OSS) + Arcee AI (Trinity 6B/26B MoE/400B MoE 米国発 Apache 2.0)
+- migration 2本: 20260417210000_seed_lightricks + 20260417220000_seed_arcee_ai
+- registry更新 + ai-university-update.yml RSS行追加 + CLAUDE.md / COMPRESSED_PROMPT_V3 リスト + "78社"参照 2箇所更新
+- flutter analyze 0エラー維持 / deno lint clean
+- cross-instance-prs: wbs_gantt + wbs_progress_notice は upstream が先行 done/移動済み

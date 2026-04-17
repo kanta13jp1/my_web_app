@@ -63,7 +63,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (78社, 2026-04-17時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (80社, 2026-04-17時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -514,6 +514,20 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'core',
     displayName: 'Core',
     status: AiProviderStatus.notImplemented,
+  ),
+  AiProviderEntry(
+    id: 'lightricks',
+    displayName: 'Lightricks LTX-2',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 4K 音声+映像 OSS・REST/Fal/Replicate)',
+    note: 'Compute-second 課金。Free 800 クレジット',
+  ),
+  AiProviderEntry(
+    id: 'arcee_ai',
+    displayName: 'Arcee AI Trinity',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — OpenAI 互換・米国発 Apache 2.0)',
+    note: r'Mini $0.045/$0.15 per 1M · OpenRouter 無料枠あり',
   ),
 ];
 

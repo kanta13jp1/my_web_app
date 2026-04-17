@@ -1606,7 +1606,7 @@ serve(async (req: Request) => {
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
       case "provider.chat": {
-        // 汎用プロバイダー呼び出し (AI大学78社の実装済みAIに統一インターフェースで話しかける)
+        // 汎用プロバイダー呼び出し (AI大学80社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 7社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");
