@@ -10191,3 +10191,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI大学 76社UI同期: inception_labs/world_labs 追加
 - .claude/settings.json: 16パーミッション追加 (Auto Mode同等)
 - cross-instance-prs: 0件 (クリーン)
+
+### VSCode版#89 追加作業 (2026-04-17 16:00)
+- AI大学 77社目 Runware (Sonic Inference Engine) 追加 — _providerMeta/quiz/_fallback 3マップ完了
+- CLAUDE.md モデル推奨: VSCode版/Windowsアプリ版を claude-haiku-4-5 (Auto Mode) に更新
+- cross-instance-prs 2件アーカイブ (runware_ui / haiku45_model_update)
+- flutter analyze 0エラー維持
