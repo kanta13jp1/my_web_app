@@ -10275,3 +10275,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 第106弾: inception-worldlabs-ai-university (JA)
 - 第107弾: runware-sonic-ai-university (JA)
 - 第108弾: sambanova-ai-university (JA)
+
+---
+
+### Windows版#74 完了 (2026-04-17 15:55)
+- AI大学 78社目 SambaNova 追加 (Rule 11 Step 0 discovery)
+- 3軸評価 8/9: 技術革新3/3 (SN50 RDU チップ) / API可用性3/3 (OpenAI互換・Free Tier) / 話題性2/3 (Intel提携・$350M調達)
+- migration: `supabase/migrations/20260417170000_seed_sambanova_ai_university.sql` (overview/models/api 3カテゴリ)
+- CLAUDE.md / COMPRESSED_PROMPT_V3.md / ai-university-update.yml 更新
+- 見送り候補: Reflection AI (公開モデル待機中) / AMI Labs (partner限定) / Rhoda AI (robotics only)
+- cross-instance-pr: `20260417_sambanova_ui.md` (→ VSCode版 UI同期依頼)
+- Rule 10 docs分析: COMPRESSED_PROMPT_V3.md L557「56社目以降」→「79社目以降」修正
+- Rule 14 ツールバージョン: 全最新確認
