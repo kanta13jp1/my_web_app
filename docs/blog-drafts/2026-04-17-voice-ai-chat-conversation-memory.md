@@ -1,7 +1,7 @@
 ---
 title: "Flutter WebにVoice AI Chatと会話記憶を実装した話 — Web Speech API + Supabase"
 tags: Flutter,Supabase,WebSpeechAPI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Flutter WebにVoice AI Chatと会話記憶を実装した話
