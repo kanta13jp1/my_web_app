@@ -1,7 +1,7 @@
 ---
 title: "AIハブ27プロバイダーへ拡張 — Reka Flash-3・Writer Palmyra-X5 追加"
 tags: Flutter,Supabase,AI,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # AIハブ27プロバイダーへ拡張

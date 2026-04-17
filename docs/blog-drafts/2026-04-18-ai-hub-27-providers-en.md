@@ -1,7 +1,7 @@
 ---
 title: "Jibun Corp's AI Hub Reaches 27 Providers — Adding Reka Flash-3 & Writer Palmyra-X5"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Jibun Corp's AI Hub Reaches 27 Providers
