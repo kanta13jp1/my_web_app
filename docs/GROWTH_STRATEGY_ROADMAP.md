@@ -9664,3 +9664,33 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | --- | --- | --- |
 | 🔴 | Playwright 再起動して音声ページ視覚確認 | VSCode版 |
 | 🟡 | テスト13件失敗調査 | VSCode版 |
+
+---
+
+## daily-development セッション記録 (2026-04-17 10:58 JST)
+
+### 完了タスク
+
+1. **blog_corrections RLS バグ修正**
+   - `20260417130000_create_blog_corrections.sql`: `user_profiles WHERE id` → `user_profiles up WHERE up.user_id`
+   - blog_corrections の admin RLS が正しく機能しない状態を修正
+
+2. **AI大学 FSRS 復習カウンター — ホームカード統合**
+   - `lib/widgets/ai_university_home_card.dart`: `_dueCardCount` フィールド追加
+   - `ai_university_fsrs_cards` から今日の due card 数を直接クエリ (RLS 保護済み)
+   - `> 0` の場合に「復習 X問」バッジ + モバイル「復習する (X問)」ボタンを表示
+   - FSRS スペース反復学習のリテンション向上に直結
+
+3. **ブログ下書き作成 (日本語+英語)**
+   - `docs/blog-drafts/2026-04-17-fsrs-spaced-repetition-ai-university.md`
+   - `docs/blog-drafts/2026-04-17-fsrs-spaced-repetition-ai-university-en.md`
+   - FSRS 実装詳細・RLS バグ修正パターンを解説
+
+4. **開発実績記録**
+   - `supabase/migrations/20260417150000_seed_daily_dev_fsrs_ui.sql`
+
+### 次回優先タスク
+- 🟡 T-1 第95弾以降: 残JA記事 EN版作成
+  - 候補: `2026-03-31-embedding-similarity.md` / `2026-03-28-edge-functions-cicd.md`
+- 🟡 Scale AI / Poolside AI (新規追加分) の Flutter UI 追加 (gemini_university_v2_page.dart の `_providerMeta`)
+- 🟢 FSRS 音声モード統合: Web Speech API 回答 → FSRS grade → 次回出題日計算
