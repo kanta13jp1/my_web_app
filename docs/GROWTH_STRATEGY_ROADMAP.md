@@ -10455,3 +10455,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - migration 2本 + registry + UI + ai-university-update RSS 2行
 - ai-university-add-provider skill 強化: registry/UI/ai-hub/N社参照手順を skill 化 (14 Step 明文化)
 - flutter analyze 0エラー / deno lint clean / dart format pass
+
+### Rule 17 WF health check (2026-04-18 VSCode版#91)
+- 全WF: deploy-prod ✅ success (最新run 24574951863) / CS/Blog/EF-Audit/Infra 全OK
+- 旧失敗2件: Check formatting (gantt trailing comma) — Windowsアプリ版#75b が修正済み (4293f85a)
+- orphan branches: 全パターン0件 (クリーン)
+- Horse Racing cancelled: concurrency正常動作
