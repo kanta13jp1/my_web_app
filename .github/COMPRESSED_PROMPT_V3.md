@@ -637,16 +637,17 @@ web/sitemap.xml          # URL マップ
 - ✅ **第79弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-11-personal-dashboard-notion-competitor.md` → FractionallySizedBox棒グラフ
 - ✅ **第80弾 dev.to dispatched** (PS版#93, 2026-04-17): `2026-04-10-dns-domain-manager.md` → TabController FAB + colorSchemeトークン
 
-**次回候補 (第102弾以降)**:
+**次回候補 (第103弾以降)**:
 
 | 優先度 | 下書き | 媒体 |
 | --- | --- | --- |
 | 🔴 | 第59・60・63・64弾 Qiita リトライ | Qiita 15:00 UTC以降 (JST翌日0:00) |
-| 🔴 | 第98〜101弾 Qiita リトライ (FSRS・EF Hub・ブログ自動化・AI大学DBタブ) | Qiita 15:00 UTC以降 |
+| 🔴 | 第98〜102弾 Qiita リトライ (FSRS・EF Hub・ブログ自動化・AI大学DBタブ・FSRS復習カード) | Qiita 15:00 UTC以降 |
 | ✅ | 第98弾 FSRS Spaced Repetition Flutter + Supabase → success | dev.to |
 | ✅ | 第99弾 EF Hub-and-Action Architecture 50本制限突破 → success | dev.to |
 | ✅ | 第100弾 ブログ自動投稿パイプライン GitHub Actions × Supabase EF → success | dev.to |
 | ✅ | 第101弾 DB駆動動的タブ AI大学 Zero-Config プロバイダー追加 → success | dev.to |
+| ✅ | 第102弾 FSRS復習カウンター × ホームカード統合 → success | dev.to |
 
 **推定ROI**: #buildinpublic / #FlutterWeb / #Supabase / #Notion タグで開発者コミュニティに到達 → ユーザー4人からの脱却。
 
