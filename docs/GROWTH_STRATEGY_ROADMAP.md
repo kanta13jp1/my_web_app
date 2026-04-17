@@ -10472,3 +10472,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - ai_quota_usage テーブル確認コマンド
   - フォールバック強化の中長期方針
 - flutter analyze 0エラー / 制約: 直接 invoke 17ページは guard未経由 (リファクタ要)
+
+### VSCode版#91 完了 (2026-04-18) — LP 134のこと + FSRS 90%
+- LP 130→134のこと: AI大学(80社マスター)/WBS・ガントチャート/FSRS間隔反復学習/競馬AI自動予想 追加
+  - feat commit: a0e18045 / flutter analyze 0エラー / dart format pass
+- FSRS due-cards統合: _fsrsDue + _fsrsDueRequested / _loadFsrsDue / TabController lazy loading
+  - gemini_university_v2_page.dart: 「今日の復習 N件」バナー (orange token)
+- DESIGN.md準拠: home_page (surface2/surface1) + ai_university_home_card (fontSize16) + gemini_university_v2 (4色修正)
+- Rule17: deploy-prod ✅ / ai-university-update GH006修正 (checkout token追加)
+- WBS更新: FSRS 70%→90% / DESIGN.md準拠 55%→60%
