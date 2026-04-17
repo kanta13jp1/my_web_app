@@ -1,7 +1,7 @@
 ---
 title: "AI Usage Quota Dashboard in Flutter + Supabase: Real-Time Token Tracking Across Models"
 tags: Flutter,Supabase,buildinpublic,Dart,AI
-published: false
+published: true
 ---
 
 # AI Usage Quota Dashboard in Flutter + Supabase: Real-Time Token Tracking Across Models

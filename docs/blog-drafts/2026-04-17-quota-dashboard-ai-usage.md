@@ -1,7 +1,7 @@
 ---
 title: "AI利用クォータ監視ダッシュボード — Flutter × Supabase でリアルタイム使用量可視化"
 tags: Flutter,Supabase,buildinpublic,個人開発,Dart
-published: false
+published: true
 ---
 
 # AI利用クォータ監視ダッシュボード — Flutter × Supabase でリアルタイム使用量可視化
