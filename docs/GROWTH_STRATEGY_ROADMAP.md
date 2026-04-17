@@ -10432,12 +10432,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branches: 全パターン0件 (blog-publish/cs-check/ai-university-update/daily-report 全0)
 - 修正済み: ai-hub 25プロバイダー push完了 / deno lint clean / flutter analyze 0エラー
 
-### PS版#110 ai-hub 25プロバイダー達成 (2026-04-18)
+### PS版#110 ai-hub 25プロバイダー達成 + T-1第110弾 (2026-04-18)
 - supabase/functions/ai-hub/index.ts: 23→25プロバイダー
   - huggingface: HuggingFace Inference API (meta-llama/Llama-3.3-70B-Instruct)
   - minimax: MiniMax Text-01 (OpenAI互換)
 - lib/models/ai_provider_registry.dart: 両社とも既に apiKeyRequired → 変更不要
 - WBS migration: 20260418030000 — provider.chat 35%進捗
+- T-1第110弾: dev.to 投稿成功
+  - https://dev.to/kanta13jp1/expanding-jibun-corps-ai-hub-to-25-providers-qwen-inflection-allenai-huggingface-minimax-24dd
 - 残タスク: Supabase Secrets に HUGGINGFACE_TOKEN / MINIMAX_API_KEY 追加 (ユーザー対応)
 - 次フェーズ候補: reka/replicate/ibm/adept (API形式要調査)
 
