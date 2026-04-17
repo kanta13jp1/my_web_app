@@ -10510,3 +10510,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - URL: https://my-web-app-b67f4.web.app/project-gantt (ハッシュなし・# は不要)
 - 既存「開発WBS」「マイプロジェクト」タブは維持 (TabController length 2→3)
 - flutter analyze 0エラー / deploy-prod 自動走行中
+
+### PS版#113 完了 (2026-04-18) — ai-hub 29プロバイダー + Rule17
+- ai-hub Phase6: meta (Meta Llama API/Llama-4-Scout) + nebius (Nebius AI Studio) — 27→29プロバイダー
+- registry: meta apiKeyRequired + nebius新規追加
+- T-1 第113弾: Jibun Corp's AI Hub Reaches 29 Providers
+  - https://dev.to/kanta13jp1/jibun-corps-ai-hub-reaches-29-providers-adding-meta-llama-api-nebius-ai-studio-35ak
+- Rule17: ai-university-update continue-on-error確認済み / deploy-prod migration衝突修正後rerun中
+
+### ai-hub プロバイダー推移
+- PS#108: 14→20, PS#109: 20→23, PS#110: 23→25, PS#111: 25→27, PS#113: 27→29
