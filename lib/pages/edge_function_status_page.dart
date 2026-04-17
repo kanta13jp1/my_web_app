@@ -153,12 +153,12 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       'category': 'growth',
     },
     {
-      'name': 'growth-acquisition-report',
-      'description': '獲得レポート生成',
+      'name': 'growth-hub',
+      'description': '獲得レポート / grコマンドセンター / 紹介 (hub)',
       'hasUi': true,
       'uiPath': '/growth-mission',
       'uiLabel': '成長ミッション',
-      'uiNavigation': '管理者ダッシュボード → 成長レポート',
+      'uiNavigation': '管理者ダッシュボード → グロース各機能',
       'category': 'growth',
     },
     {

@@ -87,11 +87,11 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       'ランディングページ経由で自動',
     ),
     _FnDef(
-      'growth-acquisition-report',
-      '獲得レポート',
+      'growth-hub',
+      '獲得レポート / コマンドセンター / 紹介 (hub)',
       true,
       '/growth-mission',
-      '成長ミッション > レポート',
+      '成長ミッション > グロース機能',
     ),
     _FnDef(
       'growth-command-center',
