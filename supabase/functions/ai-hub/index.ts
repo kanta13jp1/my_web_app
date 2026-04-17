@@ -618,8 +618,8 @@ async function seedCompanyVault(
       content: note.content,
       category: note.category,
       tags: note.tags,
-      company_id: companyId,
       ...note.metadata,
+      company_id: companyId,
     });
     noteRows.push(item);
   }
@@ -1280,7 +1280,7 @@ serve(async (req: Request) => {
         if (!userId) return json({ error: "Unauthorized" }, 401);
         const provider = String(body.provider ?? "");
         const limit = Number(body.limit ?? 10);
-        const { data, error } = await supabase
+        const { data, error } = await admin
           .from("ai_university_fsrs_cards")
           .select("*")
           .eq("user_id", userId)
@@ -1297,7 +1297,7 @@ serve(async (req: Request) => {
         const questionId = String(body.question_id ?? "");
         const provider = String(body.provider ?? "");
         const grade = Number(body.grade ?? 3);
-        const { data: existing } = await supabase
+        const { data: existing } = await admin
           .from("ai_university_fsrs_cards")
           .select("stability, reps, lapses")
           .eq("user_id", userId)
@@ -1316,7 +1316,7 @@ serve(async (req: Request) => {
         const nextDue = new Date();
         nextDue.setDate(nextDue.getDate() + Math.round(daysUntilNext));
         const state = grade === 1 ? "relearning" : reps > 2 ? "review" : "learning";
-        const { error } = await supabase
+        const { error } = await admin
           .from("ai_university_fsrs_cards")
           .upsert({
             user_id: userId,
@@ -1362,12 +1362,12 @@ serve(async (req: Request) => {
         const rawText = (claudeData.content as Array<{text: string}>)?.[0]?.text ?? "{}";
         let profileJson: Record<string, unknown> = {};
         try { profileJson = JSON.parse(rawText.replace(/```json\n?|\n?```/g, "").trim()); } catch { /* malformed */ }
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile } = await admin
           .from("ai_university_learner_profiles")
           .select("total_sessions")
           .eq("user_id", userId)
           .maybeSingle();
-        await supabase.from("ai_university_learner_profiles").upsert({
+        await admin.from("ai_university_learner_profiles").upsert({
           user_id: userId,
           weak_providers: profileJson.weak_providers ?? [],
           strong_providers: profileJson.strong_providers ?? [],
