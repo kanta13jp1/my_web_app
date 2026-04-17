@@ -2,7 +2,7 @@
 date: 2026-04-17
 from: Windowsアプリ版#74
 to: VSCode版, PowerShell版
-status: pending
+status: done
 priority: medium
 ---
 
