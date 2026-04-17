@@ -10339,3 +10339,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 修正: `supabase` → `admin` (ai_university_fsrs_cards / ai_university_learner_profiles テーブルアクセス)
 - 追加修正: company_id spread順序 (TS2783/TS2785) を逆転
 - deno check 0エラー確認後 push → deploy-prod 実行中
+
+### PS版#107 AI プロバイダー一覧ページ + provider.chat (2026-04-17 22:00)
+- lib/pages/ai_provider_status_page.dart: VSCode版#89と協調、78社4ステータス分類ページ完成
+  - 実装済み3社 (Google/Anthropic/Groq) → チャットシート「試す」ボタン付き
+  - APIキー設定が必要29社 / 課金が必要18社 / 未実装28社
+  - 検索・フィルターチップ・チャットボトムシート
+- supabase/functions/ai-hub/index.ts: provider.chat アクション新規追加
+  (google/anthropic/groq/openai/deepseek/mistral 対応)
+- lib/main.dart + gemini_university_v2_page.dart: ルート・ナビゲーション追加 (重複解消)
+- deploy-prod トリガー済み
