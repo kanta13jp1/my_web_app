@@ -1,7 +1,7 @@
 ---
 title: "Frontier AI 2026: Diffusion LLM + Spatial Intelligence — AI University Update (76 Providers)"
 tags: AI,LLM,buildinpublic,webdev,Flutter
-published: false
+published: true
 ---
 
 # Frontier AI 2026: Inception Labs & World Labs — AI University Update

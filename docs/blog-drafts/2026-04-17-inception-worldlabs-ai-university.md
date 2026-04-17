@@ -1,7 +1,7 @@
 ---
 title: "フロンティアAI2選をAI大学に追加 — 拡散LLM・空間知能 (76社目)"
 tags: AI,LLM,個人開発,Flutter,buildinpublic
-published: false
+published: true
 ---
 
 # フロンティアAI2選 — Inception Labs (Mercury) と World Labs をAI大学に追加
