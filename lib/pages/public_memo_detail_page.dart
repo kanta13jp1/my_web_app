@@ -230,6 +230,19 @@ class _PublicMemoDetailPageState extends State<PublicMemoDetailPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Public memo detail'),
+        // 戻るボタンを明示的に上書き: URL が /public-memo?id=X のまま残るのを防ぐ。
+        // 直リンクで来た場合 (Web のディープリンク) も含めて常に '/' に
+        // 遷移してブラウザURLを書き換える。
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: '戻る',
+          onPressed: () {
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/',
+              (route) => false,
+            );
+          },
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
