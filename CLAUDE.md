@@ -25,7 +25,7 @@ google, microsoft, discord, line, facebook, liven, github
 
 ## デザインシステム参照 (UI生成時に必ず参照)
 
-**毎セッション必須ツールチェーン** (Rule 19+20): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を組み合わせて UI を改善する。加えて (Rule 20) **Playwright / Context7 / GitHub MCP / Magic / Code Review / Superpowers** の6MCPを積極活用する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19/20 参照。
+**毎セッション必須ツールチェーン** (Rule 19+20+21): `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × **`frontend-design` プラグイン** × **`Claude Design` (Anthropic Labs SaaS)** × `docs/DESIGN.md` を組み合わせて UI を改善する。加えて (Rule 20) **Playwright / Context7 / GitHub MCP / Magic / Code Review / Superpowers** の6MCPを積極活用する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19/20/21 参照。
 
 UIコンポーネントを新規作成・修正する際は、以下のファイルを参照してデザイントークンを適用すること:
 
@@ -68,14 +68,16 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - **差別化機能のヒント**: 競合 AI プロバイダーの新機能からユーザー価値を逆算し、未実装機能のアイデアとして追加
    - **実施手順**: (1) `notebooklm ask "各プロバイダーの最新ニュースから開発に使えそうな機能・APIを抽出して"` → (2) 既存 EF・ページとの接続可能性を評価 → (3) 実装可能なものは即 ROADMAP へ追記 → (4) 今セッションで対応できるものは実装
 
-12. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × `docs/DESIGN.md` を毎セッション組み合わせて UI を 1ページ以上改善する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19 および `docs/DESIGN_TOOLING_SETUP.md`（正式手順書）参照。
+12. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × **`frontend-design` プラグイン** × **`Claude Design` (Anthropic Labs SaaS)** × `docs/DESIGN.md` を毎セッション組み合わせて UI を 1ページ以上改善する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19/21 および `docs/DESIGN_TOOLING_SETUP.md`（正式手順書）参照。
 
    **改善ワークフロー（既存画面改善時）**:
    1. **`design-skills` サブエージェント起動**: 主要ページ (ホーム / AI大学 / LP / ランキング) を `docs/DESIGN.md` (Orange+Indigo ダークテーマ) と照合し、デザイントークン違反・改善点を列挙
    2. **Figma MCP** (`/design-review`): 既存デザインの余白・タイポ・コンポーネント構造を読み「今あるものに合わせる」基準を取得
    3. **AIDesigner MCP** (`/design-component`): Desktop/Mobile 両方で改善案 2〜3 案を生成
    4. **Nanobanana API**: カラーパレット・コンポーネント案を生成してデザイン候補を拡張
-   5. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
+   5. **`frontend-design` プラグイン (Anthropic 公式)**: distinctive な HTML/CSS プロトタイプを生成 (generic AI slop 回避)。Flutter 変換前の美学検証に使う
+   6. **`Claude Design` SaaS** (Pro/Max プラン): 複雑な画面は Web UI で視覚的に設計し **handoff bundle** を `/claude-design-handoff` に流し込む (Rule 21)
+   7. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
 
    **制約**: `docs/DESIGN.md` に反する提案は採用しない / `Theme.of(context)` + `ThemeService` を優先 / 日本語本文の `letter-spacing: 0`・`line-height: 1.7〜2.0` を維持
 
@@ -115,6 +117,35 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    3. `memory/feedback_correction_YYYYMMDD.md` に記録
    4. `docs/cross-instance-prs/YYYYMMDD_constraint.md` で他インスタンスへ周知
    **対象範囲**: Claude モデル制限・WEB版の新たな不可操作・MCP ツール制限・GitHub Actions の仕様変更・外部AI (Copilot/Gemini/CODEX) のモデル変更すべてを含む
+
+16. **Rule 21: Claude Design ワークフロー統合（Windows版#94・全インスタンス）** — 2026-04-17 に Anthropic Labs が公開した `Claude Design` SaaS + Claude Code `frontend-design` プラグインを本プロジェクトのデザインワークフローに組み込む。Pro/Max/Team/Enterprise プラン必須。
+
+   **ツール区分**:
+   - `frontend-design` プラグイン (`claude-plugins-official/frontend-design`): 既にインストール済み。Claude Code 内で distinctive な HTML/CSS/React UI コードを生成 (generic AI slop 回避)
+   - `Claude Design` SaaS (<https://claude.ai/design> 想定): Web UI で視覚的に design を生成し、codebase を読み込んで `docs/DESIGN.md` トークンを自動継承。完了したら **handoff bundle** (JSON/Markdown) を出力
+
+   **統合ワークフロー**:
+   1. **視覚設計が主**の場合 (例: netkeiba 風競馬予想画面・複雑なダッシュボード): Claude Design SaaS でビジュアル生成 → handoff bundle を `/claude-design-handoff` に流し込み → Flutter widget skeleton + DESIGN.md 差分を自動生成
+   2. **純粋な美学検証**: `frontend-design` スキル (`Skill` tool で `frontend-design:frontend-design` 呼出) で HTML プロトタイプ → Flutter に手動変換
+   3. **既存 UI 改善**: Rule 19 のツールチェーンに追加 (Step 5-6 で `frontend-design` + Claude Design) — 既存 `design-skills` / Figma MCP / AIDesigner MCP との使い分けは Rule 19 ワークフロー参照
+
+   **handoff bundle 仕様** (Claude Design 出力):
+   ```json
+   {
+     "design_tokens": {"colors": {...}, "typography": {...}, "spacing": {...}},
+     "components": [{"name": "...", "html": "...", "props": {...}}],
+     "pages": [{"route": "...", "layout": "..."}]
+   }
+   ```
+   `/claude-design-handoff` (slash command) で自動パース + DESIGN.md との差分チェック + Flutter widget 雛形生成。
+
+   **使い分け基準**:
+   | 用途 | ツール |
+   | --- | --- |
+   | 既存デザイントークン準拠の widget 改善 | `design-skills` + Figma MCP + AIDesigner MCP (Rule 19 既存) |
+   | 新規 component の creative prototype | `frontend-design` プラグイン (HTML 生成) |
+   | 複雑な画面の視覚設計 → Flutter | Claude Design SaaS → `/claude-design-handoff` |
+   | 1 画像だけ生成 | Nanobanana API (既存) |
 
 ---
 
