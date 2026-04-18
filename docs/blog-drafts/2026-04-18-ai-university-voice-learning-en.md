@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Voice Learning — ElevenLabs TTS with Web Speech API Fallback"
 tags: Flutter,Supabase,buildinpublic,webdev,FlutterTips
-published: false
+published: true
 ---
 
 # Flutter Web Voice Learning — ElevenLabs TTS with Web Speech API Fallback

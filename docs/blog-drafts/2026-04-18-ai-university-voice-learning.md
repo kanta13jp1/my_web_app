@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web で音声学習を実装した — ElevenLabs TTS + Web Speech API フォールバック"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter Web で音声学習を実装した — ElevenLabs TTS + Web Speech API フォールバック
