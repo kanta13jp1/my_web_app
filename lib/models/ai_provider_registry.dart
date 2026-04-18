@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (92社, 2026-04-19時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (93社, 2026-04-19時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -702,6 +702,15 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     status: AiProviderStatus.notImplemented,
     entryPoint: r'(未実装 — blockchain 検証付き AI inference・$MIRA token必須)',
     note: r'GPT-4o/Llama 405B を分散検証・500K users・hallucination対策',
+  ),
+  AiProviderEntry(
+    id: 'gmi_cloud',
+    displayName: 'GMI Cloud',
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
+    envKeyName: 'GMI_CLOUD_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: 'TensorRT-LLM 最適化・100+モデル・H100 \$2.10/hr・無料枠あり',
   ),
 ];
 

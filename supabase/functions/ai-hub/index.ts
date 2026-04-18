@@ -376,6 +376,14 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  gmi_cloud: {
+    displayName: "GMI Cloud",
+    envKey: "GMI_CLOUD_API_KEY",
+    chatUrl: "https://api.gmicloud.ai/v1/chat/completions",
+    defaultModel: "deepseek-v3.2",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 type Tier = "free" | "budget" | "performance" | "premium";
@@ -1855,7 +1863,7 @@ serve(async (req: Request) => {
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
       case "provider.chat": {
-        // 汎用プロバイダー呼び出し (AI大学92社の実装済みAIに統一インターフェースで話しかける)
+        // 汎用プロバイダー呼び出し (AI大学93社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");

@@ -602,6 +602,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF8E44AD),
     officialUrl: 'https://docs.mira.network/',
   ),
+  'gmi_cloud': _ProviderMeta(
+    name: 'GMI Cloud',
+    emoji: '⚡',
+    color: const Color(0xFF76B900),
+    officialUrl: 'https://www.gmicloud.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1178,6 +1184,16 @@ final Map<String, _Quiz> _quizzes = {
       'AI 出力の信頼性 (hallucination) を分散検証で保証',
       'モデルの ファインチューニング コスト',
       'TTS の音声品質',
+    ],
+    correct: 1,
+  ),
+  'gmi_cloud': _Quiz(
+    question: 'GMI Cloud が採用する低レイテンシ inference の中核技術は?',
+    options: [
+      'CPU のみ推論',
+      'NVIDIA TensorRT-LLM + vLLM + FP8 量子化',
+      'WebAssembly',
+      'Bitcoin マイニング',
     ],
     correct: 1,
   ),
@@ -2690,6 +2706,27 @@ AI 出力を **暗号学的に検証可能** にする decentralized blockchain 
 - **Verified Generate**: 1 コール で生成 + 検証
 - **Verify only**: 既存出力の検証
 - 利用には \$MIRA トークン (crypto) 必須
+''',
+  'gmi_cloud': '''
+# GMI Cloud
+
+NVIDIA **TensorRT-LLM** バックエンドの低遅延 inference platform。100+ オープンモデルを OpenAI 互換 API で提供。
+
+## 主要モデル
+- **DeepSeek-V3.2** — \$0.28/\$0.40 per 1M tokens (推論コスパ最強)
+- **GLM-5** — Zhipu AI フラッグシップ
+- **Llama-3.1-8B/70B/405B** — OSS 標準
+- **Qwen2.5-72B** — 中国語強い
+
+## 強み
+- TensorRT-LLM + vLLM + FP8 で 2026 最低レイテンシ級
+- H100 GPU 約 \$2.10/hr 即時プロビジョン
+- Free Tier ありで試用容易
+- 100+ モデル 1 アカウント
+
+## API
+- `https://api.gmicloud.ai/v1/chat/completions`
+- OpenAI SDK の base URL 切替で動く
 ''',
 };
 
