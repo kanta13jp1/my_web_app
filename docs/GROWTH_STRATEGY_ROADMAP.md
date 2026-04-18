@@ -10810,3 +10810,23 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 未ディスパッチ blog: 2026-04-18-ai-hub-33-providers.md (T-1 #121 候補)
 - cross-instance-prs pending: 20260418_claude_design_flutter_importer.md (VSCode版向け) + 20260418_dart_format_before_push.md (全インスタンス向け)
 - 修正済み: scripts/fix_design_tokens_generic.py + fix_design_tokens_morning.py コミット
+
+### PS版#121 完了 (2026-04-18 PM)
+
+#### 実施内容
+- **T-1 第121弾**: `2026-04-18-ai-hub-33-providers.md` JA版作成 + dev.to ディスパッチ成功
+  - URL: https://dev.to/kanta13jp1/ai-hub-phase-8-adding-deepinfra-and-liquid-ai-now-at-33-providers-4915
+  - orphan branch `blog-publish/24599609082-20260418-161452` マージ + 削除 ✅
+- **AI大学 86→88社**: deepinfra + nebius 正式昇格 (Option A 実施)
+  - migration: seed_deepinfra / seed_nebius (overview/models/api 各3レコード)
+  - UI: `gemini_university_v2_page.dart` `_providerMeta` + `_fallback` 追加
+  - `ai-university-update.yml` RSS追加 / CLAUDE.md + COMPRESSED_PROMPT_V3.md provider list末尾追記
+- **cross-instance-prs完了**: deepinfra_nebius + dart_format_before_push → done/
+- **scripts**: `fix_design_tokens_generic.py` + `fix_design_tokens_morning.py` コミット
+- **Rule17**: deploy-prod 最新 SUCCESS ✅ / orphan 0件 ✅
+
+#### 残タスク (次回優先度順)
+1. 🔴 **Supabase Secrets 追加** (要ユーザー手動操作): DEEPINFRA_API_KEY / LIQUID_API_KEY / REPLICATE_API_TOKEN / COZE_API_KEY / SILICONFLOW_API_KEY / NOVITA_API_KEY / NEBIUS_API_KEY
+2. 🟡 **cross-instance-pr対応**: `20260418_claude_design_flutter_importer.md` → VSCode版スコープ (未対応)
+3. 🟢 **ai-hub Phase9+**: siliconflow/novita_ai を ai-hub PROVIDER_CONFIGS に追加 (AI大学は済み)
+4. 🔵 **T-1 #122**: 次回ブログ候補 = AI大学88社達成記事
