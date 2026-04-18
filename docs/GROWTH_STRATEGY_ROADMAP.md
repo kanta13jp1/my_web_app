@@ -10897,3 +10897,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/building-a-realtime-activity-feed-with-supabase-and-flutter-4m41
   - activity_feed_page.dart の .stream() 実装解説 (StreamSubscription + onError fallback + dispose cancel)
   - orphan branch マージ + 削除 ✅
+
+### PS版#127 Rule17 WF health check (2026-04-18 PM)
+- **全WF success率**: 最新run全SUCCESS ✅
+- **失敗WF**: deploy-prod 1件 (pre-fix) / blog-publish 1件 (pre-fix) — 両方最新は成功
+- **orphan branches**: 全パターン 0件 ✅
+- **unstaged leakage**: 0件 (session開始時クリーン)
+- **修正済み**: なし
