@@ -2366,7 +2366,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         ? Colors.green
         : scheduled
             ? _priorityColor(action.priority)
-            : Colors.grey;
+            : const Color(0xFF9CA3AF);
     final icon = completed
         ? Icons.check_circle
         : scheduled
@@ -2477,7 +2477,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: const Color(0xFFE5E7EB).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
       ),
@@ -2815,7 +2815,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                             padding: const EdgeInsets.all(18),
                             constraints: const BoxConstraints(maxWidth: 360),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.92),
+                              color: const Color(0xFFE5E7EB)
+                                  .withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: Colors.indigo.withValues(alpha: 0.14),
@@ -2938,7 +2939,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     bool isEditable = true,
   }) {
     final backgroundColor = Color.alphaBlend(
-      Colors.white.withValues(alpha: node.isDimmed ? 0.7 : 0.92),
+      const Color(0xFFE5E7EB).withValues(alpha: node.isDimmed ? 0.7 : 0.92),
       node.color.withValues(alpha: node.isDimmed ? 0.08 : 0.14),
     );
 
@@ -3397,7 +3398,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 const SizedBox(height: 4),
                 const Text(
                   '「脱線したら、時間制限を合図に元の目的へ戻る」',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style:
+                      TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -3468,7 +3470,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       fontWeight: FontWeight.bold,
                                       color: isCurrentHour
                                           ? Colors.blue
-                                          : Colors.grey,
+                                          : const Color(0xFF9CA3AF),
                                     ),
                                   ),
                                 ),
@@ -3578,7 +3580,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                           ? Colors.green
                                                           : isSuppressedByCriticalLock
                                                               ? Colors.blueGrey
-                                                              : Colors.grey,
+                                                              : const Color(
+                                                                  0xFF9CA3AF),
                                                       size: 20,
                                                     ),
                                                     const SizedBox(width: 8),
@@ -3624,7 +3627,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                                   .lineThrough
                                                               : null,
                                                           color: isDone
-                                                              ? Colors.grey
+                                                              ? const Color(
+                                                                  0xFF9CA3AF)
                                                               : isSuppressedByCriticalLock
                                                                   ? Colors
                                                                       .black54

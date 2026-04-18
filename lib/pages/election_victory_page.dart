@@ -1815,7 +1815,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '${_dateOnlyFormat.format(point.fetchedAt.toLocal())}\n'
                   '${_formatInt(point.officialCurrentLocalMembers)} 人',
                   const TextStyle(
-                    color: Colors.white,
+                    color: const Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w700,
                   ),
                 );
@@ -2649,7 +2649,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   label: Text(
                     filter == 'すべて' ? filter : '$filter ($count)',
                     style: TextStyle(
-                      color: isSelected ? Colors.white : null,
+                      color: isSelected ? const Color(0xFFE5E7EB) : null,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.normal,
                       fontSize: 13,
@@ -2824,7 +2824,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       child: Text(
                         countLabel,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: const Color(0xFFE5E7EB),
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -3836,7 +3836,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 child: Text(
                   '$battleCount戦 ${_formatInt(winCount)}勝 ${_formatInt(lossCount)}敗',
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: const Color(0xFFE5E7EB),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
