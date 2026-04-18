@@ -57,7 +57,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       case 'strong':
         return Colors.green;
       case 'medium':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       default:
         return Colors.red;
     }

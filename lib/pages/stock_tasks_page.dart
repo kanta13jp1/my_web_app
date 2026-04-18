@@ -439,7 +439,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
     final bool isCompleted = task['is_completed'] == true;
     final String text = task['task'] as String? ?? '';
     final bool isThinking = _isThinkingTask(task);
-    final badgeColor = isThinking ? Colors.deepPurple : const Color(0xFF009688);
+    final badgeColor =
+        isThinking ? const Color(0xFF3D5AFE) : const Color(0xFF009688);
     final badgeText = isThinking ? '思考ネタ' : '行動';
     return Dismissible(
       key: ValueKey(id),

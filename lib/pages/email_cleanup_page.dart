@@ -427,7 +427,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color:
-              progress >= 1.0 ? Colors.green.shade200 : Colors.indigo.shade100,
+              progress >= 1.0 ? Colors.green.shade200 : const Color(0xFFC5CAE9),
         ),
       ),
       child: ExpansionTile(
@@ -530,9 +530,9 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: const Color(0xFFFFCC80)),
       ),
       child: Row(
         children: [
@@ -540,10 +540,13 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.orange.shade100,
+              color: const Color(0xFFFFE0B2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.notifications_active, color: Colors.orange),
+            child: const Icon(
+              Icons.notifications_active,
+              color: Color(0xFFFF6B35),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -597,7 +600,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: needs
-              ? Colors.orange.shade300
+              ? const Color(0xFFFFB74D)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
           width: needs ? 1.5 : 1,
         ),
@@ -654,7 +657,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
+                      color: const Color(0xFFFFE0B2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
@@ -662,7 +665,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Colors.deepOrange,
+                        color: Color(0xFFFF6B35),
                       ),
                     ),
                   )

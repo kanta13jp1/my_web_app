@@ -28,7 +28,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
   static const _statusColors = {
     'active': Colors.green,
     'completed': Colors.blue,
-    'pending': Colors.orange,
+    'pending': Color(0xFFFF6B35),
     'cancelled': Colors.red,
   };
 
@@ -274,7 +274,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
         final inv = _invoices[i];
         return Card(
           child: ListTile(
-            leading: const Icon(Icons.receipt_long, color: Colors.indigo),
+            leading: const Icon(Icons.receipt_long, color: Color(0xFF3D5AFE)),
             title: Text(inv['title'] as String? ?? '請求書'),
             subtitle: Text(inv['client_name'] as String? ?? ''),
             trailing: Text(

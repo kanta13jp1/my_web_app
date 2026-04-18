@@ -39,7 +39,7 @@ class ShareNoteDialog extends StatelessWidget {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.share, color: Colors.indigo),
+          Icon(Icons.share, color: Color(0xFF3D5AFE)),
           SizedBox(width: 8),
           Text('メモをシェア'),
         ],
@@ -53,7 +53,7 @@ class ShareNoteDialog extends StatelessWidget {
         ElevatedButton.icon(
           onPressed: () => _shareNote(context),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.indigo,
+            backgroundColor: const Color(0xFF3D5AFE),
             foregroundColor: Colors.white,
           ),
           icon: const Icon(Icons.ios_share),

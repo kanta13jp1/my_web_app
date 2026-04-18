@@ -78,7 +78,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                 _buildMetric(
                   '週間新規',
                   channel['weeklyNewUsers'],
-                  Colors.orange,
+                  const Color(0xFFFF6B35),
                 ),
               ],
             ),

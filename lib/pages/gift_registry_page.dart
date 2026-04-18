@@ -127,7 +127,7 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                               Icons.card_giftcard,
                               color: reserved
                                   ? const Color(0xFF9CA3AF)
-                                  : Colors.pink,
+                                  : const Color(0xFFFF6B35),
                             ),
                             title: Text(title),
                             subtitle: price.isNotEmpty ? Text('¥$price') : null,

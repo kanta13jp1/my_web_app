@@ -283,7 +283,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
             const Color(0xFF0D9488),
           ),
           if (grade.isNotEmpty)
-            _headerChip(Icons.star_outline, grade, Colors.amber),
+            _headerChip(Icons.star_outline, grade, const Color(0xFFFFC107)),
         ],
       ),
     );

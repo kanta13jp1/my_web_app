@@ -200,7 +200,7 @@ class _TaskCard extends StatelessWidget {
               _MetaChip(
                 icon: Icons.flag_outlined,
                 label: '優先度 ${task.priority}',
-                color: Colors.orange,
+                color: const Color(0xFFFF6B35),
               ),
               _MetaChip(
                 icon: Icons.hourglass_top,

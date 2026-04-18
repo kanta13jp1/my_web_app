@@ -51,8 +51,7 @@ class NoteAnalysisDialog extends StatelessWidget {
                     (tag) => Chip(
                       label: Text(tag),
                       backgroundColor: const Color(0xFFE8EAF6),
-                      labelStyle:
-                          const TextStyle(color: Color(0xFF3D5AFE)),
+                      labelStyle: const TextStyle(color: Color(0xFF3D5AFE)),
                     ),
                   )
                   .toList(),

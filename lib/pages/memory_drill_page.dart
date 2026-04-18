@@ -247,15 +247,15 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
   Color _colorForCategory(String category) {
     switch (category) {
       case '地理':
-        return Colors.teal;
+        return const Color(0xFF3D5AFE);
       case '音楽':
-        return Colors.deepPurple;
+        return const Color(0xFF3D5AFE);
       case '理科':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case '歴史':
-        return Colors.brown;
+        return const Color(0xFF795548);
       default:
-        return Colors.indigo;
+        return const Color(0xFF3D5AFE);
     }
   }
 
@@ -351,13 +351,13 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
           icon: Icons.today,
           label: '今日の完了',
           value: '${_stats.completedTodayCount}セット',
-          color: Colors.indigo,
+          color: const Color(0xFF3D5AFE),
         ),
         _StatChip(
           icon: Icons.local_fire_department,
           label: '連続日数',
           value: '${_stats.currentStreak}日',
-          color: Colors.orange,
+          color: const Color(0xFFFF6B35),
         ),
       ],
     );

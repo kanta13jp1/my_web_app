@@ -62,7 +62,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('共有シグナル'),
-        backgroundColor: Colors.pink,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -106,7 +106,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                                     children: [
                                       const Icon(
                                         Icons.share,
-                                        color: Colors.pink,
+                                        color: Color(0xFFFF6B35),
                                         size: 32,
                                       ),
                                       const SizedBox(height: 8),
@@ -115,7 +115,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                                         style: const TextStyle(
                                           fontSize: 28,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.pink,
+                                          color: Color(0xFFFF6B35),
                                         ),
                                       ),
                                       const Text('シェア数'),
@@ -127,7 +127,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                                     children: [
                                       const Icon(
                                         Icons.copy,
-                                        color: Colors.purple,
+                                        color: Color(0xFF3D5AFE),
                                         size: 32,
                                       ),
                                       const SizedBox(height: 8),
@@ -136,7 +136,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                                         style: const TextStyle(
                                           fontSize: 28,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.purple,
+                                          color: Color(0xFF3D5AFE),
                                         ),
                                       ),
                                       const Text('コピー数'),

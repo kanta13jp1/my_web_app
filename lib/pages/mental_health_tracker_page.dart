@@ -130,7 +130,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.favorite, color: Colors.pink),
+                Icon(Icons.favorite, color: Color(0xFFFF6B35)),
                 SizedBox(width: 8),
                 Text(
                   '今日の状態を記録',
@@ -160,7 +160,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
               min: 1,
               max: 5,
               divisions: 4,
-              activeColor: Colors.orange,
+              activeColor: const Color(0xFFFF6B35),
               onChanged: (v) => setState(() => _stressScore = v.round()),
             ),
             const SizedBox(height: 8),
@@ -173,7 +173,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
               min: 1,
               max: 12,
               divisions: 11,
-              activeColor: Colors.indigo,
+              activeColor: const Color(0xFF3D5AFE),
               onChanged: (v) => setState(() => _sleepHours = v.round()),
             ),
             const SizedBox(height: 12),

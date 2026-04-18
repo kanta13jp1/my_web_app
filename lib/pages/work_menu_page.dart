@@ -141,7 +141,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
               title: '最近使った機能',
               description: '直近で開いた導線をすぐ再開できます。',
               icon: Icons.history,
-              color: Colors.indigo,
+              color: const Color(0xFF3D5AFE),
             ),
             const SizedBox(height: 10),
             FutureBuilder<List<String>>(
@@ -165,7 +165,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
               title: '検索結果',
               description: '${filteredEntries.length}件の機能が見つかりました。',
               icon: Icons.manage_search,
-              color: Colors.deepPurple,
+              color: const Color(0xFF3D5AFE),
             ),
             const SizedBox(height: 10),
             if (filteredEntries.isEmpty)
@@ -353,15 +353,15 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color:
-                        (isLocked ? Colors.blueGrey : entry.color).withValues(
+                    color: (isLocked ? const Color(0xFF607D8B) : entry.color)
+                        .withValues(
                       alpha: 0.12,
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(
                     entry.icon,
-                    color: isLocked ? Colors.blueGrey : entry.color,
+                    color: isLocked ? const Color(0xFF607D8B) : entry.color,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -380,7 +380,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: isLocked
-                                    ? Colors.blueGrey
+                                    ? const Color(0xFF607D8B)
                                     : isHighlighted
                                         ? entry.color
                                         : null,

@@ -148,7 +148,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                               label: Text(status.toString()),
                               backgroundColor: status.toString() == 'paid'
                                   ? Colors.green.shade100
-                                  : Colors.orange.shade100,
+                                  : const Color(0xFFFFE0B2),
                             ),
                           ),
                         );

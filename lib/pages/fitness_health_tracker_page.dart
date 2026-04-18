@@ -243,7 +243,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                   '$streakDays',
                   '連続日数',
                   Icons.local_fire_department,
-                  Colors.orange,
+                  const Color(0xFFFF6B35),
                 ),
               ),
             ],
@@ -276,7 +276,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
               '${latestWeight}kg',
               '最新体重',
               Icons.monitor_weight,
-              Colors.purple,
+              const Color(0xFF3D5AFE),
             ),
           ],
           if (_workouts.isNotEmpty) ...[

@@ -481,12 +481,12 @@ class _TeamCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: Colors.indigo.shade100,
+                  backgroundColor: const Color(0xFFC5CAE9),
                   child: Text(
                     name.isNotEmpty ? name[0] : '?',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
+                      color: Color(0xFF3D5AFE),
                     ),
                   ),
                 ),
@@ -510,14 +510,14 @@ class _TeamCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.indigo.shade50,
+                            color: const Color(0xFFE8EAF6),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
                             'オーナー',
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.indigo,
+                              color: Color(0xFF3D5AFE),
                               fontWeight: FontWeight.bold,
                             ),
                           ),

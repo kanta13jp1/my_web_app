@@ -194,7 +194,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('API Playground'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -293,7 +293,7 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                     : const Icon(Icons.play_arrow),
                 label: const Text('Execute API'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: const Color(0xFF3D5AFE),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
               ),

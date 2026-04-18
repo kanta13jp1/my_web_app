@@ -743,7 +743,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
         color = Colors.green;
         label = '有効';
       case 'pending':
-        color = Colors.orange;
+        color = const Color(0xFFFF6B35);
         label = '処理中';
       case 'expired':
         color = colorScheme.error;
@@ -774,12 +774,12 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
     final colors = {
       'A': Colors.blue,
       'AAAA': Colors.blue.shade700,
-      'CNAME': Colors.purple,
-      'MX': Colors.orange,
-      'TXT': Colors.teal,
+      'CNAME': const Color(0xFF3D5AFE),
+      'MX': const Color(0xFFFF6B35),
+      'TXT': const Color(0xFF3D5AFE),
       'NS': Colors.green,
       'SRV': Colors.red,
-      'CAA': Colors.indigo,
+      'CAA': const Color(0xFF3D5AFE),
     };
     final color = colors[type] ?? colorScheme.primary;
     return Container(
@@ -811,8 +811,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
         );
       case 'expiring_soon':
         return CircleAvatar(
-          backgroundColor: Colors.orange.withValues(alpha: 0.15),
-          child: const Icon(Icons.lock_clock, color: Colors.orange),
+          backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+          child: const Icon(Icons.lock_clock, color: Color(0xFFFF6B35)),
         );
       case 'expired':
         return CircleAvatar(
@@ -835,7 +835,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
         color = Colors.green;
         label = '有効';
       case 'expiring_soon':
-        color = Colors.orange;
+        color = const Color(0xFFFF6B35);
         label = '間もなく期限切れ';
       case 'expired':
         color = colorScheme.error;

@@ -58,7 +58,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('寄付・クラウドファンディング'),
-        backgroundColor: Colors.pink,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -122,13 +122,15 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                       .surfaceContainerHighest,
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                    Colors.pink,
+                                    Color(0xFFFF6B35),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '¥${raised.toStringAsFixed(0)} / ¥${goal.toStringAsFixed(0)}',
-                                  style: const TextStyle(color: Colors.pink),
+                                  style: const TextStyle(
+                                    color: Color(0xFFFF6B35),
+                                  ),
                                 ),
                               ],
                             ),

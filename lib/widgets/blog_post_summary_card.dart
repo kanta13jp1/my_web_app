@@ -158,7 +158,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withAlpha(25),
+                        color: const Color(0xFFFF6B35).withAlpha(25),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -166,7 +166,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Colors.deepOrange,
+                          color: Color(0xFFFF6B35),
                         ),
                       ),
                     ),

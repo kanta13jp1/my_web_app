@@ -241,7 +241,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                         : const Icon(Icons.auto_fix_high),
                     label: Text(_loading ? '執筆中...' : '今日の闘争を記す'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.amber.shade800,
+                      backgroundColor: const Color(0xFFFF8F00),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
@@ -272,7 +272,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
-                side: BorderSide(color: Colors.amber.shade200),
+                side: const BorderSide(color: Color(0xFFFFE082)),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20),

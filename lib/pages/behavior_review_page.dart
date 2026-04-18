@@ -408,7 +408,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
 
   Widget _buildReflectionCard(String reflection) {
     return Card(
-      color: Colors.indigo.shade50,
+      color: const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -416,7 +416,10 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.psychology_alt_outlined, color: Colors.indigo),
+                Icon(
+                  Icons.psychology_alt_outlined,
+                  color: Color(0xFF3D5AFE),
+                ),
                 SizedBox(width: 8),
                 Text(
                   'AI考察',
@@ -437,7 +440,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
 
   Widget _buildMyStruggleColumnCard(String column) {
     return Card(
-      color: Colors.orange.shade50,
+      color: const Color(0xFFFFF3E0),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -445,7 +448,10 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.auto_stories_outlined, color: Colors.deepOrange),
+                Icon(
+                  Icons.auto_stories_outlined,
+                  color: Color(0xFFFF6B35),
+                ),
                 SizedBox(width: 8),
                 Text(
                   'AIコラム「我が闘争」',
@@ -548,7 +554,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
       case 'AI組織':
         return const _BehaviorReviewStyle(
           icon: Icons.campaign_outlined,
-          color: Colors.indigo,
+          color: Color(0xFF3D5AFE),
         );
       case 'メモ':
         return const _BehaviorReviewStyle(
@@ -558,7 +564,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
       default:
         return const _BehaviorReviewStyle(
           icon: Icons.timeline,
-          color: Colors.blueGrey,
+          color: Color(0xFF607D8B),
         );
     }
   }

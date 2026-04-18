@@ -3076,7 +3076,7 @@ $input
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blueGrey,
+                          color: Color(0xFF607D8B),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -3180,8 +3180,9 @@ $input
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF4E5),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Text(
                     'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',

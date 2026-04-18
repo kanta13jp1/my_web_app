@@ -104,8 +104,10 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading:
-                                const Icon(Icons.stars, color: Colors.amber),
+                            leading: const Icon(
+                              Icons.stars,
+                              color: Color(0xFFFFC107),
+                            ),
                             title: Text(
                               description,
                               style:

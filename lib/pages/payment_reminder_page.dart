@@ -436,8 +436,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.indigo.shade700, Colors.indigo.shade500],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF303F9F), Color(0xFF3F51B5)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -529,7 +529,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
           color: overdue
               ? Colors.red.shade300
               : (dueSoon
-                  ? Colors.orange.shade300
+                  ? const Color(0xFFFFB74D)
                   : Theme.of(context).colorScheme.surfaceContainerHigh),
           width: overdue || dueSoon ? 1.5 : 1,
         ),

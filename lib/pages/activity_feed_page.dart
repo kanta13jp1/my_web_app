@@ -185,13 +185,13 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       case 'achievement':
         return {'icon': Icons.emoji_events, 'color': const Color(0xFFFFC107)};
       case 'milestone':
-        return {'icon': Icons.celebration, 'color': Colors.purple};
+        return {'icon': Icons.celebration, 'color': const Color(0xFF3D5AFE)};
       case 'share':
         return {'icon': Icons.share, 'color': Colors.blue};
       case 'level_up':
         return {'icon': Icons.trending_up, 'color': const Color(0xFF009688)};
       case 'stats_page_visit': // 統計ページ訪問のスタイルを追加
-        return {'icon': Icons.bar_chart, 'color': Colors.orange};
+        return {'icon': Icons.bar_chart, 'color': const Color(0xFFFF6B35)};
       default:
         return {'icon': Icons.timeline, 'color': const Color(0xFF9CA3AF)};
     }

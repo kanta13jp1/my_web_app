@@ -110,7 +110,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       case 'urgent':
         return Colors.red;
       case 'high':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'low':
         return const Color(0xFF9CA3AF);
       default:
@@ -437,7 +437,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           FloatingActionButton.small(
             heroTag: 'preset',
             onPressed: _showPresetPicker,
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFFF6B35),
             child: const Icon(Icons.flash_on),
           ),
           const SizedBox(height: 8),
@@ -555,13 +555,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: const Color(0xFFFFF3E0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.orange.shade200),
+        border: Border.all(color: const Color(0xFFFFCC80)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.shopping_cart, color: Colors.orange),
+          const Icon(Icons.shopping_cart, color: Color(0xFFFF6B35)),
           const SizedBox(width: 10),
           Text(
             '🛒 $count件の買い物が必要です',

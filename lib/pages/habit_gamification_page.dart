@@ -114,7 +114,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         final err = data['error'] as String? ?? '不明なエラー';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(err), backgroundColor: Colors.orange),
+            SnackBar(
+              content: Text(err),
+              backgroundColor: const Color(0xFFFF6B35),
+            ),
           );
         }
       }
@@ -239,8 +242,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
       margin: const EdgeInsets.all(12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.purple.shade700, Colors.deepPurple.shade900],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7B1FA2), Color(0xFF311B92)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -300,7 +303,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
               _statChip(
                 Icons.local_fire_department,
                 '$streak日連続',
-                Colors.orange,
+                const Color(0xFFFF6B35),
               ),
               _statChip(Icons.check_circle, '$totalTasks タスク', Colors.green),
               _statChip(
@@ -487,9 +490,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           if (rank == 1) {
             rankColor = const Color(0xFFFFC107);
           } else if (rank == 2) {
-            rankColor = Colors.blueGrey;
+            rankColor = const Color(0xFF607D8B);
           } else if (rank == 3) {
-            rankColor = Colors.brown;
+            rankColor = const Color(0xFF795548);
           }
           return Card(
             margin: const EdgeInsets.only(bottom: 6),

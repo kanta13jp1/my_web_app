@@ -74,13 +74,13 @@ class _AccessControlPageState extends State<AccessControlPage>
       case 'admin':
         return Colors.red;
       case 'manager':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'editor':
         return Colors.blue;
       case 'viewer':
         return const Color(0xFF9CA3AF);
       default:
-        return Colors.purple;
+        return const Color(0xFF3D5AFE);
     }
   }
 

@@ -103,13 +103,13 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
 
   Color _stressColor(int level) {
     if (level <= 2) return Colors.green;
-    if (level == 3) return Colors.orange;
+    if (level == 3) return const Color(0xFFFF6B35);
     return Colors.red;
   }
 
   Color _moodColor(int level) {
     if (level >= 4) return Colors.green;
-    if (level == 3) return Colors.orange;
+    if (level == 3) return const Color(0xFFFF6B35);
     return Colors.red;
   }
 

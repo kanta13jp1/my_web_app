@@ -108,7 +108,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
   Color _similarityColor(double score) {
     if (score >= 0.85) return Colors.green;
     if (score >= 0.70) return Colors.lightGreen;
-    if (score >= 0.50) return Colors.orange;
+    if (score >= 0.50) return const Color(0xFFFF6B35);
     return Colors.red;
   }
 
@@ -335,9 +335,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Card(
-            color: Colors.indigo.shade700,
-            child: const Padding(
+          const Card(
+            color: Color(0xFF303F9F),
+            child: Padding(
               padding: EdgeInsets.all(12),
               child: Row(
                 children: [
@@ -388,7 +388,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   )
                 : const Icon(Icons.compare),
             label: const Text('類似度を計算'),
-            style: FilledButton.styleFrom(backgroundColor: Colors.indigo),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF3D5AFE),
+            ),
           ),
           if (_apiKey == null)
             const Padding(

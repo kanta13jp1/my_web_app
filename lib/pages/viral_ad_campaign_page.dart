@@ -241,7 +241,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: highlight
-            ? Colors.orange.withValues(alpha: 0.2)
+            ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
             : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
@@ -251,7 +251,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
             value,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: highlight ? Colors.orange : null,
+              color: highlight ? const Color(0xFFFF6B35) : null,
             ),
           ),
           Text(label, style: const TextStyle(fontSize: 11)),
@@ -461,7 +461,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
-                              _isDryRun ? Colors.orange : Colors.blue,
+                              _isDryRun ? const Color(0xFFFF6B35) : Colors.blue,
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -492,7 +492,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                 final statusColor = status == 'success'
                     ? Colors.green
                     : status == 'dry_run'
-                        ? Colors.orange
+                        ? const Color(0xFFFF6B35)
                         : Theme.of(context).colorScheme.error;
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),

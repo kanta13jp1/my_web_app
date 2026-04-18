@@ -70,8 +70,9 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.08);
-    final labelColor =
-        isDark ? Colors.white70 : Colors.blueGrey.withValues(alpha: 0.85);
+    final labelColor = isDark
+        ? Colors.white70
+        : const Color(0xFF607D8B).withValues(alpha: 0.85);
     final clockText = DateFormat('yyyy/MM/dd HH:mm:ss').format(_now);
 
     return Container(

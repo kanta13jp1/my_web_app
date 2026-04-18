@@ -105,7 +105,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       case 'active':
         return Colors.green;
       case 'paused':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'error':
         return Colors.red;
       default:

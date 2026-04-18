@@ -109,8 +109,10 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
-                            leading:
-                                const Icon(Icons.gavel, color: Colors.amber),
+                            leading: const Icon(
+                              Icons.gavel,
+                              color: Color(0xFFFFC107),
+                            ),
                             title: Text(
                               title,
                               style: const TextStyle(

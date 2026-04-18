@@ -397,18 +397,18 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   pastAttempts == 0
                       ? Colors.green
                       : pastAttempts < 5
-                          ? Colors.orange
+                          ? const Color(0xFFFF6B35)
                           : Colors.red,
                 ),
                 const SizedBox(width: 6),
                 _infoChip(
                   '計画: ${hasPlan ? "あり" : "なし"}',
-                  hasPlan ? Colors.green : Colors.orange,
+                  hasPlan ? Colors.green : const Color(0xFFFF6B35),
                 ),
                 const SizedBox(width: 6),
                 _infoChip(
                   'フォールバック: ${hasFallback ? "あり" : "なし"}',
-                  hasFallback ? Colors.green : Colors.orange,
+                  hasFallback ? Colors.green : const Color(0xFFFF6B35),
                 ),
               ],
             ),

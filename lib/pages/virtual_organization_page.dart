@@ -362,7 +362,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       case 'failed':
         return Colors.red;
       default:
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
     }
   }
 

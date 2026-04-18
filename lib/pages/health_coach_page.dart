@@ -154,13 +154,13 @@ class _SummaryTab extends StatelessWidget {
         '消費カロリー',
         '${data!['calories_burned'] ?? '—'} kcal',
         Icons.local_fire_department,
-        Colors.orange
+        const Color(0xFFFF6B35)
       ),
       (
         '睡眠時間',
         '${data!['sleep_hours'] ?? '—'} 時間',
         Icons.bedtime,
-        Colors.indigo
+        const Color(0xFF3D5AFE)
       ),
       ('水分摂取', '${data!['water_ml'] ?? '—'} ml', Icons.water_drop, Colors.blue),
     ];
@@ -268,11 +268,11 @@ class _MealsTab extends StatelessWidget {
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.orange.shade100,
+            leading: const CircleAvatar(
+              backgroundColor: Color(0xFFFFE0B2),
               child: Icon(
                 Icons.restaurant,
-                color: Colors.orange.shade700,
+                color: Color(0xFFF57C00),
                 size: 20,
               ),
             ),
@@ -282,7 +282,7 @@ class _MealsTab extends StatelessWidget {
               '${meal['calories'] ?? '—'} kcal',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.orange,
+                color: Color(0xFFFF6B35),
               ),
             ),
           ),
@@ -337,7 +337,7 @@ class _AdviceTab extends StatelessWidget {
         const SizedBox(height: 12),
         const _HealthTipCard(
           icon: Icons.directions_run,
-          color: Colors.orange,
+          color: Color(0xFFFF6B35),
           title: '運動のヒント',
           body: '1日30分の有酸素運動で代謝が10〜15%向上します。'
               'ウォーキングから始めて徐々に強度を上げましょう。',
@@ -345,7 +345,7 @@ class _AdviceTab extends StatelessWidget {
         const SizedBox(height: 8),
         const _HealthTipCard(
           icon: Icons.nights_stay,
-          color: Colors.indigo,
+          color: Color(0xFF3D5AFE),
           title: '睡眠のヒント',
           body: '質の良い睡眠は免疫力・集中力・代謝を改善します。'
               '就寝1時間前のスクリーンタイムを控えましょう。',

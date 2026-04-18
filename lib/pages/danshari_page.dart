@@ -97,7 +97,7 @@ class _DanshariPageState extends State<DanshariPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('断捨離クエスト'),
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -116,7 +116,7 @@ class _DanshariPageState extends State<DanshariPage> {
           const Icon(
             Icons.check_circle_outline,
             size: 80,
-            color: Colors.orange,
+            color: Color(0xFFFF6B35),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -240,7 +240,7 @@ class _DanshariPageState extends State<DanshariPage> {
                 child: ElevatedButton.icon(
                   onPressed: () => _processNote(true), // Keep
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFFF6B35),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 4,

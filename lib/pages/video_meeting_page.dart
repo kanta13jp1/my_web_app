@@ -147,9 +147,9 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       case 'audio':
         return Colors.green;
       case 'webinar':
-        return Colors.purple;
+        return const Color(0xFF3D5AFE);
       case 'screen_share':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       default:
         return const Color(0xFF9CA3AF);
     }
@@ -386,10 +386,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
             leading: CircleAvatar(
               backgroundColor: done
                   ? Colors.green.withAlpha(30)
-                  : Colors.orange.withAlpha(30),
+                  : const Color(0xFFFF6B35).withAlpha(30),
               child: Icon(
                 done ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: done ? Colors.green : Colors.orange,
+                color: done ? Colors.green : const Color(0xFFFF6B35),
               ),
             ),
             title: Text(

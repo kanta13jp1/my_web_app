@@ -216,7 +216,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: Colors.purple.shade100,
+              backgroundColor: const Color(0xFFE1BEE7),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'P',
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -227,7 +227,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
             subtitle: Text(author.isNotEmpty ? author : '$episodeCount エピソード'),
             trailing: Chip(
               label: Text(subscribed ? '購読中' : '未購読'),
-              backgroundColor: subscribed ? Colors.purple.shade50 : null,
+              backgroundColor: subscribed ? const Color(0xFFF3E5F5) : null,
             ),
           ),
         );

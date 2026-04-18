@@ -164,7 +164,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
           child: ListTile(
             leading: Icon(
               Icons.description,
-              color: pending ? Colors.orange : Colors.green,
+              color: pending ? const Color(0xFFFF6B35) : Colors.green,
               size: 32,
             ),
             title: Text(

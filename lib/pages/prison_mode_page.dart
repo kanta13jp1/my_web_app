@@ -412,7 +412,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                       Theme.of(context).colorScheme.onSurface,
                       Theme.of(context).colorScheme.onSurfaceVariant,
                     ]
-                  : [Colors.blueGrey.shade700, Colors.blueGrey.shade500],
+                  : [const Color(0xFF455A64), const Color(0xFF607D8B)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),

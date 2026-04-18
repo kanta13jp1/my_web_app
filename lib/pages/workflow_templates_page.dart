@@ -57,11 +57,11 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       case 'hr':
         return Colors.blue;
       case 'engineering':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'marketing':
-        return Colors.pink;
+        return const Color(0xFFFF6B35);
       case 'sales':
-        return Colors.purple;
+        return const Color(0xFF3D5AFE);
       case 'support':
         return const Color(0xFF009688);
       default:
@@ -74,7 +74,7 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ワークフローテンプレート'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

@@ -143,7 +143,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CMO OFFICE (マーケティング)'),
-        backgroundColor: Colors.pink[700],
+        backgroundColor: const Color(0xFFC2185B),
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -155,7 +155,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                 children: [
                   AgentWorkspacePanel(
                     officeLabel: 'CMO',
-                    accentColor: Colors.pink,
+                    accentColor: const Color(0xFFFF6B35),
                     isLoading: false,
                     workspace: _workspace,
                     onProcessTask: _processTask,
@@ -165,13 +165,13 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     '継続エンゲージメント日数',
                     '$streak日',
                     Icons.local_fire_department,
-                    Colors.orange,
+                    const Color(0xFFFF6B35),
                   ),
                   _buildKpiCard(
                     '累計 LTV 指標 (獲得ポイント)',
                     '$points pt',
                     Icons.monetization_on,
-                    Colors.amber.shade800,
+                    const Color(0xFFFF8F00),
                   ),
                   _buildKpiCard(
                     'ブランドランク (レベル)',
@@ -185,7 +185,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     '導線分析ダッシュボード',
                     'LP View・訪問数・CVR などの指標を確認できます。',
                     Icons.bar_chart,
-                    Colors.purple,
+                    const Color(0xFF3D5AFE),
                     () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -198,7 +198,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     '発信テンプレを共有する (SNSシェア)',
                     'X の投稿画面を開いて、訴求文をそのまま共有できます。',
                     Icons.share,
-                    Colors.pink,
+                    const Color(0xFFFF6B35),
                     _shareToX,
                   ),
                   _buildActionCard(

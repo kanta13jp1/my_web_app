@@ -290,7 +290,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                 Icon(
                   _success ? Icons.check_circle : Icons.error_outline,
                   size: 14,
-                  color: _success ? Colors.green : Colors.orange,
+                  color: _success ? Colors.green : const Color(0xFFFF6B35),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -298,7 +298,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                     _resultMessage!,
                     style: TextStyle(
                       fontSize: 11,
-                      color: _success ? Colors.green : Colors.orange,
+                      color: _success ? Colors.green : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -314,22 +314,22 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
         _buildStatChip(
           label: '今日の直視',
           value: '${_stats.reviewedTodayCount}件',
-          color: Colors.indigo,
+          color: const Color(0xFF3D5AFE),
         ),
         _buildStatChip(
           label: '連続日数',
           value: '${_stats.currentStreak}日',
-          color: Colors.teal,
+          color: const Color(0xFF3D5AFE),
         ),
         _buildStatChip(
           label: '今日のカテゴリ',
           value: '${_stats.categoriesCoveredToday.length}種',
-          color: Colors.deepOrange,
+          color: const Color(0xFFFF6B35),
         ),
         _buildStatChip(
           label: '累計ノート',
           value: '${_entries.length}件',
-          color: Colors.blueGrey,
+          color: const Color(0xFF607D8B),
         ),
       ],
     );
@@ -423,7 +423,7 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
             children: [
               Chip(
                 label: Text(entry.category),
-                backgroundColor: Colors.indigo.shade50,
+                backgroundColor: const Color(0xFFE8EAF6),
               ),
               Text(
                 formatter.format(entry.createdAt),

@@ -42,8 +42,8 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   static const _stageColors = {
     'lead': Color(0xFF9CA3AF),
     'qualified': Colors.blue,
-    'proposal': Colors.orange,
-    'negotiation': Colors.purple,
+    'proposal': Color(0xFFFF6B35),
+    'negotiation': Color(0xFF3D5AFE),
     'closed_won': Colors.green,
     'closed_lost': Colors.red,
   };
@@ -586,7 +586,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '勝率',
                   '$winRate%',
                   Icons.trending_up,
-                  winRate >= 50 ? Colors.green : Colors.orange,
+                  winRate >= 50 ? Colors.green : const Color(0xFFFF6B35),
                 ),
               ),
               const SizedBox(width: 12),
@@ -595,7 +595,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '平均案件規模',
                   '¥${_formatYen(avgSize)}',
                   Icons.attach_money,
-                  Colors.purple,
+                  const Color(0xFF3D5AFE),
                 ),
               ),
             ],
@@ -707,7 +707,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
 
   Color _scoreColor(int score) {
     if (score >= 75) return Colors.green;
-    if (score >= 50) return Colors.orange;
+    if (score >= 50) return const Color(0xFFFF6B35);
     return Colors.red;
   }
 

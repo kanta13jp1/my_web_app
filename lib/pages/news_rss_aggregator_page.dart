@@ -82,7 +82,7 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ニュース・RSS'),
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -174,10 +174,11 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                               '';
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.orange.withAlpha(30),
+                              backgroundColor:
+                                  const Color(0xFFFF6B35).withAlpha(30),
                               child: const Icon(
                                 Icons.rss_feed,
-                                color: Colors.orange,
+                                color: Color(0xFFFF6B35),
                                 size: 18,
                               ),
                             ),

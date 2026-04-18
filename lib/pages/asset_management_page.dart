@@ -134,7 +134,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     const Color(0xFFEC4899),
     const Color(0xFFFFC107),
     const Color(0xFF0D9488),
-    Colors.brown,
+    const Color(0xFF795548),
   ];
 
   static const double _compactWidthBreakpoint = 420;

@@ -194,7 +194,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
-            leading: const Icon(Icons.favorite, color: Colors.pink),
+            leading: const Icon(Icons.favorite, color: Color(0xFFFF6B35)),
             title: Text('$petName${type.isNotEmpty ? " — $type" : ""}'),
             subtitle: Text(note.isNotEmpty ? note : '記録なし'),
             trailing: Column(

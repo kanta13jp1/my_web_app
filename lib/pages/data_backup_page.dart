@@ -20,16 +20,16 @@ class _DataBackupPageState extends State<DataBackupPage> {
   List<Map<String, dynamic>> _backupHistory = [];
 
   static const _exportTargets = [
-    _ExportTarget('notes', 'ノート', Icons.note, Colors.amber),
+    _ExportTarget('notes', 'ノート', Icons.note, Color(0xFFFFC107)),
     _ExportTarget('tasks', 'タスク', Icons.task, Colors.blue),
     _ExportTarget('habits', '習慣', Icons.loop, Colors.green),
     _ExportTarget(
       'finances',
       '財務',
       Icons.account_balance_wallet,
-      Colors.purple,
+      Color(0xFF3D5AFE),
     ),
-    _ExportTarget('blog_posts', 'ブログ', Icons.article, Colors.indigo),
+    _ExportTarget('blog_posts', 'ブログ', Icons.article, Color(0xFF3D5AFE)),
   ];
 
   final Set<String> _selected = {

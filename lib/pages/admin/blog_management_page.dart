@@ -116,7 +116,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             'いいね合計',
             '$_totalLikes',
             Icons.favorite_outline,
-            color: Colors.pinkAccent,
+            color: const Color(0xFFFF6B35),
           ),
           const SizedBox(width: 8),
           _statCard(
@@ -303,7 +303,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             const SizedBox(height: 10),
             Row(
               children: [
-                _engStat(Icons.favorite, '$likes', Colors.pinkAccent),
+                _engStat(Icons.favorite, '$likes', const Color(0xFFFF6B35)),
                 const SizedBox(width: 16),
                 _engStat(Icons.comment, '$comments', Colors.blueAccent),
                 const SizedBox(width: 16),

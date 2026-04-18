@@ -243,12 +243,13 @@ class _ChannelSidebar extends StatelessWidget {
                 return ListTile(
                   dense: true,
                   selected: isSelected,
-                  selectedTileColor: Colors.indigo.withValues(alpha: 0.1),
+                  selectedTileColor:
+                      const Color(0xFF3D5AFE).withValues(alpha: 0.1),
                   leading: const Text(
                     '#',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
+                      color: Color(0xFF3D5AFE),
                     ),
                   ),
                   title: Text(
@@ -282,12 +283,12 @@ class _MessageBubble extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundColor: Colors.indigo.shade100,
+            backgroundColor: const Color(0xFFC5CAE9),
             child: Text(
               sender.isNotEmpty ? sender[0].toUpperCase() : 'U',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.indigo.shade700,
+                color: Color(0xFF303F9F),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -377,7 +378,7 @@ class _MessageInput extends StatelessWidget {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.send, color: Colors.indigo),
+                : const Icon(Icons.send, color: Color(0xFF3D5AFE)),
             tooltip: '送信',
           ),
         ],

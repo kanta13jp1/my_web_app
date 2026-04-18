@@ -19,10 +19,9 @@ class BoardMeetingDialog extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade900,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A237E),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: const Row(
                 children: [
@@ -134,7 +133,7 @@ class BoardMeetingDialog extends StatelessWidget {
       case 'CTO':
         return Colors.blue;
       case 'CMO':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'CFO':
         return Colors.green;
       default:

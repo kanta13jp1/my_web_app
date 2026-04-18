@@ -118,7 +118,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
       case 'new':
         return Colors.red;
       case 'reviewed':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'implemented':
         return Colors.green;
       default:
@@ -203,9 +203,9 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                   const SizedBox(height: 8),
                                   Text(
                                     'GitHub Issue: ${fb['github_issue_url']}',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 12,
-                                      color: Colors.indigo[400],
+                                      color: Color(0xFF5C6BC0),
                                     ),
                                   ),
                                 ],

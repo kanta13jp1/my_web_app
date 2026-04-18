@@ -104,7 +104,7 @@ class _GrowthAutomationControllerPageState
                           child: ListTile(
                             leading: const Icon(
                               Icons.auto_graph,
-                              color: Colors.indigo,
+                              color: Color(0xFF3D5AFE),
                             ),
                             title: Text(
                               name,

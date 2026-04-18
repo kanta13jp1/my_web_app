@@ -98,7 +98,7 @@ class _GrowthAcquisitionReportPageState
                     '$rate%',
                     style: const TextStyle(
                       fontSize: 18,
-                      color: Colors.orange,
+                      color: Color(0xFFFF6B35),
                     ),
                   ),
                   const Text('CVR', style: TextStyle(fontSize: 10)),

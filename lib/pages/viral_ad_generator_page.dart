@@ -440,7 +440,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     final script = ad['script'] as List? ?? [];
 
     return Card(
-      color: isDark ? const Color(0xFF303030) : Colors.indigo.shade50,
+      color: isDark ? const Color(0xFF303030) : const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -461,14 +461,14 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   decoration: BoxDecoration(
                     color: hasImage
                         ? Colors.green.withAlpha(30)
-                        : Colors.orange.withAlpha(30),
+                        : const Color(0xFFFF6B35).withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     hasImage ? '🖼️ 画像付き' : '📝 テキストのみ',
                     style: TextStyle(
                       fontSize: 11,
-                      color: hasImage ? Colors.green : Colors.orange,
+                      color: hasImage ? Colors.green : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -702,7 +702,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             icon: const Icon(Icons.rocket_launch),
             label: const Text('今すぐ最適広告を自動投稿'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepOrange,
+              backgroundColor: const Color(0xFFFF6B35),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -844,8 +844,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             content: Text(
               data?['success'] == true ? '✅ 自動投稿完了!' : '⚠️ ${data?['error']}',
             ),
-            backgroundColor:
-                data?['success'] == true ? Colors.green : Colors.orange,
+            backgroundColor: data?['success'] == true
+                ? Colors.green
+                : const Color(0xFFFF6B35),
           ),
         );
         await _loadData();
@@ -883,7 +884,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       case 'ready_to_post':
         return Colors.blue;
       case 'script_only':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       default:
         return const Color(0xFF9CA3AF);
     }

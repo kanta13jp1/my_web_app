@@ -464,7 +464,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             leading: CircleAvatar(
               backgroundColor: isSelected
                   ? Theme.of(context).colorScheme.primary
-                  : Colors.blueGrey,
+                  : const Color(0xFF607D8B),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'P',
                 style: const TextStyle(
@@ -808,14 +808,14 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-          color: Colors.deepOrange.shade50,
+          color: const Color(0xFFFBE9E7),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 const Icon(
                   Icons.account_tree,
-                  color: Colors.deepOrange,
+                  color: Color(0xFFFF6B35),
                   size: 32,
                 ),
                 const SizedBox(width: 12),
@@ -827,12 +827,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.deepOrange,
+                        color: Color(0xFFFF6B35),
                       ),
                     ),
                     Text(
                       '全タスク $totalTasks件 | 遅延リスク上位 ${items.length}件',
-                      style: TextStyle(color: Colors.deepOrange.shade700),
+                      style: const TextStyle(color: Color(0xFFE64A19)),
                     ),
                   ],
                 ),
@@ -864,8 +864,8 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   backgroundColor: rank == 1
                       ? Colors.red
                       : rank <= 3
-                          ? Colors.orange
-                          : Colors.blueGrey,
+                          ? const Color(0xFFFF6B35)
+                          : const Color(0xFF607D8B),
                   child: Text(
                     '$rank',
                     style: const TextStyle(

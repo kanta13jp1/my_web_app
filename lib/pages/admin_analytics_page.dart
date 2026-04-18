@@ -2912,7 +2912,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'public_memo_share':
         return const Color(0xFFFF6B35);
       case 'public_memo_copy':
-        return Colors.amber.shade700;
+        return const Color(0xFFFFA000);
       case 'touch_landing':
         return const Color(0xFF475569);
       case 'touch_import':
@@ -2928,7 +2928,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'import_preview_evernote':
         return const Color(0xFF059669);
       case 'import_preview_markdown':
-        return Colors.brown.shade400;
+        return const Color(0xFF8D6E63);
       case 'import_signup_cta':
         return const Color(0xFF7C3AED);
       case 'public_memo_signup_cta':
@@ -4103,7 +4103,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: Color(0xFFFFC107),
+                ),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(

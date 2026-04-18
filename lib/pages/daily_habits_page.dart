@@ -385,7 +385,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
           FloatingActionButton.small(
             heroTag: 'preset',
             onPressed: _showPresetPicker,
-            backgroundColor: Colors.orange,
+            backgroundColor: const Color(0xFFFF6B35),
             child: const Icon(Icons.flash_on),
           ),
           const SizedBox(height: 8),
@@ -414,9 +414,9 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         padding: const EdgeInsets.only(top: 8, bottom: 4),
                         child: Text(
                           '⚡ 残り$remaining件 — 5分で終わるタスクを優先表示中',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: Colors.orange.shade700,
+                            color: Color(0xFFF57C00),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -507,7 +507,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         gradient: LinearGradient(
           colors: progress >= 1.0
               ? [Colors.green.shade600, Colors.green.shade400]
-              : [Colors.indigo.shade700, Colors.indigo.shade500],
+              : [const Color(0xFF303F9F), const Color(0xFF3F51B5)],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -676,7 +676,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
+                    color: const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -684,7 +684,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.deepOrange,
+                      color: Color(0xFFFF6B35),
                     ),
                   ),
                 ),

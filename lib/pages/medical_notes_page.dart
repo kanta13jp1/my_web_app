@@ -101,7 +101,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
       case '処方薬':
         return Colors.green;
       case '健康診断':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case '手術・処置':
         return Colors.red;
       default:

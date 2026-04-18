@@ -261,7 +261,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.build,
-              color: overdue ? Colors.red : Colors.orange,
+              color: overdue ? Colors.red : const Color(0xFFFF6B35),
             ),
             title: Text('$vehicle — $type'),
             subtitle: cost > 0 ? Text('費用: ¥${cost.toStringAsFixed(0)}') : null,

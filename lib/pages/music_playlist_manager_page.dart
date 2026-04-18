@@ -246,7 +246,7 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                     final cover = p['coverEmoji'] as String? ?? '🎵';
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Colors.purple.shade100,
+                        backgroundColor: const Color(0xFFE1BEE7),
                         child: Text(cover),
                       ),
                       title: Text(name),

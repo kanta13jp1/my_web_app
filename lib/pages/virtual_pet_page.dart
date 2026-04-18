@@ -147,7 +147,7 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                             const Icon(
                               Icons.pets,
                               size: 64,
-                              color: Colors.orange,
+                              color: Color(0xFFFF6B35),
                             ),
                             const SizedBox(height: 8),
                             Text(
@@ -164,11 +164,15 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                                     const TextStyle(color: Color(0xFFB0B0B0)),
                               ),
                             const SizedBox(height: 16),
-                            _buildStatBar('空腹', _pet!['hunger'], Colors.orange),
+                            _buildStatBar(
+                              '空腹',
+                              _pet!['hunger'],
+                              const Color(0xFFFF6B35),
+                            ),
                             _buildStatBar(
                               '幸福',
                               _pet!['happiness'],
-                              Colors.pink,
+                              const Color(0xFFFF6B35),
                             ),
                             _buildStatBar('体力', _pet!['energy'], Colors.green),
                           ],

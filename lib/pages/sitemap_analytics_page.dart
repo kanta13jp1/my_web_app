@@ -138,7 +138,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
           Icons.timer,
           '平均セッション時間',
           avgDuration,
-          Colors.orange,
+          const Color(0xFFFF6B35),
         ),
         _buildStatRow(
           Icons.exit_to_app,
@@ -150,7 +150,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
           Icons.web,
           '総ページ数',
           '$totalPages',
-          Colors.purple,
+          const Color(0xFF3D5AFE),
         ),
       ],
     );

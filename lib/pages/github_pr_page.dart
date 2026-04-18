@@ -331,7 +331,7 @@ class _GithubPrPageState extends State<GithubPrPage> {
                 _StatChip(
                   label: 'Stars',
                   value: '${stats['stars'] ?? 0}',
-                  color: Colors.amber,
+                  color: const Color(0xFFFFC107),
                 ),
               ],
             ),

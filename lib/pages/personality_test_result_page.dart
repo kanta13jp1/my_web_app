@@ -234,7 +234,7 @@ ${_personalityType!.description}
                   const _SectionTitle(
                     icon: Icons.star,
                     title: '強み',
-                    color: Colors.amber,
+                    color: Color(0xFFFFC107),
                   ),
                   const SizedBox(height: 16),
                   ..._personalityType!.strengths.map(
@@ -264,7 +264,7 @@ ${_personalityType!.description}
                   const _SectionTitle(
                     icon: Icons.warning,
                     title: '注意すべき点',
-                    color: Colors.orange,
+                    color: Color(0xFFFF6B35),
                   ),
                   const SizedBox(height: 16),
                   ..._personalityType!.weaknesses.map(
@@ -274,7 +274,7 @@ ${_personalityType!.description}
                         children: [
                           const Icon(
                             Icons.info,
-                            color: Colors.orange,
+                            color: Color(0xFFFF6B35),
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -354,7 +354,7 @@ ${_personalityType!.description}
                       icon: const Icon(Icons.favorite),
                       label: const Text('恋愛相性診断を試す'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pink.shade400,
+                        backgroundColor: const Color(0xFFEC407A),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

@@ -57,7 +57,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('紹介プログラム'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -91,7 +91,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                   children: [
                     if (_myCode != null) ...[
                       Card(
-                        color: Colors.indigo.shade50,
+                        color: const Color(0xFFE8EAF6),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -110,7 +110,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.indigo,
+                                  color: Color(0xFF3D5AFE),
                                   letterSpacing: 2,
                                 ),
                               ),
@@ -150,8 +150,10 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A3F51B5),
-                              child:
-                                  Icon(Icons.person_add, color: Colors.indigo),
+                              child: Icon(
+                                Icons.person_add,
+                                color: Color(0xFF3D5AFE),
+                              ),
                             ),
                             title: Text(
                               item['referred_email']?.toString() ??

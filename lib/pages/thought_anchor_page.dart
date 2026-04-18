@@ -269,17 +269,17 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         _buildStatChip(
           label: '今日の完了',
           value: '${_stats.sessionsCompletedToday}回',
-          color: Colors.indigo,
+          color: const Color(0xFF3D5AFE),
         ),
         _buildStatChip(
           label: '連続日数',
           value: '${_stats.currentStreak}日',
-          color: Colors.teal,
+          color: const Color(0xFF3D5AFE),
         ),
         _buildStatChip(
           label: '今日の退避',
           value: '${_stats.distractionNotesToday}件',
-          color: Colors.deepOrange,
+          color: const Color(0xFFFF6B35),
         ),
       ],
     );
@@ -385,7 +385,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
                 Duration(minutes: _selectedDuration).inSeconds);
 
     return Card(
-      color: Colors.indigo.shade50,
+      color: const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -393,7 +393,10 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.center_focus_strong, color: Colors.indigo),
+                const Icon(
+                  Icons.center_focus_strong,
+                  color: Color(0xFF3D5AFE),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   '進行中 ${_formatRemaining(_remaining)}',

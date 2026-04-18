@@ -58,7 +58,7 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
         return Colors.red;
       case 'medium':
       case '中':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       default:
         return Colors.green;
     }

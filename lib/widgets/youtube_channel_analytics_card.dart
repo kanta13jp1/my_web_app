@@ -295,12 +295,16 @@ class _YoutubeChannelAnalyticsCardState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.withAlpha(15),
+        color: const Color(0xFFFF6B35).withAlpha(15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         children: [
-          const Icon(Icons.upload_file, color: Colors.orange, size: 32),
+          const Icon(
+            Icons.upload_file,
+            color: Color(0xFFFF6B35),
+            size: 32,
+          ),
           const SizedBox(height: 8),
           const Text(
             'データがありません',
@@ -360,7 +364,7 @@ class _YoutubeChannelAnalyticsCardState
             _buildSummaryChip(
               '高評価',
               _formatK(totalLikes),
-              Colors.orange,
+              const Color(0xFFFF6B35),
             ),
             if (prevDate.isNotEmpty) ...[
               const SizedBox(width: 8),
@@ -663,7 +667,7 @@ class _YoutubeChannelAnalyticsCardState
       case 'ライブ':
         return Colors.blue;
       default:
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
     }
   }
 

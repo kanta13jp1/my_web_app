@@ -424,13 +424,13 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
           icon: Icons.hourglass_top,
           label: '今消化中',
           value: '$activeCount件',
-          color: Colors.indigo,
+          color: const Color(0xFF3D5AFE),
         ),
         _SummaryChip(
           icon: Icons.schedule,
           label: '後でやる',
           value: '$backlogCount件',
-          color: Colors.orange,
+          color: const Color(0xFFFF6B35),
         ),
         _SummaryChip(
           icon: Icons.task_alt,
@@ -761,17 +761,17 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
   Color _colorForDomain(String domain) {
     switch (domain) {
       case '読書':
-        return Colors.indigo;
+        return const Color(0xFF3D5AFE);
       case '勉強':
-        return Colors.teal;
+        return const Color(0xFF3D5AFE);
       case '講座':
-        return Colors.deepOrange;
+        return const Color(0xFFFF6B35);
       case '動画':
-        return Colors.purple;
+        return const Color(0xFF3D5AFE);
       case '記事':
-        return Colors.blueGrey;
+        return const Color(0xFF607D8B);
       default:
-        return Colors.brown;
+        return const Color(0xFF795548);
     }
   }
 

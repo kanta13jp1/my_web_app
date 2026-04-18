@@ -254,7 +254,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
             ? '▼${(trend.abs() * 100).round()}%改善'
             : '▲${(trend * 100).round()}%悪化';
     final trendColor =
-        trend == null || trend <= 0 ? Colors.green : Colors.orange;
+        trend == null || trend <= 0 ? Colors.green : const Color(0xFFFF6B35);
 
     return Row(
       children: [
@@ -264,9 +264,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
             value: '$_currentStreak日',
             icon: Icons.local_fire_department,
             color: _currentStreak >= 7
-                ? Colors.deepOrange
+                ? const Color(0xFFFF6B35)
                 : _currentStreak >= 3
-                    ? Colors.orange
+                    ? const Color(0xFFFF6B35)
                     : const Color(0xFFB0B0B0),
           ),
         ),
@@ -287,7 +287,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
             label: '30日合計',
             value: '$_totalSlips回',
             icon: Icons.calendar_month,
-            color: Colors.blueGrey,
+            color: const Color(0xFF607D8B),
           ),
         ),
       ],
@@ -522,7 +522,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                 dense: true,
                 leading: const Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.orange,
+                  color: Color(0xFFFF6B35),
                   size: 18,
                 ),
                 title: Text(label, style: const TextStyle(fontSize: 13)),

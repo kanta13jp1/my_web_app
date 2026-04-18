@@ -68,7 +68,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI タグ提案'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -99,7 +99,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                 icon: const Icon(Icons.auto_awesome),
                 label: const Text('タグを提案する'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: const Color(0xFF3D5AFE),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
@@ -122,7 +122,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                     .map(
                       (tag) => Chip(
                         label: Text(tag),
-                        backgroundColor: Colors.deepPurple.shade50,
+                        backgroundColor: const Color(0xFFEDE7F6),
                       ),
                     )
                     .toList(),

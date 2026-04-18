@@ -318,7 +318,7 @@ class _ElectionManagementDashboardState
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: p['gender'] == '女性'
-                  ? Colors.pink.shade100
+                  ? const Color(0xFFF8BBD0)
                   : Colors.blue.shade100,
               child: Text(
                 p['gender'] == '女性' ? '👩' : '👨',
@@ -602,7 +602,7 @@ class _ElectionManagementDashboardState
                                   color: candidateCount == 0
                                       ? Colors.redAccent
                                       : (candidateCount == 1
-                                          ? Colors.amber
+                                          ? const Color(0xFFFFC107)
                                           : Colors.green),
                                 ),
                               ),

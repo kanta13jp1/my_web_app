@@ -349,8 +349,8 @@ class _NotifTile extends StatelessWidget {
         color: isRead
             ? null
             : (isDark
-                ? Colors.indigo.withValues(alpha: 0.08)
-                : Colors.indigo.withValues(alpha: 0.04)),
+                ? const Color(0xFF3D5AFE).withValues(alpha: 0.08)
+                : const Color(0xFF3D5AFE).withValues(alpha: 0.04)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -373,7 +373,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                       const Icon(
                         Icons.priority_high,
                         size: 16,
-                        color: Colors.orange,
+                        color: Color(0xFFFF6B35),
                       ),
                       const SizedBox(width: 4),
                       Text('推奨優先度: $priority'),
@@ -452,7 +452,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('MAGI戦略秘書室'),
-        backgroundColor: Colors.blueGrey[900],
+        backgroundColor: const Color(0xFF263238),
         foregroundColor: Colors.white,
         actions: [
           if (_strategyResult != null)
@@ -469,7 +469,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             ),
         ],
       ),
-      backgroundColor: Colors.blueGrey[50],
+      backgroundColor: const Color(0xFFECEFF1),
       body: Column(
         children: [
           Container(
@@ -519,7 +519,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                       ? null
                       : () => _addTaskFromImage(ImageSource.camera),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
+                    backgroundColor: const Color(0xFF3D5AFE),
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 50),
                   ),
@@ -533,17 +533,17 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _strategyResult == null
-                    ? Center(
+                    ? const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.assistant,
                               size: 80,
-                              color: Colors.blueGrey[200],
+                              color: Color(0xFFB0BEC5),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
+                            SizedBox(height: 16),
+                            Text(
                               '「期間」を選択して、MAGIに戦略立案を指示してください。',
                               style: TextStyle(color: Color(0xFF9CA3AF)),
                             ),
@@ -675,7 +675,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? Colors.indigo
+                  ? const Color(0xFF3D5AFE)
                   : (isDark
                       ? Theme.of(context).colorScheme.surfaceContainerHighest
                       : const Color(0xFFE5E7EB)),
@@ -698,7 +698,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               color: isSelected
-                  ? Colors.indigo
+                  ? const Color(0xFF3D5AFE)
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),

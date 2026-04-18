@@ -76,7 +76,7 @@ class _HorseProviderLeaderboardPageState
         color = const Color(0xFF9CA3AF);
         break;
       case 3:
-        color = Colors.brown[300]!;
+        color = const Color(0xFFA1887F);
         break;
       default:
         color = const Color(0xFF475569);

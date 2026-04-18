@@ -342,7 +342,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           height: 14,
                           decoration: BoxDecoration(
                             color: status == 'testing'
-                                ? Colors.orange
+                                ? const Color(0xFFFF6B35)
                                 : (status == 'success'
                                     ? Colors.green
                                     : Colors.red),
@@ -389,7 +389,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           color: score >= 900
                               ? Colors.green
                               : (score >= 500
-                                  ? Colors.orange
+                                  ? const Color(0xFFFF6B35)
                                   : const Color(0xFF9CA3AF)),
                         ),
                       ),
@@ -680,7 +680,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   valueColor: AlwaysStoppedAnimation<Color>(
                     totalScore >= 80
                         ? Colors.green
-                        : (totalScore >= 50 ? Colors.orange : Colors.red),
+                        : (totalScore >= 50
+                            ? const Color(0xFFFF6B35)
+                            : Colors.red),
                   ),
                 ),
               ),
@@ -692,7 +694,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 fontWeight: FontWeight.bold,
                 color: totalScore >= 80
                     ? Colors.green
-                    : (totalScore >= 50 ? Colors.orange : Colors.red),
+                    : (totalScore >= 50 ? const Color(0xFFFF6B35) : Colors.red),
               ),
             ),
           ],
@@ -704,7 +706,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           spacing: 8,
           runSpacing: 4,
           children: [
-            _buildScoreBadge('総合', '$totalScore点', Colors.purple),
+            _buildScoreBadge('総合', '$totalScore点', const Color(0xFF3D5AFE)),
             _buildScoreBadge(
               '遅延',
               '${(latency / 1000).toStringAsFixed(2)}s',
@@ -891,11 +893,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
         icon = Icons.psychology_alt;
         break;
       case 'BALTHASAR':
-        color = Colors.deepOrange;
+        color = const Color(0xFFFF6B35);
         icon = Icons.auto_awesome;
         break;
       case 'CASPER':
-        color = Colors.indigo;
+        color = const Color(0xFF3D5AFE);
         icon = Icons.auto_graph;
         break;
       default:

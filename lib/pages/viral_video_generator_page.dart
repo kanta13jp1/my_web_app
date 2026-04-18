@@ -123,7 +123,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       backgroundColor:
-                          scoreInt >= 80 ? Colors.orange.shade700 : null,
+                          scoreInt >= 80 ? const Color(0xFFF57C00) : null,
                     ),
                 ],
               ),
@@ -318,7 +318,7 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     color: scoreInt >= 80
-                                        ? Colors.orange
+                                        ? const Color(0xFFFF6B35)
                                         : Theme.of(context)
                                             .colorScheme
                                             .onSurface,

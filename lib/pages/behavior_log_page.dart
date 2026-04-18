@@ -222,7 +222,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
 
   Color _regretColor(int level) {
     if (level == 0) return Colors.green;
-    if (level <= 2) return Colors.orange;
+    if (level <= 2) return const Color(0xFFFF6B35);
     if (level <= 4) return Colors.red.shade700;
     return Colors.red.shade900;
   }
@@ -257,8 +257,11 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.indigo.shade800, Colors.indigo.shade600],
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF283593),
+                        Color(0xFF3949AB),
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -273,10 +276,10 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      const Text(
                         'すべての行動と発言は、深く考えた結果であるべきだ',
                         style: TextStyle(
-                          color: Colors.indigo.shade200,
+                          color: Color(0xFF9FA8DA),
                           fontSize: 12,
                         ),
                       ),
@@ -346,7 +349,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.indigo.shade200, fontSize: 11),
+          style: const TextStyle(color: Color(0xFF9FA8DA), fontSize: 11),
         ),
       ],
     );
@@ -385,7 +388,8 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                       ? Icons.directions_run
                       : Icons.chat_bubble_outline,
                   size: 18,
-                  color: kind == 'action' ? Colors.blue : Colors.purple,
+                  color:
+                      kind == 'action' ? Colors.blue : const Color(0xFF3D5AFE),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -393,7 +397,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: kind == 'action' ? Colors.blue : Colors.purple,
+                    color: kind == 'action'
+                        ? Colors.blue
+                        : const Color(0xFF3D5AFE),
                   ),
                 ),
                 const Spacer(),
@@ -444,7 +450,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
+                  color: const Color(0xFFE8EAF6),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -472,7 +478,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 icon: const Icon(Icons.psychology, size: 16),
                 label: const Text('AIに考察してもらう'),
                 style: TextButton.styleFrom(
-                  foregroundColor: Colors.indigo,
+                  foregroundColor: const Color(0xFF3D5AFE),
                   textStyle: const TextStyle(fontSize: 12),
                 ),
               ),

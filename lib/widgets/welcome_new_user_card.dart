@@ -47,8 +47,11 @@ class WelcomeNewUserCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.waving_hand,
-                  color: Color(0xFFFFC107), size: 20,),
+              const Icon(
+                Icons.waving_hand,
+                color: Color(0xFFFFC107),
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

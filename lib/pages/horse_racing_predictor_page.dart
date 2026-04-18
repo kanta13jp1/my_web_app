@@ -221,7 +221,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                                 : Icons.warning,
                         size: 64,
                         color: _errorType == ErrorType.network
-                            ? Colors.orange
+                            ? const Color(0xFFFF6B35)
                             : Colors.red,
                       ),
                       const SizedBox(height: 16),
@@ -755,7 +755,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 child:
                     Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
               ),
-              _placeLabel('3着', third, Colors.brown[300]!),
+              _placeLabel('3着', third, const Color(0xFFA1887F)),
             ],
           ),
           if (reasoning != null && reasoning.isNotEmpty) ...[
@@ -1105,9 +1105,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   Color _gradeColor(String grade) {
     if (grade.startsWith('G1')) return const Color(0xFFFFC107);
     if (grade.startsWith('G2')) return const Color(0xFFD1D5DB);
-    if (grade.startsWith('G3')) return Colors.brown[300]!;
+    if (grade.startsWith('G3')) return const Color(0xFFA1887F);
     if (grade == 'リステッド') return Colors.blue[300]!;
-    if (grade == 'オープン') return Colors.purple[300]!;
+    if (grade == 'オープン') return const Color(0xFFBA68C8);
     return const Color(0xFF4B5563);
   }
 }

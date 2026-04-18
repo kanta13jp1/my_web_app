@@ -415,7 +415,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                     const Icon(
                       Icons.warning_amber_rounded,
                       size: 14,
-                      color: Colors.orange,
+                      color: Color(0xFFFF6B35),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -423,7 +423,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.orange,
+                        color: Color(0xFFFF6B35),
                       ),
                     ),
                   ],
@@ -445,7 +445,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                         const Icon(
                           Icons.circle,
                           size: 6,
-                          color: Colors.orange,
+                          color: Color(0xFFFF6B35),
                         ),
                         const SizedBox(width: 8),
                         Expanded(

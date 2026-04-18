@@ -64,10 +64,10 @@ class _RewardsPageState extends State<RewardsPage> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
-                          const Color(0xFFFFD54F),
-                          Colors.orange.shade400,
+                          Color(0xFFFFD54F),
+                          Color(0xFFFFA726),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -75,7 +75,7 @@ class _RewardsPageState extends State<RewardsPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withValues(alpha: 0.3),
+                          color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),

@@ -122,7 +122,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                                         _weather!['condition']?.toString(),
                                       ),
                                       size: 64,
-                                      color: Colors.orange,
+                                      color: const Color(0xFFFF6B35),
                                     ),
                                     const SizedBox(width: 16),
                                     Column(

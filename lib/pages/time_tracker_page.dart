@@ -315,12 +315,18 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.orange.shade100,
+            color: const Color(0xFFFFE0B2),
             child: const Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFFF6B35),
+                ),
                 SizedBox(width: 8),
-                Text('残業時間が上限に近づいています', style: TextStyle(color: Colors.orange)),
+                Text(
+                  '残業時間が上限に近づいています',
+                  style: TextStyle(color: Color(0xFFFF6B35)),
+                ),
               ],
             ),
           ),

@@ -738,7 +738,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                       ratio < 0.7
                           ? Colors.green
                           : ratio < 0.9
-                              ? Colors.orange
+                              ? const Color(0xFFFF6B35)
                               : Colors.red,
                     ),
                     minHeight: 8,

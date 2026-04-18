@@ -474,8 +474,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   if (price > 0)
                     Text(
                       '購入価格: ¥${_fmt(price.toDouble())}',
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.blueGrey),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF607D8B),
+                      ),
                     ),
                 ],
               ),
@@ -657,7 +659,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   'ROI',
                   '${roi.toStringAsFixed(2)}%',
                   Icons.percent,
-                  Colors.purple,
+                  const Color(0xFF3D5AFE),
                 ),
               ),
             ],

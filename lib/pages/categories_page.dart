@@ -120,7 +120,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('カテゴリ管理'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -143,7 +143,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),

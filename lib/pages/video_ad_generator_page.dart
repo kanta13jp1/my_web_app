@@ -102,7 +102,7 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                           child: ListTile(
                             leading: const Icon(
                               Icons.video_collection,
-                              color: Colors.deepOrange,
+                              color: Color(0xFFFF6B35),
                             ),
                             title: Text(
                               title,
@@ -117,7 +117,7 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                               ),
                               backgroundColor: status == 'ready'
                                   ? Colors.green.shade100
-                                  : Colors.orange.shade100,
+                                  : const Color(0xFFFFE0B2),
                             ),
                           ),
                         );

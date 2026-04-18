@@ -25,13 +25,13 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
   bool _saving = false;
 
   static const _categories = [
-    _Category('食費', Icons.restaurant, Colors.orange),
+    _Category('食費', Icons.restaurant, Color(0xFFFF6B35)),
     _Category('交通費', Icons.directions_car, Colors.blue),
     _Category('光熱費', Icons.bolt, Colors.yellow),
-    _Category('娯楽', Icons.sports_esports, Colors.purple),
+    _Category('娯楽', Icons.sports_esports, Color(0xFF3D5AFE)),
     _Category('医療', Icons.medical_services, Colors.red),
     _Category('教育', Icons.school, Colors.green),
-    _Category('衣類', Icons.checkroom, Colors.pink),
+    _Category('衣類', Icons.checkroom, Color(0xFFFF6B35)),
     _Category('その他', Icons.category, Color(0xFF9CA3AF)),
   ];
 
@@ -243,7 +243,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.indigo,
+                color: Color(0xFF3D5AFE),
               ),
             ),
             const SizedBox(height: 12),

@@ -288,8 +288,11 @@ class _ChallengeRow extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star,
-                      size: 12, color: Color(0xFFFFC107),),
+                  const Icon(
+                    Icons.star,
+                    size: 12,
+                    color: Color(0xFFFFC107),
+                  ),
                   const SizedBox(width: 2),
                   Text(
                     '${challenge.rewardPoints}pt',

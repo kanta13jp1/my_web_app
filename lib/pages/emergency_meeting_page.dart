@@ -1618,7 +1618,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Color _focusColor(MeetingFocus focus) {
     switch (focus) {
       case MeetingFocus.balanced:
-        return Colors.blueGrey;
+        return const Color(0xFF607D8B);
       case MeetingFocus.continuation:
         return Colors.blue;
       case MeetingFocus.abstinence:
@@ -2957,7 +2957,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isCso
-            ? const BorderSide(color: Colors.orange, width: 2)
+            ? const BorderSide(color: Color(0xFFFF6B35), width: 2)
             : BorderSide.none,
       ),
       color: isCeo ? Colors.blue[50] : Colors.white,
@@ -3605,19 +3605,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.pinkAccent.withValues(alpha: 0.8)),
+        border:
+            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.block, color: Colors.pinkAccent, size: 18),
+              Icon(Icons.block, color: Color(0xFFFF6B35), size: 18),
               SizedBox(width: 8),
               Text(
                 'なんとなくやりたい衝動を止める',
                 style: TextStyle(
-                  color: Colors.pinkAccent,
+                  color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -3632,7 +3633,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           LinearProgressIndicator(
             value: deterrenceProgress,
             backgroundColor: Colors.white24,
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
           ),
           const SizedBox(height: 8),
           Text(
@@ -3656,7 +3657,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           LinearProgressIndicator(
             value: lockCoverage,
             backgroundColor: Colors.white24,
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
           ),
           const SizedBox(height: 8),
           Text(
@@ -3722,19 +3723,19 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 label: const Text('SNS制限ロック'),
                 selected: _lockImpulsePurchase,
                 onSelected: _toggleImpulsePurchaseLock,
-                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+                selectedColor: const Color(0xFFFF6B35).withValues(alpha: 0.2),
               ),
               FilterChip(
                 label: const Text('90分タイムボックス'),
                 selected: _lockNewProjects,
                 onSelected: _toggleNewProjectsLock,
-                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+                selectedColor: const Color(0xFFFF6B35).withValues(alpha: 0.2),
               ),
               FilterChip(
                 label: const Text('週次共有リマインド'),
                 selected: _lockSubscriptionAdditions,
                 onSelected: _toggleSubscriptionAdditionsLock,
-                selectedColor: Colors.pinkAccent.withValues(alpha: 0.2),
+                selectedColor: const Color(0xFFFF6B35).withValues(alpha: 0.2),
               ),
             ],
           ),
@@ -3751,8 +3752,8 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               '通知で衝動行動を先回り抑止',
               style: TextStyle(color: Colors.white70),
             ),
-            activeThumbColor: Colors.pinkAccent,
-            activeTrackColor: Colors.pinkAccent.withValues(alpha: 0.4),
+            activeThumbColor: const Color(0xFFFF6B35),
+            activeTrackColor: const Color(0xFFFF6B35).withValues(alpha: 0.4),
           ),
           const SizedBox(height: 6),
           Text(
@@ -3798,7 +3799,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   icon: const Icon(Icons.verified),
                   label: const Text('本日違反なし'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent,
+                    backgroundColor: const Color(0xFFFF6B35),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -3841,7 +3842,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               dense: true,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: Colors.pinkAccent,
+              activeColor: const Color(0xFFFF6B35),
               checkColor: Colors.black,
               title: Text(
                 _abstinenceRules[i],
@@ -4016,9 +4017,9 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blueGrey.withValues(alpha: 0.14),
+        color: const Color(0xFF607D8B).withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueGrey.shade300),
+        border: Border.all(color: const Color(0xFF90A4AE)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4048,17 +4049,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case 'CEO':
         return Colors.blue;
       case 'CSO':
-        return Colors.orange[800]!;
+        return const Color(0xFFEF6C00);
       case 'CFO':
         return Colors.green[700]!;
       case 'CKO':
-        return Colors.purple;
+        return const Color(0xFF3D5AFE);
       case 'CMO':
-        return Colors.pink;
+        return const Color(0xFFFF6B35);
       case 'CHO':
         return const Color(0xFF009688);
       case 'CHRO':
-        return Colors.indigo;
+        return const Color(0xFF3D5AFE);
       default:
         return const Color(0xFF9CA3AF);
     }

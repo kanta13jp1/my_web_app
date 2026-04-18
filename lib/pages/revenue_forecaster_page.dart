@@ -152,13 +152,13 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                                 _forecast!['annual_forecast']?.toString() ??
                                     '-',
                                 Icons.show_chart,
-                                Colors.orange,
+                                const Color(0xFFFF6B35),
                               ),
                               _buildMetricCard(
                                 '成長率',
                                 _forecast!['growth_rate']?.toString() ?? '-',
                                 Icons.arrow_upward,
-                                Colors.purple,
+                                const Color(0xFF3D5AFE),
                               ),
                             ],
                           ),
@@ -177,7 +177,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                                 child: ListTile(
                                   leading: const Icon(
                                     Icons.lightbulb,
-                                    color: Colors.amber,
+                                    color: Color(0xFFFFC107),
                                   ),
                                   title: Text(insight.toString()),
                                 ),

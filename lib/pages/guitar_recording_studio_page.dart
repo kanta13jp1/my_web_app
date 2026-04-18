@@ -2079,7 +2079,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             child: LinearProgressIndicator(
               value: active ? level.clamp(0.0, 1.0) : 0.0,
               backgroundColor: Colors.white12,
-              color: level > 0.7 ? Colors.orange : const Color(0xFFE94560),
+              color: level > 0.7
+                  ? const Color(0xFFFF6B35)
+                  : const Color(0xFFE94560),
             ),
           ),
         ),
@@ -3303,7 +3305,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 children: [
                   Icon(
                     streak > 0 ? Icons.local_fire_department : Icons.music_off,
-                    color: streak > 0 ? Colors.amber : Colors.white24,
+                    color:
+                        streak > 0 ? const Color(0xFFFFC107) : Colors.white24,
                     size: 48,
                   ),
                   const SizedBox(height: 8),

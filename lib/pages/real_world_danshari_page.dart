@@ -113,7 +113,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('リアル断捨離クエスト'),
-        backgroundColor: Colors.orange,
+        backgroundColor: const Color(0xFFFF6B35),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -122,7 +122,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           children: [
             // Instructions
             Card(
-              color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
+              color: isDark ? const Color(0xFF1F2937) : const Color(0xFFFFF3E0),
               child: const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -130,7 +130,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     Icon(
                       Icons.camera_alt,
                       size: 48,
-                      color: Colors.orange,
+                      color: Color(0xFFFF6B35),
                     ),
                     SizedBox(height: 12),
                     Text(
@@ -149,7 +149,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               Container(
                 height: 300,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.orange),
+                  border: Border.all(color: const Color(0xFFFF6B35)),
                   borderRadius: BorderRadius.circular(12),
                   image: DecorationImage(
                     image: MemoryImage(_imageBytes!),
@@ -191,7 +191,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   icon: const Icon(Icons.camera),
                   label: const Text('カメラで撮影'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: const Color(0xFFFF6B35),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -221,7 +221,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
             // Result Area
             if (_isLoading)
               const Center(
-                child: CircularProgressIndicator(color: Colors.orange),
+                child: CircularProgressIndicator(color: Color(0xFFFF6B35)),
               )
             else if (_result != null)
               _buildResultCard(isDark),
@@ -307,15 +307,21 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
+                    color: isDark
+                        ? const Color(0xFF1F2937)
+                        : const Color(0xFFFFF3E0),
                     borderRadius: BorderRadius.circular(8),
-                    border:
-                        Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.format_quote, color: Colors.orange),
+                      const Icon(
+                        Icons.format_quote,
+                        color: Color(0xFFFF6B35),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

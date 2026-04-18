@@ -89,7 +89,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                     DateTime.now().difference(source.lastAuditedAt!).inDays <
                         30;
                 final auditStatusColor =
-                    isAuditedRecently ? Colors.green : Colors.orange;
+                    isAuditedRecently ? Colors.green : const Color(0xFFFF6B35);
 
                 return Card(
                   elevation: 2,

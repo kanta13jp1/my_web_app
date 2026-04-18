@@ -69,7 +69,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
       key: const Key('chro_office_page_scaffold'),
       appBar: AppBar(
         title: const Text('CHRO OFFICE'),
-        backgroundColor: Colors.indigo[700],
+        backgroundColor: const Color(0xFF303F9F),
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
@@ -79,7 +79,7 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
           children: [
             AgentWorkspacePanel(
               officeLabel: 'CHRO',
-              accentColor: Colors.indigo,
+              accentColor: const Color(0xFF3D5AFE),
               isLoading: _isLoadingWorkspace,
               workspace: _workspace,
               onProcessTask: _processTask,
@@ -128,8 +128,8 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
         key: tileKey,
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: Colors.indigo[100],
-          child: Icon(icon, color: Colors.indigo[800]),
+          backgroundColor: const Color(0xFFC5CAE9),
+          child: Icon(icon, color: const Color(0xFF283593)),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),

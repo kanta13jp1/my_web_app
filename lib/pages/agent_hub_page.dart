@@ -143,7 +143,7 @@ class _DepartmentsTab extends StatelessWidget {
             trailing: Chip(
               label: Text('$agentCount / $maxAgents'),
               backgroundColor: agentCount >= maxAgents
-                  ? Colors.orange.withAlpha(30)
+                  ? const Color(0xFFFF6B35).withAlpha(30)
                   : Colors.green.withAlpha(30),
             ),
           ),

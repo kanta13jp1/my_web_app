@@ -77,7 +77,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
               '報酬合計',
               '¥${_summary!['total_earnings']?.toString() ?? '0'}',
               Icons.monetization_on,
-              Colors.orange,
+              const Color(0xFFFF6B35),
             ),
           ],
         ),
@@ -157,8 +157,10 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       return Card(
                         color: const Color(0xFF1E1E1E),
                         child: ListTile(
-                          leading:
-                              const Icon(Icons.campaign, color: Colors.indigo),
+                          leading: const Icon(
+                            Icons.campaign,
+                            color: Color(0xFF3D5AFE),
+                          ),
                           title: Text(name),
                           subtitle: Text('クリック: $clicks  |  報酬: ¥$earnings'),
                           trailing: Chip(

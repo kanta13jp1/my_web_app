@@ -68,7 +68,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
               key,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.deepOrange,
+                color: Color(0xFFFF6B35),
               ),
             ),
             const SizedBox(height: 4),
@@ -84,7 +84,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('現実分析'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -115,7 +115,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
                 icon: const Icon(Icons.analytics_outlined),
                 label: const Text('現実を分析する'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
+                  backgroundColor: const Color(0xFFFF6B35),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),

@@ -262,7 +262,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           _buildStatChip(
             Icons.mark_email_unread,
             '$unread 未読',
-            Colors.orange,
+            const Color(0xFFFF6B35),
           ),
           const SizedBox(width: 8),
           _buildStatChip(

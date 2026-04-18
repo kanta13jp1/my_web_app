@@ -162,7 +162,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                   '未読通知',
                                   '${_digest!['unread_count'] ?? 0}件',
                                   Icons.notifications_active,
-                                  Colors.orange,
+                                  const Color(0xFFFF6B35),
                                   isDark,
                                 ),
                                 const SizedBox(height: 8),

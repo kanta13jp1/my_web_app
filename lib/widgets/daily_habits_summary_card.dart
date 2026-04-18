@@ -88,7 +88,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: (allDone ? Colors.green : Colors.orange)
+                color: (allDone ? Colors.green : const Color(0xFFFF6B35))
                     .withAlpha(isDark ? 40 : 20),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -97,7 +97,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                     ? Icons.check_circle_outline
                     : Icons.radio_button_unchecked,
                 size: 20,
-                color: allDone ? Colors.green : Colors.orange,
+                color: allDone ? Colors.green : const Color(0xFFFF6B35),
               ),
             ),
             const SizedBox(width: 12),
@@ -123,7 +123,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                       minHeight: 5,
                       backgroundColor: const Color(0xFFB0B0B0).withAlpha(40),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        allDone ? Colors.green : Colors.orange,
+                        allDone ? Colors.green : const Color(0xFFFF6B35),
                       ),
                     ),
                   ),
@@ -136,7 +136,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: allDone ? Colors.green : Colors.orange,
+                color: allDone ? Colors.green : const Color(0xFFFF6B35),
               ),
             ),
             const SizedBox(width: 4),

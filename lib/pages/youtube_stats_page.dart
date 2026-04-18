@@ -643,7 +643,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       _summaryTile(
                         '高評価',
                         _fmtK(totalLikes),
-                        Colors.orange,
+                        const Color(0xFFFF6B35),
                       ),
                       const SizedBox(width: 8),
                       _summaryTile(
@@ -780,7 +780,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                         style: TextStyle(
                           fontSize: 11,
                           color: engRate >= 5
-                              ? Colors.orange
+                              ? const Color(0xFFFF6B35)
                               : isDark
                                   ? const Color(0xFF9CA3AF)
                                   : const Color(0xFF4B5563),
@@ -846,7 +846,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
       case 'ライブ':
         return Colors.blue;
       default:
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
     }
   }
 

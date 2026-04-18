@@ -65,7 +65,7 @@ class AttachmentListWidget extends StatelessWidget {
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: attachment.isImage ? Colors.blue : Colors.orange,
+            color: attachment.isImage ? Colors.blue : const Color(0xFFFF6B35),
             width: 1.5,
           ),
         ),

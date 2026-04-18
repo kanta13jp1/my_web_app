@@ -88,7 +88,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _search,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
+                    backgroundColor: const Color(0xFF3D5AFE),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -142,11 +142,11 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                 child: ListTile(
                                   leading: CircleAvatar(
                                     backgroundColor:
-                                        Colors.indigo.withAlpha(30),
+                                        const Color(0xFF3D5AFE).withAlpha(30),
                                     child: Text(
                                       '${i + 1}',
                                       style: const TextStyle(
-                                        color: Colors.indigo,
+                                        color: Color(0xFF3D5AFE),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -169,7 +169,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                           '${(double.tryParse(score.toString()) ?? 0 * 100).toStringAsFixed(0)}%',
                                           style: const TextStyle(
                                             fontSize: 12,
-                                            color: Colors.indigo,
+                                            color: Color(0xFF3D5AFE),
                                           ),
                                         )
                                       : null,

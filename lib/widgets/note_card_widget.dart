@@ -377,8 +377,8 @@ class NoteCardWidget extends StatelessWidget {
       width: aspectRatio.width.toDouble(),
       constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
       decoration: BoxDecoration(
-        color: Colors.orange[50],
-        border: Border.all(color: Colors.orange, width: 8),
+        color: const Color(0xFFFFF3E0),
+        border: Border.all(color: const Color(0xFFFF6B35), width: 8),
       ),
       padding: const EdgeInsets.all(80),
       child: Column(
@@ -405,7 +405,7 @@ class NoteCardWidget extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.2),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -435,7 +435,11 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.orange[200]!, const Color(0xFFe65100), fontScale),
+          _buildFooter(
+            const Color(0xFFFFCC80),
+            const Color(0xFFe65100),
+            fontScale,
+          ),
         ],
       ),
     );

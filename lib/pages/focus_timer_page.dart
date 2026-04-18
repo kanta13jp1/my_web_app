@@ -231,7 +231,8 @@ class _FocusTimerPageState extends State<FocusTimerPage>
     return 1 - (_secondsLeft / total);
   }
 
-  Color get _timerColor => _isBreak ? Colors.green.shade600 : Colors.deepOrange;
+  Color get _timerColor =>
+      _isBreak ? Colors.green.shade600 : const Color(0xFFFF6B35);
 
   // ---- build ----
 
@@ -270,7 +271,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               _ModeChip(
                 label: 'WORK',
                 active: !_isBreak,
-                color: Colors.deepOrange,
+                color: const Color(0xFFFF6B35),
                 onTap: () {
                   if (_isRunning) return;
                   setState(() {
@@ -310,7 +311,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
             children: [
               const Icon(
                 Icons.local_fire_department,
-                color: Colors.deepOrange,
+                color: Color(0xFFFF6B35),
                 size: 20,
               ),
               const SizedBox(width: 4),
@@ -458,7 +459,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               ),
               _StatCard(
                 icon: Icons.access_time_filled,
-                color: Colors.deepOrange,
+                color: const Color(0xFFFF6B35),
                 label: '累計集中時間',
                 value: '$totalMinutes分',
                 sub: '(30日)',
@@ -472,7 +473,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               ),
               _StatCard(
                 icon: Icons.bolt,
-                color: Colors.indigo,
+                color: const Color(0xFF3D5AFE),
                 label: '集中スコア',
                 value: '$focusScore',
                 sub: '/ 100',
