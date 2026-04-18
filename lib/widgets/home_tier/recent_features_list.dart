@@ -38,7 +38,11 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         final route = r['feature_route'] as String;
         if (seen.add(route)) deduped.add(r);
       }
-      if (mounted) setState(() { _items = deduped; _loading = false; });
+      if (mounted)
+        setState(() {
+          _items = deduped;
+          _loading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }

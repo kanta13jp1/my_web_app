@@ -23,7 +23,11 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
       final rows = await Supabase.instance.client
           .from('feature_releases')
           .select('feature_route, feature_label, description, released_at')
-          .gte('released_at', DateTime.now().subtract(const Duration(days: 14)).toIso8601String())
+          .gte(
+              'released_at',
+              DateTime.now()
+                  .subtract(const Duration(days: 14))
+                  .toIso8601String())
           .order('released_at', ascending: false)
           .limit(6);
       if (mounted) {
@@ -61,12 +65,20 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
         final route = item['feature_route'] as String;
         return ListTile(
           dense: true,
-          leading: const Icon(Icons.new_releases_outlined, size: 18, color: Color(0xFFFF6B35)),
-          title: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+          leading: const Icon(Icons.new_releases_outlined,
+              size: 18, color: Color(0xFFFF6B35)),
+          title: Text(label,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white)),
           subtitle: desc.isNotEmpty
-              ? Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)))
+              ? Text(desc,
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)))
               : null,
-          trailing: const Icon(Icons.chevron_right, size: 16, color: Color(0xFF64748B)),
+          trailing: const Icon(Icons.chevron_right,
+              size: 16, color: Color(0xFF64748B)),
           onTap: () => Navigator.pushNamed(context, route),
         );
       }).toList(),
