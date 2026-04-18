@@ -10883,3 +10883,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/i-built-a-flutter-importer-for-claude-design-handoff-bundles-2ne3
   - handoff_bundle/token_diff/flutter_codegen/importer_page の4ファイル実装解説
   - 28テスト・HTML→Flutter変換(~70%精度)・3タブUI
+
+### PS版#126 Rule17 WF health check (2026-04-18 PM)
+- **全WF success率**: 12/13 (deploy-prod最新SUCCESS / blog-publish最新SUCCESS)
+- **失敗WF**: deploy-prod 2件 (pre-fix: migration collision 修正前) / blog-publish 1件 (pre-fix: 存在しないファイル)
+- **orphan branches**: 全パターン 0件 ✅
+- **Workflow Failure Handler**: skipped×4 + success×1 (正常)
+- **修正済み**: なし (全て pre-fix 済み)
