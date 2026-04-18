@@ -11103,3 +11103,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **deploy-prod**: ✅ SUCCESS (VSCode版#106 trailing_comma fix → Analyze ✅ → build ✅ → deploy ✅)
 - CI 連続失敗 9本 → 解消完了
 - CI 健全性: 全WF正常稼働中
+
+### VSCode版#107/#107b/#108 (2026-04-19)
+- **DESIGN.md token batch**: off-brand Material colors → brand hex tokens 全完了
+  - #107: 14ページ (mindless_task/agent_org/abstinence_guard/election_victory/thought_interrupt_diagnosis/compatibility_check/compatibility_result/people_help/wardrobe/language_learning/home/onboarding/wip_limit + election_strategy) + shade fix (Color().shadeN → hardcoded hex)
+  - #107b: 10ウィジェット (daily_challenge/stoic_leaderboard/note_analysis_dialog/election_regional_kpi_chart/philosopher_quote/competitor_monitoring/achievement_notification/welcome_new_user/time_waste_guard/share_note_card)
+  - #108: 118ファイル一括 (残全ファイル comprehensive batch)
+    - Python regex: Colors.X.shadeN → hardcoded Material hex / Colors.X[N] → hardcoded hex / Colors.X → brand hex
+    - 対象: deepPurple/purple/indigo/teal/cyan→0xFF3D5AFE / orange/deepOrange→0xFFFF6B35 / amber→0xFFFFC107 / blueGrey→0xFF607D8B / brown→0xFF795548 / pink/pinkAccent→0xFFFF6B35 / lime→0xFFCDDC39
+    - dart fix 2ステップ (unnecessary_const除去 → prefer_const追加) + dart format → flutter analyze 0エラー ✅
+  - **DESIGN.md準拠: 92%→98%** (off-brand brand colors完全排除)
+  - 残: Colors.blue/red/green 等の semantic colors は intentional → 置換不要
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: Colors.blue UI chrome違反確認 / AI大学学習リマインダーバッチ設定 / DESIGN.md 98%→100%
