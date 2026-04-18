@@ -55,7 +55,8 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
 
   String _envFor(String provider) {
     final detail = _details[provider];
-    if (detail is Map && detail['env'] is String) return detail['env'] as String;
+    if (detail is Map && detail['env'] is String)
+      return detail['env'] as String;
     return '${provider.toUpperCase()}_API_KEY';
   }
 
@@ -71,9 +72,8 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
     final bgColor = isCritical
         ? const Color(0xFFDC2626).withValues(alpha: isDark ? 0.25 : 0.10)
         : const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.22 : 0.10);
-    final borderColor = isCritical
-        ? const Color(0xFFDC2626)
-        : const Color(0xFFF59E0B);
+    final borderColor =
+        isCritical ? const Color(0xFFDC2626) : const Color(0xFFF59E0B);
     final icon = isCritical ? Icons.error_outline : Icons.warning_amber_rounded;
 
     return Container(
@@ -134,18 +134,21 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                   runSpacing: 4,
                   children: _missing.map((p) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: borderColor.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: borderColor.withValues(alpha: 0.4)),
+                        border: Border.all(
+                            color: borderColor.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         '${_envFor(p)} 未設定',
                         style: TextStyle(
                           fontSize: 11,
                           fontFamily: 'monospace',
-                          color: isDark ? Colors.white : const Color(0xFF111827),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF111827),
                         ),
                       ),
                     );
