@@ -10578,3 +10578,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL label fontSize 10 → 11 (labelSmall最小値)
 - WBS更新: DESIGN.md準拠 60%→65%
 - EF: 16本 / flutter analyze 0エラー
+
+### PS版#115 完了 (2026-04-18) — ai-hub Phase 7 + T-1第115弾
+- ai-hub Phase7: replicate (openai-compat.replicate.com) + coze (api.coze.com) 追加 — 29→31プロバイダー
+- registry: replicate apiKeyRequired + coze notImplemented→apiKeyRequired
+- T-1 第115弾: Jibun Corp's AI Hub Hits 31 Providers: Adding Replicate and Coze
+  - https://dev.to/kanta13jp1/jibun-corps-ai-hub-hits-31-providers-adding-replicate-and-coze-3kjj
+
+### ai-hub プロバイダー推移 (更新)
+- PS#108:14→20, PS#109:20→23, PS#110:23→25, PS#111:25→27, PS#113:27→29, PS#115:29→31
