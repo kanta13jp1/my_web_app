@@ -11063,3 +11063,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/7-principles-for-using-ai-agents-safely-in-production-a-solo-devs-checklist-568n
 - cross-instance-pr `20260419_trailing_comma_fix.md` → done/ へ移動完了
 - deploy-prod: `require_trailing_commas + prefer_const_constructors` 修正後 in_progress (成功待ち)
+
+### PS版#136 追記 — deploy-prod transient 522
+- deploy-prod CI Lint ✅ 通過 / EF deploy で esm.sh 522 (transient CDN error) → re-trigger
+- Qiita dispatch #135 → 429 (rolling rate limit 24h) → Qiita retry は UTC 15:00+ 以降
+- deploy re-trigger → VSCode版#105 と合流して in_progress
