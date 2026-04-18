@@ -2923,30 +2923,63 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   List<Widget> _buildScheduleGroups(
     List<LocalElectionScheduleEntry> schedules,
   ) {
-    final widgets = <Widget>[];
-    String? previousDate;
-
+    // Windows版#94: 件数が多いと縦に長くなるため日付ごとに ExpansionTile で
+    // 折りたたみ可能にする。最初の 1 日付だけ initiallyExpanded=true。
+    final groups = <String, List<LocalElectionScheduleEntry>>{};
+    final orderedDates = <String>[];
     for (final item in schedules) {
-      if (item.voteDate != previousDate) {
-        if (widgets.isNotEmpty) {
-          widgets.add(const SizedBox(height: 8));
-        }
-        widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              _formatScheduleDate(item.voteDate),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+      final key = item.voteDate;
+      if (!groups.containsKey(key)) {
+        orderedDates.add(key);
+        groups[key] = <LocalElectionScheduleEntry>[];
+      }
+      groups[key]!.add(item);
+    }
+    final widgets = <Widget>[];
+    for (var i = 0; i < orderedDates.length; i++) {
+      final date = orderedDates[i];
+      final items = groups[date]!;
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                dividerColor: Colors.transparent,
+              ),
+              child: ExpansionTile(
+                initiallyExpanded: i == 0,
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 2,
+                ),
+                childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                title: Text(
+                  _formatScheduleDate(date),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                subtitle: Text(
+                  '${items.length}件の選挙',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                children: items.map(_buildScheduleCard).toList(),
+              ),
             ),
           ),
-        );
-        previousDate = item.voteDate;
-      }
-      widgets.add(_buildScheduleCard(item));
+        ),
+      );
     }
-
     return widgets;
   }
 
