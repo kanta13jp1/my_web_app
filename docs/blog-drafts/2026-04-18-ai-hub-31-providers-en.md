@@ -1,7 +1,7 @@
 ---
 title: "Jibun Corp's AI Hub Hits 31 Providers: Adding Replicate and Coze"
 tags: Flutter,Supabase,buildinpublic,AI,Deno
-published: false
+published: true
 ---
 
 # Jibun Corp's AI Hub Hits 31 Providers: Adding Replicate and Coze
