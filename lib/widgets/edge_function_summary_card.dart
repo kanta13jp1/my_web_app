@@ -163,6 +163,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
     ),
     // 追加 (cs-check 自動連携 2026-04-17)
     // 追加 (cs-check 自動連携 2026-04-12)
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'agent-hub',
+      'AIエージェントハブ (部署/パフォーマンス/ルーティング統合)',
+      true,
+      '/agent-hub',
+      'AIエージェントハブページ > 部署・パフォーマンス・タスクルーティング',
+    ),
+    _FnDef(
+      'admin-notification-hub',
+      '管理者通知ハブ (緊急/警告/情報通知管理)',
+      true,
+      '/admin-notifications',
+      '管理者通知ハブページ > 重要度別通知フィルタリング',
+    ),
+    _FnDef(
+      'competitor-feature-sync',
+      '競合機能パリティ管理 (進捗トラッキング/ステータス更新)',
+      true,
+      '/competitor-feature-sync',
+      '競合機能パリティページ > 競合別進捗率・未実装機能一覧',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

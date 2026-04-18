@@ -224,6 +224,9 @@ import 'package:my_web_app/pages/project_gantt_page.dart';
 import 'package:my_web_app/pages/business_card_manager_page.dart';
 import 'package:my_web_app/pages/family_calendar_page.dart';
 import 'package:my_web_app/pages/app_hub_page.dart';
+import 'package:my_web_app/pages/agent_hub_page.dart';
+import 'package:my_web_app/pages/admin_notification_hub_page.dart';
+import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1255,6 +1258,18 @@ class MyApp extends StatelessWidget {
           case '/app-hub':
             return MaterialPageRoute(
               builder: (_) => const AppHubPage(),
+            );
+          case '/agent-hub':
+            return MaterialPageRoute(
+              builder: (_) => const AgentHubPage(),
+            );
+          case '/admin-notifications':
+            return MaterialPageRoute(
+              builder: (_) => const AdminNotificationHubPage(),
+            );
+          case '/competitor-feature-sync':
+            return MaterialPageRoute(
+              builder: (_) => const CompetitorFeatureSyncPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
