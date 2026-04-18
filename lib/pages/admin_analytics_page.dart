@@ -803,7 +803,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     child: Text(
                       '送信先: $email',
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9CA3AF)),
+                          fontSize: 12, color: Color(0xFF9CA3AF),),
                     ),
                   ),
                 DropdownButtonFormField<String>(
@@ -2623,7 +2623,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         Text(label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF),)),
       ],
     );
   }
@@ -4033,7 +4033,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         const SizedBox(width: 6),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF),),
         ),
         Expanded(
           child: Text(
@@ -4061,7 +4061,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         const SizedBox(width: 6),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF),),
         ),
         Expanded(
           child: Text(
@@ -4122,7 +4122,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('リクエストはまだありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF))),
+                    style: TextStyle(color: Color(0xFF9CA3AF),)),
               )
             else
               ListView.separated(
@@ -4374,7 +4374,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 8),
             const Text(
               'Claude Schedule の定期実行に合わせた CS キューと日次ダイジェストをここで手動確認できます。',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF),),
             ),
             const SizedBox(height: 12),
             if (_automationError != null)
@@ -4431,7 +4431,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               if (_automationSupportTickets.isEmpty)
                 const Text(
                   '未返信チケットはありません',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF),),
                 )
               else
                 ListView.separated(
@@ -4572,7 +4572,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('登録者はまだいません',
-                    style: TextStyle(color: Color(0xFF9CA3AF))),
+                    style: TextStyle(color: Color(0xFF9CA3AF),)),
               )
             else
               ListView.separated(
