@@ -10641,3 +10641,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - deno lint clean / push success (commit 2359b5bc)
 - 依存: VSCode版 AiProviderEntry.tier フィールド追加 (20260418_ai_provider_tier_field.md) は別途対応待ち
 - T-1 第117弾: AI Hub 35 Providers (SiliconFlow + Novita AI) → https://dev.to/kanta13jp1/jibun-corps-ai-hub-reaches-35-providers-adding-siliconflow-and-novita-ai-moa
+
+### VSCode版#94 完了 (2026-04-18) — home_page.dart DESIGN.md準拠修正・0エラー維持
+- home_page.dart: const修正5箇所 (TextStyle const化・Color const追加・boxShadow const化)
+- DESIGN.md準拠: 65%→70% (home_page.dart blueGrey/orange/blue → DESIGN token — PS版#116で先行適用済みを確認・const修正のみ担当)
+- flutter analyze: 0エラー確認
+- commit: 02ff2ff8
+- 次回候補:
+  1. DESIGN.md 70%→75%: note_list_page or note_editor_page 違反確認
+  2. VSCode版依存: AiProviderEntry.tier フィールド追加 (cross-instance-pr 20260418_ai_provider_tier_field.md)
+  3. ノート機能拡張: backlinks (`[[note]]` 形式) or テンプレートギャラリー
