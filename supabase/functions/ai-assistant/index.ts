@@ -183,21 +183,37 @@ serve(async (req) => {
             originalPrompt: string,
             image?: { base64: string, mime: string },
         ) => {
+            // Windows版#94: targetModel 指定時でも quota/rate_limit 時は FALLBACK_MODELS に切替
+            // (BI board meeting 等は claude-sonnet-4-6 を明示指定するため fallback が機能していなかった)
+            const primaryChain: Fighter[] = [];
             if (targetModel) {
-                 const fighter = { provider: inferProvider(targetModel), model: targetModel };
-                 if (!isProviderAvailable(fighter.provider)) {
-                    throw new Error(`${fighter.provider} API key is not configured`);
-                 }
-                 return await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
+                const primary = { provider: inferProvider(targetModel), model: targetModel };
+                if (isProviderAvailable(primary.provider)) primaryChain.push(primary);
             }
-            let lastError;
-            for (const model of FALLBACK_MODELS) {
+            // 既に primary にあるモデルは除外して追加
+            for (const m of FALLBACK_MODELS) {
+                if (!primaryChain.some((p) => p.provider === m.provider && p.model === m.model)) {
+                    primaryChain.push(m);
+                }
+            }
+            if (primaryChain.length === 0) {
+                throw new Error("No AI providers configured");
+            }
+            let lastError: unknown;
+            for (const fighter of primaryChain) {
+                if (!isProviderAvailable(fighter.provider)) continue;
                 try {
-                    return await callAI(model, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
+                    const result = await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
+                    if (fighter !== primaryChain[0]) {
+                        console.warn(`[fallback] used ${fighter.provider}:${fighter.model} after primary failure`);
+                    }
+                    return result;
                 } catch (e: unknown) {
                     const msg = e instanceof Error ? e.message : String(e);
-                    console.error(`Model ${model.model} failed:`, msg);
+                    const isQuota = /quota|rate.?limit|429|insufficient_quota|RESOURCE_EXHAUSTED/i.test(msg);
+                    console.error(`Model ${fighter.model} failed (quota=${isQuota}):`, msg);
                     lastError = e;
+                    // quota 以外の一時エラー (400 等) でも次プロバイダーを試す
                 }
             }
             throw lastError || new Error("All AI models failed.");
