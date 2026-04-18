@@ -64,7 +64,7 @@ const _defaultInfo = _CompetitorInfo(
   emoji: '🔄',
   tagline: '複数ツールをまとめて、完全無料で使える',
   searchKeyword: '代替',
-  accentColor: Color(0xFF3949AB),
+  accentColor: Color(0xFF4F46E5),
   painPoints: ['複数サービスへのログインが面倒', 'データが分散して管理しにくい', '月額料金が積み重なる'],
   features: [
     _FeatureComparison(feature: 'タスク管理', competitorHas: true, weHave: true),
@@ -973,8 +973,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _info.accentColor.withAlpha(26),
-            const Color(0xFFEEF2FF),
+            _info.accentColor.withValues(alpha: 0.1),
+            const Color(0xFF1A1A1A),
           ],
         ),
       ),
@@ -1001,7 +1001,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 _info.tagline,
                 style: const TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF374151),
+                  color: Color(0xFF9CA3AF),
                   height: 1.6,
                 ),
                 textAlign: TextAlign.center,
@@ -1018,7 +1018,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     icon: const Icon(Icons.rocket_launch, size: 18),
                     label: const Text('無料で始める（30秒）'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF3949AB),
+                      backgroundColor: const Color(0xFF4F46E5),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 14,
@@ -1139,7 +1139,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                           '自分株式会社',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF3949AB),
+                            color: Color(0xFF4F46E5),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -1201,7 +1201,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   Widget _buildCta(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFF3949AB),
+      color: const Color(0xFF4F46E5),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: Center(
         child: ConstrainedBox(
@@ -1214,14 +1214,14 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   fontFamily: 'NotoSansJP',
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: Color(0xFFE5E7EB),
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               const Text(
                 'クレジットカード不要。30秒で登録完了。',
-                style: TextStyle(color: Colors.white70, fontSize: 15),
+                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
@@ -1233,8 +1233,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF3949AB),
+                  backgroundColor: const Color(0xFFE5E7EB),
+                  foregroundColor: const Color(0xFF4F46E5),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
                     vertical: 16,
