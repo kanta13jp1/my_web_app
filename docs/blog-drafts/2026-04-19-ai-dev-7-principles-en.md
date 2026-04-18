@@ -1,7 +1,7 @@
 ---
 title: "7 Principles for Using AI Agents Safely in Production — A Solo Dev's Checklist"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # 7 Principles for Using AI Agents Safely in Production
