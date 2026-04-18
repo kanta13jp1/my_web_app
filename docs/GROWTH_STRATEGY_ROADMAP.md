@@ -10549,3 +10549,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### PS版#114 T-1 第114弾 (2026-04-18) — I Deleted the Button
 - T-1 第114弾: I Deleted the Button — Migrating Flutter AI Features from UI-Triggered to Hourly Cron Batch
   - https://dev.to/kanta13jp1/i-deleted-the-button-migrating-flutter-ai-features-from-ui-triggered-to-hourly-cron-batch-3jc0
+
+### Claude Schedule: daily-report (2026-04-18 00:30 UTC)
+- GitHub Actions 生成レポート確認 (generated-by: github-actions) → AI分析セクション追記
+- 競合モニタリング WebSearch 実施 (Notion/Slack/GitHub 3社)
+  - **Notion (4/15)**: Agent カレンダー統合・会議スケジューリング / Workers for Agents 開発プレビュー / 初期描画28%高速化
+  - **Slack**: Salesforce 30+ AI機能 — Reusable AI-Skills / MCP クライアント統合 / Real-Time Search API GA
+  - **GitHub Copilot**: Claude Opus 4.7 採用 / Autopilot パブリックプレビュー / `gh skill` コマンド追加
+- AI分析 3点: (1) Firebase 509 CDN最適化急務 (2) schedule-hub 自然言語予定登録で Notion 差別化 (3) ai-assistant EF claude-opus-4-7 更新検討
+- スケジュールヘルス: 外部ネットワーク制限 (Host not in allowlist) のため Supabase API 直接呼び出し不可 / gh CLI 未利用 → 該当ステップスキップ
+- X投稿: viral-growth-engine/post-x-update ともにネットワーク制限でスキップ (GitHub Actions 側で次回実行時に補完)
