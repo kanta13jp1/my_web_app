@@ -2017,7 +2017,7 @@ abstinence_slip_details: $slipDetailsText
       title = '朝の固定を先に終える';
       detail = '気分で動く前に、朝の優先順位を先に固定します。';
       buttonLabel = 'ブリーフィングへ';
-      color = Colors.amber;
+      color = const Color(0xFFFFC107);
       icon = Icons.wb_sunny;
       onPressed = () {
         _openMorningBriefing(context);
@@ -2642,7 +2642,7 @@ abstinence_slip_details: $slipDetailsText
               _buildStatusPill(
                 label: '朝固定',
                 value: '$morningDoneCount日',
-                color: Colors.amber,
+                color: const Color(0xFFFFC107),
               ),
               _buildStatusPill(
                 label: '残高確認',
@@ -2801,7 +2801,7 @@ abstinence_slip_details: $slipDetailsText
                               if (day.morningDone)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    Colors.amber,
+                                    const Color(0xFFFFC107),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
@@ -2830,7 +2830,7 @@ abstinence_slip_details: $slipDetailsText
                               if (day.isSaturday)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    Colors.teal,
+                                    const Color(0xFF009688),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
@@ -2860,11 +2860,11 @@ abstinence_slip_details: $slipDetailsText
             spacing: 10,
             runSpacing: 8,
             children: [
-              _CalendarLegend(color: Colors.amber, label: '朝'),
+              _CalendarLegend(color: const Color(0xFFFFC107), label: '朝'),
               _CalendarLegend(color: Colors.green, label: '残高'),
               _CalendarLegend(color: Colors.redAccent, label: '禁欲安定'),
               _CalendarLegend(color: Color(0xFFFF6B35), label: '逸脱'),
-              _CalendarLegend(color: Colors.teal, label: '土曜'),
+              _CalendarLegend(color: const Color(0xFF009688), label: '土曜'),
             ],
           ),
         ],
@@ -3372,7 +3372,7 @@ abstinence_slip_details: $slipDetailsText
   Color _calendarTaskSourceColor(_HomeCalendarTask task) {
     return switch (task.source) {
       _HomeCalendarTaskSource.dailyTodo => Colors.indigo,
-      _HomeCalendarTaskSource.mindless => Colors.teal,
+      _HomeCalendarTaskSource.mindless => const Color(0xFF009688),
     };
   }
 
@@ -4801,7 +4801,7 @@ abstinence_slip_details: $slipDetailsText
       _MenuData(
         '成長・支援',
         Icons.space_dashboard_outlined,
-        Colors.teal,
+        const Color(0xFF009688),
         () => _runTrackedAction(
           'home-insights',
           () => Navigator.of(context).pushNamed('/home-insights'),
@@ -4917,7 +4917,7 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
-    final accent = isHighlighted ? Colors.amber.shade700 : Colors.amber;
+    final accent = isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
 
     return Container(
       decoration: BoxDecoration(
@@ -4927,7 +4927,7 @@ abstinence_slip_details: $slipDetailsText
           colors: [
             baseColor,
             Color.alphaBlend(
-              Colors.amber.withValues(alpha: isHighlighted ? 0.2 : 0.09),
+              const Color(0xFFFFC107).withValues(alpha: isHighlighted ? 0.2 : 0.09),
               baseColor,
             ),
           ],
@@ -5194,7 +5194,7 @@ abstinence_slip_details: $slipDetailsText
                   headline: '${snapshot.abstinenceFocusCount}件',
                   subtitle: '遮断中の邪魔',
                   icon: Icons.shield_moon,
-                  accentColor: Colors.teal,
+                  accentColor: const Color(0xFF009688),
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
                       '逸脱回数',
@@ -5756,7 +5756,7 @@ abstinence_slip_details: $slipDetailsText
           '週末ストック残',
           '${snapshot.pendingStockTaskCount}件',
           Icons.inventory_2,
-          Colors.teal,
+          const Color(0xFF009688),
         ),
       ],
     );
@@ -6134,13 +6134,13 @@ abstinence_slip_details: $slipDetailsText
       const Color(0xFFFF6B35),
       Colors.redAccent,
       Colors.indigo,
-      Colors.teal,
+      const Color(0xFF009688),
       Colors.purple,
       const Color(0xFF6366F1),
       Colors.green,
       Colors.brown,
       Colors.pink,
-      Colors.amber,
+      const Color(0xFFFFC107),
       Colors.cyan,
     ];
     final total = breakdownEntries.fold<double>(
