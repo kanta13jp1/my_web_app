@@ -10724,3 +10724,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **home_tier widget lint修正**: curly_braces_in_flow_control_structures (2箇所) + require_trailing_commas (11箇所)
 - **cross-instance-pr作成**: 20260418_flutter_analyze_before_push.md → push前analyze習慣化依頼
 - deploy-prod run: 24595876680 (進行中)
+
+### Rule 17 WF health check (2026-04-18 PS版#119)
+- 全 WF success率: 11/17 (deploy-prod 7失敗/11試行, horse-racing-update 1失敗)
+- 失敗 WF:
+  - **deploy-prod**: dart format / flutter analyze 連続失敗 → Win版#94 uncommitted horse racing pages (lint未修正) → PS版#119 で修正コミット (run 24596394657 進行中)
+  - **horse-racing-update**: `TimeoutError: The read operation timed out` — netkeiba 側のネットワーク一時障害。対応不要 (次回 cron で自動リトライ)
+- orphan branches: 全0件 ✅
+- 修正済み:
+  - `horse_provider_leaderboard_page.dart` + `horseracing_race_detail_page.dart`: trailing_commas + curly_braces lint修正
+  - `home_page.dart` / `main.dart` / `horse_racing_predictor_page.dart`: dart format適用
+  - cross-instance-pr `20260418_flutter_analyze_before_push.md` → done/ アーカイブ
