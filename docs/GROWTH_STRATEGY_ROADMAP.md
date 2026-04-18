@@ -10712,3 +10712,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - VSCode版: cross-instance-pr `20260418_horseracing_ensemble_ui.md` 実装 (予想ページ UI + リーダーボード)
 - PS版: 結果確定後の `evaluate_accuracy` を cron 化 (日次バッチ)
 - 管理者: OPENAI_API_KEY / ANTHROPIC_API_KEY / XAI_API_KEY を Supabase secrets に登録 (fallback 発動条件)
+
+
+### PS版#118 完了 (2026-04-18) — ai-hub provider.chat_auto 4-Tier自動ルーティング + CI修復
+- **ai-hub**: `provider.chat_auto` action実装 (free→budget→performance→premium 自動エスカレーション)
+  - `callSingleProvider()` helper関数で既存 `provider.chat` ロジックを再利用
+  - `ai_hub_chat_logs` テーブルへのコスト記録 (estimated_cost_usd)
+  - TIER_PROVIDERS: free(5社) / budget(7社) / performance(7社) / premium(3社)
+- **migration collision修正**: 20260418100000 重複 → 100002 にリネーム
+- **CI修復**: home_page.dart `const Color(...).shade700` / `...Accent` 構文エラー修正
+- **home_tier widget lint修正**: curly_braces_in_flow_control_structures (2箇所) + require_trailing_commas (11箇所)
+- **cross-instance-pr作成**: 20260418_flutter_analyze_before_push.md → push前analyze習慣化依頼
+- deploy-prod run: 24595876680 (進行中)
