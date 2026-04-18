@@ -1364,9 +1364,11 @@ Generate a mind map for the following topic: **"{topic}"**
   }) async {
     return await _retryWithBackoff(
       () async {
+        // ai-search EF は ai-hub:search.query に統合済み (Windowsアプリ版#92)
         final responseData = await _invokeFunction(
-          'ai-search',
+          'ai-hub',
           {
+            'action': 'search.query',
             'query': query,
             'limit': limit,
           },

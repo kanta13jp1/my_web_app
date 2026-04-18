@@ -37,9 +37,15 @@ class _AiSearchPageState extends State<AiSearchPage> {
     });
 
     try {
+      // ai-search EF は ai-hub:search.query に統合済み (Windowsアプリ版#92)
       final response = await _supabase.functions.invoke(
-        'ai-search',
-        body: {'query': trimmed, 'limit': 20, 'mode': 'auto'},
+        'ai-hub',
+        body: {
+          'action': 'search.query',
+          'query': trimmed,
+          'limit': 20,
+          'mode': 'auto',
+        },
       );
 
       final data = response.data;
