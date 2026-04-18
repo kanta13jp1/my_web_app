@@ -1,7 +1,7 @@
 ---
 title: "Claude Code 3インスタンスを並行運用して月$20で$200相当の開発をする話"
 tags: ClaudeCode,個人開発,AI,buildinpublic,Flutter
-published: false
+published: true
 ---
 
 # Claude Code 3インスタンスを並行運用して月$20で$200相当の開発をする話

@@ -1,7 +1,7 @@
 ---
 title: "Running 3 Parallel Claude Code Instances to Get $200 of Dev Work for $20/month"
 tags: ClaudeCode,AI,buildinpublic,webdev,productivity
-published: false
+published: true
 ---
 
 # Running 3 Parallel Claude Code Instances to Get $200 of Dev Work for $20/month
