@@ -173,7 +173,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const Text(
             'AI Company Builder',
             style: TextStyle(
-              color: const Color(0xFFE5E7EB),
+              color: Color(0xFFE5E7EB),
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
@@ -181,7 +181,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const SizedBox(height: 8),
           const Text(
             'Describe a business in one sentence. The system will run a gate review, create the business-layer manager agents, attach the shared tool layer, seed initial tasks, and write the first vault notes.',
-            style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
+            style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -211,7 +211,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 child: Text(
                   'Gate threshold',
                   style: TextStyle(
-                    color: const Color(0xB3E5E7EB),
+                    color: Color(0xB3E5E7EB),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -268,7 +268,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         ),
         child: const Text(
           'No company instances yet. Run the builder once and the workspace will start storing managers, tool agents, tasks, workflows, and vault notes.',
-          style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
         ),
       );
     }
@@ -279,7 +279,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         const Text(
           'Company Instances',
           style: TextStyle(
-            color: const Color(0xFFE5E7EB),
+            color: Color(0xFFE5E7EB),
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -458,7 +458,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const Text(
             'Gate',
             style: TextStyle(
-              color: const Color(0xFFE5E7EB),
+              color: Color(0xFFE5E7EB),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -759,7 +759,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         ),
         child: const Text(
           'Select a company instance to inspect its manager layer, shared tool layer, seeded tasks, and vault notes.',
-          style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
         ),
       );
     }

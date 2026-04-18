@@ -1586,7 +1586,7 @@ $input
       ),
       child: Row(
         children: [
-          const Icon(Icons.business, color: const Color(0xB3FFFFFF), size: 36),
+          const Icon(Icons.business, color: Color(0xB3FFFFFF), size: 36),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -2608,7 +2608,7 @@ $input
         children: [
           const Row(
             children: [
-              Icon(Icons.upload_file, color: const Color(0xB3FFFFFF), size: 20),
+              Icon(Icons.upload_file, color: Color(0xB3FFFFFF), size: 20),
               SizedBox(width: 8),
               Text(
                 'Notion / Evernote / Markdown から移行',
@@ -2623,13 +2623,13 @@ $input
           const SizedBox(height: 8),
           const Text(
             'ファイルをアップロードするだけで、過去のデータがそのまま引き継げます。移行後も元のサービスを使い続けながら、少しずつ切り替えられます。',
-            style: TextStyle(fontSize: 12, color: const Color(0xB3FFFFFF), height: 1.6),
+            style: TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.6),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
-              side: const BorderSide(color: const Color(0x61FFFFFF)),
+              side: const BorderSide(color: Color(0x61FFFFFF)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () => Navigator.of(context).pushNamed('/import'),
