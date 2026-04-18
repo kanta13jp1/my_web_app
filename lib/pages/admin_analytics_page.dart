@@ -1091,8 +1091,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('送信エラー: $e'),
-              backgroundColor: const Color(0xFFB91C1C)),
+            content: Text('送信エラー: $e'),
+            backgroundColor: const Color(0xFFB91C1C),
+          ),
         );
       }
     } finally {
@@ -3211,12 +3212,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Row(
       children: [
         _profileStatChip(
-            Icons.check_circle, '$complete 完成', const Color(0xFF0D9488)),
-        const SizedBox(width: 8),
-        _profileStatChip(Icons.pending, '$partial 途中', const Color(0xFFFF6B35)),
+          Icons.check_circle,
+          '$complete 完成',
+          const Color(0xFF0D9488),
+        ),
         const SizedBox(width: 8),
         _profileStatChip(
-            Icons.warning_amber, '$empty 未設定', const Color(0xFFB91C1C)),
+          Icons.pending,
+          '$partial 途中',
+          const Color(0xFFFF6B35),
+        ),
+        const SizedBox(width: 8),
+        _profileStatChip(
+          Icons.warning_amber,
+          '$empty 未設定',
+          const Color(0xFFB91C1C),
+        ),
       ],
     );
   }
@@ -4039,8 +4050,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon,
-            size: 14, color: isEmpty ? const Color(0xFFF87171) : Colors.grey),
+        Icon(
+          icon,
+          size: 14,
+          color: isEmpty ? const Color(0xFFF87171) : Colors.grey,
+        ),
         const SizedBox(width: 6),
         Text(
           '$label: ',
@@ -4368,7 +4382,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   color: const Color(0xFFB91C1C).withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                      color: const Color(0xFFB91C1C).withValues(alpha: 0.2)),
+                    color: const Color(0xFFB91C1C).withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Text(
                   _automationError!,
@@ -4532,7 +4547,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     icon: const Icon(Icons.send, size: 16),
                     label: const Text('通知送信'),
                     style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF6366F1)),
+                      foregroundColor: const Color(0xFF6366F1),
+                    ),
                   ),
                 IconButton(
                   icon: const Icon(Icons.refresh, size: 20),
