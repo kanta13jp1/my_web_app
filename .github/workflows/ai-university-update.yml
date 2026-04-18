@@ -87,6 +87,8 @@ jobs:
           upsert_provider "moondream"   "https://moondream.ai/blog/rss.xml"                   "Moondream VLM"
           upsert_provider "rakuten_ai"  "https://global.rakuten.com/corp/news/press.rss"      "Rakuten AI 3.0"
           upsert_provider "pfn"         "https://www.preferred.jp/en/feed/"                   "Preferred Networks (PLaMo)"
+          upsert_provider "siliconflow" "https://siliconflow.cn/blog/rss.xml"                 "SiliconFlow"
+          upsert_provider "novita_ai"   "https://novita.ai/blog/rss.xml"                      "Novita AI"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
@@ -95,7 +97,7 @@ jobs:
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT
           echo "failed_providers=${FAILED_PROVIDERS}" >> $GITHUB_OUTPUT
           echo "updated_at=${TODAY}" >> $GITHUB_OUTPUT
-          TOTAL_PROVIDERS=6  # RSS有効プロバイダー数
+          TOTAL_PROVIDERS=8  # RSS有効プロバイダー数
           echo "📊 更新結果: ${SUCCESS_COUNT}/${TOTAL_PROVIDERS} 成功"
           echo "total_providers=${TOTAL_PROVIDERS}" >> $GITHUB_OUTPUT
 

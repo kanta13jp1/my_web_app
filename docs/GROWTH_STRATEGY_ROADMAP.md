@@ -10619,4 +10619,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - registry: deepinfra 新規追加 / liquid_ai notImplemented→apiKeyRequired
 
 ### ai-hub プロバイダー推移 (更新)
-- PS#108:14→20, PS#109:20→23, PS#110:23→25, PS#111:25→27, PS#113:27→29, PS#115:29→31, PS#116:31→33
+- PS#108:14→20, PS#109:20→23, PS#110:23→25, PS#111:25→27, PS#113:27→29, PS#115:29→31, PS#116:31→33, Daily:33→35
+
+### daily-development 完了 (2026-04-18 10:15) — ai-hub Phase9 SiliconFlow+Novita AI
+- ai-hub Phase9: siliconflow (硅基流动) + novita_ai — 33→35プロバイダー
+  - SiliconFlow: `https://api.siliconflow.cn/v1/chat/completions`, `Qwen/Qwen2.5-72B-Instruct` (無料枠あり)
+  - Novita AI: `https://api.novita.ai/v3/openai/chat/completions`, `meta-llama/llama-3.1-70b-instruct`
+- registry: siliconflow + novita_ai → apiKeyRequired (SILICONFLOW_API_KEY / NOVITA_API_KEY)
+- migration: 20260418110000_seed_siliconflow + 20260418120000_seed_novita_ai (overview/models/api 各3カテゴリ)
+- ai-university-update.yml: RSS 2行追加 / TOTAL_PROVIDERS 6→8
+- AI大学: 84社 → 86社 (SiliconFlow + Novita AI)
+- ブログドラフト: docs/blog-drafts/2026-04-18-en.md (T-1第117弾候補)
+- 次Phase10候補: naver (HyperCLOVA X・韓国API要確認) / databricks (workspace URL複雑) / hyperbolic (GPU cloud・OpenAI互換)

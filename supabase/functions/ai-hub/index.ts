@@ -352,6 +352,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  siliconflow: {
+    displayName: "SiliconFlow",
+    envKey: "SILICONFLOW_API_KEY",
+    chatUrl: "https://api.siliconflow.cn/v1/chat/completions",
+    defaultModel: "Qwen/Qwen2.5-72B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  novita_ai: {
+    displayName: "Novita AI",
+    envKey: "NOVITA_API_KEY",
+    chatUrl: "https://api.novita.ai/v3/openai/chat/completions",
+    defaultModel: "meta-llama/llama-3.1-70b-instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {

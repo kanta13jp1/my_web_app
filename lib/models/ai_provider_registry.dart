@@ -583,6 +583,22 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: '(未実装 — 100% 日本製 foundation model)',
     note: 'エンタープライズ商談・研究者無料枠あり',
   ),
+  AiProviderEntry(
+    id: 'siliconflow',
+    displayName: 'SiliconFlow (硅基流动)',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'SILICONFLOW_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: 'Qwen2.5-72B・DeepSeek-V3 無料枠あり・中国最大推論プラットフォーム',
+  ),
+  AiProviderEntry(
+    id: 'novita_ai',
+    displayName: 'Novita AI',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'NOVITA_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: r'Llama-3.1-70B $0.23/$0.23 per 1M・クレジット制・100+モデル対応',
+  ),
 ];
 
 /// ステータス別件数を集計
