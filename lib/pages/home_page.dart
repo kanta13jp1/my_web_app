@@ -49,6 +49,11 @@ import 'ai_secretary_page.dart';
 import 'work_menu_page.dart';
 import '../data/home_tool_catalog.dart';
 import 'profile_settings_page.dart';
+import '../widgets/home_tier/recent_features_list.dart';
+import '../widgets/home_tier/system_fixed_features_list.dart';
+import '../widgets/home_tier/user_pinned_features_list.dart';
+import '../widgets/home_tier/new_features_list.dart';
+import '../widgets/home_tier/ai_recommended_features_list.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -4192,7 +4197,53 @@ abstinence_slip_details: $slipDetailsText
                           children: [
                             // 最上部: AI大学キラーコンテンツバナー
                             const AiUniversityHomeCard(),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
+                            // 5階層カスタマイズパネル
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_tier_recent',
+                              title: '最近使った機能',
+                              icon: Icons.history,
+                              iconColor: Color(0xFFFF6B35),
+                              initiallyExpanded: true,
+                              child: RecentFeaturesList(),
+                            ),
+                            const SizedBox(height: 4),
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_tier_system',
+                              title: 'システム固定機能',
+                              icon: Icons.lock_outline,
+                              iconColor: Color(0xFF6366F1),
+                              initiallyExpanded: true,
+                              child: SystemFixedFeaturesList(),
+                            ),
+                            const SizedBox(height: 4),
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_tier_pinned',
+                              title: 'お気に入り (ピン留め)',
+                              icon: Icons.push_pin_outlined,
+                              iconColor: Color(0xFF6366F1),
+                              initiallyExpanded: true,
+                              child: UserPinnedFeaturesList(),
+                            ),
+                            const SizedBox(height: 4),
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_tier_new',
+                              title: '最近追加された機能',
+                              icon: Icons.new_releases_outlined,
+                              iconColor: Color(0xFFFF6B35),
+                              initiallyExpanded: false,
+                              child: NewFeaturesList(),
+                            ),
+                            const SizedBox(height: 4),
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_tier_recommend',
+                              title: 'AI おすすめ機能',
+                              icon: Icons.auto_awesome,
+                              iconColor: Color(0xFF6366F1),
+                              initiallyExpanded: false,
+                              child: AiRecommendedFeaturesList(),
+                            ),
+                            const SizedBox(height: 8),
                             // ギター録音スタジオ
                             const _GuitarMainFeatureBanner(),
                             const SizedBox(height: 10),

@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+import '../../data/home_system_fixed.dart';
+
+class SystemFixedFeaturesList extends StatelessWidget {
+  const SystemFixedFeaturesList({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: kHomeSystemFixed.map((f) {
+          return ActionChip(
+            avatar: Icon(f.icon, size: 16, color: f.color),
+            label: Text(f.label, style: const TextStyle(fontSize: 12)),
+            backgroundColor: const Color(0xFF1A1A1A),
+            side: BorderSide(color: f.color.withValues(alpha: 0.3)),
+            onPressed: () => Navigator.pushNamed(context, f.route),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
