@@ -11074,3 +11074,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/how-i-applied-design-tokens-across-200-flutter-pages-in-one-commit-2lfl
 - deploy-prod: in_progress (VSCode版#105 + PS版#136 lint fixes + 再トリガー含む)
 - 注意: stash pop でColor(0xFFB0B0B0)[400] 誤置換 widget 5件 → git restore で破棄 (VSCode#105 scope)
+
+### VSCode版#105 (2026-04-19 AM)
+- **セッション開始**: PS版#136が require_trailing_commas 修正済み確認 → CI Analyze code ✅
+- **DESIGN.md token置換**: Colors.grey → Color(0xFFB0B0B0) / Colors.grey[N] → const Color(正しいhex)
+  - 5ページ (ai_writing_assistant/ai_search/behavior_review/bookmark_folders/decision_check)
+  - 7ページ (affiliate_marketing/ai_suggest_tags/ai_university_content/analyze_reality/changelog/appointment/cmo)
+  - 43ページ一括 (lib/pages/ 1-2件ファイル全件)
+  - 33ウィジェット+ページ (Colors.grey[N]含む全件 / shade対応)
+  - hotfix: Color(0xFFB0B0B0)[N] → 正しいhex shade (14件)
+  - shade fix: Color(0xFFB0B0B0).shade200 等 → 正しいhex (4件)
+  - Colors.grey 完全排除 ✅ (lib/全体)
+- **残課題**: prefer_const_constructors (error) → 他インスタンスで修正 / require_trailing_commas 新規6件
+- **次回候補**: DESIGN.md 92%→95% 残ページ / AI大学学習リマインダー
