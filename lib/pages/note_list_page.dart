@@ -176,12 +176,12 @@ class _NoteListPageState extends State<NoteListPage> {
 
   Color _reminderColor(DateTime reminderDate) {
     if (_isReminderOverdue(reminderDate)) {
-      return Colors.red.shade700;
+      return const Color(0xFFB91C1C);
     }
     if (_isReminderDueToday(reminderDate)) {
-      return Colors.orange.shade700;
+      return const Color(0xFFF57C00);
     }
-    return Colors.teal.shade700;
+    return const Color(0xFF0F766E);
   }
 
   List<Map<String, dynamic>> _reminderEntries(
@@ -663,10 +663,10 @@ class _NoteListPageState extends State<NoteListPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.deepPurple.withValues(alpha: 0.08),
+        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: Colors.deepPurple.withValues(alpha: 0.16),
+          color: const Color(0xFF6366F1).withValues(alpha: 0.16),
         ),
       ),
       child: Text(
@@ -674,7 +674,7 @@ class _NoteListPageState extends State<NoteListPage> {
         style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: Colors.deepPurple,
+          color: const Color(0xFF6366F1),
         ),
       ),
     );
@@ -786,15 +786,15 @@ class _NoteListPageState extends State<NoteListPage> {
     final content = _noteContent(note);
     final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
-        ? Colors.deepPurple
+        ? const Color(0xFF6366F1)
         : (highlightReminder
-            ? Colors.teal
-            : (isPinned ? Colors.orange : Colors.blue));
+            ? const Color(0xFF0D9488)
+            : (isPinned ? const Color(0xFFFF6B35) : const Color(0xFF6366F1)));
     final fallbackAccentColor = isFavorite &&
             !highlightReminder &&
             !highlightShareCandidate &&
             !isPinned
-        ? Colors.amber.shade700
+        ? const Color(0xFFFF6B35)
         : accentColor;
 
     return Card(
@@ -845,7 +845,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple.withValues(alpha: 0.1),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
@@ -853,7 +853,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.deepPurple,
+                        color: const Color(0xFF6366F1),
                       ),
                     ),
                   ),
@@ -862,7 +862,7 @@ class _NoteListPageState extends State<NoteListPage> {
                   Icon(
                     Icons.star,
                     size: 18,
-                    color: Colors.amber.shade700,
+                    color: const Color(0xFFFF6B35),
                   ),
                 ],
               ],
@@ -942,7 +942,7 @@ class _NoteListPageState extends State<NoteListPage> {
               tooltip: isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
               icon: Icon(isFavorite ? Icons.star : Icons.star_border),
               color: isFavorite
-                  ? Colors.amber.shade700
+                  ? const Color(0xFFFF6B35)
                   : Theme.of(context).colorScheme.outlineVariant,
               onPressed: () {
                 _toggleFavorite(context, note);
@@ -1052,13 +1052,13 @@ class _NoteListPageState extends State<NoteListPage> {
           pageTitle,
           key: const Key('note_list_page_title'),
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             key: const Key('note_list_page_favorites_filter'),
             icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
-            color: _showFavoritesOnly ? Colors.amber.shade200 : Colors.white,
+            color: _showFavoritesOnly ? const Color(0xFFFFD54F) : Colors.white,
             tooltip: _showFavoritesOnly ? 'すべてのメモを表示' : 'お気に入りのみ表示',
             onPressed: _toggleFavoritesOnly,
           ),
@@ -1088,13 +1088,13 @@ class _NoteListPageState extends State<NoteListPage> {
                       const Icon(
                         Icons.note_alt_outlined,
                         size: 64,
-                        color: Colors.grey,
+                        color: const Color(0xFFB0B0B0),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _showFavoritesOnly ? 'お気に入りのメモはまだありません' : 'まだメモがありません',
                         style:
-                            const TextStyle(fontSize: 18, color: Colors.grey),
+                            const TextStyle(fontSize: 18, color: const Color(0xFFB0B0B0)),
                       ),
                       if (_showFavoritesOnly) ...[
                         const SizedBox(height: 12),
@@ -1109,7 +1109,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         icon: const Icon(Icons.add),
                         label: const Text('新しいメモを作成'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
+                          backgroundColor: const Color(0xFF6366F1),
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _navigateToEditor(context),
@@ -1190,7 +1190,7 @@ class _NoteListPageState extends State<NoteListPage> {
       floatingActionButton: FloatingActionButton(
         key: const Key('note_list_page_fab'),
         onPressed: () => _navigateToEditor(context),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF6366F1),
         child: const Icon(Icons.add),
       ),
     );

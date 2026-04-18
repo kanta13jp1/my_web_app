@@ -10651,3 +10651,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   1. DESIGN.md 70%→75%: note_list_page or note_editor_page 違反確認
   2. VSCode版依存: AiProviderEntry.tier フィールド追加 (cross-instance-pr 20260418_ai_provider_tier_field.md)
   3. ノート機能拡張: backlinks (`[[note]]` 形式) or テンプレートギャラリー
+
+### VSCode版#95 完了 (2026-04-18) — AiProviderTier enum + tier badges
+- `AiProviderTier` enum追加 (free/budget/performance/premium) + colorValue/label extensions
+- `AiProviderEntry.tier` オプショナルフィールド追加
+- 42エントリにtier分類: free:4 / budget:19 / performance:18 / premium:6
+- `ai_provider_status_page.dart`: tier badge (右端・小型) 追加
+- cross-instance-pr 20260418_ai_provider_tier_field.md → done/
+- flutter analyze 0エラー / CI dart format 自動適用済み (25df52a0)
+- commit: 80660e4d
+
+### Rule 17 WF health check + CI unblock (2026-04-18 11:00 JST)
+- deploy-prod: 6連続失敗 → **run 24594448147 success ✅**
+- 修正内容: (1) home_page.dart `const Color(...).shade700` → `Color(0xFFF57C00)` + `Color(...)Accent` → `const Color(0xFFFFAB40)` (2) dart format (3) migration timestamp重複 20260418100000 → 100002
+- orphan branches: 全0件 ✅ / WF health: deploy-prod以外全正常
+- 新 cross-instance-pr: 20260418_home_5tier_customization.md (Windowsアプリ版#90 → VSCode版 pending)
