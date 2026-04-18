@@ -4247,6 +4247,40 @@ abstinence_slip_details: $slipDetailsText
                               child: AiRecommendedFeaturesList(),
                             ),
                             const SizedBox(height: 8),
+                            // AI競馬的中率リーダーボード
+                            ListTile(
+                              dense: true,
+                              leading: const Icon(
+                                Icons.leaderboard_outlined,
+                                color: Color(0xFFFF6B35),
+                                size: 20,
+                              ),
+                              title: const Text(
+                                'AI競馬 的中率リーダーボード',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'プロバイダー別1着的中率・3連単率',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                              trailing: const Icon(
+                                Icons.chevron_right,
+                                size: 16,
+                                color: Color(0xFF64748B),
+                              ),
+                              onTap: () => Navigator.pushNamed(
+                                context,
+                                '/horse-provider-leaderboard',
+                              ),
+                            ),
+                            const SizedBox(height: 8),
                             // ギター録音スタジオ
                             const _GuitarMainFeatureBanner(),
                             const SizedBox(height: 10),

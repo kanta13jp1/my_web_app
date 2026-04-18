@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'horse_provider_leaderboard_page.dart';
+import 'horseracing_race_detail_page.dart';
 
 enum RaceType {
   all('すべて'),
@@ -177,6 +179,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.leaderboard_outlined),
+            tooltip: 'AIプロバイダー的中率',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HorseProviderLeaderboardPage(),
+              ),
+            ),
+          ),
           const Padding(
             padding: EdgeInsets.all(12),
             child: Tooltip(
@@ -639,6 +651,24 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                icon: const Icon(Icons.table_chart_outlined, size: 14),
+                label: const Text('詳細マトリックス'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF6366F1),
+                  textStyle: const TextStyle(fontSize: 12),
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HorseracingRaceDetailPage(race: race),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
