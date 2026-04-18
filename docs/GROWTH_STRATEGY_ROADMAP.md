@@ -10735,3 +10735,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - `horse_provider_leaderboard_page.dart` + `horseracing_race_detail_page.dart`: trailing_commas + curly_braces lint修正
   - `home_page.dart` / `main.dart` / `horse_racing_predictor_page.dart`: dart format適用
   - cross-instance-pr `20260418_flutter_analyze_before_push.md` → done/ アーカイブ
+
+### VSCode版#99: 競馬 ensemble UI 完成 (2026-04-18)
+- **horseracing_race_detail_page.dart**: netkeiba風マトリックステーブル (新規)
+  - 出走表 × AI予想印 ◎○▲ (DataTable)
+  - classic keiba 8色枠番バッジ
+  - consensus bar (1着コンセンサス + 票数 + 信頼度)
+  - ensemble再実行ボタン (AppBar)
+  - レースヘッダー (venue/courseType/distance/grade chips)
+- **horse_provider_leaderboard_page.dart**: プロバイダー別的中率リーダーボード (新規)
+- **horse_racing_predictor_page.dart**: 詳細マトリックス導線 + リーダーボードボタン追加
+- **home_page.dart**: AI競馬的中率リーダーボードタイル追加
+- **main.dart**: /horse-provider-leaderboard ルート追加
+- **api_key_status_banner.dart**: curly_braces + trailing_commas lint修正
+- cross-instance-pr `20260418_horseracing_ensemble_ui.md` → done/ アーカイブ
+- flutter analyze 0エラー確認 ✅
