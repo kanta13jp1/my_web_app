@@ -802,7 +802,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       '送信先: $email',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(
+                          fontSize: 12, color: Color(0xFF9CA3AF)),
                     ),
                   ),
                 DropdownButtonFormField<String>(
@@ -1414,7 +1415,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: const Color(0xFF6366F1),
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFFE5E7EB),
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
@@ -1454,17 +1455,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         title: const Text(
                           'AI クォータ監視',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFFE5E7EB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: const Text(
                           'Claude / OpenAI / Gemini / Copilot の使用状況',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(color: Color(0xB3E5E7EB)),
                         ),
                         trailing: const Icon(
                           Icons.chevron_right,
-                          color: Colors.white54,
+                          color: Color(0x8AE5E7EB),
                         ),
                         onTap: () => Navigator.push(
                           context,
@@ -1485,17 +1486,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         title: const Text(
                           'ブログ管理',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFFE5E7EB),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: const Text(
                           '投稿記事・いいね・コメント返信の確認',
-                          style: TextStyle(color: Colors.white70),
+                          style: TextStyle(color: Color(0xB3E5E7EB)),
                         ),
                         trailing: const Icon(
                           Icons.chevron_right,
-                          color: Colors.white54,
+                          color: Color(0x8AE5E7EB),
                         ),
                         onTap: () => Navigator.push(
                           context,
@@ -1921,7 +1922,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
                             backgroundColor: diagnosisColor,
-                            foregroundColor: Colors.white,
+                            foregroundColor: const Color(0xFFE5E7EB),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 10,
@@ -2174,7 +2175,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             const Text(
               '今日CVR (実登録ベース)',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 4),
             Row(
@@ -2621,7 +2622,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           value,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+        Text(label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF))),
       ],
     );
   }
@@ -2693,7 +2695,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(height: 8),
                 Text(
                   shouldShowLabel ? label : '',
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style:
+                      const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
                 ),
               ],
             );
@@ -2711,7 +2714,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         child: const Padding(
           padding: EdgeInsets.all(24),
           child: Center(
-            child: Text('データなし', style: TextStyle(color: Colors.grey)),
+            child: Text('データなし', style: TextStyle(color: Color(0xFF9CA3AF))),
           ),
         ),
       );
@@ -3319,7 +3322,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'ユーザーが取得できませんでした',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Color(0xFF9CA3AF)),
                 ),
               )
             else
@@ -3340,7 +3343,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       padding: EdgeInsets.symmetric(vertical: 12),
                       child: Text(
                         '該当するユーザーが見つかりません',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                     );
                   }
@@ -3456,7 +3459,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       email,
                                       style: const TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey,
+                                        color: Color(0xFF9CA3AF),
                                       ),
                                     ),
                                   if (bio != null && bio.isNotEmpty)
@@ -3477,13 +3480,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                         const Icon(
                                           Icons.location_on_outlined,
                                           size: 11,
-                                          color: Colors.grey,
+                                          color: Color(0xFF9CA3AF),
                                         ),
                                         Text(
                                           location,
                                           style: const TextStyle(
                                             fontSize: 11,
-                                            color: Colors.grey,
+                                            color: Color(0xFF9CA3AF),
                                           ),
                                         ),
                                       ],
@@ -3523,7 +3526,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                     '登録: $createdStr　最終ログイン: $lastSignInStr',
                                     style: const TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey,
+                                      color: Color(0xFF9CA3AF),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -3722,7 +3725,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           email,
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Colors.grey,
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
                       Row(
@@ -3730,14 +3733,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           Icon(
                             isPublic ? Icons.public : Icons.lock_outlined,
                             size: 12,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             isPublic ? '公開プロフィール' : '非公開プロフィール',
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.grey,
+                              color: Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
@@ -3944,7 +3947,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           const Icon(
                             Icons.public,
                             size: 16,
-                            color: Colors.grey,
+                            color: Color(0xFF9CA3AF),
                           ),
                           const SizedBox(width: 6),
                           const Text(
@@ -4009,7 +4012,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           height: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: Color(0xFFE5E7EB),
                           ),
                         )
                       : const Icon(Icons.save_outlined, size: 16),
@@ -4026,11 +4029,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: Colors.grey),
+        Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
         const SizedBox(width: 6),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
         ),
         Expanded(
           child: Text(
@@ -4053,12 +4056,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         Icon(
           icon,
           size: 14,
-          color: isEmpty ? const Color(0xFFF87171) : Colors.grey,
+          color: isEmpty ? const Color(0xFFF87171) : const Color(0xFF9CA3AF),
         ),
         const SizedBox(width: 6),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
         ),
         Expanded(
           child: Text(
@@ -4097,7 +4100,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 Text(
                   '${_featureRequests.length}件',
-                  style: const TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
@@ -4118,8 +4121,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             else if (_featureRequests.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child:
-                    Text('リクエストはまだありません', style: TextStyle(color: Colors.grey)),
+                child: Text('リクエストはまだありません',
+                    style: TextStyle(color: Color(0xFF9CA3AF))),
               )
             else
               ListView.separated(
@@ -4371,7 +4374,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 8),
             const Text(
               'Claude Schedule の定期実行に合わせた CS キューと日次ダイジェストをここで手動確認できます。',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 12),
             if (_automationError != null)
@@ -4428,7 +4431,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               if (_automationSupportTickets.isEmpty)
                 const Text(
                   '未返信チケットはありません',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 )
               else
                 ListView.separated(
@@ -4568,7 +4571,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             else if (_waitlistEmails.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('登録者はまだいません', style: TextStyle(color: Colors.grey)),
+                child: Text('登録者はまだいません',
+                    style: TextStyle(color: Color(0xFF9CA3AF))),
               )
             else
               ListView.separated(
@@ -4695,7 +4699,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         case 'posted':
           return const Color(0xFF0D9488);
         case 'skipped':
-          return Colors.grey;
+          return const Color(0xFF9CA3AF);
         default:
           return const Color(0xFFFF6B35);
       }
@@ -4937,7 +4941,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildComparisonCvrCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1A2233) : Colors.white;
+    final cardColor =
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
     final borderColor =
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
@@ -5004,7 +5009,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           if (sorted.isEmpty && !_comparisonCvrLoading)
             const Text(
               '比較ページへの到達データがまだありません',
-              style: TextStyle(color: Colors.grey, fontSize: 13),
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
             )
           else
             ...sorted.take(14).map((e) {
@@ -5030,8 +5035,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: pct.clamp(0.0, 1.0),
-                          backgroundColor:
-                              isDark ? Colors.white12 : const Color(0xFF6366F1),
+                          backgroundColor: isDark
+                              ? const Color(0x1FE5E7EB)
+                              : const Color(0xFF6366F1),
                           color: const Color(0xFF6366F1),
                           minHeight: 8,
                         ),
@@ -5060,7 +5066,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
+          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
         Text(
           value,
@@ -5099,7 +5105,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
   Widget _buildGrowthAchievementSummaryCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1A2233) : Colors.white;
+    final cardColor =
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
     final borderColor =
         isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
@@ -5275,7 +5282,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     child: Text(
                       '未対応 $newCount',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFFE5E7EB),
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
