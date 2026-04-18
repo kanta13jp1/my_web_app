@@ -193,6 +193,34 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    - **AI ランキング**: 他人比較中心 → 「昨日の自分」進捗を併設すべき
    - **SNS 風機能 (もしあれば)**: 時間消費型なら原則 5/6 違反
 
+18. **Rule 23: AI 開発 7 原則 (Windowsアプリ版#100・全インスタンス・必須)** — `docs/AI_DEV_PRINCIPLES.md` の **AI 開発 7 原則** は AI エージェント・AI 機能の **実装方法 (how)** を規定する。**Rule 22 (PHILOSOPHY 9 原則 = what/why) と並列・両方クリアした機能のみ実装可**。
+
+   **AI 開発 7 原則 (要約)**:
+
+   1. **Auth Layer** — API キー source of truth 単一化・古い値の上書き防止
+   2. **Deny-by-default Security** — MVP 段階から認証・rate limit・入力検証
+   3. **Trace-based Observability** — `trace_id` + span + 5 秒超検出
+   4. **Cost Circuit Breaker** — 4 段階上限 (request/agent/business/platform) 自動遮断
+   5. **Team Memory + Effectiveness Score** — 成功失敗パターン蓄積・低スコア減衰・自動注入
+   6. **Checkpoint + Retry** — 中間状態保存・再試行ポリシー・dead letter queue
+   7. **Quality Gate (Sentinel + Warden)** — 自動出力前の事実確認 + 品質確認
+
+   **適用方法**:
+   - 新 AI 機能設計時: 7 項目チェックリスト実施 (`docs/AI_DEV_PRINCIPLES.md` 末尾参照)
+     - 6+ ✅ → 即実装可
+     - 4-5 ✅ → 設計再考
+     - 3 以下 ✅ → 実装見送り or 大幅再設計
+   - **PHILOSOPHY 9 原則 (Rule 22) と AI_DEV 7 原則 (Rule 23) 両方クリアした機能のみ実装可**
+   - 既存機能のスコア表は `docs/AI_DEV_PRINCIPLES.md` 「既存機能の評価」セクション参照
+
+   **重要**: AI 開発の安全な高速化は **強力な監視・制御・記憶の組み合わせ**で実現する。AI ツールで開発スピードが圧倒的に上がる一方、目に見えない欠陥 (API キー上書き・ハルシネーションループ・自動投稿スパム化等) が大きな代償を生む。
+
+   **要改善既存機能**:
+   - **competitor-monitoring** (3/7): Circuit breaker + retry + memory 強化
+   - **blog-publish** (2/7): Quality gate + circuit breaker 必須
+
+   **ソース**: NotebookLM Notebook [Perils of Invisible Defaults](https://notebooklm.google.com/notebook/7e39f060-7f61-4a31-babb-237da14f06aa) (AI エージェントで 1 日 23 ページ構築した開発者の実体験)
+
 ---
 
 ## Multi-AI ワークフロー（毎回必ず実行）
