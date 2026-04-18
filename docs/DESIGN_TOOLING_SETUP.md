@@ -113,3 +113,43 @@ docs/DESIGN.md と lib/services/theme_service.dart を前提に、
 この機能の desktop / mobile UI を AIDesigner MCP で提案してください。
 既存画面との整合も説明し、その後 Flutter 実装案まで出してください。
 ```
+
+---
+
+## Claude Design 取り込みフロー (Rule 21 統合)
+
+Claude Design SaaS (Anthropic Labs) で生成した handoff bundle を Flutter コードに変換するワークフロー。
+
+### ステップ
+
+1. **Claude Design SaaS で bundle 出力** (Pro/Max/Team/Enterprise プラン必須)
+   - UI をデザインして「Export as JSON」または handoff spec を生成
+
+2. **開発者インポートページで取り込み** (`/dev/claude-design-importer`)
+   - ブラウザで `/dev/claude-design-importer` を開く (admin ログイン必須)
+   - bundle JSON をテキストフィールドに貼り付けて「Parse」
+   - 「Diff vs DESIGN.md」でトークン差分を確認
+   - 「Generate Flutter widgets」でコード生成 → クリップボードにコピー
+
+3. **生成コードを配置・調整**
+   - 生成物は `lib/widgets/generated/claude_design/` に保存する命名規則
+   - 生成コードは ~70% 精度: `onPressed`、状態管理、API 連携は手動補完
+   - `docs/DESIGN.md` トークン (orange=0xFFFF6B35 / indigo=0xFF6366F1 等) と照合して修正
+
+4. **flutter analyze 0 エラーを確認してコミット**
+
+### 実装ファイル
+
+| ファイル | 役割 |
+|---|---|
+| `lib/dev/claude_design/handoff_bundle.dart` | ClaudeDesignHandoff 型定義 (fromJson/toJson) |
+| `lib/dev/claude_design/token_diff.dart` | DESIGN.md トークンとの差分計算 |
+| `lib/dev/claude_design/flutter_codegen.dart` | HTML snippet → Flutter widget コード生成 |
+| `lib/dev/claude_design/importer_page.dart` | 開発者向け UI (`/dev/claude-design-importer`) |
+| `test/dev/claude_design/` | unit tests 28件 (all passing) |
+
+### 制約
+
+- `/dev/claude-design-importer` は admin ユーザー専用 (kanta13jp1)
+- 生成コードは review 必須 — production に直接使用しない
+- `docs/DESIGN.md` 更新は自動 merge しない (ユーザー確認必須)

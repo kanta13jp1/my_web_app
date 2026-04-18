@@ -231,6 +231,7 @@ import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
 import 'package:my_web_app/pages/daily_judgment_page.dart';
 import 'package:my_web_app/pages/ai_university_content_page.dart';
 import 'package:my_web_app/pages/development_achievements_page.dart';
+import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1290,6 +1291,10 @@ class MyApp extends StatelessWidget {
           case '/development-achievements':
             return MaterialPageRoute(
               builder: (_) => const DevelopmentAchievementsPage(),
+            );
+          case '/dev/claude-design-importer':
+            return MaterialPageRoute(
+              builder: (_) => const ClaudeDesignImporterPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());
