@@ -162,7 +162,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('AI分析バッチを開始しました。完了まで数分かかります。'),
-              backgroundColor: Colors.teal,
+              backgroundColor: const Color(0xFF009688),
               duration: Duration(seconds: 4),
             ),
           );
@@ -549,7 +549,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             const Divider(),
             const Text(
               'AI情勢分析 (Batch Updated):',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
+              style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 8),
             Text(cand['ai_analysis'] ?? '分析データなし'),
@@ -582,7 +582,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          unselectedLabelColor: const Color(0xB3FFFFFF),
           indicatorColor: Colors.amber,
           isScrollable: true,
           tabs: const [
@@ -687,7 +687,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     .withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 4),
+                  BoxShadow(color: const Color(0x42000000), blurRadius: 4),
                 ],
               ),
               child: Row(
@@ -708,7 +708,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   else if (_lastBatchLog?['status'] == 'ERROR')
                     const Icon(Icons.error, color: Colors.red, size: 16)
                   else
-                    const Icon(Icons.access_time, color: Colors.grey, size: 16),
+                    const Icon(Icons.access_time, color: const Color(0xFF9CA3AF), size: 16),
 
                   const SizedBox(width: 8),
 
@@ -864,7 +864,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         children: [
           SizedBox(
             width: 80,
-            child: Text(label, style: const TextStyle(color: Colors.grey)),
+            child: Text(label, style: const TextStyle(color: const Color(0xFF9CA3AF))),
           ),
           Expanded(
             child: Text(
@@ -923,7 +923,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Text('獲得予測議席', style: TextStyle(color: Colors.grey)),
+                  const Text('獲得予測議席', style: TextStyle(color: const Color(0xFF9CA3AF))),
                   Text(
                     '$seats / 465',
                     style: const TextStyle(
@@ -1126,7 +1126,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             label: const Text('ポスター/チラシを撮影・診断'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
-              backgroundColor: Colors.teal,
+              backgroundColor: const Color(0xFF009688),
             ),
           ),
         ),
@@ -1154,7 +1154,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     child: ListTile(
                       leading: Icon(
                         Icons.image,
-                        color: score >= 80 ? Colors.teal : Colors.grey,
+                        color: score >= 80 ? const Color(0xFF009688) : const Color(0xFF9CA3AF),
                       ),
                       title: Text(
                         '診断スコア: $score点',

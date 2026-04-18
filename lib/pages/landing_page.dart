@@ -1586,7 +1586,7 @@ $input
       ),
       child: Row(
         children: [
-          const Icon(Icons.business, color: Colors.white70, size: 36),
+          const Icon(Icons.business, color: const Color(0xB3FFFFFF), size: 36),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -2608,7 +2608,7 @@ $input
         children: [
           const Row(
             children: [
-              Icon(Icons.upload_file, color: Colors.white70, size: 20),
+              Icon(Icons.upload_file, color: const Color(0xB3FFFFFF), size: 20),
               SizedBox(width: 8),
               Text(
                 'Notion / Evernote / Markdown から移行',
@@ -2623,13 +2623,13 @@ $input
           const SizedBox(height: 8),
           const Text(
             'ファイルをアップロードするだけで、過去のデータがそのまま引き継げます。移行後も元のサービスを使い続けながら、少しずつ切り替えられます。',
-            style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.6),
+            style: TextStyle(fontSize: 12, color: const Color(0xB3FFFFFF), height: 1.6),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white38),
+              side: const BorderSide(color: const Color(0x61FFFFFF)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
             onPressed: () => Navigator.of(context).pushNamed('/import'),
@@ -2738,7 +2738,7 @@ $input
                       style: TextStyle(
                         fontSize: 12,
                         color: row.isOurs
-                            ? Colors.white70
+                            ? const Color(0xB3FFFFFF)
                             : const Color(0xFF94A3B8),
                       ),
                     ),
@@ -3261,7 +3261,7 @@ $input
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7F9FC),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.black12),
+                    border: Border.all(color: const Color(0x1F000000)),
                   ),
                   child: const Text(
                     'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
