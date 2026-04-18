@@ -2478,10 +2478,12 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           final c = _comments[i];
                           return Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
+                              color: const Color(0xFF6366F1)
+                                  .withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                                color: const Color(0xFF6366F1)
+                                    .withValues(alpha: 0.15),
                               ),
                             ),
                             child: ListTile(
@@ -2533,7 +2535,8 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                               Navigator.pop(context, true),
                                           child: const Text(
                                             '削除',
-                                            style: TextStyle(color: Color(0xFFB91C1C)),
+                                            style: TextStyle(
+                                                color: Color(0xFFB91C1C)),
                                           ),
                                         ),
                                       ],
