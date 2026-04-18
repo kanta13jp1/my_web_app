@@ -11007,3 +11007,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 対策: python batch replace → dart format → git add → git commit を1つのBashコール内で完結
 - **DESIGN.md準拠**: 85%→88% 達成
 - 次回候補: DESIGN.md 88%→90% (morning_briefing_page/election_victory_page) / wrap-up
+
+### VSCode版#102 続き (2026-04-18 PM)
+- **DESIGN.md token 5ページ追加修正** (python batch → dart format → git add → commit パターン):
+  - `morning_briefing_page`: Colors.grey×50 + white×9 → token
+  - `election_victory_page`: token置換完了
+  - `mindless_task_page`: token置換完了
+  - `abstinence_guard_page`: token置換完了
+  - `ai_company_builder_page`: token置換完了
+- **DESIGN.md準拠: 88%→92%** 達成
+- **確立したパターン**: python batch replace → dart format → git add → git commit を1 Bash callで完結 (linter revert防止)
+- 次回候補: home_page.dart (223件・最大) / election_strategy_page (44件) / wrap-up実行
