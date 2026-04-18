@@ -10890,3 +10890,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **orphan branches**: 全パターン 0件 ✅
 - **Workflow Failure Handler**: skipped×4 + success×1 (正常)
 - **修正済み**: なし (全て pre-fix 済み)
+
+### PS版#126 (2026-04-18 PM)
+- **Rule17 WF health check**: deploy-prod/blog-publish 最新成功 / orphan 0件 ✅ (VSCode版linter leakage 再発→git checkout --で解消)
+- **T-1 第126弾**: Supabase Realtime + Flutter アクティビティフィード JA+EN dispatch → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/building-a-realtime-activity-feed-with-supabase-and-flutter-4m41
+  - activity_feed_page.dart の .stream() 実装解説 (StreamSubscription + onError fallback + dispose cancel)
+  - orphan branch マージ + 削除 ✅
