@@ -10947,3 +10947,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### PS版#131 Rule17 WF health check (2026-04-18 PM)
 - 全WF最新SUCCESS ✅ / orphan 0件 / leakage 0件
+
+### PS版#131 (2026-04-18 PM)
+- **Rule17**: 全WF SUCCESS ✅ / orphan 0件
+- **T-1 第131弾**: FSRS間隔反復学習システム JA+EN → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/spaced-repetition-in-flutter-supabase-ai-university-memory-system-4jak
+  - stability単一変数アルゴリズム + due_date<=nowフィルタ + UPSERT冪等性 解説
+  - orphan branch マージ + 削除 ✅
