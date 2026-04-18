@@ -10771,3 +10771,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - **horse-racing-update**: `TimeoutError: The read operation timed out` (NAR netkeiba 一時障害) → 対応不要
 - orphan branches: 全0件 ✅
 - 修正済み: deploy-prod CI は現在 success
+
+### PS版#120 (2026-04-18 PM)
+- **CI whack-a-mole**: `admin_analytics_page.dart` 13個 `const Color().shade` → shadeなし修正
+  - `asset_management_page.dart` Colors→DESIGN tokenコミット(stash残留)
+  - `admin_analytics_page.dart` trailing_commas 6箇所追加修正
+  - flutter analyze 0エラー確認 ✅
+- **T-1 第120弾**: Supabase EF 150s timeout batch回避記事 → dev.to投稿成功
+  - https://dev.to/kanta13jp1/bypassing-supabase-edge-function-150s-timeout-with-batch-loops-1dnm
+- **Rule 17**: horse-racing-update 最新run success ✅ / orphan 0件 ✅
+- **deploy-prod**: run 24599168751 進行中 (25b7626c)
