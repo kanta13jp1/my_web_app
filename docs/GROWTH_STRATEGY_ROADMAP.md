@@ -11057,3 +11057,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/supabase-row-level-security-in-flutter-web-3-real-patterns-from-production-4jd8
 - orphan branches: 全パターン 0件 ✅
 - 次回候補: deploy-prod SUCCESS確認 / AI大学学習リマインダーバッチ設定 / 新規T-1弾作成
+
+### T-1 第136弾 (PS版#136 続き)
+- **T-1 第136弾**: AIエージェントを安全に使うための7原則 JA+EN → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/7-principles-for-using-ai-agents-safely-in-production-a-solo-devs-checklist-568n
+- cross-instance-pr `20260419_trailing_comma_fix.md` → done/ へ移動完了
+- deploy-prod: `require_trailing_commas + prefer_const_constructors` 修正後 in_progress (成功待ち)
