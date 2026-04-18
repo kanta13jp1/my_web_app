@@ -1,7 +1,7 @@
 ---
 title: "9 Principles for Building a 200-Page SaaS Solo — The Jibun Kaisha Framework"
 tags: Flutter,buildinpublic,AI,productivity,philosophy
-published: false
+published: true
 ---
 
 # 9 Principles for Building a 200-Page SaaS Solo — The Jibun Kaisha Framework
