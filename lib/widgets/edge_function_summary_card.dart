@@ -251,6 +251,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/notification-digest',
       '通知ダイジェストページ > 未読・本日・重要通知サマリー',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'affiliate-marketing',
+      'アフィリエイトマーケティング管理',
+      true,
+      '/affiliate-marketing',
+      'アフィリエイトマーケティングページ > プログラム一覧・成果確認',
+    ),
+    _FnDef(
+      'ai-image-generator',
+      'AI画像生成',
+      true,
+      '/ai-image-generator',
+      'AI画像生成ページ > プロンプト入力で画像生成',
+    ),
+    _FnDef(
+      'ai-secretary',
+      'AIセクレタリー (スケジュール・タスク管理)',
+      true,
+      '/ai-secretary',
+      'AIセクレタリーページ > 今日のスケジュール・優先タスク確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
