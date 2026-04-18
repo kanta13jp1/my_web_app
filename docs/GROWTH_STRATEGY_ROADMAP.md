@@ -10850,3 +10850,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - `20260418_claude_design_flutter_importer.md` cross-instance-pr 完了
 - **docs/DESIGN_TOOLING_SETUP.md**: Rule 21 Claude Design ワークフロー追記
 - **deploy-prod**: migration collision解消 → in_progress (確認中)
+
+### VSCode版#101 (2026-04-18 PM)
+- **セッション開始チェック**: 並行インスタンス確認 → PS版#121/122 + Win版#96が先行コミット済み
+  - claude_design importer: PS版#121 が `be8a54c5` で完了 (VSCode版と同一実装が並行完了)
+  - cross-instance-pr: `20260418_claude_design_flutter_importer.md` → done/ 確認済み ✅
+- **DESIGN.md token修正確認**: asset_management (0 errors) + admin_analytics (0 errors) → 既コミット済み
+- **次回優先タスク**:
+  1. 🔴 Supabase Secrets 追加 (要ユーザー手動操作)
+  2. 🟡 ai-hub Phase9+: siliconflow/novita_ai backend追加
+  3. 🟢 DESIGN.md token compliance続行 (home_page/wardrobe_page 等)
