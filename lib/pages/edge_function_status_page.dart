@@ -190,20 +190,37 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
     'data': Color(0xFF06B6D4),
   };
 
+  /// EF の種類に応じて呼び出し方法を変える:
+  /// - `*-hub`: action 指定が必要なため POST + ダミー body で応答確認
+  /// - `ai-assistant`: POST で action=get_models を送って到達確認
+  /// - その他: GET (旧 standalone EF 互換)
+  ///
+  /// 到達できれば (2xx / 4xx 含む) 「生存」と判定する。
+  /// CORS / network error / 5xx のみ「接続失敗」扱い。
   Future<void> _testFunction(String name) async {
     setState(() => _loading = true);
     try {
+      final bool isHub = name.endsWith('-hub');
+      final bool isAiAssistant = name == 'ai-assistant';
       final result = await _supabase.functions.invoke(
         name,
-        method: HttpMethod.get,
+        method: (isHub || isAiAssistant) ? HttpMethod.post : HttpMethod.get,
+        body: isHub
+            ? {'action': 'health.ping'}
+            : isAiAssistant
+                ? {'action': 'get_models'}
+                : null,
       );
+      final status = result.status;
+      // 到達していれば ok (200-499 = EF が応答, 5xx = server error = 接続失敗)
       setState(() {
         _testResults[name] = {
-          'status': result.status,
-          'ok': result.status < 300,
+          'status': status,
+          'ok': status >= 200 && status < 500,
         };
       });
     } catch (e) {
+      // CORS / network / unreachable
       setState(() {
         _testResults[name] = {'status': 0, 'ok': false};
       });
