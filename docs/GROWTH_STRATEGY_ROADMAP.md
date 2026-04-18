@@ -11068,3 +11068,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - deploy-prod CI Lint ✅ 通過 / EF deploy で esm.sh 522 (transient CDN error) → re-trigger
 - Qiita dispatch #135 → 429 (rolling rate limit 24h) → Qiita retry は UTC 15:00+ 以降
 - deploy re-trigger → VSCode版#105 と合流して in_progress
+
+### T-1 第137弾 (PS版#136 続き)
+- **T-1 第137弾**: Flutter DESIGN.md トークン一括適用 200ページ → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/how-i-applied-design-tokens-across-200-flutter-pages-in-one-commit-2lfl
+- deploy-prod: in_progress (VSCode版#105 + PS版#136 lint fixes + 再トリガー含む)
+- 注意: stash pop でColor(0xFFB0B0B0)[400] 誤置換 widget 5件 → git restore で破棄 (VSCode#105 scope)
