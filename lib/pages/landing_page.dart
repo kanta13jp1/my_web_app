@@ -2623,7 +2623,8 @@ $input
           const SizedBox(height: 8),
           const Text(
             'ファイルをアップロードするだけで、過去のデータがそのまま引き継げます。移行後も元のサービスを使い続けながら、少しずつ切り替えられます。',
-            style: TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.6),
+            style:
+                TextStyle(fontSize: 12, color: Color(0xB3FFFFFF), height: 1.6),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(

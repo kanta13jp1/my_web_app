@@ -168,7 +168,9 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                         hintText: 'メモ（任意）: 今気になっていること、体の調子など',
                         hintStyle: TextStyle(
                           fontSize: 12,
-                          color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                          color: isDark
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -232,7 +234,8 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
-                    leading: const Icon(Icons.psychology, color: const Color(0xFF009688)),
+                    leading: const Icon(Icons.psychology,
+                        color: const Color(0xFF009688)),
                     title: Text(
                       log['content']?.toString().split('\n').first ?? '',
                       style: const TextStyle(fontSize: 13),
@@ -245,7 +248,8 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                     ),
                     trailing: Text(
                       dateStr,
-                      style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      style: const TextStyle(
+                          fontSize: 11, color: const Color(0xFF9CA3AF)),
                     ),
                   ),
                 );

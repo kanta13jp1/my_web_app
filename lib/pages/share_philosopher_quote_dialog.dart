@@ -341,10 +341,12 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF9CA3AF).withValues(alpha: 0.1),
+                            color:
+                                const Color(0xFF9CA3AF).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: const Color(0xFF9CA3AF).withValues(alpha: 0.3),
+                              color: const Color(0xFF9CA3AF)
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(

@@ -65,7 +65,10 @@ class _RewardsPageState extends State<RewardsPage> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color(0xFFFFC107).shade300, Colors.orange.shade400],
+                        colors: [
+                          const Color(0xFFFFC107).shade300,
+                          Colors.orange.shade400
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -181,7 +184,9 @@ class _RewardsPageState extends State<RewardsPage> {
           child: Icon(
             icon,
             size: 30,
-            color: isUnlocked ? const Color(0xFFFFC107).shade800 : const Color(0xFF9CA3AF),
+            color: isUnlocked
+                ? const Color(0xFFFFC107).shade800
+                : const Color(0xFF9CA3AF),
           ),
         ),
         const SizedBox(height: 8),

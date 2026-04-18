@@ -4917,7 +4917,8 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
-    final accent = isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
+    final accent =
+        isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
 
     return Container(
       decoration: BoxDecoration(
@@ -4927,7 +4928,8 @@ abstinence_slip_details: $slipDetailsText
           colors: [
             baseColor,
             Color.alphaBlend(
-              const Color(0xFFFFC107).withValues(alpha: isHighlighted ? 0.2 : 0.09),
+              const Color(0xFFFFC107)
+                  .withValues(alpha: isHighlighted ? 0.2 : 0.09),
               baseColor,
             ),
           ],

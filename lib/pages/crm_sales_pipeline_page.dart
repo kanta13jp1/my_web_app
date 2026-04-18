@@ -453,7 +453,8 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.people_outline,
+                size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text('リードがまだありません'),
             SizedBox(height: 4),

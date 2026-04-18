@@ -117,7 +117,8 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                               const SizedBox(height: 4),
                               Text(
                                 '紹介数: ${_myCode!['totalReferrals'] ?? 0}人',
-                                style: const TextStyle(color: const Color(0xFF9CA3AF)),
+                                style: const TextStyle(
+                                    color: const Color(0xFF9CA3AF)),
                               ),
                             ],
                           ),

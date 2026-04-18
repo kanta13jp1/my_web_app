@@ -164,7 +164,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             alignment: WrapAlignment.center,
             children: [
               _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
-              _buildRoleIcon(Icons.attach_money, 'CFO', '財務', const Color(0xFF009688)),
+              _buildRoleIcon(
+                  Icons.attach_money, 'CFO', '財務', const Color(0xFF009688)),
               _buildRoleIcon(
                 Icons.health_and_safety,
                 'CHO',
@@ -191,7 +192,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         const SizedBox(height: 4),
         Text(role, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF))),
+        Text(label,
+            style:
+                const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF))),
       ],
     );
   }

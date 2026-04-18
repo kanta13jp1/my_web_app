@@ -135,9 +135,11 @@ class _AccessControlPageState extends State<AccessControlPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.admin_panel_settings, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.admin_panel_settings,
+                size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('ロールが定義されていません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('ロールが定義されていません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -196,7 +198,8 @@ class _AccessControlPageState extends State<AccessControlPage>
   Widget _buildLogsTab() {
     if (_accessLogs.isEmpty) {
       return const Center(
-        child: Text('アクセスログがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('アクセスログがありません',
+            style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -222,7 +225,8 @@ class _AccessControlPageState extends State<AccessControlPage>
             trailing: timestamp.length >= 10
                 ? Text(
                     timestamp.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 11, color: const Color(0xFF9CA3AF)),
                   )
                 : null,
           ),

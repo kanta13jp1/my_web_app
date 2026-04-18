@@ -212,7 +212,8 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                   child: Row(
                     children: [
                       if (rating > 0) ...[
-                        const Icon(Icons.star, size: 14, color: const Color(0xFFFFC107)),
+                        const Icon(Icons.star,
+                            size: 14, color: const Color(0xFFFFC107)),
                         Text(
                           ' $rating',
                           style: const TextStyle(fontSize: 12),
@@ -258,7 +259,8 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.workspace_premium, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.workspace_premium,
+                size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
             Text('証明書がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
             SizedBox(height: 8),

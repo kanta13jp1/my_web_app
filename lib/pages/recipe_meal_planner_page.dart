@@ -139,7 +139,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant_menu, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.restaurant_menu,
+                size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
             Text('レシピがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
@@ -186,9 +187,11 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today, size: 64, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.calendar_today,
+                size: 64, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
-            const Text('週間プランがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            const Text('週間プランがありません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () async {
@@ -249,7 +252,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
           children: [
             Icon(Icons.shopping_cart, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('買い物リストが空です', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('買い物リストが空です',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );

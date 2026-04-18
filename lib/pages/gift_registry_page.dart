@@ -125,7 +125,9 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                           child: ListTile(
                             leading: Icon(
                               Icons.card_giftcard,
-                              color: reserved ? const Color(0xFF9CA3AF) : Colors.pink,
+                              color: reserved
+                                  ? const Color(0xFF9CA3AF)
+                                  : Colors.pink,
                             ),
                             title: Text(title),
                             subtitle: price.isNotEmpty ? Text('¥$price') : null,

@@ -652,8 +652,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 decoration: isPurchased && !needs
                                     ? TextDecoration.lineThrough
                                     : null,
-                                color:
-                                    isPurchased && !needs ? const Color(0xFF9CA3AF) : null,
+                                color: isPurchased && !needs
+                                    ? const Color(0xFF9CA3AF)
+                                    : null,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

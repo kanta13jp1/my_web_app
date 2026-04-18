@@ -247,7 +247,8 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.schedule_send, size: 48, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.schedule_send,
+                size: 48, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 8),
             Text(
               emptyMessage,

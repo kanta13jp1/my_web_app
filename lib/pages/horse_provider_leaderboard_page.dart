@@ -240,7 +240,8 @@ class _HorseProviderLeaderboardPageState
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: rank == 1
-                                    ? const Color(0xFFFFC107).withValues(alpha: 0.3)
+                                    ? const Color(0xFFFFC107)
+                                        .withValues(alpha: 0.3)
                                     : const Color(0xFF1F1F1F),
                               ),
                             ),

@@ -88,7 +88,8 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.event, size: 48, color: const Color(0xFF9CA3AF)),
+                          Icon(Icons.event,
+                              size: 48, color: const Color(0xFF9CA3AF)),
                           SizedBox(height: 8),
                           Text(
                             'ミーティングはありません',
@@ -106,7 +107,8 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: const Color(0xFF009688).withAlpha(30),
+                              backgroundColor:
+                                  const Color(0xFF009688).withAlpha(30),
                               child: const Icon(
                                 Icons.video_camera_front,
                                 color: const Color(0xFF009688),

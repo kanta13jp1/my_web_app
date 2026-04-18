@@ -180,7 +180,8 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 IconButton(
                   icon: const Icon(Icons.download, size: 20),
@@ -204,7 +205,8 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
           children: [
             Icon(Icons.screenshot, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('スクリーンショットがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('スクリーンショットがありません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -227,7 +229,8 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             children: [
               Container(
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                child: const Icon(Icons.image, size: 40, color: const Color(0xFF9CA3AF)),
+                child: const Icon(Icons.image,
+                    size: 40, color: const Color(0xFF9CA3AF)),
               ),
               Positioned(
                 bottom: 0,

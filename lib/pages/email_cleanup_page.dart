@@ -560,7 +560,8 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                 const SizedBox(height: 2),
                 const Text(
                   '「整理完了」をタップして記録しましょう',
-                  style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                  style:
+                      TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),

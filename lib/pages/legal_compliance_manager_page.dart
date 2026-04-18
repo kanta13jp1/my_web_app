@@ -167,7 +167,8 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                           '残$daysLeft日',
                           style: TextStyle(
                             fontSize: 10,
-                            color: urgent ? Colors.red : const Color(0xFF9CA3AF),
+                            color:
+                                urgent ? Colors.red : const Color(0xFF9CA3AF),
                           ),
                         ),
                     ],
@@ -182,7 +183,8 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
   Widget _buildChecklistTab() {
     if (_checklist.isEmpty) {
       return const Center(
-        child: Text('チェック項目がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('チェック項目がありません',
+            style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     final completed = _checklist.where((c) => c['done'] == true).length;

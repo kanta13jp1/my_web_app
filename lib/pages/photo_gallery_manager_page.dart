@@ -127,7 +127,8 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
           children: [
             Icon(Icons.photo_library, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('アルバムがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('アルバムがありません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -169,7 +170,8 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                 ),
                 Text(
                   '$count 枚',
-                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                  style: const TextStyle(
+                      fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),

@@ -149,7 +149,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.work,
-                color: status == 'open' ? Colors.green : const Color(0xFF9CA3AF),
+                color:
+                    status == 'open' ? Colors.green : const Color(0xFF9CA3AF),
               ),
             ),
             title: Text(
@@ -173,7 +174,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 ),
                 const Text(
                   '応募者',
-                  style: TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                  style:
+                      TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -187,7 +189,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
   Widget _buildApplicantsTab() {
     if (_applicants.isEmpty) {
       return const Center(
-        child: Text('応募者がいません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child:
+            Text('応募者がいません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -246,7 +249,8 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 10, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),
