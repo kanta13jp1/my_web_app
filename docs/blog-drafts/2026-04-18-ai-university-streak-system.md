@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で連続学習ストリークシステムを作った — AI大学の裏側"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter × Supabase で連続学習ストリークシステムを作った — AI大学の裏側
