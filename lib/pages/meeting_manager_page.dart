@@ -54,7 +54,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ミーティング管理'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -88,11 +88,11 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.event, size: 48, color: Colors.grey),
+                          Icon(Icons.event, size: 48, color: const Color(0xFF9CA3AF)),
                           SizedBox(height: 8),
                           Text(
                             'ミーティングはありません',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -106,10 +106,10 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                         return Card(
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.teal.withAlpha(30),
+                              backgroundColor: const Color(0xFF009688).withAlpha(30),
                               child: const Icon(
                                 Icons.video_camera_front,
-                                color: Colors.teal,
+                                color: const Color(0xFF009688),
                               ),
                             ),
                             title: Text(
@@ -129,7 +129,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                               item['status']?.toString() ?? '',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.teal,
+                                color: const Color(0xFF009688),
                               ),
                             ),
                           ),

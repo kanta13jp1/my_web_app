@@ -139,7 +139,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     final platformLabel = _platforms
         .firstWhere(
           (p) => p.id == platform,
-          orElse: () => const _Platform('', '', '', Colors.grey),
+          orElse: () => const _Platform('', '', '', const Color(0xFF9CA3AF)),
         )
         .label;
     final titleCtrl = TextEditingController();
@@ -394,7 +394,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: (posted ? platform.color : Colors.grey)
+                  color: (posted ? platform.color : const Color(0xFF9CA3AF))
                       .withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
@@ -454,7 +454,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                       Icon(
                         posted ? Icons.check_circle : Icons.circle_outlined,
                         size: 14,
-                        color: posted ? platform.color : Colors.grey,
+                        color: posted ? platform.color : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -462,7 +462,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: posted ? platform.color : Colors.grey,
+                          color: posted ? platform.color : const Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -498,7 +498,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               '${_scheduleDrafts.length}件',
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
               ),
             ),
           ],
@@ -508,7 +508,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           'blog-draft タスクが自動生成した下書き（blog_posts テーブル）',
           style: TextStyle(
             fontSize: 11,
-            color: isDark ? Colors.grey[500] : Colors.grey[500],
+            color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
           ),
         ),
         const SizedBox(height: 8),
@@ -553,7 +553,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 '$dateLabel  |  $platformLabels',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                 ),
               ),
               trailing: Container(
@@ -643,7 +643,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                           '',
                           '',
                           '?',
-                          Colors.grey,
+                          const Color(0xFF9CA3AF),
                         ),
                       );
                       return Tooltip(

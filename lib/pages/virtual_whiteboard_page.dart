@@ -145,7 +145,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                     isSelected
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
-                    color: isSelected ? const Color(0xFF6366F1) : const Color(0xFF9CA3AF),
+                    color: isSelected
+                        ? const Color(0xFF6366F1)
+                        : const Color(0xFF9CA3AF),
                     size: 20,
                   ),
                   title: Text(tmplName, style: const TextStyle(fontSize: 14)),
@@ -461,7 +463,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                     updatedAt.length > 10
                         ? updatedAt.substring(0, 10)
                         : updatedAt,
-                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),
@@ -476,7 +479,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
   Widget _buildTemplateList() {
     if (_templates.isEmpty) {
       return const Center(
-        child: Text('テンプレートがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('テンプレートがありません',
+            style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return GridView.builder(
@@ -521,7 +525,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                   const SizedBox(height: 4),
                   Text(
                     desc,
-                    style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 12, color: const Color(0xFF9CA3AF)),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -566,7 +571,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.draw, size: 64, color: const Color(0xFF9CA3AF)),
+                      const Icon(Icons.draw,
+                          size: 64, color: const Color(0xFF9CA3AF)),
                       const SizedBox(height: 16),
                       const Text(
                         'ボードが空です',

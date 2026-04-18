@@ -454,13 +454,13 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       'python': Colors.green,
       'dart': Colors.lightBlue,
       'rust': Colors.orange,
-      'go': Colors.cyan,
+      'go': const Color(0xFF00BCD4),
       'java': Colors.red,
       'sql': Colors.purple,
       'html': Colors.deepOrange,
       'css': Colors.indigo,
     };
-    final color = langColors[lang] ?? Colors.grey;
+    final color = langColors[lang] ?? const Color(0xFF9CA3AF);
     return CircleAvatar(
       radius: 16,
       backgroundColor: color.withValues(alpha: 0.15),
@@ -507,7 +507,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              leading: const Icon(Icons.folder, color: Colors.amber),
+              leading: const Icon(Icons.folder, color: const Color(0xFFFFC107)),
               title: Text(c['name'] as String? ?? ''),
               subtitle: Text(c['description'] as String? ?? ''),
               trailing: Text('${c['snippet_count'] ?? 0}件'),
@@ -608,7 +608,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           ),
           const SizedBox(height: 8),
           if (breakdown.isEmpty)
-            const Text('データなし', style: TextStyle(color: Colors.grey))
+            const Text('データなし', style: TextStyle(color: const Color(0xFF9CA3AF)))
           else
             ...breakdown.map((b) {
               final lang = b['language'] as String? ?? '';
@@ -660,7 +660,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               value,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            Text(label, style: const TextStyle(color: Colors.grey)),
+            Text(label, style: const TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       ),

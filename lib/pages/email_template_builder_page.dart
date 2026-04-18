@@ -108,9 +108,9 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.email, size: 64, color: Colors.grey),
+            const Icon(Icons.email, size: 64, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
-            const Text('テンプレートがありません', style: TextStyle(color: Colors.grey)),
+            const Text('テンプレートがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _showCreateDialog,
@@ -146,7 +146,7 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
                 ),
                 const Text(
                   '使用',
-                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),

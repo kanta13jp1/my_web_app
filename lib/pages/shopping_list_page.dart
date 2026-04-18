@@ -112,7 +112,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       case 'high':
         return Colors.orange;
       case 'low':
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
       default:
         return Colors.blue;
     }
@@ -493,7 +493,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -631,7 +631,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   child: Icon(
                     isPurchased && !needs ? Icons.check : _categoryIcon(cat),
                     color: isPurchased && !needs
-                        ? Colors.grey
+                        ? const Color(0xFF9CA3AF)
                         : _categoryColor(cat),
                     size: 18,
                   ),
@@ -653,7 +653,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     ? TextDecoration.lineThrough
                                     : null,
                                 color:
-                                    isPurchased && !needs ? Colors.grey : null,
+                                    isPurchased && !needs ? const Color(0xFF9CA3AF) : null,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

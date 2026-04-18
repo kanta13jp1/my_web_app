@@ -50,7 +50,7 @@ class _RewardsPageState extends State<RewardsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(' ステータス報酬'),
-        backgroundColor: Colors.amber,
+        backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.black,
       ),
       body: _isLoading
@@ -65,7 +65,7 @@ class _RewardsPageState extends State<RewardsPage> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.amber.shade300, Colors.orange.shade400],
+                        colors: [const Color(0xFFFFC107).shade300, Colors.orange.shade400],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -122,7 +122,7 @@ class _RewardsPageState extends State<RewardsPage> {
                         child: Text(
                           'まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: const Color(0xFF9CA3AF)),
                         ),
                       ),
                     )
@@ -174,14 +174,14 @@ class _RewardsPageState extends State<RewardsPage> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isUnlocked
-                ? Colors.amber.shade100
+                ? const Color(0xFFFFC107).shade100
                 : Theme.of(context).colorScheme.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
             size: 30,
-            color: isUnlocked ? Colors.amber.shade800 : Colors.grey,
+            color: isUnlocked ? const Color(0xFFFFC107).shade800 : const Color(0xFF9CA3AF),
           ),
         ),
         const SizedBox(height: 8),
@@ -191,7 +191,7 @@ class _RewardsPageState extends State<RewardsPage> {
             fontSize: 12,
             color: isUnlocked
                 ? Theme.of(context).colorScheme.onSurface
-                : Colors.grey,
+                : const Color(0xFF9CA3AF),
             fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
           ),
           textAlign: TextAlign.center,

@@ -126,7 +126,7 @@ class _DanshariPageState extends State<DanshariPage> {
           const SizedBox(height: 8),
           const Text(
             'CSO: 「素晴らしい意思決定でした、CEO。」',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: const Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -151,7 +151,7 @@ class _DanshariPageState extends State<DanshariPage> {
             '残り案件: ${_staleNotes.length - _currentIndex}件',
             textAlign: TextAlign.center,
             style: const TextStyle(
-              color: Colors.grey,
+              color: const Color(0xFF9CA3AF),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -170,12 +170,12 @@ class _DanshariPageState extends State<DanshariPage> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.history, color: Colors.grey, size: 16),
+                        const Icon(Icons.history, color: const Color(0xFF9CA3AF), size: 16),
                         const SizedBox(width: 4),
                         Text(
                           '最終更新: $dateStr',
                           style: const TextStyle(
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                             fontSize: 12,
                           ),
                         ),

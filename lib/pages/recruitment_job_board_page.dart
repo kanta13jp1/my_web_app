@@ -121,9 +121,9 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.work, size: 64, color: Colors.grey),
+            Icon(Icons.work, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('求人がありません', style: TextStyle(color: Colors.grey)),
+            Text('求人がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -149,7 +149,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.work,
-                color: status == 'open' ? Colors.green : Colors.grey,
+                color: status == 'open' ? Colors.green : const Color(0xFF9CA3AF),
               ),
             ),
             title: Text(
@@ -173,7 +173,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 ),
                 const Text(
                   '応募者',
-                  style: TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -187,7 +187,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
   Widget _buildApplicantsTab() {
     if (_applicants.isEmpty) {
       return const Center(
-        child: Text('応募者がいません', style: TextStyle(color: Colors.grey)),
+        child: Text('応募者がいません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -203,7 +203,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           'applied': Colors.blue,
           'screening': Colors.orange,
           'interview': Colors.purple,
-          'offer': Colors.teal,
+          'offer': const Color(0xFF009688),
           'hired': Colors.green,
           'rejected': Colors.red,
         };
@@ -215,7 +215,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           'hired': '採用',
           'rejected': '不採用',
         };
-        final color = stageColors[stage] ?? Colors.grey;
+        final color = stageColors[stage] ?? const Color(0xFF9CA3AF);
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
           child: ListTile(
@@ -246,7 +246,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),

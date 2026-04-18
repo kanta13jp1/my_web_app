@@ -70,10 +70,10 @@ class _HorseProviderLeaderboardPageState
     Color color;
     switch (rank) {
       case 1:
-        color = Colors.amber;
+        color = const Color(0xFFFFC107);
         break;
       case 2:
-        color = Colors.grey[400]!;
+        color = const Color(0xFF9CA3AF)!;
         break;
       case 3:
         color = Colors.brown[300]!;
@@ -240,7 +240,7 @@ class _HorseProviderLeaderboardPageState
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: rank == 1
-                                    ? Colors.amber.withValues(alpha: 0.3)
+                                    ? const Color(0xFFFFC107).withValues(alpha: 0.3)
                                     : const Color(0xFF1F1F1F),
                               ),
                             ),

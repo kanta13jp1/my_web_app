@@ -5108,7 +5108,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             Text(
               'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
-              style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style:
+                  const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5483,7 +5484,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             Text(
               'お金の流れをすべてリスト化する。収入・支出に加えて口座間の振替も記録できます。表示中: $visibleMonthLabel（過去月に切替可）',
-              style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style:
+                  const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5979,7 +5981,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       const SizedBox(height: 6),
                       const Text(
                         '毎月自動で奪われる富を監視せよ。',
-                        style: TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                            fontSize: 11, color: const Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 6),
                       InkWell(
@@ -6040,7 +6043,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           Text(
                             '毎月自動で奪われる富を監視せよ。',
-                            style: TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                                fontSize: 11, color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -6049,7 +6053,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         children: [
                           const Text(
                             '表示月',
-                            style: TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                                fontSize: 10, color: const Color(0xFF9CA3AF)),
                           ),
                           Text(
                             visibleMonthLabel,
@@ -6062,7 +6067,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           const SizedBox(height: 4),
                           const Text(
                             '月額合計',
-                            style: TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                                fontSize: 10, color: const Color(0xFF9CA3AF)),
                           ),
                           Text(
                             '¥${NumberFormat('#,###').format(totalCost)}',
@@ -6184,7 +6190,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                     decoration: isPaid
                                         ? TextDecoration.lineThrough
                                         : null,
-                                    color: isPaid ? const Color(0xFF9CA3AF) : null,
+                                    color:
+                                        isPaid ? const Color(0xFF9CA3AF) : null,
                                     fontWeight: isPaid
                                         ? FontWeight.normal
                                         : FontWeight.bold,
@@ -6393,7 +6400,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     Text(
                       _showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
-                      style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                      style: const TextStyle(
+                          fontSize: 10, color: const Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),

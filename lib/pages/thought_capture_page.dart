@@ -269,7 +269,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     decoration: InputDecoration(
                       hintText: '今浮かんだことを即記録...',
                       hintStyle: TextStyle(
-                        color: isDark ? Colors.grey[500] : Colors.grey[400],
+                        color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
                       ),
                       filled: true,
                       fillColor: isDark
@@ -440,7 +440,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
     final reflection = thought['reflection'] as String?;
     final importance = thought['importance'] as int? ?? 3;
     final capturedAt = thought['captured_at'] as String?;
-    final color = _typeColors[type] ?? Colors.grey;
+    final color = _typeColors[type] ?? const Color(0xFF9CA3AF);
 
     return Card(
       color: cardColor,
@@ -495,7 +495,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                         size: 12,
                         color: i < importance
                             ? const Color(0xFFF59E0B)
-                            : Colors.grey[300],
+                            : const Color(0xFFD1D5DB),
                       ),
                     ),
                   ),

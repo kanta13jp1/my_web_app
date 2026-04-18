@@ -155,7 +155,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const Text(
             'GPT・Claude・Geminiを統合したMAGIシステムが、\nあなたの専属役員として\n24時間365日、経営をサポートします。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, height: 1.5),
+            style: TextStyle(color: const Color(0xFF9CA3AF), height: 1.5),
           ),
           const SizedBox(height: 40),
           Wrap(
@@ -164,12 +164,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
             alignment: WrapAlignment.center,
             children: [
               _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
-              _buildRoleIcon(Icons.attach_money, 'CFO', '財務', Colors.teal),
+              _buildRoleIcon(Icons.attach_money, 'CFO', '財務', const Color(0xFF009688)),
               _buildRoleIcon(
                 Icons.health_and_safety,
                 'CHO',
                 '健康',
-                Colors.teal.shade800,
+                const Color(0xFF009688).shade800,
               ),
               _buildRoleIcon(Icons.diversity_3, 'CHRO', '人事', Colors.pink),
               _buildRoleIcon(Icons.campaign, 'CMO', '広報', Colors.purple),
@@ -191,7 +191,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         const SizedBox(height: 4),
         Text(role, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(label, style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF))),
       ],
     );
   }
@@ -255,7 +255,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           const Text(
             'この名前はAI役員からの報告書に使用されます',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+            style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
           ),
         ],
       ),
@@ -267,7 +267,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final steps = [
       (
         Icons.wb_sunny,
-        Colors.amber,
+        const Color(0xFFFFC107),
         'モーニングブリーフィング',
         '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'
       ),
@@ -279,7 +279,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
       (
         Icons.upload_file,
-        Colors.teal,
+        const Color(0xFF009688),
         'Notionから移行する',
         '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'
       ),

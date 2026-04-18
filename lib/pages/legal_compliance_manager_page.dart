@@ -118,9 +118,9 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.description, size: 64, color: Colors.grey),
+            Icon(Icons.description, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('契約書がありません', style: TextStyle(color: Colors.grey)),
+            Text('契約書がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -158,7 +158,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                         expiry.length >= 10 ? expiry.substring(0, 10) : expiry,
                         style: TextStyle(
                           fontSize: 11,
-                          color: urgent ? Colors.red : Colors.grey,
+                          color: urgent ? Colors.red : const Color(0xFF9CA3AF),
                           fontWeight: urgent ? FontWeight.bold : null,
                         ),
                       ),
@@ -167,7 +167,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                           '残$daysLeft日',
                           style: TextStyle(
                             fontSize: 10,
-                            color: urgent ? Colors.red : Colors.grey,
+                            color: urgent ? Colors.red : const Color(0xFF9CA3AF),
                           ),
                         ),
                     ],
@@ -182,7 +182,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
   Widget _buildChecklistTab() {
     if (_checklist.isEmpty) {
       return const Center(
-        child: Text('チェック項目がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('チェック項目がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     final completed = _checklist.where((c) => c['done'] == true).length;
@@ -199,7 +199,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             '$completed / ${_checklist.length} 完了',
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(color: const Color(0xFF9CA3AF)),
           ),
         ),
         Expanded(
@@ -218,7 +218,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                   text,
                   style: TextStyle(
                     decoration: done ? TextDecoration.lineThrough : null,
-                    color: done ? Colors.grey : null,
+                    color: done ? const Color(0xFF9CA3AF) : null,
                   ),
                 ),
                 secondary: priority == 'high'

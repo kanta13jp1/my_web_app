@@ -32,7 +32,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
     _Category('医療', Icons.medical_services, Colors.red),
     _Category('教育', Icons.school, Colors.green),
     _Category('衣類', Icons.checkroom, Colors.pink),
-    _Category('その他', Icons.category, Colors.grey),
+    _Category('その他', Icons.category, const Color(0xFF9CA3AF)),
   ];
 
   @override
@@ -250,7 +250,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
             if (categoryTotals.isNotEmpty) ...[
               const Text(
                 'カテゴリ別',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(fontSize: 13, color: const Color(0xFF9CA3AF)),
               ),
               const SizedBox(height: 6),
               ...categoryTotals.entries.map((e) {
@@ -263,7 +263,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
                       Icon(
                         cat?.icon ?? Icons.category,
                         size: 16,
-                        color: cat?.color ?? Colors.grey,
+                        color: cat?.color ?? const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 6),
                       Expanded(child: Text(e.key)),
@@ -303,7 +303,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
             child: ListTile(
               leading: Icon(
                 cat?.icon ?? Icons.category,
-                color: cat?.color ?? Colors.grey,
+                color: cat?.color ?? const Color(0xFF9CA3AF),
               ),
               title:
                   Text(e['label'] as String? ?? e['category'] as String? ?? ''),

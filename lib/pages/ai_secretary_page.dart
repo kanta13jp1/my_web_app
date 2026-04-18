@@ -482,7 +482,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
-                    color: Colors.grey,
+                    color: const Color(0xFF9CA3AF),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -545,7 +545,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                             const SizedBox(height: 16),
                             const Text(
                               '「期間」を選択して、MAGIに戦略立案を指示してください。',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: const Color(0xFF9CA3AF)),
                             ),
                           ],
                         ),
@@ -569,7 +569,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.amber[100],
+                                          color: const Color(0xFFFFC107)[100],
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
@@ -577,7 +577,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           'MAGI Strategist: $_usedModel',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color: Colors.amber[900],
+                                            color: const Color(0xFFFFC107)[900],
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -631,7 +631,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.grey,
+                                        color: const Color(0xFF9CA3AF),
                                       ),
                                     ),
                                     ..._attemptLogs.map(
@@ -640,7 +640,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                         style: const TextStyle(
                                           fontSize: 10,
                                           fontFamily: 'monospace',
-                                          color: Colors.grey,
+                                          color: const Color(0xFF9CA3AF),
                                         ),
                                       ),
                                     ),
@@ -678,7 +678,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   ? Colors.indigo
                   : (isDark
                       ? Theme.of(context).colorScheme.surfaceContainerHighest
-                      : Colors.grey[200]),
+                      : const Color(0xFFE5E7EB)),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -687,7 +687,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   ? Colors.white
                   : (isDark
                       ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : Colors.grey[600]),
+                      : const Color(0xFF4B5563)),
               size: 20,
             ),
           ),

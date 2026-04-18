@@ -458,7 +458,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                   '1\thttps://www.youtube.com/...\t動画\t3週間前\tタイトル\t出演者\t148\t1018\t8094',
               border: const OutlineInputBorder(),
               filled: true,
-              fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
+              fillColor: isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
             ),
             style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
           ),
@@ -525,7 +525,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.bar_chart, size: 48, color: Colors.grey),
+            const Icon(Icons.bar_chart, size: 48, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
             const Text('統計データがありません'),
             const SizedBox(height: 8),
@@ -658,7 +658,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     '最新: $latestDate  |  全${filtered.length}件  |  ${dates.length}スナップショット',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -670,7 +670,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                         'ソート: ',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -777,8 +777,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           color: engRate >= 5
                               ? Colors.orange
                               : isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF4B5563),
                         ),
                       ),
                     ],

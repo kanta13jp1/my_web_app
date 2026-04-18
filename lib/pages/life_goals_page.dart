@@ -396,7 +396,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
+                color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                 height: 1.5,
               ),
             ),
@@ -530,7 +530,7 @@ class _GoalCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                                  isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                             ),
                           ),
                           if (targetDate != null) ...[
@@ -539,7 +539,7 @@ class _GoalCard extends StatelessWidget {
                               Icons.calendar_today,
                               size: 10,
                               color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                                  isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                             ),
                             const SizedBox(width: 2),
                             Text(
@@ -547,8 +547,8 @@ class _GoalCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark
-                                    ? Colors.grey[400]
-                                    : Colors.grey[600],
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFF4B5563),
                               ),
                             ),
                           ],
@@ -622,7 +622,7 @@ class _GoalCard extends StatelessWidget {
                 description,
                 style: TextStyle(
                   fontSize: 12,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -719,14 +719,14 @@ class _GoalCard extends StatelessWidget {
                   Icon(
                     Icons.account_tree_outlined,
                     size: 13,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '子目標: ${children.length}件 (完了: ${children.where((c) => c['status'] == 'completed').length}件)',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                     ),
                   ),
                 ],

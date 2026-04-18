@@ -258,7 +258,9 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   : const Color(0xFF009688).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _isSaturday ? const Color(0xFFFFC107) : const Color(0xFF009688).shade200,
+                color: _isSaturday
+                    ? const Color(0xFFFFC107)
+                    : const Color(0xFF009688).shade200,
               ),
             ),
             child: Column(
@@ -340,7 +342,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
                               child: Text(
                                 '思考ネタや行動タスクを\nストックしておきましょう',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: const Color(0xFF9CA3AF)),
+                                style:
+                                    TextStyle(color: const Color(0xFF9CA3AF)),
                               ),
                             ),
                           ),
@@ -463,7 +466,9 @@ class _StockTasksPageState extends State<StockTasksPage> {
           leading: IconButton(
             icon: Icon(
               isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isCompleted ? const Color(0xFF009688) : const Color(0xFF9CA3AF),
+              color: isCompleted
+                  ? const Color(0xFF009688)
+                  : const Color(0xFF9CA3AF),
             ),
             onPressed: () => _toggleTask(id, isCompleted),
           ),

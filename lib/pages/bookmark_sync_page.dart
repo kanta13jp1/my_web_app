@@ -225,7 +225,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                                   Text(t, style: const TextStyle(fontSize: 12)),
                               onDeleted: () =>
                                   setDialogState(() => _newTags.remove(t)),
-                              deleteIconColor: Colors.grey,
+                              deleteIconColor: const Color(0xFF9CA3AF),
                             ),
                           )
                           .toList(),
@@ -268,7 +268,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           _buildStatChip(
             Icons.local_offer,
             '${_allTags.length} タグ',
-            Colors.teal,
+            const Color(0xFF009688),
           ),
         ],
       ),
@@ -375,11 +375,11 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: isRead
-              ? Colors.grey.withValues(alpha: 0.15)
+              ? const Color(0xFF9CA3AF).withValues(alpha: 0.15)
               : Colors.blue.withValues(alpha: 0.15),
           child: Icon(
             isRead ? Icons.bookmark : Icons.bookmark_add,
-            color: isRead ? Colors.grey : Colors.blue,
+            color: isRead ? const Color(0xFF9CA3AF) : Colors.blue,
             size: 20,
           ),
         ),
@@ -419,14 +419,14 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.teal.withValues(alpha: 0.1),
+                          color: const Color(0xFF009688).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           '#$t',
                           style: const TextStyle(
                             fontSize: 10,
-                            color: Colors.teal,
+                            color: const Color(0xFF009688),
                           ),
                         ),
                       ),

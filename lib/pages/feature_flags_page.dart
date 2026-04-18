@@ -95,14 +95,14 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                           Icon(
                             Icons.toggle_off_outlined,
                             size: 64,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                           SizedBox(height: 16),
                           Text(
                             'フィーチャーフラグがありません',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey,
+                              color: const Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
@@ -125,7 +125,7 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                               enabled ? Icons.toggle_on : Icons.toggle_off,
                               color: enabled
                                   ? const Color(0xFF6366F1)
-                                  : Colors.grey,
+                                  : const Color(0xFF9CA3AF),
                               size: 32,
                             ),
                             title: Text(name),

@@ -151,14 +151,14 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           Icon(
             Icons.person_off_outlined,
             size: 64,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+            color: isDark ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
           ),
           const SizedBox(height: 16),
           Text(
             'プロフィールが見つかりません',
             style: TextStyle(
               fontSize: 18,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
             ),
           ),
           const SizedBox(height: 8),
@@ -166,7 +166,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             '非公開または存在しないユーザーです',
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? Colors.grey[600] : Colors.grey[400],
+              color: isDark ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
             ),
           ),
           const SizedBox(height: 24),
@@ -227,7 +227,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                           Icon(
                             Icons.location_on_outlined,
                             size: 14,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                           ),
                           const SizedBox(width: 2),
                           Text(
@@ -235,7 +235,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                             style: TextStyle(
                               fontSize: 12,
                               color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                                  isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                             ),
                           ),
                         ],
@@ -261,7 +261,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               _bio!,
               style: TextStyle(
                 fontSize: 14,
-                color: isDark ? Colors.grey[300] : const Color(0xFF475569),
+                color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF475569),
                 height: 1.5,
               ),
             ),
@@ -417,7 +417,7 @@ class _StatChip extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
           ),
         ),
       ],

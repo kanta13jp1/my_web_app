@@ -65,7 +65,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('分析データエクスポート'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -113,7 +113,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (t) => Chip(
                                 label: Text(t),
-                                backgroundColor: Colors.teal.shade50,
+                                backgroundColor: const Color(0xFF009688).shade50,
                               ),
                             )
                             .toList(),
@@ -136,7 +136,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (f) => Chip(
                                 label: Text(f.toUpperCase()),
-                                backgroundColor: Colors.teal.shade100,
+                                backgroundColor: const Color(0xFF009688).shade100,
                               ),
                             )
                             .toList(),
@@ -155,7 +155,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           padding: EdgeInsets.all(32),
                           child: Text(
                             'エクスポート履歴はありません',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: const Color(0xFF9CA3AF)),
                           ),
                         ),
                       )
@@ -167,7 +167,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A009688),
-                              child: Icon(Icons.download, color: Colors.teal),
+                              child: Icon(Icons.download, color: const Color(0xFF009688)),
                             ),
                             title: Text(
                               item['type']?.toString() ??
@@ -182,7 +182,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                                   '',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: const Color(0xFF9CA3AF),
                               ),
                             ),
                           ),

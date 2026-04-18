@@ -122,7 +122,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           children: [
             // Instructions
             Card(
-              color: isDark ? Colors.grey[800] : Colors.orange[50],
+              color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
               child: const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -161,9 +161,9 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[900] : Colors.grey[200],
+                  color: isDark ? const Color(0xFF111827) : const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(color: const Color(0xFF9CA3AF)),
                 ),
                 child: Center(
                   child: Text(
@@ -305,7 +305,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.grey[800] : Colors.orange[50],
+                    color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
                     borderRadius: BorderRadius.circular(8),
                     border:
                         Border.all(color: Colors.orange.withValues(alpha: 0.3)),
@@ -320,7 +320,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           _result!['witty_comment'] ?? '',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
-                            color: isDark ? Colors.grey[300] : Colors.grey[800],
+                            color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF1F2937),
                           ),
                         ),
                       ),

@@ -129,9 +129,9 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.directions_car, size: 64, color: Colors.grey),
+            Icon(Icons.directions_car, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('車両が登録されていません', style: TextStyle(color: Colors.grey)),
+            Text('車両が登録されていません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -155,7 +155,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.directions_car,
-                color: status == 'active' ? Colors.green : Colors.grey,
+                color: status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
               ),
             ),
             title:
@@ -176,7 +176,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                   status == 'active' ? '稼働中' : '停止中',
                   style: TextStyle(
                     fontSize: 11,
-                    color: status == 'active' ? Colors.green : Colors.grey,
+                    color: status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
                   ),
                 ),
               ],
@@ -190,7 +190,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
   Widget _buildTripsTab() {
     if (_tripLogs.isEmpty) {
       return const Center(
-        child: Text('走行記録がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('走行記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -224,7 +224,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),
@@ -237,7 +237,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
   Widget _buildMaintenanceTab() {
     if (_maintenance.isEmpty) {
       return const Center(
-        child: Text('メンテナンス記録がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('メンテナンス記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -267,14 +267,14 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 if (nextDue.length >= 10)
                   Text(
                     '次回: ${nextDue.substring(0, 10)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: overdue ? Colors.red : Colors.grey,
+                      color: overdue ? Colors.red : const Color(0xFF9CA3AF),
                       fontWeight: overdue ? FontWeight.bold : null,
                     ),
                   ),

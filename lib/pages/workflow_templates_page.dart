@@ -63,9 +63,9 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       case 'sales':
         return Colors.purple;
       case 'support':
-        return Colors.teal;
+        return const Color(0xFF009688);
       default:
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -111,12 +111,12 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                           Icon(
                             Icons.account_tree_outlined,
                             size: 48,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'テンプレートはありません',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),

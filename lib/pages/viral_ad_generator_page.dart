@@ -417,7 +417,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   ),
                   Text(
                     desc,
-                    style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                        fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 ],
               ),
@@ -486,7 +487,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     color:
                         Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: const Center(
-                      child: Icon(Icons.image, size: 48, color: const Color(0xFF9CA3AF)),
+                      child: Icon(Icons.image,
+                          size: 48, color: const Color(0xFF9CA3AF)),
                     ),
                   ),
                 ),
@@ -638,7 +640,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   const SizedBox(height: 8),
                   const Text(
                     'Claude Schedule (daily-report) が自動で最適時間に広告を投稿します',
-                    style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    style:
+                        TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 ],
               ),
@@ -719,7 +722,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               if (sub.isNotEmpty)
                 Text(
                   sub,
-                  style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                  style: const TextStyle(
+                      fontSize: 11, color: const Color(0xFF9CA3AF)),
                 ),
             ],
           ),
@@ -736,7 +740,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           children: [
             Icon(Icons.history, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 16),
-            Text('まだ広告を生成していません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('まだ広告を生成していません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
             SizedBox(height: 8),
             Text(
               '「生成」タブで広告を作成しましょう',

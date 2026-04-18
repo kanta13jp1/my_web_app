@@ -263,7 +263,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                 _summaryChip(
                   '総数',
                   '${_functions.length}',
-                  Colors.grey,
+                  const Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 8),
                 _summaryChip('UI あり', '$_withUi', const Color(0xFF10B981)),
@@ -449,7 +449,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               size: 12,
                               color: hasUi
                                   ? const Color(0xFF6366F1)
-                                  : Colors.grey[400],
+                                  : const Color(0xFF9CA3AF),
                             ),
                             const SizedBox(width: 4),
                             Flexible(
@@ -459,7 +459,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                   fontSize: 11,
                                   color: hasUi
                                       ? const Color(0xFF6366F1)
-                                      : Colors.grey[400],
+                                      : const Color(0xFF9CA3AF),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -517,7 +517,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             size: 18,
                             color: navExpanded
                                 ? const Color(0xFFF59E0B)
-                                : Colors.grey[400],
+                                : const Color(0xFF9CA3AF),
                           ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(

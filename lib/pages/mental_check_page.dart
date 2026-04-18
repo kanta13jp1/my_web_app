@@ -119,7 +119,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('メンタルチェック'),
-        backgroundColor: Colors.teal[700],
+        backgroundColor: const Color(0xFF009688)[700],
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -168,7 +168,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                         hintText: 'メモ（任意）: 今気になっていること、体の調子など',
                         hintStyle: TextStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.grey[500] : Colors.grey[400],
+                          color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -185,7 +185,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                       child: FilledButton(
                         onPressed: _saving ? null : _saveCheck,
                         style: FilledButton.styleFrom(
-                          backgroundColor: Colors.teal,
+                          backgroundColor: const Color(0xFF009688),
                         ),
                         child: _saving
                             ? const SizedBox(
@@ -217,7 +217,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     'まだ記録がありません',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: const Color(0xFF9CA3AF)),
                   ),
                 ),
               )
@@ -232,7 +232,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
-                    leading: const Icon(Icons.psychology, color: Colors.teal),
+                    leading: const Icon(Icons.psychology, color: const Color(0xFF009688)),
                     title: Text(
                       log['content']?.toString().split('\n').first ?? '',
                       style: const TextStyle(fontSize: 13),
@@ -245,7 +245,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                     ),
                     trailing: Text(
                       dateStr,
-                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                      style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                     ),
                   ),
                 );

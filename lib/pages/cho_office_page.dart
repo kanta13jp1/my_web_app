@@ -68,7 +68,7 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CHO OFFICE'),
-        backgroundColor: Colors.teal[700],
+        backgroundColor: const Color(0xFF009688)[700],
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
@@ -78,7 +78,7 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
           children: [
             AgentWorkspacePanel(
               officeLabel: 'CHO',
-              accentColor: Colors.teal,
+              accentColor: const Color(0xFF009688),
               isLoading: _isLoadingWorkspace,
               workspace: _workspace,
               onProcessTask: _processTask,
@@ -124,8 +124,8 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: Colors.teal[100],
-          child: Icon(icon, color: Colors.teal[800]),
+          backgroundColor: const Color(0xFF009688)[100],
+          child: Icon(icon, color: const Color(0xFF009688)[800]),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),

@@ -533,7 +533,7 @@ class _TeamCard extends StatelessWidget {
                   )
                 else if (!isOwner && onLeave != null)
                   IconButton(
-                    icon: const Icon(Icons.exit_to_app, color: Colors.grey),
+                    icon: const Icon(Icons.exit_to_app, color: const Color(0xFF9CA3AF)),
                     tooltip: 'チームを退出',
                     onPressed: onLeave,
                   ),
@@ -566,7 +566,7 @@ class _TeamCard extends StatelessWidget {
                     const Icon(
                       Icons.vpn_key_outlined,
                       size: 16,
-                      color: Colors.grey,
+                      color: const Color(0xFF9CA3AF),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -596,7 +596,7 @@ class _TeamCard extends StatelessWidget {
                         );
                       },
                       child:
-                          const Icon(Icons.copy, size: 16, color: Colors.grey),
+                          const Icon(Icons.copy, size: 16, color: const Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),

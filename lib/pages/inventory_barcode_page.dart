@@ -120,9 +120,9 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2, size: 64, color: Colors.grey),
+            Icon(Icons.inventory_2, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('商品が登録されていません', style: TextStyle(color: Colors.grey)),
+            Text('商品が登録されていません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -143,7 +143,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
           child: ListTile(
             leading: Icon(
               Icons.qr_code,
-              color: low ? Colors.red : Colors.grey,
+              color: low ? Colors.red : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: sku.isNotEmpty ? Text('SKU: $sku') : null,
@@ -175,7 +175,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
   Widget _buildMovementsTab() {
     if (_movements.isEmpty) {
       return const Center(
-        child: Text('入出庫記録がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('入出庫記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(

@@ -168,7 +168,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                           Icons.calendar_today,
                           color: _connected
                               ? const Color(0xFF34A853)
-                              : Colors.grey,
+                              : const Color(0xFF9CA3AF),
                           size: 32,
                         ),
                         const SizedBox(width: 12),
@@ -192,7 +192,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                                     decoration: BoxDecoration(
                                       color: _connected
                                           ? const Color(0xFF34A853)
-                                          : Colors.grey,
+                                          : const Color(0xFF9CA3AF),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -202,7 +202,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                                     style: TextStyle(
                                       color: _connected
                                           ? const Color(0xFF34A853)
-                                          : Colors.grey,
+                                          : const Color(0xFF9CA3AF),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

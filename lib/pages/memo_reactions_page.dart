@@ -91,7 +91,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('メモリアクション'),
-        backgroundColor: Colors.amber,
+        backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -154,14 +154,14 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? Colors.amber.shade100
+                              ? const Color(0xFFFFC107).shade100
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: isActive
-                                ? Colors.amber
+                                ? const Color(0xFFFFC107)
                                 : Theme.of(context)
                                     .colorScheme
                                     .surfaceContainerHighest,
@@ -179,7 +179,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: isActive
-                                    ? Colors.amber.shade800
+                                    ? const Color(0xFFFFC107).shade800
                                     : Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,

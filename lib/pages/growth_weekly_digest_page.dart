@@ -117,7 +117,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('週次ダイジェスト'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -152,14 +152,14 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                           children: [
                             const Icon(
                               Icons.person_add,
-                              color: Colors.teal,
+                              color: const Color(0xFF009688),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '今週の新規ユーザー: ${d['totalNewUsers']}人',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: Colors.teal,
+                                color: const Color(0xFF009688),
                               ),
                             ),
                           ],
@@ -168,7 +168,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                       if (channels.isEmpty)
                         const Text(
                           'チャネルデータがありません',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: const Color(0xFF9CA3AF)),
                         )
                       else ...[
                         const Text(

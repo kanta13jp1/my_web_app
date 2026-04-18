@@ -97,14 +97,14 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                           Icon(
                             Icons.card_giftcard,
                             size: 64,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                           SizedBox(height: 16),
                           Text(
                             'ギフトリストが空です',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey,
+                              color: const Color(0xFF9CA3AF),
                             ),
                           ),
                         ],
@@ -125,14 +125,14 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                           child: ListTile(
                             leading: Icon(
                               Icons.card_giftcard,
-                              color: reserved ? Colors.grey : Colors.pink,
+                              color: reserved ? const Color(0xFF9CA3AF) : Colors.pink,
                             ),
                             title: Text(title),
                             subtitle: price.isNotEmpty ? Text('¥$price') : null,
                             trailing: reserved
                                 ? const Chip(
                                     label: Text('予約済'),
-                                    backgroundColor: Colors.grey,
+                                    backgroundColor: const Color(0xFF9CA3AF),
                                   )
                                 : const Icon(Icons.chevron_right),
                           ),

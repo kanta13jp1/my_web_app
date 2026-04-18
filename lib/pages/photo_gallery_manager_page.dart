@@ -125,9 +125,9 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.photo_library, size: 64, color: Colors.grey),
+            Icon(Icons.photo_library, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('アルバムがありません', style: TextStyle(color: Colors.grey)),
+            Text('アルバムがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -169,7 +169,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                 ),
                 Text(
                   '$count 枚',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -204,7 +204,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
             child: Center(
               child: Text(
                 'このアルバムに写真がありません',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: const Color(0xFF9CA3AF)),
               ),
             ),
           ),
@@ -254,7 +254,7 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
                               .surfaceContainerHigh,
                           child: const Icon(
                             Icons.image,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                   if (title.isNotEmpty)

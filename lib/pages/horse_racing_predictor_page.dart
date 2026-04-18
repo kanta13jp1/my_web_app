@@ -242,7 +242,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         child: Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: const Color(0xFF9CA3AF)),
+                          style:
+                              const TextStyle(color: const Color(0xFF9CA3AF)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -300,7 +301,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.sports, size: 64, color: const Color(0xFF9CA3AF)),
+                      const Icon(Icons.sports,
+                          size: 64, color: const Color(0xFF9CA3AF)),
                       const SizedBox(height: 12),
                       Text(
                         '$_selectedDate のレースデータなし',
@@ -309,12 +311,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       const SizedBox(height: 4),
                       const Text(
                         '毎朝 07:30 に自動取得されます',
-                        style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
+                        style: TextStyle(
+                            color: const Color(0xFF9CA3AF), fontSize: 12),
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
-                        style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 11),
+                        style: TextStyle(
+                            color: const Color(0xFF9CA3AF), fontSize: 11),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -499,7 +503,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     SizedBox(width: 8),
                     Text(
                       'AI予想未生成',
-                      style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13),
+                      style: TextStyle(
+                          color: const Color(0xFF9CA3AF), fontSize: 13),
                     ),
                   ],
                 ),
@@ -795,7 +800,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           children: [
             Icon(Icons.history, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
-            Text('予想履歴がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('予想履歴がありません',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -877,14 +883,16 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 Text(
                   '${venue != null ? '$venue · ' : ''}'
                   '$raceDate · 信頼度${(confidence * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(color: const Color(0xFF6B7280), fontSize: 11),
+                  style:
+                      TextStyle(color: const Color(0xFF6B7280), fontSize: 11),
                 ),
                 if (hasResult)
                   Text(
                     '実際: ${result['first_place'] ?? '?'} - '
                     '${result['second_place'] ?? '?'} - '
                     '${result['third_place'] ?? '?'}',
-                    style: TextStyle(color: const Color(0xFF4B5563), fontSize: 11),
+                    style:
+                        TextStyle(color: const Color(0xFF4B5563), fontSize: 11),
                   ),
               ],
             ),
@@ -1027,7 +1035,8 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   width: 110,
                   child: Text(
                     pair.$1,
-                    style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12),
+                    style:
+                        TextStyle(color: const Color(0xFF6B7280), fontSize: 12),
                   ),
                 ),
                 Expanded(

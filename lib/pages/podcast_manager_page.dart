@@ -121,9 +121,9 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.podcasts, size: 64, color: Colors.grey),
+            Icon(Icons.podcasts, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('エピソードがありません', style: TextStyle(color: Colors.grey)),
+            Text('エピソードがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -151,7 +151,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
                       : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Icon(
                     isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: isPlaying ? Colors.white : Colors.grey,
+                    color: isPlaying ? Colors.white : const Color(0xFF9CA3AF),
                   ),
                 ),
                 if (listened)
@@ -173,13 +173,13 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
               title,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: listened ? Colors.grey : null,
+                color: listened ? const Color(0xFF9CA3AF) : null,
               ),
             ),
             subtitle: Text(channel.isNotEmpty ? channel : '—'),
             trailing: Text(
               duration,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
             ),
             onTap: () => setState(() {
               _playingId = isPlaying ? null : id;
@@ -196,9 +196,9 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.rss_feed, size: 64, color: Colors.grey),
+            Icon(Icons.rss_feed, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('チャンネルがありません', style: TextStyle(color: Colors.grey)),
+            Text('チャンネルがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );

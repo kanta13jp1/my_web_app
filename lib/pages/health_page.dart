@@ -79,7 +79,7 @@ class _HealthPageState extends State<HealthPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('健康管理室'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -103,7 +103,7 @@ class _HealthPageState extends State<HealthPage> {
                 ElevatedButton(
                   onPressed: _addHealthLog,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
+                    backgroundColor: const Color(0xFF009688),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -120,7 +120,7 @@ class _HealthPageState extends State<HealthPage> {
                     ? const Center(
                         child: Text(
                           '健康ログはまだありません',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: const Color(0xFF9CA3AF)),
                         ),
                       )
                     : ListView.builder(
@@ -138,14 +138,14 @@ class _HealthPageState extends State<HealthPage> {
                             child: ListTile(
                               leading: const Icon(
                                 Icons.directions_run,
-                                color: Colors.teal,
+                                color: const Color(0xFF009688),
                               ),
                               title: Text(item['content'] ?? ''),
                               trailing: Text(
                                 dateStr,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: const Color(0xFF9CA3AF),
                                 ),
                               ),
                             ),

@@ -582,7 +582,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('また明日復習しましょう', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            const Text('また明日復習しましょう',
+                style: TextStyle(color: const Color(0xFF9CA3AF))),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () =>
@@ -646,7 +647,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       if (!_showAnswer) ...[
                         const Text(
                           '単語',
-                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14),
+                          style: TextStyle(
+                              color: const Color(0xFF9CA3AF), fontSize: 14),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -665,7 +667,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       ] else ...[
                         const Text(
                           '訳',
-                          style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 14),
+                          style: TextStyle(
+                              color: const Color(0xFF9CA3AF), fontSize: 14),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -887,7 +890,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             ),
             Text(
               label,
-              style: const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
+              style:
+                  const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
             ),
           ],
         ),

@@ -235,7 +235,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             children: [
               const Text(
                 '整理の結果を記録しましょう（任意）',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
+                style: TextStyle(fontSize: 13, color: const Color(0xFF9CA3AF)),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -481,7 +481,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       fontSize: 13,
                       decoration:
                           _routineChecks[i] ? TextDecoration.lineThrough : null,
-                      color: _routineChecks[i] ? Colors.grey : null,
+                      color: _routineChecks[i] ? const Color(0xFF9CA3AF) : null,
                     ),
                   ),
                   controlAffinity: ListTileControlAffinity.leading,
@@ -512,7 +512,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             const Text(
               'メールアカウントを登録して\n整理リマインダーを設定しましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -560,7 +560,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                 const SizedBox(height: 2),
                 const Text(
                   '「整理完了」をタップして記録しましょう',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -641,7 +641,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                           fontWeight: label != null
                               ? FontWeight.normal
                               : FontWeight.w700,
-                          color: label != null ? Colors.grey : null,
+                          color: label != null ? const Color(0xFF9CA3AF) : null,
                         ),
                       ),
                     ],

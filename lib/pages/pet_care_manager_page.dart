@@ -139,9 +139,9 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.pets, size: 64, color: Colors.grey),
+            Icon(Icons.pets, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('ペットが登録されていません', style: TextStyle(color: Colors.grey)),
+            Text('ペットが登録されていません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -178,7 +178,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
   Widget _buildHealthTab() {
     if (_healthLogs.isEmpty) {
       return const Center(
-        child: Text('健康記録がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('健康記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -204,7 +204,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 if (weight != null)
                   Text(
@@ -225,7 +225,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
   Widget _buildVaccinationTab() {
     if (_vaccinations.isEmpty) {
       return const Center(
-        child: Text('ワクチン記録がありません', style: TextStyle(color: Colors.grey)),
+        child: Text('ワクチン記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -258,7 +258,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                         '次回: ${nextDue.length >= 10 ? nextDue.substring(0, 10) : nextDue}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: overdue ? Colors.red : Colors.grey,
+                          color: overdue ? Colors.red : const Color(0xFF9CA3AF),
                           fontWeight: overdue ? FontWeight.bold : null,
                         ),
                       ),

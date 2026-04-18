@@ -219,7 +219,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -235,7 +235,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isDark
-                                ? Colors.grey[700]!
+                                ? const Color(0xFF374151)!
                                 : const Color(0xFFE5E7EB),
                           ),
                         ),
@@ -248,7 +248,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                   fontSize: 12,
                                   fontFamily: 'monospace',
                                   color: isDark
-                                      ? Colors.grey[300]
+                                      ? const Color(0xFFD1D5DB)
                                       : Colors.black87,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -273,7 +273,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           '招待コード: $_referralCode',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                           ),
                         ),
                       ],
@@ -414,7 +414,7 @@ class _ReferralPageState extends State<ReferralPage> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                   ),
                 ),
               ],
@@ -430,17 +430,17 @@ class _ReferralPageState extends State<ReferralPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : const Color(0xFFF3F4F6),
+        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.grey[700]! : const Color(0xFFE5E7EB),
+          color: isDark ? const Color(0xFF374151)! : const Color(0xFFE5E7EB),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
-          color: isDark ? Colors.grey[200] : Colors.black87,
+          color: isDark ? const Color(0xFFE5E7EB) : Colors.black87,
         ),
       ),
     );

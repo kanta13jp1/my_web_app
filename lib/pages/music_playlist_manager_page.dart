@@ -227,12 +227,12 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                       Icon(
                         Icons.queue_music,
                         size: 64,
-                        color: Colors.grey,
+                        color: const Color(0xFF9CA3AF),
                       ),
                       SizedBox(height: 12),
                       Text(
                         'プレイリストがありません',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: const Color(0xFF9CA3AF)),
                       ),
                     ],
                   ),
@@ -343,7 +343,7 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                   ? const Center(
                       child: Text(
                         'まだ曲がありません',
-                        style: TextStyle(color: Colors.grey),
+                        style: TextStyle(color: const Color(0xFF9CA3AF)),
                       ),
                     )
                   : ReorderableListView.builder(

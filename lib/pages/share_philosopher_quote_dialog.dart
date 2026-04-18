@@ -157,7 +157,7 @@ class _SharePhilosopherQuoteDialogState
                                   _selectedQuote.authorDescription!,
                                   style: const TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey,
+                                    color: const Color(0xFF9CA3AF),
                                   ),
                                 ),
                               ],
@@ -250,7 +250,7 @@ class _SharePhilosopherQuoteDialogState
                           '下のボタンから、哲学者の名言と画像をSNSに直接シェアできます',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -323,7 +323,7 @@ class _SharePhilosopherQuoteDialogState
                           '画像だけをダウンロードしたい場合は、プレビューを表示してからダウンロードしてください',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -334,17 +334,17 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey,
+                            color: const Color(0xFF9CA3AF),
                           ),
                         ),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.1),
+                            color: const Color(0xFF9CA3AF).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.grey.withValues(alpha: 0.3),
+                              color: const Color(0xFF9CA3AF).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Text(

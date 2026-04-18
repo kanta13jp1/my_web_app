@@ -177,17 +177,17 @@ class _AiAgentPageState extends State<AiAgentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.smart_toy_outlined, size: 64, color: Colors.grey[400]),
+          Icon(Icons.smart_toy_outlined, size: 64, color: const Color(0xFF9CA3AF)),
           const SizedBox(height: 16),
           Text(
             'AIエージェントがまだいません',
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 16, color: const Color(0xFF4B5563)),
           ),
           const SizedBox(height: 8),
           Text(
             'タスク自動化フローを作成して\n繰り返し作業をAIに任せましょう',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(color: const Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -212,7 +212,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
           child: ListTile(
             leading: Icon(
               Icons.smart_toy,
-              color: isActive ? Colors.indigo : Colors.grey,
+              color: isActive ? Colors.indigo : const Color(0xFF9CA3AF),
             ),
             title: Text(
               flow['name'] as String? ?? '',

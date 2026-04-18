@@ -53,7 +53,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ソーシャルフィード'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -119,7 +119,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                           CircleAvatar(
                                             radius: 16,
                                             backgroundColor:
-                                                Colors.teal.withAlpha(30),
+                                                const Color(0xFF009688).withAlpha(30),
                                             child: Text(
                                               (post['username']
                                                           ?.toString()
@@ -130,7 +130,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                       .toUpperCase()
                                                   : '?'),
                                               style: const TextStyle(
-                                                color: Colors.teal,
+                                                color: const Color(0xFF009688),
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -151,7 +151,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                   .substring(0, 10),
                                               style: const TextStyle(
                                                 fontSize: 11,
-                                                color: Colors.grey,
+                                                color: const Color(0xFF9CA3AF),
                                               ),
                                             ),
                                         ],
@@ -169,14 +169,14 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               const Icon(
                                                 Icons.favorite_border,
                                                 size: 14,
-                                                color: Colors.grey,
+                                                color: const Color(0xFF9CA3AF),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 post['likes'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: Colors.grey,
+                                                  color: const Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                               const SizedBox(width: 12),
@@ -185,14 +185,14 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               const Icon(
                                                 Icons.comment_outlined,
                                                 size: 14,
-                                                color: Colors.grey,
+                                                color: const Color(0xFF9CA3AF),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 post['comments'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: Colors.grey,
+                                                  color: const Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                             ],

@@ -109,7 +109,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       case 'error':
         return Colors.red;
       default:
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -178,12 +178,12 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined, size: 48, color: Colors.grey),
+            Icon(Icons.account_tree_outlined, size: 48, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text(
               'ワークフローがありません\nテンプレートから作成してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -235,7 +235,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       return const Center(
         child: Text(
           'テンプレートがありません',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: const Color(0xFF9CA3AF)),
         ),
       );
     }
@@ -273,7 +273,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Widget _buildStatsTab() {
     if (_stats == null) {
       return const Center(
-        child: Text('統計データがありません', style: TextStyle(color: Colors.grey)),
+        child: Text('統計データがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     final items = [
@@ -310,7 +310,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                     const SizedBox(height: 4),
                     Text(
                       item.$1,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                       textAlign: TextAlign.center,
                     ),
                   ],

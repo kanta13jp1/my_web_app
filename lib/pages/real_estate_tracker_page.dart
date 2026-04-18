@@ -457,7 +457,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
               leading:
-                  const Icon(Icons.home_work, color: Colors.teal, size: 36),
+                  const Icon(Icons.home_work, color: const Color(0xFF009688), size: 36),
               title: Text(
                 name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -536,7 +536,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
           const Padding(
             padding: EdgeInsets.all(12),
             child:
-                Text('物件タブから物件を選択してください', style: TextStyle(color: Colors.grey)),
+                Text('物件タブから物件を選択してください', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ),
         Expanded(
           child: _finances.isEmpty
@@ -605,7 +605,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),
-          _statCard('物件数', '$count件', Icons.home_work, Colors.teal),
+          _statCard('物件数', '$count件', Icons.home_work, const Color(0xFF009688)),
           const SizedBox(height: 8),
           _statCard(
             '総資産評価額',
@@ -675,7 +675,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               children: [
                 Text(
                   label,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  style: const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13),
                 ),
                 Text(
                   value,

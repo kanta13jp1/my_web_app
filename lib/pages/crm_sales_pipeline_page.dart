@@ -40,7 +40,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   };
 
   static const _stageColors = {
-    'lead': Colors.grey,
+    'lead': const Color(0xFF9CA3AF),
     'qualified': Colors.blue,
     'proposal': Colors.orange,
     'negotiation': Colors.purple,
@@ -302,7 +302,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
           final count = (info?['count'] as num?)?.toInt() ?? 0;
           final value = (info?['value'] as num?)?.toInt() ?? 0;
           final stageDeals = _deals.where((d) => d['stage'] == stage).toList();
-          final color = _stageColors[stage] ?? Colors.grey;
+          final color = _stageColors[stage] ?? const Color(0xFF9CA3AF);
           return Container(
             width: 220,
             margin: const EdgeInsets.only(right: 12),
@@ -453,13 +453,13 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline, size: 64, color: Colors.grey),
+            Icon(Icons.people_outline, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text('リードがまだありません'),
             SizedBox(height: 4),
             Text(
               '「リード追加」からCRM管理を始めましょう',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -476,7 +476,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         final stage = deal['stage'] as String? ?? 'lead';
         final score = (deal['score'] as num?)?.toInt() ?? 0;
         final source = deal['lead_source'] as String? ?? 'web';
-        final stageColor = _stageColors[stage] ?? Colors.grey;
+        final stageColor = _stageColors[stage] ?? const Color(0xFF9CA3AF);
         return Card(
           color: const Color(0xFF1E1E1E),
           margin: const EdgeInsets.only(bottom: 8),
@@ -666,7 +666,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
             ),
             Text(
               label,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),

@@ -68,7 +68,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('サポートチケット'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -94,12 +94,12 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                           Icon(
                             Icons.check_circle_outline,
                             size: 64,
-                            color: Colors.teal.shade300,
+                            color: const Color(0xFF009688).shade300,
                           ),
                           const SizedBox(height: 16),
                           const Text(
                             '未返信チケットはありません',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                            style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -112,7 +112,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                             '未返信チケット: ${_tickets.length}件 / FAQ: ${_faq.length}件',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Colors.teal,
+                              color: const Color(0xFF009688),
                             ),
                           ),
                         ),
@@ -129,7 +129,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                 child: ListTile(
                                   leading: const Icon(
                                     Icons.support_agent,
-                                    color: Colors.teal,
+                                    color: const Color(0xFF009688),
                                   ),
                                   title: Text(
                                     ticket['title']?.toString() ?? '無題',
@@ -146,7 +146,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                     label: Text(
                                       ticket['status']?.toString() ?? 'open',
                                     ),
-                                    backgroundColor: Colors.teal.shade50,
+                                    backgroundColor: const Color(0xFF009688).shade50,
                                   ),
                                 ),
                               );

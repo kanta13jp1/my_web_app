@@ -855,7 +855,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'discard':
         return Colors.red;
       default:
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -866,7 +866,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'ホワイト':
         return Colors.white;
       case 'グレー':
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
       case 'ネイビー':
         return const Color(0xFF001F5B);
       case 'ブルー':
@@ -882,7 +882,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'ピンク':
         return Colors.pink;
       default:
-        return Colors.grey[400]!;
+        return const Color(0xFF9CA3AF)!;
     }
   }
 }

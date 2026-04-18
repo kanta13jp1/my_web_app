@@ -141,9 +141,9 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.videocam_off, size: 64, color: Colors.grey),
+            Icon(Icons.videocam_off, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('録画がありません', style: TextStyle(color: Colors.grey)),
+            Text('録画がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -180,7 +180,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 IconButton(
                   icon: const Icon(Icons.download, size: 20),
@@ -202,9 +202,9 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.screenshot, size: 64, color: Colors.grey),
+            Icon(Icons.screenshot, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('スクリーンショットがありません', style: TextStyle(color: Colors.grey)),
+            Text('スクリーンショットがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -227,7 +227,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             children: [
               Container(
                 color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                child: const Icon(Icons.image, size: 40, color: Colors.grey),
+                child: const Icon(Icons.image, size: 40, color: const Color(0xFF9CA3AF)),
               ),
               Positioned(
                 bottom: 0,
