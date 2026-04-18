@@ -10916,3 +10916,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **全WF**: deploy-prod最新SUCCESS ✅ / orphan 0件 ✅
 - **unstaged leakage**: home_page.dart → git checkout --で解消
 - **修正済み**: なし (pre-fix failure のみ)
+
+### PS版#128 (2026-04-18 PM)
+- **Rule17 WF health check**: 全WF最新SUCCESS ✅ / orphan 0件
+- **T-1 第128弾**: AI大学バッジ・実績システム JA+EN → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/building-a-badge-achievement-system-with-flutter-supabase-58ji
+  - award_ai_university_badge RPC (ON CONFLICT DO NOTHING + FOUND) + 7アクションEF + Flutter count 解説
+  - orphan branch マージ + 削除 ✅
