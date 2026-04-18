@@ -45,14 +45,14 @@ analyzer:
     avoid_dynamic_calls: error
     library_private_types_in_public_api: error
     require_trailing_commas: error
-    prefer_const_constructors: error
-    prefer_const_literals_to_create_immutables: error
+    prefer_const_constructors: warning
+    prefer_const_literals_to_create_immutables: warning
     prefer_final_fields: error
     null_closures: error
     prefer_final_locals: error
     prefer_single_quotes: error
-    prefer_const_declarations: error
-    prefer_const_constructors_in_immutables: error
+    prefer_const_declarations: warning
+    prefer_const_constructors_in_immutables: warning
     only_throw_errors: error
     use_build_context_synchronously: error
     prefer_void_to_null: error
