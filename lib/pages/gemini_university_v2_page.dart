@@ -2877,7 +2877,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Text(
                     'AI 大学',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Color(0xFFE5E7EB),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -2885,7 +2885,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   Text(
                     '自分株式会社',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.6),
                       fontSize: 11,
                     ),
                   ),
@@ -2894,13 +2894,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ],
           ),
           const SizedBox(height: 14),
-          Divider(color: Colors.white.withValues(alpha: 0.24)),
+          Divider(color: const Color(0xFFE5E7EB).withValues(alpha: 0.24)),
           const SizedBox(height: 14),
           // 達成数メッセージ
           Text(
             '$count 社のAIを\n学習しました！',
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFFE5E7EB),
               fontSize: 26,
               fontWeight: FontWeight.bold,
               height: 1.4,
@@ -2919,7 +2919,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 decoration: BoxDecoration(
                   color: learned
                       ? m.color.withValues(alpha: 0.71)
-                      : Colors.white.withValues(alpha: 0.08),
+                      : const Color(0xFFE5E7EB).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -2927,8 +2927,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   style: TextStyle(
                     fontSize: 11,
                     color: learned
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.38),
+                        ? const Color(0xFFE5E7EB)
+                        : const Color(0xFFE5E7EB).withValues(alpha: 0.38),
                     fontWeight: learned ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -3131,7 +3131,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       appBar: AppBar(
         title: const Text('AI 大学'),
         backgroundColor: const Color(0xFF1A1A1A),
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFFE5E7EB),
         actions: [
           IconButton(
             icon: const Icon(Icons.leaderboard),
@@ -3175,8 +3175,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           controller: tc,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
+          indicatorColor: const Color(0xFFE5E7EB),
+          labelColor: const Color(0xFFE5E7EB),
           unselectedLabelColor: const Color(0xFFB0B0B0),
           tabs: _providers.map((id) {
             final m = _meta(id);
@@ -3287,7 +3287,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 Text(
                   m.name,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFFE5E7EB),
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -3296,7 +3296,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   Text(
                     updatedAt,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -3310,7 +3310,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           ),
           if (m.officialUrl.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.open_in_new, color: Colors.white),
+              icon: const Icon(Icons.open_in_new, color: Color(0xFFE5E7EB)),
               tooltip: '公式サイト',
               onPressed: () => _launchUrl(m.officialUrl),
             ),
@@ -3321,9 +3321,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   // MarkdownBody 共通スタイル (ダーク専用)
   static final MarkdownStyleSheet _mdStyle = MarkdownStyleSheet(
-    p: const TextStyle(color: Colors.white, height: 1.7),
+    p: const TextStyle(color: Color(0xFFE5E7EB), height: 1.7),
     h1: const TextStyle(
-      color: Colors.white,
+      color: Color(0xFFE5E7EB),
       fontSize: 20,
       fontWeight: FontWeight.bold,
     ),
@@ -3337,7 +3337,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontSize: 15,
       fontWeight: FontWeight.w600,
     ),
-    strong: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    strong: const TextStyle(color: Color(0xFFE5E7EB), fontWeight: FontWeight.bold),
     em: const TextStyle(
       color: Color(0xFFB0B0B0),
       fontStyle: FontStyle.italic,
@@ -3371,7 +3371,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           title,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: Color(0xFFE5E7EB),
           ),
         ),
         subtitle: Text(
