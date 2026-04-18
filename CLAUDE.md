@@ -118,33 +118,47 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
    4. `docs/cross-instance-prs/YYYYMMDD_constraint.md` で他インスタンスへ周知
    **対象範囲**: Claude モデル制限・WEB版の新たな不可操作・MCP ツール制限・GitHub Actions の仕様変更・外部AI (Copilot/Gemini/CODEX) のモデル変更すべてを含む
 
-16. **Rule 21: Claude Design ワークフロー統合（Windows版#94・全インスタンス）** — 2026-04-17 に Anthropic Labs が公開した `Claude Design` SaaS + Claude Code `frontend-design` プラグインを本プロジェクトのデザインワークフローに組み込む。Pro/Max/Team/Enterprise プラン必須。
+16. **Rule 21: Claude Design ワークフロー統合（Windows版#94・全インスタンス）** — Anthropic 公式の 2 つのデザインプラグインを本プロジェクトのデザインワークフローに組み込む。両方ともインストール済み (2026-04-18 時点)。
 
-   **ツール区分**:
-   - `frontend-design` プラグイン (`claude-plugins-official/frontend-design`): 既にインストール済み。Claude Code 内で distinctive な HTML/CSS/React UI コードを生成 (generic AI slop 回避)
-   - `Claude Design` SaaS (<https://claude.ai/design> 想定): Web UI で視覚的に design を生成し、codebase を読み込んで `docs/DESIGN.md` トークンを自動継承。完了したら **handoff bundle** (JSON/Markdown) を出力
+   **インストール済みツール**:
+   - **`frontend-design@claude-plugins-official`** (v=unknown): distinctive な HTML/CSS/React UI コード生成 (generic AI slop 回避)。Skill tool から `frontend-design:frontend-design` で呼出
+   - **`design@knowledge-work-plugins`** (v1.2.0): Anthropic Labs の Claude Design プラグイン。Claude Desktop / Claude Code 共用。6 slash commands + 9 MCP サーバー bundle
 
-   **統合ワークフロー**:
-   1. **視覚設計が主**の場合 (例: netkeiba 風競馬予想画面・複雑なダッシュボード): Claude Design SaaS でビジュアル生成 → handoff bundle を `/claude-design-handoff` に流し込み → Flutter widget skeleton + DESIGN.md 差分を自動生成
-   2. **純粋な美学検証**: `frontend-design` スキル (`Skill` tool で `frontend-design:frontend-design` 呼出) で HTML プロトタイプ → Flutter に手動変換
-   3. **既存 UI 改善**: Rule 19 のツールチェーンに追加 (Step 5-6 で `frontend-design` + Claude Design) — 既存 `design-skills` / Figma MCP / AIDesigner MCP との使い分けは Rule 19 ワークフロー参照
+   **`design@knowledge-work-plugins` で利用可能な slash commands**:
+   - `/design-critique` — UI 構造化レビュー (Figma URL / 画像 / 説明)
+   - `/design-handoff` — 開発者 handoff spec (トークン・breakpoint・state・a11y)
+   - `/design-system` — DESIGN.md audit / document / extend
+   - `/accessibility-review` — WCAG 2.1 AA 監査
+   - `/research-synthesis` — ユーザー調査統合
+   - `/user-research` — 調査ガイド生成
 
-   **handoff bundle 仕様** (Claude Design 出力):
-   ```json
-   {
-     "design_tokens": {"colors": {...}, "typography": {...}, "spacing": {...}},
-     "components": [{"name": "...", "html": "...", "props": {...}}],
-     "pages": [{"route": "...", "layout": "..."}]
-   }
-   ```
-   `/claude-design-handoff` (slash command) で自動パース + DESIGN.md との差分チェック + Flutter widget 雛形生成。
+   **bundle される MCP サーバー** (自動接続):
+   Figma / Notion / Slack / Linear / Asana / Atlassian / Intercom / Gmail / Google Calendar
 
-   **使い分け基準**:
+   **自作 `/claude-design-handoff` との使い分け**:
+   | 目的 | ツール |
+   | --- | --- |
+   | Figma URL → 開発者用 handoff spec 生成 | 公式 `/design-handoff` (Anthropic) |
+   | handoff 出力 → **Flutter widget skeleton + DESIGN.md 差分** | 自作 `/claude-design-handoff` (本プロジェクト固有) |
+   | UI 構造化レビュー | 公式 `/design-critique` |
+   | DESIGN.md 監査 | 公式 `/design-system audit` |
+   | WCAG 2.1 AA チェック | 公式 `/accessibility-review` |
+
+   **統合ワークフロー例** (新規画面追加時):
+   1. Figma でデザイン作成
+   2. `/design-critique <Figma URL>` で構造レビュー
+   3. `/accessibility-review <Figma URL>` で a11y チェック
+   4. `/design-handoff <Figma URL>` で開発者 spec 生成
+   5. Flutter 実装後 `/claude-design-handoff` で DESIGN.md トークン差分 + widget skeleton 生成
+   6. `flutter analyze 0 エラー` → commit
+
+   **使い分け基準表** (Rule 19 ツールチェーン全体):
    | 用途 | ツール |
    | --- | --- |
+   | Figma レビュー / a11y / handoff spec | `design@knowledge-work-plugins` (公式) |
    | 既存デザイントークン準拠の widget 改善 | `design-skills` + Figma MCP + AIDesigner MCP (Rule 19 既存) |
    | 新規 component の creative prototype | `frontend-design` プラグイン (HTML 生成) |
-   | 複雑な画面の視覚設計 → Flutter | Claude Design SaaS → `/claude-design-handoff` |
+   | handoff → Flutter + DESIGN.md 差分 | 自作 `/claude-design-handoff` |
    | 1 画像だけ生成 | Nanobanana API (既存) |
 
 ---
