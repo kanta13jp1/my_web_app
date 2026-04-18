@@ -10666,3 +10666,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 修正内容: (1) home_page.dart `const Color(...).shade700` → `Color(0xFFF57C00)` + `Color(...)Accent` → `const Color(0xFFFFAB40)` (2) dart format (3) migration timestamp重複 20260418100000 → 100002
 - orphan branches: 全0件 ✅ / WF health: deploy-prod以外全正常
 - 新 cross-instance-pr: 20260418_home_5tier_customization.md (Windowsアプリ版#90 → VSCode版 pending)
+
+### VSCode版#96 完了 (2026-04-18) — note_list_page.dart DESIGN.md準拠修正 (70%→75%)
+- token色置換20箇所: deepPurple→indigo / blue→indigo / orange→0xFFFF6B35 / grey→0xFFB0B0B0
+- amber.shade700→0xFFFF6B35 / red.shade700→0xFFB91C1C / teal→0xFF0D9488
+- flutter analyze 0エラー / commit: db39a5ae
+- 次回候補: DESIGN.md 75%→80% (note_editor_page or quiz_page) / ノートbacklinks機能
