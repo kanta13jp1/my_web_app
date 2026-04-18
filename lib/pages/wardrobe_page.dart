@@ -230,12 +230,12 @@ class _WardrobePageState extends State<WardrobePage>
       appBar: AppBar(
         title: const Text('ワードローブ管理'),
         backgroundColor: Colors.brown[700],
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFFE5E7EB),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
+          indicatorColor: const Color(0xFFE5E7EB),
+          labelColor: const Color(0xFFE5E7EB),
+          unselectedLabelColor: const Color(0xFFE5E7EB).withValues(alpha: 0.6),
           tabs: const [
             Tab(icon: Icon(Icons.checkroom), text: '一覧'),
             Tab(icon: Icon(Icons.pie_chart), text: '断捨離分析'),
@@ -246,7 +246,7 @@ class _WardrobePageState extends State<WardrobePage>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addItem,
         backgroundColor: Colors.brown[700],
-        foregroundColor: Colors.white,
+        foregroundColor: const Color(0xFFE5E7EB),
         icon: const Icon(Icons.add),
         label: const Text('衣類を追加'),
       ),
@@ -424,7 +424,8 @@ class _WardrobePageState extends State<WardrobePage>
                           _chip(
                             item.category,
                             Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFF4E342E).withAlpha(120)
+                                ? const Color(0xFF4E342E)
+                                    .withValues(alpha: 0.47)
                                 : Colors.brown[100]!,
                           ),
                           const SizedBox(width: 4),
@@ -474,7 +475,7 @@ class _WardrobePageState extends State<WardrobePage>
                 Icon(
                   Icons.schedule,
                   size: 12,
-                  color: isOld ? Colors.red : Colors.grey,
+                  color: isOld ? Colors.red : const Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -483,7 +484,7 @@ class _WardrobePageState extends State<WardrobePage>
                       : '着用記録なし',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOld ? Colors.red : Colors.grey[500],
+                    color: isOld ? Colors.red : const Color(0xFF9CA3AF),
                   ),
                 ),
                 if (isOld) ...[
@@ -536,7 +537,8 @@ class _WardrobePageState extends State<WardrobePage>
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.delete, size: 18, color: Colors.grey),
+                  icon: const Icon(Icons.delete,
+                      size: 18, color: Color(0xFF9CA3AF)),
                   onPressed: () => _deleteItem(item),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -1040,7 +1042,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
               onPressed: _isSaving ? null : _save,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.brown[700],
-                foregroundColor: Colors.white,
+                foregroundColor: const Color(0xFFE5E7EB),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: _isSaving
@@ -1049,7 +1051,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: Color(0xFFE5E7EB),
                       ),
                     )
                   : const Text(
