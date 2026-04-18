@@ -681,6 +681,82 @@ $input
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // ★ AI 開発 7 原則: 実装規律 (Rule 23)
+        GestureDetector(
+          onTap: () => Navigator.of(context).pushNamed('/ai-dev-principles'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F1F1F), Color(0xFF1A2E2E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF26A69A).withValues(alpha: 0.5),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF26A69A).withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF26A69A).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.shield_outlined,
+                    color: Color(0xFF26A69A),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI 開発 7 原則 — 実装規律',
+                        style: TextStyle(
+                          color: Color(0xFFFAFAFA),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Auth/Security/Observability/Circuit Breaker — 動画 5 本 + チェックリスト',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF26A69A),
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+        ),
         // ★ 基本理念: 自分株式会社 — The Enterprise of Self
         GestureDetector(
           onTap: () => Navigator.of(context).pushNamed('/philosophy'),
