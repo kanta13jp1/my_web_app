@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 200
+          token: ${{ secrets.BYPASS_RULES || github.token }}
 
       # ── Step 1: 日次メトリクス取得 ──────────────────────────────────────────
       - name: Step 1 - Supabase daily-digest 取得
@@ -295,6 +296,7 @@ jobs:
           fi
 
           git commit -m "自動: 日次レポート ${DATE} (GitHub Actions)"
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
           git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin main
           echo "✅ main直接push完了"

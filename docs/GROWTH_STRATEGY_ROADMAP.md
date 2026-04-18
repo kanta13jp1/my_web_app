@@ -10520,3 +10520,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### ai-hub プロバイダー推移
 - PS#108: 14→20, PS#109: 20→23, PS#110: 23→25, PS#111: 25→27, PS#113: 27→29
+
+### Rule 17 WF health check (2026-04-18 09:15)
+- 全 WF success率: cs-check 5/5, deploy-prod 1/1, ai-university-update 3/3, horse-racing 5 cancelled (concurrency正常)
+- 失敗 WF: daily-report — Step 7 GH006 (checkout token未設定) → checkout token追加修正済み
+- 失敗 WF: ai-university-update — 前セッション(#91)でGH006修正済み (BYPASS_RULES checkout token追加)
+- orphan branches: 全パターン0件 (blog-publish/cs-check/ai-university-update/daily-report/claude/* 全ゼロ)
+- 修正済み: daily-report.yml Checkout step に token: ${{ secrets.BYPASS_RULES || github.token }} 追加
+
+### VSCode版#92 完了 (2026-04-18) — Rule17 + local-election-intelligence HTMLパーサ修正
+- daily-report.yml GH006修正: Checkout に BYPASS_RULES token追加
+- local-election-intelligence: new-kokumin.jp HTMLパーサ完全書き直し (server-side rendered対応)
+  - var elections = [...] JS変数 → <section class=pref-section> + <li class=election-item> HTML解析
+  - SCHEDULE_WINDOW_DAYS 60→90日、SCHEDULE_MAX_ENTRIES 100→200件
+  - 984件の選挙データを正常取得
+- orphan branches: 全0件
