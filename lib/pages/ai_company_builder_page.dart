@@ -163,9 +163,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF111827),
+        color: const Color(0xFF111827),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0x1FFFFFFF)),
+        border: Border.all(color: const Color(0x1FFFFFFF)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +173,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const Text(
             'AI Company Builder',
             style: TextStyle(
-              color: Color(0xFFE5E7EB),
+              color: const Color(0xFFE5E7EB),
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
@@ -181,7 +181,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const SizedBox(height: 8),
           const Text(
             'Describe a business in one sentence. The system will run a gate review, create the business-layer manager agents, attach the shared tool layer, seed initial tasks, and write the first vault notes.',
-            style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+            style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -194,7 +194,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   'Example: Build an AI-native online school for Japanese startup founders.',
               hintStyle: const TextStyle(color: Color(0x61FFFFFF)),
               filled: true,
-              fillColor: Color(0xFFE5E7EB).withValues(alpha: 0.05),
+              fillColor: const Color(0xFFE5E7EB).withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -211,7 +211,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 child: Text(
                   'Gate threshold',
                   style: TextStyle(
-                    color: Color(0xB3E5E7EB),
+                    color: const Color(0xB3E5E7EB),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -262,13 +262,13 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Color(0xFF0F172A),
+          color: const Color(0xFF0F172A),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Color(0x1AFFFFFF)),
+          border: Border.all(color: const Color(0x1AFFFFFF)),
         ),
         child: const Text(
           'No company instances yet. Run the builder once and the workspace will start storing managers, tool agents, tasks, workflows, and vault notes.',
-          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
         ),
       );
     }
@@ -279,7 +279,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         const Text(
           'Company Instances',
           style: TextStyle(
-            color: Color(0xFFE5E7EB),
+            color: const Color(0xFFE5E7EB),
             fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
@@ -302,11 +302,11 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: selected
-                      ? Color(0xFF1D4ED8).withValues(alpha: 0.16)
-                      : Color(0xFF111827),
+                      ? const Color(0xFF1D4ED8).withValues(alpha: 0.16)
+                      : const Color(0xFF111827),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: selected ? Color(0xFF60A5FA) : Color(0x1FFFFFFF),
+                    color: selected ? const Color(0xFF60A5FA) : const Color(0x1FFFFFFF),
                   ),
                 ),
                 child: Column(
@@ -368,7 +368,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
 
   Widget _buildStatusChip(String status, bool passed) {
     final Color tone =
-        passed ? Color(0xFF10B981) : Color(0xFFF59E0B);
+        passed ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -419,9 +419,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF111827),
+        color: const Color(0xFF111827),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0x1FFFFFFF)),
+        border: Border.all(color: const Color(0x1FFFFFFF)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,7 +458,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const Text(
             'Gate',
             style: TextStyle(
-              color: Color(0xFFE5E7EB),
+              color: const Color(0xFFE5E7EB),
               fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
@@ -490,9 +490,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Color(0xFFE5E7EB).withValues(alpha: 0.06),
+        color: const Color(0xFFE5E7EB).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0x1AFFFFFF)),
+        border: Border.all(color: const Color(0x1AFFFFFF)),
       ),
       child: Text(
         '$label: $value',
@@ -530,7 +530,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
-            backgroundColor: Color(0x1FFFFFFF),
+            backgroundColor: const Color(0x1FFFFFFF),
           ),
         ),
         const SizedBox(height: 6),
@@ -557,9 +557,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             width: 230,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0x1FFFFFFF)),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -613,9 +613,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0x1FFFFFFF)),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -669,9 +669,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0x1FFFFFFF)),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,9 +714,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Color(0xFF111827),
+              color: const Color(0xFF111827),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0x1FFFFFFF)),
+              border: Border.all(color: const Color(0x1FFFFFFF)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -753,13 +753,13 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Color(0xFF111827),
+          color: const Color(0xFF111827),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Color(0x1FFFFFFF)),
+          border: Border.all(color: const Color(0x1FFFFFFF)),
         ),
         child: const Text(
           'Select a company instance to inspect its manager layer, shared tool layer, seeded tasks, and vault notes.',
-          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(color: const Color(0xB3E5E7EB), height: 1.5),
         ),
       );
     }
@@ -792,11 +792,11 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF020617),
+      backgroundColor: const Color(0xFF020617),
       appBar: AppBar(
         title: const Text('AI Company Builder'),
-        backgroundColor: Color(0xFF020617),
-        foregroundColor: Color(0xFFE5E7EB),
+        backgroundColor: const Color(0xFF020617),
+        foregroundColor: const Color(0xFFE5E7EB),
         actions: [
           IconButton(
             onPressed: _isLoading ? null : _loadCompanies,
@@ -816,7 +816,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Color(0xFF7F1D1D),
+                  color: const Color(0xFF7F1D1D),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
