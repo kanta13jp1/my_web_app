@@ -10904,3 +10904,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **orphan branches**: 全パターン 0件 ✅
 - **unstaged leakage**: 0件 (session開始時クリーン)
 - **修正済み**: なし
+
+### PS版#127 (2026-04-18 PM)
+- **Rule17 WF health check**: 全WF最新SUCCESS ✅ / orphan 0件 / unstaged leakage 0件
+- **T-1 第127弾**: AI大学ストリークシステム (Flutter×Supabase) JA+EN → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/building-a-learning-streak-system-with-flutter-supabase-like-duolingo-182h
+  - update_ai_university_streak RPC + EF + Flutter home card 実装解説
+  - orphan branch マージ + 削除 ✅
