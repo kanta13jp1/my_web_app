@@ -229,6 +229,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/social-feed',
       'ソーシャルフィードページ > 公開/フォロー別フィード表示',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'invoice-generator',
+      '請求書ジェネレーター',
+      true,
+      '/invoice-generator',
+      '請求書ジェネレーターページ > 請求書作成・一覧表示',
+    ),
+    _FnDef(
+      'poll-survey',
+      'アンケート・投票',
+      true,
+      '/poll-survey',
+      'アンケートページ > 質問作成・投票',
+    ),
+    _FnDef(
+      'notification-digest',
+      '通知ダイジェスト',
+      true,
+      '/notification-digest',
+      '通知ダイジェストページ > 未読・本日・重要通知サマリー',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
