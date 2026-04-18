@@ -273,6 +273,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/ai-secretary',
       'AIセクレタリーページ > 今日のスケジュール・優先タスク確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'ai-summarizer',
+      'AI要約 (テキスト・URL要約)',
+      true,
+      '/ai-summarizer',
+      'AI要約ページ > テキストまたはURL入力で要約生成',
+    ),
+    _FnDef(
+      'ai-writing-assistant',
+      'AI文章アシスタント',
+      true,
+      '/ai-writing-assistant',
+      'AI文章アシスタントページ > 文章生成・校正・翻訳',
+    ),
+    _FnDef(
+      'analytics-export',
+      'アナリティクスエクスポート',
+      true,
+      '/analytics-export',
+      'アナリティクスエクスポートページ > CSV/JSONデータエクスポート',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
