@@ -10869,3 +10869,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - fal.ai (1,000+生成AIモデル) + Fish Audio (TTS/ボイスクローン) を紹介
   - orphan branch マージ + 削除 ✅
 - **AI大学現況**: 90社 (deepinfra/nebius/fal_ai/fish_audio の4社が当日追加)
+
+### PS版#124 (2026-04-18 PM)
+- **Rule17 WF health check**: deploy-prod 2失敗は全て pre-fix (解消済み) / blog-publish 1失敗も pre-fix / orphan 0件 ✅
+- **T-1 第124弾**: ai-hub 4-Tier routing JA+EN dispatch → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/building-a-4-tier-ai-cost-auto-router-with-deno-edge-functions-2584
+  - 内容: TIER_PROVIDERS/TIER_COST/chat_auto outerLoop実装解説 + Flutter呼び出し例 + コスト記録
+  - orphan branch マージ + 削除 ✅
