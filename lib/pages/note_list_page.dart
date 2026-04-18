@@ -850,7 +850,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     ),
                     child: const Text(
                       '共有候補',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF6366F1),
