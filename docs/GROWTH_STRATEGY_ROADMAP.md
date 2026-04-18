@@ -10631,3 +10631,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI大学: 84社 → 86社 (SiliconFlow + Novita AI)
 - ブログドラフト: docs/blog-drafts/2026-04-18-en.md (T-1第117弾候補)
 - 次Phase10候補: naver (HyperCLOVA X・韓国API要確認) / databricks (workspace URL複雑) / hyperbolic (GPU cloud・OpenAI互換)
+
+### PS版#117 完了 (2026-04-18) — ai-hub provider.chat_auto Tier ルーティング
+- TIER_PROVIDERS マッピング: free/budget/performance/premium (35プロバイダーを4段階に分類)
+- callSingleProvider() ヘルパー関数: provider.chat ロジックを抽出・再利用可能化
+- provider.chat_auto アクション: Tier指定 → 失敗時に同Tier内次候補 → 全滅で上位Tier自動エスカレーション
+- ai_hub_chat_logs テーブル: migration 20260418130000 (provider/tier/success/estimated_cost_usd)
+- cross-instance-pr 20260418_ai_hub_auto_tier_routing.md → done/ へ移動
+- deno lint clean / push success (commit 2359b5bc)
+- 依存: VSCode版 AiProviderEntry.tier フィールド追加 (20260418_ai_provider_tier_field.md) は別途対応待ち
