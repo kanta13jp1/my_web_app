@@ -10750,3 +10750,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **api_key_status_banner.dart**: curly_braces + trailing_commas lint修正
 - cross-instance-pr `20260418_horseracing_ensemble_ui.md` → done/ アーカイブ
 - flutter analyze 0エラー確認 ✅
+
+### PS版#119 続き: deploy-prod CI修復 + T-1完了 (2026-04-18 PM)
+- **whack-a-mole CI修復**: `growth_roadmap_progress_card.dart:420` `_FeatureStatus.implemented` (無効enum) → `.done` 修正
+  - Win版#94が追加したコードに存在しないenum値を使用 → flutter analyze 2エラー → 修正コミット c86fd8e6
+- **deploy-prod**: run 24598257966 進行中 (fix commit c86fd8e6)
+- **T-1 第119弾**: blog-publish orphan `blog-publish/24596689320-20260418-131629` マージ完了
+  - JA/EN 両draft `published:true` 確認済み → orphan削除完了
+- **orphan branches**: 全パターン 0件 ✅
