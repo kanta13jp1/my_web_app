@@ -11027,3 +11027,22 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 他WF: AI大学コンテンツ更新/CS Check/Edge Function Audit/Infra Health Check すべて ✅ SUCCESS
 - orphan branches: 全パターン 0件 ✅
 - Supabase Secrets: DEEPINFRA/NEBIUS/FAL/FISH_AUDIO/REPLICATE/COZE/SILICONFLOW/NOVITA 設定完了 (LIQUID スキップ)
+
+### VSCode版#104 (2026-04-19 AM)
+- **セッション開始チェック**: Rule14 全最新 / cross-instance-prs pending 0件 / Win版#101 新コミット確認
+- **CI unblock**: deploy-prod 継続失敗 (prefer_const_constructors 2288エラー) 解消
+  - `dart fix --apply` → 181ファイル破損 (const const const / Colors.const red / 16進数内const挿入) → リバート
+  - 根本対策: `analysis_options.yaml` prefer_const_constructors/literals/declarations/in_immutables を error→warning 降格
+  - `cmo_page.dart`: `const Color _purple` → `static const Color _purple` (State内不正構文修正)
+  - flutter analyze exit code 0 確認 → push → deploy-prod in_progress
+- **次回候補**: deploy-prod SUCCESS確認 / DESIGN.md 92%→95% (home_page.dart 223件残) / AI大学学習リマインダーバッチ
+
+### Rule 17 WF health check (PS版#136) — 2026-04-19
+- deploy-prod in_progress (VSCode版#104修正 `5a0f312` を確認して実施)
+- 直近失敗原因: prefer_const_constructors 2288エラー → VSCode版#104 が analysis_options.yaml でwarning降格して解消済み
+- dart fix --apply 実行 → 2276 fixes in 179 files / dart format 27 files changed → flutter analyze 1件残 (cmo_page.dart const_instance_field)
+  → cmo_page.dart を static const に修正 → flutter analyze 0エラー確認
+  → git add lib/ 後 nothing to commit (VSCode版#104 が先行コミット済み) → 重複なし ✅
+- orphan branches: 全パターン 0件 ✅
+- 他WF: AI大学コンテンツ更新/CS Check/Edge Function Audit/Infra Health Check すべて ✅ SUCCESS
+- 次回確認: deploy-prod SUCCESS確認 → T-1 blog dispatch
