@@ -420,17 +420,17 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             const Icon(
               Icons.view_timeline_outlined,
               size: 64,
-              color: Colors.grey,
+              color: const Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 16),
             const Text(
               'プロジェクトがありません',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 8),
             const Text(
               'ガントチャートで進捗を可視化しましょう',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -494,7 +494,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 if (startDate != null || endDate != null)
                   Text(
                     '${startDate != null ? _formatDate(startDate) : "?"} 〜 ${endDate != null ? _formatDate(endDate) : "?"}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 Text(
                   'タスク: $taskCount件',
@@ -521,11 +521,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.view_timeline_outlined, size: 64, color: Colors.grey),
+            Icon(Icons.view_timeline_outlined, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 16),
             Text(
               'プロジェクトを選択してください',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -544,7 +544,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             if (_milestones.isNotEmpty) ...[
               Row(
                 children: [
-                  const Icon(Icons.flag, color: Colors.amber, size: 20),
+                  const Icon(Icons.flag, color: const Color(0xFFFFC107), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'マイルストーン (${_milestones.length}件)',
@@ -590,7 +590,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   child: Text(
                     'タスクがありません\n右上の＋ボタンから追加してください',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: const Color(0xFF9CA3AF)),
                   ),
                 ),
               )
@@ -615,12 +615,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isPast ? Colors.red.shade50 : Colors.amber.shade50,
+      color: isPast ? Colors.red.shade50 : const Color(0xFFFFC107).shade50,
       child: ListTile(
         dense: true,
         leading: Icon(
           Icons.flag,
-          color: isPast ? Colors.red : Colors.amber.shade700,
+          color: isPast ? Colors.red : const Color(0xFFFFC107).shade700,
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: dueDate != null
@@ -629,11 +629,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   _formatDate(dueDate),
                   style: TextStyle(
                     fontSize: 12,
-                    color: isPast ? Colors.red : Colors.amber.shade800,
+                    color: isPast ? Colors.red : const Color(0xFFFFC107).shade800,
                   ),
                 ),
                 backgroundColor:
-                    isPast ? Colors.red.shade100 : Colors.amber.shade100,
+                    isPast ? Colors.red.shade100 : const Color(0xFFFFC107).shade100,
               )
             : null,
       ),
@@ -656,7 +656,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       case 'blocked':
         statusColor = Colors.red;
       default:
-        statusColor = Colors.grey;
+        statusColor = const Color(0xFF9CA3AF);
     }
 
     String statusLabel;
@@ -729,7 +729,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 const SizedBox(width: 4),
                 Text(
                   startDate != null ? _formatDate(startDate) : '未設定',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(width: 12),
                 Icon(
@@ -740,7 +740,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 const SizedBox(width: 4),
                 Text(
                   '$durationDays日間',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
                 const Spacer(),
                 Text(
@@ -765,11 +765,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined, size: 64, color: Colors.grey),
+            Icon(Icons.account_tree_outlined, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 16),
             Text(
               'プロジェクトを選択してください',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -825,7 +825,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             child: Text(
               'タスクが登録されていません\nタイムラインタブからタスクを追加してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: const Color(0xFF9CA3AF)),
             ),
           )
         else

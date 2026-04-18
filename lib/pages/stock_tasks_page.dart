@@ -232,7 +232,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('時間があるときのストック'),
-        backgroundColor: Colors.teal,
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -254,11 +254,11 @@ class _StockTasksPageState extends State<StockTasksPage> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _isSaturday
-                  ? Colors.amber.withValues(alpha: 0.16)
-                  : Colors.teal.withValues(alpha: 0.1),
+                  ? const Color(0xFFFFC107).withValues(alpha: 0.16)
+                  : const Color(0xFF009688).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _isSaturday ? Colors.amber : Colors.teal.shade200,
+                color: _isSaturday ? const Color(0xFFFFC107) : const Color(0xFF009688).shade200,
               ),
             ),
             child: Column(
@@ -340,7 +340,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                               child: Text(
                                 '思考ネタや行動タスクを\nストックしておきましょう',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.grey),
+                                style: TextStyle(color: const Color(0xFF9CA3AF)),
                               ),
                             ),
                           ),
@@ -355,7 +355,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                             padding: EdgeInsets.symmetric(horizontal: 8),
                             child: Text(
                               '完了済み',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: const Color(0xFF9CA3AF)),
                             ),
                           ),
                           const Divider(),
@@ -420,7 +420,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   icon: const Icon(
                     Icons.add_circle,
                     size: 32,
-                    color: Colors.teal,
+                    color: const Color(0xFF009688),
                   ),
                   onPressed: _addTask,
                 ),
@@ -437,7 +437,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
     final bool isCompleted = task['is_completed'] == true;
     final String text = task['task'] as String? ?? '';
     final bool isThinking = _isThinkingTask(task);
-    final badgeColor = isThinking ? Colors.deepPurple : Colors.teal;
+    final badgeColor = isThinking ? Colors.deepPurple : const Color(0xFF009688);
     final badgeText = isThinking ? '思考ネタ' : '行動';
     return Dismissible(
       key: ValueKey(id),
@@ -463,7 +463,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
           leading: IconButton(
             icon: Icon(
               isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isCompleted ? Colors.teal : Colors.grey,
+              color: isCompleted ? const Color(0xFF009688) : const Color(0xFF9CA3AF),
             ),
             onPressed: () => _toggleTask(id, isCompleted),
           ),
@@ -473,7 +473,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
               fontSize: 16,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
               color: isCompleted
-                  ? Colors.grey
+                  ? const Color(0xFF9CA3AF)
                   : Theme.of(context).colorScheme.onSurface,
             ),
           ),

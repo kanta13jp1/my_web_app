@@ -417,7 +417,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   ),
                   Text(
                     desc,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 ],
               ),
@@ -486,7 +486,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     color:
                         Theme.of(context).colorScheme.surfaceContainerHighest,
                     child: const Center(
-                      child: Icon(Icons.image, size: 48, color: Colors.grey),
+                      child: Icon(Icons.image, size: 48, color: const Color(0xFF9CA3AF)),
                     ),
                   ),
                 ),
@@ -638,7 +638,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   const SizedBox(height: 8),
                   const Text(
                     'Claude Schedule (daily-report) が自動で最適時間に広告を投稿します',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 ],
               ),
@@ -674,7 +674,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                           Text(
                             item.$2,
                             style: const TextStyle(
-                              color: Colors.grey,
+                              color: const Color(0xFF9CA3AF),
                               fontSize: 12,
                             ),
                           ),
@@ -719,7 +719,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               if (sub.isNotEmpty)
                 Text(
                   sub,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                 ),
             ],
           ),
@@ -734,13 +734,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
+            Icon(Icons.history, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 16),
-            Text('まだ広告を生成していません', style: TextStyle(color: Colors.grey)),
+            Text('まだ広告を生成していません', style: TextStyle(color: const Color(0xFF9CA3AF))),
             SizedBox(height: 8),
             Text(
               '「生成」タブで広告を作成しましょう',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -872,7 +872,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       case 'script_only':
         return Colors.orange;
       default:
-        return Colors.grey;
+        return const Color(0xFF9CA3AF);
     }
   }
 

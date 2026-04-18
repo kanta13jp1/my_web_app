@@ -242,7 +242,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         child: Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey),
+                          style: const TextStyle(color: const Color(0xFF9CA3AF)),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -288,7 +288,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             },
             style: SegmentedButton.styleFrom(
               backgroundColor: const Color(0xFF1E1E1E),
-              foregroundColor: Colors.grey,
+              foregroundColor: const Color(0xFF9CA3AF),
               selectedForegroundColor: Colors.white,
               selectedBackgroundColor: const Color(0xFFFF6B35),
             ),
@@ -300,21 +300,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.sports, size: 64, color: Colors.grey),
+                      const Icon(Icons.sports, size: 64, color: const Color(0xFF9CA3AF)),
                       const SizedBox(height: 12),
                       Text(
                         '$_selectedDate のレースデータなし',
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: const Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 4),
                       const Text(
                         '毎朝 07:30 に自動取得されます',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
                       ),
                       const SizedBox(height: 16),
                       const Text(
                         'AI予想はバッチ処理 (毎時00分 UTC) で自動生成されます',
-                        style: TextStyle(color: Colors.grey, fontSize: 11),
+                        style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 11),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -394,7 +394,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       statusColor = const Color(0xFFFF6B35);
       statusLabel = postTime ?? '予定';
     } else {
-      statusColor = Colors.grey;
+      statusColor = const Color(0xFF9CA3AF);
       statusLabel = '終了';
     }
 
@@ -465,7 +465,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               '$courseType${distance != null ? ' ${distance}m' : ''}',
               '${entries.length}頭',
             ].join(' · '),
-            style: TextStyle(color: Colors.grey[500], fontSize: 12),
+            style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12),
           ),
           trailing: Chip(
             label: Text(
@@ -486,20 +486,20 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.08),
+                  color: const Color(0xFF9CA3AF).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
                     Icon(
                       Icons.psychology_outlined,
-                      color: Colors.grey,
+                      color: const Color(0xFF9CA3AF),
                       size: 18,
                     ),
                     SizedBox(width: 8),
                     Text(
                       'AI予想未生成',
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13),
                     ),
                   ],
                 ),
@@ -509,7 +509,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               const Text(
                 '出走馬',
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: const Color(0xFF9CA3AF),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -531,7 +531,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     final prevRace = en['prev_race_name'] as String?;
                     final prevDays = (en['prev_days_ago'] as num?)?.toInt();
 
-                    Color prevColor = Colors.grey;
+                    Color prevColor = const Color(0xFF9CA3AF);
                     if (prevFinish == 1) {
                       prevColor = const Color(0xFFFFD700);
                     } else if (prevFinish != null && prevFinish <= 3) {
@@ -585,7 +585,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     Text(
                       'ほか ${entries.length - 10}頭',
                       style: const TextStyle(
-                        color: Colors.grey,
+                        color: const Color(0xFF9CA3AF),
                         fontSize: 11,
                       ),
                     ),
@@ -730,13 +730,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           const SizedBox(height: 8),
           Row(
             children: [
-              _placeLabel('1着', first, Colors.amber),
+              _placeLabel('1着', first, const Color(0xFFFFC107)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child:
                     Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
               ),
-              _placeLabel('2着', second, Colors.grey[400]!),
+              _placeLabel('2着', second, const Color(0xFF9CA3AF)!),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child:
@@ -749,7 +749,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             const SizedBox(height: 6),
             Text(
               reasoning,
-              style: TextStyle(color: Colors.grey[500], fontSize: 11),
+              style: TextStyle(color: const Color(0xFF6B7280), fontSize: 11),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -793,9 +793,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
+            Icon(Icons.history, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
-            Text('予想履歴がありません', style: TextStyle(color: Colors.grey)),
+            Text('予想履歴がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -877,14 +877,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 Text(
                   '${venue != null ? '$venue · ' : ''}'
                   '$raceDate · 信頼度${(confidence * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                  style: TextStyle(color: const Color(0xFF6B7280), fontSize: 11),
                 ),
                 if (hasResult)
                   Text(
                     '実際: ${result['first_place'] ?? '?'} - '
                     '${result['second_place'] ?? '?'} - '
                     '${result['third_place'] ?? '?'}',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                    style: TextStyle(color: const Color(0xFF4B5563), fontSize: 11),
                   ),
               ],
             ),
@@ -978,7 +978,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       ? '¥${NumberFormat('#,###').format(maxPayout)}'
                       : '-',
                   Icons.emoji_events,
-                  Colors.amber,
+                  const Color(0xFFFFC107),
                 ),
               ),
               const SizedBox(width: 10),
@@ -989,7 +989,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       ? '¥${NumberFormat('#,###').format(totalPayout)}'
                       : '-',
                   Icons.payments,
-                  Colors.teal,
+                  const Color(0xFF009688),
                 ),
               ),
             ],
@@ -1027,7 +1027,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   width: 110,
                   child: Text(
                     pair.$1,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(color: const Color(0xFF6B7280), fontSize: 12),
                   ),
                 ),
                 Expanded(
@@ -1065,7 +1065,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               const SizedBox(width: 6),
               Text(
                 title,
-                style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 11),
               ),
             ],
           ),
@@ -1084,11 +1084,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Color _gradeColor(String grade) {
-    if (grade.startsWith('G1')) return Colors.amber;
-    if (grade.startsWith('G2')) return Colors.grey[300]!;
+    if (grade.startsWith('G1')) return const Color(0xFFFFC107);
+    if (grade.startsWith('G2')) return const Color(0xFFD1D5DB)!;
     if (grade.startsWith('G3')) return Colors.brown[300]!;
     if (grade == 'リステッド') return Colors.blue[300]!;
     if (grade == 'オープン') return Colors.purple[300]!;
-    return Colors.grey[600]!;
+    return const Color(0xFF4B5563)!;
   }
 }
