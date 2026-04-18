@@ -1,7 +1,7 @@
 ---
 title: "Building a Badge & Achievement System with Flutter + Supabase"
 tags: Flutter,Supabase,buildinpublic,webdev,Gamification
-published: false
+published: true
 ---
 
 # Building a Badge & Achievement System with Flutter + Supabase

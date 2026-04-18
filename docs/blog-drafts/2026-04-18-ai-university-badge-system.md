@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase でバッジ・実績システムを作った — AI大学の裏側"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter × Supabase でバッジ・実績システムを作った — AI大学の裏側
