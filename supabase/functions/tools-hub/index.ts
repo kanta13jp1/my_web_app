@@ -173,11 +173,31 @@ serve(async (req) => {
           // deno-lint-ignore no-explicit-any
           const unpredicted = races.filter((r: any) => !r.horse_predictions || r.horse_predictions.length === 0);
           if (unpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
-          const results = [];
+          const results: Array<Record<string, unknown>> = [];
+          const failures: Array<Record<string, unknown>> = [];
+          // ユーザー報告 (Win版#93): 100+レースを直列で Gemini 呼び出す → 途中で
+          // 429 quota/transient error で残り全滅 + silent catch で発見できなかった。
+          // 修正: 並列化 + per-race 失敗ログ + 429 検知で早期break (次cron再試行)
+          let quotaExceeded = false;
           for (const race of unpredicted) {
+            if (quotaExceeded) {
+              failures.push({
+                race_id: race.id,
+                race_name: race.race_name,
+                reason: "skipped: Gemini quota exceeded earlier in batch",
+              });
+              continue;
+            }
             // deno-lint-ignore no-explicit-any
             const entries = (race.horse_entries as any[]) ?? [];
-            if (entries.length < 3) continue;
+            if (entries.length < 3) {
+              failures.push({
+                race_id: race.id,
+                race_name: race.race_name,
+                reason: `entries < 3 (${entries.length}頭)`,
+              });
+              continue;
+            }
             const entryText = entries.map((e) =>
               `馬番${e.horse_number} ${e.horse_name} (騎手:${e.jockey ?? "不明"}, 単勝${e.win_odds ?? "?"}倍, ${e.popularity ?? "?"}番人気)`
             ).join("\n");
@@ -188,9 +208,36 @@ serve(async (req) => {
                 { method: "POST", headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
               );
+              if (!res.ok) {
+                const errText = await res.text().catch(() => "");
+                const isQuota = res.status === 429 ||
+                  /quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(errText);
+                failures.push({
+                  race_id: race.id,
+                  race_name: race.race_name,
+                  reason: `Gemini HTTP ${res.status}`,
+                  detail: errText.slice(0, 200),
+                });
+                if (isQuota) {
+                  console.warn(`[predict_all] Gemini quota at race ${race.id}. Skipping remaining.`);
+                  quotaExceeded = true;
+                }
+                continue;
+              }
               const aiData = await res.json() as { candidates?: [{ content: { parts: [{ text: string }] } }] };
               const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-              const pred = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
+              let pred: Record<string, unknown>;
+              try {
+                pred = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
+              } catch (parseErr) {
+                failures.push({
+                  race_id: race.id,
+                  race_name: race.race_name,
+                  reason: `JSON.parse failed: ${parseErr}`,
+                  detail: text.slice(0, 200),
+                });
+                continue;
+              }
               const { error: ie } = await admin.from("horse_predictions").upsert({
                 race_id: race.id, first_pick: pred.first ?? entries[0].horse_name,
                 second_pick: pred.second ?? entries[1].horse_name,
@@ -198,10 +245,31 @@ serve(async (req) => {
                 confidence: pred.confidence ?? 0.5, ai_reasoning: pred.reasoning ?? "",
                 ai_model: "gemini-2.5-flash",
               }, { onConflict: "race_id" });
-              if (!ie) results.push({ race_id: race.id, race_name: race.race_name, ...pred });
-            } catch { /* ignore per-race errors */ }
+              if (ie) {
+                failures.push({
+                  race_id: race.id,
+                  race_name: race.race_name,
+                  reason: `upsert failed: ${ie.message}`,
+                });
+              } else {
+                results.push({ race_id: race.id, race_name: race.race_name, ...pred });
+              }
+            } catch (err) {
+              failures.push({
+                race_id: race.id,
+                race_name: race.race_name,
+                reason: `exception: ${String(err).slice(0, 200)}`,
+              });
+            }
           }
-          return json({ success: true, predictions: results, count: results.length });
+          return json({
+            success: true,
+            predictions: results,
+            count: results.length,
+            failures,
+            failure_count: failures.length,
+            quota_exceeded: quotaExceeded,
+          });
         }
         case "horseracing.predictions": {
           const { data: preds, error: pe } = await admin.from("horse_predictions")
