@@ -1,7 +1,7 @@
 ---
 title: "Claude + Groq で学習プロファイルを自動構築した — AI大学 Memory Agent"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Claude + Groq で学習プロファイルを自動構築した — AI大学 Memory Agent

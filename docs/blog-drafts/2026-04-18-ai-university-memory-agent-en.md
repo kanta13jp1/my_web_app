@@ -1,7 +1,7 @@
 ---
 title: "Claude + Groq Hybrid LLM — AI University Memory Agent"
 tags: Flutter,Supabase,buildinpublic,webdev,FlutterTips
-published: false
+published: true
 ---
 
 # Claude + Groq Hybrid LLM — AI University Memory Agent
