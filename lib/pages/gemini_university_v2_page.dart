@@ -578,6 +578,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0052CC),
     officialUrl: 'https://nebius.com/ai-studio',
   ),
+  'fal_ai': _ProviderMeta(
+    name: 'fal.ai',
+    emoji: '🎬',
+    color: const Color(0xFFFF4D6D),
+    officialUrl: 'https://fal.ai/',
+  ),
+  'fish_audio': _ProviderMeta(
+    name: 'Fish Audio',
+    emoji: '🐟',
+    color: const Color(0xFF1E88E5),
+    officialUrl: 'https://fish.audio/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1114,6 +1126,26 @@ final Map<String, _Quiz> _quizzes = {
       '画像・動画・音声を含むマルチモーダル GPU 推論クラウド',
       'コードのみ',
       '音楽生成専用',
+    ],
+    correct: 1,
+  ),
+  'fal_ai': _Quiz(
+    question: 'fal.ai が統一 API でホストしている代表的な動画生成モデルは?',
+    options: [
+      'Gemini Veo 3 のみ',
+      'Seedance 2.0 / SVD-XT / Stable Video',
+      'Sora 単独',
+      'Runway Gen-3 単独',
+    ],
+    correct: 1,
+  ),
+  'fish_audio': _Quiz(
+    question: 'Fish Audio のオープンソース TTS モデル名は?',
+    options: [
+      'Whisper Voice',
+      'Fish Speech S1',
+      'Bark Tiny',
+      'XTTS-v3',
     ],
     correct: 1,
   ),
@@ -2540,6 +2572,47 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 ## API
 - `https://api.studio.nebius.com/v1/chat/completions`
 - 自分株式会社では **Performance Tier** に分類
+''',
+  'fal_ai': '''
+# fal.ai
+
+米国発の **生成メディア統合 API**。1,000+ モデル (画像/動画/音声/3D) を 1 キーで呼べる低遅延 GPU クラウド。
+
+## 主要モデル
+- **Seedance 2.0** — 1080p 高品質動画生成
+- **FLUX.1 [dev]** — Black Forest Labs SOTA 画像
+- **Nano Banana** — Gemini 2.5 Flash Image (高速)
+- **Stable Audio** — テキスト → 楽曲
+- **TripoSR** — 単一画像 → 3Dメッシュ
+
+## 強み
+- 専用最適化エンジンで他社比 4倍高速
+- WebSocket リアルタイムストリーミング
+- LoRA 即時デプロイ (HF から数分)
+
+## API
+- `pip install fal-client` → API key で 3 行コード
+- 詳細: https://fal.ai/docs/documentation
+''',
+  'fish_audio': '''
+# Fish Audio
+
+中国発の **音声 AI 専業プラットフォーム**。70+ 言語 / 1,000+ プリビルド音声 / 即時ボイスクローン。
+
+## 主要モデル
+- **Fish Speech S1** — フラッグシップ TTS (OSS)
+- **Fish Speech S1-Mini** — エッジ向け軽量版
+- **Voice Clone v2** — 5 秒サンプルで即時クローン
+- **Real-time Stream** — WebSocket フレーム単位返却
+
+## 強み
+- 200ms 以内で最初のフレーム返却 (会話 AI 向け)
+- CJK (中国語/日本語/英語) 高品質
+- OSS Fish Speech S1 は GitHub で無料公開
+
+## API
+- `https://api.fish.audio/v1/tts`
+- OSS: https://github.com/fishaudio/fish-speech
 ''',
 };
 

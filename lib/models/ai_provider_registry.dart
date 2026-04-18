@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (88社, 2026-04-18時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (90社, 2026-04-18時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -672,6 +672,20 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     envKeyName: 'NOVITA_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: r'Llama-3.1-70B $0.23/$0.23 per 1M・クレジット制・100+モデル対応',
+  ),
+  AiProviderEntry(
+    id: 'fal_ai',
+    displayName: 'fal.ai',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — 1000+モデル統合・画像/動画/音声/3D マルチモーダル)',
+    note: r'FLUX/Seedance 2.0/Stable Audio・$0.025/img・低遅延 GPU クラウド',
+  ),
+  AiProviderEntry(
+    id: 'fish_audio',
+    displayName: 'Fish Audio',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(未実装 — TTS 専業 70+言語・リアルタイムストリーミング)',
+    note: r'Fish Speech S1 (OSS)・$15/100万文字・ボイスクローン即時',
   ),
 ];
 

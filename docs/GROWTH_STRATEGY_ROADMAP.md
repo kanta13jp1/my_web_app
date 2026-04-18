@@ -10830,3 +10830,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 2. 🟡 **cross-instance-pr対応**: `20260418_claude_design_flutter_importer.md` → VSCode版スコープ (未対応)
 3. 🟢 **ai-hub Phase9+**: siliconflow/novita_ai を ai-hub PROVIDER_CONFIGS に追加 (AI大学は済み)
 4. 🔵 **T-1 #122**: 次回ブログ候補 = AI大学88社達成記事
+
+### Windowsアプリ版#96 (2026-04-18 PM)
+- **AI大学 88→90社**: Step 0 discovery → fal.ai (9/9) + Fish Audio (8/9) 追加
+- **fal.ai**: 1000+モデル統合 (Seedance 2.0/FLUX/Stable Audio/TripoSR) 低遅延 GPU クラウド
+- **Fish Audio**: 70+言語 TTS / Fish Speech S1 OSS / 即時ボイスクローン
+- **PS#121 並行衝突**: deepinfra+nebius 88社昇格と同時進行 → stash + rebase + 3 conflict 手動解決 (yml + UI _providerMeta + UI _fallback)
+- **更新**: migration 2本 + registry +2 (notImplemented) + UI 3 maps +2 + yml +2 RSS + CLAUDE.md/COMPRESSED list / N社 88→90 (3 files)
+- **品質**: dart format 0 changed / flutter analyze 0 issues / deno lint clean
