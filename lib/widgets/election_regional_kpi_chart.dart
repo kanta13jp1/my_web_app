@@ -635,8 +635,11 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   subtitle: Text(
                     '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',
                   ),
-                  trailing: const Icon(Icons.edit,
-                      size: 16, color: Color(0xFFB0B0B0)),
+                  trailing: const Icon(
+                    Icons.edit,
+                    size: 16,
+                    color: Color(0xFFB0B0B0),
+                  ),
                   onTap: () async {
                     try {
                       final supabase = Supabase.instance.client;

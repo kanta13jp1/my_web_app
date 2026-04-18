@@ -206,7 +206,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         Text(
                           '${_selectedContentMode.label} - 1ページ最大${_selectedContentMode.maxCharsPerPage}文字',
                           style: const TextStyle(
-                              fontSize: 12, color: Color(0xFFB0B0B0)),
+                            fontSize: 12,
+                            color: Color(0xFFB0B0B0),
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
