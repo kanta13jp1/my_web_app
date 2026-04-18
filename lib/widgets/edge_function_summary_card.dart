@@ -207,6 +207,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/development-achievements',
       '開発実績ページ > 完了済みタスク・実績リスト',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'semantic-search',
+      'セマンティック検索 (意味ベース検索)',
+      true,
+      '/semantic-search',
+      'セマンティック検索ページ > キーワード入力で意味ベース検索',
+    ),
+    _FnDef(
+      'sitemap-analytics',
+      'サイトマップ・Web分析',
+      true,
+      '/sitemap-analytics',
+      'サイトマップ分析ページ > ページ別アクセス数・直帰率',
+    ),
+    _FnDef(
+      'social-feed',
+      'ソーシャルフィード (投稿フィード)',
+      true,
+      '/social-feed',
+      'ソーシャルフィードページ > 公開/フォロー別フィード表示',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
