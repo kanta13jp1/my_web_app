@@ -68,6 +68,203 @@ async function deleteItem(admin: SupabaseClient, source: string, userId: string,
   if (error) throw new Error(error.message);
 }
 
+// ===== Horse Racing Multi-Provider Ensemble (Windows版#94) =====
+// Quota/failure 時に自動 fallback + 複数プロバイダーで1レースの予想を蓄積
+// して精度を向上させる。shared chat 基盤 (ai-hub) と独立させているのは
+// horse racing 固有のプロンプト・JSON schema・コスト追跡が混ざらないため。
+
+type HorseProviderConfig = {
+  provider: string;
+  model: string;
+  apiKeyEnv: string;
+  estimatedCostUsd: number;
+};
+
+const HORSE_PROVIDER_CHAIN: HorseProviderConfig[] = [
+  { provider: "google", model: "gemini-2.5-flash", apiKeyEnv: "GEMINI_API_KEY", estimatedCostUsd: 0.0005 },
+  { provider: "openai", model: "gpt-4o-mini", apiKeyEnv: "OPENAI_API_KEY", estimatedCostUsd: 0.002 },
+  { provider: "anthropic", model: "claude-haiku-4-5", apiKeyEnv: "ANTHROPIC_API_KEY", estimatedCostUsd: 0.003 },
+  { provider: "xai", model: "grok-4-1-fast-non-reasoning", apiKeyEnv: "XAI_API_KEY", estimatedCostUsd: 0.002 },
+];
+
+type ProviderPredictionResult = {
+  success: boolean;
+  prediction?: {
+    first: string;
+    second: string;
+    third: string;
+    confidence: number;
+    reasoning: string;
+  };
+  error?: {
+    http_status?: number;
+    reason: string;
+    detail?: string;
+    is_quota: boolean;
+  };
+  latency_ms: number;
+};
+
+function buildHorseRacePrompt(race: Record<string, unknown>, entries: Record<string, unknown>[]): string {
+  const entryText = entries.map((e) =>
+    `馬番${e.horse_number} ${e.horse_name} (騎手:${e.jockey ?? "不明"}, 単勝${e.win_odds ?? "?"}倍, ${e.popularity ?? "?"}番人気)`
+  ).join("\n");
+  return `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の3連単予想をしてください。\n出走馬:\n${entryText}\n\nJSON形式のみで回答 (前後に説明文を入れない): {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠"}`;
+}
+
+async function callProviderForHorsePrediction(
+  cfg: HorseProviderConfig,
+  prompt: string,
+): Promise<ProviderPredictionResult> {
+  const apiKey = Deno.env.get(cfg.apiKeyEnv) ?? "";
+  if (!apiKey) {
+    return {
+      success: false,
+      error: { reason: `${cfg.apiKeyEnv} not configured`, is_quota: false },
+      latency_ms: 0,
+    };
+  }
+  const startMs = Date.now();
+  try {
+    let res: Response;
+    let rawText = "";
+
+    if (cfg.provider === "google") {
+      res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        },
+      );
+      if (res.ok) {
+        const data = await res.json() as { candidates?: Array<{ content: { parts: Array<{ text: string }> } }> };
+        rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      }
+    } else if (cfg.provider === "openai" || cfg.provider === "xai") {
+      const url = cfg.provider === "openai"
+        ? "https://api.openai.com/v1/chat/completions"
+        : "https://api.x.ai/v1/chat/completions";
+      res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: cfg.model,
+          messages: [
+            { role: "system", content: "あなたは競馬予想AIです。必ずJSONのみで回答してください。" },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.3,
+          response_format: { type: "json_object" },
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { choices?: Array<{ message: { content: string } }> };
+        rawText = data.choices?.[0]?.message?.content ?? "";
+      }
+    } else if (cfg.provider === "anthropic") {
+      res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: cfg.model,
+          max_tokens: 1024,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { content?: Array<{ text: string }> };
+        rawText = data.content?.[0]?.text ?? "";
+      }
+    } else {
+      return {
+        success: false,
+        error: { reason: `unknown provider: ${cfg.provider}`, is_quota: false },
+        latency_ms: Date.now() - startMs,
+      };
+    }
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      const isQuota = res.status === 429 ||
+        /quota|rate.?limit|RESOURCE_EXHAUSTED|insufficient_quota/i.test(errText);
+      return {
+        success: false,
+        error: {
+          http_status: res.status,
+          reason: `${cfg.provider} HTTP ${res.status}`,
+          detail: errText.slice(0, 200),
+          is_quota: isQuota,
+        },
+        latency_ms: Date.now() - startMs,
+      };
+    }
+
+    let pred: Record<string, unknown>;
+    try {
+      pred = JSON.parse(rawText.replace(/```json\n?|\n?```/g, "").trim());
+    } catch (parseErr) {
+      return {
+        success: false,
+        error: {
+          reason: `JSON.parse failed: ${parseErr}`,
+          detail: rawText.slice(0, 200),
+          is_quota: false,
+        },
+        latency_ms: Date.now() - startMs,
+      };
+    }
+
+    return {
+      success: true,
+      prediction: {
+        first: String(pred.first ?? ""),
+        second: String(pred.second ?? ""),
+        third: String(pred.third ?? ""),
+        confidence: Number(pred.confidence ?? 0.5),
+        reasoning: String(pred.reasoning ?? ""),
+      },
+      latency_ms: Date.now() - startMs,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: { reason: `exception: ${String(err).slice(0, 200)}`, is_quota: false },
+      latency_ms: Date.now() - startMs,
+    };
+  }
+}
+
+async function persistEnsemblePrediction(
+  admin: SupabaseClient,
+  raceId: string,
+  cfg: HorseProviderConfig,
+  result: ProviderPredictionResult,
+): Promise<void> {
+  if (!result.success || !result.prediction) return;
+  await admin.from("horse_race_predictions_ensemble").upsert({
+    race_id: raceId,
+    provider: cfg.provider,
+    model: cfg.model,
+    first_pick: result.prediction.first,
+    second_pick: result.prediction.second,
+    third_pick: result.prediction.third,
+    confidence: result.prediction.confidence,
+    reasoning: result.prediction.reasoning,
+    prediction_json: result.prediction,
+    estimated_cost_usd: cfg.estimatedCostUsd,
+    latency_ms: result.latency_ms,
+  }, { onConflict: "race_id,provider,model" });
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -163,8 +360,10 @@ serve(async (req) => {
           return json({ success: true, races: races ?? [] });
         }
         case "horseracing.predict_all": {
-          const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
-          if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
+          // Windows版#94: quota fallback chain 対応
+          // 1) レース毎に HORSE_PROVIDER_CHAIN を順に試行 (quota時は次プロバイダー)
+          // 2) 成功した予想を horse_predictions (互換維持) + horse_race_predictions_ensemble に両方記録
+          // 3) 全プロバイダーquota時のみ残りレースを早期skip
           const targetDate = String(body.date ?? new Date().toISOString().split("T")[0]);
           const { data: races } = await admin.from("horse_races")
             .select("*, horse_entries(*), horse_predictions(id)")
@@ -175,16 +374,18 @@ serve(async (req) => {
           if (unpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
           const results: Array<Record<string, unknown>> = [];
           const failures: Array<Record<string, unknown>> = [];
-          // ユーザー報告 (Win版#93): 100+レースを直列で Gemini 呼び出す → 途中で
-          // 429 quota/transient error で残り全滅 + silent catch で発見できなかった。
-          // 修正: 並列化 + per-race 失敗ログ + 429 検知で早期break (次cron再試行)
-          let quotaExceeded = false;
+          const providerStats: Record<string, { attempts: number; hits: number; quotas: number }> = {};
+          for (const cfg of HORSE_PROVIDER_CHAIN) {
+            providerStats[cfg.provider] = { attempts: 0, hits: 0, quotas: 0 };
+          }
+          const exhaustedProviders = new Set<string>();
+
           for (const race of unpredicted) {
-            if (quotaExceeded) {
+            if (exhaustedProviders.size >= HORSE_PROVIDER_CHAIN.length) {
               failures.push({
                 race_id: race.id,
                 race_name: race.race_name,
-                reason: "skipped: Gemini quota exceeded earlier in batch",
+                reason: "skipped: all providers exhausted (quota)",
               });
               continue;
             }
@@ -198,67 +399,72 @@ serve(async (req) => {
               });
               continue;
             }
-            const entryText = entries.map((e) =>
-              `馬番${e.horse_number} ${e.horse_name} (騎手:${e.jockey ?? "不明"}, 単勝${e.win_odds ?? "?"}倍, ${e.popularity ?? "?"}番人気)`
-            ).join("\n");
-            const prompt = `競馬レース「${race.race_name}」(${race.venue ?? ""}/${race.course_type ?? "芝"}${race.distance ?? ""}m/${race.grade ?? ""}) の3連単予想をしてください。\n出走馬:\n${entryText}\n\nJSON形式で回答: {"first":"予想馬名1","second":"予想馬名2","third":"予想馬名3","confidence":0.0,"reasoning":"根拠"}`;
-            try {
-              const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
-                { method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) }
-              );
-              if (!res.ok) {
-                const errText = await res.text().catch(() => "");
-                const isQuota = res.status === 429 ||
-                  /quota|rate.?limit|RESOURCE_EXHAUSTED/i.test(errText);
-                failures.push({
-                  race_id: race.id,
-                  race_name: race.race_name,
-                  reason: `Gemini HTTP ${res.status}`,
-                  detail: errText.slice(0, 200),
-                });
-                if (isQuota) {
-                  console.warn(`[predict_all] Gemini quota at race ${race.id}. Skipping remaining.`);
-                  quotaExceeded = true;
-                }
-                continue;
+            const prompt = buildHorseRacePrompt(race, entries);
+            let succeededCfg: HorseProviderConfig | null = null;
+            let succeededResult: ProviderPredictionResult | null = null;
+            const perRaceFailures: Array<Record<string, unknown>> = [];
+
+            for (const cfg of HORSE_PROVIDER_CHAIN) {
+              if (exhaustedProviders.has(cfg.provider)) continue;
+              providerStats[cfg.provider].attempts += 1;
+              const result = await callProviderForHorsePrediction(cfg, prompt);
+              if (result.success) {
+                providerStats[cfg.provider].hits += 1;
+                succeededCfg = cfg;
+                succeededResult = result;
+                break;
               }
-              const aiData = await res.json() as { candidates?: [{ content: { parts: [{ text: string }] } }] };
-              const text = aiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-              let pred: Record<string, unknown>;
-              try {
-                pred = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
-              } catch (parseErr) {
-                failures.push({
-                  race_id: race.id,
-                  race_name: race.race_name,
-                  reason: `JSON.parse failed: ${parseErr}`,
-                  detail: text.slice(0, 200),
-                });
-                continue;
+              perRaceFailures.push({
+                provider: cfg.provider,
+                model: cfg.model,
+                reason: result.error?.reason,
+                http_status: result.error?.http_status,
+                is_quota: result.error?.is_quota ?? false,
+              });
+              if (result.error?.is_quota) {
+                providerStats[cfg.provider].quotas += 1;
+                exhaustedProviders.add(cfg.provider);
+                console.warn(`[predict_all] ${cfg.provider} quota exceeded — fallback to next provider.`);
               }
-              const { error: ie } = await admin.from("horse_predictions").upsert({
-                race_id: race.id, first_pick: pred.first ?? entries[0].horse_name,
-                second_pick: pred.second ?? entries[1].horse_name,
-                third_pick: pred.third ?? entries[2].horse_name,
-                confidence: pred.confidence ?? 0.5, ai_reasoning: pred.reasoning ?? "",
-                ai_model: "gemini-2.5-flash",
-              }, { onConflict: "race_id" });
-              if (ie) {
-                failures.push({
-                  race_id: race.id,
-                  race_name: race.race_name,
-                  reason: `upsert failed: ${ie.message}`,
-                });
-              } else {
-                results.push({ race_id: race.id, race_name: race.race_name, ...pred });
-              }
-            } catch (err) {
+            }
+
+            if (!succeededCfg || !succeededResult || !succeededResult.prediction) {
               failures.push({
                 race_id: race.id,
                 race_name: race.race_name,
-                reason: `exception: ${String(err).slice(0, 200)}`,
+                reason: "all providers failed",
+                provider_failures: perRaceFailures,
+              });
+              continue;
+            }
+
+            // 1) ensemble table に記録 (プロバイダー別蓄積)
+            await persistEnsemblePrediction(admin, race.id, succeededCfg, succeededResult);
+
+            // 2) 互換維持: horse_predictions (代表1件) に最初の成功プロバイダー結果を入れる
+            const pred = succeededResult.prediction;
+            const { error: ie } = await admin.from("horse_predictions").upsert({
+              race_id: race.id,
+              first_pick: pred.first || entries[0].horse_name,
+              second_pick: pred.second || entries[1].horse_name,
+              third_pick: pred.third || entries[2].horse_name,
+              confidence: pred.confidence,
+              ai_reasoning: pred.reasoning,
+              ai_model: `${succeededCfg.provider}:${succeededCfg.model}`,
+            }, { onConflict: "race_id" });
+            if (ie) {
+              failures.push({
+                race_id: race.id,
+                race_name: race.race_name,
+                reason: `horse_predictions upsert failed: ${ie.message}`,
+              });
+            } else {
+              results.push({
+                race_id: race.id,
+                race_name: race.race_name,
+                provider: succeededCfg.provider,
+                model: succeededCfg.model,
+                ...pred,
               });
             }
           }
@@ -268,8 +474,168 @@ serve(async (req) => {
             count: results.length,
             failures,
             failure_count: failures.length,
-            quota_exceeded: quotaExceeded,
+            provider_stats: providerStats,
+            exhausted_providers: Array.from(exhaustedProviders),
           });
+        }
+        case "horseracing.predict_ensemble": {
+          // 1レースに対し全プロバイダーで並列予想 → ensemble table に記録
+          // body: { race_id, providers?: string[], force?: boolean }
+          const raceId = String(body.race_id ?? "");
+          if (!raceId) return json({ error: "race_id required" }, 400);
+          const whitelist: string[] | null = Array.isArray(body.providers) ? body.providers.map(String) : null;
+          const force = Boolean(body.force ?? false);
+          const { data: race, error: re } = await admin.from("horse_races")
+            .select("*, horse_entries(*)")
+            .eq("id", raceId)
+            .maybeSingle();
+          if (re) throw new Error(re.message);
+          if (!race) return json({ error: "race not found" }, 404);
+          // deno-lint-ignore no-explicit-any
+          const entries = ((race as any).horse_entries as any[]) ?? [];
+          if (entries.length < 3) return json({ error: `entries < 3 (${entries.length})` }, 400);
+
+          const targetCfgs = whitelist
+            ? HORSE_PROVIDER_CHAIN.filter((c) => whitelist.includes(c.provider))
+            : HORSE_PROVIDER_CHAIN;
+          if (targetCfgs.length === 0) return json({ error: "no providers selected" }, 400);
+
+          // 既に予想済みの provider は skip (force=true でやり直し)
+          let existing: Set<string> = new Set();
+          if (!force) {
+            const { data: ex } = await admin.from("horse_race_predictions_ensemble")
+              .select("provider, model")
+              .eq("race_id", raceId);
+            existing = new Set((ex ?? []).map((r: Record<string, unknown>) => `${r.provider}:${r.model}`));
+          }
+
+          const prompt = buildHorseRacePrompt(race as Record<string, unknown>, entries);
+          const jobs = targetCfgs
+            .filter((cfg) => !existing.has(`${cfg.provider}:${cfg.model}`))
+            .map(async (cfg) => {
+              const result = await callProviderForHorsePrediction(cfg, prompt);
+              if (result.success) {
+                await persistEnsemblePrediction(admin, raceId, cfg, result);
+              }
+              return { cfg, result };
+            });
+          const settled = await Promise.all(jobs);
+          const succeeded = settled.filter((s) => s.result.success);
+          const failed = settled.filter((s) => !s.result.success);
+          return json({
+            success: true,
+            race_id: raceId,
+            attempted: settled.length,
+            succeeded: succeeded.map((s) => ({
+              provider: s.cfg.provider,
+              model: s.cfg.model,
+              prediction: s.result.prediction,
+              latency_ms: s.result.latency_ms,
+            })),
+            failed: failed.map((s) => ({
+              provider: s.cfg.provider,
+              model: s.cfg.model,
+              reason: s.result.error?.reason,
+              is_quota: s.result.error?.is_quota ?? false,
+            })),
+            skipped_already_predicted: targetCfgs.length - settled.length,
+          });
+        }
+        case "horseracing.consensus": {
+          // 1レースの全予想をプロバイダー横断で集計しコンセンサスを返す
+          // body: { race_id }
+          const raceId = String(body.race_id ?? "");
+          if (!raceId) return json({ error: "race_id required" }, 400);
+          const { data: preds, error: pe } = await admin.from("horse_race_predictions_ensemble")
+            .select("provider, model, first_pick, second_pick, third_pick, confidence, reasoning, predicted_at")
+            .eq("race_id", raceId)
+            .order("predicted_at", { ascending: true });
+          if (pe) throw new Error(pe.message);
+          const rows = preds ?? [];
+          if (rows.length === 0) {
+            return json({ success: true, race_id: raceId, consensus: null, predictions: [] });
+          }
+          // 1着票数 + 信頼度加重集計
+          const firstVotes: Record<string, { votes: number; weighted: number; providers: string[] }> = {};
+          for (const p of rows) {
+            const horse = String(p.first_pick ?? "").trim();
+            if (!horse) continue;
+            if (!firstVotes[horse]) firstVotes[horse] = { votes: 0, weighted: 0, providers: [] };
+            firstVotes[horse].votes += 1;
+            firstVotes[horse].weighted += Number(p.confidence ?? 0.5);
+            firstVotes[horse].providers.push(`${p.provider}:${p.model}`);
+          }
+          const sortedFirst = Object.entries(firstVotes)
+            .sort((a, b) => b[1].weighted - a[1].weighted);
+          const top = sortedFirst[0];
+          const agreementRate = top ? top[1].votes / rows.length : 0;
+          return json({
+            success: true,
+            race_id: raceId,
+            predictions: rows,
+            total_providers: rows.length,
+            consensus: top ? {
+              first_pick: top[0],
+              votes: top[1].votes,
+              weighted_score: Math.round(top[1].weighted * 1000) / 1000,
+              providers: top[1].providers,
+              agreement_rate: Math.round(agreementRate * 1000) / 1000,
+            } : null,
+            first_pick_distribution: sortedFirst.map(([horse, v]) => ({
+              horse,
+              votes: v.votes,
+              weighted: Math.round(v.weighted * 1000) / 1000,
+              providers: v.providers,
+            })),
+          });
+        }
+        case "horseracing.provider_leaderboard": {
+          const { data, error: le } = await admin.from("horse_provider_leaderboard")
+            .select("*");
+          if (le) throw new Error(le.message);
+          return json({ success: true, leaderboard: data ?? [] });
+        }
+        case "horseracing.evaluate_accuracy": {
+          // 結果確定済みレースの ensemble 予想を全てスコアリング
+          // body: { race_id? } (指定時は1レース、省略時は最新50レース)
+          const raceId = body.race_id ? String(body.race_id) : null;
+          const resultsQuery = admin.from("horse_results")
+            .select("race_id, first_place, second_place, third_place");
+          const { data: resultsRows, error: resErr } = raceId
+            ? await resultsQuery.eq("race_id", raceId)
+            : await resultsQuery.order("created_at", { ascending: false }).limit(50);
+          if (resErr) throw new Error(resErr.message);
+          if (!resultsRows || resultsRows.length === 0) {
+            return json({ success: true, evaluated: 0, message: "no finalized results" });
+          }
+          let evaluated = 0;
+          for (const r of resultsRows as Array<Record<string, unknown>>) {
+            const rid = String(r.race_id);
+            const { data: preds } = await admin.from("horse_race_predictions_ensemble")
+              .select("provider, model, first_pick, second_pick, third_pick")
+              .eq("race_id", rid);
+            for (const p of (preds ?? []) as Array<Record<string, unknown>>) {
+              const firstCorrect = String(p.first_pick ?? "").trim() === String(r.first_place ?? "").trim();
+              const trifectaCorrect = firstCorrect
+                && String(p.second_pick ?? "").trim() === String(r.second_place ?? "").trim()
+                && String(p.third_pick ?? "").trim() === String(r.third_place ?? "").trim();
+              await admin.from("horse_prediction_accuracy").upsert({
+                race_id: rid,
+                provider: p.provider,
+                model: p.model,
+                predicted_first: p.first_pick,
+                predicted_second: p.second_pick,
+                predicted_third: p.third_pick,
+                actual_first: r.first_place,
+                actual_second: r.second_place,
+                actual_third: r.third_place,
+                first_correct: firstCorrect,
+                trifecta_correct: trifectaCorrect,
+              }, { onConflict: "race_id,provider,model" });
+              evaluated += 1;
+            }
+          }
+          return json({ success: true, evaluated, races_processed: resultsRows.length });
         }
         case "horseracing.predictions": {
           const { data: preds, error: pe } = await admin.from("horse_predictions")
@@ -780,6 +1146,8 @@ serve(async (req) => {
             "vault.list", "vault.add", "vault.delete",
             "pet.status", "pet.feed",
             "horseracing.today", "horseracing.list_races", "horseracing.predict_all",
+            "horseracing.predict_ensemble", "horseracing.consensus",
+            "horseracing.provider_leaderboard", "horseracing.evaluate_accuracy",
             "horseracing.predictions", "horseracing.store_results", "horseracing.accuracy",
             "horseracing.register_race", "horseracing.stats",
             "slack.post", "slack.search",

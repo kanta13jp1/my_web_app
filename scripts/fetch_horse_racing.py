@@ -762,18 +762,40 @@ def fetch_results(target_date: str):
 
 
 def trigger_ai_predictions(target_date: str):
-    """tools-hub を呼び出して AI 3連単予想を実行"""
+    """tools-hub を呼び出して AI 3連単予想を実行 (multi-provider fallback chain)"""
     print(f"[INFO] {target_date} のAI予想を実行中...")
     result = tools_hub_call("horseracing.predict_all", {"date": target_date})
     count = result.get("count", 0)
     msg = result.get("message", "")
     print(f"[DONE] {count}件の予想完了 {msg}")
     for pred in result.get("predictions", []):
+        provider = pred.get("provider", "?")
+        model = pred.get("model", "?")
         print(
-            f"  {pred.get('race_name', '?')}: "
+            f"  {pred.get('race_name', '?')} [{provider}:{model}]: "
             f"{pred.get('first', '?')}-{pred.get('second', '?')}-{pred.get('third', '?')} "
             f"(信頼度:{pred.get('confidence', 0):.0%})"
         )
+    failures = result.get("failures", [])
+    if failures:
+        print(f"[WARN] 失敗 {len(failures)}件:", file=sys.stderr)
+        for f in failures[:20]:
+            reason = f.get("reason", "?")
+            race_name = f.get("race_name", "?")
+            print(f"  - {race_name}: {reason}", file=sys.stderr)
+        if len(failures) > 20:
+            print(f"  ... (+{len(failures) - 20}件)", file=sys.stderr)
+    stats = result.get("provider_stats") or {}
+    if stats:
+        print("[STATS] プロバイダー別:", file=sys.stderr)
+        for provider, s in stats.items():
+            print(
+                f"  {provider}: 試行{s.get('attempts', 0)} / 成功{s.get('hits', 0)} / quota{s.get('quotas', 0)}",
+                file=sys.stderr,
+            )
+    exhausted = result.get("exhausted_providers") or []
+    if exhausted:
+        print(f"[WARN] quota 到達プロバイダー: {', '.join(exhausted)}", file=sys.stderr)
 
 
 # ─── CLI エントリーポイント ────────────────────────────────────────────────────
