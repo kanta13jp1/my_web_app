@@ -125,15 +125,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   double? _debtLockdownLoadedForDebt;
 
   final List<Color> _colors = [
-    Colors.blue,
-    Colors.green,
-    Colors.red,
-    Colors.orange,
-    Colors.purple,
-    Colors.teal,
-    Colors.pink,
+    const Color(0xFF6366F1),
+    const Color(0xFF0D9488),
+    const Color(0xFFB91C1C),
+    const Color(0xFFFF6B35),
+    const Color(0xFF6366F1),
+    const Color(0xFF0D9488),
+    const Color(0xFFEC4899),
     Colors.amber,
-    Colors.cyan,
+    const Color(0xFF0D9488),
     Colors.brown,
   ];
 
@@ -273,9 +273,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Color _flowActionColor(String actionType) {
-    if (_isIncomeActionType(actionType)) return Colors.green;
-    if (_isTransferActionType(actionType)) return Colors.blue;
-    return Colors.red;
+    if (_isIncomeActionType(actionType)) return const Color(0xFF0D9488);
+    if (_isTransferActionType(actionType)) return const Color(0xFF6366F1);
+    return const Color(0xFFB91C1C);
   }
 
   void _updateSelectedFlowType(String label) {
@@ -1734,7 +1734,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(successMessage ?? '✅ $type を記録しました'),
-          backgroundColor: Colors.green[700],
+          backgroundColor: const Color(0xFF047857),
         ),
       );
       await _fetchTodayClosing();
@@ -1925,7 +1925,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               }
               if (context.mounted) Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFB91C1C)),
             child: const Text('削除'),
           ),
         ],
@@ -2171,7 +2172,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             child: const Text('キャンセル'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFB91C1C)),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('削除'),
           ),
@@ -2774,7 +2776,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除', style: TextStyle(color: Colors.red)),
+            child: const Text('削除', style: TextStyle(color: Color(0xFFB91C1C))),
           ),
         ],
       ),
@@ -3006,7 +3008,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       debugPrint('edit due_date error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('支払日の更新に失敗: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('支払日の更新に失敗: $e'),
+            backgroundColor: const Color(0xFFB91C1C)),
       );
     }
   }
@@ -3181,7 +3185,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       double diff = 0;
       if (i > 0) diff = dailyTotals[i] - dailyTotals[i - 1];
       if (diff.abs() > _maxDailyChange) _maxDailyChange = diff.abs();
-      final color = diff >= 0 ? Colors.green : Colors.red;
+      final color =
+          diff >= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
       _barChartGroups.add(
         BarChartGroupData(
           x: i,
@@ -3215,7 +3220,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
       ),
-      backgroundColor: Colors.blueGrey[50],
+      backgroundColor: const Color(0xFF64748B),
       body: SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(isCompact ? 12.0 : 16.0),
@@ -3284,8 +3289,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
           color: widget.emphasizeMonthlyFlow
-              ? Colors.green.shade400
-              : Colors.green.shade100,
+              ? const Color(0xFF2DD4BF)
+              : const Color(0xFFCCFBF1),
           width: widget.emphasizeMonthlyFlow ? 2 : 1,
         ),
       ),
@@ -3300,7 +3305,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
+                    color: const Color(0xFF0D9488).withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -3342,18 +3347,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildFlowPriorityMetric(
                   label: '収入',
                   value: '¥${NumberFormat('#,###').format(totalIncome)}',
-                  color: Colors.green.shade700,
+                  color: const Color(0xFF0F766E),
                 ),
                 _buildFlowPriorityMetric(
                   label: '支出',
                   value: '¥${NumberFormat('#,###').format(totalExpense)}',
-                  color: Colors.red.shade700,
+                  color: const Color(0xFFB91C1C),
                 ),
                 _buildFlowPriorityMetric(
                   label: '差額',
                   value:
                       '${net >= 0 ? '+' : '-'}¥${NumberFormat('#,###').format(net.abs())}',
-                  color: net >= 0 ? Colors.green.shade800 : Colors.red.shade800,
+                  color: net >= 0
+                      ? const Color(0xFF065F46)
+                      : const Color(0xFF7F1D1D),
                 ),
               ],
             ),
@@ -3430,7 +3437,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.flag, color: Colors.deepOrange),
+                const Icon(Icons.flag, color: Color(0xFFFF6B35)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -3620,9 +3627,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[50],
+        color: const Color(0xFF64748B),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blueGrey.shade100),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3671,12 +3678,15 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         ? _formatSignedYen(currentNet - prevNet)
         : 'データ不足';
     final netDiffColor = (prevNet != null && currentNet != null)
-        ? ((currentNet - prevNet) >= 0 ? Colors.green : Colors.red)
+        ? ((currentNet - prevNet) >= 0
+            ? const Color(0xFF0D9488)
+            : const Color(0xFFB91C1C))
         : Colors.grey;
 
     final fixedDiff =
         (fixedCostByMonth[currentKey] ?? 0) - (fixedCostByMonth[prevKey] ?? 0);
-    final fixedDiffColor = fixedDiff <= 0 ? Colors.green : Colors.red;
+    final fixedDiffColor =
+        fixedDiff <= 0 ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
 
     final currentTask = taskStatsByMonth[currentKey] ??
         {
@@ -3700,7 +3710,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.view_timeline, color: Colors.indigo),
+                Icon(Icons.view_timeline, color: Color(0xFF6366F1)),
                 SizedBox(width: 8),
                 Text(
                   '3ヶ月俯瞰（先月・今月・来月）',
@@ -3777,12 +3787,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   label: '今月タスク進捗',
                   value:
                       '${currentTask['completed'] ?? 0}/${currentTask['total'] ?? 0}',
-                  color: Colors.blue,
+                  color: const Color(0xFF6366F1),
                 ),
                 _buildOverviewStatChip(
                   label: '来月タスク件数',
                   value: '${nextTask['total'] ?? 0}件',
-                  color: Colors.orange,
+                  color: const Color(0xFFFF6B35),
                 ),
               ],
             ),
@@ -3817,7 +3827,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.auto_awesome, color: Colors.deepPurple),
+                Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
                 SizedBox(width: 8),
                 Text(
                   '借金返済プラン',
@@ -3839,12 +3849,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 _buildOverviewStatChip(
                   label: '負債件数',
                   value: '${liabilities.length}件',
-                  color: Colors.red,
+                  color: const Color(0xFFB91C1C),
                 ),
                 _buildOverviewStatChip(
                   label: '負債合計',
                   value: _formatYen(totalDebt),
-                  color: Colors.deepOrange,
+                  color: const Color(0xFFFF6B35),
                 ),
               ],
             ),
@@ -4019,19 +4029,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? '収監中'
             : '未開始';
     final statusColor = isReleased
-        ? Colors.green
+        ? const Color(0xFF0D9488)
         : isEnabled
-            ? Colors.red
-            : Colors.blueGrey;
+            ? const Color(0xFFB91C1C)
+            : const Color(0xFF475569);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isReleased ? Colors.green.shade50 : Colors.red.shade50,
+        color: isReleased ? const Color(0xFFF0FDFA) : const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isReleased ? Colors.green.shade200 : Colors.red.shade200,
+          color: isReleased ? const Color(0xFF99F6E4) : const Color(0xFFFCA5A5),
         ),
       ),
       child: Column(
@@ -4077,17 +4087,19 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               _buildOverviewStatChip(
                 label: '本日違反',
                 value: '${todayViolations.length}件',
-                color: todayViolations.isEmpty ? Colors.teal : Colors.red,
+                color: todayViolations.isEmpty
+                    ? const Color(0xFF0D9488)
+                    : const Color(0xFFB91C1C),
               ),
               _buildOverviewStatChip(
                 label: '連続遵守',
                 value: '${snapshot?.currentCompliantStreakDays ?? 0}日',
-                color: Colors.indigo,
+                color: const Color(0xFF6366F1),
               ),
               _buildOverviewStatChip(
                 label: '日課達成',
                 value: '${completedRuleIds.length}/${rules.length}',
-                color: Colors.deepPurple,
+                color: const Color(0xFF7C3AED),
               ),
             ],
           ),
@@ -4232,17 +4244,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   Color _debtExecutionTaskColor(DebtExecutionTaskKind kind) {
     switch (kind) {
       case DebtExecutionTaskKind.focus:
-        return Colors.deepPurple;
+        return const Color(0xFF7C3AED);
       case DebtExecutionTaskKind.budget:
-        return Colors.red.shade700;
+        return const Color(0xFFB91C1C);
       case DebtExecutionTaskKind.fixedCost:
-        return Colors.orange.shade700;
+        return const Color(0xFFC05621);
       case DebtExecutionTaskKind.payment:
-        return Colors.green.shade700;
+        return const Color(0xFF0F766E);
       case DebtExecutionTaskKind.milestone:
-        return Colors.blue.shade700;
+        return const Color(0xFF1D4ED8);
       case DebtExecutionTaskKind.review:
-        return Colors.teal.shade700;
+        return const Color(0xFF0F766E);
     }
   }
 
@@ -4267,7 +4279,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ? Colors.white
             : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
-      selectedColor: Colors.deepPurple,
+      selectedColor: const Color(0xFF7C3AED),
       labelStyle: TextStyle(
         color:
             selected ? Colors.white : Theme.of(context).colorScheme.onSurface,
@@ -4296,17 +4308,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF1A0A4E).withAlpha(160)
+            ? const Color(0xFF1A0A4E).withValues(alpha: 0.63)
             : const Color(0xFFF6F3FF),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.deepPurple.withValues(alpha: 0.16)),
+        border:
+            Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.code, color: Colors.deepPurple),
+              Icon(Icons.code, color: Color(0xFF7C3AED)),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -4517,7 +4530,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               children: [
                 Icon(
                   Icons.account_balance,
-                  color: Colors.green,
+                  color: Color(0xFF0D9488),
                 ),
                 SizedBox(
                   width: 8,
@@ -4554,7 +4567,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 icon: const Icon(Icons.done_all),
                 label: const Text('全体状況を保存'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[800],
+                  backgroundColor: const Color(0xFF065F46),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -4603,7 +4616,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     label: watchlistEntry.group.isEmpty
                         ? 'Watching'
                         : 'Watch: ${watchlistEntry.group}',
-                    iconColor: Colors.amber[800],
+                    iconColor: const Color(0xFF92400E),
                   ),
                   if (watchlistEntry.memo.isNotEmpty)
                     _buildWatchlistMetaChip(
@@ -4633,7 +4646,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         ),
                         isDense: true,
                         filled: isUpdatedToday,
-                        fillColor: isUpdatedToday ? Colors.green[50] : null,
+                        fillColor:
+                            isUpdatedToday ? const Color(0xFF64748B) : null,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -4650,8 +4664,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 ? Icons.star_border
                                 : Icons.star,
                             color: watchlistEntry == null
-                                ? Colors.grey[500]
-                                : Colors.amber[800],
+                                ? const Color(0xFF64748B)
+                                : const Color(0xFF92400E),
                           ),
                         ),
                         if (canQuickUpdate) ...[
@@ -4668,7 +4682,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: isUpdatedToday
                                 ? Colors.grey
-                                : Colors.green[700],
+                                : const Color(0xFF047857),
                             foregroundColor: Colors.white,
                           ),
                           child: Text(isUpdatedToday ? '済' : '記録'),
@@ -4705,7 +4719,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           isDense: true,
                           filled: isUpdatedToday,
-                          fillColor: isUpdatedToday ? Colors.green[50] : null,
+                          fillColor:
+                              isUpdatedToday ? const Color(0xFF64748B) : null,
                         ),
                       ),
                     ),
@@ -4718,8 +4733,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       icon: Icon(
                         watchlistEntry == null ? Icons.star_border : Icons.star,
                         color: watchlistEntry == null
-                            ? Colors.grey[500]
-                            : Colors.amber[800],
+                            ? const Color(0xFF64748B)
+                            : const Color(0xFF92400E),
                       ),
                     ),
                     if (canQuickUpdate) ...[
@@ -4733,8 +4748,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ElevatedButton(
                       onPressed: () => _saveSingleAssetData(type),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isUpdatedToday ? Colors.grey : Colors.green[700],
+                        backgroundColor: isUpdatedToday
+                            ? Colors.grey
+                            : const Color(0xFF047857),
                         foregroundColor: Colors.white,
                       ),
                       child: Text(isUpdatedToday ? '済' : '記録'),
@@ -4757,7 +4773,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   Icon(
                     _getIconForAsset(type),
                     size: 11,
-                    color: isLiability ? Colors.red[400] : Colors.green[600],
+                    color: isLiability
+                        ? const Color(0xFFF87171)
+                        : const Color(0xFF64748B),
                   ),
                   const SizedBox(width: 2),
                   Text(
@@ -4765,7 +4783,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: isLiability ? Colors.red[600] : Colors.green[700],
+                      color: isLiability
+                          ? const Color(0xFF64748B)
+                          : const Color(0xFF047857),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -4777,12 +4797,12 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   if (canQuickUpdate) ...[
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       '昨日と同額なら「同額」で更新',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.blueGrey[600],
+                        color: Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -4818,7 +4838,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: iconColor ?? Colors.grey[700]),
+          Icon(icon, size: 14, color: iconColor ?? const Color(0xFF334155)),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -4842,16 +4862,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.amber[50],
+        color: const Color(0xFF64748B),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.amber[200]!),
+        border: Border.all(color: const Color(0xFFFDE68A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.star, color: Colors.amber[800]),
+              const Icon(Icons.star, color: Color(0xFF92400E)),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -4882,7 +4902,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber[100]!),
+                border: Border.all(color: const Color(0xFFFEF3C7)),
               ),
               child: const Text(
                 'Use the star button on any asset row to add it here.',
@@ -4897,8 +4917,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 lastAmount = _assetData[lastDate]?[entry.assetType];
               }
               final isLiability = (lastAmount ?? 0) < 0;
-              final amountColor =
-                  isLiability ? Colors.red[600] : Colors.green[700];
+              final amountColor = isLiability
+                  ? const Color(0xFF64748B)
+                  : const Color(0xFF047857);
 
               return Container(
                 key: Key('asset_watchlist_item_${entry.assetType}'),
@@ -4907,7 +4928,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.amber[100]!),
+                  border: Border.all(color: const Color(0xFFFEF3C7)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -4948,7 +4969,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           _buildWatchlistMetaChip(
                             icon: Icons.folder_open_outlined,
                             label: entry.group,
-                            iconColor: Colors.amber[800],
+                            iconColor: const Color(0xFF92400E),
                           ),
                         if (lastAmount != null)
                           _buildWatchlistMetaChip(
@@ -5013,7 +5034,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               Text(
                 '¥${NumberFormat('#,###').format(totalAssets)}',
                 style: const TextStyle(
-                  color: Colors.green,
+                  color: Color(0xFF0D9488),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -5026,7 +5047,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               Text(
                 '¥${NumberFormat('#,###').format(totalLiabilities)}',
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFB91C1C),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -5077,7 +5098,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.receipt_long, color: Colors.blue),
+                Icon(Icons.receipt_long, color: Color(0xFF6366F1)),
                 SizedBox(width: 8),
                 Text(
                   '④収支の記録',
@@ -5165,10 +5186,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.blueGrey[50],
+                color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: Colors.blueGrey.withValues(alpha: 0.12)),
+                border: Border.all(
+                    color: const Color(0xFF475569).withValues(alpha: 0.12)),
               ),
               child: Row(
                 children: [
@@ -5276,7 +5297,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ElevatedButton(
                   onPressed: _recordFlow,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
+                    backgroundColor: const Color(0xFF64748B),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -5288,7 +5309,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -5302,8 +5323,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome)}',
-                        style: TextStyle(
-                          color: Colors.green[800],
+                        style: const TextStyle(
+                          color: Color(0xFF065F46),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5318,8 +5339,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalExpense)}',
-                        style: TextStyle(
-                          color: Colors.red[800],
+                        style: const TextStyle(
+                          color: Color(0xFF991B1B),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5333,8 +5354,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
                           color: (totalIncome - totalExpense) >= 0
-                              ? Colors.green[800]
-                              : Colors.red[800],
+                              ? const Color(0xFF065F46)
+                              : const Color(0xFF991B1B),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5370,7 +5391,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         onTap: () => _editFlow(item),
                         leading: Icon(
                           isIncome ? Icons.add_circle : Icons.remove_circle,
-                          color: isIncome ? Colors.green : Colors.red,
+                          color: isIncome
+                              ? const Color(0xFF0D9488)
+                              : const Color(0xFFB91C1C),
                           size: 20,
                         ),
                         title: Text(desc, style: const TextStyle(fontSize: 13)),
@@ -5384,7 +5407,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             Text(
                               '${isIncome ? '+' : '-'}¥${NumberFormat('#,###').format(amount)}',
                               style: TextStyle(
-                                color: isIncome ? Colors.green : Colors.red,
+                                color: isIncome
+                                    ? const Color(0xFF0D9488)
+                                    : const Color(0xFFB91C1C),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -5393,14 +5418,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               tooltip: '編集',
                               visualDensity: VisualDensity.compact,
                               icon: const Icon(Icons.edit_outlined, size: 20),
-                              color: Colors.blueGrey[700],
+                              color: const Color(0xFF64748B),
                               onPressed: () => _editFlow(item),
                             ),
                             IconButton(
                               tooltip: '削除',
                               visualDensity: VisualDensity.compact,
                               icon: const Icon(Icons.delete_outline, size: 20),
-                              color: Colors.red[400],
+                              color: const Color(0xFFF87171),
                               onPressed: () => _deleteFlow(item),
                             ),
                           ],
@@ -5448,7 +5473,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.receipt_long, color: Colors.blue),
+                Icon(Icons.receipt_long, color: Color(0xFF6366F1)),
                 SizedBox(width: 8),
                 Text(
                   '④収支の記録',
@@ -5538,10 +5563,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.blueGrey[50],
+                color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
-                border:
-                    Border.all(color: Colors.blueGrey.withValues(alpha: 0.12)),
+                border: Border.all(
+                    color: const Color(0xFF475569).withValues(alpha: 0.12)),
               ),
               child: Row(
                 children: [
@@ -5726,7 +5751,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ElevatedButton(
                   onPressed: _recordFlow,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[800],
+                    backgroundColor: const Color(0xFF64748B),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -5738,7 +5763,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -5752,8 +5777,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalIncome)}',
-                        style: TextStyle(
-                          color: Colors.green[800],
+                        style: const TextStyle(
+                          color: Color(0xFF065F46),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5768,8 +5793,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalExpense)}',
-                        style: TextStyle(
-                          color: Colors.red[800],
+                        style: const TextStyle(
+                          color: Color(0xFF991B1B),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5783,8 +5808,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         '￥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
                           color: (totalIncome - totalExpense) >= 0
-                              ? Colors.green[800]
-                              : Colors.red[800],
+                              ? const Color(0xFF065F46)
+                              : const Color(0xFF991B1B),
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -5798,9 +5823,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const SizedBox(height: 8),
               Text(
                 '$visibleMonthLabel の振替合計: ￥${NumberFormat('#,###').format(totalTransfer)}（収支差額には含めません）',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 11,
-                  color: Colors.blueGrey[700],
+                  color: Color(0xFF64748B),
                 ),
               ),
             ],
@@ -5871,14 +5896,14 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           tooltip: '編集',
                           visualDensity: VisualDensity.compact,
                           icon: const Icon(Icons.edit_outlined, size: 20),
-                          color: Colors.blueGrey[700],
+                          color: const Color(0xFF64748B),
                           onPressed: () => _editFlow(item),
                         ),
                         IconButton(
                           tooltip: '削除',
                           visualDensity: VisualDensity.compact,
                           icon: const Icon(Icons.delete_outline, size: 20),
-                          color: Colors.red[400],
+                          color: const Color(0xFFF87171),
                           onPressed: () => _deleteFlow(item),
                         ),
                       ],
@@ -5926,9 +5951,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red[50],
-              borderRadius: const BorderRadius.only(
+            decoration: const BoxDecoration(
+              color: Color(0xFF64748B),
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
@@ -5937,16 +5962,16 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          Icon(Icons.credit_card_off, color: Colors.red[800]),
-                          const SizedBox(width: 8),
+                          Icon(Icons.credit_card_off, color: Color(0xFF991B1B)),
+                          SizedBox(width: 8),
                           Text(
                             '③固定費をすべて把握',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red[900],
+                              color: Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -5961,20 +5986,20 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                         onTap: _pickSubscriptionHistoryMonth,
                         child: Text(
                           '表示中: $visibleMonthLabel',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
-                            color: Colors.red[700],
+                            color: Color(0xFFB91C1C),
                           ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '¥${NumberFormat('#,###').format(totalCost)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red[800],
+                          color: Color(0xFF991B1B),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -5984,8 +6009,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: unpaidCost > 0
-                              ? Colors.red[700]
-                              : Colors.green[700],
+                              ? const Color(0xFFB91C1C)
+                              : const Color(0xFF047857),
                         ),
                       ),
                     ],
@@ -5993,27 +6018,27 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
                               Icon(
                                 Icons.credit_card_off,
-                                color: Colors.red[800],
+                                color: Color(0xFF991B1B),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 '③固定費をすべて把握',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red[900],
+                                  color: Color(0xFF64748B),
                                 ),
                               ),
                             ],
                           ),
-                          const Text(
+                          Text(
                             '毎月自動で奪われる富を監視せよ。',
                             style: TextStyle(fontSize: 11, color: Colors.grey),
                           ),
@@ -6028,10 +6053,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           Text(
                             visibleMonthLabel,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Colors.red[700],
+                              color: Color(0xFFB91C1C),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -6041,10 +6066,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           ),
                           Text(
                             '¥${NumberFormat('#,###').format(totalCost)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.red[800],
+                              color: Color(0xFF991B1B),
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -6054,8 +6079,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: unpaidCost > 0
-                                  ? Colors.red[700]
-                                  : Colors.green[700],
+                                  ? const Color(0xFFB91C1C)
+                                  : const Color(0xFF047857),
                             ),
                           ),
                         ],
@@ -6068,9 +6093,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.red[50],
+                color: const Color(0xFF64748B),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.12)),
+                border: Border.all(
+                    color: const Color(0xFFB91C1C).withValues(alpha: 0.12)),
               ),
               child: Row(
                 children: [
@@ -6187,7 +6213,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 style: TextStyle(
                                   color: isPaid
                                       ? Colors.grey
-                                      : Colors.red.shade700,
+                                      : const Color(0xFFB91C1C),
                                   fontSize: 12,
                                 ),
                               ),
@@ -6236,7 +6262,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                 value: 'delete',
                                 child: Text(
                                   '削除',
-                                  style: TextStyle(color: Colors.red),
+                                  style: TextStyle(color: Color(0xFFB91C1C)),
                                 ),
                               ),
                             ],
@@ -6250,7 +6276,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               onPressed: _addSubscription,
               icon: const Icon(Icons.add),
               label: const Text('固定費を追加'),
-              style: TextButton.styleFrom(foregroundColor: Colors.red[800]),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF991B1B)),
             ),
           ),
         ],
@@ -6269,7 +6296,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.assignment_late, color: Colors.orange),
+                Icon(Icons.assignment_late, color: Color(0xFFFF6B35)),
                 SizedBox(width: 8),
                 Text(
                   '⑤今月の必須タスク',
@@ -6317,7 +6344,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             subtitle: Text(
                               '締切: ${DateFormat('yyyy/MM/dd').format(deadline)}',
                               style: TextStyle(
-                                color: isOverdue ? Colors.red : Colors.grey,
+                                color: isOverdue
+                                    ? const Color(0xFFB91C1C)
+                                    : Colors.grey,
                               ),
                             ),
                             controlAffinity: ListTileControlAffinity.leading,
@@ -6330,7 +6359,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               onPressed: _addMustTask,
               icon: const Icon(Icons.add),
               label: const Text('タスクを追加'),
-              style: TextButton.styleFrom(foregroundColor: Colors.orange[800]),
+              style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B)),
             ),
           ],
         ),
@@ -6372,7 +6402,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     const Icon(Icons.show_chart, size: 16),
                     Switch(
                       value: _showDailyChange,
-                      activeThumbColor: Colors.redAccent,
+                      activeThumbColor: const Color(0xFFB91C1C),
                       onChanged: (value) {
                         setState(() {
                           _showDailyChange = value;
@@ -6391,7 +6421,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   const Text('個別', style: TextStyle(fontSize: 10)),
                   Switch(
                     value: _isStacked,
-                    activeThumbColor: Colors.green,
+                    activeThumbColor: const Color(0xFF0D9488),
                     onChanged: (value) {
                       setState(() {
                         _isStacked = value;
@@ -6459,8 +6489,9 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               return BarTooltipItem(
                 '$date\n$val',
                 TextStyle(
-                  color:
-                      rod.toY >= 0 ? Colors.lightGreenAccent : Colors.redAccent,
+                  color: rod.toY >= 0
+                      ? Colors.lightGreenAccent
+                      : const Color(0xFFB91C1C),
                   fontWeight: FontWeight.bold,
                 ),
               );
