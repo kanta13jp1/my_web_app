@@ -41,21 +41,36 @@ class _ThoughtInterruptDiagnosisPageState
           Icons.smartphone,
           const Color(0xFF9CA3AF),
         ),
-        _DiagOption('eating_out', '食べ物を探す', Icons.fastfood, Colors.orange),
+        _DiagOption(
+          'eating_out',
+          '食べ物を探す',
+          Icons.fastfood,
+          const Color(0xFFFF6B35),
+        ),
       ],
     ),
     _DiagQuestion(
       question: 'Q2: 作業中に衝動が来た時、何をしたくなりますか？',
       icon: Icons.local_fire_department,
       options: [
-        _DiagOption('smoking', 'タバコを吸う', Icons.smoking_rooms, Colors.brown),
+        _DiagOption(
+          'smoking',
+          'タバコを吸う',
+          Icons.smoking_rooms,
+          const Color(0xFF795548),
+        ),
         _DiagOption(
           'alcohol',
           'お酒を飲む',
           Icons.local_bar,
           const Color(0xFFF59E0B),
         ),
-        _DiagOption('masturbation', '性的な衝動に従う', Icons.block, Colors.pink),
+        _DiagOption(
+          'masturbation',
+          '性的な衝動に従う',
+          Icons.block,
+          const Color(0xFFFF6B35),
+        ),
         _DiagOption(
           'dating_apps',
           '出会い系・異性探索',
@@ -68,7 +83,12 @@ class _ThoughtInterruptDiagnosisPageState
           Icons.casino,
           const Color(0xFF059669),
         ),
-        _DiagOption('eating_out', '間食・外食', Icons.restaurant, Colors.orange),
+        _DiagOption(
+          'eating_out',
+          '間食・外食',
+          Icons.restaurant,
+          const Color(0xFFFF6B35),
+        ),
       ],
     ),
     _DiagQuestion(
@@ -88,8 +108,18 @@ class _ThoughtInterruptDiagnosisPageState
           const Color(0xFFF97316),
         ),
         _DiagOption('afternoon', '午後 (14〜17時)', Icons.cloud, Colors.blue),
-        _DiagOption('evening', '夕方 (17〜20時)', Icons.wb_twilight, Colors.orange),
-        _DiagOption('night', '夜 (20〜23時)', Icons.nights_stay, Colors.indigo),
+        _DiagOption(
+          'evening',
+          '夕方 (17〜20時)',
+          Icons.wb_twilight,
+          const Color(0xFFFF6B35),
+        ),
+        _DiagOption(
+          'night',
+          '夜 (20〜23時)',
+          Icons.nights_stay,
+          const Color(0xFF3D5AFE),
+        ),
         _DiagOption(
           'midnight',
           '深夜 (23時〜)',
@@ -118,19 +148,19 @@ class _ThoughtInterruptDiagnosisPageState
           'posture',
           '姿勢が崩れる',
           Icons.airline_seat_recline_normal,
-          Colors.brown,
+          const Color(0xFF795548),
         ),
         _DiagOption(
           'yawn',
           'あくびが出る・眠くなる',
           Icons.bedtime_outlined,
-          Colors.indigo,
+          const Color(0xFF3D5AFE),
         ),
         _DiagOption(
           'restless',
           'そわそわ・落ち着かない',
           Icons.directions_run,
-          Colors.orange,
+          const Color(0xFFFF6B35),
         ),
         _DiagOption(
           'none',
@@ -255,7 +285,7 @@ class _ThoughtInterruptDiagnosisPageState
         LinearProgressIndicator(
           value: (_currentStep + 1) / _questions.length,
           backgroundColor: const Color(0xFFEEEEEE),
-          color: Colors.indigo,
+          color: const Color(0xFF3D5AFE),
           minHeight: 4,
         ),
         Expanded(
@@ -265,7 +295,7 @@ class _ThoughtInterruptDiagnosisPageState
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(q.icon, color: Colors.indigo, size: 22),
+                  Icon(q.icon, color: const Color(0xFF3D5AFE), size: 22),
                   const SizedBox(width: 8),
                   Text(
                     '${_currentStep + 1} / ${_questions.length}',
@@ -303,7 +333,7 @@ class _ThoughtInterruptDiagnosisPageState
                   onPressed:
                       selected == null ? null : (_isSaving ? null : _nextStep),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
+                    backgroundColor: const Color(0xFF3D5AFE),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     disabledBackgroundColor: const Color(0xFFE0E0E0),
@@ -341,7 +371,7 @@ class _ThoughtInterruptDiagnosisPageState
       padding: const EdgeInsets.all(20),
       children: [
         const Center(
-          child: Icon(Icons.shield, size: 56, color: Colors.indigo),
+          child: Icon(Icons.shield, size: 56, color: Color(0xFF3D5AFE)),
         ),
         const SizedBox(height: 16),
         const Center(
@@ -350,7 +380,7 @@ class _ThoughtInterruptDiagnosisPageState
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: Colors.indigo,
+              color: Color(0xFF3D5AFE),
             ),
           ),
         ),
@@ -366,7 +396,7 @@ class _ThoughtInterruptDiagnosisPageState
                     children: [
                       Icon(
                         Icons.report_problem,
-                        color: Colors.orange,
+                        color: Color(0xFFFF6B35),
                         size: 18,
                       ),
                       SizedBox(width: 6),
@@ -387,13 +417,13 @@ class _ThoughtInterruptDiagnosisPageState
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.orange.shade100,
+                          color: const Color(0xFFFFE0B2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           d.toString(),
-                          style: TextStyle(
-                            color: Colors.orange.shade800,
+                          style: const TextStyle(
+                            color: Color(0xFFEF6C00),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -416,25 +446,25 @@ class _ThoughtInterruptDiagnosisPageState
         const SizedBox(height: 12),
         if (advice.isNotEmpty)
           Card(
-            color: Colors.indigo.shade50,
+            color: const Color(0xFFE8EAF6),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
                       Icon(
                         Icons.psychology,
-                        color: Colors.indigo.shade700,
+                        color: Color(0xFF303F9F),
                         size: 18,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Text(
                         'アドバイス',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.indigo.shade700,
+                          color: Color(0xFF303F9F),
                         ),
                       ),
                     ],
@@ -457,7 +487,7 @@ class _ThoughtInterruptDiagnosisPageState
           icon: const Icon(Icons.shield, size: 18),
           label: const Text('禁欲ガードで防衛を開始'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.indigo,
+            backgroundColor: const Color(0xFF3D5AFE),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),

@@ -65,7 +65,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       return const _DailyGuardStatus(
         label: '逸脱あり',
         detail: 'その日は抑止ラインを突破しています。',
-        color: Colors.orange,
+        color: Color(0xFFFF6B35),
         icon: Icons.warning_amber_rounded,
       );
     }
@@ -73,7 +73,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       return const _DailyGuardStatus(
         label: '未設定',
         detail: 'その日の禁止対象が固定されていません。',
-        color: Colors.blueGrey,
+        color: Color(0xFF607D8B),
         icon: Icons.radio_button_unchecked,
       );
     }
@@ -199,8 +199,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   const SizedBox(height: 8),
                   Text(
                     category.principle,
-                    style: TextStyle(
-                      color: Colors.blueGrey.shade700,
+                    style: const TextStyle(
+                      color: Color(0xFF455A64),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -342,7 +342,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
         ? const _DailyGuardStatus(
             label: '読込中',
             detail: '',
-            color: Colors.blueGrey,
+            color: Color(0xFF607D8B),
             icon: Icons.more_horiz,
           )
         : _resolveDailyStatus(snapshot);
@@ -480,7 +480,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                             _buildMetricChip(
                               label: '逸脱回数',
                               value: '${snapshot.totalSlipCount}回',
-                              color: Colors.orange,
+                              color: const Color(0xFFFF6B35),
                             ),
                             _buildMetricChip(
                               label: '無傷',
@@ -528,9 +528,9 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   Widget _buildDisciplinePanel(AbstinenceDisciplineSnapshot snapshot) {
     final stageColor = switch (snapshot.mindsetStageLabel) {
       '浪費を断れる' => Colors.green,
-      '我慢が定着中' => Colors.deepOrange,
-      '一拍置ける' => Colors.indigo,
-      _ => Colors.blueGrey,
+      '我慢が定着中' => const Color(0xFFFF6B35),
+      '一拍置ける' => const Color(0xFF3D5AFE),
+      _ => const Color(0xFF607D8B),
     };
 
     return Container(
@@ -595,7 +595,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               _buildMetricChip(
                 label: '我慢回数',
                 value: '${snapshot.totalRepCount}回',
-                color: Colors.indigo,
+                color: const Color(0xFF3D5AFE),
               ),
               _buildMetricChip(
                 label: '防いだ出費',
@@ -605,12 +605,12 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               _buildMetricChip(
                 label: '取り戻した時間',
                 value: '${snapshot.totalTimeSavedMinutes}分',
-                color: Colors.deepOrange,
+                color: const Color(0xFFFF6B35),
               ),
               _buildMetricChip(
                 label: '連続日数',
                 value: '${snapshot.streakDays}日',
-                color: Colors.brown,
+                color: const Color(0xFF795548),
               ),
             ],
           ),
@@ -633,7 +633,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.blueGrey.withValues(alpha: 0.18),
+                  color: const Color(0xFF607D8B).withValues(alpha: 0.18),
                 ),
               ),
               child: const Text(
@@ -658,7 +658,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
+        border:
+            Border.all(color: const Color(0xFF607D8B).withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,13 +681,13 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.indigo.withValues(alpha: 0.08),
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '${summary.count}回',
                   style: const TextStyle(
-                    color: Colors.indigo,
+                    color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -698,8 +699,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
           const SizedBox(height: 4),
           Text(
             category.principle,
-            style: TextStyle(
-              color: Colors.blueGrey.shade700,
+            style: const TextStyle(
+              color: Color(0xFF455A64),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -716,13 +717,13 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               _buildMetricChip(
                 label: '累計時間回収',
                 value: '${summary.totalTimeSavedMinutes}分',
-                color: Colors.deepOrange,
+                color: const Color(0xFFFF6B35),
               ),
               _buildMetricChip(
                 label: '既定値',
                 value:
                     '${_formatYen(category.defaultMoneySaved)}円 / ${category.defaultTimeSavedMinutes}分',
-                color: Colors.blueGrey,
+                color: const Color(0xFF607D8B),
               ),
             ],
           ),
@@ -756,7 +757,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.16)),
+        border:
+            Border.all(color: const Color(0xFF607D8B).withValues(alpha: 0.16)),
       ),
       child: ListTile(
         dense: true,
@@ -798,7 +800,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.18)),
+        border:
+            Border.all(color: const Color(0xFF607D8B).withValues(alpha: 0.18)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -874,8 +877,8 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               final statusColor = protocol.isLockedForToday
                   ? Colors.green
                   : protocol.isEnabled
-                      ? Colors.orange
-                      : Colors.blueGrey;
+                      ? const Color(0xFFFF6B35)
+                      : const Color(0xFF607D8B);
 
               return Container(
                 key: Key('abstinence_guard_absolute_quit_${protocol.item.id}'),
@@ -1027,8 +1030,9 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               spacing: 8,
               runSpacing: 8,
               children: priorityStates.take(3).map((state) {
-                final color =
-                    state.slipCount > 0 ? Colors.orange : Colors.redAccent;
+                final color = state.slipCount > 0
+                    ? const Color(0xFFFF6B35)
+                    : Colors.redAccent;
                 final suffix =
                     state.slipCount > 0 ? '逸脱 ${state.slipCount}回' : 'ガード中';
                 return Container(
@@ -1055,7 +1059,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
   }
 
   Widget _buildGuardCard(AbstinenceGuardState state) {
-    final color = state.isEnabled ? Colors.redAccent : Colors.blueGrey;
+    final color = state.isEnabled ? Colors.redAccent : const Color(0xFF607D8B);
     final tags = <String>[
       if (state.item.isDigital) 'デジタル',
       if (state.item.isImpulse) '衝動',

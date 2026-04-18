@@ -476,7 +476,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.menu_book, color: Colors.indigo),
+            Icon(Icons.menu_book, color: Color(0xFF3D5AFE)),
             SizedBox(width: 8),
             Text('利用マニュアル'),
           ],
@@ -568,7 +568,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('2026 勝利戦略室'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -586,7 +586,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           controller: _tabController,
           labelColor: Colors.white,
           unselectedLabelColor: const Color(0xB3FFFFFF),
-          indicatorColor: Colors.amber,
+          indicatorColor: const Color(0xFFFFC107),
           isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.map), text: '戦況マップ'),
@@ -640,7 +640,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 final prob = cand['win_probability'] as int? ?? 50;
                 final color = prob >= 80
                     ? Colors.red
-                    : (prob >= 50 ? Colors.orange : Colors.blue);
+                    : (prob >= 50 ? const Color(0xFFFF6B35) : Colors.blue);
                 return Marker(
                   point: LatLng(cand['latitude'], cand['longitude']),
                   width: 60,
@@ -727,7 +727,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
+                          color: Color(0xFF3D5AFE),
                         ),
                       ),
                       Text(
@@ -754,7 +754,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               // バッチ実行ボタン (AI)
               FloatingActionButton.small(
                 heroTag: 'btn_analyze',
-                backgroundColor: Colors.indigo,
+                backgroundColor: const Color(0xFF3D5AFE),
                 onPressed: _isBusy ? null : _triggerBatchAnalysis,
                 tooltip: '全選挙区のAI再分析を実行',
                 child: _isBusy
@@ -775,7 +775,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 backgroundColor: Theme.of(context).colorScheme.surface,
                 onPressed: _fetchCandidates,
                 tooltip: '最新データを読み込み',
-                child: const Icon(Icons.refresh, color: Colors.indigo),
+                child: const Icon(Icons.refresh, color: Color(0xFF3D5AFE)),
               ),
             ],
           ),
@@ -900,7 +900,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         children: [
           if (_myDistrict.isNotEmpty)
             Card(
-              color: Colors.indigo.shade50,
+              color: const Color(0xFFE8EAF6),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -910,7 +910,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       '$_myDistrict 分析レポート',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.indigo,
+                        color: Color(0xFF3D5AFE),
                       ),
                     ),
                     const Divider(),
@@ -940,7 +940,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     style: const TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
-                      color: Colors.indigo,
+                      color: Color(0xFF3D5AFE),
                     ),
                   ),
                   if (seats >= 233)
@@ -968,7 +968,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             0,
             60,
             (v) => setState(() => _supportRate = v),
-            Colors.orange,
+            const Color(0xFFFF6B35),
           ),
           _slider(
             '若年層投票率',
@@ -1048,7 +1048,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.indigo,
+                color: Color(0xFF3D5AFE),
               ),
             ),
           );
@@ -1202,7 +1202,7 @@ class _ManualItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.indigo),
+          Icon(icon, size: 20, color: const Color(0xFF3D5AFE)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

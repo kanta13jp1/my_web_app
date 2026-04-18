@@ -19,13 +19,13 @@ class _WipLimitPageState extends State<WipLimitPage> {
   List<Map<String, dynamic>> _items = [];
 
   static const _categories = [
-    ('📚', '読書', Colors.brown),
-    ('📖', '勉強', Colors.indigo),
-    ('💻', 'プロジェクト', Colors.teal),
-    ('🎮', 'ゲーム', Colors.purple),
+    ('📚', '読書', Color(0xFF795548)),
+    ('📖', '勉強', Color(0xFF3D5AFE)),
+    ('💻', 'プロジェクト', Color(0xFF3D5AFE)),
+    ('🎮', 'ゲーム', Color(0xFF3D5AFE)),
     ('📺', 'アニメ・ドラマ', Colors.red),
-    ('🎵', '音楽', Colors.pink),
-    ('🔧', 'スキル習得', Colors.orange),
+    ('🎵', '音楽', Color(0xFFFF6B35)),
+    ('🔧', 'スキル習得', Color(0xFFFF6B35)),
     ('📝', '資格・試験', Colors.blue),
     ('🏋️', 'トレーニング', Colors.green),
     ('🗂️', 'その他', Color(0xFFB0B0B0)),
@@ -325,7 +325,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     gradient: LinearGradient(
                       colors: [
                         Theme.of(context).colorScheme.onSurface,
-                        Colors.brown.shade700,
+                        const Color(0xFF5D4037),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
@@ -350,8 +350,8 @@ class _WipLimitPageState extends State<WipLimitPage> {
                       const SizedBox(height: 8),
                       Text(
                         '現在 ${active.length} 件を消化中',
-                        style: TextStyle(
-                          color: Colors.brown.shade200,
+                        style: const TextStyle(
+                          color: Color(0xFFBCAAA4),
                           fontSize: 13,
                         ),
                       ),
@@ -436,7 +436,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isActive ? Colors.orange.shade300 : Colors.green.shade200,
+          color: isActive ? const Color(0xFFFFB74D) : Colors.green.shade200,
           width: isActive ? 1.5 : 1,
         ),
       ),
@@ -483,7 +483,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                       fontWeight: FontWeight.w900,
                       color: progress >= 100
                           ? Colors.green
-                          : Colors.orange.shade700,
+                          : const Color(0xFFF57C00),
                     ),
                   ),
                 ],
@@ -506,7 +506,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   backgroundColor:
                       Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(
-                    progress >= 100 ? Colors.green : Colors.orange,
+                    progress >= 100 ? Colors.green : const Color(0xFFFF6B35),
                   ),
                   minHeight: 6,
                 ),
@@ -523,11 +523,11 @@ class _WipLimitPageState extends State<WipLimitPage> {
               ],
               if (isActive) ...[
                 const SizedBox(height: 4),
-                Text(
+                const Text(
                   'タップして進捗を更新',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.orange.shade600,
+                    color: Color(0xFFFB8C00),
                   ),
                 ),
               ],

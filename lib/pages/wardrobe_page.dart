@@ -229,7 +229,7 @@ class _WardrobePageState extends State<WardrobePage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('ワードローブ管理'),
-        backgroundColor: Colors.brown[700],
+        backgroundColor: const Color(0xFF5D4037),
         foregroundColor: const Color(0xFFE5E7EB),
         bottom: TabBar(
           controller: _tabController,
@@ -242,10 +242,10 @@ class _WardrobePageState extends State<WardrobePage>
           ],
         ),
       ),
-      backgroundColor: Colors.brown[50],
+      backgroundColor: const Color(0xFFEFEBE9),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addItem,
-        backgroundColor: Colors.brown[700],
+        backgroundColor: const Color(0xFF5D4037),
         foregroundColor: const Color(0xFFE5E7EB),
         icon: const Icon(Icons.add),
         label: const Text('衣類を追加'),
@@ -286,7 +286,7 @@ class _WardrobePageState extends State<WardrobePage>
                     return FilterChip(
                       label: Text(cat, style: const TextStyle(fontSize: 12)),
                       selected: selected,
-                      selectedColor: Colors.brown[200],
+                      selectedColor: const Color(0xFFBCAAA4),
                       onSelected: (_) => setState(() => _filterCategory = cat),
                     );
                   },
@@ -426,7 +426,7 @@ class _WardrobePageState extends State<WardrobePage>
                             Theme.of(context).brightness == Brightness.dark
                                 ? const Color(0xFF4E342E)
                                     .withValues(alpha: 0.47)
-                                : Colors.brown[100]!,
+                                : const Color(0xFFD7CCC8),
                           ),
                           const SizedBox(width: 4),
                           _chip(
@@ -525,7 +525,7 @@ class _WardrobePageState extends State<WardrobePage>
                 _actionBtn(
                   '売却',
                   Icons.sell,
-                  Colors.orange,
+                  const Color(0xFFFF6B35),
                   () => _updateStatus(item, 'sell'),
                 ),
                 const SizedBox(width: 6),
@@ -630,10 +630,14 @@ class _WardrobePageState extends State<WardrobePage>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _summaryItem('総数', '$total件', Colors.brown),
+                      _summaryItem('総数', '$total件', const Color(0xFF795548)),
                       _summaryItem('保持', '${counts['keep']}件', Colors.green),
                       _summaryItem('寄付', '${counts['donate']}件', Colors.blue),
-                      _summaryItem('売却', '${counts['sell']}件', Colors.orange),
+                      _summaryItem(
+                        '売却',
+                        '${counts['sell']}件',
+                        const Color(0xFFFF6B35),
+                      ),
                       _summaryItem('処分', '${counts['discard']}件', Colors.red),
                     ],
                   ),
@@ -646,22 +650,25 @@ class _WardrobePageState extends State<WardrobePage>
           Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.orange[300]!, width: 1),
+              side: const BorderSide(color: Color(0xFFFFB74D), width: 1),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  const Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.orange[700]),
-                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.warning_amber,
+                        color: Color(0xFFF57C00),
+                      ),
+                      SizedBox(width: 8),
                       Text(
                         '断捨離候補（180日以上未着用）',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange[800],
+                          color: Color(0xFFEF6C00),
                         ),
                       ),
                     ],
@@ -779,7 +786,7 @@ class _WardrobePageState extends State<WardrobePage>
                                 backgroundColor: Theme.of(context)
                                     .colorScheme
                                     .surfaceContainerHighest,
-                                color: Colors.brown[400],
+                                color: const Color(0xFF8D6E63),
                                 minHeight: 10,
                               ),
                             ),
@@ -851,7 +858,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'donate':
         return Colors.blue;
       case 'sell':
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case 'discard':
         return Colors.red;
       default:
@@ -876,11 +883,11 @@ class _WardrobePageState extends State<WardrobePage>
       case 'レッド':
         return Colors.red;
       case 'ブラウン':
-        return Colors.brown;
+        return const Color(0xFF795548);
       case 'ベージュ':
         return const Color(0xFFF5F5DC);
       case 'ピンク':
-        return Colors.pink;
+        return const Color(0xFFFF6B35);
       default:
         return const Color(0xFF9CA3AF);
     }
@@ -1044,7 +1051,7 @@ class _AddItemSheetState extends State<_AddItemSheet> {
             child: ElevatedButton(
               onPressed: _isSaving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.brown[700],
+                backgroundColor: const Color(0xFF5D4037),
                 foregroundColor: const Color(0xFFE5E7EB),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

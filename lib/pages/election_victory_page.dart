@@ -1385,17 +1385,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 children: [
                   _buildStatusChip(
                     realitySnapshot.isStale ? 'キャッシュ表示中' : '最新取得済み',
-                    color:
-                        realitySnapshot.isStale ? Colors.orange : Colors.green,
+                    color: realitySnapshot.isStale
+                        ? const Color(0xFFFF6B35)
+                        : Colors.green,
                   ),
                   _buildStatusChip(
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
-                    color: Colors.blueGrey,
+                    color: const Color(0xFF607D8B),
                   ),
                   if (_publishedRealityMemo != null)
                     _buildStatusChip(
                       '公開ノート準備済み',
-                      color: Colors.indigo,
+                      color: const Color(0xFF3D5AFE),
                     ),
                 ],
               ),
@@ -1404,7 +1405,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               const SizedBox(height: 12),
               _buildInlineNotice(
                 _realityError!,
-                color: Colors.orange,
+                color: const Color(0xFFFF6B35),
                 icon: Icons.info_outline,
               ),
             ],
@@ -1496,9 +1497,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.blueGrey.withValues(alpha: 0.06),
+        color: const Color(0xFF607D8B).withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.16)),
+        border:
+            Border.all(color: const Color(0xFF607D8B).withValues(alpha: 0.16)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1660,7 +1662,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _buildStatusChip(
               '履歴 ${_formatInt(history.length)} 点',
-              color: Colors.blueGrey,
+              color: const Color(0xFF607D8B),
             ),
             if (latestPoint != null)
               _buildStatusChip(
@@ -1681,7 +1683,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (history.isEmpty)
           _buildInlineNotice(
             '履歴グラフを描くためのデータがまだありません。最新実データの取得を続けると、ここに地方議員数の推移が蓄積されます。',
-            color: Colors.blueGrey,
+            color: const Color(0xFF607D8B),
             icon: Icons.show_chart,
           )
         else
@@ -1706,7 +1708,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   const SizedBox(height: 12),
                   _buildInlineNotice(
                     '履歴がまだ1点です。次回以降の取得で時系列の線が伸びます。',
-                    color: Colors.blueGrey,
+                    color: const Color(0xFF607D8B),
                     icon: Icons.timeline,
                   ),
                 ],
@@ -1746,7 +1748,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           show: true,
           drawVerticalLine: false,
           getDrawingHorizontalLine: (value) => FlLine(
-            color: Colors.blueGrey.withValues(alpha: 0.15),
+            color: const Color(0xFF607D8B).withValues(alpha: 0.15),
             strokeWidth: 1,
           ),
         ),
@@ -2548,7 +2550,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _buildStatusChip(
               '今後 ${_formatInt(upcomingSchedules.length)} 件',
-              color: Colors.blueGrey,
+              color: const Color(0xFF607D8B),
             ),
             _buildStatusChip(
               '14日以内 ${_formatInt(upcomingSoonCount)} 件',
@@ -2676,7 +2678,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             _selectedScheduleFilter == 'すべて'
                 ? '今後の地方選挙日程をまだ取得できていません。時間を置いて再取得してください。'
                 : '$_selectedScheduleFilterに該当する地方選挙はありません。',
-            color: Colors.blueGrey,
+            color: const Color(0xFF607D8B),
             icon: Icons.event_busy,
           )
         else
@@ -2789,8 +2791,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   color: Color(0xFF1D4ED8),
                   shape: BoxShape.circle,
                 ),
-                markerDecoration: BoxDecoration(
-                  color: Colors.blueGrey.shade400,
+                markerDecoration: const BoxDecoration(
+                  color: Color(0xFF78909C),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -2847,7 +2849,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (selectedEvents.isEmpty)
           _buildInlineNotice(
             '選択日に該当する地方選挙はありません。',
-            color: Colors.blueGrey,
+            color: const Color(0xFF607D8B),
             icon: Icons.event_available,
           )
         else
@@ -3983,7 +3985,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           children: [
             _buildStatusChip(
               '表示 ${_formatInt(visibleMembers.length)}/${_formatInt(filteredMembers.length)} 人',
-              color: Colors.blueGrey,
+              color: const Color(0xFF607D8B),
             ),
             _buildStatusChip(
               '個票 ${_formatInt(snapshot.rosterCount)} 人',
@@ -4003,7 +4005,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         if (filteredMembers.isEmpty)
           _buildInlineNotice(
             '条件に合う議員が見つかりません。都道府県または検索条件を変更してください。',
-            color: Colors.blueGrey,
+            color: const Color(0xFF607D8B),
             icon: Icons.info_outline,
           )
         else
@@ -4135,7 +4137,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               const SizedBox(height: 10),
               _buildInlineNotice(
                 detailError,
-                color: Colors.orange,
+                color: const Color(0xFFFF6B35),
                 icon: Icons.info_outline,
               ),
             ],
@@ -4227,7 +4229,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ? Colors.green
         : overdue > 0 || gap != 0
             ? Colors.red
-            : Colors.orange;
+            : const Color(0xFFFF6B35);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -4565,10 +4567,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final accent = overdue
         ? Colors.red
         : dueSoon
-            ? Colors.orange
+            ? const Color(0xFFFF6B35)
             : plan.endorsementConfirmed
                 ? Colors.green
-                : Colors.blueGrey;
+                : const Color(0xFF607D8B);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -4669,7 +4671,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildMetricChip(String label, String value, {Color? color}) {
-    final chipColor = color ?? Colors.blueGrey;
+    final chipColor = color ?? const Color(0xFF607D8B);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(

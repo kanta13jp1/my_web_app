@@ -87,7 +87,7 @@ class _TodoFlowPainter extends CustomPainter {
       for (final node in nodes) node.id: node,
     };
     final paint = Paint()
-      ..color = Colors.blueGrey.withValues(alpha: 0.45)
+      ..color = const Color(0xFF607D8B).withValues(alpha: 0.45)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -1172,9 +1172,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       case TaskPriority.a:
         return Colors.redAccent;
       case TaskPriority.b:
-        return Colors.orange;
+        return const Color(0xFFFF6B35);
       case TaskPriority.c:
-        return Colors.blueGrey;
+        return const Color(0xFF607D8B);
     }
   }
 
@@ -1324,10 +1324,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.blueGrey.withValues(alpha: 0.08),
+                            color:
+                                const Color(0xFF607D8B).withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blueGrey.withValues(alpha: 0.18),
+                              color: const Color(0xFF607D8B)
+                                  .withValues(alpha: 0.18),
                             ),
                           ),
                           child: Column(
@@ -1374,7 +1376,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                           .surfaceContainerLow,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: Colors.blueGrey.withValues(
+                                        color:
+                                            const Color(0xFF607D8B).withValues(
                                           alpha: 0.14,
                                         ),
                                       ),
@@ -2225,10 +2228,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blueGrey.withValues(alpha: 0.08),
+                color: const Color(0xFF607D8B).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Colors.blueGrey.withValues(alpha: 0.2),
+                  color: const Color(0xFF607D8B).withValues(alpha: 0.2),
                 ),
               ),
               child: const Row(
@@ -2479,7 +2482,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFE5E7EB).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
+        border:
+            Border.all(color: const Color(0xFF3D5AFE).withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2524,7 +2528,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.indigo.withValues(alpha: 0.08),
+                          color:
+                              const Color(0xFF3D5AFE).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -2629,7 +2634,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             title: _stripPriorityTag(task['content'] as String? ?? ''),
             subtitle: subtitle,
             color: _todoFlowLogMode
-                ? Colors.indigo
+                ? const Color(0xFF3D5AFE)
                 : isCompleted
                     ? Colors.green
                     : _priorityColor(
@@ -2672,7 +2677,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.15)),
+        border:
+            Border.all(color: const Color(0xFF3D5AFE).withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2688,7 +2694,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.hub, color: Colors.indigo.shade400),
+                      const Icon(Icons.hub, color: Color(0xFF5C6BC0)),
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
@@ -2772,7 +2778,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       _buildTodoFlowStatPill(
                         label: 'ログ',
                         value: '$logCount 件',
-                        color: Colors.indigo,
+                        color: const Color(0xFF3D5AFE),
                       ),
                       OutlinedButton.icon(
                         onPressed:
@@ -2819,15 +2825,16 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   .withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Colors.indigo.withValues(alpha: 0.14),
+                                color: const Color(0xFF3D5AFE)
+                                    .withValues(alpha: 0.14),
                               ),
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.timeline,
-                                  color: Colors.indigo.shade400,
+                                  color: Color(0xFF5C6BC0),
                                   size: 28,
                                 ),
                                 const SizedBox(height: 8),
@@ -2906,17 +2913,19 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                 vertical: 8,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.amber.withValues(alpha: 0.14),
+                                color: const Color(0xFFFFC107)
+                                    .withValues(alpha: 0.14),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.amber.withValues(alpha: 0.25),
+                                  color: const Color(0xFFFFC107)
+                                      .withValues(alpha: 0.25),
                                 ),
                               ),
                               child: Text(
                                 node.note!,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 11,
-                                  color: Colors.brown.shade700,
+                                  color: Color(0xFF5D4037),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -3031,11 +3040,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-      decoration: BoxDecoration(
-        color: Colors.amber.shade50,
+      decoration: const BoxDecoration(
+        color: Color(0xFFFFF8E1),
         border: Border(
-          top: BorderSide(color: Colors.amber.shade200),
-          bottom: BorderSide(color: Colors.amber.shade200),
+          top: BorderSide(color: Color(0xFFFFE082)),
+          bottom: BorderSide(color: Color(0xFFFFE082)),
         ),
       ),
       child: Column(
@@ -3043,7 +3052,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.hourglass_bottom, color: Colors.orange.shade800),
+              const Icon(Icons.hourglass_bottom, color: Color(0xFFEF6C00)),
               const SizedBox(width: 8),
               const Expanded(
                 child: Text(
@@ -3081,14 +3090,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.orange.shade100),
+              border: Border.all(color: const Color(0xFFFFE0B2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.menu_book, size: 18, color: Colors.brown),
+                    Icon(
+                      Icons.menu_book,
+                      size: 18,
+                      color: Color(0xFF795548),
+                    ),
                     SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -3264,7 +3277,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade100),
+                border: Border.all(color: const Color(0xFFFFE0B2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3347,18 +3360,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.blueGrey.withValues(alpha: 0.07),
+        color: const Color(0xFF607D8B).withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.blueGrey.shade700),
+          Icon(icon, size: 14, color: const Color(0xFF455A64)),
           const SizedBox(width: 4),
           Text(
             '$label $value',
-            style: TextStyle(
-              color: Colors.blueGrey.shade700,
+            style: const TextStyle(
+              color: Color(0xFF455A64),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -3547,8 +3560,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                               decoration: BoxDecoration(
                                                 color:
                                                     isSuppressedByCriticalLock
-                                                        ? Colors.blueGrey
-                                                            .withValues(
+                                                        ? const Color(
+                                                            0xFF607D8B,
+                                                          ).withValues(
                                                             alpha: 0.05,
                                                           )
                                                         : null,
@@ -3578,7 +3592,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                       color: isDone
                                                           ? Colors.green
                                                           : isSuppressedByCriticalLock
-                                                              ? Colors.blueGrey
+                                                              ? const Color(
+                                                                  0xFF607D8B,
+                                                                )
                                                               : const Color(
                                                                   0xFF9CA3AF,
                                                                 ),
@@ -3652,8 +3668,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                         ),
                                                         decoration:
                                                             BoxDecoration(
-                                                          color: Colors.blueGrey
-                                                              .withValues(
+                                                          color: const Color(
+                                                            0xFF607D8B,
+                                                          ).withValues(
                                                             alpha: 0.1,
                                                           ),
                                                           borderRadius:
@@ -3665,8 +3682,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                         child: const Text(
                                                           '保留',
                                                           style: TextStyle(
-                                                            color:
-                                                                Colors.blueGrey,
+                                                            color: Color(
+                                                              0xFF607D8B,
+                                                            ),
                                                             fontSize: 10,
                                                             fontWeight:
                                                                 FontWeight.w700,
@@ -3680,10 +3698,11 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                             _showCriticalTaskGuide(
                                                           criticalGuide,
                                                         ),
-                                                        icon: Icon(
+                                                        icon: const Icon(
                                                           Icons.help_outline,
-                                                          color: Colors.blueGrey
-                                                              .shade500,
+                                                          color: Color(
+                                                            0xFF607D8B,
+                                                          ),
                                                           size: 18,
                                                         ),
                                                       ),

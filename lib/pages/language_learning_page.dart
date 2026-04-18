@@ -362,7 +362,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('語学学習'),
-        backgroundColor: Colors.deepOrange,
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
@@ -433,7 +433,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         // Streak banner
         if (_streak.isNotEmpty)
           Container(
-            color: Colors.orange.shade50,
+            color: const Color(0xFFFFF3E0),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
@@ -443,7 +443,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                   '${_streak['current'] ?? 0}日連続学習中',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.orange,
+                    color: Color(0xFFFF6B35),
                   ),
                 ),
                 const Spacer(),
@@ -467,9 +467,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               final isSelected = _selectedDeck?['deck_id'] == deck['deck_id'];
               return Card(
                 elevation: isSelected ? 4 : 1,
-                color: isSelected ? Colors.deepOrange.shade50 : null,
+                color: isSelected ? const Color(0xFFFFF3E0) : null,
                 child: ListTile(
-                  leading: const Icon(Icons.book, color: Colors.deepOrange),
+                  leading: const Icon(Icons.book, color: Color(0xFFFF6B35)),
                   title: Text(deck['title'] as String? ?? ''),
                   subtitle: Text(
                     '${_langLabels[fromLang] ?? fromLang} → ${_langLabels[toLang] ?? toLang} | $cardCount 枚',
@@ -481,7 +481,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         IconButton(
                           icon: const Icon(
                             Icons.add_card,
-                            color: Colors.deepOrange,
+                            color: Color(0xFFFF6B35),
                           ),
                           tooltip: 'カードを追加',
                           onPressed: _showAddCardDialog,
@@ -611,7 +611,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               Expanded(
                 child: LinearProgressIndicator(
                   value: progress,
-                  color: Colors.deepOrange,
+                  color: const Color(0xFFFF6B35),
                 ),
               ),
               const SizedBox(width: 8),
@@ -640,7 +640,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       end: Alignment.bottomRight,
                       colors: _showAnswer
                           ? [Colors.green.shade50, Colors.green.shade100]
-                          : [Colors.deepOrange.shade50, Colors.orange.shade50],
+                          : [const Color(0xFFFFF3E0), const Color(0xFFFFF3E0)],
                     ),
                   ),
                   child: Column(
@@ -755,7 +755,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               icon: const Icon(Icons.visibility),
               label: const Text('答えを見る'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
+                backgroundColor: const Color(0xFFFF6B35),
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 48),
               ),
@@ -781,7 +781,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         children: [
           // Streak card
           Card(
-            color: Colors.orange.shade50,
+            color: const Color(0xFFFFF3E0),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -796,7 +796,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: Color(0xFFFF6B35),
                         ),
                       ),
                       Text(
@@ -829,7 +829,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 '総カード数',
                 '$totalCards',
                 Icons.flip,
-                Colors.deepOrange,
+                const Color(0xFFFF6B35),
               ),
               _buildStatCard(
                 '総レビュー',
@@ -841,7 +841,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 '正解率',
                 '$correctRate%',
                 Icons.percent,
-                Colors.purple,
+                const Color(0xFF3D5AFE),
               ),
             ],
           ),

@@ -60,7 +60,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('相性診断'),
-        backgroundColor: Colors.pink.shade100,
+        backgroundColor: const Color(0xFFFFE0B2),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -111,7 +111,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blue.shade50, Colors.purple.shade50],
+            colors: [Colors.blue.shade50, const Color(0xFFE8EAF6)],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -208,7 +208,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.pink.shade400 : Colors.transparent,
+          color: isSelected ? const Color(0xFFFFA726) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -247,7 +247,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       children: [
         Row(
           children: [
-            Icon(Icons.star, color: Colors.amber.shade700),
+            const Icon(Icons.star, color: Color(0xFFFFA000)),
             const SizedBox(width: 8),
             Text(
               'あなたと相性の良いタイプ TOP5',
@@ -292,7 +292,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
     IconData rankIcon;
     switch (rank) {
       case 1:
-        rankColor = Colors.amber.shade700;
+        rankColor = const Color(0xFFFFA000);
         rankIcon = Icons.emoji_events;
         break;
       case 2:
@@ -300,7 +300,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         rankIcon = Icons.emoji_events;
         break;
       case 3:
-        rankColor = Colors.brown.shade600;
+        rankColor = const Color(0xFF6D4C41);
         rankIcon = Icons.emoji_events;
         break;
       default:
@@ -405,17 +405,21 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.pink.shade50,
+                  color: const Color(0xFFFFF3E0),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.favorite, color: Colors.pink.shade700, size: 16),
+                    const Icon(
+                      Icons.favorite,
+                      color: Color(0xFFF57C00),
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '$score',
-                      style: TextStyle(
-                        color: Colors.pink.shade700,
+                      style: const TextStyle(
+                        color: Color(0xFFF57C00),
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -494,7 +498,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isSelected
-              ? Colors.pink.shade400
+              ? const Color(0xFFFFA726)
               : isMyType
                   ? Colors.blue.shade300
                   : Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -513,7 +517,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         child: Container(
           decoration: BoxDecoration(
             color: isSelected
-                ? Colors.pink.shade50
+                ? const Color(0xFFFFF3E0)
                 : isMyType
                     ? Colors.blue.shade50
                     : Colors.white,
@@ -527,7 +531,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isSelected
-                          ? Colors.pink.shade900
+                          ? const Color(0xFFE65100)
                           : isMyType
                               ? Colors.blue.shade900
                               : Theme.of(context).colorScheme.onSurface,
@@ -577,7 +581,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       child: ElevatedButton(
         onPressed: _checkCompatibility,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.pink.shade400,
+          backgroundColor: const Color(0xFFFFA726),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

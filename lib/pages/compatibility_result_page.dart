@@ -109,7 +109,7 @@ ${_compatibilityMatch.description}''';
     return Scaffold(
       appBar: AppBar(
         title: const Text('相性診断結果'),
-        backgroundColor: Colors.pink.shade100,
+        backgroundColor: const Color(0xFFFFE0B2),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -183,10 +183,10 @@ ${_compatibilityMatch.description}''';
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.purple.shade50, Colors.pink.shade50],
+            colors: [Color(0xFFE8EAF6), Color(0xFFFFF3E0)],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -232,12 +232,12 @@ ${_compatibilityMatch.description}''';
             ),
 
             // ハートアイコン
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Icon(
                 Icons.favorite,
                 size: 32,
-                color: Colors.pink.shade400,
+                color: Color(0xFFFFA726),
               ),
             ),
 
@@ -248,13 +248,13 @@ ${_compatibilityMatch.description}''';
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.pink.shade100,
+                      color: const Color(0xFFFFE0B2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '相手',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.pink.shade900,
+                            color: const Color(0xFFE65100),
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -265,7 +265,7 @@ ${_compatibilityMatch.description}''';
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
-                          color: Colors.pink.shade900,
+                          color: const Color(0xFFE65100),
                         ),
                   ),
                   const SizedBox(height: 4),
@@ -294,11 +294,11 @@ ${_compatibilityMatch.description}''';
       child: Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.pink.shade50,
+              Color(0xFFFFF3E0),
               Colors.white,
             ],
           ),
@@ -324,7 +324,7 @@ ${_compatibilityMatch.description}''';
                       '${_scoreAnimation.value.round()}',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Colors.pink.shade700,
+                            color: const Color(0xFFF57C00),
                             fontSize: 72,
                           ),
                     ),
@@ -406,8 +406,8 @@ ${_compatibilityMatch.description}''';
                 minHeight: 12,
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHigh,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.pink.shade400,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Color(0xFFFFA726),
                 ),
               ),
             ),
@@ -430,7 +430,7 @@ ${_compatibilityMatch.description}''';
           children: [
             Row(
               children: [
-                Icon(Icons.psychology, color: Colors.purple.shade700),
+                const Icon(Icons.psychology, color: Color(0xFF303F9F)),
                 const SizedBox(width: 8),
                 Text(
                   _compatibilityMatch.title,
@@ -467,7 +467,7 @@ ${_compatibilityMatch.description}''';
           children: [
             Row(
               children: [
-                Icon(Icons.star, color: Colors.amber.shade700),
+                const Icon(Icons.star, color: Color(0xFFFFA000)),
                 const SizedBox(width: 8),
                 Text(
                   '関係性の強み',
@@ -529,9 +529,9 @@ ${_compatibilityMatch.description}''';
           children: [
             Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.orange.shade700,
+                  color: Color(0xFFF57C00),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -552,14 +552,14 @@ ${_compatibilityMatch.description}''';
                     Container(
                       margin: const EdgeInsets.only(top: 4),
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade100,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFE0B2),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.info_outline,
                         size: 16,
-                        color: Colors.orange.shade700,
+                        color: Color(0xFFF57C00),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -689,8 +689,8 @@ ${_compatibilityMatch.description}''';
               ),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.pink.shade700,
-              side: BorderSide(color: Colors.pink.shade300, width: 2),
+              foregroundColor: const Color(0xFFF57C00),
+              side: const BorderSide(color: Color(0xFFFFB74D), width: 2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

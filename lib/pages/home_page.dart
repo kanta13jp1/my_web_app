@@ -4464,7 +4464,7 @@ abstinence_slip_details: $slipDetailsText
                             _buildSectionHeader(
                               'OFFICE KPI SNAPSHOT',
                               Icons.space_dashboard,
-                              Colors.deepPurple,
+                              const Color(0xFF3D5AFE),
                               key: const Key('home_section_office_kpi_summary'),
                             ),
                             _buildOfficeKpiSummary(
@@ -4477,7 +4477,7 @@ abstinence_slip_details: $slipDetailsText
                             _buildSectionHeader(
                               'KPI SUMMARY',
                               Icons.show_chart,
-                              Colors.purple,
+                              const Color(0xFF3D5AFE),
                             ),
                             _buildKpiSummary(
                               context,
@@ -4664,7 +4664,7 @@ abstinence_slip_details: $slipDetailsText
                             _buildSectionHeader(
                               'RECENT TOOLS',
                               Icons.history,
-                              Colors.deepPurple,
+                              const Color(0xFF3D5AFE),
                             ),
                             _buildRecentToolsMenu(context, isCompact),
                             const SizedBox(height: 16),
@@ -4790,7 +4790,7 @@ abstinence_slip_details: $slipDetailsText
       _MenuData(
         '機能を探す',
         Icons.search,
-        Colors.deepPurple,
+        const Color(0xFF3D5AFE),
         () => _openWorkMenu(
           context,
           shouldLockExploratoryMenus: shouldLockExploratoryMenus,
@@ -5166,7 +5166,7 @@ abstinence_slip_details: $slipDetailsText
                       : '--',
                   subtitle: '総ユーザー数',
                   icon: Icons.campaign,
-                  accentColor: Colors.pink,
+                  accentColor: const Color(0xFFFF6B35),
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
                       '今日のLP View',
@@ -5446,7 +5446,8 @@ abstinence_slip_details: $slipDetailsText
     for (var i = 0; i < series.length; i++) {
       spots.add(FlSpot(i.toDouble(), series[i].count.toDouble()));
     }
-    final lineColor = isDark ? Colors.pinkAccent : Colors.pink;
+    final lineColor =
+        isDark ? const Color(0xFFFF6B35) : const Color(0xFFFF6B35);
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.6);
@@ -6140,13 +6141,13 @@ abstinence_slip_details: $slipDetailsText
       const Color(0xFFE53935),
       const Color(0xFF3D5AFE),
       const Color(0xFF009688),
-      Colors.purple,
+      const Color(0xFF3D5AFE),
       const Color(0xFF6366F1),
       const Color(0xFF4CAF50),
       const Color(0xFF78716C),
-      Colors.pink,
+      const Color(0xFFFF6B35),
       const Color(0xFFFFC107),
-      Colors.cyan,
+      const Color(0xFF3D5AFE),
     ];
     final total = breakdownEntries.fold<double>(
       0,

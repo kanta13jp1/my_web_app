@@ -738,7 +738,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI組織OS'),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
       body: _isLoading
@@ -775,7 +775,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                               _buildSummaryChip(
                                 label: '未完了タスク',
                                 value: '${_snapshot.tasks.length}',
-                                color: Colors.deepPurple,
+                                color: const Color(0xFF3D5AFE),
                               ),
                               _buildSummaryChip(
                                 label: '記憶ログ',
@@ -785,7 +785,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                               _buildSummaryChip(
                                 label: '通信ログ',
                                 value: '${_snapshot.recentMessages.length}',
-                                color: Colors.orange,
+                                color: const Color(0xFFFF6B35),
                               ),
                               _buildSummaryChip(
                                 label: '関係マップ',
@@ -1155,7 +1155,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     final taskCount = _snapshot.openTaskCountsByAgent[agent.id] ?? 0;
     final memoryCount = _snapshot.memoryCountsByAgent[agent.id] ?? 0;
     final cardColor = agent.isActive
-        ? Colors.deepPurple
+        ? const Color(0xFF3D5AFE)
         : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Card(
@@ -1266,7 +1266,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 _buildMiniTag(
                   icon: Icons.assignment_late_outlined,
                   label: '未完了 $taskCount',
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF3D5AFE),
                 ),
                 _buildMiniTag(
                   icon: Icons.memory,
@@ -1365,12 +1365,12 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 _buildMiniTag(
                   icon: Icons.flag_outlined,
                   label: '優先度 ${task.priority}',
-                  color: Colors.orange,
+                  color: const Color(0xFFFF6B35),
                 ),
                 _buildMiniTag(
                   icon: Icons.inventory_2_outlined,
                   label: task.taskType,
-                  color: Colors.indigo,
+                  color: const Color(0xFF3D5AFE),
                 ),
               ],
             ),
@@ -1473,12 +1473,12 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 _buildMiniTag(
                   icon: Icons.tag,
                   label: '#${channel.label}',
-                  color: Colors.deepPurple,
+                  color: const Color(0xFF3D5AFE),
                 ),
                 _buildMiniTag(
                   icon: Icons.forum_outlined,
                   label: message.status,
-                  color: Colors.orange,
+                  color: const Color(0xFFFF6B35),
                 ),
               ],
             ),
@@ -1612,7 +1612,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         color = Colors.blue;
         break;
       default:
-        color = Colors.orange;
+        color = const Color(0xFFFF6B35);
         break;
     }
 
@@ -1701,7 +1701,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   Widget _buildSecretarySection() {
     return Card(
       elevation: 2,
-      color: Colors.deepPurple.shade50,
+      color: const Color(0xFFE8EAF6),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1709,7 +1709,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.support_agent, color: Colors.deepPurple),
+                Icon(Icons.support_agent, color: Color(0xFF3D5AFE)),
                 SizedBox(width: 8),
                 Text(
                   '秘書に話しかける',
@@ -1742,14 +1742,14 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple.shade100,
+                  color: const Color(0xFFC5CAE9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
                     const Icon(
                       Icons.check_circle,
-                      color: Colors.deepPurple,
+                      color: Color(0xFF3D5AFE),
                       size: 16,
                     ),
                     const SizedBox(width: 8),
@@ -1758,7 +1758,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         _secretaryReply!,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.deepPurple,
+                          color: Color(0xFF3D5AFE),
                         ),
                       ),
                     ),
@@ -1790,7 +1790,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
   Widget _buildGoalSection() {
     return Card(
       elevation: 2,
-      color: Colors.orange.shade50,
+      color: const Color(0xFFFFF3E0),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -1798,7 +1798,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.flag, color: Colors.orange),
+                Icon(Icons.flag, color: Color(0xFFFF6B35)),
                 SizedBox(width: 8),
                 Text(
                   'プロジェクトゴール展開',
@@ -1835,13 +1835,13 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 _buildDeptTag('CFO室', 'CFO', Colors.blue),
                 _buildDeptTag('CMO室', 'CMO', Colors.green),
                 _buildDeptTag('CHO室', 'CHO', Colors.red),
-                _buildDeptTag('CHRO室', 'CHRO', Colors.purple),
+                _buildDeptTag('CHRO室', 'CHRO', const Color(0xFF3D5AFE)),
                 _buildDeptTag('企画部', '企画', const Color(0xFF009688)),
-                _buildDeptTag('開発部', 'CTO', Colors.indigo),
-                _buildDeptTag('営業部', '営業', Colors.orange),
+                _buildDeptTag('開発部', 'CTO', const Color(0xFF3D5AFE)),
+                _buildDeptTag('営業部', '営業', const Color(0xFFFF6B35)),
                 _buildDeptTag('CS部', 'CS', const Color(0xFF00BCD4)),
-                _buildDeptTag('法務部', '法務', Colors.brown),
-                _buildDeptTag('広報部', '広報', Colors.pink),
+                _buildDeptTag('法務部', '法務', const Color(0xFF795548)),
+                _buildDeptTag('広報部', '広報', const Color(0xFFFF6B35)),
                 _buildDeptTag('調達部', '調達', const Color(0xFF9CA3AF)),
               ],
             ),
@@ -1859,7 +1859,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     : const Icon(Icons.rocket_launch),
                 label: const Text('全部署に展開'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.orange,
+                  backgroundColor: const Color(0xFFFF6B35),
                 ),
               ),
             ),

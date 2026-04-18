@@ -129,7 +129,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
         color = Colors.redAccent;
         break;
       default:
-        color = Colors.orange;
+        color = const Color(0xFFFF6B35);
         break;
     }
 
@@ -155,9 +155,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
       key: const Key('people_help_leave_requests_section'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.indigo.withValues(alpha: 0.05),
+        color: const Color(0xFF3D5AFE).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
+        border:
+            Border.all(color: const Color(0xFF3D5AFE).withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,10 +167,11 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CircleAvatar(
-                backgroundColor: Colors.indigo.withValues(alpha: 0.12),
+                backgroundColor:
+                    const Color(0xFF3D5AFE).withValues(alpha: 0.12),
                 child: const Icon(
                   Icons.event_available_outlined,
-                  color: Colors.indigo,
+                  color: Color(0xFF3D5AFE),
                 ),
               ),
               const SizedBox(width: 12),
@@ -328,7 +330,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           'People Help',
           key: Key('people_help_page_title'),
         ),
-        backgroundColor: Colors.indigo,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
       body: ListView(
@@ -358,7 +360,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             subtitle:
                 'Open a starter note for day-one setup and coaching points.',
             icon: Icons.edit_note,
-            color: Colors.indigo,
+            color: const Color(0xFF3D5AFE),
             page: widget.onboardingNotePage ??
                 const NoteEditorPage(
                   initialTitle: 'Onboarding memo',
@@ -372,7 +374,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             title: 'Rewards',
             subtitle: 'Review incentives, kudos, and recognition updates.',
             icon: Icons.card_giftcard,
-            color: Colors.amber.shade800,
+            color: const Color(0xFFFF8F00),
             page: const RewardsPage(),
           ),
           _buildActionCard(
@@ -381,7 +383,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             title: 'Stats',
             subtitle: 'Open people metrics and trend snapshots.',
             icon: Icons.bar_chart,
-            color: Colors.teal,
+            color: const Color(0xFF3D5AFE),
             page: const StatsPage(),
           ),
           const SizedBox(height: 24),
@@ -390,7 +392,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           _buildChecklistSection(
             title: 'First-week checklist',
             icon: Icons.checklist,
-            color: Colors.indigo,
+            color: const Color(0xFF3D5AFE),
             items: const [
               'Share the first three priorities before the new teammate starts.',
               'Lock the first 1:1 schedule and feedback owner.',
@@ -401,7 +403,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           _buildChecklistSection(
             title: 'Signals to review next',
             icon: Icons.insights,
-            color: Colors.deepPurple,
+            color: const Color(0xFF3D5AFE),
             items: const [
               'Onboarding completion trend',
               'Open follow-up items from recent 1:1s',
@@ -426,7 +428,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.indigo.withValues(alpha: 0.18),
+            color: const Color(0xFF3D5AFE).withValues(alpha: 0.18),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -439,7 +441,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             children: [
               CircleAvatar(
                 backgroundColor: Colors.white,
-                child: Icon(Icons.people_alt_outlined, color: Colors.indigo),
+                child: Icon(
+                  Icons.people_alt_outlined,
+                  color: Color(0xFF3D5AFE),
+                ),
               ),
               SizedBox(width: 12),
               Expanded(

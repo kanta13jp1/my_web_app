@@ -113,7 +113,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.business_center, size: 80, color: Colors.indigo),
+          const Icon(
+            Icons.business_center,
+            size: 80,
+            color: Color(0xFF3D5AFE),
+          ),
           const SizedBox(height: 32),
           Text(
             'あなたの人生を\n「経営」する',
@@ -163,7 +167,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
             runSpacing: 20,
             alignment: WrapAlignment.center,
             children: [
-              _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
+              _buildRoleIcon(
+                Icons.psychology,
+                'CSO',
+                '戦略',
+                const Color(0xFF607D8B),
+              ),
               _buildRoleIcon(
                 Icons.attach_money,
                 'CFO',
@@ -176,9 +185,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 '健康',
                 const Color(0xFF00695C),
               ),
-              _buildRoleIcon(Icons.diversity_3, 'CHRO', '人事', Colors.pink),
-              _buildRoleIcon(Icons.campaign, 'CMO', '広報', Colors.purple),
-              _buildRoleIcon(Icons.school, 'CKO', '知財', Colors.indigo),
+              _buildRoleIcon(
+                Icons.diversity_3,
+                'CHRO',
+                '人事',
+                const Color(0xFFFF6B35),
+              ),
+              _buildRoleIcon(
+                Icons.campaign,
+                'CMO',
+                '広報',
+                const Color(0xFF3D5AFE),
+              ),
+              _buildRoleIcon(
+                Icons.school,
+                'CKO',
+                '知財',
+                const Color(0xFF3D5AFE),
+              ),
             ],
           ),
         ],
@@ -298,7 +322,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.rocket_launch, size: 64, color: Colors.indigo),
+          const Icon(
+            Icons.rocket_launch,
+            size: 64,
+            color: Color(0xFF3D5AFE),
+          ),
           const SizedBox(height: 20),
           const Text(
             '就任おめでとうございます！',
@@ -417,7 +445,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _currentPage == index
-                      ? Colors.indigo
+                      ? const Color(0xFF3D5AFE)
                       : Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
               );
@@ -438,7 +466,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             ElevatedButton.icon(
               onPressed: _isLoading ? null : _finishOnboarding,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
+                backgroundColor: const Color(0xFF3D5AFE),
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
