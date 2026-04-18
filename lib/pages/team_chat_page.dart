@@ -221,7 +221,7 @@ class _ChannelSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Color(0xFFB0B0B0).shade100,
+      color: const Color(0xFFF5F5F5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -344,7 +344,7 @@ class _MessageInput extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFB0B0B0).shade200)),
+        border: Border(top: BorderSide(color: const Color(0xFFEEEEEE))),
       ),
       child: Row(
         children: [

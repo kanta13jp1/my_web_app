@@ -406,7 +406,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             Container(
                               height: 18,
                               decoration: BoxDecoration(
-                                color: Color(0xFFB0B0B0).shade200,
+                                color: const Color(0xFFEEEEEE),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
