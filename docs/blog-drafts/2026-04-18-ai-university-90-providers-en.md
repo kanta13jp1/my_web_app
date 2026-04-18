@@ -1,7 +1,7 @@
 ---
 title: "AI University Hits 90 Providers: Adding fal.ai and Fish Audio"
 tags: Flutter,Supabase,buildinpublic,webdev,AI
-published: false
+published: true
 ---
 
 # AI University Hits 90 Providers: Adding fal.ai and Fish Audio
