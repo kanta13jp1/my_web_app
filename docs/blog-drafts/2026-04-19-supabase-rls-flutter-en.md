@@ -1,7 +1,7 @@
 ---
 title: "Supabase Row Level Security in Flutter Web — 3 Real Patterns from Production"
 tags: Flutter,Supabase,security,webdev,buildinpublic
-published: false
+published: true
 ---
 
 # Supabase Row Level Security in Flutter Web — 3 Real Patterns from Production
