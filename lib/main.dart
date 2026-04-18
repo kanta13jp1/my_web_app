@@ -236,6 +236,9 @@ import 'package:my_web_app/pages/development_achievements_page.dart';
 import 'package:my_web_app/pages/invoice_generator_page.dart';
 import 'package:my_web_app/pages/poll_survey_page.dart';
 import 'package:my_web_app/pages/notification_digest_page.dart';
+import 'package:my_web_app/pages/ai_university_badges_page.dart';
+import 'package:my_web_app/pages/ai_university_streaks_page.dart';
+import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1318,6 +1321,18 @@ class MyApp extends StatelessWidget {
           case '/notification-digest':
             return MaterialPageRoute(
               builder: (_) => const NotificationDigestPage(),
+            );
+          case '/ai-university-badges':
+            return MaterialPageRoute(
+              builder: (_) => const AiUniversityBadgesPage(),
+            );
+          case '/ai-university-streaks':
+            return MaterialPageRoute(
+              builder: (_) => const AiUniversityStreaksPage(),
+            );
+          case '/ai-workflow-automation':
+            return MaterialPageRoute(
+              builder: (_) => const AiWorkflowAutomationPage(),
             );
           case '/dev/claude-design-importer':
             return MaterialPageRoute(

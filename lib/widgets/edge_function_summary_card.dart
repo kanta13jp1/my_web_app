@@ -295,6 +295,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/analytics-export',
       'アナリティクスエクスポートページ > CSV/JSONデータエクスポート',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'ai-university-badges',
+      'AI大学 達成バッジ管理',
+      true,
+      '/ai-university-badges',
+      'AI大学バッジページ > 取得バッジ一覧・条件確認',
+    ),
+    _FnDef(
+      'ai-university-streaks',
+      'AI大学 連続学習ストリーク',
+      true,
+      '/ai-university-streaks',
+      'AI大学ストリークページ > 連続学習日数・ランキング',
+    ),
+    _FnDef(
+      'ai-workflow-automation',
+      'AIワークフロー自動化',
+      true,
+      '/ai-workflow-automation',
+      'AIワークフロー自動化ページ > ワークフロー一覧・管理',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
