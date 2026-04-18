@@ -11018,3 +11018,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **DESIGN.md準拠: 88%→92%** 達成
 - **確立したパターン**: python batch replace → dart format → git add → git commit を1 Bash callで完結 (linter revert防止)
 - 次回候補: home_page.dart (223件・最大) / election_strategy_page (44件) / wrap-up実行
+
+### Rule 17 WF health check (2026-04-19 01:35)
+- deploy-prod: 3 failed / 0 success — Analyze code ステップで失敗
+  - `ai_company_builder_page.dart`: `Color(0xFFE5E7EB)12/38/10` 13箇所 (Colors.white12/38/10 誤置換) → `Color(0x1FFFFFFF/0x61FFFFFF/0x1AFFFFFF)` 修正
+  - `admin_analytics_page.dart`: require_trailing_commas 4箇所 修正
+  - commit `0f265882` → deploy-prod 再トリガー in_progress
+- 他WF: AI大学コンテンツ更新/CS Check/Edge Function Audit/Infra Health Check すべて ✅ SUCCESS
+- orphan branches: 全パターン 0件 ✅
+- Supabase Secrets: DEEPINFRA/NEBIUS/FAL/FISH_AUDIO/REPLICATE/COZE/SILICONFLOW/NOVITA 設定完了 (LIQUID スキップ)
