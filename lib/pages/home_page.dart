@@ -43,6 +43,7 @@ import '../widgets/profile_progress_card.dart';
 import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/ai_university_home_card.dart';
+import '../widgets/api_key_status_banner.dart';
 import '../widgets/referral_share_card.dart';
 import '../widgets/thought_interrupt_quick_widget.dart';
 import 'ai_secretary_page.dart';
@@ -4195,6 +4196,8 @@ abstinence_slip_details: $slipDetailsText
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // AI プロバイダー API キー未設定バナー (Windows版#94)
+                            const ApiKeyStatusBanner(),
                             // 最上部: AI大学キラーコンテンツバナー
                             const AiUniversityHomeCard(),
                             const SizedBox(height: 8),

@@ -197,11 +197,17 @@ serve(async (req) => {
                 }
             }
             if (primaryChain.length === 0) {
-                throw new Error("No AI providers configured");
+                const ps = getProviderStatus();
+                const err: Error & { missing_providers?: string[]; provider_status?: unknown } = new Error("No AI providers configured — すべての API キーが未設定です");
+                err.missing_providers = ps.missing;
+                err.provider_status = ps;
+                throw err;
             }
             let lastError: unknown;
+            const attemptedProviders: string[] = [];
             for (const fighter of primaryChain) {
                 if (!isProviderAvailable(fighter.provider)) continue;
+                attemptedProviders.push(fighter.provider);
                 try {
                     const result = await callAI(fighter, KEYS, { ...requestData, content: originalPrompt, imageBase64: image?.base64, mimeType: image?.mime });
                     if (fighter !== primaryChain[0]) {
@@ -216,7 +222,15 @@ serve(async (req) => {
                     // quota 以外の一時エラー (400 等) でも次プロバイダーを試す
                 }
             }
-            throw lastError || new Error("All AI models failed.");
+            // 全 primaryChain 失敗 — 未設定プロバイダーの情報を含めて throw
+            const ps = getProviderStatus();
+            const finalMsg = lastError instanceof Error ? lastError.message : String(lastError ?? "unknown");
+            const err: Error & { attempted_providers?: string[]; missing_providers?: string[]; provider_status?: unknown } =
+                new Error(`All configured AI providers failed. last=${finalMsg} | missing=${ps.missing.join(",") || "(none)"}`);
+            err.attempted_providers = attemptedProviders;
+            err.missing_providers = ps.missing;
+            err.provider_status = ps;
+            throw err;
         };
 
         const runPromptWithStrategy = async (
@@ -243,11 +257,21 @@ serve(async (req) => {
         // --- 1. GET MODELS ---
         if (action === 'get_models') {
             const models = MODEL_CATALOG.filter((item) => isProviderAvailable(item.provider));
+            const providerStatus = getProviderStatus();
             return new Response(
                 JSON.stringify({
                     success: true,
                     models,
+                    provider_status: providerStatus,
                 }),
+                { headers: corsHeaders }
+            );
+        }
+
+        // --- 1.5 Provider Status (Windows版#94) — Flutter 側でバナー表示 ---
+        if (action === 'get_provider_status') {
+            return new Response(
+                JSON.stringify({ success: true, ...getProviderStatus() }),
                 { headers: corsHeaders }
             );
         }
@@ -1116,10 +1140,33 @@ function isProviderAvailable(providerName: string): boolean {
             return Boolean(KEYS.deepseek);
         case 'xai':
         case 'grok':
-            return false;
+            return Boolean(KEYS.grok);
         default:
             return false;
     }
+}
+
+// Windows版#94: 各 API キーの設定状況を返す (Flutter 側でバナー表示)
+function getProviderStatus(): {
+    configured: string[];
+    missing: string[];
+    total: number;
+    details: Record<string, { env: string; configured: boolean }>;
+} {
+    const details = {
+        google: { env: 'GEMINI_API_KEY', configured: Boolean(KEYS.gemini) },
+        openai: { env: 'OPENAI_API_KEY', configured: Boolean(KEYS.openai) },
+        anthropic: { env: 'ANTHROPIC_API_KEY', configured: Boolean(KEYS.anthropic) },
+        deepseek: { env: 'DEEPSEEK_API_KEY', configured: Boolean(KEYS.deepseek) },
+        xai: { env: 'XAI_API_KEY', configured: Boolean(KEYS.grok) },
+    };
+    const configured = Object.entries(details)
+        .filter(([_, v]) => v.configured)
+        .map(([k]) => k);
+    const missing = Object.entries(details)
+        .filter(([_, v]) => !v.configured)
+        .map(([k]) => k);
+    return { configured, missing, total: Object.keys(details).length, details };
 }
 
 async function callOpenAICompatible(
