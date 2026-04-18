@@ -52,6 +52,11 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          # Self user IDs — CRITICAL: prevent infinite reply loop on own comments
+          SELF_QIITA_USER: kanta13jp1
+          SELF_DEVTO_USER: kanta13jp1
+          # Defense-in-depth: max replies per article per run
+          MAX_REPLIES_PER_ARTICLE: "2"
         run: python3 scripts/blog_engagement.py
 
       - name: Summary

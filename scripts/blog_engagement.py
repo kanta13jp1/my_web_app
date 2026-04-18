@@ -39,6 +39,14 @@ SKIP_AUTHORS = {"kanta13jp1"}
 QIITA_BASE = "https://qiita.com/api/v2"
 DEVTO_BASE = "https://dev.to/api"
 
+# Self user IDs — IMPORTANT: skip own replies to prevent infinite reply loop
+# (記事投稿者本人 = bot が自動返信 → bot がそれにまた返信 → 無限増殖の不具合を防ぐ)
+SELF_QIITA_USER = os.environ.get("SELF_QIITA_USER", "kanta13jp1")
+SELF_DEVTO_USER = os.environ.get("SELF_DEVTO_USER", "kanta13jp1")
+
+# Safety: max replies per article per run (defense-in-depth)
+MAX_REPLIES_PER_ARTICLE = int(os.environ.get("MAX_REPLIES_PER_ARTICLE", "2"))
+
 REPLY_PROMPT = """\
 あなたは「自分株式会社」というFlutter Web + Supabase + AIのライフ管理アプリを個人開発している日本人エンジニアです。
 Qiitaの記事「{title}」に{author}さんからコメントが届きました:
@@ -257,16 +265,22 @@ def process_qiita() -> None:
         if not isinstance(comments, list):
             comments = []
 
+        replies_this_article = 0
         for comment in comments:
             comment_id = comment["id"]
             author = comment["user"]["id"]
             body = comment.get("body", "")
             created_at = comment.get("created_at", "")
 
-            # 自分自身のコメントはスキップ
-            if author in SKIP_AUTHORS:
+            # ── Skip own replies (CRITICAL: prevents infinite reply loop) ──
+            if author == SELF_QIITA_USER or author in SKIP_AUTHORS:
                 print(f"    ⏭️  Skipping own comment @{author}")
                 continue
+
+            # Defense-in-depth: cap replies per article per run
+            if replies_this_article >= MAX_REPLIES_PER_ARTICLE:
+                print(f"    ⚠️ Reached MAX_REPLIES_PER_ARTICLE ({MAX_REPLIES_PER_ARTICLE}) — skipping rest")
+                break
 
             # Check if already replied
             existing = sb_check(
@@ -277,6 +291,7 @@ def process_qiita() -> None:
             if not existing:
                 print(f"    💬 Replying to @{author}...")
                 reply_text = generate_reply(title, body, author)
+                replies_this_article += 1
 
                 replied = False
                 if not DRY_RUN:
@@ -404,15 +419,21 @@ def process_devto() -> None:
         if not isinstance(comments, list):
             continue
 
+        replies_this_article = 0
         for comment in comments:
             comment_id = str(comment["id_code"])
             author = comment.get("user", {}).get("username", "")
             body = comment.get("body_html", comment.get("body_markdown", ""))
 
-            # 自分自身のコメントはスキップ
-            if author in SKIP_AUTHORS or author == "kanta13jp1":
+            # ── Skip own replies (CRITICAL: prevents infinite reply loop) ──
+            if author == SELF_DEVTO_USER or author in SKIP_AUTHORS:
                 print(f"    ⏭️  Skipping own comment @{author}")
                 continue
+
+            # Defense-in-depth: cap replies per article per run
+            if replies_this_article >= MAX_REPLIES_PER_ARTICLE:
+                print(f"    ⚠️ Reached MAX_REPLIES_PER_ARTICLE ({MAX_REPLIES_PER_ARTICLE}) — skipping rest")
+                break
 
             existing = sb_check(
                 "blog_comments",
@@ -422,7 +443,7 @@ def process_devto() -> None:
             if not existing:
                 print(f"    💬 Replying to @{author} (dev.to)...")
                 reply_text = generate_reply(title, body, author)
-                replied = False
+                replies_this_article += 1
 
                 if not DRY_RUN:
                     r = devto_post("/comments", {
