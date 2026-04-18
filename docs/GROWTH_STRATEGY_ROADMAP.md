@@ -10936,3 +10936,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### PS版#130 Rule17 WF health check (2026-04-18 PM)
 - 全WF最新SUCCESS ✅ / orphan 0件 / leakage 0件
+
+### PS版#130 (2026-04-18 PM)
+- **Rule17**: 全WF SUCCESS ✅ / orphan 0件
+- **T-1 第130弾**: Flutter Web PNG シェアカード JA+EN → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/capture-a-flutter-widget-as-png-and-download-it-web-share-card-2n20
+  - RepaintBoundary→toImage(pixelRatio:2.0)→base64→HTMLAnchorElement パターン解説
+  - orphan branch マージ + 削除 ✅
+  - 本日T-1累計: #121〜#130 = **10本** (過去最高更新)
