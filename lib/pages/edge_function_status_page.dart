@@ -235,7 +235,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
 
     // Group by category
     final grouped = <String, List<Map<String, dynamic>>>{};
@@ -248,27 +248,27 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('Edge Functions 実装状況'),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
         elevation: 0,
       ),
       body: Column(
         children: [
           // Summary bar
           Container(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 _summaryChip(
                   '総数',
                   '${_functions.length}',
-                  const Color(0xFF9CA3AF),
+                  Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 8),
-                _summaryChip('UI あり', '$_withUi', const Color(0xFF10B981)),
+                _summaryChip('UI あり', '$_withUi', Color(0xFF10B981)),
                 const SizedBox(width: 8),
-                _summaryChip('UI なし', '$_withoutUi', const Color(0xFFEF4444)),
+                _summaryChip('UI なし', '$_withoutUi', Color(0xFFEF4444)),
                 const Spacer(),
                 Text(
                   '${(_withUi / _functions.length * 100).toStringAsFixed(0)}% 連携済',
@@ -284,7 +284,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
           // Progress bar
           LinearProgressIndicator(
             value: _withUi / _functions.length,
-            backgroundColor: const Color(0xFFEF4444).withAlpha(30),
+            backgroundColor: Color(0xFFEF4444).withAlpha(30),
             valueColor: const AlwaysStoppedAnimation<Color>(
               Color(0xFF10B981),
             ),
@@ -297,7 +297,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
               children: grouped.entries.map((entry) {
                 final cat = entry.key;
                 final fns = entry.value;
-                final color = _categoryColors[cat] ?? const Color(0xFF6366F1);
+                final color = _categoryColors[cat] ?? Color(0xFF6366F1);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -321,7 +321,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               fontWeight: FontWeight.w700,
                               color: isDark
                                   ? Colors.white
-                                  : const Color(0xFF1E293B),
+                                  : Color(0xFF1E293B),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -388,7 +388,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
     final uiPath = fn['uiPath'] as String?;
     final uiNavigation = fn['uiNavigation'] as String?;
     final testResult = _testResults[name];
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
     final navExpanded = _expandedNavigation.contains(name);
 
     return Card(
@@ -399,8 +399,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
           color: hasUi
-              ? const Color(0xFF10B981).withAlpha(40)
-              : const Color(0xFFEF4444).withAlpha(40),
+              ? Color(0xFF10B981).withAlpha(40)
+              : Color(0xFFEF4444).withAlpha(40),
         ),
       ),
       child: Column(
@@ -415,7 +415,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                   hasUi ? Icons.check_circle : Icons.cancel,
                   size: 18,
                   color:
-                      hasUi ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      hasUi ? Color(0xFF10B981) : Color(0xFFEF4444),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -428,7 +428,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color:
-                              isDark ? Colors.white : const Color(0xFF1E293B),
+                              isDark ? Colors.white : Color(0xFF1E293B),
                           fontFamily: 'monospace',
                         ),
                       ),
@@ -448,8 +448,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               hasUi ? Icons.link : Icons.link_off,
                               size: 12,
                               color: hasUi
-                                  ? const Color(0xFF6366F1)
-                                  : const Color(0xFF9CA3AF),
+                                  ? Color(0xFF6366F1)
+                                  : Color(0xFF9CA3AF),
                             ),
                             const SizedBox(width: 4),
                             Flexible(
@@ -458,8 +458,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: hasUi
-                                      ? const Color(0xFF6366F1)
-                                      : const Color(0xFF9CA3AF),
+                                      ? Color(0xFF6366F1)
+                                      : Color(0xFF9CA3AF),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -474,8 +474,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             final ok = testResult['ok'] ?? false;
                             final status = testResult['status'] ?? 0;
                             final color = ok
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFFEF4444);
+                                ? Color(0xFF10B981)
+                                : Color(0xFFEF4444);
                             return Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 6,
@@ -516,8 +516,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                 : Icons.touch_app_outlined,
                             size: 18,
                             color: navExpanded
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFF9CA3AF),
+                                ? Color(0xFFF59E0B)
+                                : Color(0xFF9CA3AF),
                           ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(
@@ -580,8 +580,8 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: isDark
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFFB45309),
+                                ? Color(0xFFF59E0B)
+                                : Color(0xFFB45309),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -591,10 +591,10 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withAlpha(15),
+                            color: Color(0xFFF59E0B).withAlpha(15),
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: const Color(0xFFF59E0B).withAlpha(40),
+                              color: Color(0xFFF59E0B).withAlpha(40),
                             ),
                           ),
                           child: Row(
@@ -613,7 +613,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                     fontWeight: FontWeight.w500,
                                     color: isDark
                                         ? Colors.white
-                                        : const Color(0xFF1E293B),
+                                        : Color(0xFF1E293B),
                                   ),
                                 ),
                               ),

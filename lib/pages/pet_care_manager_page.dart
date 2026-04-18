@@ -259,7 +259,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                         '次回: ${nextDue.length >= 10 ? nextDue.substring(0, 10) : nextDue}',
                         style: TextStyle(
                           fontSize: 11,
-                          color: overdue ? Colors.red : const Color(0xFF9CA3AF),
+                          color: overdue ? Colors.red : Color(0xFF9CA3AF),
                           fontWeight: overdue ? FontWeight.bold : null,
                         ),
                       ),

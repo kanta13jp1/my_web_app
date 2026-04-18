@@ -105,7 +105,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
       case '手術・処置':
         return Colors.red;
       default:
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
     }
   }
 
@@ -124,7 +124,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('医療・健康ノート'),
-        backgroundColor: const Color(0xFF00796B),
+        backgroundColor: Color(0xFF00796B),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -174,8 +174,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark
-                              ? const Color(0xFF6B7280)
-                              : const Color(0xFF9CA3AF),
+                              ? Color(0xFF6B7280)
+                              : Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -194,8 +194,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark
-                              ? const Color(0xFF6B7280)
-                              : const Color(0xFF9CA3AF),
+                              ? Color(0xFF6B7280)
+                              : Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -212,7 +212,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                       child: FilledButton(
                         onPressed: _saving ? null : _saveNote,
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF009688),
+                          backgroundColor: Color(0xFF009688),
                         ),
                         child: _saving
                             ? const SizedBox(

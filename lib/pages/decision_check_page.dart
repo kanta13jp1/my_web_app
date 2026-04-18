@@ -262,14 +262,14 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('論理的意思決定ガード'),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
         elevation: 0,
         actions: [
           IconButton(
@@ -280,7 +280,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewCheckDialog,
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: Color(0xFF6366F1),
         label: const Text('決意をチェック', style: TextStyle(color: Colors.white)),
         icon: const Icon(Icons.psychology, color: Colors.white),
       ),
@@ -304,7 +304,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
     final hasPlan = check['has_concrete_plan'] as bool? ?? false;
     final hasFallback = check['has_fallback'] as bool? ?? false;
     final createdAt = check['created_at'] as String?;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
     final verdictColor = verdict != null
         ? (_verdictColors[verdict] ?? Colors.grey)
         : Colors.grey;
@@ -386,7 +386,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : Color(0xFF1E293B),
               ),
             ),
             const SizedBox(height: 8),
@@ -464,7 +464,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 8),

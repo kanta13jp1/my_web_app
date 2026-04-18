@@ -390,7 +390,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                               ? Colors.green
                               : (score >= 500
                                   ? Colors.orange
-                                  : const Color(0xFF9CA3AF)),
+                                  : Color(0xFF9CA3AF)),
                         ),
                       ),
                       const Text(
@@ -542,7 +542,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         filled: true,
         fillColor: _magiSettings.enabled
             ? Colors.white
-            : const Color(0xFF9CA3AF).withValues(alpha: 0.05),
+            : Color(0xFF9CA3AF).withValues(alpha: 0.05),
       ),
       items: options
           .map(
@@ -708,7 +708,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
             _buildScoreBadge(
               '遅延',
               '${(latency / 1000).toStringAsFixed(2)}s',
-              const Color(0xFF009688),
+              Color(0xFF009688),
             ),
           ],
         ),
@@ -719,7 +719,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF9CA3AF).withValues(alpha: 0.05),
+            color: Color(0xFF9CA3AF).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -899,7 +899,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
         icon = Icons.auto_graph;
         break;
       default:
-        color = const Color(0xFF9CA3AF);
+        color = Color(0xFF9CA3AF);
         icon = Icons.hub;
     }
     return CircleAvatar(

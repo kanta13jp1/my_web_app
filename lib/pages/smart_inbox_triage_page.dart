@@ -67,10 +67,10 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('スマート受信トレイ'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -122,7 +122,7 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                         final item = _items[i] as Map<String, dynamic>;
                         final priority = item['priority']?.toString();
                         return Card(
-                          color: const Color(0xFF1E1E1E),
+                          color: Color(0xFF1E1E1E),
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor:

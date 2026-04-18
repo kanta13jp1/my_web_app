@@ -171,8 +171,8 @@ class _ReferralPageState extends State<ReferralPage> {
                       if (_referralCount > 0) ...[
                         Card(
                           color: isDark
-                              ? const Color(0xFF022C22).withAlpha(180)
-                              : const Color(0xFFECFDF5),
+                              ? Color(0xFF022C22).withAlpha(180)
+                              : Color(0xFFECFDF5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -220,8 +220,8 @@ class _ReferralPageState extends State<ReferralPage> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: isDark
-                              ? const Color(0xFFD1D5DB)
-                              : const Color(0xFF374151),
+                              ? Color(0xFFD1D5DB)
+                              : Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -233,12 +233,12 @@ class _ReferralPageState extends State<ReferralPage> {
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.grey[850]
-                              : const Color(0xFFF3F4F6),
+                              : Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isDark
-                                ? const Color(0xFF374151)
-                                : const Color(0xFFE5E7EB),
+                                ? Color(0xFF374151)
+                                : Color(0xFFE5E7EB),
                           ),
                         ),
                         child: Row(
@@ -250,7 +250,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                   fontSize: 12,
                                   fontFamily: 'monospace',
                                   color: isDark
-                                      ? const Color(0xFFD1D5DB)
+                                      ? Color(0xFFD1D5DB)
                                       : Colors.black87,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -276,8 +276,8 @@ class _ReferralPageState extends State<ReferralPage> {
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF4B5563),
+                                ? Color(0xFF9CA3AF)
+                                : Color(0xFF4B5563),
                           ),
                         ),
                       ],
@@ -291,7 +291,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           label: const Text('リンクをコピー'),
                           onPressed: _copyLink,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
+                            backgroundColor: Color(0xFF6366F1),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -316,7 +316,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         '紹介リンクを送る',
                         'LINEやXで友達に送るだけ',
                         Icons.send,
-                        const Color(0xFF6366F1),
+                        Color(0xFF6366F1),
                         isDark,
                       ),
                       _buildStep(
@@ -324,7 +324,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         '友達が登録する',
                         'リンクから無料で登録',
                         Icons.person_add,
-                        const Color(0xFF8B5CF6),
+                        Color(0xFF8B5CF6),
                         isDark,
                       ),
                       _buildStep(
@@ -332,7 +332,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         '一緒に使い始める',
                         'メモ・資産管理・AI機能が全部無料',
                         Icons.check_circle,
-                        const Color(0xFF10B981),
+                        Color(0xFF10B981),
                         isDark,
                       ),
                       const SizedBox(height: 24),
@@ -419,8 +419,8 @@ class _ReferralPageState extends State<ReferralPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF4B5563),
+                        ? Color(0xFF9CA3AF)
+                        : Color(0xFF4B5563),
                   ),
                 ),
               ],
@@ -436,17 +436,17 @@ class _ReferralPageState extends State<ReferralPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
+        color: isDark ? Color(0xFF1F2937) : Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+          color: isDark ? Color(0xFF374151) : Color(0xFFE5E7EB),
         ),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
-          color: isDark ? const Color(0xFFE5E7EB) : Colors.black87,
+          color: isDark ? Color(0xFFE5E7EB) : Colors.black87,
         ),
       ),
     );

@@ -696,12 +696,12 @@ $input
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF7986CB).withValues(alpha: 0.5),
+                color: Color(0xFF7986CB).withValues(alpha: 0.5),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
+                  color: Color(0xFF3D5AFE).withValues(alpha: 0.15),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -713,7 +713,7 @@ $input
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF7986CB).withValues(alpha: 0.15),
+                    color: Color(0xFF7986CB).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -772,12 +772,12 @@ $input
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFFF6B35).withValues(alpha: 0.6),
+                color: Color(0xFFFF6B35).withValues(alpha: 0.6),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+                  color: Color(0xFFFF6B35).withValues(alpha: 0.15),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
@@ -789,7 +789,7 @@ $input
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+                    color: Color(0xFFFF6B35).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -848,10 +848,10 @@ $input
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6B35).withAlpha(15),
+              color: Color(0xFFFF6B35).withAlpha(15),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: const Color(0xFFFF6B35).withAlpha(70),
+                color: Color(0xFFFF6B35).withAlpha(70),
               ),
             ),
             child: const Row(
@@ -933,9 +933,9 @@ $input
               margin: const EdgeInsets.only(bottom: 14),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
+                color: Color(0xFFF0FDF4),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFF86EFAC)),
+                border: Border.all(color: Color(0xFF86EFAC)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -970,13 +970,13 @@ $input
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B35),
+              backgroundColor: Color(0xFFFF6B35),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
-              shadowColor: const Color(0xFFFF6B35),
+              shadowColor: Color(0xFFFF6B35),
             ),
           ),
         ),
@@ -993,7 +993,7 @@ $input
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFFF6B35),
+              foregroundColor: Color(0xFFFF6B35),
               side: const BorderSide(color: Color(0xFFFF6B35)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -1034,9 +1034,9 @@ $input
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF000000),
+        color: Color(0xFF000000),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2F3336)),
+        border: Border.all(color: Color(0xFF2F3336)),
       ),
       child: Row(
         children: [
@@ -1044,7 +1044,7 @@ $input
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFF1DA1F2).withValues(alpha: 0.15),
+              color: Color(0xFF1DA1F2).withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
@@ -1088,7 +1088,7 @@ $input
           FilledButton(
             onPressed: _shareOnX,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF1DA1F2),
+              backgroundColor: Color(0xFF1DA1F2),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -1168,22 +1168,22 @@ $input
     final stats = [
       (
         icon: Icons.people_alt_outlined,
-        color: const Color(0xFF7986CB),
-        bgColor: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
+        color: Color(0xFF7986CB),
+        bgColor: Color(0xFF3D5AFE).withValues(alpha: 0.15),
         value: _totalUsers > 0 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
         icon: Icons.article_outlined,
-        color: const Color(0xFF4FC3F7),
-        bgColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+        color: Color(0xFF4FC3F7),
+        bgColor: Color(0xFF0284C7).withValues(alpha: 0.15),
         value: _publicMemoCount > 0 ? '$_publicMemoCount' : '–',
         label: '公開メモ数',
       ),
       (
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF81C784),
-        bgColor: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+        color: Color(0xFF81C784),
+        bgColor: Color(0xFF4CAF50).withValues(alpha: 0.15),
         value: _achievementCount > 0 ? '$_achievementCount' : '–',
         label: '実装済み機能数',
       ),
@@ -1193,7 +1193,7 @@ $input
       key: const Key('landing_social_proof_stats'),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
@@ -1224,7 +1224,7 @@ $input
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: const Text(
@@ -1291,7 +1291,7 @@ $input
       (
         competitor: 'Notion',
         icon: '📝',
-        color: const Color(0xFF1F2937),
+        color: Color(0xFF1F2937),
         steps: [
           'Notionのページを開き「…」→「エクスポート」→「Markdown & CSV」を選択',
           '自分株式会社の「インポート」画面を開く',
@@ -1301,7 +1301,7 @@ $input
       (
         competitor: 'Evernote',
         icon: '🐘',
-        color: const Color(0xFF00A82D),
+        color: Color(0xFF00A82D),
         steps: [
           'Evernoteで「ファイル」→「ノートをエクスポート」→「ENEX形式」で書き出し',
           '自分株式会社の「インポート」画面を開く',
@@ -1498,7 +1498,7 @@ $input
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
+                    color: Color(0xFFEEF2FF),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -1615,7 +1615,7 @@ $input
           ElevatedButton(
             onPressed: () => Navigator.of(context).pushNamed('/enterprise'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: Color(0xFF10B981),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               textStyle: const TextStyle(
@@ -1638,7 +1638,7 @@ $input
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: Color(0xFFD1FAE5)),
       ),
-      color: const Color(0xFFF0FDF4),
+      color: Color(0xFFF0FDF4),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -2507,7 +2507,7 @@ $input
           colors: [Color(0xFFF8FAFF), Color(0xFFF0F4FF)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2584,7 +2584,7 @@ $input
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3949AB),
+                backgroundColor: Color(0xFF3949AB),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -2600,7 +2600,7 @@ $input
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -2661,9 +2661,9 @@ $input
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF0),
+        color: Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: Color(0xFFFDE68A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2696,12 +2696,12 @@ $input
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: row.isOurs
-                    ? const Color(0xFF3949AB)
-                    : const Color(0xFFFEFCE8),
+                    ? Color(0xFF3949AB)
+                    : Color(0xFFFEFCE8),
                 borderRadius: BorderRadius.circular(12),
                 border: row.isOurs
                     ? null
-                    : Border.all(color: const Color(0xFFFDE68A)),
+                    : Border.all(color: Color(0xFFFDE68A)),
               ),
               child: Row(
                 children: [
@@ -2713,7 +2713,7 @@ $input
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color:
-                            row.isOurs ? Colors.white : const Color(0xFF1E293B),
+                            row.isOurs ? Colors.white : Color(0xFF1E293B),
                       ),
                     ),
                   ),
@@ -2727,7 +2727,7 @@ $input
                             row.isOurs ? FontWeight.w800 : FontWeight.w600,
                         color: row.isOurs
                             ? Colors.yellowAccent
-                            : const Color(0xFF64748B),
+                            : Color(0xFF64748B),
                       ),
                     ),
                   ),
@@ -2739,8 +2739,8 @@ $input
                       style: TextStyle(
                         fontSize: 12,
                         color: row.isOurs
-                            ? const Color(0xB3FFFFFF)
-                            : const Color(0xFF94A3B8),
+                            ? Color(0xB3FFFFFF)
+                            : Color(0xFF94A3B8),
                       ),
                     ),
                   ),
@@ -2781,7 +2781,7 @@ $input
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -2864,7 +2864,7 @@ $input
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3949AB),
+                backgroundColor: Color(0xFF3949AB),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -2963,7 +2963,7 @@ $input
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7FF),
+                    color: Color(0xFFF2F7FF),
                     borderRadius: BorderRadius.circular(16),
                     border:
                         Border.all(color: Colors.blue.withValues(alpha: 0.2)),
@@ -3102,7 +3102,7 @@ $input
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF4E5),
+                    color: Color(0xFFFFF4E5),
                     borderRadius: BorderRadius.circular(12),
                     border:
                         Border.all(color: Colors.orange.withValues(alpha: 0.3)),
@@ -3192,7 +3192,7 @@ $input
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF2F7FF),
+                    color: Color(0xFFF2F7FF),
                     borderRadius: BorderRadius.circular(12),
                     border:
                         Border.all(color: Colors.blue.withValues(alpha: 0.2)),
@@ -3260,9 +3260,9 @@ $input
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7F9FC),
+                    color: Color(0xFFF7F9FC),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0x1F000000)),
+                    border: Border.all(color: Color(0x1F000000)),
                   ),
                   child: const Text(
                     'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
@@ -3379,7 +3379,7 @@ $input
             curve: Curves.easeInOut,
           );
         },
-        backgroundColor: const Color(0xFF3949AB),
+        backgroundColor: Color(0xFF3949AB),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.rocket_launch, size: 18),
         label: const Text(
@@ -3472,14 +3472,14 @@ class _BenefitChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: Color(0xFFEEF2FF),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFC7D2FE)),
+        border: Border.all(color: Color(0xFFC7D2FE)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: const Color(0xFF4F46E5)),
+          Icon(icon, size: 14, color: Color(0xFF4F46E5)),
           const SizedBox(width: 6),
           Text(
             label,
@@ -3540,7 +3540,7 @@ class _FaqItemState extends State<_FaqItem> {
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
                   size: 20,
-                  color: const Color(0xFF64748B),
+                  color: Color(0xFF64748B),
                 ),
               ],
             ),
@@ -3573,7 +3573,7 @@ class _LandingMainBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFE94560),
+        color: Color(0xFFE94560),
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Text(

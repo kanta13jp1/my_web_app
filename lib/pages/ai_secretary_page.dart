@@ -569,7 +569,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFFECB3),
+                                          color: Color(0xFFFFECB3),
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
@@ -577,7 +577,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           'MAGI Strategist: $_usedModel',
                                           style: TextStyle(
                                             fontSize: 10,
-                                            color: const Color(0xFFFF6F00),
+                                            color: Color(0xFFFF6F00),
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -678,7 +678,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   ? Colors.indigo
                   : (isDark
                       ? Theme.of(context).colorScheme.surfaceContainerHighest
-                      : const Color(0xFFE5E7EB)),
+                      : Color(0xFFE5E7EB)),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -687,7 +687,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   ? Colors.white
                   : (isDark
                       ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : const Color(0xFF4B5563)),
+                      : Color(0xFF4B5563)),
               size: 20,
             ),
           ),

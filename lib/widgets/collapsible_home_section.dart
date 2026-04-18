@@ -93,7 +93,7 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
     final expanded = _expanded ?? widget.initiallyExpanded;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor =
-        isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+        isDark ? Color(0xFF1E293B) : Color(0xFFE2E8F0);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -117,7 +117,7 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
                     Icon(
                       widget.icon,
                       size: 18,
-                      color: widget.iconColor ?? const Color(0xFF6366F1),
+                      color: widget.iconColor ?? Color(0xFF6366F1),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -129,8 +129,8 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
                         color: isDark
-                            ? const Color(0xFFE2E8F0)
-                            : const Color(0xFF1E293B),
+                            ? Color(0xFFE2E8F0)
+                            : Color(0xFF1E293B),
                       ),
                     ),
                   ),
@@ -139,8 +139,8 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
                     child: Icon(
                       Icons.expand_more,
                       color: isDark
-                          ? const Color(0xFF94A3B8)
-                          : const Color(0xFF64748B),
+                          ? Color(0xFF94A3B8)
+                          : Color(0xFF64748B),
                     ),
                   ),
                 ],

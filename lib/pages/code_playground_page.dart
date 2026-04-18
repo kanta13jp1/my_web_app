@@ -454,13 +454,13 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       'python': Colors.green,
       'dart': Colors.lightBlue,
       'rust': Colors.orange,
-      'go': const Color(0xFF00BCD4),
+      'go': Color(0xFF00BCD4),
       'java': Colors.red,
       'sql': Colors.purple,
       'html': Colors.deepOrange,
       'css': Colors.indigo,
     };
-    final color = langColors[lang] ?? const Color(0xFF9CA3AF);
+    final color = langColors[lang] ?? Color(0xFF9CA3AF);
     return CircleAvatar(
       radius: 16,
       backgroundColor: color.withValues(alpha: 0.15),

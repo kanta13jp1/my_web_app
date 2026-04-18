@@ -31,12 +31,12 @@ class _ThoughtInterruptDiagnosisPageState
           'mobile_games',
           'ゲームを開く',
           Icons.videogame_asset,
-          const Color(0xFF7C3AED),
+          Color(0xFF7C3AED),
         ),
         _DiagOption('video', '動画を見る', Icons.play_circle, Colors.red),
-        _DiagOption('manga', '漫画を読む', Icons.menu_book, const Color(0xFF0891B2)),
+        _DiagOption('manga', '漫画を読む', Icons.menu_book, Color(0xFF0891B2)),
         _DiagOption('smartphone', 'スマホを手に取る', Icons.smartphone,
-            const Color(0xFF9CA3AF)),
+            Color(0xFF9CA3AF)),
         _DiagOption('eating_out', '食べ物を探す', Icons.fastfood, Colors.orange),
       ],
     ),
@@ -49,20 +49,20 @@ class _ThoughtInterruptDiagnosisPageState
           'alcohol',
           'お酒を飲む',
           Icons.local_bar,
-          const Color(0xFFF59E0B),
+          Color(0xFFF59E0B),
         ),
         _DiagOption('masturbation', '性的な衝動に従う', Icons.block, Colors.pink),
         _DiagOption(
           'dating_apps',
           '出会い系・異性探索',
           Icons.favorite,
-          const Color(0xFFE11D48),
+          Color(0xFFE11D48),
         ),
         _DiagOption(
           'gambling',
           'ギャンブル・賭け事',
           Icons.casino,
-          const Color(0xFF059669),
+          Color(0xFF059669),
         ),
         _DiagOption('eating_out', '間食・外食', Icons.restaurant, Colors.orange),
       ],
@@ -72,12 +72,12 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.access_time,
       options: [
         _DiagOption(
-            'morning', '朝 (6〜9時)', Icons.wb_sunny, const Color(0xFFFFC107)),
+            'morning', '朝 (6〜9時)', Icons.wb_sunny, Color(0xFFFFC107)),
         _DiagOption(
           'midday',
           '昼食後 (12〜14時)',
           Icons.lunch_dining,
-          const Color(0xFFF97316),
+          Color(0xFFF97316),
         ),
         _DiagOption('afternoon', '午後 (14〜17時)', Icons.cloud, Colors.blue),
         _DiagOption('evening', '夕方 (17〜20時)', Icons.wb_twilight, Colors.orange),
@@ -86,7 +86,7 @@ class _ThoughtInterruptDiagnosisPageState
           'midnight',
           '深夜 (23時〜)',
           Icons.bedtime,
-          const Color(0xFF1E293B),
+          Color(0xFF1E293B),
         ),
       ],
     ),
@@ -95,12 +95,12 @@ class _ThoughtInterruptDiagnosisPageState
       icon: Icons.warning_amber,
       options: [
         _DiagOption(
-            'hand', '手が無意識に動く', Icons.front_hand, const Color(0xFF009688)),
+            'hand', '手が無意識に動く', Icons.front_hand, Color(0xFF009688)),
         _DiagOption(
           'eyes',
           '目が泳ぐ・視線が定まらない',
           Icons.visibility,
-          const Color(0xFF0891B2),
+          Color(0xFF0891B2),
         ),
         _DiagOption(
           'posture',
@@ -121,7 +121,7 @@ class _ThoughtInterruptDiagnosisPageState
           Colors.orange,
         ),
         _DiagOption(
-            'none', 'サインを感じない', Icons.help_outline, const Color(0xFF9CA3AF)),
+            'none', 'サインを感じない', Icons.help_outline, Color(0xFF9CA3AF)),
       ],
     ),
   ];
@@ -238,7 +238,7 @@ class _ThoughtInterruptDiagnosisPageState
         // プログレスバー
         LinearProgressIndicator(
           value: (_currentStep + 1) / _questions.length,
-          backgroundColor: const Color(0xFFEEEEEE),
+          backgroundColor: Color(0xFFEEEEEE),
           color: Colors.indigo,
           minHeight: 4,
         ),
@@ -290,7 +290,7 @@ class _ThoughtInterruptDiagnosisPageState
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    disabledBackgroundColor: const Color(0xFFE0E0E0),
+                    disabledBackgroundColor: Color(0xFFE0E0E0),
                   ),
                   child: _isSaving
                       ? const SizedBox(
@@ -504,7 +504,7 @@ class _OptionCard extends StatelessWidget {
               isSelected ? option.color.withValues(alpha: 0.12) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? option.color : const Color(0xFFE0E0E0),
+            color: isSelected ? option.color : Color(0xFFE0E0E0),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
@@ -521,7 +521,7 @@ class _OptionCard extends StatelessWidget {
           children: [
             Icon(
               option.icon,
-              color: isSelected ? option.color : const Color(0xFF9CA3AF),
+              color: isSelected ? option.color : Color(0xFF9CA3AF),
               size: 22,
             ),
             const SizedBox(width: 12),

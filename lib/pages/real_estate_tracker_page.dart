@@ -605,7 +605,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),
-          _statCard('物件数', '$count件', Icons.home_work, const Color(0xFF009688)),
+          _statCard('物件数', '$count件', Icons.home_work, Color(0xFF009688)),
           const SizedBox(height: 8),
           _statCard(
             '総資産評価額',

@@ -79,7 +79,7 @@ class _HealthPageState extends State<HealthPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('健康管理室'),
-        backgroundColor: const Color(0xFF009688),
+        backgroundColor: Color(0xFF009688),
         foregroundColor: Colors.white,
       ),
       body: Column(
@@ -103,7 +103,7 @@ class _HealthPageState extends State<HealthPage> {
                 ElevatedButton(
                   onPressed: _addHealthLog,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF009688),
+                    backgroundColor: Color(0xFF009688),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

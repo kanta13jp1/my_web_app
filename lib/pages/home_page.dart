@@ -1306,7 +1306,7 @@ abstinence_slip_details: $slipDetailsText
         title: '逸脱が発生。禁欲ガードを最優先',
         detail: '今日の逸脱は${snapshot.abstinenceSlipCount}回。先に再設定して再発を止める。',
         icon: Icons.shield_moon,
-        color: const Color(0xFFE53935),
+        color: Color(0xFFE53935),
       );
     }
 
@@ -1316,7 +1316,7 @@ abstinence_slip_details: $slipDetailsText
         title: '今月の収支を先に把握する',
         detail: snapshot.monthlyCashflowSummary.summaryLine,
         icon: Icons.receipt_long,
-        color: const Color(0xFF4CAF50),
+        color: Color(0xFF4CAF50),
       );
     }
 
@@ -1346,7 +1346,7 @@ abstinence_slip_details: $slipDetailsText
         title: '必須タスクを先に完了',
         detail: '思考停止ログの必須タスクが${snapshot.pendingCriticalTaskCount}件残っています。',
         icon: Icons.lock_clock,
-        color: const Color(0xFFE53935),
+        color: Color(0xFFE53935),
       );
     }
 
@@ -1357,7 +1357,7 @@ abstinence_slip_details: $slipDetailsText
         detail:
             '昨日 ${snapshot.completionGoalSnapshot.yesterdayCompletedCount}件 / 今日 ${snapshot.completionGoalSnapshot.todayCompletedCount}件 / 目標 ${snapshot.completionGoalSnapshot.targetCount}件',
         icon: Icons.trending_up,
-        color: const Color(0xFF3D5AFE),
+        color: Color(0xFF3D5AFE),
       );
     }
 
@@ -1369,7 +1369,7 @@ abstinence_slip_details: $slipDetailsText
         title: '週末ストックを見直す',
         detail: '土曜リマインド: 未完了ストックが${snapshot.pendingStockTaskCount}件あります。',
         icon: Icons.inventory_2,
-        color: const Color(0xFFFFC107),
+        color: Color(0xFFFFC107),
       );
     }
 
@@ -1621,7 +1621,7 @@ abstinence_slip_details: $slipDetailsText
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final baseColor = Color.alphaBlend(
       command.color.withValues(alpha: isDark ? 0.2 : 0.12),
-      isDark ? const Color(0xFF1A1A1A) : Colors.white,
+      isDark ? Color(0xFF1A1A1A) : Colors.white,
     );
     final textColor = isDark ? Colors.white : Colors.black87;
 
@@ -1768,10 +1768,10 @@ abstinence_slip_details: $slipDetailsText
     final summary = snapshot.monthlyCashflowSummary;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = summary.netTotal >= 0
-        ? const Color(0xFF4CAF50)
-        : const Color(0xFFEF9A9A);
+        ? Color(0xFF4CAF50)
+        : Color(0xFFEF9A9A);
     final cardColor =
-        isDark ? const Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
+        isDark ? Color(0xFF1E1E1E) : Colors.white.withValues(alpha: 0.92);
     final borderColor = isHighlighted
         ? accentColor.withValues(alpha: 0.7)
         : accentColor.withValues(alpha: 0.22);
@@ -1888,14 +1888,14 @@ abstinence_slip_details: $slipDetailsText
                     summary.reviewDone ? Icons.visibility : Icons.priority_high,
                 label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
                 color:
-                    summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
+                    summary.reviewDone ? Color(0xFFB0B0B0) : accentColor,
               ),
               _buildMonthlyCashflowChip(
                 icon: Icons.edit_note,
                 label: recordLabel,
                 color: summary.recordCount > 0
-                    ? const Color(0xFF6366F1)
-                    : const Color(0xFFFF6B35),
+                    ? Color(0xFF6366F1)
+                    : Color(0xFFFF6B35),
               ),
               if (summary.lastRecordedAt != null)
                 _buildMonthlyCashflowChip(
@@ -1999,7 +1999,7 @@ abstinence_slip_details: $slipDetailsText
     var title = '嫌でも先にやる1件を固定';
     var detail = '強制導線は解除済みです。次の通常メニューへ進めます。';
     var buttonLabel = '状態を更新';
-    Color color = const Color(0xFFB0B0B0);
+    Color color = Color(0xFFB0B0B0);
     var icon = Icons.verified;
     VoidCallback onPressed = _refreshKpis;
 
@@ -2017,7 +2017,7 @@ abstinence_slip_details: $slipDetailsText
       title = '朝の固定を先に終える';
       detail = '気分で動く前に、朝の優先順位を先に固定します。';
       buttonLabel = 'ブリーフィングへ';
-      color = const Color(0xFFFFC107);
+      color = Color(0xFFFFC107);
       icon = Icons.wb_sunny;
       onPressed = () {
         _openMorningBriefing(context);
@@ -2045,7 +2045,7 @@ abstinence_slip_details: $slipDetailsText
 
     final baseColor = Color.alphaBlend(
       color.withValues(alpha: isDark ? 0.18 : 0.1),
-      isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      isDark ? Color(0xFF1E1E1E) : Colors.white,
     );
 
     return Container(
@@ -2144,7 +2144,7 @@ abstinence_slip_details: $slipDetailsText
     final helper = achieved
         ? 'このまま維持して、次の1件は短く終わるタスクから取ります。'
         : 'あと ${goal.remainingCount}件で前日超えです。5分で終わるものから先に片付けます。';
-    final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final baseColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
 
     return Container(
       key: const Key('home_completion_goal_card'),
@@ -2343,7 +2343,7 @@ abstinence_slip_details: $slipDetailsText
                 label: '逸脱',
                 value: '${snapshot.abstinenceSlipCount}回',
                 color: snapshot.abstinenceSlipCount > 0
-                    ? const Color(0xFFFF6B35)
+                    ? Color(0xFFFF6B35)
                     : Colors.green,
               ),
               _buildStatusPill(
@@ -2538,7 +2538,7 @@ abstinence_slip_details: $slipDetailsText
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: const Color(0xFFB0B0B0).withValues(alpha: isDark ? 0.3 : 0.18),
+          color: Color(0xFFB0B0B0).withValues(alpha: isDark ? 0.3 : 0.18),
         ),
       ),
       child: Column(
@@ -2580,7 +2580,7 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarSummaryPill(
                     label: '逸脱日数',
                     value: '$slipDaysCount日',
-                    color: const Color(0xFFFF6B35),
+                    color: Color(0xFFFF6B35),
                     filter: _CalendarHighlightFilter.slip,
                   ),
                   _buildCalendarSummaryPill(
@@ -2592,7 +2592,7 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarSummaryPill(
                     label: '未設定日数',
                     value: '$unsetDaysCount日',
-                    color: const Color(0xFFB0B0B0),
+                    color: Color(0xFFB0B0B0),
                     filter: _CalendarHighlightFilter.unset,
                   ),
                 ],
@@ -2642,7 +2642,7 @@ abstinence_slip_details: $slipDetailsText
               _buildStatusPill(
                 label: '朝固定',
                 value: '$morningDoneCount日',
-                color: const Color(0xFFFFC107),
+                color: Color(0xFFFFC107),
               ),
               _buildStatusPill(
                 label: '残高確認',
@@ -2701,7 +2701,7 @@ abstinence_slip_details: $slipDetailsText
               final status = _resolveCalendarDayStatus(day);
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
-                  day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
+                  day.isCurrentMonth ? status.color : Color(0xFFB0B0B0);
               final backgroundColor = day.isCurrentMonth
                   ? matchesFilter
                       ? accentColor.withValues(
@@ -2713,8 +2713,8 @@ abstinence_slip_details: $slipDetailsText
                                       ? 0.08
                                       : 0.1,
                         )
-                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
-                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
+                      : Color(0xFFB0B0B0).withValues(alpha: 0.035)
+                  : Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -2735,11 +2735,11 @@ abstinence_slip_details: $slipDetailsText
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: day.isToday
-                            ? const Color(0xFF6366F1)
+                            ? Color(0xFF6366F1)
                             : day.isCurrentMonth
                                 ? matchesFilter
                                     ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(0xFFB0B0B0)
+                                    : Color(0xFFB0B0B0)
                                         .withValues(alpha: 0.08)
                                 : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
@@ -2763,9 +2763,9 @@ abstinence_slip_details: $slipDetailsText
                                               : Colors.black87)
                                           : accentColor)
                                       : isDark
-                                          ? const Color(0xFF666666)
-                                          : const Color(0xFFB0B0B0)
-                                  : const Color(0xFFB0B0B0),
+                                          ? Color(0xFF666666)
+                                          : Color(0xFFB0B0B0)
+                                  : Color(0xFFB0B0B0),
                             ),
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
@@ -2801,7 +2801,7 @@ abstinence_slip_details: $slipDetailsText
                               if (day.morningDone)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    const Color(0xFFFFC107),
+                                    Color(0xFFFFC107),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
@@ -2823,14 +2823,14 @@ abstinence_slip_details: $slipDetailsText
                               if (day.hasAbstinenceSlip)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    const Color(0xFFFF6B35),
+                                    Color(0xFFFF6B35),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
                               if (day.isSaturday)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    const Color(0xFF009688),
+                                    Color(0xFF009688),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
@@ -3055,7 +3055,7 @@ abstinence_slip_details: $slipDetailsText
                       size: 18,
                       color: task.isCompleted
                           ? Colors.green
-                          : const Color(0xFFB0B0B0),
+                          : Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3070,7 +3070,7 @@ abstinence_slip_details: $slipDetailsText
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? const Color(0xFF888888)
+                                  ? Color(0xFF888888)
                                   : null,
                             ),
                           ),
@@ -3086,7 +3086,7 @@ abstinence_slip_details: $slipDetailsText
                               if (task.secondaryLabel != null)
                                 _buildCalendarTaskBadge(
                                   label: task.secondaryLabel!,
-                                  color: const Color(0xFFB0B0B0),
+                                  color: Color(0xFFB0B0B0),
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
@@ -3247,7 +3247,7 @@ abstinence_slip_details: $slipDetailsText
                       size: 18,
                       color: task.isCompleted
                           ? Colors.green
-                          : const Color(0xFFB0B0B0),
+                          : Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3262,7 +3262,7 @@ abstinence_slip_details: $slipDetailsText
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? const Color(0xFF888888)
+                                  ? Color(0xFF888888)
                                   : null,
                             ),
                           ),
@@ -3278,7 +3278,7 @@ abstinence_slip_details: $slipDetailsText
                               if (task.secondaryLabel != null)
                                 _buildCalendarTaskBadge(
                                   label: task.secondaryLabel!,
-                                  color: const Color(0xFFB0B0B0),
+                                  color: Color(0xFFB0B0B0),
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
@@ -3372,7 +3372,7 @@ abstinence_slip_details: $slipDetailsText
   Color _calendarTaskSourceColor(_HomeCalendarTask task) {
     return switch (task.source) {
       _HomeCalendarTaskSource.dailyTodo => Colors.indigo,
-      _HomeCalendarTaskSource.mindless => const Color(0xFF009688),
+      _HomeCalendarTaskSource.mindless => Color(0xFF009688),
     };
   }
 
@@ -3546,7 +3546,7 @@ abstinence_slip_details: $slipDetailsText
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      backgroundColor: isDark ? Color(0xFF1E1E1E) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -3741,7 +3741,7 @@ abstinence_slip_details: $slipDetailsText
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: '逸脱内容',
-                    accent: const Color(0xFFFF6B35),
+                    accent: Color(0xFFFF6B35),
                     emptyLabel: day.isFuture ? 'まだ記録はありません。' : '逸脱はありません。',
                     items: day.slipDetails,
                   ),
@@ -3763,7 +3763,7 @@ abstinence_slip_details: $slipDetailsText
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: 'その日に設定していた禁止対象',
-                    accent: const Color(0xFFB0B0B0),
+                    accent: Color(0xFFB0B0B0),
                     emptyLabel: day.isFuture ? 'まだ設定はありません。' : '禁止対象は未設定です。',
                     items: day.enabledLabels,
                   ),
@@ -3832,7 +3832,7 @@ abstinence_slip_details: $slipDetailsText
                     value: _formatSignedYen(cashflow.netTotal.toDouble()),
                     color: cashflow.netTotal >= 0
                         ? Colors.indigo
-                        : const Color(0xFFFF6B35),
+                        : Color(0xFFFF6B35),
                   ),
                 ),
               ],
@@ -4012,7 +4012,7 @@ abstinence_slip_details: $slipDetailsText
     return Scaffold(
       key: const Key('home_page_scaffold'),
       backgroundColor:
-          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF3F7FF),
+          isDark ? Color(0xFF0A0A0A) : Color(0xFFF3F7FF),
       appBar: AppBar(
         toolbarHeight: 74,
         title: const Column(
@@ -4341,7 +4341,7 @@ abstinence_slip_details: $slipDetailsText
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                                 side: BorderSide(
-                                  color: const Color(0xFF3D5AFE)
+                                  color: Color(0xFF3D5AFE)
                                       .withValues(alpha: 0.24),
                                 ),
                               ),
@@ -4369,7 +4369,7 @@ abstinence_slip_details: $slipDetailsText
                                         width: 40,
                                         height: 40,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF3D5AFE)
+                                          color: Color(0xFF3D5AFE)
                                               .withValues(alpha: 0.08),
                                           borderRadius:
                                               BorderRadius.circular(10),
@@ -4428,7 +4428,7 @@ abstinence_slip_details: $slipDetailsText
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEDE7F6),
+                                    color: Color(0xFFEDE7F6),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: const Icon(
@@ -4486,7 +4486,7 @@ abstinence_slip_details: $slipDetailsText
                             _buildSectionHeader(
                               'OPERATIONS CALENDAR',
                               Icons.calendar_month,
-                              const Color(0xFFB0B0B0),
+                              Color(0xFFB0B0B0),
                               key:
                                   const Key('home_section_operations_calendar'),
                             ),
@@ -4713,7 +4713,7 @@ abstinence_slip_details: $slipDetailsText
       icon: const Icon(Icons.palette_outlined, size: 16),
       label: const Text('UI デザインステータス'),
       style: OutlinedButton.styleFrom(
-        foregroundColor: const Color(0xFFFF6B35),
+        foregroundColor: Color(0xFFFF6B35),
         side: const BorderSide(color: Color(0xFFFF6B35)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         minimumSize: const Size(double.infinity, 44),
@@ -4801,7 +4801,7 @@ abstinence_slip_details: $slipDetailsText
       _MenuData(
         '成長・支援',
         Icons.space_dashboard_outlined,
-        const Color(0xFF009688),
+        Color(0xFF009688),
         () => _runTrackedAction(
           'home-insights',
           () => Navigator.of(context).pushNamed('/home-insights'),
@@ -4862,7 +4862,7 @@ abstinence_slip_details: $slipDetailsText
 
   Widget _buildCeoCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final baseColor = isDark ? Color(0xFF1F2937) : Colors.white;
 
     return Container(
       decoration: BoxDecoration(
@@ -4916,9 +4916,9 @@ abstinence_slip_details: $slipDetailsText
     bool isHighlighted = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF1F2937) : Colors.white;
+    final baseColor = isDark ? Color(0xFF1F2937) : Colors.white;
     final accent =
-        isHighlighted ? const Color(0xFFFFA000) : const Color(0xFFFFC107);
+        isHighlighted ? Color(0xFFFFA000) : Color(0xFFFFC107);
 
     return Container(
       decoration: BoxDecoration(
@@ -4928,7 +4928,7 @@ abstinence_slip_details: $slipDetailsText
           colors: [
             baseColor,
             Color.alphaBlend(
-              const Color(0xFFFFC107)
+              Color(0xFFFFC107)
                   .withValues(alpha: isHighlighted ? 0.2 : 0.09),
               baseColor,
             ),
@@ -5196,7 +5196,7 @@ abstinence_slip_details: $slipDetailsText
                   headline: '${snapshot.abstinenceFocusCount}件',
                   subtitle: '遮断中の邪魔',
                   icon: Icons.shield_moon,
-                  accentColor: const Color(0xFF009688),
+                  accentColor: Color(0xFF009688),
                   metrics: <_OfficeKpiMetricItem>[
                     _OfficeKpiMetricItem(
                       '逸脱回数',
@@ -5271,7 +5271,7 @@ abstinence_slip_details: $slipDetailsText
     required VoidCallback onTap,
     Widget? bottomWidget,
   }) {
-    final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final baseColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.65);
@@ -5525,7 +5525,7 @@ abstinence_slip_details: $slipDetailsText
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F1F3),
+            color: isDark ? Color(0xFF1E1E1E) : Color(0xFFF0F1F3),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isDark
@@ -5546,7 +5546,7 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(height: 6),
               Container(
                 height: 2,
-                color: const Color(0xFFF57C00),
+                color: Color(0xFFF57C00),
               ),
               const SizedBox(height: 10),
               Container(
@@ -5641,7 +5641,7 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(height: 6),
               Container(
                 height: 2,
-                color: const Color(0xFFF57C00),
+                color: Color(0xFFF57C00),
               ),
               const SizedBox(height: 10),
               Align(
@@ -5674,9 +5674,9 @@ abstinence_slip_details: $slipDetailsText
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFFFF6B35)
+                                ? Color(0xFFFF6B35)
                                     .withValues(alpha: 0.62)
-                                : const Color(0xFFB0B0B0)
+                                : Color(0xFFB0B0B0)
                                     .withValues(alpha: 0.25),
                           ),
                         ),
@@ -5758,7 +5758,7 @@ abstinence_slip_details: $slipDetailsText
           '週末ストック残',
           '${snapshot.pendingStockTaskCount}件',
           Icons.inventory_2,
-          const Color(0xFF009688),
+          Color(0xFF009688),
         ),
       ],
     );
@@ -5773,7 +5773,7 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.16)
-        : const Color(0xFFB0B0B0).withValues(alpha: 0.24);
+        : Color(0xFFB0B0B0).withValues(alpha: 0.24);
     final titleColor =
         isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
 
@@ -5794,7 +5794,7 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 4),
           Container(
             height: 2,
-            color: const Color(0xFFF57C00),
+            color: Color(0xFFF57C00),
           ),
           const SizedBox(height: 4),
           Table(
@@ -5897,7 +5897,7 @@ abstinence_slip_details: $slipDetailsText
               _buildTrendLegendChip(
                 isDark: isDark,
                 label: '浪費',
-                color: const Color(0xFFFFAB40),
+                color: Color(0xFFFFAB40),
               ),
           ],
         ),
@@ -6065,8 +6065,8 @@ abstinence_slip_details: $slipDetailsText
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        const Color(0xFF6366F1).withValues(alpha: 0.6),
-                        const Color(0xFF6366F1).withValues(alpha: 0.18),
+                        Color(0xFF6366F1).withValues(alpha: 0.6),
+                        Color(0xFF6366F1).withValues(alpha: 0.18),
                       ],
                     ),
                   ),
@@ -6075,7 +6075,7 @@ abstinence_slip_details: $slipDetailsText
                   LineChartBarData(
                     spots: wasteSpots,
                     isCurved: false,
-                    color: const Color(0xFFFFAB40),
+                    color: Color(0xFFFFAB40),
                     barWidth: 2.4,
                     dashArray: const [8, 4],
                     dotData: FlDotData(show: wasteSpots.length <= 40),
@@ -6133,16 +6133,16 @@ abstinence_slip_details: $slipDetailsText
     }
 
     final palette = <Color>[
-      const Color(0xFFFF6B35),
+      Color(0xFFFF6B35),
       Colors.redAccent,
       Colors.indigo,
-      const Color(0xFF009688),
+      Color(0xFF009688),
       Colors.purple,
-      const Color(0xFF6366F1),
+      Color(0xFF6366F1),
       Colors.green,
       Colors.brown,
       Colors.pink,
-      const Color(0xFFFFC107),
+      Color(0xFFFFC107),
       Colors.cyan,
     ];
     final total = breakdownEntries.fold<double>(
@@ -6180,7 +6180,7 @@ abstinence_slip_details: $slipDetailsText
                 isDark: isDark,
                 title: '累計浪費',
                 value: _formatYen(overview.totalWaste),
-                accent: const Color(0xFFFF6B35),
+                accent: Color(0xFFFF6B35),
               ),
               _buildWasteMetricCard(
                 isDark: isDark,
@@ -6192,7 +6192,7 @@ abstinence_slip_details: $slipDetailsText
                 isDark: isDark,
                 title: '最大カテゴリ',
                 value: overview.topWasteCategory ?? '--',
-                accent: const Color(0xFFB0B0B0),
+                accent: Color(0xFFB0B0B0),
               ),
             ],
           ),
@@ -6516,7 +6516,7 @@ abstinence_slip_details: $slipDetailsText
     final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.7)
         : Colors.black.withValues(alpha: 0.6);
-    final base = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final base = isDark ? Color(0xFF1E1E1E) : Colors.white;
 
     return Container(
       decoration: BoxDecoration(
@@ -7039,8 +7039,8 @@ class _PersonalityTypeBanner extends StatelessWidget {
           return Card(
             elevation: 0,
             color: isDark
-                ? const Color(0xFF2E1065).withValues(alpha: 0.47)
-                : const Color(0xFFF3E8FF),
+                ? Color(0xFF2E1065).withValues(alpha: 0.47)
+                : Color(0xFFF3E8FF),
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: ListTile(
@@ -7049,8 +7049,8 @@ class _PersonalityTypeBanner extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF4C1D95).withValues(alpha: 0.55)
-                      : const Color(0xFFDDD6FE),
+                      ? Color(0xFF4C1D95).withValues(alpha: 0.55)
+                      : Color(0xFFDDD6FE),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
@@ -7080,8 +7080,8 @@ class _PersonalityTypeBanner extends StatelessWidget {
         return Card(
           elevation: 0,
           color: isDark
-              ? const Color(0xFF2E1065).withValues(alpha: 0.47)
-              : const Color(0xFFF3E8FF),
+              ? Color(0xFF2E1065).withValues(alpha: 0.47)
+              : Color(0xFFF3E8FF),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           child: ListTile(
@@ -7090,8 +7090,8 @@ class _PersonalityTypeBanner extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF4C1D95).withValues(alpha: 0.55)
-                    : const Color(0xFFDDD6FE),
+                    ? Color(0xFF4C1D95).withValues(alpha: 0.55)
+                    : Color(0xFFDDD6FE),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -7135,7 +7135,7 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
             colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFFF6B35), width: 1.5),
+          border: Border.all(color: Color(0xFFFF6B35), width: 1.5),
           boxShadow: const [
             BoxShadow(
               color: Color(0xFFFF6B35),
@@ -7149,7 +7149,7 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+                color: Color(0xFFFF6B35).withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
@@ -7208,7 +7208,7 @@ class _MainFeatureBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B35),
+        color: Color(0xFFFF6B35),
         borderRadius: BorderRadius.circular(4),
       ),
       child: const Text(

@@ -71,23 +71,23 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
   Color _frameColor(int waku) {
     switch (waku) {
       case 1:
-        return const Color(0xFFFFFFFF);
+        return Color(0xFFFFFFFF);
       case 2:
-        return const Color(0xFF1E1E1E);
+        return Color(0xFF1E1E1E);
       case 3:
-        return const Color(0xFFDC2626);
+        return Color(0xFFDC2626);
       case 4:
-        return const Color(0xFF2563EB);
+        return Color(0xFF2563EB);
       case 5:
-        return const Color(0xFFFACC15);
+        return Color(0xFFFACC15);
       case 6:
-        return const Color(0xFF16A34A);
+        return Color(0xFF16A34A);
       case 7:
-        return const Color(0xFFF97316);
+        return Color(0xFFF97316);
       case 8:
-        return const Color(0xFFEC4899);
+        return Color(0xFFEC4899);
       default:
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
     }
   }
 
@@ -97,16 +97,16 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
   Color _providerColor(String provider) {
     switch (provider.toLowerCase()) {
       case 'google':
-        return const Color(0xFF4285F4);
+        return Color(0xFF4285F4);
       case 'openai':
-        return const Color(0xFF10A37F);
+        return Color(0xFF10A37F);
       case 'anthropic':
-        return const Color(0xFFFF6B35);
+        return Color(0xFFFF6B35);
       case 'x':
       case 'xai':
-        return const Color(0xFF94A3B8);
+        return Color(0xFF94A3B8);
       default:
-        return const Color(0xFF6366F1);
+        return Color(0xFF6366F1);
     }
   }
 
@@ -114,26 +114,26 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
   // first_pick=◎, second_pick=○, third_pick=▲, else ─
   (String, Color) _mark(Map<String, dynamic> provider, String horseName) {
     if ((provider['first_pick'] as String?) == horseName) {
-      return ('◎', const Color(0xFFDC2626));
+      return ('◎', Color(0xFFDC2626));
     }
     if ((provider['second_pick'] as String?) == horseName) {
-      return ('○', const Color(0xFF2563EB));
+      return ('○', Color(0xFF2563EB));
     }
     if ((provider['third_pick'] as String?) == horseName) {
-      return ('▲', const Color(0xFFF59E0B));
+      return ('▲', Color(0xFFF59E0B));
     }
-    return ('─', const Color(0xFF374151));
+    return ('─', Color(0xFF374151));
   }
 
   // Consensus mark for a horse
   (String, Color) _consensusMark(String horseName) {
-    if (_consensus == null) return ('─', const Color(0xFF374151));
+    if (_consensus == null) return ('─', Color(0xFF374151));
     final first = _consensus!['first_pick'] as String?;
     if (first == horseName) {
       final votes = _consensus!['votes'] as int? ?? 0;
-      return ('◎$votes票', const Color(0xFFDC2626));
+      return ('◎$votes票', Color(0xFFDC2626));
     }
-    return ('─', const Color(0xFF374151));
+    return ('─', Color(0xFF374151));
   }
 
   @override
@@ -166,9 +166,9 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Row(
@@ -178,7 +178,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                 margin: const EdgeInsets.only(right: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35),
+                  color: Color(0xFFFF6B35),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -213,7 +213,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                   : const Icon(Icons.refresh, size: 14),
               label: const Text('ensemble再実行', style: TextStyle(fontSize: 11)),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF6366F1),
+                foregroundColor: Color(0xFF6366F1),
                 side: const BorderSide(color: Color(0xFF6366F1), width: 0.7),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: Size.zero,
@@ -260,10 +260,10 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF141414),
+        color: Color(0xFF141414),
         border: Border(
           bottom:
-              BorderSide(color: const Color(0xFF6366F1).withValues(alpha: 0.3)),
+              BorderSide(color: Color(0xFF6366F1).withValues(alpha: 0.3)),
         ),
       ),
       child: Wrap(
@@ -271,16 +271,16 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
         runSpacing: 4,
         children: [
           if (postTime != null)
-            _headerChip(Icons.schedule, postTime, const Color(0xFFFF6B35)),
+            _headerChip(Icons.schedule, postTime, Color(0xFFFF6B35)),
           _headerChip(
             Icons.location_on_outlined,
             venue,
-            const Color(0xFF6366F1),
+            Color(0xFF6366F1),
           ),
           _headerChip(
             Icons.straighten,
             '$courseType${distance != null ? ' ${distance}m' : ''}',
-            const Color(0xFF0D9488),
+            Color(0xFF0D9488),
           ),
           if (grade.isNotEmpty)
             _headerChip(Icons.star_outline, grade, Colors.amber),
@@ -316,7 +316,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+      color: Color(0xFFDC2626).withValues(alpha: 0.08),
       child: Row(
         children: [
           const Icon(Icons.group_work, color: Color(0xFFDC2626), size: 14),
@@ -353,12 +353,12 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(const Color(0xFF1A1A1A)),
+          headingRowColor: WidgetStateProperty.all(Color(0xFF1A1A1A)),
           dataRowColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return const Color(0xFF1E1E2E);
+              return Color(0xFF1E1E2E);
             }
-            return const Color(0xFF0F0F0F);
+            return Color(0xFF0F0F0F);
           }),
           columnSpacing: 8,
           horizontalMargin: 12,
@@ -575,9 +575,9 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     style: TextStyle(
                       color: odds != null
                           ? (double.tryParse(odds)! < 5
-                              ? const Color(0xFF4ADE80)
+                              ? Color(0xFF4ADE80)
                               : Colors.white)
-                          : const Color(0xFF64748B),
+                          : Color(0xFF64748B),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),

@@ -158,7 +158,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                         expiry.length >= 10 ? expiry.substring(0, 10) : expiry,
                         style: TextStyle(
                           fontSize: 11,
-                          color: urgent ? Colors.red : const Color(0xFF9CA3AF),
+                          color: urgent ? Colors.red : Color(0xFF9CA3AF),
                           fontWeight: urgent ? FontWeight.bold : null,
                         ),
                       ),
@@ -168,7 +168,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                           style: TextStyle(
                             fontSize: 10,
                             color:
-                                urgent ? Colors.red : const Color(0xFF9CA3AF),
+                                urgent ? Colors.red : Color(0xFF9CA3AF),
                           ),
                         ),
                     ],
@@ -219,7 +219,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                   text,
                   style: TextStyle(
                     decoration: done ? TextDecoration.lineThrough : null,
-                    color: done ? const Color(0xFF9CA3AF) : null,
+                    color: done ? Color(0xFF9CA3AF) : null,
                   ),
                 ),
                 secondary: priority == 'high'

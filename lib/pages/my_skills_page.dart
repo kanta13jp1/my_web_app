@@ -101,9 +101,9 @@ class _MySkillsPageState extends State<MySkillsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Color(0xFF0F172A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: Color(0xFF6366F1),
         foregroundColor: Colors.white,
         title: const Text('マイスキル'),
         actions: [
@@ -116,7 +116,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateSkillDialog,
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: Color(0xFF6366F1),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('新規スキル'),
@@ -193,7 +193,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
               icon: const Icon(Icons.add),
               label: const Text('最初のスキルを作成'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -218,7 +218,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF1E293B),
+      color: Color(0xFF1E293B),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => _showRunSkillDialog(id, name),
@@ -252,7 +252,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
+                      color: Color(0xFF0F172A),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -290,7 +290,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6366F1).withValues(
+                            color: Color(0xFF6366F1).withValues(
                               alpha: 0.2,
                             ),
                             borderRadius: BorderRadius.circular(12),
@@ -316,7 +316,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                       icon: const Icon(Icons.play_arrow, size: 16),
                       label: const Text('実行'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Color(0xFF6366F1),
                         side: const BorderSide(color: Color(0xFF6366F1)),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                       ),
@@ -351,7 +351,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFF1E293B),
         title: const Text(
           '新規スキルを作成',
           style: TextStyle(color: Colors.white, fontSize: 16),
@@ -405,7 +405,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: Color(0xFF6366F1),
               foregroundColor: Colors.white,
             ),
             child: const Text('保存'),
@@ -424,7 +424,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx2, setInner) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: Color(0xFF1E293B),
           title: Text(
             skillName,
             style: const TextStyle(color: Colors.white, fontSize: 16),
@@ -463,7 +463,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: Color(0xFF0F172A),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: SelectableText(
@@ -509,7 +509,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
               icon: const Icon(Icons.play_arrow, size: 16),
               label: const Text('実行'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -523,7 +523,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: Color(0xFF1E293B),
         title: const Text(
           'スキルを削除',
           style: TextStyle(color: Colors.white),
@@ -541,7 +541,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: Color(0xFFEF4444),
               foregroundColor: Colors.white,
             ),
             child: const Text('削除'),
@@ -567,7 +567,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
         hintText: hint,
         hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
         filled: true,
-        fillColor: const Color(0xFF0F172A),
+        fillColor: Color(0xFF0F172A),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF334155)),

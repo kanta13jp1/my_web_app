@@ -54,10 +54,10 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('セマンティック検索'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
       ),

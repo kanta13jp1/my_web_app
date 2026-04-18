@@ -122,7 +122,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
           children: [
             // Instructions
             Card(
-              color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
+              color: isDark ? Color(0xFF1F2937) : Colors.orange[50],
               child: const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -162,10 +162,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 height: 200,
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF111827)
-                      : const Color(0xFFE5E7EB),
+                      ? Color(0xFF111827)
+                      : Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF9CA3AF)),
+                  border: Border.all(color: Color(0xFF9CA3AF)),
                 ),
                 child: Center(
                   child: Text(
@@ -307,7 +307,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1F2937) : Colors.orange[50],
+                    color: isDark ? Color(0xFF1F2937) : Colors.orange[50],
                     borderRadius: BorderRadius.circular(8),
                     border:
                         Border.all(color: Colors.orange.withValues(alpha: 0.3)),
@@ -323,8 +323,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
                             color: isDark
-                                ? const Color(0xFFD1D5DB)
-                                : const Color(0xFF1F2937),
+                                ? Color(0xFFD1D5DB)
+                                : Color(0xFF1F2937),
                           ),
                         ),
                       ),

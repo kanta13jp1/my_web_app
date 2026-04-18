@@ -90,10 +90,10 @@ class WbsTask {
       );
 
   Color get statusColor => switch (status) {
-        'completed' => const Color(0xFF4CAF50),
-        'in_progress' => const Color(0xFFFF6B35),
-        'blocked' => const Color(0xFFE53935),
-        _ => const Color(0xFF707070),
+        'completed' => Color(0xFF4CAF50),
+        'in_progress' => Color(0xFFFF6B35),
+        'blocked' => Color(0xFFE53935),
+        _ => Color(0xFF707070),
       };
 
   String get statusLabel => switch (status) {
@@ -111,10 +111,10 @@ class WbsTask {
       };
 
   Color get instanceColor => switch (instance) {
-        'vscode' => const Color(0xFF007ACC),
-        'windows' => const Color(0xFF00BCF2),
-        'ps' => const Color(0xFF4B0082),
-        _ => const Color(0xFF3D5AFE),
+        'vscode' => Color(0xFF007ACC),
+        'windows' => Color(0xFF00BCF2),
+        'ps' => Color(0xFF4B0082),
+        _ => Color(0xFF3D5AFE),
       };
 }
 
@@ -261,9 +261,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: Color(0xFF121212),
         title: const Text(
           '開発ロードマップ & WBS',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -281,9 +281,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         ],
         bottom: TabBar(
           controller: _tabs,
-          indicatorColor: const Color(0xFFFF6B35),
-          labelColor: const Color(0xFFFF6B35),
-          unselectedLabelColor: const Color(0xFF707070),
+          indicatorColor: Color(0xFFFF6B35),
+          labelColor: Color(0xFFFF6B35),
+          unselectedLabelColor: Color(0xFF707070),
           tabs: const [
             Tab(icon: Icon(Icons.account_tree_outlined), text: '開発WBS'),
             Tab(icon: Icon(Icons.timeline), text: 'タイムライン'),
@@ -467,7 +467,7 @@ class _OverallProgressCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A4A)),
+        border: Border.all(color: Color(0xFF2A2A4A)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,10 +502,10 @@ class _OverallProgressCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
+                  color: Color(0xFFFF6B35).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFFFF6B35).withValues(alpha: 0.4),
+                    color: Color(0xFFFF6B35).withValues(alpha: 0.4),
                   ),
                 ),
                 child: Text(
@@ -524,7 +524,7 @@ class _OverallProgressCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress / 100,
-              backgroundColor: const Color(0xFF2A2A2A),
+              backgroundColor: Color(0xFF2A2A2A),
               valueColor:
                   const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
               minHeight: 8,
@@ -566,7 +566,7 @@ class _MilestoneCard extends StatelessWidget {
       width: 200,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
+        color: Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: milestone.color.withValues(alpha: 0.4)),
       ),
@@ -602,10 +602,10 @@ class _MilestoneCard extends StatelessWidget {
                     : '⚠️ 期限超過',
             style: TextStyle(
               color: milestone.achieved
-                  ? const Color(0xFF4CAF50)
+                  ? Color(0xFF4CAF50)
                   : days < 14
-                      ? const Color(0xFFE53935)
-                      : const Color(0xFFB0B0B0),
+                      ? Color(0xFFE53935)
+                      : Color(0xFFB0B0B0),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -620,7 +620,7 @@ class _MilestoneCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
               value: taskProgress,
-              backgroundColor: const Color(0xFF2A2A2A),
+              backgroundColor: Color(0xFF2A2A2A),
               valueColor: AlwaysStoppedAnimation<Color>(milestone.color),
               minHeight: 4,
             ),
@@ -662,7 +662,7 @@ class _FilterRow extends StatelessWidget {
             null,
             filterInstance,
             onFilterInstance,
-            const Color(0xFFFF6B35),
+            Color(0xFFFF6B35),
           ),
           const SizedBox(width: 6),
           _chip(
@@ -670,7 +670,7 @@ class _FilterRow extends StatelessWidget {
             'vscode',
             filterInstance,
             onFilterInstance,
-            const Color(0xFF007ACC),
+            Color(0xFF007ACC),
           ),
           const SizedBox(width: 6),
           _chip(
@@ -678,7 +678,7 @@ class _FilterRow extends StatelessWidget {
             'windows',
             filterInstance,
             onFilterInstance,
-            const Color(0xFF00BCF2),
+            Color(0xFF00BCF2),
           ),
           const SizedBox(width: 6),
           _chip(
@@ -686,7 +686,7 @@ class _FilterRow extends StatelessWidget {
             'ps',
             filterInstance,
             onFilterInstance,
-            const Color(0xFF4B0082),
+            Color(0xFF4B0082),
           ),
           const SizedBox(width: 12),
           const Text('│', style: TextStyle(color: Color(0xFF333333))),
@@ -696,7 +696,7 @@ class _FilterRow extends StatelessWidget {
             null,
             filterMilestone,
             onFilterMilestone,
-            const Color(0xFF707070),
+            Color(0xFF707070),
           ),
           ...milestones.map((m) {
             return Padding(
@@ -730,14 +730,14 @@ class _FilterRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color:
-              selected ? color.withValues(alpha: 0.2) : const Color(0xFF1E1E1E),
+              selected ? color.withValues(alpha: 0.2) : Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: selected ? color : const Color(0xFF333333)),
+          border: Border.all(color: selected ? color : Color(0xFF333333)),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? color : const Color(0xFF707070),
+            color: selected ? color : Color(0xFF707070),
             fontSize: 12,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
           ),
@@ -773,7 +773,7 @@ class _CategorySection extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
+            color: Color(0xFF1E1E1E),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -797,7 +797,7 @@ class _CategorySection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: avg / 100,
-                    backgroundColor: const Color(0xFF2A2A2A),
+                    backgroundColor: Color(0xFF2A2A2A),
                     valueColor:
                         const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
                     minHeight: 6,
@@ -834,9 +834,9 @@ class _TaskRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6, left: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF141414),
+        color: Color(0xFF141414),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF222222)),
+        border: Border.all(color: Color(0xFF222222)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -848,7 +848,7 @@ class _TaskRow extends StatelessWidget {
                   task.title,
                   style: TextStyle(
                     color: task.status == 'completed'
-                        ? const Color(0xFF707070)
+                        ? Color(0xFF707070)
                         : Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -901,7 +901,7 @@ class _TaskRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                     child: LinearProgressIndicator(
                       value: task.progress / 100,
-                      backgroundColor: const Color(0xFF2A2A2A),
+                      backgroundColor: Color(0xFF2A2A2A),
                       valueColor:
                           AlwaysStoppedAnimation<Color>(task.statusColor),
                       minHeight: 4,
@@ -978,7 +978,7 @@ class _MyProjectsTab extends StatelessWidget {
       child: Column(
         children: [
           Card(
-            color: const Color(0xFF1E1E1E),
+            color: Color(0xFF1E1E1E),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -1007,12 +1007,12 @@ class _MyProjectsTab extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFF333333)),
+                            border: Border.all(color: Color(0xFF333333)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: DropdownButton<String>(
                             value: status,
-                            dropdownColor: const Color(0xFF1E1E1E),
+                            dropdownColor: Color(0xFF1E1E1E),
                             style: const TextStyle(color: Colors.white),
                             underline: const SizedBox.shrink(),
                             isExpanded: true,
@@ -1032,7 +1032,7 @@ class _MyProjectsTab extends StatelessWidget {
                       ElevatedButton(
                         onPressed: saving ? null : onSave,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B35),
+                          backgroundColor: Color(0xFFFF6B35),
                           foregroundColor: Colors.white,
                         ),
                         child: saving
@@ -1070,9 +1070,9 @@ class _MyProjectsTab extends StatelessWidget {
                         itemBuilder: (_, i) {
                           final p = projects[i];
                           final s = p['status'] as String? ?? '進行中';
-                          final c = statusColors[s] ?? const Color(0xFFFF6B35);
+                          final c = statusColors[s] ?? Color(0xFFFF6B35);
                           return Card(
-                            color: const Color(0xFF1E1E1E),
+                            color: Color(0xFF1E1E1E),
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               leading: CircleAvatar(
@@ -1095,7 +1095,7 @@ class _MyProjectsTab extends StatelessWidget {
                                 ),
                               ),
                               trailing: PopupMenuButton<String>(
-                                color: const Color(0xFF1E1E1E),
+                                color: Color(0xFF1E1E1E),
                                 icon: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 8,
@@ -1380,11 +1380,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             style: TextStyle(color: Color(0xFFB0B0C0), fontSize: 11),
           ),
           const SizedBox(width: 16),
-          _legendSwatch(const Color(0xFF4CAF50), '完了'),
+          _legendSwatch(Color(0xFF4CAF50), '完了'),
           const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFFFF6B35), '進行中'),
+          _legendSwatch(Color(0xFFFF6B35), '進行中'),
           const SizedBox(width: 8),
-          _legendSwatch(const Color(0xFF707080), '未着手'),
+          _legendSwatch(Color(0xFF707080), '未着手'),
         ],
       ),
     );
@@ -1461,7 +1461,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     final isEven = index % 2 == 0;
     return Container(
       decoration: BoxDecoration(
-        color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+        color: isEven ? Color(0xFF14141C) : Color(0xFF1A1A24),
         border: const Border(
           bottom: BorderSide(color: _gridLine, width: 0.5),
         ),
@@ -1487,8 +1487,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 : Icons.check_box_outline_blank,
             size: 14,
             color: task.status == 'completed'
-                ? const Color(0xFF4CAF50)
-                : const Color(0xFF606070),
+                ? Color(0xFF4CAF50)
+                : Color(0xFF606070),
           ),
           const SizedBox(width: 6),
           // カテゴリ絵文字
@@ -1566,7 +1566,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     return Container(
       decoration: BoxDecoration(
         color:
-            index % 2 == 0 ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+            index % 2 == 0 ? Color(0xFF14141C) : Color(0xFF1A1A24),
       ),
       child: Stack(
         children: [
@@ -1665,9 +1665,9 @@ class _GanttGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final weekend = Paint()..color = const Color(0xFF181822);
-    final weekLine = Paint()..color = const Color(0xFF22222E);
-    final monthLine = Paint()..color = const Color(0xFF3A3A48);
+    final weekend = Paint()..color = Color(0xFF181822);
+    final weekLine = Paint()..color = Color(0xFF22222E);
+    final monthLine = Paint()..color = Color(0xFF3A3A48);
 
     var day = start;
     var x = 0.0;
@@ -1698,7 +1698,7 @@ class _GanttGridPainter extends CustomPainter {
     }
     // Today ライン
     final todayPaint = Paint()
-      ..color = const Color(0xFFFF6B35)
+      ..color = Color(0xFFFF6B35)
       ..strokeWidth = 1.5;
     canvas.drawLine(
       Offset(todayX, 0),
@@ -1727,7 +1727,7 @@ class _MonthHeaderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final line = Paint()..color = const Color(0xFF3A3A48);
+    final line = Paint()..color = Color(0xFF3A3A48);
 
     // 月ヘッダー (上段)
     DateTime monthCursor = DateTime(start.year, start.month, 1);
@@ -1789,14 +1789,14 @@ class _MonthHeaderPainter extends CustomPainter {
     }
 
     // ヘッダー下の太線
-    final bottomLinePaint = Paint()..color = const Color(0xFF3A3A48);
+    final bottomLinePaint = Paint()..color = Color(0xFF3A3A48);
     canvas.drawLine(
       Offset(0, size.height - 1),
       Offset(size.width, size.height - 1),
       bottomLinePaint,
     );
     // 月/日セクション境界
-    final midLinePaint = Paint()..color = const Color(0xFF2A2A36);
+    final midLinePaint = Paint()..color = Color(0xFF2A2A36);
     canvas.drawLine(
       const Offset(0, 26),
       Offset(size.width, 26),
@@ -1817,7 +1817,7 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          Icon(icon, color: const Color(0xFFFF6B35), size: 18),
+          Icon(icon, color: Color(0xFFFF6B35), size: 18),
           const SizedBox(width: 8),
           Text(
             label,
@@ -1840,9 +1840,9 @@ class _EmptyCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
+          color: Color(0xFF1A1A1A),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF2A2A2A)),
+          border: Border.all(color: Color(0xFF2A2A2A)),
         ),
         child: Text(
           message,

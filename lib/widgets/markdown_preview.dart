@@ -72,7 +72,7 @@ class MarkdownPreview extends StatelessWidget {
           color: Colors.red[700],
         ),
         codeblockDecoration: BoxDecoration(
-          color: const Color(0xFF2B2B2B),
+          color: Color(0xFF2B2B2B),
           borderRadius: BorderRadius.circular(8),
         ),
         codeblockPadding: const EdgeInsets.all(16),
@@ -158,7 +158,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF2B2B2B),
+            color: Color(0xFF2B2B2B),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -228,7 +228,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2B2B2B),
+        color: Color(0xFF2B2B2B),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -330,33 +330,33 @@ class CodeElementBuilder extends MarkdownElementBuilder {
   Color _getColorForClassName(String? className) {
     switch (className) {
       case 'keyword':
-        return const Color(0xFFCC7832); // オレンジ
+        return Color(0xFFCC7832); // オレンジ
       case 'built_in':
-        return const Color(0xFF9876AA); // 紫
+        return Color(0xFF9876AA); // 紫
       case 'string':
-        return const Color(0xFF6A8759); // 緑
+        return Color(0xFF6A8759); // 緑
       case 'number':
-        return const Color(0xFF6897BB); // 青
+        return Color(0xFF6897BB); // 青
       case 'comment':
-        return const Color(0xFF808080); // グレー
+        return Color(0xFF808080); // グレー
       case 'function':
-        return const Color(0xFFFFC66D); // 黄色
+        return Color(0xFFFFC66D); // 黄色
       case 'class':
       case 'title':
-        return const Color(0xFFFFB86C); // オレンジ黄色
+        return Color(0xFFFFB86C); // オレンジ黄色
       case 'variable':
       case 'params':
-        return const Color(0xFFA9B7C6); // 明るいグレー
+        return Color(0xFFA9B7C6); // 明るいグレー
       case 'meta':
-        return const Color(0xFFBBB529); // 黄土色
+        return Color(0xFFBBB529); // 黄土色
       case 'tag':
-        return const Color(0xFFE8BF6A); // 黄土色
+        return Color(0xFFE8BF6A); // 黄土色
       case 'attr':
       case 'attribute':
-        return const Color(0xFFBBB529); // 黄土色
+        return Color(0xFFBBB529); // 黄土色
       case 'literal':
       case 'constant':
-        return const Color(0xFF9876AA); // 紫
+        return Color(0xFF9876AA); // 紫
       default:
         return Colors.white; // デフォルトは白
     }
@@ -397,14 +397,14 @@ class _CopyCodeButtonState extends State<_CopyCodeButton> {
             Icon(
               _copied ? Icons.check : Icons.copy,
               size: 14,
-              color: _copied ? const Color(0xFF10B981) : Colors.white54,
+              color: _copied ? Color(0xFF10B981) : Colors.white54,
             ),
             const SizedBox(width: 4),
             Text(
               _copied ? 'Copied!' : 'Copy',
               style: TextStyle(
                 fontSize: 11,
-                color: _copied ? const Color(0xFF10B981) : Colors.white54,
+                color: _copied ? Color(0xFF10B981) : Colors.white54,
               ),
             ),
           ],

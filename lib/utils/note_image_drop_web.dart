@@ -143,9 +143,9 @@ class _NoteImageDropZoneState extends State<NoteImageDropZone> {
             child: IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
-                  color: const Color(0x226366F1),
+                  color: Color(0x226366F1),
                   border: Border.all(
-                    color: const Color(0xFF6366F1),
+                    color: Color(0xFF6366F1),
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(8),

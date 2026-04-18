@@ -150,7 +150,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
               child: Icon(
                 Icons.work,
                 color:
-                    status == 'open' ? Colors.green : const Color(0xFF9CA3AF),
+                    status == 'open' ? Colors.green : Color(0xFF9CA3AF),
               ),
             ),
             title: Text(
@@ -204,7 +204,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           'applied': Colors.blue,
           'screening': Colors.orange,
           'interview': Colors.purple,
-          'offer': const Color(0xFF009688),
+          'offer': Color(0xFF009688),
           'hired': Colors.green,
           'rejected': Colors.red,
         };
@@ -216,7 +216,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           'hired': '採用',
           'rejected': '不採用',
         };
-        final color = stageColors[stage] ?? const Color(0xFF9CA3AF);
+        final color = stageColors[stage] ?? Color(0xFF9CA3AF);
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
           child: ListTile(

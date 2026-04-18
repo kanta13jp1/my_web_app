@@ -146,11 +146,11 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: isDark
-              ? const Color(0xFF7C3AED).withAlpha(60)
-              : const Color(0xFFDDD6FE),
+              ? Color(0xFF7C3AED).withAlpha(60)
+              : Color(0xFFDDD6FE),
         ),
       ),
-      color: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFF5F3FF),
+      color: isDark ? Color(0xFF1E1B4B) : Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -159,7 +159,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF7C3AED).withAlpha(isDark ? 40 : 20),
+                color: Color(0xFF7C3AED).withAlpha(isDark ? 40 : 20),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -182,8 +182,8 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: isDark
-                              ? const Color(0xFFDDD6FE)
-                              : const Color(0xFF4C1D95),
+                              ? Color(0xFFDDD6FE)
+                              : Color(0xFF4C1D95),
                         ),
                       ),
                     ],
@@ -206,7 +206,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                             value: _milestoneProgress,
                             minHeight: 4,
                             backgroundColor:
-                                const Color(0xFF7C3AED).withAlpha(30),
+                                Color(0xFF7C3AED).withAlpha(30),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               Color(0xFF7C3AED),
                             ),

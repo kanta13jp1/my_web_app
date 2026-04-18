@@ -119,7 +119,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('メンタルチェック'),
-        backgroundColor: const Color(0xFF00796B),
+        backgroundColor: Color(0xFF00796B),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -169,8 +169,8 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark
-                              ? const Color(0xFF6B7280)
-                              : const Color(0xFF9CA3AF),
+                              ? Color(0xFF6B7280)
+                              : Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -187,7 +187,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                       child: FilledButton(
                         onPressed: _saving ? null : _saveCheck,
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF009688),
+                          backgroundColor: Color(0xFF009688),
                         ),
                         child: _saving
                             ? const SizedBox(

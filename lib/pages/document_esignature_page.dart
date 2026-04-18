@@ -137,7 +137,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
             Icon(
               pending ? Icons.pending_actions : Icons.check_circle,
               size: 64,
-              color: const Color(0xFF9CA3AF),
+              color: Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 12),
             Text(

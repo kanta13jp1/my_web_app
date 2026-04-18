@@ -385,7 +385,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                   icon: const Icon(Icons.pause),
                   label: const Text('一時停止'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFA000),
+                    backgroundColor: Color(0xFFFFA000),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -465,7 +465,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               ),
               _StatCard(
                 icon: Icons.local_fire_department,
-                color: const Color(0xFFFFA000),
+                color: Color(0xFFFFA000),
                 label: '連続集中日',
                 value: '$streakDays日',
                 sub: 'ストリーク',
@@ -551,7 +551,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                         ? Colors.green
                         : status == 'active'
                             ? Colors.blue
-                            : const Color(0xFF9CA3AF),
+                            : Color(0xFF9CA3AF),
                   ),
                   title: Text(
                     label,
@@ -573,7 +573,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
 
   Color _scoreColor(int score) {
     if (score >= 70) return Colors.green;
-    if (score >= 40) return const Color(0xFFFFA000);
+    if (score >= 40) return Color(0xFFFFA000);
     return Colors.red;
   }
 

@@ -234,7 +234,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withAlpha(20),
+                        color: Color(0xFF6366F1).withAlpha(20),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -326,11 +326,11 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withAlpha(20),
+                color: Color(0xFF6366F1).withAlpha(20),
                 borderRadius: BorderRadius.circular(8),
               ),
               child:
-                  Icon(trigger.icon, size: 14, color: const Color(0xFF6366F1)),
+                  Icon(trigger.icon, size: 14, color: Color(0xFF6366F1)),
             ),
             const SizedBox(width: 10),
             Expanded(

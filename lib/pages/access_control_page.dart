@@ -78,7 +78,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       case 'editor':
         return Colors.blue;
       case 'viewer':
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
       default:
         return Colors.purple;
     }

@@ -15,7 +15,7 @@ class SystemFixedFeaturesList extends StatelessWidget {
           return ActionChip(
             avatar: Icon(f.icon, size: 16, color: f.color),
             label: Text(f.label, style: const TextStyle(fontSize: 12)),
-            backgroundColor: const Color(0xFF1A1A1A),
+            backgroundColor: Color(0xFF1A1A1A),
             side: BorderSide(color: f.color.withValues(alpha: 0.3)),
             onPressed: () => Navigator.pushNamed(context, f.route),
           );

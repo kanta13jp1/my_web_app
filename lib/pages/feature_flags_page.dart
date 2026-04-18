@@ -124,8 +124,8 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                             leading: Icon(
                               enabled ? Icons.toggle_on : Icons.toggle_off,
                               color: enabled
-                                  ? const Color(0xFF6366F1)
-                                  : const Color(0xFF9CA3AF),
+                                  ? Color(0xFF6366F1)
+                                  : Color(0xFF9CA3AF),
                               size: 32,
                             ),
                             title: Text(name),

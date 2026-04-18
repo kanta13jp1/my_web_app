@@ -281,7 +281,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                           _triggerLabels[entry.key] ?? entry.key,
                         ),
                         value: entry.value,
-                        activeThumbColor: const Color(0xFF4A154B),
+                        activeThumbColor: Color(0xFF4A154B),
                         onChanged: (val) {
                           setState(() => _triggers[entry.key] = val);
                         },
@@ -309,7 +309,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                         : const Icon(Icons.save, size: 16),
                     label: Text(_isSaving ? '保存中...' : '設定を保存'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A154B),
+                      backgroundColor: Color(0xFF4A154B),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),

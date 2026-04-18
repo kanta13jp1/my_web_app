@@ -325,7 +325,7 @@ class _GithubPrPageState extends State<GithubPrPage> {
                 _StatChip(
                   label: 'Merged',
                   value: '${stats['merged_prs'] ?? 0}',
-                  color: const Color(0xFF8957E5),
+                  color: Color(0xFF8957E5),
                 ),
                 const SizedBox(width: 8),
                 _StatChip(
@@ -437,7 +437,7 @@ class _PrTile extends StatelessWidget {
       case 'closed':
         return Colors.red;
       case 'merged':
-        return const Color(0xFF8957E5);
+        return Color(0xFF8957E5);
       default:
         return Colors.grey;
     }

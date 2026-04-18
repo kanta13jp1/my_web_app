@@ -152,13 +152,13 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
       case 'x':
         return Colors.black;
       case 'linkedin':
-        return const Color(0xFF0077B5);
+        return Color(0xFF0077B5);
       case 'instagram':
-        return const Color(0xFFE1306C);
+        return Color(0xFFE1306C);
       case 'facebook':
-        return const Color(0xFF1877F2);
+        return Color(0xFF1877F2);
       default:
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
     }
   }
 
@@ -180,10 +180,10 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('SNS投稿スケジューラー'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         elevation: 0,
         actions: [
           IconButton(
@@ -206,7 +206,7 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateDialog,
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: Color(0xFFFF6B35),
         tooltip: '新規投稿',
         child: const Icon(Icons.add),
       ),
@@ -266,7 +266,7 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
         final post = posts[i] as Map<String, dynamic>;
         final platform = post['platform']?.toString();
         return Card(
-          color: const Color(0xFF1E1E1E),
+          color: Color(0xFF1E1E1E),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: _platformColor(platform).withAlpha(20),

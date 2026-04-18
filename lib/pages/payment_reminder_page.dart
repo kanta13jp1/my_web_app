@@ -105,7 +105,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     for (final c in _categories) {
       if (c.$1 == cat) return c.$4;
     }
-    return const Color(0xFF2196F3);
+    return Color(0xFF2196F3);
   }
 
   String _categoryLabel(String cat) {

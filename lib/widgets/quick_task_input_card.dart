@@ -179,10 +179,10 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2233) : Colors.white,
+        color: isDark ? Color(0xFF1A2233) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
+          color: isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0),
         ),
       ),
       child: Column(
@@ -194,7 +194,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                 width: 30,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5).withAlpha(20),
+                  color: Color(0xFF4F46E5).withAlpha(20),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -209,7 +209,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  color: isDark ? Colors.white : Color(0xFF1E293B),
                 ),
               ),
               const Spacer(),
@@ -243,8 +243,8 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
                         color: isDark
-                            ? const Color(0xFF374151)
-                            : const Color(0xFFE5E7EB),
+                            ? Color(0xFF374151)
+                            : Color(0xFFE5E7EB),
                       ),
                     ),
                   ),
@@ -259,7 +259,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                 child: FilledButton(
                   onPressed: _loading ? null : _submit,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
+                    backgroundColor: Color(0xFF4F46E5),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

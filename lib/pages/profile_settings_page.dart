@@ -277,10 +277,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     final userId = supabase.auth.currentUser?.id ?? '';
     final url = 'https://my-web-app-b67f4.web.app/u?id=$userId';
     return Card(
-      color: const Color(0xFF6366F1).withAlpha(15),
+      color: Color(0xFF6366F1).withAlpha(15),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: const Color(0xFF6366F1).withAlpha(60)),
+        side: BorderSide(color: Color(0xFF6366F1).withAlpha(60)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -304,7 +304,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withAlpha(10),
+                color: Color(0xFF6366F1).withAlpha(10),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -330,7 +330,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Color(0xFF6366F1),
                     side: const BorderSide(color: Color(0xFF6366F1)),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

@@ -146,9 +146,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         title: Row(
           children: [
             const Text(
@@ -171,7 +171,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFFFF6B35),
+          indicatorColor: Color(0xFFFF6B35),
           tabs: const [
             Tab(icon: Icon(Icons.today), text: '今日のレース'),
             Tab(icon: Icon(Icons.history), text: '予想履歴'),
@@ -287,10 +287,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               }
             },
             style: SegmentedButton.styleFrom(
-              backgroundColor: const Color(0xFF1E1E1E),
-              foregroundColor: const Color(0xFF9CA3AF),
+              backgroundColor: Color(0xFF1E1E1E),
+              foregroundColor: Color(0xFF9CA3AF),
               selectedForegroundColor: Colors.white,
-              selectedBackgroundColor: const Color(0xFFFF6B35),
+              selectedBackgroundColor: Color(0xFFFF6B35),
             ),
           ),
         ),
@@ -345,7 +345,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       children: [
         if (!hasPredictions)
           Container(
-            color: const Color(0xFFFF6B35).withValues(alpha: 0.1),
+            color: Color(0xFFFF6B35).withValues(alpha: 0.1),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: const Row(
               children: [
@@ -401,15 +401,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       statusColor = isCorrect == true ? Colors.green : Colors.red;
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
-      statusColor = const Color(0xFFFF6B35);
+      statusColor = Color(0xFFFF6B35);
       statusLabel = postTime ?? '予定';
     } else {
-      statusColor = const Color(0xFF9CA3AF);
+      statusColor = Color(0xFF9CA3AF);
       statusLabel = '終了';
     }
 
     return Card(
-      color: const Color(0xFF1E1E1E),
+      color: Color(0xFF1E1E1E),
       margin: const EdgeInsets.only(bottom: 10),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Theme(
@@ -445,7 +445,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35),
+                    color: Color(0xFFFF6B35),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -496,7 +496,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF9CA3AF).withValues(alpha: 0.08),
+                  color: Color(0xFF9CA3AF).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -544,9 +544,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     final prevRace = en['prev_race_name'] as String?;
                     final prevDays = (en['prev_days_ago'] as num?)?.toInt();
 
-                    Color prevColor = const Color(0xFF9CA3AF);
+                    Color prevColor = Color(0xFF9CA3AF);
                     if (prevFinish == 1) {
-                      prevColor = const Color(0xFFFFD700);
+                      prevColor = Color(0xFFFFD700);
                     } else if (prevFinish != null && prevFinish <= 3) {
                       prevColor = Colors.green;
                     } else if (prevFinish != null && prevFinish <= 5) {
@@ -671,7 +671,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 icon: const Icon(Icons.table_chart_outlined, size: 14),
                 label: const Text('詳細マトリックス'),
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Color(0xFF6366F1),
                   textStyle: const TextStyle(fontSize: 12),
                 ),
                 onPressed: () => Navigator.push(
@@ -702,13 +702,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFFF6B35).withValues(alpha: 0.08),
-            const Color(0xFF3D5AFE).withValues(alpha: 0.04),
+            Color(0xFFFF6B35).withValues(alpha: 0.08),
+            Color(0xFF3D5AFE).withValues(alpha: 0.04),
           ],
         ),
         borderRadius: BorderRadius.circular(10),
         border:
-            Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.25)),
+            Border.all(color: Color(0xFFFF6B35).withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,7 +729,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
+                  color: Color(0xFFFF6B35).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -743,13 +743,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           const SizedBox(height: 8),
           Row(
             children: [
-              _placeLabel('1着', first, const Color(0xFFFFC107)),
+              _placeLabel('1着', first, Color(0xFFFFC107)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child:
                     Icon(Icons.arrow_forward, color: Colors.white38, size: 14),
               ),
-              _placeLabel('2着', second, const Color(0xFF9CA3AF)),
+              _placeLabel('2着', second, Color(0xFF9CA3AF)),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
                 child:
@@ -836,7 +836,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         Color cardBg;
         Widget trailing;
         if (!hasResult) {
-          cardBg = const Color(0xFF1E1E1E);
+          cardBg = Color(0xFF1E1E1E);
           trailing = const Chip(
             label: Text('未結果', style: TextStyle(fontSize: 11)),
           );
@@ -868,7 +868,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+              backgroundColor: Color(0xFFFF6B35).withValues(alpha: 0.12),
               child: const Icon(
                 Icons.psychology,
                 color: Color(0xFFFF6B35),
@@ -972,7 +972,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   '総予想数',
                   '$total件',
                   Icons.psychology,
-                  const Color(0xFF3D5AFE),
+                  Color(0xFF3D5AFE),
                 ),
               ),
               const SizedBox(width: 10),
@@ -996,7 +996,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       ? '¥${NumberFormat('#,###').format(maxPayout)}'
                       : '-',
                   Icons.emoji_events,
-                  const Color(0xFFFFC107),
+                  Color(0xFFFFC107),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1007,7 +1007,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       ? '¥${NumberFormat('#,###').format(totalPayout)}'
                       : '-',
                   Icons.payments,
-                  const Color(0xFF009688),
+                  Color(0xFF009688),
                 ),
               ),
             ],
@@ -1103,11 +1103,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
   }
 
   Color _gradeColor(String grade) {
-    if (grade.startsWith('G1')) return const Color(0xFFFFC107);
-    if (grade.startsWith('G2')) return const Color(0xFFD1D5DB);
+    if (grade.startsWith('G1')) return Color(0xFFFFC107);
+    if (grade.startsWith('G2')) return Color(0xFFD1D5DB);
     if (grade.startsWith('G3')) return Colors.brown[300]!;
     if (grade == 'リステッド') return Colors.blue[300]!;
     if (grade == 'オープン') return Colors.purple[300]!;
-    return const Color(0xFF4B5563);
+    return Color(0xFF4B5563);
   }
 }

@@ -238,11 +238,11 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor:
-                        (_statusColors[status] ?? const Color(0xFF9CA3AF))
+                        (_statusColors[status] ?? Color(0xFF9CA3AF))
                             .withAlpha(40),
                     child: Icon(
                       Icons.work,
-                      color: _statusColors[status] ?? const Color(0xFF9CA3AF),
+                      color: _statusColors[status] ?? Color(0xFF9CA3AF),
                       size: 20,
                     ),
                   ),

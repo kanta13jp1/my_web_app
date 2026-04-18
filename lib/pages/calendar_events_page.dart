@@ -39,7 +39,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     if (hex.length == 6) {
       return Color(int.parse('FF$hex', radix: 16));
     }
-    return const Color(0xFF4285F4);
+    return Color(0xFF4285F4);
   }
 
   @override

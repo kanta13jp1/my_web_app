@@ -199,10 +199,10 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('音声メモ・文字起こし'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
         actions: [
@@ -220,7 +220,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addMemo,
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: Color(0xFFFF6B35),
         tooltip: '音声メモを追加',
         child: const Icon(Icons.mic, color: Colors.white),
       ),
@@ -308,7 +308,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                                   icon: const Icon(Icons.add),
                                   label: const Text('最初のメモを追加'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF7C3AED),
+                                    backgroundColor: Color(0xFF7C3AED),
                                     foregroundColor: Colors.white,
                                   ),
                                 ),
@@ -343,7 +343,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           leading: CircleAvatar(
-            backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+            backgroundColor: Color(0xFF7C3AED).withValues(alpha: 0.12),
             child: const Icon(Icons.mic, color: Color(0xFF7C3AED), size: 20),
           ),
           title:
@@ -390,7 +390,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF7C3AED).withValues(alpha: 0.06),
+                        color: Color(0xFF7C3AED).withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child:
@@ -432,7 +432,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         icon: const Icon(Icons.note_add_outlined, size: 16),
                         label: const Text('ノートに変換'),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF7C3AED),
+                          foregroundColor: Color(0xFF7C3AED),
                         ),
                       ),
                     ],

@@ -974,7 +974,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
           end: Alignment.bottomRight,
           colors: [
             _info.accentColor.withValues(alpha: 0.1),
-            const Color(0xFF1A1A1A),
+            Color(0xFF1A1A1A),
           ],
         ),
       ),
@@ -1018,7 +1018,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     icon: const Icon(Icons.rocket_launch, size: 18),
                     label: const Text('無料で始める（30秒）'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
+                      backgroundColor: Color(0xFF4F46E5),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 14,
@@ -1201,7 +1201,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   Widget _buildCta(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFF4F46E5),
+      color: Color(0xFF4F46E5),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: Center(
         child: ConstrainedBox(
@@ -1233,8 +1233,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE5E7EB),
-                  foregroundColor: const Color(0xFF4F46E5),
+                  backgroundColor: Color(0xFFE5E7EB),
+                  foregroundColor: Color(0xFF4F46E5),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
                     vertical: 16,

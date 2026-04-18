@@ -97,7 +97,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ノートコメント'),
-        backgroundColor: const Color(0xFF009688),
+        backgroundColor: Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           if (_loadedNoteId != null)
@@ -203,7 +203,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                   ElevatedButton(
                     onPressed: _isSubmitting ? null : _addComment,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF009688),
+                      backgroundColor: Color(0xFF009688),
                       foregroundColor: Colors.white,
                     ),
                     child: _isSubmitting

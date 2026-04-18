@@ -284,7 +284,7 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
       itemBuilder: (_, i) {
         final item = _items[i];
         final type = item['content_type'] as String? ?? 'other';
-        final color = _typeColors[type] ?? const Color(0xFF6B7280);
+        final color = _typeColors[type] ?? Color(0xFF6B7280);
         final scheduledAt = item['scheduled_at'] as String? ?? '';
         return Card(
           margin: const EdgeInsets.only(bottom: 8),

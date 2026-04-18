@@ -2879,7 +2879,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             backgroundColor: Colors.redAccent,
                             foregroundColor: Colors.white,
                             elevation: 4,
-                            disabledBackgroundColor: const Color(0xFF9CA3AF),
+                            disabledBackgroundColor: Color(0xFF9CA3AF),
                           ),
                         ),
                       ),
@@ -3545,7 +3545,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ? Icons.push_pin
                       : Icons.push_pin_outlined,
                   color: i == _selectedContinuationPriorityIndex
-                      ? const Color(0xFFFFC107)Accent,
+                      ? Color(0xFFFFD740)
                       : Colors.white54,
                 ),
                 tooltip: '今日の最重要1件に固定',
@@ -3861,7 +3861,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.85)),
+        border: Border.all(color: Color(0xFFFFC107).withValues(alpha: 0.85)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4055,11 +4055,11 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case 'CMO':
         return Colors.pink;
       case 'CHO':
-        return const Color(0xFF009688);
+        return Color(0xFF009688);
       case 'CHRO':
         return Colors.indigo;
       default:
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
     }
   }
 

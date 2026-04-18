@@ -790,7 +790,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                               _buildSummaryChip(
                                 label: '関係マップ',
                                 value: '${_snapshot.relationships.length}',
-                                color: const Color(0xFF009688),
+                                color: Color(0xFF009688),
                               ),
                             ],
                           ),
@@ -1278,7 +1278,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     icon: Icons.schedule,
                     label:
                         '最終稼働 ${agent.lastActiveAt!.month}/${agent.lastActiveAt!.day} ${agent.lastActiveAt!.hour.toString().padLeft(2, '0')}:${agent.lastActiveAt!.minute.toString().padLeft(2, '0')}',
-                    color: const Color(0xFF009688),
+                    color: Color(0xFF009688),
                   ),
               ],
             ),
@@ -1601,7 +1601,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
     switch (status) {
       case 'active':
       case 'sent':
-        color = const Color(0xFF009688);
+        color = Color(0xFF009688);
         break;
       case 'completed':
       case 'resolved':
@@ -1831,18 +1831,18 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               spacing: 6,
               runSpacing: 6,
               children: [
-                _buildDeptTag('CEO室', 'CEO', const Color(0xFFFFC107)),
+                _buildDeptTag('CEO室', 'CEO', Color(0xFFFFC107)),
                 _buildDeptTag('CFO室', 'CFO', Colors.blue),
                 _buildDeptTag('CMO室', 'CMO', Colors.green),
                 _buildDeptTag('CHO室', 'CHO', Colors.red),
                 _buildDeptTag('CHRO室', 'CHRO', Colors.purple),
-                _buildDeptTag('企画部', '企画', const Color(0xFF009688)),
+                _buildDeptTag('企画部', '企画', Color(0xFF009688)),
                 _buildDeptTag('開発部', 'CTO', Colors.indigo),
                 _buildDeptTag('営業部', '営業', Colors.orange),
-                _buildDeptTag('CS部', 'CS', const Color(0xFF00BCD4)),
+                _buildDeptTag('CS部', 'CS', Color(0xFF00BCD4)),
                 _buildDeptTag('法務部', '法務', Colors.brown),
                 _buildDeptTag('広報部', '広報', Colors.pink),
-                _buildDeptTag('調達部', '調達', const Color(0xFF9CA3AF)),
+                _buildDeptTag('調達部', '調達', Color(0xFF9CA3AF)),
               ],
             ),
             const SizedBox(height: 12),

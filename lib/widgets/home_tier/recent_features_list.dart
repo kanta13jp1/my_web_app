@@ -76,7 +76,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
               (item['feature_route'] as String).split('/').last;
           return ActionChip(
             label: Text(label, style: const TextStyle(fontSize: 12)),
-            backgroundColor: const Color(0xFF1A1A1A),
+            backgroundColor: Color(0xFF1A1A1A),
             side: const BorderSide(color: Color(0xFF2A2A2A)),
             onPressed: () => Navigator.pushNamed(
               context,

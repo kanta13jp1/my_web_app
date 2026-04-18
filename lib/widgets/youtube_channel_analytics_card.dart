@@ -407,12 +407,12 @@ class _YoutubeChannelAnalyticsCardState
                     ),
                     decoration: BoxDecoration(
                       color: active
-                          ? const Color(0xFF6366F1).withAlpha(30)
+                          ? Color(0xFF6366F1).withAlpha(30)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
                         color: active
-                            ? const Color(0xFF6366F1)
+                            ? Color(0xFF6366F1)
                             : Colors.grey.withAlpha(60),
                       ),
                     ),
@@ -423,7 +423,7 @@ class _YoutubeChannelAnalyticsCardState
                         fontWeight:
                             active ? FontWeight.bold : FontWeight.normal,
                         color: active
-                            ? const Color(0xFF6366F1)
+                            ? Color(0xFF6366F1)
                             : (isDark ? Colors.grey[400] : Colors.grey[700]),
                       ),
                     ),

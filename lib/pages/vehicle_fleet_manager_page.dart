@@ -156,7 +156,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
               child: Icon(
                 Icons.directions_car,
                 color:
-                    status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
+                    status == 'active' ? Colors.green : Color(0xFF9CA3AF),
               ),
             ),
             title:
@@ -179,7 +179,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                     fontSize: 11,
                     color: status == 'active'
                         ? Colors.green
-                        : const Color(0xFF9CA3AF),
+                        : Color(0xFF9CA3AF),
                   ),
                 ),
               ],
@@ -280,7 +280,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                     '次回: ${nextDue.substring(0, 10)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: overdue ? Colors.red : const Color(0xFF9CA3AF),
+                      color: overdue ? Colors.red : Color(0xFF9CA3AF),
                       fontWeight: overdue ? FontWeight.bold : null,
                     ),
                   ),

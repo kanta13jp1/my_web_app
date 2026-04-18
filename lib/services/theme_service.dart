@@ -54,7 +54,7 @@ class ThemeService extends ChangeNotifier {
   }
 
   ThemeMode _themeMode = ThemeMode.system;
-  Color _primaryColor = const Color(0xFF0F172A);
+  Color _primaryColor = Color(0xFF0F172A);
 
   ThemeService() {
     _loadThemeMode();

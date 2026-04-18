@@ -57,14 +57,14 @@ class _SocialProofBannerState extends State<SocialProofBanner> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [const Color(0xFF1E1B4B), const Color(0xFF1A2233)]
-              : [const Color(0xFFF5F3FF), const Color(0xFFEFF6FF)],
+              ? [Color(0xFF1E1B4B), Color(0xFF1A2233)]
+              : [Color(0xFFF5F3FF), Color(0xFFEFF6FF)],
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isDark
-              ? const Color(0xFF4C1D95).withAlpha(80)
-              : const Color(0xFFDDD6FE),
+              ? Color(0xFF4C1D95).withAlpha(80)
+              : Color(0xFFDDD6FE),
         ),
       ),
       child: Row(
@@ -130,7 +130,7 @@ class _StatItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: isDark ? const Color(0xFFDDD6FE) : const Color(0xFF4C1D95),
+            color: isDark ? Color(0xFFDDD6FE) : Color(0xFF4C1D95),
           ),
         ),
         Text(

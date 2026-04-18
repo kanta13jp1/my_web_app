@@ -213,7 +213,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
           child: ListTile(
             leading: Icon(
               Icons.smart_toy,
-              color: isActive ? Colors.indigo : const Color(0xFF9CA3AF),
+              color: isActive ? Colors.indigo : Color(0xFF9CA3AF),
             ),
             title: Text(
               flow['name'] as String? ?? '',

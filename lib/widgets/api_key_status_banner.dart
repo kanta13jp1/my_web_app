@@ -71,10 +71,10 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
     // 全て未設定 = critical / 一部未設定 = warning
     final isCritical = _configured.isEmpty;
     final bgColor = isCritical
-        ? const Color(0xFFDC2626).withValues(alpha: isDark ? 0.25 : 0.10)
-        : const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.22 : 0.10);
+        ? Color(0xFFDC2626).withValues(alpha: isDark ? 0.25 : 0.10)
+        : Color(0xFFF59E0B).withValues(alpha: isDark ? 0.22 : 0.10);
     final borderColor =
-        isCritical ? const Color(0xFFDC2626) : const Color(0xFFF59E0B);
+        isCritical ? Color(0xFFDC2626) : Color(0xFFF59E0B);
     final icon = isCritical ? Icons.error_outline : Icons.warning_amber_rounded;
 
     return Container(
@@ -100,14 +100,14 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    color: isDark ? Colors.white : Color(0xFF1F2937),
                   ),
                 ),
               ),
               IconButton(
                 tooltip: '閉じる',
                 icon: const Icon(Icons.close, size: 18),
-                color: isDark ? Colors.white70 : const Color(0xFF6B7280),
+                color: isDark ? Colors.white70 : Color(0xFF6B7280),
                 onPressed: () => setState(() => _dismissed = true),
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
@@ -126,7 +126,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                     '設定済み: ${_configured.join(", ")}',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: isDark ? Colors.white70 : const Color(0xFF374151),
+                      color: isDark ? Colors.white70 : Color(0xFF374151),
                     ),
                   ),
                 const SizedBox(height: 3),
@@ -152,7 +152,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                           fontSize: 11,
                           fontFamily: 'monospace',
                           color:
-                              isDark ? Colors.white : const Color(0xFF111827),
+                              isDark ? Colors.white : Color(0xFF111827),
                         ),
                       ),
                     );
@@ -165,7 +165,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                       : '他プロバイダーが quota 到達時に上記の未設定キーへフォールバックできません。管理者に設定を依頼してください。',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? Colors.white70 : const Color(0xFF4B5563),
+                    color: isDark ? Colors.white70 : Color(0xFF4B5563),
                     height: 1.4,
                   ),
                 ),

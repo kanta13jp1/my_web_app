@@ -583,7 +583,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xB3FFFFFF),
+          unselectedLabelColor: Color(0xB3FFFFFF),
           indicatorColor: Colors.amber,
           isScrollable: true,
           tabs: const [
@@ -1130,7 +1130,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             label: const Text('ポスター/チラシを撮影・診断'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
-              backgroundColor: const Color(0xFF009688),
+              backgroundColor: Color(0xFF009688),
             ),
           ),
         ),
@@ -1159,8 +1159,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       leading: Icon(
                         Icons.image,
                         color: score >= 80
-                            ? const Color(0xFF009688)
-                            : const Color(0xFF9CA3AF),
+                            ? Color(0xFF009688)
+                            : Color(0xFF9CA3AF),
                       ),
                       title: Text(
                         '診断スコア: $score点',

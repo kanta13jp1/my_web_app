@@ -232,7 +232,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('時間があるときのストック'),
-        backgroundColor: const Color(0xFF009688),
+        backgroundColor: Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -254,13 +254,13 @@ class _StockTasksPageState extends State<StockTasksPage> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: _isSaturday
-                  ? const Color(0xFFFFC107).withValues(alpha: 0.16)
-                  : const Color(0xFF009688).withValues(alpha: 0.1),
+                  ? Color(0xFFFFC107).withValues(alpha: 0.16)
+                  : Color(0xFF009688).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _isSaturday
-                    ? const Color(0xFFFFC107)
-                    : const Color(0xFF80CBC4),
+                    ? Color(0xFFFFC107)
+                    : Color(0xFF80CBC4),
               ),
             ),
             child: Column(
@@ -439,7 +439,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
     final bool isCompleted = task['is_completed'] == true;
     final String text = task['task'] as String? ?? '';
     final bool isThinking = _isThinkingTask(task);
-    final badgeColor = isThinking ? Colors.deepPurple : const Color(0xFF009688);
+    final badgeColor = isThinking ? Colors.deepPurple : Color(0xFF009688);
     final badgeText = isThinking ? '思考ネタ' : '行動';
     return Dismissible(
       key: ValueKey(id),
@@ -466,8 +466,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
             icon: Icon(
               isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
               color: isCompleted
-                  ? const Color(0xFF009688)
-                  : const Color(0xFF9CA3AF),
+                  ? Color(0xFF009688)
+                  : Color(0xFF9CA3AF),
             ),
             onPressed: () => _toggleTask(id, isCompleted),
           ),
@@ -477,7 +477,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
               fontSize: 16,
               decoration: isCompleted ? TextDecoration.lineThrough : null,
               color: isCompleted
-                  ? const Color(0xFF9CA3AF)
+                  ? Color(0xFF9CA3AF)
                   : Theme.of(context).colorScheme.onSurface,
             ),
           ),

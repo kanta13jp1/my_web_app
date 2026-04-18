@@ -128,7 +128,7 @@ class _DepartmentsTab extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFF6366F1).withAlpha(30),
+              backgroundColor: Color(0xFF6366F1).withAlpha(30),
               child: Text(
                 (dept['label'] as String? ?? '?').substring(0, 1),
                 style: const TextStyle(
@@ -172,7 +172,7 @@ class _PerformanceTab extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFFF97316).withAlpha(30),
+              backgroundColor: Color(0xFFF97316).withAlpha(30),
               child: Text(
                 '${i + 1}',
                 style: const TextStyle(color: Color(0xFFF97316)),

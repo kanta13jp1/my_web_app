@@ -1128,28 +1128,28 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _buildHeroMetric(
                   label: '計画現在',
                   value: _formatInt(plan.currentLocalMembers),
-                  color: const Color(0xFF0F766E),
+                  color: Color(0xFF0F766E),
                 ),
                 _buildHeroMetric(
                   label: '公式現在',
                   value: _formatInt(officialCount),
-                  color: const Color(0xFF0891B2),
+                  color: Color(0xFF0891B2),
                 ),
                 _buildHeroMetric(
                   label: '目標',
                   value: _formatInt(plan.targetLocalMembers),
-                  color: const Color(0xFF2563EB),
+                  color: Color(0xFF2563EB),
                 ),
                 _buildHeroMetric(
                   label: '残り必要純増',
                   value: _formatInt(gapToTarget),
-                  color: const Color(0xFFB91C1C),
+                  color: Color(0xFFB91C1C),
                 ),
                 _buildHeroMetric(
                   label: '2023実績',
                   value:
                       '${plan.previousUnifiedElectionFirstHalfWins}+${plan.previousUnifiedElectionSecondHalfWins}',
-                  color: const Color(0xFF7C3AED),
+                  color: Color(0xFF7C3AED),
                 ),
               ],
             ),
@@ -1201,10 +1201,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1D4ED8).withValues(alpha: 0.08),
+        color: Color(0xFF1D4ED8).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1D4ED8).withValues(alpha: 0.18),
+          color: Color(0xFF1D4ED8).withValues(alpha: 0.18),
         ),
       ),
       child: Column(
@@ -1227,7 +1227,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           SelectableText(
             'https://my-web-app-b67f4.web.app/public/local-election-700',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFF1D4ED8),
+                  color: Color(0xFF1D4ED8),
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -1338,7 +1338,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                         realitySnapshot.hasScheduleData)
                       FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1DA1F2),
+                          backgroundColor: Color(0xFF1DA1F2),
                         ),
                         onPressed: realitySnapshot.hasData
                             ? () => ElectionXPostComposerDialog.show(
@@ -1427,28 +1427,28 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     value:
                         _formatInt(realitySnapshot.officialCurrentLocalMembers),
                     subtitle: '議員ページ集計',
-                    color: const Color(0xFF0891B2),
+                    color: Color(0xFF0891B2),
                   ),
                   _buildSummaryCard(
                     title: '基準340との差分',
                     value: _formatSignedInt(realitySnapshot.deltaFromBaseline),
                     subtitle: '初期前提とのズレ',
                     color: realitySnapshot.deltaFromBaseline >= 0
-                        ? const Color(0xFF0F766E)
-                        : const Color(0xFFB91C1C),
+                        ? Color(0xFF0F766E)
+                        : Color(0xFFB91C1C),
                   ),
                   _buildSummaryCard(
                     title: '実数基準の残り',
                     value:
                         _formatInt(realitySnapshot.actualNetIncreaseRequired),
                     subtitle: '700人まで',
-                    color: const Color(0xFFB91C1C),
+                    color: Color(0xFFB91C1C),
                   ),
                   _buildSummaryCard(
                     title: '議員在籍県数',
                     value: _formatInt(activePrefectures),
                     subtitle: '公式ページで確認できた県',
-                    color: const Color(0xFF7C3AED),
+                    color: Color(0xFF7C3AED),
                   ),
                   _buildSummaryCard(
                     title: '2023前半戦',
@@ -1456,7 +1456,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       realitySnapshot.official2023FirstHalfWins,
                     ),
                     subtitle: '公式結果ベース',
-                    color: const Color(0xFFB45309),
+                    color: Color(0xFFB45309),
                   ),
                   _buildSummaryCard(
                     title: '2023後半戦',
@@ -1464,7 +1464,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       realitySnapshot.official2023SecondHalfWins,
                     ),
                     subtitle: '公式結果ベース',
-                    color: const Color(0xFFBE123C),
+                    color: Color(0xFFBE123C),
                   ),
                 ],
               ),
@@ -1553,15 +1553,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             children: [
               _buildStatusChip(
                 '推移 ${_formatInt(_historyPointsForDisplay(snapshot).length)} 点',
-                color: const Color(0xFF0891B2),
+                color: Color(0xFF0891B2),
               ),
               _buildStatusChip(
                 '日程 ${_formatInt(snapshot.upcomingSchedules.length)} 件',
-                color: const Color(0xFF2563EB),
+                color: Color(0xFF2563EB),
               ),
               _buildStatusChip(
                 '名簿 ${_formatInt(snapshot.rosterCount)} 人',
-                color: const Color(0xFF7C3AED),
+                color: Color(0xFF7C3AED),
               ),
             ],
           ),
@@ -1665,15 +1665,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             if (latestPoint != null)
               _buildStatusChip(
                 '最新 ${_formatInt(latestPoint.officialCurrentLocalMembers)} 人',
-                color: const Color(0xFF0891B2),
+                color: Color(0xFF0891B2),
               ),
             _buildStatusChip(
               '最大 ${_formatInt(maxCount)} 人',
-              color: const Color(0xFF0F766E),
+              color: Color(0xFF0F766E),
             ),
             _buildStatusChip(
               '最小 ${_formatInt(minCount)} 人',
-              color: const Color(0xFF7C3AED),
+              color: Color(0xFF7C3AED),
             ),
           ],
         ),
@@ -1827,14 +1827,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           LineChartBarData(
             spots: spots,
             isCurved: history.length > 2,
-            color: const Color(0xFF0891B2),
+            color: Color(0xFF0891B2),
             barWidth: 3,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, percent, barData, index) {
                 return FlDotCirclePainter(
                   radius: 4,
-                  color: const Color(0xFF0891B2),
+                  color: Color(0xFF0891B2),
                   strokeWidth: 2,
                   strokeColor: Theme.of(context).colorScheme.surface,
                 );
@@ -1842,7 +1842,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             belowBarData: BarAreaData(
               show: true,
-              color: const Color(0xFF0891B2).withValues(alpha: 0.12),
+              color: Color(0xFF0891B2).withValues(alpha: 0.12),
             ),
           ),
         ],
@@ -1860,10 +1860,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             padding: const EdgeInsets.all(14),
             margin: const EdgeInsets.only(bottom: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.07),
+              color: Color(0xFF1565C0).withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF1565C0).withValues(alpha: 0.2),
+                color: Color(0xFF1565C0).withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -1879,7 +1879,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   child: Text(
                     _geminiAnalysisResult!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF1565C0),
+                          color: Color(0xFF1565C0),
                         ),
                   ),
                 ),
@@ -1898,10 +1898,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: Color(0xFF0F172A).withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.10),
+              color: Color(0xFF0F172A).withValues(alpha: 0.10),
             ),
           ),
           child: Column(
@@ -2133,7 +2133,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     if (item.currentMembers <= _lowPresenceThreshold) {
       return Color.alphaBlend(
-        const Color(0xFFFFC107).withValues(alpha: 0.22),
+        Color(0xFFFFC107).withValues(alpha: 0.22),
         surface,
       );
     }
@@ -2148,7 +2148,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
     }
     if (item.currentMembers <= _lowPresenceThreshold) {
-      return const Color(0xFFFFA000).withValues(alpha: 0.7);
+      return Color(0xFFFFA000).withValues(alpha: 0.7);
     }
     return Theme.of(context).colorScheme.outlineVariant;
   }
@@ -2170,7 +2170,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.currentMembers == 0) {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.14);
     }
-    return const Color(0xFFFFC107).withValues(alpha: 0.25);
+    return Color(0xFFFFC107).withValues(alpha: 0.25);
   }
 
   Color _prefectureBadgeForegroundColor(
@@ -2180,7 +2180,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.currentMembers == 0) {
       return Theme.of(context).colorScheme.error;
     }
-    return const Color(0xFFFF6F00);
+    return Color(0xFFFF6F00);
   }
 
   Future<void> _downloadElectionDataCsv(
@@ -2306,12 +2306,12 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           decoration: BoxDecoration(
             color: passed
                 ? Theme.of(context).colorScheme.surfaceContainerHigh
-                : const Color(0xFF1D4ED8).withValues(alpha: 0.06),
+                : Color(0xFF1D4ED8).withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: passed
                   ? Theme.of(context).colorScheme.outlineVariant
-                  : const Color(0xFF1D4ED8).withValues(alpha: 0.2),
+                  : Color(0xFF1D4ED8).withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -2323,7 +2323,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   fontWeight: FontWeight.w600,
                   color: passed
                       ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : const Color(0xFF1D4ED8),
+                      : Color(0xFF1D4ED8),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -2335,7 +2335,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   fontWeight: FontWeight.w800,
                   color: passed
                       ? Theme.of(context).colorScheme.onSurfaceVariant
-                      : const Color(0xFF1D4ED8),
+                      : Color(0xFF1D4ED8),
                 ),
               ),
               const SizedBox(height: 2),
@@ -2358,13 +2358,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1D4ED8).withValues(alpha: 0.08),
-            const Color(0xFF7C3AED).withValues(alpha: 0.05),
+            Color(0xFF1D4ED8).withValues(alpha: 0.08),
+            Color(0xFF7C3AED).withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF1D4ED8).withValues(alpha: 0.15),
+          color: Color(0xFF1D4ED8).withValues(alpha: 0.15),
         ),
       ),
       child: Column(
@@ -2379,7 +2379,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '統一地方選挙 2027 カウントダウン (仮日程)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1D4ED8),
+                        color: Color(0xFF1D4ED8),
                       ),
                 ),
               ),
@@ -2552,7 +2552,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             _buildStatusChip(
               '14日以内 ${_formatInt(upcomingSoonCount)} 件',
-              color: const Color(0xFF2563EB),
+              color: Color(0xFF2563EB),
             ),
             _buildStatusChip(
               '未擁立 ${_formatInt(snapshot.redAlertScheduleCount)} 件',
@@ -2560,7 +2560,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             _buildStatusChip(
               '単騎 ${_formatInt(snapshot.yellowAlertScheduleCount)} 件',
-              color: const Color(0xFFFF8F00),
+              color: Color(0xFFFF8F00),
             ),
             _buildStatusChip(
               '過去1年 ${_formatInt(pastSchedules.length)} 件',
@@ -2575,10 +2575,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1D4ED8).withValues(alpha: 0.05),
+              color: Color(0xFF1D4ED8).withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFF1D4ED8).withValues(alpha: 0.12),
+                color: Color(0xFF1D4ED8).withValues(alpha: 0.12),
               ),
             ),
             child: Column(
@@ -2649,7 +2649,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   label: Text(
                     filter == 'すべて' ? filter : '$filter ($count)',
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFFE5E7EB) : null,
+                      color: isSelected ? Color(0xFFE5E7EB) : null,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.normal,
                       fontSize: 13,
@@ -2782,7 +2782,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 canMarkersOverflow: false,
                 markersMaxCount: 1,
                 todayDecoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.18),
+                  color: Color(0xFF2563EB).withValues(alpha: 0.18),
                   shape: BoxShape.circle,
                 ),
                 selectedDecoration: const BoxDecoration(
@@ -2804,8 +2804,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       .reduce((left, right) => left < right ? left : right);
                   final color = switch (severity) {
                     0 => Theme.of(context).colorScheme.error,
-                    1 => const Color(0xFFFF8F00),
-                    _ => const Color(0xFF0F766E),
+                    1 => Color(0xFFFF8F00),
+                    _ => Color(0xFF0F766E),
                   };
                   final countLabel =
                       events.length > 9 ? '9+' : '${events.length}';
@@ -3156,19 +3156,19 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _buildMetricChip(
                   '自治体',
                   item.municipality,
-                  color: const Color(0xFF475569),
+                  color: Color(0xFF475569),
                 ),
                 if (item.announcementDate.trim().isNotEmpty)
                   _buildMetricChip(
                     '告示日',
                     _formatScheduleDate(item.announcementDate),
-                    color: const Color(0xFF2563EB),
+                    color: Color(0xFF2563EB),
                   ),
                 if (item.seatCount > 0 || item.totalCandidateCount > 0)
                   _buildMetricChip(
                     '定数/候補者',
                     '${_formatInt(item.seatCount)} / ${_formatInt(item.totalCandidateCount)}',
-                    color: const Color(0xFF7C3AED),
+                    color: Color(0xFF7C3AED),
                   ),
               ],
             ),
@@ -3253,7 +3253,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     if (item.isAlertYellow) {
       return Color.alphaBlend(
-        const Color(0xFFFFC107).withValues(alpha: 0.22),
+        Color(0xFFFFC107).withValues(alpha: 0.22),
         surface,
       );
     }
@@ -3268,7 +3268,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
     }
     if (item.isAlertYellow) {
-      return const Color(0xFFFFA000).withValues(alpha: 0.7);
+      return Color(0xFFFFA000).withValues(alpha: 0.7);
     }
     return Theme.of(context).colorScheme.outlineVariant;
   }
@@ -3290,7 +3290,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.isAlertRed) {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.14);
     }
-    return const Color(0xFFFFC107).withValues(alpha: 0.25);
+    return Color(0xFFFFC107).withValues(alpha: 0.25);
   }
 
   Color _scheduleBadgeForegroundColor(
@@ -3300,17 +3300,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.isAlertRed) {
       return Theme.of(context).colorScheme.error;
     }
-    return const Color(0xFFFF6F00);
+    return Color(0xFFFF6F00);
   }
 
   Color _scheduleMetricColor(LocalElectionScheduleEntry item) {
     if (item.isAlertRed) {
-      return const Color(0xFFB91C1C);
+      return Color(0xFFB91C1C);
     }
     if (item.isAlertYellow) {
-      return const Color(0xFFFF8F00);
+      return Color(0xFFFF8F00);
     }
-    return const Color(0xFF0F766E);
+    return Color(0xFF0F766E);
   }
 
   String _formatScheduleDate(String raw) {
@@ -3499,7 +3499,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               _buildPastElectionRecordChip(
                 label: '${_formatInt(battleCount)}戦',
                 backgroundColor:
-                    const Color(0xFF0F172A).withValues(alpha: 0.08),
+                    Color(0xFF0F172A).withValues(alpha: 0.08),
                 foregroundColor: Theme.of(context).colorScheme.onSurface,
               ),
               _buildPastElectionRecordChip(
@@ -3987,15 +3987,15 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             _buildStatusChip(
               '個票 ${_formatInt(snapshot.rosterCount)} 人',
-              color: const Color(0xFF0891B2),
+              color: Color(0xFF0891B2),
             ),
             _buildStatusChip(
               '年齢表示 ${_formatInt(ageVisibleCount)} 人',
-              color: const Color(0xFF0F766E),
+              color: Color(0xFF0F766E),
             ),
             _buildStatusChip(
               'プロフィール表示 ${_formatInt(profileVisibleCount)} 人',
-              color: const Color(0xFF7C3AED),
+              color: Color(0xFF7C3AED),
             ),
           ],
         ),
@@ -4092,30 +4092,30 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 _buildMetricChip(
                   '議会',
                   member.assemblyLabel,
-                  color: const Color(0xFF1D4ED8),
+                  color: Color(0xFF1D4ED8),
                 ),
                 if (member.electionCountLabel.trim().isNotEmpty)
                   _buildMetricChip(
                     '当選回数',
                     member.electionCountLabel,
-                    color: const Color(0xFFB45309),
+                    color: Color(0xFFB45309),
                   ),
                 _buildMetricChip(
                   '県連',
                   member.prefecture,
-                  color: const Color(0xFF475569),
+                  color: Color(0xFF475569),
                 ),
                 if (member.age != null)
                   _buildMetricChip(
                     '年齢',
                     '${member.age}歳',
-                    color: const Color(0xFF0F766E),
+                    color: Color(0xFF0F766E),
                   ),
                 if (member.gender.trim().isNotEmpty)
                   _buildMetricChip(
                     '性別',
                     member.gender,
-                    color: const Color(0xFFBE185D),
+                    color: Color(0xFFBE185D),
                   ),
               ],
             ),
@@ -4315,38 +4315,38 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           title: '県連配分済み純増',
           value: _formatInt(plan.allocatedNetIncrease),
           subtitle: '必要 ${_formatInt(plan.requiredNetIncrease)} に対して',
-          color: const Color(0xFF0F766E),
+          color: Color(0xFF0F766E),
         ),
         _buildSummaryCard(
           title: '現職維持目標',
           value: _formatInt(plan.totalIncumbentRetentionTarget),
           subtitle: '県連入力の合計値',
-          color: const Color(0xFFB45309),
+          color: Color(0xFFB45309),
         ),
         _buildSummaryCard(
           title: '重点自治体',
           value: _formatInt(plan.totalFocusMunicipalityCount),
           subtitle: '全国合計',
-          color: const Color(0xFF1D4ED8),
+          color: Color(0xFF1D4ED8),
         ),
         _buildSummaryCard(
           title: '新人擁立',
           value: _formatInt(plan.totalNewCandidateTarget),
           subtitle: '全国合計',
-          color: const Color(0xFF7C3AED),
+          color: Color(0xFF7C3AED),
         ),
         _buildSummaryCard(
           title: '公認内定済み県連',
           value:
               '${_formatInt(plan.confirmedEndorsementCount)}/${_formatInt(plan.prefectures.length)}',
           subtitle: '期限管理に使用',
-          color: const Color(0xFF0F766E),
+          color: Color(0xFF0F766E),
         ),
         _buildSummaryCard(
           title: '接戦区支援回数',
           value: _formatInt(plan.totalCloseRaceSupportRounds),
           subtitle: '全国合計',
-          color: const Color(0xFFBE123C),
+          color: Color(0xFFBE123C),
         ),
       ],
     );
@@ -4643,7 +4643,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   _buildMetricChip(
                     '公式実数',
                     '${_formatInt(reality.currentMembers)}人',
-                    color: const Color(0xFF0891B2),
+                    color: Color(0xFF0891B2),
                   ),
               ],
             ),

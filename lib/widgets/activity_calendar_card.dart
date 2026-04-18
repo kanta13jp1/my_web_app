@@ -96,11 +96,11 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
 
   Color _cellColor(int count, bool isDark) {
     if (count == 0) {
-      return isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+      return isDark ? Color(0xFF1E293B) : Color(0xFFE2E8F0);
     }
-    if (count == 1) return const Color(0xFF6366F1).withAlpha(120);
-    if (count <= 3) return const Color(0xFF6366F1).withAlpha(180);
-    return const Color(0xFF6366F1);
+    if (count == 1) return Color(0xFF6366F1).withAlpha(120);
+    if (count <= 3) return Color(0xFF6366F1).withAlpha(180);
+    return Color(0xFF6366F1);
   }
 
   @override
@@ -132,11 +132,11 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: isDark
-              ? const Color(0xFF6366F1).withAlpha(40)
-              : const Color(0xFFDDD6FE),
+              ? Color(0xFF6366F1).withAlpha(40)
+              : Color(0xFFDDD6FE),
         ),
       ),
-      color: isDark ? const Color(0xFF0F172A) : Colors.white,
+      color: isDark ? Color(0xFF0F172A) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -155,7 +155,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: isDark ? Colors.white : Color(0xFF1E293B),
                   ),
                 ),
                 const Spacer(),
@@ -196,7 +196,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                               borderRadius: BorderRadius.circular(3),
                               border: isToday
                                   ? Border.all(
-                                      color: const Color(0xFF6366F1),
+                                      color: Color(0xFF6366F1),
                                       width: 1.5,
                                     )
                                   : null,
@@ -225,7 +225,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color:
-                          isDark ? Colors.grey[300] : const Color(0xFF374151),
+                          isDark ? Colors.grey[300] : Color(0xFF374151),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -236,8 +236,8 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   height: 10,
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1E293B)
-                        : const Color(0xFFE2E8F0),
+                        ? Color(0xFF1E293B)
+                        : Color(0xFFE2E8F0),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -254,7 +254,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1).withAlpha(120),
+                    color: Color(0xFF6366F1).withAlpha(120),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -271,7 +271,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1),
+                    color: Color(0xFF6366F1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

@@ -272,7 +272,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             name,
             style: TextStyle(
               decoration: bought ? TextDecoration.lineThrough : null,
-              color: bought ? const Color(0xFF9CA3AF) : null,
+              color: bought ? Color(0xFF9CA3AF) : null,
             ),
           ),
           subtitle: Text('$category${qty.isNotEmpty ? " · $qty" : ""}'),

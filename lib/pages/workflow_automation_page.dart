@@ -109,17 +109,17 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       case 'error':
         return Colors.red;
       default:
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AIワークフロー自動化'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
         actions: [
@@ -260,7 +260,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
             trailing: ElevatedButton(
               onPressed: () => _createFromTemplate(tmpl),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
               child: const Text('作成'),

@@ -59,7 +59,7 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ナレッジベース'),
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: Color(0xFF6366F1),
         foregroundColor: Colors.white,
         actions: [
           IconButton(

@@ -2366,7 +2366,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         ? Colors.green
         : scheduled
             ? _priorityColor(action.priority)
-            : const Color(0xFF9CA3AF);
+            : Color(0xFF9CA3AF);
     final icon = completed
         ? Icons.check_circle
         : scheduled
@@ -2477,7 +2477,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE5E7EB).withValues(alpha: 0.9),
+        color: Color(0xFFE5E7EB).withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.indigo.withValues(alpha: 0.12)),
       ),
@@ -2815,7 +2815,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                             padding: const EdgeInsets.all(18),
                             constraints: const BoxConstraints(maxWidth: 360),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE5E7EB)
+                              color: Color(0xFFE5E7EB)
                                   .withValues(alpha: 0.92),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
@@ -2939,7 +2939,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     bool isEditable = true,
   }) {
     final backgroundColor = Color.alphaBlend(
-      const Color(0xFFE5E7EB).withValues(alpha: node.isDimmed ? 0.7 : 0.92),
+      Color(0xFFE5E7EB).withValues(alpha: node.isDimmed ? 0.7 : 0.92),
       node.color.withValues(alpha: node.isDimmed ? 0.08 : 0.14),
     );
 
@@ -3469,7 +3469,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       fontWeight: FontWeight.bold,
                                       color: isCurrentHour
                                           ? Colors.blue
-                                          : const Color(0xFF9CA3AF),
+                                          : Color(0xFF9CA3AF),
                                     ),
                                   ),
                                 ),

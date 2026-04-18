@@ -96,7 +96,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
     showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: Color(0xFF1E1E1E),
         title: const Text('名刺を追加', style: TextStyle(color: Colors.white)),
         content: SingleChildScrollView(
           child: Column(
@@ -122,7 +122,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
           ElevatedButton(
             onPressed: _saving ? null : _save,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B35),
+              backgroundColor: Color(0xFFFF6B35),
               foregroundColor: Colors.white,
             ),
             child: _saving
@@ -165,9 +165,9 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: Color(0xFF121212),
         title: const Text('名刺管理', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -200,7 +200,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                       ElevatedButton.icon(
                         onPressed: _showAddDialog,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF6B35),
+                          backgroundColor: Color(0xFFFF6B35),
                           foregroundColor: Colors.white,
                         ),
                         icon: const Icon(Icons.add),
@@ -219,12 +219,12 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                     final initials =
                         raw.length >= 2 ? raw.substring(0, 2) : raw;
                     return Card(
-                      color: const Color(0xFF1E1E1E),
+                      color: Color(0xFF1E1E1E),
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor:
-                              const Color(0xFFFF6B35).withValues(alpha: 0.2),
+                              Color(0xFFFF6B35).withValues(alpha: 0.2),
                           child: Text(
                             initials,
                             style: const TextStyle(
@@ -288,7 +288,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                 ),
       floatingActionButton: _cards.isNotEmpty
           ? FloatingActionButton(
-              backgroundColor: const Color(0xFFFF6B35),
+              backgroundColor: Color(0xFFFF6B35),
               onPressed: _showAddDialog,
               child: const Icon(Icons.add, color: Colors.white),
             )

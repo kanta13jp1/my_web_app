@@ -253,8 +253,8 @@ class _ChallengeRow extends StatelessWidget {
         color: isCompleted
             ? Colors.green.withAlpha(isDark ? 20 : 15)
             : isDark
-                ? const Color(0xFF1F2937)
-                : const Color(0xFFF9FAFB),
+                ? Color(0xFF1F2937)
+                : Color(0xFFF9FAFB),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isCompleted
@@ -322,7 +322,7 @@ class _ChallengeRow extends StatelessWidget {
                     minHeight: 6,
                     backgroundColor: Colors.grey.withAlpha(40),
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      isCompleted ? Colors.green : const Color(0xFF6366F1),
+                      isCompleted ? Colors.green : Color(0xFF6366F1),
                     ),
                   ),
                 ),

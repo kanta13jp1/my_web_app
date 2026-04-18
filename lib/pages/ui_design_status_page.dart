@@ -788,9 +788,9 @@ class _StageBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (String label, Color color) = switch (stage) {
-      UiImprovementStage.applied => ('Applied', const Color(0xFF1E7B65)),
-      UiImprovementStage.inProgress => ('In progress', const Color(0xFF916626)),
-      UiImprovementStage.planned => ('Planned', const Color(0xFFB22323)),
+      UiImprovementStage.applied => ('Applied', Color(0xFF1E7B65)),
+      UiImprovementStage.inProgress => ('In progress', Color(0xFF916626)),
+      UiImprovementStage.planned => ('Planned', Color(0xFFB22323)),
     };
 
     return Container(

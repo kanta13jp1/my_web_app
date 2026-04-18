@@ -855,7 +855,7 @@ class _RankCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isMe ? const Color(0xFF141A2B) : _RankingPalette.surface2,
+            color: isMe ? Color(0xFF141A2B) : _RankingPalette.surface2,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isMe

@@ -146,8 +146,8 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                         ? Icons.check_circle
                         : Icons.radio_button_unchecked,
                     color: isSelected
-                        ? const Color(0xFF6366F1)
-                        : const Color(0xFF9CA3AF),
+                        ? Color(0xFF6366F1)
+                        : Color(0xFF9CA3AF),
                     size: 20,
                   ),
                   title: Text(tmplName, style: const TextStyle(fontSize: 14)),
@@ -326,14 +326,14 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: Text(
           _selectedBoard != null
               ? _selectedBoard!['name']?.toString() ?? 'ホワイトボード'
               : 'バーチャルホワイトボード',
         ),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
         leading: _selectedBoard != null
@@ -377,7 +377,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
       floatingActionButton: _selectedBoard == null
           ? FloatingActionButton(
               onPressed: _createBoard,
-              backgroundColor: const Color(0xFFFF6B35),
+              backgroundColor: Color(0xFFFF6B35),
               tooltip: '新しいボードを作成',
               child: const Icon(Icons.add, color: Colors.white),
             )
@@ -448,7 +448,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.15),
+              backgroundColor: Color(0xFF6366F1).withValues(alpha: 0.15),
               child: const Icon(Icons.dashboard, color: Color(0xFF6366F1)),
             ),
             title:
@@ -501,10 +501,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
         final name = tmpl['name']?.toString() ?? '';
         final desc = tmpl['description']?.toString() ?? '';
         final colors = [
-          const Color(0xFF6366F1),
-          const Color(0xFF0EA5E9),
-          const Color(0xFF10B981),
-          const Color(0xFFF59E0B),
+          Color(0xFF6366F1),
+          Color(0xFF0EA5E9),
+          Color(0xFF10B981),
+          Color(0xFFF59E0B),
         ];
         final color = colors[index % colors.length];
         return Card(
@@ -550,7 +550,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
       children: [
         // Toolbar
         Container(
-          color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+          color: Color(0xFF6366F1).withValues(alpha: 0.08),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
@@ -564,7 +564,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                 icon: const Icon(Icons.sticky_note_2, size: 18),
                 label: const Text('付箋'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Color(0xFF6366F1),
                 ),
               ),
             ],
@@ -593,7 +593,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                         icon: const Icon(Icons.sticky_note_2),
                         label: const Text('付箋を追加'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6366F1),
+                          backgroundColor: Color(0xFF6366F1),
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -631,7 +631,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                       child: ListTile(
                         leading: Icon(
                           _elementIcon(type),
-                          color: const Color(0xFF6366F1),
+                          color: Color(0xFF6366F1),
                         ),
                         title: Text(content.isNotEmpty ? content : '($type)'),
                         trailing: Text(

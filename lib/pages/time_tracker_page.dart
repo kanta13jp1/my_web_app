@@ -200,10 +200,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('勤怠・時間追跡'),
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
@@ -230,7 +230,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _logHours,
-        backgroundColor: const Color(0xFFFF6B35),
+        backgroundColor: Color(0xFFFF6B35),
         tooltip: '作業時間を記録',
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -269,7 +269,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
       children: [
         // KPI header
         Container(
-          color: const Color(0xFF0EA5E9).withValues(alpha: 0.08),
+          color: Color(0xFF0EA5E9).withValues(alpha: 0.08),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
@@ -341,14 +341,14 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                     final memo = entry['memo']?.toString() ?? '';
                     final recordedAt = entry['recordedAt']?.toString() ?? '';
                     return Card(
-                      color: const Color(0xFF1E1E1E),
+                      color: Color(0xFF1E1E1E),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: type == 'clock_in'
                               ? Colors.green.shade100
                               : type == 'clock_out'
                                   ? Colors.red.shade100
-                                  : const Color(0xFF0EA5E9)
+                                  : Color(0xFF0EA5E9)
                                       .withValues(alpha: 0.15),
                           child: Icon(
                             type == 'clock_in'
@@ -360,7 +360,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                                 ? Colors.green
                                 : type == 'clock_out'
                                     ? Colors.red
-                                    : const Color(0xFF0EA5E9),
+                                    : Color(0xFF0EA5E9),
                             size: 20,
                           ),
                         ),
@@ -426,11 +426,11 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
         final hours = (proj['hours'] as num?)?.toDouble() ?? 0;
         final ratio = maxHours > 0 ? hours / maxHours : 0.0;
         final colors = [
-          const Color(0xFF0EA5E9),
-          const Color(0xFF6366F1),
-          const Color(0xFF10B981),
-          const Color(0xFFF59E0B),
-          const Color(0xFFEF4444),
+          Color(0xFF0EA5E9),
+          Color(0xFF6366F1),
+          Color(0xFF10B981),
+          Color(0xFFF59E0B),
+          Color(0xFFEF4444),
         ];
         final color = colors[index % colors.length];
         return Padding(

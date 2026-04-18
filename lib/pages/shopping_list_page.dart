@@ -102,7 +102,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     for (final c in _categories) {
       if (c.$1 == cat) return c.$4;
     }
-    return const Color(0xFF607D8B);
+    return Color(0xFF607D8B);
   }
 
   Color _priorityColor(String p) {
@@ -112,7 +112,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       case 'high':
         return Colors.orange;
       case 'low':
-        return const Color(0xFF9CA3AF);
+        return Color(0xFF9CA3AF);
       default:
         return Colors.blue;
     }
@@ -631,7 +631,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                   child: Icon(
                     isPurchased && !needs ? Icons.check : _categoryIcon(cat),
                     color: isPurchased && !needs
-                        ? const Color(0xFF9CA3AF)
+                        ? Color(0xFF9CA3AF)
                         : _categoryColor(cat),
                     size: 18,
                   ),
@@ -653,7 +653,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                     ? TextDecoration.lineThrough
                                     : null,
                                 color: isPurchased && !needs
-                                    ? const Color(0xFF9CA3AF)
+                                    ? Color(0xFF9CA3AF)
                                     : null,
                               ),
                               overflow: TextOverflow.ellipsis,

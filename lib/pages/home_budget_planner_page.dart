@@ -263,7 +263,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
                       Icon(
                         cat?.icon ?? Icons.category,
                         size: 16,
-                        color: cat?.color ?? const Color(0xFF9CA3AF),
+                        color: cat?.color ?? Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 6),
                       Expanded(child: Text(e.key)),
@@ -303,7 +303,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
             child: ListTile(
               leading: Icon(
                 cat?.icon ?? Icons.category,
-                color: cat?.color ?? const Color(0xFF9CA3AF),
+                color: cat?.color ?? Color(0xFF9CA3AF),
               ),
               title:
                   Text(e['label'] as String? ?? e['category'] as String? ?? ''),

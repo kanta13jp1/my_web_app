@@ -191,9 +191,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
   Color _platformColor(String? platform) {
     switch (platform) {
       case 'x':
-        return const Color(0xFF1DA1F2);
+        return Color(0xFF1DA1F2);
       case 'chrome':
-        return const Color(0xFF4285F4);
+        return Color(0xFF4285F4);
       default:
         return Colors.grey;
     }
@@ -228,8 +228,8 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                       colors: progress >= 1.0
                           ? [Colors.green.shade600, Colors.green.shade400]
                           : [
-                              const Color(0xFF1DA1F2),
-                              const Color(0xFF4285F4),
+                              Color(0xFF1DA1F2),
+                              Color(0xFF4285F4),
                             ],
                     ),
                     borderRadius: BorderRadius.circular(14),

@@ -493,7 +493,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                         ? Colors.green
                         : diff > 0
                             ? Colors.red
-                            : const Color(0xFF9CA3AF),
+                            : Color(0xFF9CA3AF),
                   ),
                   title: Text(
                     '${weight}kg',

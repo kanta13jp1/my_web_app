@@ -283,14 +283,14 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('買い物ログ'),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
         elevation: 0,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -298,7 +298,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDialog,
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: Color(0xFF6366F1),
         label: const Text('記録', style: TextStyle(color: Colors.white)),
         icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
       ),
@@ -325,7 +325,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
   Widget _buildMonthSummary(bool isDark) {
     final fmt = NumberFormat('#,###');
     return Container(
-      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+      color: isDark ? Color(0xFF1E293B) : Colors.white,
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
@@ -372,7 +372,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
     final purchasedAt = session['purchased_at'] as String?;
     final items = session['purchase_items'] as List? ?? [];
     final fmt = NumberFormat('#,###');
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
 
     return Card(
       color: cardColor,
@@ -381,7 +381,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? Color(0xFF334155) : Color(0xFFE2E8F0),
         ),
       ),
       child: Padding(
@@ -405,7 +405,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      color: isDark ? Colors.white : Color(0xFF1E293B),
                     ),
                   ),
                 ),
@@ -460,8 +460,8 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     ),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFFF1F5F9),
+                          ? Color(0xFF334155)
+                          : Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -507,7 +507,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 8),

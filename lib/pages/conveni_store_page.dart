@@ -202,7 +202,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               '$currentDay日目完了 — 売上: ¥${fmt.format(revenue)} / 利益: ¥${fmt.format(profit)}',
             ),
             backgroundColor:
-                profit >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                profit >= 0 ? Color(0xFF10B981) : Color(0xFFEF4444),
           ),
         );
       }
@@ -232,14 +232,14 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('コンビニ経営シミュレーション'),
-        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
+        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
         elevation: 0,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -265,7 +265,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
+              color: isDark ? Colors.white : Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 8),
@@ -283,7 +283,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             icon: const Icon(Icons.store),
             label: const Text('開業する (初期資金 ¥5,000,000)'),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: Color(0xFF6366F1),
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
                 vertical: 12,
@@ -308,7 +308,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
     final totalProfit = store['total_profit'] as int? ?? 0;
     final level = store['store_level'] as int? ?? 1;
     final xp = store['experience_points'] as int? ?? 0;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -317,7 +317,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
         children: [
           // Store header
           Card(
-            color: const Color(0xFF6366F1),
+            color: Color(0xFF6366F1),
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -384,8 +384,8 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                         '📈 累計利益',
                         '¥${fmt.format(totalProfit)}',
                         totalProfit >= 0
-                            ? const Color(0xFFBEF264)
-                            : const Color(0xFFFCA5A5),
+                            ? Color(0xFFBEF264)
+                            : Color(0xFFFCA5A5),
                       ),
                     ],
                   ),
@@ -402,7 +402,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                   '評判',
                   reputation,
                   Icons.star,
-                  const Color(0xFFF59E0B),
+                  Color(0xFFF59E0B),
                   cardColor,
                 ),
               ),
@@ -412,7 +412,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                   '顧客満足',
                   satisfaction,
                   Icons.sentiment_satisfied_alt,
-                  const Color(0xFF10B981),
+                  Color(0xFF10B981),
                   cardColor,
                 ),
               ),
@@ -422,7 +422,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                   'スタッフ士気',
                   store['staff_morale'] as int? ?? 70,
                   Icons.people,
-                  const Color(0xFF6366F1),
+                  Color(0xFF6366F1),
                   cardColor,
                 ),
               ),
@@ -446,7 +446,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                   : const Icon(Icons.play_arrow),
               label: Text(_simulating ? 'シミュレーション中...' : '1日進める'),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: Color(0xFF10B981),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
@@ -459,7 +459,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : Color(0xFF1E293B),
               ),
             ),
             const SizedBox(height: 8),
@@ -570,7 +570,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+          color: isDark ? Color(0xFF334155) : Color(0xFFE2E8F0),
         ),
       ),
       child: Padding(
@@ -582,7 +582,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? Colors.white : Color(0xFF1E293B),
               ),
             ),
             const Spacer(),
@@ -608,8 +608,8 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: isProfit
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFFEF4444),
+                    ? Color(0xFF10B981)
+                    : Color(0xFFEF4444),
               ),
             ),
           ],
