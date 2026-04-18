@@ -232,6 +232,9 @@ import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
 import 'package:my_web_app/pages/daily_judgment_page.dart';
 import 'package:my_web_app/pages/ai_university_content_page.dart';
 import 'package:my_web_app/pages/development_achievements_page.dart';
+import 'package:my_web_app/pages/invoice_generator_page.dart';
+import 'package:my_web_app/pages/poll_survey_page.dart';
+import 'package:my_web_app/pages/notification_digest_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1297,6 +1300,18 @@ class MyApp extends StatelessWidget {
           case '/development-achievements':
             return MaterialPageRoute(
               builder: (_) => const DevelopmentAchievementsPage(),
+            );
+          case '/invoice-generator':
+            return MaterialPageRoute(
+              builder: (_) => const InvoiceGeneratorPage(),
+            );
+          case '/poll-survey':
+            return MaterialPageRoute(
+              builder: (_) => const PollSurveyPage(),
+            );
+          case '/notification-digest':
+            return MaterialPageRoute(
+              builder: (_) => const NotificationDigestPage(),
             );
           case '/dev/claude-design-importer':
             return MaterialPageRoute(
