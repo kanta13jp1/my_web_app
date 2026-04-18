@@ -2333,7 +2333,7 @@ abstinence_slip_details: $slipDetailsText
                 label: '逸脱',
                 value: '${snapshot.abstinenceSlipCount}回',
                 color: snapshot.abstinenceSlipCount > 0
-                    ? Colors.orange
+                    ? const Color(0xFFFF6B35)
                     : Colors.green,
               ),
               _buildStatusPill(
@@ -2570,7 +2570,7 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarSummaryPill(
                     label: '逸脱日数',
                     value: '$slipDaysCount日',
-                    color: Colors.orange,
+                    color: const Color(0xFFFF6B35),
                     filter: _CalendarHighlightFilter.slip,
                   ),
                   _buildCalendarSummaryPill(
@@ -2668,7 +2668,7 @@ abstinence_slip_details: $slipDetailsText
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Colors.blueGrey.shade500,
+                      color: const Color(0xFF888888),
                     ),
                   ),
                 ),
@@ -2691,7 +2691,7 @@ abstinence_slip_details: $slipDetailsText
               final status = _resolveCalendarDayStatus(day);
               final matchesFilter = _matchesCalendarHighlightFilter(day);
               final accentColor =
-                  day.isCurrentMonth ? status.color : Colors.blueGrey;
+                  day.isCurrentMonth ? status.color : const Color(0xFFB0B0B0);
               final backgroundColor = day.isCurrentMonth
                   ? matchesFilter
                       ? accentColor.withValues(
@@ -2703,8 +2703,8 @@ abstinence_slip_details: $slipDetailsText
                                       ? 0.08
                                       : 0.1,
                         )
-                      : Colors.blueGrey.withValues(alpha: 0.035)
-                  : Colors.blueGrey.withValues(alpha: 0.05);
+                      : const Color(0xFFB0B0B0).withValues(alpha: 0.035)
+                  : const Color(0xFFB0B0B0).withValues(alpha: 0.05);
 
               return Material(
                 color: Colors.transparent,
@@ -2725,11 +2725,11 @@ abstinence_slip_details: $slipDetailsText
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: day.isToday
-                            ? Colors.blue.shade400
+                            ? const Color(0xFF6366F1)
                             : day.isCurrentMonth
                                 ? matchesFilter
                                     ? accentColor.withValues(alpha: 0.22)
-                                    : Colors.blueGrey.withValues(alpha: 0.08)
+                                    : const Color(0xFFB0B0B0).withValues(alpha: 0.08)
                                 : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
                       ),
@@ -2752,9 +2752,9 @@ abstinence_slip_details: $slipDetailsText
                                               : Colors.black87)
                                           : accentColor)
                                       : isDark
-                                          ? Colors.blueGrey.shade700
-                                          : Colors.blueGrey.shade300
-                                  : Colors.blueGrey.shade300,
+                                          ? const Color(0xFF666666)
+                                          : const Color(0xFFB0B0B0)
+                                  : const Color(0xFFB0B0B0),
                             ),
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
@@ -2812,7 +2812,7 @@ abstinence_slip_details: $slipDetailsText
                               if (day.hasAbstinenceSlip)
                                 _buildCalendarDot(
                                   _calendarDotDisplayColor(
-                                    Colors.orange,
+                                    const Color(0xFFFF6B35),
                                     isEmphasized: matchesFilter,
                                   ),
                                 ),
@@ -2852,7 +2852,7 @@ abstinence_slip_details: $slipDetailsText
               _CalendarLegend(color: Colors.amber, label: '朝'),
               _CalendarLegend(color: Colors.green, label: '残高'),
               _CalendarLegend(color: Colors.redAccent, label: '禁欲安定'),
-              _CalendarLegend(color: Colors.orange, label: '逸脱'),
+              _CalendarLegend(color: const Color(0xFFFF6B35), label: '逸脱'),
               _CalendarLegend(color: Colors.teal, label: '土曜'),
             ],
           ),
@@ -3042,7 +3042,7 @@ abstinence_slip_details: $slipDetailsText
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
                       size: 18,
-                      color: task.isCompleted ? Colors.green : Colors.blueGrey,
+                      color: task.isCompleted ? Colors.green : const Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3057,7 +3057,7 @@ abstinence_slip_details: $slipDetailsText
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? Colors.blueGrey.shade500
+                                  ? const Color(0xFF888888)
                                   : null,
                             ),
                           ),
@@ -3073,7 +3073,7 @@ abstinence_slip_details: $slipDetailsText
                               if (task.secondaryLabel != null)
                                 _buildCalendarTaskBadge(
                                   label: task.secondaryLabel!,
-                                  color: Colors.blueGrey,
+                                  color: const Color(0xFFB0B0B0),
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
@@ -3232,7 +3232,7 @@ abstinence_slip_details: $slipDetailsText
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
                       size: 18,
-                      color: task.isCompleted ? Colors.green : Colors.blueGrey,
+                      color: task.isCompleted ? Colors.green : const Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3247,7 +3247,7 @@ abstinence_slip_details: $slipDetailsText
                                   ? TextDecoration.lineThrough
                                   : null,
                               color: task.isCompleted
-                                  ? Colors.blueGrey.shade500
+                                  ? const Color(0xFF888888)
                                   : null,
                             ),
                           ),
@@ -3263,7 +3263,7 @@ abstinence_slip_details: $slipDetailsText
                               if (task.secondaryLabel != null)
                                 _buildCalendarTaskBadge(
                                   label: task.secondaryLabel!,
-                                  color: Colors.blueGrey,
+                                  color: const Color(0xFFB0B0B0),
                                 ),
                               if (task.isImportant)
                                 _buildCalendarTaskBadge(
@@ -3493,7 +3493,7 @@ abstinence_slip_details: $slipDetailsText
       return const _CalendarDayStatus(
         label: '未設定',
         detail: '未来の日付です。まだ運用状態は確定していません。',
-        color: Colors.blueGrey,
+        color: const Color(0xFFB0B0B0),
         icon: Icons.radio_button_unchecked,
       );
     }
@@ -3501,7 +3501,7 @@ abstinence_slip_details: $slipDetailsText
       return const _CalendarDayStatus(
         label: '逸脱あり',
         detail: 'その日は抑止ラインを突破しています。',
-        color: Colors.orange,
+        color: const Color(0xFFFF6B35),
         icon: Icons.warning_amber_rounded,
       );
     }
@@ -3509,7 +3509,7 @@ abstinence_slip_details: $slipDetailsText
       return const _CalendarDayStatus(
         label: '未設定',
         detail: 'その日の禁止対象が固定されていません。',
-        color: Colors.blueGrey,
+        color: const Color(0xFFB0B0B0),
         icon: Icons.radio_button_unchecked,
       );
     }
@@ -3726,7 +3726,7 @@ abstinence_slip_details: $slipDetailsText
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: '逸脱内容',
-                    accent: Colors.orange,
+                    accent: const Color(0xFFFF6B35),
                     emptyLabel: day.isFuture ? 'まだ記録はありません。' : '逸脱はありません。',
                     items: day.slipDetails,
                   ),
@@ -3748,7 +3748,7 @@ abstinence_slip_details: $slipDetailsText
                   const SizedBox(height: 12),
                   _buildCalendarDetailSection(
                     title: 'その日に設定していた禁止対象',
-                    accent: Colors.blueGrey,
+                    accent: const Color(0xFFB0B0B0),
                     emptyLabel: day.isFuture ? 'まだ設定はありません。' : '禁止対象は未設定です。',
                     items: day.enabledLabels,
                   ),
@@ -3816,7 +3816,7 @@ abstinence_slip_details: $slipDetailsText
                     label: '差額',
                     value: _formatSignedYen(cashflow.netTotal.toDouble()),
                     color:
-                        cashflow.netTotal >= 0 ? Colors.indigo : Colors.orange,
+                        cashflow.netTotal >= 0 ? Colors.indigo : const Color(0xFFFF6B35),
                   ),
                 ),
               ],
@@ -3828,7 +3828,7 @@ abstinence_slip_details: $slipDetailsText
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Colors.blueGrey.shade700,
+                color: const Color(0xFF666666),
               ),
             ),
           ],
@@ -4381,7 +4381,7 @@ abstinence_slip_details: $slipDetailsText
                             _buildSectionHeader(
                               'OPERATIONS CALENDAR',
                               Icons.calendar_month,
-                              Colors.blueGrey,
+                              const Color(0xFFB0B0B0),
                               key:
                                   const Key('home_section_operations_calendar'),
                             ),
@@ -5423,7 +5423,7 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(height: 6),
               Container(
                 height: 2,
-                color: Colors.orange.shade700,
+                color: const Color(0xFFFF6B35).shade700,
               ),
               const SizedBox(height: 10),
               Container(
@@ -5518,7 +5518,7 @@ abstinence_slip_details: $slipDetailsText
               const SizedBox(height: 6),
               Container(
                 height: 2,
-                color: Colors.orange.shade700,
+                color: const Color(0xFFFF6B35).shade700,
               ),
               const SizedBox(height: 10),
               Align(
@@ -5551,8 +5551,8 @@ abstinence_slip_details: $slipDetailsText
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: isSelected
-                                ? Colors.orange.withValues(alpha: 0.62)
-                                : Colors.blueGrey.withValues(alpha: 0.25),
+                                ? const Color(0xFFFF6B35).withValues(alpha: 0.62)
+                                : const Color(0xFFB0B0B0).withValues(alpha: 0.25),
                           ),
                         ),
                         child: Text(
@@ -5648,7 +5648,7 @@ abstinence_slip_details: $slipDetailsText
   }) {
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.16)
-        : Colors.blueGrey.withValues(alpha: 0.24);
+        : const Color(0xFFB0B0B0).withValues(alpha: 0.24);
     final titleColor =
         isDark ? Colors.white : Colors.black.withValues(alpha: 0.86);
 
@@ -5669,7 +5669,7 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 4),
           Container(
             height: 2,
-            color: Colors.orange.shade700,
+            color: const Color(0xFFFF6B35).shade700,
           ),
           const SizedBox(height: 4),
           Table(
@@ -5772,7 +5772,7 @@ abstinence_slip_details: $slipDetailsText
               _buildTrendLegendChip(
                 isDark: isDark,
                 label: '浪費',
-                color: Colors.orangeAccent,
+                color: const Color(0xFFFF6B35)Accent,
               ),
           ],
         ),
@@ -5940,8 +5940,8 @@ abstinence_slip_details: $slipDetailsText
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.blue.withValues(alpha: 0.6),
-                        Colors.blue.withValues(alpha: 0.18),
+                        const Color(0xFF6366F1).withValues(alpha: 0.6),
+                        const Color(0xFF6366F1).withValues(alpha: 0.18),
                       ],
                     ),
                   ),
@@ -5950,7 +5950,7 @@ abstinence_slip_details: $slipDetailsText
                   LineChartBarData(
                     spots: wasteSpots,
                     isCurved: false,
-                    color: Colors.orangeAccent,
+                    color: const Color(0xFFFF6B35)Accent,
                     barWidth: 2.4,
                     dashArray: const [8, 4],
                     dotData: FlDotData(show: wasteSpots.length <= 40),
@@ -6008,12 +6008,12 @@ abstinence_slip_details: $slipDetailsText
     }
 
     final palette = <Color>[
-      Colors.orange,
+      const Color(0xFFFF6B35),
       Colors.redAccent,
       Colors.indigo,
       Colors.teal,
       Colors.purple,
-      Colors.blue,
+      const Color(0xFF6366F1),
       Colors.green,
       Colors.brown,
       Colors.pink,
@@ -6055,7 +6055,7 @@ abstinence_slip_details: $slipDetailsText
                 isDark: isDark,
                 title: '累計浪費',
                 value: _formatYen(overview.totalWaste),
-                accent: Colors.orange,
+                accent: const Color(0xFFFF6B35),
               ),
               _buildWasteMetricCard(
                 isDark: isDark,
@@ -6067,7 +6067,7 @@ abstinence_slip_details: $slipDetailsText
                 isDark: isDark,
                 title: '最大カテゴリ',
                 value: overview.topWasteCategory ?? '--',
-                accent: Colors.blueGrey,
+                accent: const Color(0xFFB0B0B0),
               ),
             ],
           ),
@@ -6868,7 +6868,7 @@ class _CalendarLegend extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.blueGrey.shade700,
+            color: const Color(0xFF666666),
             fontWeight: FontWeight.w600,
           ),
         ),

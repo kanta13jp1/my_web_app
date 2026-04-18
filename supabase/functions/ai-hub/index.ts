@@ -370,6 +370,68 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   },
 };
 
+type Tier = "free" | "budget" | "performance" | "premium";
+
+const TIER_PROVIDERS: Record<Tier, string[]> = {
+  free: ["deepseek", "groq", "cerebras", "siliconflow", "novita_ai"],
+  budget: ["sambanova", "arcee_ai", "minimax", "deepinfra", "together_ai", "fireworks_ai", "moonshot"],
+  performance: ["openai", "google", "mistral", "cohere", "perplexity", "nebius", "qwen"],
+  premium: ["anthropic", "openai", "google"],
+};
+
+const TIER_COST_USD_PER_1K: Record<Tier, number> = {
+  free: 0.0001,
+  budget: 0.001,
+  performance: 0.01,
+  premium: 0.05,
+};
+
+const TIER_ORDER: Tier[] = ["free", "budget", "performance", "premium"];
+
+async function callSingleProvider(
+  providerId: string,
+  messages: { role: string; content: string }[],
+  model?: string,
+): Promise<{ ok: boolean; text?: string; modelUsed?: string; error?: string; isRetriable: boolean }> {
+  const cfg = PROVIDER_CONFIGS[providerId];
+  if (!cfg) return { ok: false, error: "unknown provider", isRetriable: false };
+  const apiKey = Deno.env.get(cfg.envKey) ?? "";
+  if (!apiKey) return { ok: false, error: "apiKeyRequired", isRetriable: false };
+  try {
+    let authHeaders: Record<string, string> = { Authorization: `Bearer ${apiKey}` };
+    let fetchUrl = cfg.chatUrl;
+    if (providerId === "anthropic") {
+      authHeaders = { "x-api-key": apiKey, "anthropic-version": "2023-06-01" };
+    } else if (providerId === "google") {
+      authHeaders = {};
+      fetchUrl = `${cfg.chatUrl}?key=${apiKey}`;
+    }
+    const resp = await fetch(fetchUrl, {
+      method: "POST",
+      headers: { ...authHeaders, "Content-Type": "application/json", ...(cfg.extraHeaders ?? {}) },
+      body: JSON.stringify(cfg.buildBody(messages, model ?? cfg.defaultModel)),
+    });
+    if (!resp.ok) {
+      const isRetriable = resp.status === 429 || resp.status >= 500;
+      return { ok: false, error: `HTTP ${resp.status}`, isRetriable };
+    }
+    const respText = await resp.text();
+    let data: unknown;
+    try {
+      data = JSON.parse(respText);
+    } catch {
+      return { ok: true, text: respText.slice(0, 2000), modelUsed: model ?? cfg.defaultModel, isRetriable: false };
+    }
+    const content = cfg.parseResponse(data);
+    const modelUsed = (typeof (data as Record<string, unknown>)?.model === "string"
+      ? (data as Record<string, unknown>).model
+      : model ?? cfg.defaultModel) as string;
+    return { ok: true, text: content, modelUsed, isRetriable: false };
+  } catch (e) {
+    return { ok: false, error: String(e), isRetriable: true };
+  }
+}
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -1845,6 +1907,63 @@ serve(async (req: Request) => {
         } catch (e) {
           return json({ success: false, status: "error", provider: providerId, message: String(e) }, 500);
         }
+      }
+
+      case "provider.chat_auto": {
+        const requestedTier = (body.tier as Tier | undefined);
+        const messages = Array.isArray(body.messages) ? body.messages : null;
+        const userMsg = String(body.message ?? "");
+        if (!messages && !userMsg) return json({ error: "messages or message required" }, 400);
+        const finalMessages = messages ?? [{ role: "user", content: userMsg }];
+        const startTierIndex = requestedTier ? TIER_ORDER.indexOf(requestedTier) : 0;
+        if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
+
+        let resultText: string | undefined;
+        let usedProvider: string | undefined;
+        let usedTier: Tier | undefined;
+        let usedModel: string | undefined;
+
+        outerLoop:
+        for (let ti = startTierIndex; ti < TIER_ORDER.length; ti++) {
+          const tier = TIER_ORDER[ti];
+          const providers = TIER_PROVIDERS[tier].filter((p) => p in PROVIDER_CONFIGS);
+          for (const pid of providers) {
+            const result = await callSingleProvider(pid, finalMessages, undefined);
+            if (result.ok && result.text) {
+              resultText = result.text;
+              usedProvider = pid;
+              usedTier = tier;
+              usedModel = result.modelUsed;
+              break outerLoop;
+            }
+          }
+        }
+
+        if (!resultText || !usedProvider || !usedTier) {
+          return json({ success: false, status: "allProvidersFailed", message: "すべての Tier のプロバイダーが失敗しました" }, 502);
+        }
+
+        // コスト記録 (best-effort、失敗してもレスポンスには影響しない)
+        try {
+          const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] * (finalMessages.join("").length / 1000);
+          await admin.from("ai_hub_chat_logs").insert({
+            provider: usedProvider,
+            tier: usedTier,
+            success: true,
+            estimated_cost_usd: estimatedCost,
+            model: usedModel ?? null,
+          });
+        } catch { /* ignore logging errors */ }
+
+        return json({
+          success: true,
+          provider: usedProvider,
+          tier: usedTier,
+          model: usedModel ?? PROVIDER_CONFIGS[usedProvider]?.defaultModel,
+          status: "implemented",
+          text: resultText,
+        });
       }
 
       case "provider.list": {
