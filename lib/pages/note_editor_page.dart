@@ -1586,12 +1586,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return Theme.of(context).colorScheme.primary;
     }
     if (reminderDate.isBefore(DateTime.now())) {
-      return Colors.red.shade700;
+      return const Color(0xFFB91C1C);
     }
     if (DateUtils.isSameDay(reminderDate, DateTime.now())) {
-      return Colors.orange.shade700;
+      return const Color(0xFFF57C00);
     }
-    return Colors.teal.shade700;
+    return const Color(0xFF0F766E);
   }
 
   Widget _buildReminderBanner(BuildContext context) {
@@ -1645,22 +1645,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 : '';
             return Text(
               'Saved$suffix',
-              style: const TextStyle(fontSize: 12, color: Colors.green),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF0D9488)),
             );
           case SaveState.saving:
             return const Text(
               'Saving...',
-              style: TextStyle(fontSize: 12, color: Colors.blue),
+              style: TextStyle(fontSize: 12, color: Color(0xFF6366F1)),
             );
           case SaveState.modified:
             return const Text(
               'Unsaved changes',
-              style: TextStyle(fontSize: 12, color: Colors.orange),
+              style: TextStyle(fontSize: 12, color: Color(0xFFFF6B35)),
             );
           case SaveState.error:
             return const Text(
               'Save error',
-              style: TextStyle(fontSize: 12, color: Colors.red),
+              style: TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
             );
         }
       },
@@ -1699,7 +1699,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       key: const Key('note_editor_selected_ai_model_chip'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.blueGrey.withValues(alpha: 0.08),
+        color: const Color(0xFF1A1A1A).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -2143,7 +2143,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           IconButton(
             key: const Key('note_editor_page_favorite_button'),
             icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
-            color: _isFavorite ? Colors.amber.shade700 : null,
+            color: _isFavorite ? const Color(0xFFFF6B35) : null,
             onPressed: _toggleFavorite,
             tooltip: _isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
           ),
@@ -2193,7 +2193,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     child: Container(
                       padding: const EdgeInsets.all(2),
                       decoration: const BoxDecoration(
-                        color: Colors.indigo,
+                        color: Color(0xFF6366F1),
                         shape: BoxShape.circle,
                       ),
                       constraints:
@@ -2478,17 +2478,17 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           final c = _comments[i];
                           return Container(
                             decoration: BoxDecoration(
-                              color: Colors.indigo.withValues(alpha: 0.05),
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Colors.indigo.withValues(alpha: 0.15),
+                                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                               ),
                             ),
                             child: ListTile(
                               dense: true,
                               leading: const CircleAvatar(
                                 radius: 14,
-                                backgroundColor: Colors.indigo,
+                                backgroundColor: Color(0xFF6366F1),
                                 child: Icon(
                                   Icons.person,
                                   size: 16,
@@ -2512,7 +2512,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                 icon: const Icon(
                                   Icons.delete_outline,
                                   size: 18,
-                                  color: Colors.red,
+                                  color: Color(0xFFB91C1C),
                                 ),
                                 tooltip: '削除',
                                 onPressed: () async {
@@ -2533,7 +2533,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                               Navigator.pop(context, true),
                                           child: const Text(
                                             '削除',
-                                            style: TextStyle(color: Colors.red),
+                                            style: TextStyle(color: Color(0xFFB91C1C)),
                                           ),
                                         ),
                                       ],
@@ -2584,7 +2584,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : IconButton(
-                        icon: const Icon(Icons.send, color: Colors.indigo),
+                        icon: const Icon(Icons.send, color: Color(0xFF6366F1)),
                         tooltip: '送信',
                         onPressed: _submit,
                       ),
