@@ -1,7 +1,7 @@
 ---
 title: "I Built a Flutter Importer for Claude Design Handoff Bundles"
 tags: Flutter,Supabase,buildinpublic,webdev,AI
-published: false
+published: true
 ---
 
 # I Built a Flutter Importer for Claude Design Handoff Bundles

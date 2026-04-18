@@ -1,7 +1,7 @@
 ---
 title: "Claude Design の handoff bundle を Flutter に取り込むインポーターを作った"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Claude Design の handoff bundle を Flutter に取り込むインポーターを作った
