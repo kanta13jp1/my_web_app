@@ -681,6 +681,82 @@ $input
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        // ★ 基本理念: 自分株式会社 — The Enterprise of Self
+        GestureDetector(
+          onTap: () => Navigator.of(context).pushNamed('/philosophy'),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F0F1F), Color(0xFF1A1A2E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF7986CB).withValues(alpha: 0.5),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF7986CB).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance,
+                    color: Color(0xFF7986CB),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '基本理念 — 自分株式会社',
+                        style: TextStyle(
+                          color: Color(0xFFFAFAFA),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          height: 1.4,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'あなたが CEO。動画 5 本 + 9 原則 + 完全文字起こし',
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 12,
+                          height: 1.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: Color(0xFF7986CB),
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+        ),
         // ★ メイン機能: ギター録音スタジオ
         GestureDetector(
           onTap: () =>

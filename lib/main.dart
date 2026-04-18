@@ -33,6 +33,7 @@ import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
+import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
 import 'package:my_web_app/pages/profile_settings_page.dart';
 import 'package:my_web_app/pages/public_profile_page.dart';
@@ -416,6 +417,11 @@ class MyApp extends StatelessWidget {
             );
           case '/user-manual':
             return MaterialPageRoute(builder: (_) => const UserManualPage());
+          case '/philosophy':
+            return MaterialPageRoute(
+              builder: (_) => const PhilosophyPage(),
+              settings: settings,
+            );
           case '/behavior-review':
             return MaterialPageRoute(builder: (_) => BehaviorReviewPage());
           case '/reality-check':
