@@ -190,6 +190,13 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: 'ai-hub',
   ),
   AiProviderEntry(
+    id: 'deepinfra',
+    displayName: 'DeepInfra',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'DEEPINFRA_API_KEY',
+    entryPoint: 'ai-hub',
+  ),
+  AiProviderEntry(
     id: 'fireworks_ai',
     displayName: 'Fireworks AI',
     status: AiProviderStatus.apiKeyRequired,
@@ -453,7 +460,9 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'liquid_ai',
     displayName: 'Liquid AI',
-    status: AiProviderStatus.notImplemented,
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'LIQUID_API_KEY',
+    entryPoint: 'ai-hub',
   ),
   AiProviderEntry(
     id: 'snowflake',

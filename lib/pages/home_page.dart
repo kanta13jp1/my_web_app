@@ -1880,12 +1880,12 @@ abstinence_slip_details: $slipDetailsText
                 icon:
                     summary.reviewDone ? Icons.visibility : Icons.priority_high,
                 label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
-                color: summary.reviewDone ? Colors.blueGrey : accentColor,
+                color: summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
               ),
               _buildMonthlyCashflowChip(
                 icon: Icons.edit_note,
                 label: recordLabel,
-                color: summary.recordCount > 0 ? Colors.blue : Colors.orange,
+                color: summary.recordCount > 0 ? const Color(0xFF6366F1) : const Color(0xFFFF6B35),
               ),
               if (summary.lastRecordedAt != null)
                 _buildMonthlyCashflowChip(
@@ -1989,7 +1989,7 @@ abstinence_slip_details: $slipDetailsText
     var title = '嫌でも先にやる1件を固定';
     var detail = '強制導線は解除済みです。次の通常メニューへ進めます。';
     var buttonLabel = '状態を更新';
-    Color color = Colors.blueGrey;
+    Color color = const Color(0xFFB0B0B0);
     var icon = Icons.verified;
     VoidCallback onPressed = _refreshKpis;
 
@@ -2528,7 +2528,7 @@ abstinence_slip_details: $slipDetailsText
         ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Colors.blueGrey.withValues(alpha: isDark ? 0.3 : 0.18),
+          color: const Color(0xFFB0B0B0).withValues(alpha: isDark ? 0.3 : 0.18),
         ),
       ),
       child: Column(
@@ -2536,7 +2536,7 @@ abstinence_slip_details: $slipDetailsText
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month, color: Colors.blueGrey),
+              const Icon(Icons.calendar_month, color: const Color(0xFFB0B0B0)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2582,7 +2582,7 @@ abstinence_slip_details: $slipDetailsText
                   _buildCalendarSummaryPill(
                     label: '未設定日数',
                     value: '$unsetDaysCount日',
-                    color: Colors.blueGrey,
+                    color: const Color(0xFFB0B0B0),
                     filter: _CalendarHighlightFilter.unset,
                   ),
                 ],
@@ -2596,7 +2596,7 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Colors.blueGrey.shade600,
+              color: const Color(0xFF888888),
             ),
           ),
           const SizedBox(height: 6),
@@ -2609,7 +2609,7 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.blueGrey.shade600,
+              color: const Color(0xFF888888),
             ),
           ),
           if (filterLabel != null) ...[
@@ -2620,7 +2620,7 @@ abstinence_slip_details: $slipDetailsText
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: Colors.blueGrey.shade600,
+                color: const Color(0xFF888888),
               ),
             ),
           ],
@@ -2965,7 +2965,7 @@ abstinence_slip_details: $slipDetailsText
                       '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.blueGrey.shade600,
+                        color: const Color(0xFF888888),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3096,7 +3096,7 @@ abstinence_slip_details: $slipDetailsText
                 '他 ${day.tasks.length - 6} 件のタスクがあります。',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.blueGrey.shade600,
+                  color: const Color(0xFF888888),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -3155,7 +3155,7 @@ abstinence_slip_details: $slipDetailsText
                       '完了 $completedCount / 全体 ${day.totalTaskCount} / 未完了 $remainingCount',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.blueGrey.shade600,
+                        color: const Color(0xFF888888),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -3286,7 +3286,7 @@ abstinence_slip_details: $slipDetailsText
                 '他 $hiddenTaskCount 件のタスクがあります。',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.blueGrey.shade600,
+                  color: const Color(0xFF888888),
                   fontWeight: FontWeight.w600,
                 ),
               ),

@@ -336,6 +336,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  deepinfra: {
+    displayName: "DeepInfra",
+    envKey: "DEEPINFRA_API_KEY",
+    chatUrl: "https://api.deepinfra.com/v1/openai/chat/completions",
+    defaultModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  liquid: {
+    displayName: "Liquid AI",
+    envKey: "LIQUID_API_KEY",
+    chatUrl: "https://api.liquid.ai/v1/chat/completions",
+    defaultModel: "liquid/lfm-40b",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {

@@ -10605,3 +10605,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - registry に Tier (Free/Budget/Performance/Premium) フィールド追加 (VSCode版)
   - ai-hub provider.chat 自動エスカレーション/ダウングレード ロジック (PS版)
 - NotebookLM Master Brain には個別 ask で deep-dive 可能
+
+### Rule 17 WF health check (2026-04-18 10:00)
+- deploy-prod: 最新run 24593022199 success / 過去failure(24577679162)は migration timestamp衝突→自己解消
+- daily-report: 3件failure = 旧コード(fix前)の過去失敗。現在は修正済み
+- orphan blog-publish: 1本 → 削除完了 (published:true already in main)
+- horse-racing-update: timeout 45分設定済み (前セッション)。次回run確認待ち
+- 全体: 大きな問題なし
+
+### PS版#116 完了 (2026-04-18) — ai-hub Phase 8 + Rule17
+- Rule17: deploy-prod success (run 24593022199) / orphan 1本削除 / 大きな問題なし
+- ai-hub Phase8: deepinfra (api.deepinfra.com/v1/openai) + liquid (api.liquid.ai/v1) 追加 — 31→33プロバイダー
+- registry: deepinfra 新規追加 / liquid_ai notImplemented→apiKeyRequired
+
+### ai-hub プロバイダー推移 (更新)
+- PS#108:14→20, PS#109:20→23, PS#110:23→25, PS#111:25→27, PS#113:27→29, PS#115:29→31, PS#116:31→33
