@@ -2606,7 +2606,7 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 4),
           const Text(
             '各日の「収」「支」で、その日の入出金を月単位で俯瞰できます。',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF888888),
@@ -5669,7 +5669,7 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(height: 4),
           Container(
             height: 2,
-            color: Color(0xFFF57C00),
+            color: const Color(0xFFF57C00),
           ),
           const SizedBox(height: 4),
           Table(
@@ -7011,11 +7011,11 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFFF6B35), width: 1.5),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0xFFFF6B35),
+              color: Color(0xFFFF6B35),
               blurRadius: 12,
-              offset: const Offset(0, 4),
+              offset: Offset(0, 4),
             ),
           ],
         ),
