@@ -143,8 +143,8 @@ def supabase_rest(method: str, table: str, data=None, params: dict = None):
         return None
 
 
-def tools_hub_call(action: str, extra: dict = None) -> dict:
-    """tools-hub Edge Function 呼び出し"""
+def tools_hub_call(action: str, extra: dict = None, timeout: int = 300) -> dict:
+    """tools-hub Edge Function 呼び出し (Windows版#94b: timeout 120 → 300s)"""
     payload = {"action": action, **(extra or {})}
     body = json.dumps(payload).encode("utf-8")
     headers = {
@@ -153,11 +153,14 @@ def tools_hub_call(action: str, extra: dict = None) -> dict:
     }
     req = urllib.request.Request(TOOLS_HUB_URL, data=body, headers=headers, method="POST")
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         err = e.read().decode("utf-8", errors="replace")
         print(f"[ERROR] tools-hub {action}: {e.code} {err[:300]}", file=sys.stderr)
+        return {}
+    except TimeoutError as e:
+        print(f"[ERROR] tools-hub {action}: read timeout ({timeout}s) — {e}", file=sys.stderr)
         return {}
 
 
@@ -762,12 +765,54 @@ def fetch_results(target_date: str):
 
 
 def trigger_ai_predictions(target_date: str):
-    """tools-hub を呼び出して AI 3連単予想を実行 (multi-provider fallback chain)"""
+    """tools-hub を呼び出して AI 3連単予想を実行 (multi-provider fallback chain)
+
+    Windows版#94b: EF 150s timeout 対策で batch 処理 (limit=20) をループ実行。
+    全レースが予想完了するか、3 batch 連続で進捗 0 になったら停止。"""
     print(f"[INFO] {target_date} のAI予想を実行中...")
-    result = tools_hub_call("horseracing.predict_all", {"date": target_date})
+    total_results: list = []
+    total_failures: list = []
+    total_stats: dict = {}
+    batch_limit = 20
+    max_batches = 10  # 安全上限 (batch_limit 20 × 10 = 200 レースまで)
+    no_progress_count = 0
+    for i in range(max_batches):
+        result = tools_hub_call(
+            "horseracing.predict_all",
+            {"date": target_date, "limit": batch_limit},
+        )
+        batch_count = result.get("count", 0)
+        remaining = result.get("remaining", 0)
+        total_unpredicted = result.get("total_unpredicted", 0)
+        print(
+            f"[BATCH {i + 1}] {batch_count}件予想 / 残り{remaining}件 / "
+            f"全未予想{total_unpredicted}件"
+        )
+        total_results.extend(result.get("predictions", []))
+        total_failures.extend(result.get("failures", []))
+        for k, v in (result.get("provider_stats") or {}).items():
+            if k not in total_stats:
+                total_stats[k] = {"attempts": 0, "hits": 0, "quotas": 0}
+            for field in ("attempts", "hits", "quotas"):
+                total_stats[k][field] += v.get(field, 0)
+        if batch_count == 0:
+            no_progress_count += 1
+            if no_progress_count >= 2:
+                print("[WARN] 2 batch 連続で進捗 0 件 → 停止", file=sys.stderr)
+                break
+        else:
+            no_progress_count = 0
+        if remaining == 0 or not result:
+            break
+    result = {
+        "predictions": total_results,
+        "count": len(total_results),
+        "failures": total_failures,
+        "provider_stats": total_stats,
+        "exhausted_providers": [],
+    }
     count = result.get("count", 0)
-    msg = result.get("message", "")
-    print(f"[DONE] {count}件の予想完了 {msg}")
+    print(f"[DONE] 計 {count}件の予想完了 (全 batch 合計)")
     for pred in result.get("predictions", []):
         provider = pred.get("provider", "?")
         model = pred.get("model", "?")

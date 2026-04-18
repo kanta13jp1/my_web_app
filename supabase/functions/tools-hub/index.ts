@@ -370,8 +370,13 @@ serve(async (req) => {
             .eq("race_date", targetDate).eq("status", "scheduled");
           if (!races || races.length === 0) return json({ success: true, predictions: [], message: "本日のレースなし" });
           // deno-lint-ignore no-explicit-any
-          const unpredicted = races.filter((r: any) => !r.horse_predictions || r.horse_predictions.length === 0);
-          if (unpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
+          const allUnpredicted = races.filter((r: any) => !r.horse_predictions || r.horse_predictions.length === 0);
+          if (allUnpredicted.length === 0) return json({ success: true, predictions: [], message: "全レース予想済" });
+          // Windows版#94b: EF 150s timeout 対策として 1 回あたり最大 limit 件まで処理
+          // (4 providers × 長レースで 120s urllib timeout に到達するため)
+          const maxBatch = Math.max(1, Math.min(50, Number(body.limit ?? 20)));
+          const unpredicted = allUnpredicted.slice(0, maxBatch);
+          const remaining = Math.max(0, allUnpredicted.length - unpredicted.length);
           const results: Array<Record<string, unknown>> = [];
           const failures: Array<Record<string, unknown>> = [];
           const providerStats: Record<string, { attempts: number; hits: number; quotas: number }> = {};
@@ -476,6 +481,9 @@ serve(async (req) => {
             failure_count: failures.length,
             provider_stats: providerStats,
             exhausted_providers: Array.from(exhaustedProviders),
+            remaining,
+            batch_size: unpredicted.length,
+            total_unpredicted: allUnpredicted.length,
           });
         }
         case "horseracing.predict_ensemble": {
