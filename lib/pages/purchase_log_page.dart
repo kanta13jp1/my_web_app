@@ -469,8 +469,8 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark
-                            ? Color(0xFFB0B0B0)[300]
-                            : Color(0xFFB0B0B0)[600],
+                            ? const Color(0xFFE0E0E0)
+                            : const Color(0xFF757575),
                       ),
                     ),
                   );

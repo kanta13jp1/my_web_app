@@ -232,7 +232,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Color(0xFFB0B0B0)[850]
+                              ? const Color(0xFF303030)
                               : const Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(

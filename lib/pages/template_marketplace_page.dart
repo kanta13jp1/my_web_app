@@ -334,7 +334,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           t.description,
           style: TextStyle(
             fontSize: 12,
-            color: isDark ? Colors.white54 : Color(0xFFB0B0B0)[600],
+            color: isDark ? Colors.white54 : const Color(0xFF757575),
           ),
         ),
         trailing: Container(

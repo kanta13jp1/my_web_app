@@ -412,7 +412,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                       children: [
                         Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: isLiked ? Colors.red : Color(0xFFB0B0B0)[400],
+                          color: isLiked ? Colors.red : const Color(0xFFBDBDBD),
                           size: 18,
                         ),
                         const SizedBox(width: 4),
@@ -420,7 +420,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                           '$likes',
                           style: TextStyle(
                             color:
-                                isLiked ? Colors.red : Color(0xFFB0B0B0)[400],
+                                isLiked ? Colors.red : const Color(0xFFBDBDBD),
                             fontSize: 13,
                           ),
                         ),

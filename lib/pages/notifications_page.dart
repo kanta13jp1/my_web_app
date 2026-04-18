@@ -126,7 +126,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Color(0xFFB0B0B0)[900] : Color(0xFFB0B0B0)[50],
+      backgroundColor:
+          isDark ? const Color(0xFF212121) : const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
