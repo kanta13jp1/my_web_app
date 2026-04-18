@@ -862,7 +862,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFB91C1C),),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
             child: const Text('削除'),
           ),
         ],
@@ -1143,8 +1144,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     Navigator.pop(context);
                   }
                 },
-                icon: const Icon(Icons.delete_outline,
-                    color: Color(0xFFB91C1C),),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Color(0xFFB91C1C),
+                ),
                 label: const Text(
                   '削除',
                   style: TextStyle(color: Color(0xFFB91C1C)),
@@ -1303,8 +1306,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.add_circle,
-                            color: Color(0xFF6366F1),),
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: Color(0xFF6366F1),
+                        ),
                         onPressed: () {
                           if (subtaskController.text.trim().isNotEmpty) {
                             addSubtask(todoId, subtaskController.text.trim());
@@ -1789,7 +1794,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
       decoration: BoxDecoration(
         color: const Color(0xFF6366F1).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.12)),
+        border:
+            Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.12)),
       ),
       child: Text(
         method,
@@ -2409,9 +2415,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 borderData: FlBorderData(show: false),
                 barGroups: [
                   makeBarGroup(
-                      0, totalEstimated.toDouble(), const Color(0xFFFF6B35),),
+                    0,
+                    totalEstimated.toDouble(),
+                    const Color(0xFFFF6B35),
+                  ),
                   makeBarGroup(
-                      1, totalMinutes.toDouble(), const Color(0xFF6366F1),),
+                    1,
+                    totalMinutes.toDouble(),
+                    const Color(0xFF6366F1),
+                  ),
                 ],
               ),
             ),
@@ -5073,8 +5085,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           ),
           IconButton(
             key: Key('morning_briefing_delete_todo_$id'),
-            icon: const Icon(Icons.delete_outline,
-                color: Color(0xFFB91C1C),),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: Color(0xFFB91C1C),
+            ),
             tooltip: 'タスクを削除',
             onPressed: () => _confirmDeleteTodo(todo),
           ),
@@ -5194,14 +5208,15 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon:
-                      const Icon(Icons.upgrade, color: Color(0xFF0D9488)),
+                  icon: const Icon(Icons.upgrade, color: Color(0xFF0D9488)),
                   tooltip: '今日のタスクにする',
                   onPressed: () => _moveSomedayTaskToToday(id),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      color: Color(0xFFB91C1C),),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFB91C1C),
+                  ),
                   tooltip: '削除',
                   onPressed: () => _deleteSomedayTask(id),
                 ),
@@ -5282,7 +5297,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFB91C1C),),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
             child: const Text('削除'),
           ),
         ],
