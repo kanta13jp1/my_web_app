@@ -55,8 +55,9 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
 
   String _envFor(String provider) {
     final detail = _details[provider];
-    if (detail is Map && detail['env'] is String)
+    if (detail is Map && detail['env'] is String) {
       return detail['env'] as String;
+    }
     return '${provider.toUpperCase()}_API_KEY';
   }
 
@@ -135,12 +136,12 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                   children: _missing.map((p) {
                     return Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
+                          horizontal: 8, vertical: 3,),
                       decoration: BoxDecoration(
                         color: borderColor.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                            color: borderColor.withValues(alpha: 0.4)),
+                            color: borderColor.withValues(alpha: 0.4),),
                       ),
                       child: Text(
                         '${_envFor(p)} 未設定',
