@@ -10672,3 +10672,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - amber.shade700→0xFFFF6B35 / red.shade700→0xFFB91C1C / teal→0xFF0D9488
 - flutter analyze 0エラー / commit: db39a5ae
 - 次回候補: DESIGN.md 75%→80% (note_editor_page or quiz_page) / ノートbacklinks機能
+
+### VSCode版#97 完了 (2026-04-18) — note_editor_page.dart DESIGN.md準拠修正 (75%→80%)
+- token色置換16箇所: red→0xFFB91C1C / orange→0xFFFF6B35 / blue→0xFF6366F1 / green→0xFF0D9488
+- indigo→0xFF6366F1 / blueGrey→0xFF1A1A1A / amber.shade700→0xFFFF6B35
+- 修正: orange.shade700→0xFFF57C00 / teal.shade700→0xFF0F766E
+- unnecessary_const修正 (const Text親パターン: SaveState case×3)
+- flutter analyze 0エラー / commit: 2aaefb76
+- 次回候補: DESIGN.md 80%→85% (comparison_page or quiz_page) / ノートbacklinks機能
