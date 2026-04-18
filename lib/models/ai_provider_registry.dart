@@ -44,25 +44,32 @@ extension AiProviderStatusX on AiProviderStatus {
   }
 }
 
-
 enum AiProviderTier { free, budget, performance, premium }
 
 extension AiProviderTierX on AiProviderTier {
   String get label {
     switch (this) {
-      case AiProviderTier.free:        return '無料';
-      case AiProviderTier.budget:      return '低コスト';
-      case AiProviderTier.performance: return '標準';
-      case AiProviderTier.premium:     return 'プレミアム';
+      case AiProviderTier.free:
+        return '無料';
+      case AiProviderTier.budget:
+        return '低コスト';
+      case AiProviderTier.performance:
+        return '標準';
+      case AiProviderTier.premium:
+        return 'プレミアム';
     }
   }
 
   int get colorValue {
     switch (this) {
-      case AiProviderTier.free:        return 0xFF94A3B8;
-      case AiProviderTier.budget:      return 0xFF4ADE80;
-      case AiProviderTier.performance: return 0xFFFACC15;
-      case AiProviderTier.premium:     return 0xFFFF6B35;
+      case AiProviderTier.free:
+        return 0xFF94A3B8;
+      case AiProviderTier.budget:
+        return 0xFF4ADE80;
+      case AiProviderTier.performance:
+        return 0xFFFACC15;
+      case AiProviderTier.premium:
+        return 0xFFFF6B35;
     }
   }
 }

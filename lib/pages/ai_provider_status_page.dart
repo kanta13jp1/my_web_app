@@ -236,12 +236,15 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
               if (entry.tier != null) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Color(entry.tier!.colorValue).withValues(alpha: 0.12),
+                    color:
+                        Color(entry.tier!.colorValue).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Color(entry.tier!.colorValue).withValues(alpha: 0.35),
+                      color:
+                          Color(entry.tier!.colorValue).withValues(alpha: 0.35),
                     ),
                   ),
                   child: Text(
