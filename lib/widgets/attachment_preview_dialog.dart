@@ -163,7 +163,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.broken_image, size: 64, color: Colors.grey),
+                    Icon(Icons.broken_image, size: 64, color: Color(0xFFB0B0B0)),
                     SizedBox(height: 16),
                     Text('画像を読み込めません'),
                   ],

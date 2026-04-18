@@ -70,7 +70,7 @@ class BoardMeetingDialog extends StatelessWidget {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
-                                  color: Colors.grey,
+                                  color: Color(0xFFB0B0B0),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -138,7 +138,7 @@ class BoardMeetingDialog extends StatelessWidget {
       case 'CFO':
         return Colors.green;
       default:
-        return Colors.grey;
+        return Color(0xFFB0B0B0);
     }
   }
 }

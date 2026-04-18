@@ -123,10 +123,10 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark ? Colors.grey[850] : Colors.grey[50],
+              color: isDark ? const Color(0xFF303030) : const Color(0xFFFAFAFA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
+                color: isDark ? const Color(0xFF616161) : const Color(0xFFEEEEEE),
               ),
             ),
             child: Column(
@@ -189,15 +189,15 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
                               Icons.poll_outlined,
                               size: 48,
                               color:
-                                  isDark ? Colors.grey[600] : Colors.grey[400],
+                                  isDark ? const Color(0xFF757575) : const Color(0xFFBDBDBD),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'アンケートがありません',
                               style: TextStyle(
                                 color: isDark
-                                    ? Colors.grey[500]
-                                    : Colors.grey[600],
+                                    ? const Color(0xFF9E9E9E)
+                                    : const Color(0xFF757575),
                               ),
                             ),
                           ],

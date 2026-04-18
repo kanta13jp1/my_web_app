@@ -163,7 +163,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '$_totalDays日 アクティブ',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
                   ),
                 ),
               ],
@@ -225,7 +225,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color:
-                          isDark ? Colors.grey[300] : const Color(0xFF374151),
+                          isDark ? const Color(0xFFE0E0E0) : const Color(0xFF374151),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -246,7 +246,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   'なし',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -263,7 +263,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '少',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -280,7 +280,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '多',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
                   ),
                 ),
               ],

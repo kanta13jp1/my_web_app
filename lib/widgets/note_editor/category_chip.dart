@@ -27,7 +27,7 @@ class CategoryChip extends StatelessWidget {
         icon: const Icon(Icons.add_circle_outline, size: 18),
         label: const Text('カテゴリを設定'),
         style: TextButton.styleFrom(
-          foregroundColor: Colors.grey[700],
+          foregroundColor: const Color(0xFF616161),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       );

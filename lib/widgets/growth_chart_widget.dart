@@ -104,7 +104,7 @@ class GrowthChartWidget extends StatelessWidget {
                               DateFormat('M/d').format(date),
                               style: const TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey,
+                                color: Color(0xFFB0B0B0),
                               ),
                             ),
                           );
@@ -121,7 +121,7 @@ class GrowthChartWidget extends StatelessWidget {
                             value.toInt().toString(),
                             style: const TextStyle(
                               fontSize: 10,
-                              color: Colors.grey,
+                              color: Color(0xFFB0B0B0),
                             ),
                           );
                         },

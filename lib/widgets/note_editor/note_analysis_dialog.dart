@@ -64,7 +64,7 @@ class NoteAnalysisDialog extends StatelessWidget {
             if (actionItems.isEmpty)
               const Text(
                 '検出されたアクションはありません',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: Color(0xFFB0B0B0)),
               )
             else
               ...actionItems.map(
@@ -104,7 +104,7 @@ class NoteAnalysisDialog extends StatelessWidget {
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: Colors.grey,
+          color: Color(0xFFB0B0B0),
         ),
       ),
     );
@@ -121,6 +121,6 @@ class NoteAnalysisDialog extends StatelessWidget {
   Color _getSentimentColor(String sentiment) {
     if (sentiment.contains('positive')) return Colors.green;
     if (sentiment.contains('negative')) return Colors.red;
-    return Colors.grey;
+    return Color(0xFFB0B0B0);
   }
 }

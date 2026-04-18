@@ -193,7 +193,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                     _streakLabel,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -218,7 +218,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                         '次: $_nextMilestone日',
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                          color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
                         ),
                       ),
                     ],
@@ -232,7 +232,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                 children: [
                   const Text(
                     '最高記録',
-                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                    style: TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
                   ),
                   Text(
                     '$_bestStreak日',

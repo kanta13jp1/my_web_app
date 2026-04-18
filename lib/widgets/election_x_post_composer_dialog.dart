@@ -183,7 +183,7 @@ class _ElectionXPostComposerDialogState
             padding: EdgeInsets.only(left: 2, bottom: 8),
             child: Text(
               '投開票週末を選択',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+              style: TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
             ),
           ),
           SingleChildScrollView(
@@ -222,7 +222,7 @@ class _ElectionXPostComposerDialogState
           child: Text(
             '選択した週末に選挙データがありません。\n別の週末を選択するか、スケジュールを最新取得してください。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Color(0xFFB0B0B0)),
           ),
         ),
       );

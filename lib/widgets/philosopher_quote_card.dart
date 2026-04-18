@@ -114,7 +114,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                     quote.authorDescription!,
                                     style: const TextStyle(
                                       fontSize: 20,
-                                      color: Colors.grey,
+                                      color: Color(0xFFB0B0B0),
                                     ),
                                   ),
                               ],

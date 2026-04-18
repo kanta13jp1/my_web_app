@@ -131,7 +131,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     border: Border.all(
                                       color: isSelected
                                           ? Colors.blue
-                                          : Colors.grey[300]!,
+                                          : const Color(0xFFE0E0E0),
                                       width: isSelected ? 3 : 1,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
@@ -206,7 +206,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                         Text(
                           '${_selectedContentMode.label} - 1ページ最大${_selectedContentMode.maxCharsPerPage}文字',
                           style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
+                              const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -600,7 +600,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
             const SizedBox(height: 16),
             const Text(
               '※ 大量の画像生成は時間がかかり、デバイスのメモリを消費します',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
             ),
           ],
         ),
@@ -629,7 +629,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       child: Row(
         children: [
           const SizedBox(width: 8),
-          const Icon(Icons.arrow_right, size: 20, color: Colors.grey),
+          const Icon(Icons.arrow_right, size: 20, color: Color(0xFFB0B0B0)),
           const SizedBox(width: 4),
           Expanded(
             child: Text(text, style: const TextStyle(fontSize: 14)),

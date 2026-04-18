@@ -192,7 +192,7 @@ class _InterventionSheet extends StatelessWidget {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: const Color(0xFFE0E0E0),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

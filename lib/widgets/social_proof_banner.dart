@@ -137,7 +137,7 @@ class _StatItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
           ),
         ),
       ],

@@ -98,7 +98,7 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
                   'ノート数',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
                   ),
                 ),
               ],
@@ -197,7 +197,7 @@ class _RankRow extends StatelessWidget {
             fontWeight: FontWeight.w600,
             color: rank == 1
                 ? const Color(0xFFEAB308)
-                : (isDark ? Colors.grey[300] : Colors.grey[700]),
+                : (isDark ? const Color(0xFFE0E0E0) : const Color(0xFF616161)),
           ),
         ),
       ],

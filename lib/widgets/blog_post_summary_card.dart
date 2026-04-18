@@ -124,7 +124,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.grey.withAlpha(40)),
+        side: BorderSide(color: Color(0xFFB0B0B0).withAlpha(40)),
       ),
       child: InkWell(
         onTap: () => Navigator.of(context).pushNamed('/tech-blog-tracker'),
@@ -194,7 +194,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                     const Icon(
                       Icons.chevron_right,
                       size: 18,
-                      color: Colors.grey,
+                      color: Color(0xFFB0B0B0),
                     ),
                   ],
                 ),
@@ -211,12 +211,12 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                       decoration: BoxDecoration(
                         color: p.posted
                             ? p.color.withAlpha(25)
-                            : Colors.grey.withAlpha(15),
+                            : Color(0xFFB0B0B0).withAlpha(15),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
                           color: p.posted
                               ? p.color.withAlpha(80)
-                              : Colors.grey.withAlpha(30),
+                              : Color(0xFFB0B0B0).withAlpha(30),
                         ),
                       ),
                       child: Text(
@@ -225,7 +225,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                           fontSize: 10,
                           fontWeight:
                               p.posted ? FontWeight.w700 : FontWeight.normal,
-                          color: p.posted ? p.color : Colors.grey,
+                          color: p.posted ? p.color : Color(0xFFB0B0B0),
                         ),
                       ),
                     );

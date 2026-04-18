@@ -209,7 +209,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark
-                              ? Colors.grey[400]
+                              ? const Color(0xFFBDBDBD)
                               : const Color(0xFF6B7280),
                         ),
                       ),
@@ -244,7 +244,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 value: pct / 100,
                 minHeight: 8,
                 backgroundColor:
-                    isDark ? Colors.grey[800] : const Color(0xFFE0E7FF),
+                    isDark ? const Color(0xFF424242) : const Color(0xFFE0E7FF),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   pct >= 75
                       ? const Color(0xFF059669)
@@ -262,7 +262,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 '未設定: ${missingFields.map((f) => f.label).join(' / ')}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? Colors.grey[400] : const Color(0xFF9CA3AF),
+                  color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF9CA3AF),
                 ),
               ),
             ],

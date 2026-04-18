@@ -207,7 +207,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                           style: TextStyle(
                             fontSize: 11,
                             color:
-                                totalSlips > 0 ? Colors.red : Colors.grey[600],
+                                totalSlips > 0 ? Colors.red : const Color(0xFF757575),
                           ),
                         ),
                       ],
@@ -217,7 +217,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                     _isExpanded
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: Colors.grey,
+                    color: Color(0xFFB0B0B0),
                   ),
                 ],
               ),

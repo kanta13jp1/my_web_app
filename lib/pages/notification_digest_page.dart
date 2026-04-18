@@ -113,14 +113,14 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                           Icon(
                             Icons.notifications_none,
                             size: 48,
-                            color: isDark ? Colors.grey[600] : Colors.grey[400],
+                            color: isDark ? const Color(0xFF757575) : const Color(0xFFBDBDBD),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'ダイジェストデータがありません',
                             style: TextStyle(
                               color:
-                                  isDark ? Colors.grey[500] : Colors.grey[600],
+                                  isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
                             ),
                           ),
                         ],
@@ -193,8 +193,8 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: isDark
-                                      ? Colors.grey[300]
-                                      : Colors.grey[700],
+                                      ? const Color(0xFFE0E0E0)
+                                      : const Color(0xFF616161),
                                 ),
                           ),
                           const SizedBox(height: 8),
@@ -209,7 +209,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                           ? Icons.notifications_none
                                           : Icons.notifications,
                                       color: n['is_read'] == true
-                                          ? Colors.grey
+                                          ? Color(0xFFB0B0B0)
                                           : const Color(0xFF6366F1),
                                     ),
                                     title: Text(
@@ -249,7 +249,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
           ),
         ),
         const Spacer(),

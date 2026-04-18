@@ -313,7 +313,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                   'タスクなし',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
                   ),
                 ),
               ),
@@ -339,7 +339,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark
-              ? Colors.grey[700]!
+              ? const Color(0xFF616161)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
         boxShadow: [

@@ -398,7 +398,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         decoration: BoxDecoration(
           color: selected
               ? const Color(0xFF6366F1).withAlpha(25)
-              : (isDark ? Colors.grey[800] : Colors.grey[100]),
+              : (isDark ? const Color(0xFF424242) : const Color(0xFFF5F5F5)),
           border: Border.all(
             color: selected ? const Color(0xFF6366F1) : Colors.transparent,
             width: 2,
@@ -440,7 +440,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     final script = ad['script'] as List? ?? [];
 
     return Card(
-      color: isDark ? Colors.grey[850] : Colors.indigo.shade50,
+      color: isDark ? const Color(0xFF303030) : Colors.indigo.shade50,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

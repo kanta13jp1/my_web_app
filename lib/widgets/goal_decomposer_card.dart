@@ -237,7 +237,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                         SizedBox(height: 2),
                         Text(
                           'ゴールを入力 → 部署別サブタスクに自動分解',
-                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                          style: TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
                         ),
                       ],
                     ),
@@ -247,7 +247,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     size: 20,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
                   ),
                 ],
               ),
@@ -268,7 +268,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                       hintText: '例: ユーザー数を100人にする / 技術ブログを毎日投稿する',
                       hintStyle: TextStyle(
                         fontSize: 12,
-                        color: isDark ? Colors.grey[500] : Colors.grey[400],
+                        color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
