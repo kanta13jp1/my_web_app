@@ -2663,7 +2663,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A)],
+          colors: [Color(0xFF1A1A1A), Color(0xFF1E1E1E)],
         ),
       ),
       child: Column(
@@ -2768,7 +2768,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           const SizedBox(height: 12),
           const Text(
             'my-web-app-b67f4.web.app',
-            style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 10),
+            style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 11),
           ),
         ],
       ),
@@ -2934,7 +2934,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 大学'),
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -3074,8 +3074,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            m.color.withValues(alpha: 0.78),
-            m.color.withValues(alpha: 0.51),
+            m.color.withValues(alpha: 0.20),
+            m.color.withValues(alpha: 0.10),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
