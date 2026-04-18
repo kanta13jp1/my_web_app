@@ -34,6 +34,7 @@ import 'election_victory_page.dart';
 import 'settings_page.dart';
 import 'stock_tasks_page.dart';
 import 'mindless_task_page.dart';
+import '../widgets/collapsible_home_section.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
 import '../widgets/time_waste_guard_widget.dart';
 import '../widgets/welcome_new_user_card.dart';
@@ -4195,8 +4196,15 @@ abstinence_slip_details: $slipDetailsText
                             // ギター録音スタジオ
                             const _GuitarMainFeatureBanner(),
                             const SizedBox(height: 10),
-                            // 競合21社 vs 開発進捗バー
-                            const GrowthRoadmapProgressCard(),
+                            // 競合21社 vs 開発進捗バー (アコーディオン)
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_section_growth_roadmap',
+                              title: 'GROWTH ROADMAP',
+                              icon: Icons.flag_outlined,
+                              iconColor: Color(0xFF6366F1),
+                              initiallyExpanded: false,
+                              child: GrowthRoadmapProgressCard(),
+                            ),
                             const SizedBox(height: 12),
                             if (WelcomeNewUserCard.shouldShow()) ...[
                               const WelcomeNewUserCard(),
