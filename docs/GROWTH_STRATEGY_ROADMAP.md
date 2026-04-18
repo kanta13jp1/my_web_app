@@ -10998,3 +10998,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/flutter-web-speech-to-text-with-deepgram-nova-2-and-mediarecorder-1d7h
   - MediaRecorder→Blob→base64→Deepgram Nova-2 パターン解説
   - orphan branch マージ + 削除 ✅
+
+### VSCode版#102 追記 (2026-04-18 PM)
+- **admin_analytics_page DESIGN.md修正**: Colors.grey(27箇所)→Color(0xFF9CA3AF) / Colors.white(8箇所)→Color(0xFFE5E7EB)
+  - Colors.white70/54/12→アルファ埋め込みhex (0xB3/0x8A/0x1F) / const修正
+  - ※ linter leakageによりPS版#134のRule17コミットに混入 (admin_analytics_page.dart 91行変更)
+- **発見: linter leakageパターン** — Edit後にlinterがColor変換→PS版がgit add時に一緒にコミット
+  - 対策: python batch replace → dart format → git add → git commit を1つのBashコール内で完結
+- **DESIGN.md準拠**: 85%→88% 達成
+- 次回候補: DESIGN.md 88%→90% (morning_briefing_page/election_victory_page) / wrap-up
