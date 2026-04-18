@@ -33,6 +33,9 @@ DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
 REPLY_DELAY = 3   # seconds between API calls
 FOLLOW_DELAY = 2
 
+# 自分自身のコメントには返信しない (記事オーナー)
+SKIP_AUTHORS = {"kanta13jp1"}
+
 QIITA_BASE = "https://qiita.com/api/v2"
 DEVTO_BASE = "https://dev.to/api"
 
@@ -260,6 +263,11 @@ def process_qiita() -> None:
             body = comment.get("body", "")
             created_at = comment.get("created_at", "")
 
+            # 自分自身のコメントはスキップ
+            if author in SKIP_AUTHORS:
+                print(f"    ⏭️  Skipping own comment @{author}")
+                continue
+
             # Check if already replied
             existing = sb_check(
                 "blog_comments",
@@ -400,6 +408,11 @@ def process_devto() -> None:
             comment_id = str(comment["id_code"])
             author = comment.get("user", {}).get("username", "")
             body = comment.get("body_html", comment.get("body_markdown", ""))
+
+            # 自分自身のコメントはスキップ
+            if author in SKIP_AUTHORS or author == "kanta13jp1":
+                print(f"    ⏭️  Skipping own comment @{author}")
+                continue
 
             existing = sb_check(
                 "blog_comments",
