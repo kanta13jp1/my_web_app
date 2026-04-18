@@ -320,6 +320,22 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  replicate: {
+    displayName: "Replicate",
+    envKey: "REPLICATE_API_TOKEN",
+    chatUrl: "https://openai-compat.replicate.com/v1/chat/completions",
+    defaultModel: "meta/llama-4-scout-instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  coze: {
+    displayName: "Coze (ByteDance)",
+    envKey: "COZE_API_KEY",
+    chatUrl: "https://api.coze.com/v1/chat/completions",
+    defaultModel: "gpt-4o",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 function asString(value: unknown): string {

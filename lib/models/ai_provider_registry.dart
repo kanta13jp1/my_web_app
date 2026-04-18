@@ -187,7 +187,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     displayName: 'Replicate',
     status: AiProviderStatus.apiKeyRequired,
     envKeyName: 'REPLICATE_API_TOKEN',
-    entryPoint: '(未実装)',
+    entryPoint: 'ai-hub',
   ),
   AiProviderEntry(
     id: 'fireworks_ai',
@@ -374,8 +374,10 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   ),
   AiProviderEntry(
     id: 'coze',
-    displayName: 'Coze',
-    status: AiProviderStatus.notImplemented,
+    displayName: 'Coze (ByteDance)',
+    status: AiProviderStatus.apiKeyRequired,
+    envKeyName: 'COZE_API_KEY',
+    entryPoint: 'ai-hub',
   ),
   AiProviderEntry(
     id: 'apple',
