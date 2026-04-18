@@ -65,7 +65,10 @@ class _RewardsPageState extends State<RewardsPage> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [const Color(0xFFFFC107).shade300, Colors.orange.shade400],
+                        colors: [
+                          const Color(0xFFFFD54F),
+                          Colors.orange.shade400
+                        ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -122,7 +125,7 @@ class _RewardsPageState extends State<RewardsPage> {
                         child: Text(
                           'まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         ),
                       ),
                     )
@@ -174,14 +177,15 @@ class _RewardsPageState extends State<RewardsPage> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isUnlocked
-                ? const Color(0xFFFFC107).shade100
+                ? const Color(0xFFFFECB3)
                 : Theme.of(context).colorScheme.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
           child: Icon(
             icon,
             size: 30,
-            color: isUnlocked ? const Color(0xFFFFC107).shade800 : const Color(0xFF9CA3AF),
+            color:
+                isUnlocked ? const Color(0xFFFF8F00) : const Color(0xFF9CA3AF),
           ),
         ),
         const SizedBox(height: 8),

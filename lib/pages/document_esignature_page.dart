@@ -142,7 +142,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
             const SizedBox(height: 12),
             Text(
               pending ? '署名待ちの文書がありません' : '完了した文書がありません',
-              style: const TextStyle(color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -186,7 +186,8 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                   ),
                 if (pending)
                   FilledButton.tonal(

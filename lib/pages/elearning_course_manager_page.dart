@@ -133,11 +133,11 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.school, size: 64, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.school, size: 64, color: Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
             Text(
               showProgress ? '学習中のコースがありません' : 'コースがありません',
-              style: const TextStyle(color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -200,7 +200,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                         '${progress.toInt()}% 完了',
                         style: const TextStyle(
                           fontSize: 11,
-                          color: const Color(0xFF9CA3AF),
+                          color: Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -212,7 +212,8 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                   child: Row(
                     children: [
                       if (rating > 0) ...[
-                        const Icon(Icons.star, size: 14, color: const Color(0xFFFFC107)),
+                        const Icon(Icons.star,
+                            size: 14, color: Color(0xFFFFC107)),
                         Text(
                           ' $rating',
                           style: const TextStyle(fontSize: 12),
@@ -258,13 +259,13 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.workspace_premium, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.workspace_premium, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('証明書がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('証明書がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
             SizedBox(height: 8),
             Text(
               'コースを修了すると証明書が発行されます',
-              style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -283,7 +284,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
           child: ListTile(
             leading: const Icon(
               Icons.workspace_premium,
-              color: const Color(0xFFFFC107),
+              color: Color(0xFFFFC107),
               size: 36,
             ),
             title: Text(

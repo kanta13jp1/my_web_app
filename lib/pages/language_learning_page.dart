@@ -411,12 +411,12 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             const Icon(
               Icons.library_books_outlined,
               size: 64,
-              color: const Color(0xFF9CA3AF),
+              color: Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 16),
             const Text(
               '単語帳がありません',
-              style: TextStyle(fontSize: 18, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 18, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 8),
             ElevatedButton.icon(
@@ -449,7 +449,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 const Spacer(),
                 Text(
                   '最長: ${_streak['longest'] ?? 0}日',
-                  style: const TextStyle(color: const Color(0xFF9CA3AF)),
+                  style: const TextStyle(color: Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -555,12 +555,12 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.flip_outlined, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.flip_outlined, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 16),
             Text(
               '「単語帳」タブから単語帳を選択してレビューを開始してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -582,8 +582,10 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text('また明日復習しましょう',
-                style: TextStyle(color: const Color(0xFF9CA3AF))),
+            const Text(
+              'また明日復習しましょう',
+              style: TextStyle(color: Color(0xFF9CA3AF)),
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () =>
@@ -615,7 +617,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
               const SizedBox(width: 8),
               Text(
                 '${_reviewIndex + 1}/${_reviewCards.length}',
-                style: const TextStyle(color: const Color(0xFF9CA3AF)),
+                style: const TextStyle(color: Color(0xFF9CA3AF)),
               ),
             ],
           ),
@@ -648,7 +650,9 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         const Text(
                           '単語',
                           style: TextStyle(
-                              color: const Color(0xFF9CA3AF), fontSize: 14),
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -662,13 +666,15 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                         const SizedBox(height: 32),
                         const Text(
                           'タップして答えを見る',
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         ),
                       ] else ...[
                         const Text(
                           '訳',
                           style: TextStyle(
-                              color: const Color(0xFF9CA3AF), fontSize: 14),
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -795,7 +801,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       ),
                       Text(
                         '最長: ${_streak['longest'] ?? 0}日',
-                        style: const TextStyle(color: const Color(0xFF9CA3AF)),
+                        style: const TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                     ],
                   ),
@@ -890,8 +896,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             ),
             Text(
               label,
-              style:
-                  const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
+              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
           ],
         ),

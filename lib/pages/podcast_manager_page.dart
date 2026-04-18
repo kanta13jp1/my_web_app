@@ -121,9 +121,9 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.podcasts, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.podcasts, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('エピソードがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('エピソードがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -179,7 +179,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
             subtitle: Text(channel.isNotEmpty ? channel : '—'),
             trailing: Text(
               duration,
-              style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
             onTap: () => setState(() {
               _playingId = isPlaying ? null : id;
@@ -196,9 +196,9 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.rss_feed, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.rss_feed, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('チャンネルがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('チャンネルがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
           ],
         ),
       );

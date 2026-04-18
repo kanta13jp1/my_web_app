@@ -149,7 +149,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                     ? const Center(
                         child: Text(
                           'コメントがありません',
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         ),
                       )
                     : ListView.separated(

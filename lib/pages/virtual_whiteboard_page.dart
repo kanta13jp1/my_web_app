@@ -131,7 +131,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
               const SizedBox(height: 16),
               const Text(
                 'テンプレートを選択 (任意)',
-                style: TextStyle(fontSize: 13, color: const Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
               ),
               const SizedBox(height: 8),
               ...(_templates.map((tmpl) {
@@ -230,7 +230,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
               const SizedBox(height: 12),
               const Text(
                 'カラーを選択',
-                style: TextStyle(fontSize: 13, color: const Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
               ),
               const SizedBox(height: 8),
               Row(
@@ -419,16 +419,16 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.dashboard, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.dashboard, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 16),
             Text(
               'ボードがありません',
-              style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 16),
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
             ),
             SizedBox(height: 8),
             Text(
               '右下の + から新しいボードを作成してください',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -464,7 +464,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                         ? updatedAt.substring(0, 10)
                         : updatedAt,
                     style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
               ],
             ),
@@ -479,8 +481,10 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
   Widget _buildTemplateList() {
     if (_templates.isEmpty) {
       return const Center(
-        child: Text('テンプレートがありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text(
+          'テンプレートがありません',
+          style: TextStyle(color: Color(0xFF9CA3AF)),
+        ),
       );
     }
     return GridView.builder(
@@ -526,7 +530,9 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                   Text(
                     desc,
                     style: const TextStyle(
-                        fontSize: 12, color: const Color(0xFF9CA3AF)),
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -571,12 +577,15 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.draw,
-                          size: 64, color: const Color(0xFF9CA3AF)),
+                      const Icon(
+                        Icons.draw,
+                        size: 64,
+                        color: Color(0xFF9CA3AF),
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         'ボードが空です',
-                        style: TextStyle(color: const Color(0xFF9CA3AF)),
+                        style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
@@ -629,7 +638,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
                           type,
                           style: const TextStyle(
                             fontSize: 12,
-                            color: const Color(0xFF9CA3AF),
+                            color: Color(0xFF9CA3AF),
                           ),
                         ),
                       ),

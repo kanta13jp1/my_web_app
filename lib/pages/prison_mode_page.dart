@@ -572,7 +572,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation(
-                  isPaidOff ? Colors.green : const Color(0xFFFFC107).shade700,
+                  isPaidOff ? Colors.green : const Color(0xFFFFA000),
                 ),
                 minHeight: 6,
               ),

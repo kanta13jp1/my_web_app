@@ -4543,7 +4543,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const Text(
               '現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
-              style: TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             _buildAssetWatchlistSection(),
@@ -4691,7 +4691,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           IconButton(
                             icon: const Icon(
                               Icons.delete_outline,
-                              color: const Color(0xFF9CA3AF),
+                              color: Color(0xFF9CA3AF),
                             ),
                             onPressed: () => _showRemoveAssetDialog(type),
                           ),
@@ -4759,7 +4759,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       IconButton(
                         icon: const Icon(
                           Icons.delete_outline,
-                          color: const Color(0xFF9CA3AF),
+                          color: Color(0xFF9CA3AF),
                         ),
                         onPressed: () => _showRemoveAssetDialog(type),
                       ),
@@ -4892,7 +4892,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           const Text(
             'Keep important assets or liabilities pinned with a short memo.',
-            style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
           const SizedBox(height: 12),
           if (entries.isEmpty)
@@ -5108,8 +5108,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             Text(
               'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
-              style:
-                  const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5211,7 +5210,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               '履歴表示月',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -5484,8 +5483,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             Text(
               'お金の流れをすべてリスト化する。収入・支出に加えて口座間の振替も記録できます。表示中: $visibleMonthLabel（過去月に切替可）',
-              style:
-                  const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5589,7 +5587,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               '履歴表示月',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -5981,8 +5979,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       const SizedBox(height: 6),
                       const Text(
                         '毎月自動で奪われる富を監視せよ。',
-                        style: TextStyle(
-                            fontSize: 11, color: const Color(0xFF9CA3AF)),
+                        style:
+                            TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 6),
                       InkWell(
@@ -6044,7 +6042,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           Text(
                             '毎月自動で奪われる富を監視せよ。',
                             style: TextStyle(
-                                fontSize: 11, color: const Color(0xFF9CA3AF)),
+                                fontSize: 11, color: Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -6054,7 +6052,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           const Text(
                             '表示月',
                             style: TextStyle(
-                                fontSize: 10, color: const Color(0xFF9CA3AF)),
+                                fontSize: 10, color: Color(0xFF9CA3AF)),
                           ),
                           Text(
                             visibleMonthLabel,
@@ -6068,7 +6066,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                           const Text(
                             '月額合計',
                             style: TextStyle(
-                                fontSize: 10, color: const Color(0xFF9CA3AF)),
+                                fontSize: 10, color: Color(0xFF9CA3AF)),
                           ),
                           Text(
                             '¥${NumberFormat('#,###').format(totalCost)}',
@@ -6123,7 +6121,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               '固定費の表示月',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -6313,7 +6311,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             ),
             const Text(
               '今月中に必ず処理すべき事務手続き等を記録せよ。',
-              style: TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             _isLoadingTasks
@@ -6401,7 +6399,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     Text(
                       _showDailyChange ? '昨日の自分に勝ったか？' : '国力(富)の総量は増えているか？',
                       style: const TextStyle(
-                          fontSize: 10, color: const Color(0xFF9CA3AF)),
+                          fontSize: 10, color: Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),

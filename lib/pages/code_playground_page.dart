@@ -507,7 +507,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
-              leading: const Icon(Icons.folder, color: const Color(0xFFFFC107)),
+              leading: const Icon(Icons.folder, color: Color(0xFFFFC107)),
               title: Text(c['name'] as String? ?? ''),
               subtitle: Text(c['description'] as String? ?? ''),
               trailing: Text('${c['snippet_count'] ?? 0}件'),
@@ -608,7 +608,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           ),
           const SizedBox(height: 8),
           if (breakdown.isEmpty)
-            const Text('データなし', style: TextStyle(color: const Color(0xFF9CA3AF)))
+            const Text('データなし', style: TextStyle(color: Color(0xFF9CA3AF)))
           else
             ...breakdown.map((b) {
               final lang = b['language'] as String? ?? '';
@@ -660,7 +660,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               value,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            Text(label, style: const TextStyle(color: const Color(0xFF9CA3AF))),
+            Text(label, style: const TextStyle(color: Color(0xFF9CA3AF))),
           ],
         ),
       ),

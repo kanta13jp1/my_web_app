@@ -306,7 +306,9 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                       : const Color(0xFF111827),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: selected ? const Color(0xFF60A5FA) : const Color(0x1FFFFFFF),
+                    color: selected
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0x1FFFFFFF),
                   ),
                 ),
                 child: Column(
@@ -336,8 +338,8 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                       metadata['summary']?.toString() ??
                           metadata['idea']?.toString() ??
                           '',
-                      style:
-                          const TextStyle(color: Color(0xB3E5E7EB), height: 1.4),
+                      style: const TextStyle(
+                          color: Color(0xB3E5E7EB), height: 1.4),
                     ),
                     const SizedBox(height: 10),
                     Row(

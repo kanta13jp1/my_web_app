@@ -245,12 +245,12 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.videocam_off, size: 48, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.videocam_off, size: 48, color: Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text(
               '会議ルームがありません\n右下の＋ボタンで作成してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -305,12 +305,15 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.description_outlined,
-                size: 48, color: const Color(0xFF9CA3AF)),
+            Icon(
+              Icons.description_outlined,
+              size: 48,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 8),
             Text(
               '議事録がありません',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -342,7 +345,9 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                   Text(
                     min['created_at'].toString(),
                     style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
               ],
             ),
@@ -358,11 +363,11 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.checklist, size: 48, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.checklist, size: 48, color: Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text(
               'アクションアイテムがありません',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -407,8 +412,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
   Widget _buildStatsTab() {
     if (_stats == null) {
       return const Center(
-        child: Text('統計データがありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text(
+          '統計データがありません',
+          style: TextStyle(color: Color(0xFF9CA3AF)),
+        ),
       );
     }
     final items = [
@@ -447,7 +454,9 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                     Text(
                       item.$1,
                       style: const TextStyle(
-                          fontSize: 12, color: const Color(0xFF9CA3AF)),
+                        fontSize: 12,
+                        color: Color(0xFF9CA3AF),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],

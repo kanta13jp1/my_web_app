@@ -94,12 +94,13 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                           Icon(
                             Icons.check_circle_outline,
                             size: 64,
-                            color: const Color(0xFF009688).shade300,
+                            color: const Color(0xFF4DB6AC),
                           ),
                           const SizedBox(height: 16),
                           const Text(
                             '未返信チケットはありません',
-                            style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                                fontSize: 16, color: Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -112,7 +113,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                             '未返信チケット: ${_tickets.length}件 / FAQ: ${_faq.length}件',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF009688),
+                              color: Color(0xFF009688),
                             ),
                           ),
                         ),
@@ -129,7 +130,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                 child: ListTile(
                                   leading: const Icon(
                                     Icons.support_agent,
-                                    color: const Color(0xFF009688),
+                                    color: Color(0xFF009688),
                                   ),
                                   title: Text(
                                     ticket['title']?.toString() ?? '無題',
@@ -146,7 +147,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                     label: Text(
                                       ticket['status']?.toString() ?? 'open',
                                     ),
-                                    backgroundColor: const Color(0xFF009688).shade50,
+                                    backgroundColor: const Color(0xFFE0F2F1),
                                   ),
                                 ),
                               );

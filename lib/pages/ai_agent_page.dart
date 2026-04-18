@@ -177,17 +177,18 @@ class _AiAgentPageState extends State<AiAgentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.smart_toy_outlined, size: 64, color: const Color(0xFF9CA3AF)),
+          const Icon(Icons.smart_toy_outlined,
+              size: 64, color: Color(0xFF9CA3AF)),
           const SizedBox(height: 16),
-          Text(
+          const Text(
             'AIエージェントがまだいません',
-            style: TextStyle(fontSize: 16, color: const Color(0xFF4B5563)),
+            style: TextStyle(fontSize: 16, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'タスク自動化フローを作成して\n繰り返し作業をAIに任せましょう',
             textAlign: TextAlign.center,
-            style: TextStyle(color: const Color(0xFF6B7280)),
+            style: TextStyle(color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(

@@ -2148,7 +2148,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
     }
     if (item.currentMembers <= _lowPresenceThreshold) {
-      return const Color(0xFFFFC107).shade700.withValues(alpha: 0.7);
+      return const Color(0xFFFFA000).withValues(alpha: 0.7);
     }
     return Theme.of(context).colorScheme.outlineVariant;
   }
@@ -2180,7 +2180,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.currentMembers == 0) {
       return Theme.of(context).colorScheme.error;
     }
-    return const Color(0xFFFFC107).shade900;
+    return const Color(0xFFFF6F00);
   }
 
   Future<void> _downloadElectionDataCsv(
@@ -2560,7 +2560,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ),
             _buildStatusChip(
               '単騎 ${_formatInt(snapshot.yellowAlertScheduleCount)} 件',
-              color: const Color(0xFFFFC107).shade800,
+              color: const Color(0xFFFF8F00),
             ),
             _buildStatusChip(
               '過去1年 ${_formatInt(pastSchedules.length)} 件',
@@ -2804,7 +2804,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       .reduce((left, right) => left < right ? left : right);
                   final color = switch (severity) {
                     0 => Theme.of(context).colorScheme.error,
-                    1 => const Color(0xFFFFC107).shade800,
+                    1 => const Color(0xFFFF8F00),
                     _ => const Color(0xFF0F766E),
                   };
                   final countLabel =
@@ -3268,7 +3268,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return Theme.of(context).colorScheme.error.withValues(alpha: 0.5);
     }
     if (item.isAlertYellow) {
-      return const Color(0xFFFFC107).shade700.withValues(alpha: 0.7);
+      return const Color(0xFFFFA000).withValues(alpha: 0.7);
     }
     return Theme.of(context).colorScheme.outlineVariant;
   }
@@ -3300,7 +3300,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     if (item.isAlertRed) {
       return Theme.of(context).colorScheme.error;
     }
-    return const Color(0xFFFFC107).shade900;
+    return const Color(0xFFFF6F00);
   }
 
   Color _scheduleMetricColor(LocalElectionScheduleEntry item) {
@@ -3308,7 +3308,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return const Color(0xFFB91C1C);
     }
     if (item.isAlertYellow) {
-      return const Color(0xFFFFC107).shade800;
+      return const Color(0xFFFF8F00);
     }
     return const Color(0xFF0F766E);
   }

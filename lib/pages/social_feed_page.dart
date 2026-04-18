@@ -119,7 +119,8 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                           CircleAvatar(
                                             radius: 16,
                                             backgroundColor:
-                                                const Color(0xFF009688).withAlpha(30),
+                                                const Color(0xFF009688)
+                                                    .withAlpha(30),
                                             child: Text(
                                               (post['username']
                                                           ?.toString()
@@ -130,7 +131,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                       .toUpperCase()
                                                   : '?'),
                                               style: const TextStyle(
-                                                color: const Color(0xFF009688),
+                                                color: Color(0xFF009688),
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -151,7 +152,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                   .substring(0, 10),
                                               style: const TextStyle(
                                                 fontSize: 11,
-                                                color: const Color(0xFF9CA3AF),
+                                                color: Color(0xFF9CA3AF),
                                               ),
                                             ),
                                         ],
@@ -169,14 +170,14 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               const Icon(
                                                 Icons.favorite_border,
                                                 size: 14,
-                                                color: const Color(0xFF9CA3AF),
+                                                color: Color(0xFF9CA3AF),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 post['likes'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: const Color(0xFF9CA3AF),
+                                                  color: Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                               const SizedBox(width: 12),
@@ -185,14 +186,14 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               const Icon(
                                                 Icons.comment_outlined,
                                                 size: 14,
-                                                color: const Color(0xFF9CA3AF),
+                                                color: Color(0xFF9CA3AF),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 post['comments'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: const Color(0xFF9CA3AF),
+                                                  color: Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                             ],

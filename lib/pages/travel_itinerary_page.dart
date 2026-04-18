@@ -441,17 +441,20 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.flight_takeoff,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(
+              Icons.flight_takeoff,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 16),
             Text(
               '旅行プランがありません',
-              style: TextStyle(color: const Color(0xFF9CA3AF), fontSize: 16),
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 16),
             ),
             SizedBox(height: 8),
             Text(
               '右下の + から新しい旅行を作成してください',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -487,7 +490,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                       const Icon(
                         Icons.location_on,
                         size: 14,
-                        color: const Color(0xFF9CA3AF),
+                        color: Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 4),
                       Text(destination, style: const TextStyle(fontSize: 13)),
@@ -497,7 +500,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   Text(
                     '$startDate${endDate.isNotEmpty ? ' 〜 $endDate' : ''}',
                     style: const TextStyle(
-                        fontSize: 12, color: const Color(0xFF9CA3AF)),
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
               ],
             ),
@@ -515,10 +520,12 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.map, size: 64, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.map, size: 64, color: Color(0xFF9CA3AF)),
             const SizedBox(height: 16),
-            const Text('日程がまだありません',
-                style: TextStyle(color: const Color(0xFF9CA3AF))),
+            const Text(
+              '日程がまだありません',
+              style: TextStyle(color: Color(0xFF9CA3AF)),
+            ),
             const SizedBox(height: 8),
             ElevatedButton.icon(
               onPressed: _addActivity,
@@ -564,9 +571,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   ),
                   title: Text(actName),
                   trailing: time.isNotEmpty
-                      ? Text(time,
-                          style:
-                              const TextStyle(color: const Color(0xFF9CA3AF)))
+                      ? Text(
+                          time,
+                          style: const TextStyle(color: Color(0xFF9CA3AF)),
+                        )
                       : null,
                 ),
               );
@@ -581,8 +589,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Widget _buildBookingsTab() {
     if (_bookings.isEmpty) {
       return const Center(
-        child: Text('予約情報がありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text(
+          '予約情報がありません',
+          style: TextStyle(color: Color(0xFF9CA3AF)),
+        ),
       );
     }
     return ListView.builder(
@@ -626,7 +636,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   Text(
                     '確認番号: $confirmNo',
                     style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
               ],
             ),
@@ -658,7 +670,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               ? const Center(
                   child: Text(
                     '持ち物リストがありません',
-                    style: TextStyle(color: const Color(0xFF9CA3AF)),
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
                   ),
                 )
               : ListView.builder(
@@ -736,7 +748,9 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                   Text(
                     '${(ratio * 100).toStringAsFixed(1)}% 使用',
                     style: const TextStyle(
-                        fontSize: 12, color: const Color(0xFF9CA3AF)),
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
                 ],
               ),
@@ -764,8 +778,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           if (_budget['categories'] == null ||
               (_budget['categories'] as List?)?.isEmpty == true)
             const Center(
-              child: Text('予算データがありません',
-                  style: TextStyle(color: const Color(0xFF9CA3AF))),
+              child: Text(
+                '予算データがありません',
+                style: TextStyle(color: Color(0xFF9CA3AF)),
+              ),
             ),
         ],
       ),
@@ -783,9 +799,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
             color: color,
           ),
         ),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+        ),
       ],
     );
   }

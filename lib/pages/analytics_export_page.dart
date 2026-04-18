@@ -113,7 +113,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (t) => Chip(
                                 label: Text(t),
-                                backgroundColor: const Color(0xFF009688).shade50,
+                                backgroundColor: const Color(0xFFE0F2F1),
                               ),
                             )
                             .toList(),
@@ -136,7 +136,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (f) => Chip(
                                 label: Text(f.toUpperCase()),
-                                backgroundColor: const Color(0xFF009688).shade100,
+                                backgroundColor: const Color(0xFFB2DFDB),
                               ),
                             )
                             .toList(),
@@ -155,7 +155,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           padding: EdgeInsets.all(32),
                           child: Text(
                             'エクスポート履歴はありません',
-                            style: TextStyle(color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(color: Color(0xFF9CA3AF)),
                           ),
                         ),
                       )
@@ -167,7 +167,8 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A009688),
-                              child: Icon(Icons.download, color: const Color(0xFF009688)),
+                              child: Icon(Icons.download,
+                                  color: Color(0xFF009688)),
                             ),
                             title: Text(
                               item['type']?.toString() ??
@@ -182,7 +183,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                                   '',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                               ),
                             ),
                           ),

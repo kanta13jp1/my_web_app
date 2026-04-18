@@ -155,7 +155,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const Text(
             'GPT・Claude・Geminiを統合したMAGIシステムが、\nあなたの専属役員として\n24時間365日、経営をサポートします。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: const Color(0xFF9CA3AF), height: 1.5),
+            style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
           ),
           const SizedBox(height: 40),
           Wrap(
@@ -164,12 +164,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
             alignment: WrapAlignment.center,
             children: [
               _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
-              _buildRoleIcon(Icons.attach_money, 'CFO', '財務', const Color(0xFF009688)),
+              _buildRoleIcon(
+                  Icons.attach_money, 'CFO', '財務', const Color(0xFF009688)),
               _buildRoleIcon(
                 Icons.health_and_safety,
                 'CHO',
                 '健康',
-                const Color(0xFF009688).shade800,
+                const Color(0xFF00695C),
               ),
               _buildRoleIcon(Icons.diversity_3, 'CHRO', '人事', Colors.pink),
               _buildRoleIcon(Icons.campaign, 'CMO', '広報', Colors.purple),
@@ -191,7 +192,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         const SizedBox(height: 4),
         Text(role, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: const TextStyle(fontSize: 10, color: const Color(0xFF9CA3AF))),
+        Text(label,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
       ],
     );
   }
@@ -255,7 +257,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           const Text(
             'この名前はAI役員からの報告書に使用されます',
-            style: TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
         ],
       ),

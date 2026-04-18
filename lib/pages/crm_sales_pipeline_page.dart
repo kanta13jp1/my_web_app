@@ -40,7 +40,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   };
 
   static const _stageColors = {
-    'lead': const Color(0xFF9CA3AF),
+    'lead': Color(0xFF9CA3AF),
     'qualified': Colors.blue,
     'proposal': Colors.orange,
     'negotiation': Colors.purple,
@@ -453,13 +453,13 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.people_outline, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.people_outline, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text('リードがまだありません'),
             SizedBox(height: 4),
             Text(
               '「リード追加」からCRM管理を始めましょう',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -666,7 +666,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
             ),
             Text(
               label,
-              style: const TextStyle(color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(color: Color(0xFF9CA3AF)),
             ),
           ],
         ),

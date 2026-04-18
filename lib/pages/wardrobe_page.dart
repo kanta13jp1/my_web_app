@@ -882,7 +882,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'ピンク':
         return Colors.pink;
       default:
-        return const Color(0xFF9CA3AF)!;
+        return const Color(0xFF9CA3AF);
     }
   }
 }

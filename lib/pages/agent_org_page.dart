@@ -1415,7 +1415,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       elevation: 1,
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
-        leading: const Icon(Icons.alt_route, color: const Color(0xFF009688)),
+        leading: const Icon(Icons.alt_route, color: Color(0xFF009688)),
         title: Text(
           '${from?.displayName ?? relationship.fromAgentId} -> ${to?.displayName ?? relationship.toAgentId}',
           style: const TextStyle(fontWeight: FontWeight.w700),

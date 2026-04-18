@@ -152,14 +152,14 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                           children: [
                             const Icon(
                               Icons.person_add,
-                              color: const Color(0xFF009688),
+                              color: Color(0xFF009688),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '今週の新規ユーザー: ${d['totalNewUsers']}人',
                               style: const TextStyle(
                                 fontSize: 14,
-                                color: const Color(0xFF009688),
+                                color: Color(0xFF009688),
                               ),
                             ),
                           ],
@@ -168,7 +168,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                       if (channels.isEmpty)
                         const Text(
                           'チャネルデータがありません',
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         )
                       else ...[
                         const Text(

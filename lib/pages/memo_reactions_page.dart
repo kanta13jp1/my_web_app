@@ -154,7 +154,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                         ),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? const Color(0xFFFFC107).shade100
+                              ? const Color(0xFFFFECB3)
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHigh,
@@ -179,7 +179,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: isActive
-                                    ? const Color(0xFFFFC107).shade800
+                                    ? const Color(0xFFFF8F00)
                                     : Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,

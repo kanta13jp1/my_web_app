@@ -124,7 +124,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('医療・健康ノート'),
-        backgroundColor: const Color(0xFF009688)[700],
+        backgroundColor: const Color(0xFF00796B),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -173,7 +173,9 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintText: 'タイトル（任意）: 例: 内科受診 2026/03/28',
                         hintStyle: TextStyle(
                           fontSize: 12,
-                          color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                          color: isDark
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -191,7 +193,9 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintText: '詳細: 症状・診断・処方薬・次回予約日など',
                         hintStyle: TextStyle(
                           fontSize: 12,
-                          color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
+                          color: isDark
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -240,7 +244,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     '医療・健康ノートはまだありません',
-                    style: TextStyle(color: const Color(0xFF9CA3AF)),
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
                   ),
                 ),
               )
@@ -306,7 +310,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         : null,
                     trailing: Text(
                       dateStr,
-                      style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      style: const TextStyle(
+                          fontSize: 11, color: Color(0xFF9CA3AF)),
                     ),
                   ),
                 );

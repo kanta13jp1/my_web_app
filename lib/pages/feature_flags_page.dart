@@ -95,14 +95,14 @@ class _FeatureFlagsPageState extends State<FeatureFlagsPage> {
                           Icon(
                             Icons.toggle_off_outlined,
                             size: 64,
-                            color: const Color(0xFF9CA3AF),
+                            color: Color(0xFF9CA3AF),
                           ),
                           SizedBox(height: 16),
                           Text(
                             'フィーチャーフラグがありません',
                             style: TextStyle(
                               fontSize: 16,
-                              color: const Color(0xFF9CA3AF),
+                              color: Color(0xFF9CA3AF),
                             ),
                           ),
                         ],

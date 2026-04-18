@@ -493,7 +493,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -652,8 +652,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 decoration: isPurchased && !needs
                                     ? TextDecoration.lineThrough
                                     : null,
-                                color:
-                                    isPurchased && !needs ? const Color(0xFF9CA3AF) : null,
+                                color: isPurchased && !needs
+                                    ? const Color(0xFF9CA3AF)
+                                    : null,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

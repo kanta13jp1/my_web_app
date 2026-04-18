@@ -456,8 +456,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
           return Card(
             margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
-              leading:
-                  const Icon(Icons.home_work, color: const Color(0xFF009688), size: 36),
+              leading: const Icon(Icons.home_work,
+                  color: Color(0xFF009688), size: 36),
               title: Text(
                 name,
                 style: const TextStyle(fontWeight: FontWeight.bold),
@@ -535,8 +535,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         else
           const Padding(
             padding: EdgeInsets.all(12),
-            child:
-                Text('物件タブから物件を選択してください', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            child: Text('物件タブから物件を選択してください',
+                style: TextStyle(color: Color(0xFF9CA3AF))),
           ),
         Expanded(
           child: _finances.isEmpty
@@ -675,7 +675,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               children: [
                 Text(
                   label,
-                  style: const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 13),
+                  style:
+                      const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                 ),
                 Text(
                   value,

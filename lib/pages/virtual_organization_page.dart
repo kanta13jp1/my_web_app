@@ -204,7 +204,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         child: Text(
           '部署がまだありません\n仮想組織を初期化してください',
           textAlign: TextAlign.center,
-          style: TextStyle(color: const Color(0xFF9CA3AF)),
+          style: TextStyle(color: Color(0xFF9CA3AF)),
         ),
       );
     }
@@ -242,7 +242,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       return const Center(
         child: Text(
           'エージェントがいません',
-          style: TextStyle(color: const Color(0xFF9CA3AF)),
+          style: TextStyle(color: Color(0xFF9CA3AF)),
         ),
       );
     }
@@ -273,7 +273,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
                     personality,
                     style: const TextStyle(
                       fontSize: 11,
-                      color: const Color(0xFF9CA3AF),
+                      color: Color(0xFF9CA3AF),
                     ),
                   ),
               ],
@@ -292,11 +292,11 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.assignment, size: 48, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.assignment, size: 48, color: Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
             const Text(
               'タスクがありません',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -337,7 +337,8 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
                 if (createdAt.length >= 10)
                   Text(
                     createdAt.substring(0, 10),
-                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                   ),
               ],
             ),

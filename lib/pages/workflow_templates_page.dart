@@ -111,12 +111,12 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                           Icon(
                             Icons.account_tree_outlined,
                             size: 48,
-                            color: const Color(0xFF9CA3AF),
+                            color: Color(0xFF9CA3AF),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'テンプレートはありません',
-                            style: TextStyle(color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(color: Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),

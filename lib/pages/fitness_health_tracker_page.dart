@@ -314,7 +314,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -341,7 +341,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         subtitle: Text('$duration分 • ${calories}kcal'),
         trailing: Text(
           date.length >= 10 ? date.substring(0, 10) : date,
-          style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
         ),
       ),
     );

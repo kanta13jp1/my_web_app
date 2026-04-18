@@ -245,7 +245,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Card(
-            color: const Color(0xFF009688).shade700,
+            color: const Color(0xFF00796B),
             child: const Padding(
               padding: EdgeInsets.all(12),
               child: Row(
@@ -462,7 +462,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     const SizedBox(height: 8),
                     const Text(
                       '1.0 = 完全一致 / 0.0 = 無相関 / -1.0 = 逆の意味',
-                      style: TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
                       textAlign: TextAlign.center,
                     ),
                   ],

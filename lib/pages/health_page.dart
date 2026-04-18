@@ -120,7 +120,7 @@ class _HealthPageState extends State<HealthPage> {
                     ? const Center(
                         child: Text(
                           '健康ログはまだありません',
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         ),
                       )
                     : ListView.builder(
@@ -138,14 +138,14 @@ class _HealthPageState extends State<HealthPage> {
                             child: ListTile(
                               leading: const Icon(
                                 Icons.directions_run,
-                                color: const Color(0xFF009688),
+                                color: Color(0xFF009688),
                               ),
                               title: Text(item['content'] ?? ''),
                               trailing: Text(
                                 dateStr,
                                 style: const TextStyle(
                                   fontSize: 12,
-                                  color: const Color(0xFF9CA3AF),
+                                  color: Color(0xFF9CA3AF),
                                 ),
                               ),
                             ),

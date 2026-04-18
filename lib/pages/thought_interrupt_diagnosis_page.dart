@@ -35,7 +35,8 @@ class _ThoughtInterruptDiagnosisPageState
         ),
         _DiagOption('video', '動画を見る', Icons.play_circle, Colors.red),
         _DiagOption('manga', '漫画を読む', Icons.menu_book, const Color(0xFF0891B2)),
-        _DiagOption('smartphone', 'スマホを手に取る', Icons.smartphone, const Color(0xFF9CA3AF)),
+        _DiagOption('smartphone', 'スマホを手に取る', Icons.smartphone,
+            const Color(0xFF9CA3AF)),
         _DiagOption('eating_out', '食べ物を探す', Icons.fastfood, Colors.orange),
       ],
     ),
@@ -70,7 +71,8 @@ class _ThoughtInterruptDiagnosisPageState
       question: 'Q3: 1日のうち、最も集中が途切れやすい時間帯は？',
       icon: Icons.access_time,
       options: [
-        _DiagOption('morning', '朝 (6〜9時)', Icons.wb_sunny, const Color(0xFFFFC107)),
+        _DiagOption(
+            'morning', '朝 (6〜9時)', Icons.wb_sunny, const Color(0xFFFFC107)),
         _DiagOption(
           'midday',
           '昼食後 (12〜14時)',
@@ -92,7 +94,8 @@ class _ThoughtInterruptDiagnosisPageState
       question: 'Q4: 集中が途切れる前に気づく「サイン」はありますか？',
       icon: Icons.warning_amber,
       options: [
-        _DiagOption('hand', '手が無意識に動く', Icons.front_hand, const Color(0xFF009688)),
+        _DiagOption(
+            'hand', '手が無意識に動く', Icons.front_hand, const Color(0xFF009688)),
         _DiagOption(
           'eyes',
           '目が泳ぐ・視線が定まらない',
@@ -117,7 +120,8 @@ class _ThoughtInterruptDiagnosisPageState
           Icons.directions_run,
           Colors.orange,
         ),
-        _DiagOption('none', 'サインを感じない', Icons.help_outline, const Color(0xFF9CA3AF)),
+        _DiagOption(
+            'none', 'サインを感じない', Icons.help_outline, const Color(0xFF9CA3AF)),
       ],
     ),
   ];
@@ -234,7 +238,7 @@ class _ThoughtInterruptDiagnosisPageState
         // プログレスバー
         LinearProgressIndicator(
           value: (_currentStep + 1) / _questions.length,
-          backgroundColor: const Color(0xFF9CA3AF).shade200,
+          backgroundColor: const Color(0xFFEEEEEE),
           color: Colors.indigo,
           minHeight: 4,
         ),
@@ -286,7 +290,7 @@ class _ThoughtInterruptDiagnosisPageState
                     backgroundColor: Colors.indigo,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    disabledBackgroundColor: const Color(0xFF9CA3AF).shade300,
+                    disabledBackgroundColor: const Color(0xFFE0E0E0),
                   ),
                   child: _isSaving
                       ? const SizedBox(
@@ -500,7 +504,7 @@ class _OptionCard extends StatelessWidget {
               isSelected ? option.color.withValues(alpha: 0.12) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? option.color : const Color(0xFF9CA3AF).shade300,
+            color: isSelected ? option.color : const Color(0xFFE0E0E0),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected

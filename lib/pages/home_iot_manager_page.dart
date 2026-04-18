@@ -140,9 +140,9 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.devices, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.devices, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('デバイスがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('デバイスがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -182,7 +182,9 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
                 child: ListTile(
                   leading: Icon(
                     _deviceIcon(type),
-                    color: isOn ? const Color(0xFFFFC107) : const Color(0xFF9CA3AF),
+                    color: isOn
+                        ? const Color(0xFFFFC107)
+                        : const Color(0xFF9CA3AF),
                   ),
                   title: Text(name),
                   subtitle: value != null ? Text('$value') : null,
@@ -205,9 +207,9 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.auto_mode, size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.auto_mode, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('自動化ルールがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('自動化ルールがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
           ],
         ),
       );

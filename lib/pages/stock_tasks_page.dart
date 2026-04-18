@@ -260,7 +260,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
               border: Border.all(
                 color: _isSaturday
                     ? const Color(0xFFFFC107)
-                    : const Color(0xFF009688).shade200,
+                    : const Color(0xFF80CBC4),
               ),
             ),
             child: Column(
@@ -342,8 +342,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                               child: Text(
                                 '思考ネタや行動タスクを\nストックしておきましょう',
                                 textAlign: TextAlign.center,
-                                style:
-                                    TextStyle(color: const Color(0xFF9CA3AF)),
+                                style: TextStyle(color: Color(0xFF9CA3AF)),
                               ),
                             ),
                           ),
@@ -358,7 +357,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                             padding: EdgeInsets.symmetric(horizontal: 8),
                             child: Text(
                               '完了済み',
-                              style: TextStyle(color: const Color(0xFF9CA3AF)),
+                              style: TextStyle(color: Color(0xFF9CA3AF)),
                             ),
                           ),
                           const Divider(),
@@ -423,7 +422,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   icon: const Icon(
                     Icons.add_circle,
                     size: 32,
-                    color: const Color(0xFF009688),
+                    color: Color(0xFF009688),
                   ),
                   onPressed: _addTask,
                 ),

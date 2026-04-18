@@ -27,7 +27,7 @@ class _CmoPageState extends State<CmoPage> {
   bool _isLoading = false;
   Map<String, dynamic>? _pressRelease;
 
-  final Color _purple = const Color(0xFF7C3AED);
+  const Color _purple = Color(0xFF7C3AED);
 
   @override
   void initState() {

@@ -420,17 +420,17 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             const Icon(
               Icons.view_timeline_outlined,
               size: 64,
-              color: const Color(0xFF9CA3AF),
+              color: Color(0xFF9CA3AF),
             ),
             const SizedBox(height: 16),
             const Text(
               'プロジェクトがありません',
-              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 8),
             const Text(
               'ガントチャートで進捗を可視化しましょう',
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -495,7 +495,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   Text(
                     '${startDate != null ? _formatDate(startDate) : "?"} 〜 ${endDate != null ? _formatDate(endDate) : "?"}',
                     style: const TextStyle(
-                        fontSize: 12, color: const Color(0xFF9CA3AF)),
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                    ),
                   ),
                 Text(
                   'タスク: $taskCount件',
@@ -522,12 +524,15 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.view_timeline_outlined,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(
+              Icons.view_timeline_outlined,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 16),
             Text(
               'プロジェクトを選択してください',
-              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -546,8 +551,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             if (_milestones.isNotEmpty) ...[
               Row(
                 children: [
-                  const Icon(Icons.flag,
-                      color: const Color(0xFFFFC107), size: 20),
+                  const Icon(
+                    Icons.flag,
+                    color: Color(0xFFFFC107),
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'マイルストーン (${_milestones.length}件)',
@@ -593,7 +601,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   child: Text(
                     'タスクがありません\n右上の＋ボタンから追加してください',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: const Color(0xFF9CA3AF)),
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
                   ),
                 ),
               )
@@ -618,12 +626,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isPast ? Colors.red.shade50 : const Color(0xFFFFC107).shade50,
+      color: isPast ? Colors.red.shade50 : const Color(0xFFFFF8E1),
       child: ListTile(
         dense: true,
         leading: Icon(
           Icons.flag,
-          color: isPast ? Colors.red : const Color(0xFFFFC107).shade700,
+          color: isPast ? Colors.red : const Color(0xFFFFA000),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: dueDate != null
@@ -632,13 +640,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   _formatDate(dueDate),
                   style: TextStyle(
                     fontSize: 12,
-                    color:
-                        isPast ? Colors.red : const Color(0xFFFFC107).shade800,
+                    color: isPast ? Colors.red : const Color(0xFFFF8F00),
                   ),
                 ),
-                backgroundColor: isPast
-                    ? Colors.red.shade100
-                    : const Color(0xFFFFC107).shade100,
+                backgroundColor:
+                    isPast ? Colors.red.shade100 : const Color(0xFFFFECB3),
               )
             : null,
       ),
@@ -735,7 +741,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 Text(
                   startDate != null ? _formatDate(startDate) : '未設定',
                   style: const TextStyle(
-                      fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Icon(
@@ -747,7 +755,9 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                 Text(
                   '$durationDays日間',
                   style: const TextStyle(
-                      fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -772,12 +782,15 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(
+              Icons.account_tree_outlined,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 16),
             Text(
               'プロジェクトを選択してください',
-              style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
             ),
           ],
         ),
@@ -833,7 +846,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             child: Text(
               'タスクが登録されていません\nタイムラインタブからタスクを追加してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: const Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF)),
             ),
           )
         else

@@ -426,7 +426,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                           '#$t',
                           style: const TextStyle(
                             fontSize: 10,
-                            color: const Color(0xFF009688),
+                            color: Color(0xFF009688),
                           ),
                         ),
                       ),

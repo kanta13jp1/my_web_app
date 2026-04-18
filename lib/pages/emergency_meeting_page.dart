@@ -2751,7 +2751,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         'なんとなくやりたいことへの逃避を先に塞ぎ、'
                         'なんとなくやりたくない必須行動へ戻すための48時間プランを提示します。',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: const Color(0xFF9CA3AF)),
+                        style: TextStyle(color: Color(0xFF9CA3AF)),
                       ),
                       const SizedBox(height: 24),
                       Align(
@@ -2906,7 +2906,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     const SizedBox(height: 8),
                     const Text(
                       '継続と禁欲の打ち手を組み立てています...',
-                      style: TextStyle(color: const Color(0xFF9CA3AF)),
+                      style: TextStyle(color: Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),
@@ -3545,7 +3545,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       ? Icons.push_pin
                       : Icons.push_pin_outlined,
                   color: i == _selectedContinuationPriorityIndex
-                      ? const Color(0xFFFFC107)Accent
+                      ? const Color(0xFFFFC107)Accent,
                       : Colors.white54,
                 ),
                 tooltip: '今日の最重要1件に固定',
@@ -3868,12 +3868,12 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.query_stats, color: const Color(0xFFFFC107), size: 18),
+              Icon(Icons.query_stats, color: Color(0xFFFFC107), size: 18),
               SizedBox(width: 8),
               Text(
                 '次回会議の検証指標',
                 style: TextStyle(
-                  color: const Color(0xFFFFC107),
+                  color: Color(0xFFFFC107),
                   fontWeight: FontWeight.bold,
                 ),
               ),
