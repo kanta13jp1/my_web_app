@@ -185,7 +185,7 @@ class _CompetitorProgressGrid extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: pct / 100,
                       minHeight: 8,
-                      backgroundColor: Color(0xFFB0B0B0).withAlpha(40),
+                      backgroundColor: const Color(0xFFB0B0B0).withAlpha(40),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         pct >= 80
                             ? Colors.green

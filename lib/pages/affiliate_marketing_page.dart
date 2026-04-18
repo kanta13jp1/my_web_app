@@ -94,8 +94,10 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
           value,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        Text(label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+        ),
       ],
     );
   }

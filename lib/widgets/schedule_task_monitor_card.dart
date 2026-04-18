@@ -250,7 +250,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     Icon(
                       _showTriggers ? Icons.expand_less : Icons.expand_more,
                       size: 16,
-                      color: Color(0xFFB0B0B0),
+                      color: const Color(0xFFB0B0B0),
                     ),
                   ],
                 ),
@@ -272,7 +272,9 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                   '実行ログ (${_tasks.length}タスク)',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                    color: isDark
+                        ? const Color(0xFFBDBDBD)
+                        : const Color(0xFF757575),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -348,7 +350,9 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     '${trigger.schedule}  |  ${trigger.description}',
                     style: TextStyle(
                       fontSize: 10,
-                      color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                      color: isDark
+                          ? const Color(0xFFBDBDBD)
+                          : const Color(0xFF757575),
                     ),
                   ),
                 ],
@@ -467,7 +471,9 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                         '${task.def.schedule}  |  最終: $lastRunStr',
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                          color: isDark
+                              ? const Color(0xFFBDBDBD)
+                              : const Color(0xFF757575),
                         ),
                       ),
                     ],
@@ -499,7 +505,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                       Icon(
                         isExpanded ? Icons.expand_less : Icons.expand_more,
                         size: 16,
-                        color: Color(0xFFB0B0B0),
+                        color: const Color(0xFFB0B0B0),
                       ),
                     ],
                   ],
@@ -587,7 +593,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       case 'skipped':
         return Colors.orange;
       default:
-        return Color(0xFFB0B0B0);
+        return const Color(0xFFB0B0B0);
     }
   }
 

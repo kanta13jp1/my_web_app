@@ -439,7 +439,7 @@ class _PrTile extends StatelessWidget {
       case 'merged':
         return const Color(0xFF8957E5);
       default:
-        return Color(0xFFB0B0B0);
+        return const Color(0xFFB0B0B0);
     }
   }
 

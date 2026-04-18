@@ -138,7 +138,7 @@ class BoardMeetingDialog extends StatelessWidget {
       case 'CFO':
         return Colors.green;
       default:
-        return Color(0xFFB0B0B0);
+        return const Color(0xFFB0B0B0);
     }
   }
 }

@@ -121,7 +121,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                     child: LinearProgressIndicator(
                       value: pct,
                       minHeight: 5,
-                      backgroundColor: Color(0xFFB0B0B0).withAlpha(40),
+                      backgroundColor: const Color(0xFFB0B0B0).withAlpha(40),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         allDone ? Colors.green : Colors.orange,
                       ),

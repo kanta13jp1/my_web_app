@@ -435,8 +435,10 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (description.isNotEmpty) ...[
-                  Text(description,
-                      style: const TextStyle(color: Color(0xFFB0B0B0))),
+                  Text(
+                    description,
+                    style: const TextStyle(color: Color(0xFFB0B0B0)),
+                  ),
                   const SizedBox(height: 8),
                 ],
                 if (milestones.isNotEmpty) ...[

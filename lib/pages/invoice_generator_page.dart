@@ -109,7 +109,8 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
               color: isDark ? const Color(0xFF303030) : const Color(0xFFFAFAFA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? const Color(0xFF616161) : const Color(0xFFEEEEEE),
+                color:
+                    isDark ? const Color(0xFF616161) : const Color(0xFFEEEEEE),
               ),
             ),
             child: Column(
@@ -181,8 +182,9 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
                             Icon(
                               Icons.receipt_long,
                               size: 48,
-                              color:
-                                  isDark ? const Color(0xFF757575) : const Color(0xFFBDBDBD),
+                              color: isDark
+                                  ? const Color(0xFF757575)
+                                  : const Color(0xFFBDBDBD),
                             ),
                             const SizedBox(height: 8),
                             Text(

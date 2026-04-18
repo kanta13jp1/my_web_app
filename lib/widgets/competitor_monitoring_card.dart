@@ -209,7 +209,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
               '${ms}ms',
               style: TextStyle(
                 fontSize: 12,
-                color: ms > 2000 ? Colors.orange : Color(0xFFB0B0B0),
+                color: ms > 2000 ? Colors.orange : const Color(0xFFB0B0B0),
               ),
             ),
           const SizedBox(width: 8),

@@ -231,7 +231,9 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                 '毎日のアクセスでグラフが描かれていきます',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                  color: isDark
+                      ? const Color(0xFF9E9E9E)
+                      : const Color(0xFFBDBDBD),
                 ),
               ),
             ],

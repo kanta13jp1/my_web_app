@@ -154,7 +154,8 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
               'タスクをこなしてポイントを獲得しましょう',
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                color:
+                    isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
               ),
             ),
             const SizedBox(height: 12),
@@ -259,7 +260,7 @@ class _ChallengeRow extends StatelessWidget {
         border: Border.all(
           color: isCompleted
               ? Colors.green.withAlpha(60)
-              : Color(0xFFB0B0B0).withAlpha(40),
+              : const Color(0xFFB0B0B0).withAlpha(40),
         ),
       ),
       child: Column(
@@ -270,7 +271,7 @@ class _ChallengeRow extends StatelessWidget {
               Icon(
                 isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
                 size: 16,
-                color: isCompleted ? Colors.green : Color(0xFFB0B0B0),
+                color: isCompleted ? Colors.green : const Color(0xFFB0B0B0),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -280,7 +281,7 @@ class _ChallengeRow extends StatelessWidget {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
-                    color: isCompleted ? Color(0xFFB0B0B0) : null,
+                    color: isCompleted ? const Color(0xFFB0B0B0) : null,
                   ),
                 ),
               ),
@@ -307,7 +308,8 @@ class _ChallengeRow extends StatelessWidget {
               challenge.challengeDescription,
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                color:
+                    isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
               ),
             ),
           ],
@@ -320,7 +322,7 @@ class _ChallengeRow extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: pct,
                     minHeight: 6,
-                    backgroundColor: Color(0xFFB0B0B0).withAlpha(40),
+                    backgroundColor: const Color(0xFFB0B0B0).withAlpha(40),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       isCompleted ? Colors.green : const Color(0xFF6366F1),
                     ),
@@ -332,7 +334,9 @@ class _ChallengeRow extends StatelessWidget {
                 '$progress/${challenge.targetValue}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                  color: isDark
+                      ? const Color(0xFFBDBDBD)
+                      : const Color(0xFF757575),
                 ),
               ),
               if (isCompleted && !rewardClaimed) ...[

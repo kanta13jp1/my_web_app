@@ -267,7 +267,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                 ? Colors.deepOrange
                 : _currentStreak >= 3
                     ? Colors.orange
-                    : Color(0xFFB0B0B0),
+                    : const Color(0xFFB0B0B0),
           ),
         ),
         const SizedBox(width: 8),

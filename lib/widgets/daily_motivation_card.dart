@@ -140,7 +140,9 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                       '(${quote.authorDescription})',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                        color: isDark
+                            ? const Color(0xFFBDBDBD)
+                            : const Color(0xFF757575),
                       ),
                     ),
                   ],

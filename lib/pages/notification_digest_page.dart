@@ -113,14 +113,17 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                           Icon(
                             Icons.notifications_none,
                             size: 48,
-                            color: isDark ? const Color(0xFF757575) : const Color(0xFFBDBDBD),
+                            color: isDark
+                                ? const Color(0xFF757575)
+                                : const Color(0xFFBDBDBD),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'ダイジェストデータがありません',
                             style: TextStyle(
-                              color:
-                                  isDark ? const Color(0xFF9E9E9E) : const Color(0xFF757575),
+                              color: isDark
+                                  ? const Color(0xFF9E9E9E)
+                                  : const Color(0xFF757575),
                             ),
                           ),
                         ],
@@ -209,7 +212,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                           ? Icons.notifications_none
                                           : Icons.notifications,
                                       color: n['is_read'] == true
-                                          ? Color(0xFFB0B0B0)
+                                          ? const Color(0xFFB0B0B0)
                                           : const Color(0xFF6366F1),
                                     ),
                                     title: Text(

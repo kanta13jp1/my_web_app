@@ -106,7 +106,9 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                           Text(
                             '予約はありません',
                             style: TextStyle(
-                                fontSize: 16, color: Color(0xFFB0B0B0)),
+                              fontSize: 16,
+                              color: Color(0xFFB0B0B0),
+                            ),
                           ),
                         ],
                       ),

@@ -193,7 +193,9 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                     _streakLabel,
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                      color: isDark
+                          ? const Color(0xFFBDBDBD)
+                          : const Color(0xFF757575),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -218,7 +220,9 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                         '次: $_nextMilestone日',
                         style: TextStyle(
                           fontSize: 10,
-                          color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                          color: isDark
+                              ? const Color(0xFFBDBDBD)
+                              : const Color(0xFF757575),
                         ),
                       ),
                     ],

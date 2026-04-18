@@ -262,7 +262,9 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 '未設定: ${missingFields.map((f) => f.label).join(' / ')}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF9CA3AF),
+                  color: isDark
+                      ? const Color(0xFFBDBDBD)
+                      : const Color(0xFF9CA3AF),
                 ),
               ),
             ],

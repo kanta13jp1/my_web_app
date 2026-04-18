@@ -98,7 +98,9 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
                   'ノート数',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                    color: isDark
+                        ? const Color(0xFFBDBDBD)
+                        : const Color(0xFF757575),
                   ),
                 ),
               ],

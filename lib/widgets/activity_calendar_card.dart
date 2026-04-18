@@ -163,7 +163,9 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '$_totalDays日 アクティブ',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                    color: isDark
+                        ? const Color(0xFFBDBDBD)
+                        : const Color(0xFF757575),
                   ),
                 ),
               ],
@@ -224,8 +226,9 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color:
-                          isDark ? const Color(0xFFE0E0E0) : const Color(0xFF374151),
+                      color: isDark
+                          ? const Color(0xFFE0E0E0)
+                          : const Color(0xFF374151),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -246,7 +249,9 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   'なし',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                    color: isDark
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFFBDBDBD),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -263,7 +268,9 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '少',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                    color: isDark
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFFBDBDBD),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -280,7 +287,9 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                   '多',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                    color: isDark
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFFBDBDBD),
                   ),
                 ),
               ],

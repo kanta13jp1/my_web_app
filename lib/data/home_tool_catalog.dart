@@ -388,7 +388,7 @@ List<HomeToolEntry> buildHomeToolCatalog({
       title: '設定',
       subtitle: 'テーマ・プロフィール・資産・フィードバックを管理する',
       icon: Icons.settings_outlined,
-      color: Color(0xFFB0B0B0),
+      color: const Color(0xFFB0B0B0),
       keywords: const <String>['設定', 'settings', 'テーマ', 'プロフィール', 'フィードバック'],
       onOpen: (context) => _pushPage(context, const SettingsPage()),
     ),

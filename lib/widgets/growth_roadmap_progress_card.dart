@@ -2879,7 +2879,7 @@ class _FeatureRowTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark
             ? const Color(0xFF0F172A).withValues(alpha: 0.4)
-            : Color(0xFFB0B0B0).withValues(alpha: 0.03),
+            : const Color(0xFFB0B0B0).withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: row.status == _FeatureStatus.unique

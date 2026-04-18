@@ -313,7 +313,9 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                   'タスクなし',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                    color: isDark
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFFBDBDBD),
                   ),
                 ),
               ),

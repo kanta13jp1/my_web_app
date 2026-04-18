@@ -212,7 +212,9 @@ class _YoutubeChannelAnalyticsCardState
                           '${widget.channelName}  ${widget.channelHandle}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                            color: isDark
+                                ? const Color(0xFFBDBDBD)
+                                : const Color(0xFF757575),
                           ),
                         ),
                       ],
@@ -236,7 +238,7 @@ class _YoutubeChannelAnalyticsCardState
                   ),
                   Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: Color(0xFFB0B0B0),
+                    color: const Color(0xFFB0B0B0),
                   ),
                 ],
               ),
@@ -379,7 +381,8 @@ class _YoutubeChannelAnalyticsCardState
               'ソート:',
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                color:
+                    isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
               ),
             ),
             const SizedBox(width: 8),
@@ -413,7 +416,7 @@ class _YoutubeChannelAnalyticsCardState
                       border: Border.all(
                         color: active
                             ? const Color(0xFF6366F1)
-                            : Color(0xFFB0B0B0).withAlpha(60),
+                            : const Color(0xFFB0B0B0).withAlpha(60),
                       ),
                     ),
                     child: Text(
@@ -424,7 +427,9 @@ class _YoutubeChannelAnalyticsCardState
                             active ? FontWeight.bold : FontWeight.normal,
                         color: active
                             ? const Color(0xFF6366F1)
-                            : (isDark ? const Color(0xFFBDBDBD) : const Color(0xFF616161)),
+                            : (isDark
+                                ? const Color(0xFFBDBDBD)
+                                : const Color(0xFF616161)),
                       ),
                     ),
                   ),
@@ -448,7 +453,9 @@ class _YoutubeChannelAnalyticsCardState
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF616161),
+                      color: isDark
+                          ? const Color(0xFFBDBDBD)
+                          : const Color(0xFF616161),
                     ),
                   ),
                 ),
@@ -460,7 +467,9 @@ class _YoutubeChannelAnalyticsCardState
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF616161),
+                            color: isDark
+                                ? const Color(0xFFBDBDBD)
+                                : const Color(0xFF616161),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -545,7 +554,9 @@ class _YoutubeChannelAnalyticsCardState
                       video.performers.replaceAll('\n', ' / '),
                       style: TextStyle(
                         fontSize: 10,
-                        color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                        color: isDark
+                            ? const Color(0xFFBDBDBD)
+                            : const Color(0xFF757575),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -572,7 +583,8 @@ class _YoutubeChannelAnalyticsCardState
                     ? const Center(
                         child: Text(
                           '—',
-                          style: TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
+                          style:
+                              TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
                         ),
                       )
                     : Column(

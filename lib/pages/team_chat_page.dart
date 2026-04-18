@@ -343,8 +343,8 @@ class _MessageInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: const Color(0xFFEEEEEE))),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
       ),
       child: Row(
         children: [

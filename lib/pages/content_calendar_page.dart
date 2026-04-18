@@ -175,7 +175,9 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                       Text(
                         _error!,
                         style: const TextStyle(
-                            fontSize: 11, color: Color(0xFFB0B0B0)),
+                          fontSize: 11,
+                          color: Color(0xFFB0B0B0),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],

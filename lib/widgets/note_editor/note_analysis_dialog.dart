@@ -121,6 +121,6 @@ class NoteAnalysisDialog extends StatelessWidget {
   Color _getSentimentColor(String sentiment) {
     if (sentiment.contains('positive')) return Colors.green;
     if (sentiment.contains('negative')) return Colors.red;
-    return Color(0xFFB0B0B0);
+    return const Color(0xFFB0B0B0);
   }
 }

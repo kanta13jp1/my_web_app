@@ -672,7 +672,7 @@ class _MindMapPageState extends State<MindMapPage> {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFFB0B0B0).withValues(alpha: 0.3),
+            color: const Color(0xFFB0B0B0).withValues(alpha: 0.3),
             spreadRadius: 1,
             blurRadius: 3,
           ),

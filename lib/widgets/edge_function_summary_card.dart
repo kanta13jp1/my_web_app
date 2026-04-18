@@ -327,7 +327,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                           '全 ${_functions.length} 件  |  UI 実装済: $_withUiCount 件  |  UI未実装: $_noUiCount 件  ($pct%)',
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                            color: isDark
+                                ? const Color(0xFFBDBDBD)
+                                : const Color(0xFF757575),
                           ),
                         ),
                       ],
@@ -353,8 +355,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                           child: LinearProgressIndicator(
                             value: _withUiCount / _functions.length,
                             minHeight: 6,
-                            backgroundColor:
-                                isDark ? const Color(0xFF424242) : const Color(0xFFEEEEEE),
+                            backgroundColor: isDark
+                                ? const Color(0xFF424242)
+                                : const Color(0xFFEEEEEE),
                             valueColor: const AlwaysStoppedAnimation<Color>(
                               Color(0xFF6366F1),
                             ),
@@ -369,7 +372,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
                     size: 20,
-                    color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                    color: isDark
+                        ? const Color(0xFFBDBDBD)
+                        : const Color(0xFF757575),
                   ),
                 ],
               ),
@@ -434,7 +439,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                           fn.description,
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                            color: isDark
+                                ? const Color(0xFFBDBDBD)
+                                : const Color(0xFF757575),
                           ),
                         ),
                       ],
@@ -478,7 +485,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                   '他 ${_withUiCount - 8} 件 → 詳細は Edge Functions 状況ページへ',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF9E9E9E),
+                    color: isDark
+                        ? const Color(0xFF9E9E9E)
+                        : const Color(0xFF9E9E9E),
                   ),
                 ),
               ),
@@ -527,7 +536,8 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
               fn.uiInstruction ?? '',
               style: TextStyle(
                 fontSize: 11,
-                color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                color:
+                    isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
               ),
             ),
           ),

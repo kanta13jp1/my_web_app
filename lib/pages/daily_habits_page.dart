@@ -655,7 +655,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         fontSize: 14,
                         decoration:
                             isCompleted ? TextDecoration.lineThrough : null,
-                        color: isCompleted ? Color(0xFFB0B0B0) : null,
+                        color: isCompleted ? const Color(0xFFB0B0B0) : null,
                       ),
                     ),
                     if (desc != null && desc.isNotEmpty)

@@ -130,13 +130,13 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       style: pw.TextStyle(
                         font: ttfRegular,
                         fontSize: 10,
-                        color: PdfColor(0xFFB0B0B0)700,
+                        color: PdfColors.grey700,
                       ),
                       textAlign: pw.TextAlign.right,
                     ),
                   ],
                 ),
-                pw.Divider(color: PdfColor(0xFFB0B0B0)300),
+                pw.Divider(color: PdfColors.grey300),
                 pw.SizedBox(height: 10),
                 pw.Expanded(
                   child: pw.Column(
@@ -149,7 +149,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       if (pieChartPdfImage != null)
                         pw.Padding(
                           padding: const pw.EdgeInsets.symmetric(vertical: 8),
-                          child: pw.Divider(color: PdfColor(0xFFB0B0B0)400),
+                          child: pw.Divider(color: PdfColors.grey400),
                         ),
                       pw.Expanded(
                         flex: 3,
@@ -159,7 +159,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   ),
                 ),
                 pw.SizedBox(height: 10),
-                pw.Divider(color: PdfColor(0xFFB0B0B0)300),
+                pw.Divider(color: PdfColors.grey300),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -170,7 +170,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       style: pw.TextStyle(
                         font: ttfRegular,
                         fontSize: 8,
-                        color: PdfColor(0xFFB0B0B0)500,
+                        color: PdfColors.grey500,
                       ),
                     ),
                   ],
@@ -635,8 +635,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   subtitle: Text(
                     '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',
                   ),
-                  trailing:
-                      const Icon(Icons.edit, size: 16, color: Color(0xFFB0B0B0)),
+                  trailing: const Icon(Icons.edit,
+                      size: 16, color: Color(0xFFB0B0B0)),
                   onTap: () async {
                     try {
                       final supabase = Supabase.instance.client;

@@ -162,8 +162,10 @@ class _FinancialReportPageState extends State<FinancialReportPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title,
-              style: const TextStyle(fontSize: 16, color: Color(0xFFB0B0B0))),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
+          ),
           Text(
             value,
             style: TextStyle(

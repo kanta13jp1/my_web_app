@@ -217,7 +217,9 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                 '→ 自動で部署に振り分け',
                 style: TextStyle(
                   fontSize: 10,
-                  color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFF9E9E9E),
+                  color: isDark
+                      ? const Color(0xFF9E9E9E)
+                      : const Color(0xFF9E9E9E),
                 ),
               ),
             ],
@@ -232,7 +234,9 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                     hintText: '例: 来週のブログを準備する / 広告費の見直し',
                     hintStyle: TextStyle(
                       fontSize: 12,
-                      color: isDark ? const Color(0xFF9E9E9E) : const Color(0xFFBDBDBD),
+                      color: isDark
+                          ? const Color(0xFF9E9E9E)
+                          : const Color(0xFFBDBDBD),
                     ),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
