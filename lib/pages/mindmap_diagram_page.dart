@@ -98,14 +98,14 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                           Icon(
                             Icons.account_tree,
                             size: 64,
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                           ),
                           SizedBox(height: 16),
                           Text(
                             'マインドマップがありません',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey,
+                              color: Color(0xFFB0B0B0),
                             ),
                           ),
                         ],

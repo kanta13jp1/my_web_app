@@ -751,7 +751,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       const SizedBox(height: 4),
                       Text(
                         '${_weeklyDigest.currentWeekStart} – ${_weeklyDigest.currentWeekEnd}',
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: Color(0xFFB0B0B0)),
                       ),
                     ],
                     const SizedBox(height: 12),

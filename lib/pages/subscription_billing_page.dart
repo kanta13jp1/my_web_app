@@ -169,7 +169,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Color(0xFFB0B0B0)),
             ),
           ),
           Expanded(child: Text(value)),

@@ -229,11 +229,11 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
   Widget _buildWeatherDetail(IconData icon, String label, String value) {
     return Column(
       children: [
-        Icon(icon, size: 20, color: Colors.grey),
+        Icon(icon, size: 20, color: Color(0xFFB0B0B0)),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
+          style: const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
         ),
         Text(
           value,

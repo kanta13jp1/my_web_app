@@ -226,7 +226,7 @@ class _SummaryTab extends StatelessWidget {
                     LinearProgressIndicator(
                       value:
                           (data!['goal_progress'] as num?)?.toDouble() ?? 0.0,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: Color(0xFFB0B0B0).shade200,
                       color: Colors.green,
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(4),

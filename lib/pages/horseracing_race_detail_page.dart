@@ -459,7 +459,9 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     decoration: BoxDecoration(
                       color: frameColor,
                       borderRadius: BorderRadius.circular(4),
-                      border: waku == 1 ? Border.all(color: Colors.grey) : null,
+                      border: waku == 1
+                          ? Border.all(color: Color(0xFFB0B0B0))
+                          : null,
                     ),
                     alignment: Alignment.center,
                     child: Text(

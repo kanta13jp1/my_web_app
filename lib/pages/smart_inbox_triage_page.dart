@@ -105,11 +105,11 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.inbox, size: 48, color: Colors.grey),
+                          Icon(Icons.inbox, size: 48, color: Color(0xFFB0B0B0)),
                           SizedBox(height: 8),
                           Text(
                             '受信メッセージはありません',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: Color(0xFFB0B0B0)),
                           ),
                         ],
                       ),

@@ -185,7 +185,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
   Widget _buildPagesTab() {
     if (_pages.isEmpty) {
       return const Center(
-        child: Text('ページデータがありません', style: TextStyle(color: Colors.grey)),
+        child: Text('ページデータがありません', style: TextStyle(color: Color(0xFFB0B0B0))),
       );
     }
     return ListView.builder(
@@ -234,7 +234,8 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
                 const SizedBox(height: 4),
                 Text(
                   '直帰率: ${bounce.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
                 ),
               ],
             ),

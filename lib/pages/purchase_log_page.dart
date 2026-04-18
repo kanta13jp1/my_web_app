@@ -468,7 +468,9 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                       price != null ? '$name ¥${fmt.format(price)}' : name,
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDark ? Colors.grey[300] : Colors.grey[600],
+                        color: isDark
+                            ? Color(0xFFB0B0B0)[300]
+                            : Color(0xFFB0B0B0)[600],
                       ),
                     ),
                   );

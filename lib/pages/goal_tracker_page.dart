@@ -270,7 +270,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                           const Icon(
                             Icons.check_circle_outline,
                             size: 16,
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                           ),
                           const SizedBox(width: 8),
                           Expanded(child: Text(m)),
@@ -435,7 +435,8 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (description.isNotEmpty) ...[
-                  Text(description, style: const TextStyle(color: Colors.grey)),
+                  Text(description,
+                      style: const TextStyle(color: Color(0xFFB0B0B0))),
                   const SizedBox(height: 8),
                 ],
                 if (milestones.isNotEmpty) ...[

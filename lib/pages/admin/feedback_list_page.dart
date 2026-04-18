@@ -122,7 +122,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
       case 'implemented':
         return Colors.green;
       default:
-        return Colors.grey;
+        return Color(0xFFB0B0B0);
     }
   }
 

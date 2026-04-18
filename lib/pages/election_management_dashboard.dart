@@ -524,7 +524,7 @@ class _ElectionManagementDashboardState
                         child: Text(
                           w,
                           style: const TextStyle(
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                             fontSize: 12,
                           ),
                         ),

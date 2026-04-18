@@ -444,7 +444,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             const Text(
               '毎日やることを登録して\n習慣化しましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -655,7 +655,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         fontSize: 14,
                         decoration:
                             isCompleted ? TextDecoration.lineThrough : null,
-                        color: isCompleted ? Colors.grey : null,
+                        color: isCompleted ? Color(0xFFB0B0B0) : null,
                       ),
                     ),
                     if (desc != null && desc.isNotEmpty)

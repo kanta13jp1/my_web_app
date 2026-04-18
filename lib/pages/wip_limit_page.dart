@@ -28,7 +28,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
     ('🔧', 'スキル習得', Colors.orange),
     ('📝', '資格・試験', Colors.blue),
     ('🏋️', 'トレーニング', Colors.green),
-    ('🗂️', 'その他', Colors.grey),
+    ('🗂️', 'その他', Color(0xFFB0B0B0)),
   ];
 
   @override

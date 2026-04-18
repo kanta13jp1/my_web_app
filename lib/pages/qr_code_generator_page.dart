@@ -142,7 +142,7 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
+                    border: Border.all(color: Color(0xFFB0B0B0)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

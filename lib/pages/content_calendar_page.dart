@@ -174,8 +174,8 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                       const SizedBox(height: 4),
                       Text(
                         _error!,
-                        style:
-                            const TextStyle(fontSize: 11, color: Colors.grey),
+                        style: const TextStyle(
+                            fontSize: 11, color: Color(0xFFB0B0B0)),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -312,7 +312,8 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                 ),
                 Text(
                   item['status'] as String? ?? 'planned',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style:
+                      const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
                 ),
               ],
             ),

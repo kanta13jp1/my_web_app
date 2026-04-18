@@ -106,7 +106,7 @@ class _DevelopmentAchievementsPageState
                                 '',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Colors.grey,
+                              color: Color(0xFFB0B0B0),
                             ),
                           ),
                         );

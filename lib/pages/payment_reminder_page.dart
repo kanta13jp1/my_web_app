@@ -418,7 +418,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             const Text(
               '毎月の支払いを登録して\n忘れずにリマインドしましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(

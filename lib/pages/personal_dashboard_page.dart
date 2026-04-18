@@ -153,12 +153,12 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.grey,
+                        color: Color(0xFFB0B0B0),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.grey),
+                        style: const TextStyle(color: Color(0xFFB0B0B0)),
                       ),
                     ],
                   ),

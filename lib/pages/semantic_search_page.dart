@@ -118,12 +118,12 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                 Icon(
                                   Icons.manage_search,
                                   size: 48,
-                                  color: Colors.grey,
+                                  color: Color(0xFFB0B0B0),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
                                   'キーワードを入力して検索してください',
-                                  style: TextStyle(color: Colors.grey),
+                                  style: TextStyle(color: Color(0xFFB0B0B0)),
                                 ),
                               ],
                             ),

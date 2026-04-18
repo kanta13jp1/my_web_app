@@ -61,7 +61,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                   label,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
+                    color: Color(0xFFB0B0B0),
                   ),
                 ),
               ],

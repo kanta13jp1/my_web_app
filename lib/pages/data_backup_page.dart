@@ -266,7 +266,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
               subtitle: Text(b['targets']?.toString() ?? '全データ'),
               trailing: Text(
                 b['size_kb'] != null ? '${b['size_kb']} KB' : '',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
               ),
             ),
           ),

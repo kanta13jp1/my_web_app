@@ -92,7 +92,7 @@ class _TravelItineraryPlannerPageState
                           const Icon(
                             Icons.flight_takeoff,
                             size: 64,
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                           ),
                           const SizedBox(height: 16),
                           const Text('旅行プランがありません'),

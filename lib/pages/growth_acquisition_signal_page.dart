@@ -131,7 +131,8 @@ class _GrowthAcquisitionSignalPageState
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: selected ? Colors.green : Colors.grey,
+                                color:
+                                    selected ? Colors.green : Color(0xFFB0B0B0),
                                 width: 2,
                               ),
                             ),
@@ -165,7 +166,7 @@ class _GrowthAcquisitionSignalPageState
                                   signal,
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey,
+                                    color: Color(0xFFB0B0B0),
                                   ),
                                 ),
                               ],

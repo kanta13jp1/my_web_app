@@ -620,7 +620,7 @@ class _TableDataPageState extends State<TableDataPage> {
             const Icon(
               Icons.table_chart_outlined,
               size: 64,
-              color: Colors.grey,
+              color: Color(0xFFB0B0B0),
             ),
             const SizedBox(height: 16),
             const Text(

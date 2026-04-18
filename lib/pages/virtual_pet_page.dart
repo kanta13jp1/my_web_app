@@ -160,7 +160,8 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                             if (_pet!['level'] != null)
                               Text(
                                 'Lv. ${_pet!['level']}',
-                                style: const TextStyle(color: Colors.grey),
+                                style:
+                                    const TextStyle(color: Color(0xFFB0B0B0)),
                               ),
                             const SizedBox(height: 16),
                             _buildStatBar('空腹', _pet!['hunger'], Colors.orange),

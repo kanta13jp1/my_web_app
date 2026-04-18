@@ -99,14 +99,14 @@ class _FamilySharingManagerPageState extends State<FamilySharingManagerPage> {
                           Icon(
                             Icons.family_restroom,
                             size: 64,
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                           ),
                           SizedBox(height: 16),
                           Text(
                             'ファミリーメンバーがいません',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.grey,
+                              color: Color(0xFFB0B0B0),
                             ),
                           ),
                         ],

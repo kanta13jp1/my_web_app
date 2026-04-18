@@ -226,7 +226,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
               const SizedBox(height: 4),
               Text(
                 _error!,
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style: const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
               ),
             ],
           ),
@@ -267,7 +267,7 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
               ),
               trailing: Text(
                 (r['recorded_at'] as String? ?? '').substring(0, 10),
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                style: const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
               ),
             ),
           ),

@@ -267,7 +267,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                 ? Colors.deepOrange
                 : _currentStreak >= 3
                     ? Colors.orange
-                    : Colors.grey,
+                    : Color(0xFFB0B0B0),
           ),
         ),
         const SizedBox(width: 8),
@@ -406,7 +406,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             Container(
                               height: 18,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
+                                color: Color(0xFFB0B0B0).shade200,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),

@@ -93,7 +93,7 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                       if (d == null)
                         const Text(
                           'データがありません',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: Color(0xFFB0B0B0)),
                         )
                       else ...[
                         Card(

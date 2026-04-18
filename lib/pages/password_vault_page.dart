@@ -122,9 +122,10 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock, size: 64, color: Colors.grey),
+            Icon(Icons.lock, size: 64, color: Color(0xFFB0B0B0)),
             SizedBox(height: 12),
-            Text('保存されたパスワードがありません', style: TextStyle(color: Colors.grey)),
+            Text('保存されたパスワードがありません',
+                style: TextStyle(color: Color(0xFFB0B0B0))),
           ],
         ),
       );
