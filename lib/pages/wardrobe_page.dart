@@ -537,8 +537,11 @@ class _WardrobePageState extends State<WardrobePage>
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.delete,
-                      size: 18, color: Color(0xFF9CA3AF)),
+                  icon: const Icon(
+                    Icons.delete,
+                    size: 18,
+                    color: Color(0xFF9CA3AF),
+                  ),
                   onPressed: () => _deleteItem(item),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
