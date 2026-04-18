@@ -10594,3 +10594,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - note_list_page: FilterChipタグフィルター + ノートカードtagチップ表示 (orange token)
 - flutter analyze 0エラー / deploy-prod pending (FSRS + tags migration適用中)
 - WBS: ノート機能強化 β版 完了 / DESIGN.md準拠 65%維持
+### Windowsアプリ版#87 完了 (2026-04-18 03:30) — Kepion アーキテクチャ参考反映
+- ユーザー共有 NotebookLM (Kepion: Building an Autonomous AI Company Orchestrator) を取得
+- docs/architecture/kepion-reference-2026-04-18.md 作成
+  - 28エージェント (ビジネス層7体 + ツール層21体) の役割表
+  - 7主要技術特徴 (2層アーキテクチャ・Redis Pub/Sub・OpenRouter Tier・Obsidian Vault・A2A・Perplexica/Firecrawl・Composio)
+  - 自分株式会社への応用検討 (短期 / 中期 / 長期)
+  - 次回セッション候補タスク 6件 (担当インスタンス別)
+- 即適用可能な短期タスク:
+  - registry に Tier (Free/Budget/Performance/Premium) フィールド追加 (VSCode版)
+  - ai-hub provider.chat 自動エスカレーション/ダウングレード ロジック (PS版)
+- NotebookLM Master Brain には個別 ask で deep-dive 可能
