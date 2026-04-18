@@ -1,7 +1,7 @@
 ---
 title: "AI University Hits 88 Providers: Adding DeepInfra and Nebius AI Studio"
 tags: Flutter,Supabase,buildinpublic,webdev,AI
-published: false
+published: true
 ---
 
 # AI University Hits 88 Providers: Adding DeepInfra and Nebius AI Studio

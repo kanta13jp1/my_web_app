@@ -1,7 +1,7 @@
 ---
 title: "自分株式会社の AI大学が88社対応に — DeepInfra と Nebius AI Studio を追加"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # 自分株式会社の AI大学が88社対応に — DeepInfra と Nebius AI Studio を追加
