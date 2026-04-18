@@ -11046,3 +11046,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branches: 全パターン 0件 ✅
 - 他WF: AI大学コンテンツ更新/CS Check/Edge Function Audit/Infra Health Check すべて ✅ SUCCESS
 - 次回確認: deploy-prod SUCCESS確認 → T-1 blog dispatch
+
+### PS版#136 (2026-04-19 AM)
+- **Rule 17**: deploy-prod 9連続失敗 → 解析
+  - VSCode版#104 が prefer_const → warning 降格で先行修正 (analysis_options.yaml)
+  - CI still failing: require_trailing_commas 36件残 → dart fix --apply + dart format で解消
+  - cmo_page.dart const_instance_field → static const 修正
+  - flutter analyze 0エラー確認 → 181ファイル変更コミット → deploy-prod 再トリガー
+- **T-1 第135弾**: Supabase RLS Flutter実践 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/supabase-row-level-security-in-flutter-web-3-real-patterns-from-production-4jd8
+- orphan branches: 全パターン 0件 ✅
+- 次回候補: deploy-prod SUCCESS確認 / AI大学学習リマインダーバッチ設定 / 新規T-1弾作成
