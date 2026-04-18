@@ -10758,3 +10758,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1 第119弾**: blog-publish orphan `blog-publish/24596689320-20260418-131629` マージ完了
   - JA/EN 両draft `published:true` 確認済み → orphan削除完了
 - **orphan branches**: 全パターン 0件 ✅
+
+### PS版#119 最終: deploy-prod SUCCESS (2026-04-18 PM)
+- run 24598378012 (Win版#94b commit 028a5e13) → **success** ✅
+- CI完全復旧: flutter analyze 0エラー / dart format クリーン / deploy成功
+- 修正サマリー: `_FeatureStatus.implemented` → `.done` が最後のブロッカーだった
