@@ -2535,8 +2535,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                               Navigator.pop(context, true),
                                           child: const Text(
                                             '削除',
-                                            style: TextStyle(
-                                                color: Color(0xFFB91C1C)),
+                                            style: const TextStyle(
+                                              color: Color(0xFFB91C1C),
+                                            ),
                                           ),
                                         ),
                                       ],
