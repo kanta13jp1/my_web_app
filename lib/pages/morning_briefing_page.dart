@@ -1332,7 +1332,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       if (subtasks.isEmpty) {
                         return const Text(
                           'サブタスクはありません',
-                          style: TextStyle(color: const Color(0xFF9CA3AF)),
+                          style: TextStyle(color: Color(0xFF9CA3AF)),
                         );
                       }
                       return Flexible(
@@ -2193,7 +2193,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               children: [
                 const TabBar(
                   labelColor: Color(0xFF6366F1),
-                  unselectedLabelColor: const Color(0xFF9CA3AF),
+                  unselectedLabelColor: Color(0xFF9CA3AF),
                   tabs: [
                     Tab(text: '分析グラフ'),
                     Tab(text: 'AI日報'),
@@ -2320,7 +2320,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     titleStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFFE5E7EB),
+                      color: Color(0xFFE5E7EB),
                     ),
                   );
                 }).toList(),
@@ -2376,7 +2376,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       return BarTooltipItem(
                         rod.toY.round().toString(),
                         const TextStyle(
-                          color: const Color(0xFF000000),
+                          color: Color(0xFF000000),
                           fontWeight: FontWeight.bold,
                         ),
                       );
@@ -2390,7 +2390,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       showTitles: true,
                       getTitlesWidget: (double value, TitleMeta meta) {
                         const style = TextStyle(
-                          color: const Color(0xFF9CA3AF),
+                          color: Color(0xFF9CA3AF),
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         );
@@ -2453,7 +2453,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             Text(
               title,
               style:
-                  const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                  const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
             Text(
               value,
@@ -2787,7 +2787,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       icon: const Icon(
                                         Icons.edit,
                                         size: 20,
-                                        color: const Color(0xFF9CA3AF),
+                                        color: Color(0xFF9CA3AF),
                                       ),
                                       onPressed: showPromptSettingsDialog,
                                       tooltip: '設定を開く',
@@ -2865,7 +2865,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   'フィルタ:',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF9CA3AF),
+                                    color: Color(0xFF9CA3AF),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -2896,7 +2896,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   '並び替え:',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF9CA3AF),
+                                    color: Color(0xFF9CA3AF),
                                   ),
                                 ),
                                 PopupMenuButton<String>(
@@ -2968,14 +2968,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                         const Icon(
                                           Icons.access_time,
                                           size: 14,
-                                          color: const Color(0xFF9CA3AF),
+                                          color: Color(0xFF9CA3AF),
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
                                           '残り見積もり: $totalEstimatedMinutes分',
                                           style: const TextStyle(
                                             fontSize: 12,
-                                            color: const Color(0xFF9CA3AF),
+                                            color: Color(0xFF9CA3AF),
                                           ),
                                         ),
                                       ],
@@ -3194,7 +3194,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     Icon(
                                       Icons.wb_sunny_outlined,
                                       size: 64,
-                                      color: const Color(0xFF9CA3AF),
+                                      color: Color(0xFF9CA3AF),
                                     ),
                                     SizedBox(height: 16),
                                     Text('今日のタスクはありません'),
@@ -3239,7 +3239,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     Icon(
                                       Icons.history,
                                       size: 64,
-                                      color: const Color(0xFF9CA3AF),
+                                      color: Color(0xFF9CA3AF),
                                     ),
                                     SizedBox(height: 16),
                                     Text('完了したタスクはありません'),
@@ -3319,7 +3319,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                             style: const TextStyle(
                                               decoration:
                                                   TextDecoration.lineThrough,
-                                              color: const Color(0xFF9CA3AF),
+                                              color: Color(0xFF9CA3AF),
                                             ),
                                           ),
                                           subtitle: Row(
@@ -3489,7 +3489,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   child: Row(
                     children: [
                       Icon(_categoryIcons[e.key],
-                          color: const Color(0xFF9CA3AF)),
+                          color: const Color(0xFF9CA3AF),),
                       const SizedBox(width: 8),
                       Text(e.value),
                     ],
@@ -3897,7 +3897,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     const Icon(
                       Icons.checklist,
                       size: 16,
-                      color: const Color(0xFF9CA3AF),
+                      color: Color(0xFF9CA3AF),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -4289,7 +4289,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             const Text(
                               ' / ',
                               style: TextStyle(
-                                  fontSize: 12, color: const Color(0xFF9CA3AF)),
+                                  fontSize: 12, color: Color(0xFF9CA3AF),),
                             ),
                             Text(
                               _difficultyLabels[difficulty] ?? '',
@@ -4303,13 +4303,13 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 ' / ',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: const Color(0xFF9CA3AF),
+                                  color: Color(0xFF9CA3AF),
                                 ),
                               ),
                               const Icon(
                                 Icons.access_time,
                                 size: 14,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                               ),
                               const SizedBox(width: 2),
                               Text(
@@ -4610,7 +4610,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     child: Text(
                       countLabel,
                       style: const TextStyle(
-                        color: const Color(0xFFE5E7EB),
+                        color: Color(0xFFE5E7EB),
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
                       ),
@@ -5003,7 +5003,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             const Chip(
               label: Text(
                 '今日中',
-                style: TextStyle(color: const Color(0xFFE5E7EB), fontSize: 10),
+                style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 10),
               ),
               backgroundColor: Color(0xFFFF6B35),
               padding: EdgeInsets.zero,
@@ -5014,11 +5014,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           if (recurrenceLabel != null)
             Chip(
               avatar: const Icon(Icons.repeat,
-                  size: 12, color: const Color(0xFFE5E7EB)),
+                  size: 12, color: Color(0xFFE5E7EB),),
               label: Text(
                 recurrenceLabel,
                 style: const TextStyle(
-                    color: const Color(0xFFE5E7EB), fontSize: 10),
+                    color: Color(0xFFE5E7EB), fontSize: 10,),
               ),
               backgroundColor: const Color(0xFFA78BFA),
               padding: EdgeInsets.zero,
@@ -5034,7 +5034,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           Row(
             children: [
               Icon(_categoryIcons[category],
-                  size: 12, color: const Color(0xFF9CA3AF)),
+                  size: 12, color: const Color(0xFF9CA3AF),),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -5079,7 +5079,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text(
                     '$subDone/$subTotal',
                     style: const TextStyle(
-                        fontSize: 10, color: const Color(0xFF9CA3AF)),
+                        fontSize: 10, color: Color(0xFF9CA3AF),),
                   ),
                 ],
               ),
@@ -5112,7 +5112,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               index: index,
               child: const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Icon(Icons.drag_handle, color: const Color(0xFF9CA3AF)),
+                child: Icon(Icons.drag_handle, color: Color(0xFF9CA3AF)),
               ),
             ),
         ],
@@ -5126,7 +5126,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
         color: const Color(0xFFB91C1C),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Icon(Icons.delete, color: const Color(0xFFE5E7EB)),
+        child: const Icon(Icons.delete, color: Color(0xFFE5E7EB)),
       ),
       confirmDismiss: (direction) => _confirmDeleteTodo(todo),
       /*
@@ -5172,17 +5172,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.inventory_2_outlined,
-                  size: 64, color: const Color(0xFF9CA3AF)),
+                  size: 64, color: Color(0xFF9CA3AF),),
               SizedBox(height: 16),
               Text(
                 'ストックされたタスクはありません。',
-                style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
+                style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
               ),
               SizedBox(height: 8),
               Text(
                 '「いつかやる」タスクをここに追加して、頭をスッキリさせましょう。',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: const Color(0xFF9CA3AF)),
+                style: TextStyle(color: Color(0xFF9CA3AF)),
               ),
             ],
           ),
