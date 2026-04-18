@@ -582,7 +582,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Color(0xB3FFFFFF),
+          unselectedLabelColor: const Color(0xB3FFFFFF),
           indicatorColor: Colors.amber,
           isScrollable: true,
           tabs: const [
