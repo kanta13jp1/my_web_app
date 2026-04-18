@@ -233,6 +233,27 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                   ),
                 ),
               ),
+              if (entry.tier != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Color(entry.tier!.colorValue).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Color(entry.tier!.colorValue).withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    entry.tier!.label,
+                    style: TextStyle(
+                      color: Color(entry.tier!.colorValue),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 6),

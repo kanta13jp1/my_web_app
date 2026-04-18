@@ -44,10 +44,34 @@ extension AiProviderStatusX on AiProviderStatus {
   }
 }
 
+
+enum AiProviderTier { free, budget, performance, premium }
+
+extension AiProviderTierX on AiProviderTier {
+  String get label {
+    switch (this) {
+      case AiProviderTier.free:        return '無料';
+      case AiProviderTier.budget:      return '低コスト';
+      case AiProviderTier.performance: return '標準';
+      case AiProviderTier.premium:     return 'プレミアム';
+    }
+  }
+
+  int get colorValue {
+    switch (this) {
+      case AiProviderTier.free:        return 0xFF94A3B8;
+      case AiProviderTier.budget:      return 0xFF4ADE80;
+      case AiProviderTier.performance: return 0xFFFACC15;
+      case AiProviderTier.premium:     return 0xFFFF6B35;
+    }
+  }
+}
+
 class AiProviderEntry {
   final String id; // 例: 'openai', 'sambanova'
   final String displayName;
   final AiProviderStatus status;
+  final AiProviderTier? tier;
   final String? envKeyName; // 必要な Supabase Secret 名 (null = なし)
   final String?
       entryPoint; // EF action 名 or 呼び出し経路 (例: 'ai-assistant', 'ai-hub:voice.tts')
@@ -57,6 +81,7 @@ class AiProviderEntry {
     required this.id,
     required this.displayName,
     required this.status,
+    this.tier,
     this.envKeyName,
     this.entryPoint,
     this.note = '',
@@ -75,6 +100,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'openai',
     displayName: 'OpenAI',
     status: AiProviderStatus.implemented,
+    tier: AiProviderTier.performance,
     envKeyName: 'OPENAI_API_KEY',
     entryPoint: 'ai-assistant (Melchior) / ai-hub / ai-search',
     note: 'gpt-4o-mini/gpt-4o 採用。gpt-5.4 系は未導入',
@@ -83,6 +109,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'anthropic',
     displayName: 'Anthropic',
     status: AiProviderStatus.implemented,
+    tier: AiProviderTier.premium,
     envKeyName: 'ANTHROPIC_API_KEY',
     entryPoint: 'ai-assistant (Balthasar/Synthesis)',
     note: 'claude-sonnet-4-6 + claude-opus-4-7 (extended_thinking)',
@@ -91,6 +118,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'google',
     displayName: 'Google Gemini',
     status: AiProviderStatus.implemented,
+    tier: AiProviderTier.performance,
     envKeyName: 'GEMINI_API_KEY',
     entryPoint: 'ai-assistant (Casper) / ai-hub',
     note: 'gemini-2.5-flash。3.1-pro-preview は未導入',
@@ -119,6 +147,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'perplexity',
     displayName: 'Perplexity',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
     envKeyName: 'PERPLEXITY_API_KEY',
     entryPoint: '(未実装 — Sonar API)',
     note: 'リアルタイムWeb検索統合',
@@ -127,6 +156,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'deepseek',
     displayName: 'DeepSeek',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'DEEPSEEK_API_KEY',
     entryPoint: '(未実装 — OpenAI 互換)',
   ),
@@ -134,6 +164,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'mistral',
     displayName: 'Mistral AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
     envKeyName: 'MISTRAL_API_KEY',
     entryPoint: '(未実装)',
   ),
@@ -141,6 +172,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'groq',
     displayName: 'Groq',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'GROQ_API_KEY',
     entryPoint: '(未実装 — OpenAI 互換・超高速)',
   ),
@@ -148,6 +180,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'cohere',
     displayName: 'Cohere',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
     envKeyName: 'COHERE_API_KEY',
     entryPoint: '(未実装 — RAG特化)',
   ),
@@ -155,6 +188,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'sambanova',
     displayName: 'SambaNova',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'SAMBANOVA_API_KEY',
     entryPoint: '(未実装 — OpenAI 互換・SN50 RDU)',
     note: r'$5 Free Credit あり',
@@ -163,6 +197,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'openrouter',
     displayName: 'OpenRouter',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'OPENROUTER_API_KEY',
     entryPoint: '(未実装 — 400+ モデル統合)',
   ),
@@ -186,6 +221,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'replicate',
     displayName: 'Replicate',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'REPLICATE_API_TOKEN',
     entryPoint: 'ai-hub',
   ),
@@ -193,6 +229,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'deepinfra',
     displayName: 'DeepInfra',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'DEEPINFRA_API_KEY',
     entryPoint: 'ai-hub',
   ),
@@ -200,6 +237,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'fireworks_ai',
     displayName: 'Fireworks AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'FIREWORKS_API_KEY',
     entryPoint: '(未実装)',
   ),
@@ -207,6 +245,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'together_ai',
     displayName: 'Together AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'TOGETHER_API_KEY',
     entryPoint: '(未実装)',
   ),
@@ -214,6 +253,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'huggingface',
     displayName: 'Hugging Face',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.free,
     envKeyName: 'HUGGINGFACE_TOKEN',
     entryPoint: 'ai-hub:provider.chat (Inference API・PS版#110で追加)',
   ),
@@ -223,6 +263,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'microsoft',
     displayName: 'Microsoft Copilot',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'meta',
@@ -244,16 +285,19 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'amazon',
     displayName: 'Amazon Bedrock',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'nvidia',
     displayName: 'NVIDIA',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'ibm',
     displayName: 'IBM',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'sakana',
@@ -264,6 +308,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'baidu',
     displayName: 'Baidu ERNIE',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'oracle',
@@ -285,12 +330,14 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'writer',
     displayName: 'Writer',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
     envKeyName: 'WRITER_API_KEY',
   ),
   AiProviderEntry(
     id: 'ai21',
     displayName: 'AI21 Labs',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'voyage',
@@ -301,6 +348,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'ollama',
     displayName: 'Ollama',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.free,
     note: 'ローカル実行・サーバー自前運用必要',
   ),
   AiProviderEntry(
@@ -352,11 +400,13 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'qwen',
     displayName: 'Alibaba Qwen',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
   ),
   AiProviderEntry(
     id: 'moonshot',
     displayName: 'Moonshot Kimi',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'midjourney',
@@ -378,6 +428,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: '01ai',
     displayName: '01.AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
   ),
   AiProviderEntry(
     id: 'coze',
@@ -396,6 +447,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'databricks',
     displayName: 'Databricks',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'samsung',
@@ -406,6 +458,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'zhipu',
     displayName: 'Zhipu GLM',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'character_ai',
@@ -421,21 +474,25 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'allenai',
     displayName: 'Allen AI (OLMo)',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.free,
   ),
   AiProviderEntry(
     id: 'naver',
     displayName: 'Naver HyperCLOVA',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
   ),
   AiProviderEntry(
     id: 'adept',
     displayName: 'Adept',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
   ),
   AiProviderEntry(
     id: 'cerebras',
     displayName: 'Cerebras',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
   ),
   AiProviderEntry(
     id: 'prover',
@@ -446,6 +503,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'lmsys',
     displayName: 'LMSYS',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.free,
   ),
   AiProviderEntry(
     id: 'falcon_tii',
@@ -461,6 +519,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'liquid_ai',
     displayName: 'Liquid AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
     envKeyName: 'LIQUID_API_KEY',
     entryPoint: 'ai-hub',
   ),
@@ -473,21 +532,25 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'cognition',
     displayName: 'Cognition (Devin)',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
   ),
   AiProviderEntry(
     id: 'scale_ai',
     displayName: 'Scale AI',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
   ),
   AiProviderEntry(
     id: 'poolside',
     displayName: 'Poolside',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
   ),
   AiProviderEntry(
     id: 'harvey',
     displayName: 'Harvey',
     status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
   ),
   AiProviderEntry(
     id: 'manus',
@@ -550,6 +613,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'arcee_ai',
     displayName: 'Arcee AI Trinity',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'ARCEE_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: r'Mini $0.045/$0.15 per 1M · OpenRouter 無料枠あり',
@@ -558,6 +622,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'minimax',
     displayName: 'MiniMax (Hailuo)',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'MINIMAX_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換・PS版#110で追加)',
     note: 'M2.5-Lightning 月100万tok free・香港上場',
@@ -587,6 +652,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'siliconflow',
     displayName: 'SiliconFlow (硅基流动)',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'SILICONFLOW_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: 'Qwen2.5-72B・DeepSeek-V3 無料枠あり・中国最大推論プラットフォーム',
@@ -595,6 +661,7 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     id: 'novita_ai',
     displayName: 'Novita AI',
     status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
     envKeyName: 'NOVITA_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: r'Llama-3.1-70B $0.23/$0.23 per 1M・クレジット制・100+モデル対応',
