@@ -10860,3 +10860,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   1. 🔴 Supabase Secrets 追加 (要ユーザー手動操作)
   2. 🟡 ai-hub Phase9+: siliconflow/novita_ai backend追加
   3. 🟢 DESIGN.md token compliance続行 (home_page/wardrobe_page 等)
+
+### PS版#123 (2026-04-18 PM)
+- **Rule17 WF health check**: deploy-prod SUCCESS ✅ / blog-publish 1失敗は解消済み / orphan 0件
+- **ai-hub Phase9+確認**: siliconflow/novita_ai は PS版#116 で実装済み ✅ (追加作業なし)
+- **T-1 第123弾**: AI大学90社達成記事 JA+EN dispatch → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/ai-university-hits-90-providers-adding-falai-and-fish-audio-mbl
+  - fal.ai (1,000+生成AIモデル) + Fish Audio (TTS/ボイスクローン) を紹介
+  - orphan branch マージ + 削除 ✅
+- **AI大学現況**: 90社 (deepinfra/nebius/fal_ai/fish_audio の4社が当日追加)
