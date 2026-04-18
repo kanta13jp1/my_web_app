@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web Speech-to-Text with Deepgram Nova-2 and MediaRecorder"
 tags: Flutter,Supabase,buildinpublic,webdev,FlutterTips
-published: false
+published: true
 ---
 
 # Flutter Web Speech-to-Text with Deepgram Nova-2 and MediaRecorder

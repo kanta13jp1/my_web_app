@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web で音声認識 (STT) を実装した — Deepgram Nova-2 + MediaRecorder"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter Web で音声認識 (STT) を実装した — Deepgram Nova-2 + MediaRecorder
