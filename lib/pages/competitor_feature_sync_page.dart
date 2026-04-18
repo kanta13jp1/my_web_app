@@ -9,8 +9,7 @@ class CompetitorFeatureSyncPage extends StatefulWidget {
       _CompetitorFeatureSyncPageState();
 }
 
-class _CompetitorFeatureSyncPageState
-    extends State<CompetitorFeatureSyncPage> {
+class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = false;
   String? _error;
@@ -229,8 +228,7 @@ class _FeatureTile extends StatelessWidget {
         title: Text(featureName),
         subtitle: Text('$competitor · $category'),
         trailing: PopupMenuButton<String>(
-          onSelected: (status) =>
-              onStatusUpdate(featureId, competitor, status),
+          onSelected: (status) => onStatusUpdate(featureId, competitor, status),
           itemBuilder: (_) => const [
             PopupMenuItem(value: 'done', child: Text('✅ 完了')),
             PopupMenuItem(value: 'partial', child: Text('🔶 部分実装')),

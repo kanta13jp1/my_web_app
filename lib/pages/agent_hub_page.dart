@@ -48,8 +48,8 @@ class _AgentHubPageState extends State<AgentHubPage>
       setState(() {
         final deptData = results[0].data;
         if (deptData is Map && deptData['departments'] is List) {
-          _departments = (deptData['departments'] as List)
-              .cast<Map<String, dynamic>>();
+          _departments =
+              (deptData['departments'] as List).cast<Map<String, dynamic>>();
         }
         final perfData = results[1].data;
         if (perfData is Map && perfData['ranking'] is List) {

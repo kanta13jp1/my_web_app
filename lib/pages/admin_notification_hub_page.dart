@@ -134,8 +134,8 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                                 margin: const EdgeInsets.only(bottom: 6),
                                 color: isRead ? null : color.withAlpha(10),
                                 child: ListTile(
-                                  leading:
-                                      Icon(_severityIcon(severity), color: color),
+                                  leading: Icon(_severityIcon(severity),
+                                      color: color),
                                   title: Text(
                                     n['title'] as String? ?? '',
                                     style: TextStyle(
@@ -144,8 +144,7 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                                           : FontWeight.bold,
                                     ),
                                   ),
-                                  subtitle:
-                                      Text(n['message'] as String? ?? ''),
+                                  subtitle: Text(n['message'] as String? ?? ''),
                                   trailing: isRead
                                       ? null
                                       : TextButton(
