@@ -228,6 +228,9 @@ import 'package:my_web_app/pages/app_hub_page.dart';
 import 'package:my_web_app/pages/agent_hub_page.dart';
 import 'package:my_web_app/pages/admin_notification_hub_page.dart';
 import 'package:my_web_app/pages/competitor_feature_sync_page.dart';
+import 'package:my_web_app/pages/daily_judgment_page.dart';
+import 'package:my_web_app/pages/ai_university_content_page.dart';
+import 'package:my_web_app/pages/development_achievements_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:my_web_app/services/notification_service.dart';
@@ -1275,6 +1278,18 @@ class MyApp extends StatelessWidget {
           case '/competitor-feature-sync':
             return MaterialPageRoute(
               builder: (_) => const CompetitorFeatureSyncPage(),
+            );
+          case '/daily-judgment':
+            return MaterialPageRoute(
+              builder: (_) => const DailyJudgmentPage(),
+            );
+          case '/ai-university-content':
+            return MaterialPageRoute(
+              builder: (_) => const AiUniversityContentPage(),
+            );
+          case '/development-achievements':
+            return MaterialPageRoute(
+              builder: (_) => const DevelopmentAchievementsPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

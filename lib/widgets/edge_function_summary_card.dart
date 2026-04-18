@@ -185,6 +185,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/competitor-feature-sync',
       '競合機能パリティページ > 競合別進捗率・未実装機能一覧',
     ),
+    // 追加 (cs-check 自動連携 2026-04-18)
+    _FnDef(
+      'daily-judgment',
+      'AI デイリー判定',
+      true,
+      '/daily-judgment',
+      'デイリー判定ページ > AIによる今日の優先事項・判断',
+    ),
+    _FnDef(
+      'ai-university-content',
+      'AI大学コンテンツ管理 (UPSERT/GET)',
+      true,
+      '/ai-university-content',
+      'AI大学コンテンツページ > プロバイダー別コンテンツ一覧',
+    ),
+    _FnDef(
+      'development-achievements',
+      '開発実績一覧',
+      true,
+      '/development-achievements',
+      '開発実績ページ > 完了済みタスク・実績リスト',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
