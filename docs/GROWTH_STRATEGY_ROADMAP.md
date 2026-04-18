@@ -10680,3 +10680,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - unnecessary_const修正 (const Text親パターン: SaveState case×3)
 - flutter analyze 0エラー / commit: 2aaefb76
 - 次回候補: DESIGN.md 80%→85% (comparison_page or quiz_page) / ノートbacklinks機能
+
+### VSCode版#98 完了 (2026-04-18) — ホーム画面 5階層カスタマイズ (Windows版#90 cross-instance-pr)
+- migration 3本: user_feature_usage / user_pinned_features / feature_releases
+- lib/data/home_system_fixed.dart: システム固定機能4本
+- lib/widgets/home_tier/: 5ウィジェット (Recent/SystemFixed/UserPinned/NewFeatures/AiRecommended)
+- home_page.dart: CollapsibleHomeSection×5 をAiUniversityHomeCard直下に配置
+- lib/utils/feature_tap_logger.dart: recordFeatureTap() fire-and-forget helper
+- cross-instance-pr 20260418_home_5tier_customization.md → done/
+- flutter analyze 0エラー / commit: 47d73c03
+- 次回候補: DESIGN.md 80%→85% (comparison_page) / PS版 ai-hub:home.recommend action依頼 / ノートbacklinks
