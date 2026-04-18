@@ -1,7 +1,7 @@
 ---
 title: "自分株式会社の AI Hub に 4-Tier 自動ルーティングを実装した話"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # 自分株式会社の AI Hub に 4-Tier 自動ルーティングを実装した話

@@ -1,7 +1,7 @@
 ---
 title: "Building a 4-Tier AI Cost Auto-Router with Deno Edge Functions"
 tags: Flutter,Supabase,buildinpublic,webdev,AI
-published: false
+published: true
 ---
 
 # Building a 4-Tier AI Cost Auto-Router with Deno Edge Functions
