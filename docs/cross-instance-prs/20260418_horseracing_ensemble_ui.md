@@ -6,11 +6,16 @@ status: pending
 priority: high
 ---
 
-# 競馬 AI 予想ページ マルチプロバイダーアンサンブル UI
+# 競馬 AI 予想ページ マルチプロバイダーアンサンブル UI (netkeiba 風レイアウト)
 
 ## 概要
 
-ユーザー要望「quota 制限に達したら他のAIプロバイダーのAPIに切り替えられないか。複数のAIプロバイダーのモデルを組み合わせて予想を蓄積して、どんどん予想の精度をあげていくような機能にしたい」。
+ユーザー要望:
+1. 「quota 制限に達したら他のAIプロバイダーのAPIに切り替えられないか。複数のAIプロバイダーのモデルを組み合わせて予想を蓄積して、どんどん予想の精度をあげていくような機能にしたい」
+2. **「netkeiba のような UI にしたい」** (2026-04-18 追加要望) — 出走表形式で、各 AI プロバイダー = 1 カラムとして印 (◎○▲△☆) を並べる
+
+参考画像: <https://race.netkeiba.com/yoso/mark_list.html?race_id=202603010305&rf=race_submenu>
+(出走表 × 複数予想者のマトリックス表示 / 枠色ハイライト / 馬体重・単勝・人気表示)
 
 Windowsアプリ版#94 で EF 基盤を実装済み (migration + tools-hub 新 action):
 
@@ -21,6 +26,89 @@ Windowsアプリ版#94 で EF 基盤を実装済み (migration + tools-hub 新 a
 - `predict_all` を Gemini → OpenAI → Claude → xAI の fallback chain に拡張 (quota 時に自動切替)
 
 VSCode版で対応する Flutter UI を実装してください。
+
+## netkeiba 風レイアウト仕様 (最重要・ユーザー要望)
+
+### 出走表マトリックス (メインビュー)
+
+各行 = 1 頭、各列 = (枠/馬番/各AI予想印/馬名/性齢/斤量/騎手/厩舎/馬体重/単勝/人気)
+
+```
+┌─┬──┬────┬────┬────┬────┬─────────┬────┬────┬────┬────┬────────┬──────┬────┐
+│枠│馬番│Gemini│GPT │Claude│Grok │コンセンサス│馬名 │性齢│斤量│騎手 │厩舎    │馬体重 │単勝│
+├─┼──┼────┼────┼────┼────┼─────────┼────┼────┼────┼────┼────────┼──────┼────┤
+│1│ 1 │ ◎  │ ○ │ ◎  │ ▲ │  ◎ 3票  │モンロ│牡3 │55.0│舟山 │栗東 牧浦│458(-8)│8.1 │
+│1│ 2 │ △  │ ▲ │ △  │ △ │  △ 3票  │テクノ│牝3 │55.0│小沢 │栗東 楢口│446(-2)│34.8│
+│2│ 3 │ ○  │ ◎ │ ○  │ ○ │  ○ 3票  │ミリオ│牡3 │55.0│長浜 │美浦 蛯名│460(-6)│5.5 │
+│2│ 4 │ ─ │ △ │ ─  │ △ │    ─   │ウイン│牡3 │54.0│遠藤 │美浦 嘉藤│436(-2)│15.9│
+│3│ 5 │ ─ │ ─ │ ─  │ ─ │    ─   │ファビ│牝3 │52.0│田山 │栗東 前川│430(+4)│27.8│
+│3│ 6 │ △  │ ─ │ ▲  │ ─ │    ▲   │ホウオ│牡3 │55.0│鷲頭 │美浦 奥村│444(-6)│68.4│
+└─┴──┴────┴────┴────┴────┴─────────┴────┴────┴────┴────┴────────┴──────┴────┘
+```
+
+### 予想印のマッピング
+
+各プロバイダーの `first_pick / second_pick / third_pick` (horse_name) を `horse_entries` の馬名と突き合わせて以下の印を決める:
+
+| 予想順位 | 印 | 色 |
+| --- | --- | --- |
+| 1 着予想 | ◎ | `Color(0xFFDC2626)` (赤) |
+| 2 着予想 | ○ | `Color(0xFF2563EB)` (青) |
+| 3 着予想 | ▲ | `Color(0xFFF59E0B)` (橙) |
+| (将来) 4〜5 着候補 | △ | `Color(0xFF6B7280)` (灰) |
+| 予想外 | ─ or 空欄 | — |
+
+### 枠番の色 (classic keiba frame colors)
+
+```dart
+Color frameColor(int waku) {
+  switch (waku) {
+    case 1: return const Color(0xFFFFFFFF); // 白 (border黒)
+    case 2: return const Color(0xFF1E1E1E); // 黒
+    case 3: return const Color(0xFFDC2626); // 赤
+    case 4: return const Color(0xFF2563EB); // 青
+    case 5: return const Color(0xFFFACC15); // 黄
+    case 6: return const Color(0xFF16A34A); // 緑
+    case 7: return const Color(0xFFF97316); // 橙
+    case 8: return const Color(0xFFEC4899); // 桃
+    default: return const Color(0xFF9CA3AF);
+  }
+}
+
+Color frameTextColor(int waku) => (waku == 1 || waku == 5) ? Colors.black : Colors.white;
+```
+
+### レースヘッダー (netkeiba 風)
+
+```
+╔══════════════════════════════════════════════╗
+║ 5R  3歳未勝利                                      ║
+║ 12:05 発走 / 芝 1800m (右 A) / 天候:晴 / 馬場:良          ║
+║ 1回 福島 3日目 サラ系3歳 未勝利 / 見習騎手 / 馬齢 16頭       ║
+║ 本賞金: 590,240,150,89,59 万円                        ║
+╚══════════════════════════════════════════════╝
+```
+
+`horse_races` テーブルの既存カラム (`race_name`, `venue`, `course_type`, `distance`, `race_date`, `grade`, `race_number`, `post_time`等) から組み立てる。
+
+### コース/レース番号タブ
+
+画面上部に `1R 2R 3R ... 12R` の横スクロールタブ + 前日/翌日の日付タブ (4/11 / 4/12 / 4/18 / 4/19 等)。同一日の複数場 (中山/阪神/福島) も切替ボタンで。
+
+### 実装ファイル構成
+
+```
+lib/pages/horseracing/
+  horseracing_race_detail_page.dart      # netkeiba 風マトリックスメイン
+  horseracing_provider_leaderboard_page.dart  # リーダーボード
+  widgets/
+    race_matrix_table.dart               # DataTable or CustomPaint で出走表
+    frame_number_badge.dart              # 枠色バッジ
+    prediction_mark.dart                 # ◎○▲△ 描画
+    consensus_cell.dart                  # 票数入りコンセンサスセル
+    race_header_card.dart                # レースヘッダー
+    race_number_tab_bar.dart             # 1R〜12R タブ
+```
 
 ## 依頼内容
 
@@ -73,12 +161,16 @@ VSCode版で対応する Flutter UI を実装してください。
 
 ## 完了条件
 
-- [ ] レース詳細で consensus action を呼び出してプロバイダー別予想表示
-- [ ] コンセンサスパネル (多数決1着 + 得票 + 加重スコア)
+- [ ] **netkeiba 風マトリックステーブル**: 出走表 × 各 AI 予想印 ◎○▲△
+- [ ] **枠番の色付け**: classic keiba 8 色 (白/黒/赤/青/黄/緑/橙/桃)
+- [ ] **レースヘッダー**: 発走時刻・距離・馬場・天候・グレード (netkeiba 風)
+- [ ] **1R〜12R タブ**: 同日同場のレース番号切替
+- [ ] **日付タブ + 開催場切替**: 前日/当日/翌日 + 中山/阪神/福島 等
+- [ ] コンセンサス列: 多数決 1 着印 + 得票 (例: `◎ 3票`)
 - [ ] 「ensemble 再実行」ボタン (predict_ensemble force=true)
 - [ ] プロバイダー別リーダーボードページ新規作成
-- [ ] home_page.dart にリーダーボード導線追加
-- [ ] 予想一覧カードに provider badge 表示
+- [ ] home_page.dart にリーダーボード導線追加 (CollapsibleHomeSection)
+- [ ] 予想一覧カードに provider badge 表示 (google=blue/openai=green/anthropic=orange/xai=grey)
 - [ ] `flutter analyze` 0 エラー / `docs/DESIGN.md` トークン準拠
 - [ ] 本番 (`my-web-app-b67f4.web.app`) で実機検証
 

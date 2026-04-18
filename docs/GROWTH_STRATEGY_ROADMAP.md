@@ -10690,3 +10690,25 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - cross-instance-pr 20260418_home_5tier_customization.md → done/
 - flutter analyze 0エラー / commit: 47d73c03
 - 次回候補: DESIGN.md 80%→85% (comparison_page) / PS版 ai-hub:home.recommend action依頼 / ノートbacklinks
+
+---
+
+## セッション記録: Windowsアプリ版#94 (2026-04-18)
+
+### 実装内容
+- **競馬AI マルチプロバイダーアンサンブル予想基盤** (ユーザー要望「quota時の他プロバイダー切替 + 複数モデル蓄積」)
+- migration: `horse_race_predictions_ensemble` + `horse_prediction_accuracy` + `horse_provider_leaderboard` view
+- tools-hub: `predict_all` を Gemini→OpenAI→Claude→xAI の fallback chain に拡張
+- tools-hub 新 action: `predict_ensemble` (1レース並列 multi-provider) / `consensus` (集計) / `provider_leaderboard` / `evaluate_accuracy`
+- scripts/fetch_horse_racing.py: provider badge + failures + quota ログ拡張
+- cross-instance-pr: VSCode版 へ予想ページ UI + リーダーボードページ UI 実装依頼
+
+### deploy-prod 状況
+- commit `0d61cb94` (ensemble foundation)
+- 3 連続 CI failure は note_editor_page `unnecessary_const` (VSCode#97 副作用) → 0f2d6730 で修正済み
+
+### 次回候補
+- 横断: horse-racing-update dispatch で fallback chain 実機検証 → Gemini quota 到達時に OpenAI fallback が動くか確認
+- VSCode版: cross-instance-pr `20260418_horseracing_ensemble_ui.md` 実装 (予想ページ UI + リーダーボード)
+- PS版: 結果確定後の `evaluate_accuracy` を cron 化 (日次バッチ)
+- 管理者: OPENAI_API_KEY / ANTHROPIC_API_KEY / XAI_API_KEY を Supabase secrets に登録 (fallback 発動条件)
