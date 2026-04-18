@@ -10876,3 +10876,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/building-a-4-tier-ai-cost-auto-router-with-deno-edge-functions-2584
   - 内容: TIER_PROVIDERS/TIER_COST/chat_auto outerLoop実装解説 + Flutter呼び出し例 + コスト記録
   - orphan branch マージ + 削除 ✅
+
+### PS版#125 (2026-04-18 PM)
+- **Rule17**: deploy-prod SUCCESS ✅ / orphan 0件 ✅ (pre-fix failure 1件のみ)
+- **T-1 第125弾**: claude_design handoff importer JA+EN dispatch → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/i-built-a-flutter-importer-for-claude-design-handoff-bundles-2ne3
+  - handoff_bundle/token_diff/flutter_codegen/importer_page の4ファイル実装解説
+  - 28テスト・HTML→Flutter変換(~70%精度)・3タブUI
