@@ -1880,12 +1880,15 @@ abstinence_slip_details: $slipDetailsText
                 icon:
                     summary.reviewDone ? Icons.visibility : Icons.priority_high,
                 label: summary.reviewDone ? '今月レビュー済み' : '今月レビュー未実施',
-                color: summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
+                color:
+                    summary.reviewDone ? const Color(0xFFB0B0B0) : accentColor,
               ),
               _buildMonthlyCashflowChip(
                 icon: Icons.edit_note,
                 label: recordLabel,
-                color: summary.recordCount > 0 ? const Color(0xFF6366F1) : const Color(0xFFFF6B35),
+                color: summary.recordCount > 0
+                    ? const Color(0xFF6366F1)
+                    : const Color(0xFFFF6B35),
               ),
               if (summary.lastRecordedAt != null)
                 _buildMonthlyCashflowChip(
@@ -2729,7 +2732,8 @@ abstinence_slip_details: $slipDetailsText
                             : day.isCurrentMonth
                                 ? matchesFilter
                                     ? accentColor.withValues(alpha: 0.22)
-                                    : const Color(0xFFB0B0B0).withValues(alpha: 0.08)
+                                    : const Color(0xFFB0B0B0)
+                                        .withValues(alpha: 0.08)
                                 : Colors.transparent,
                         width: day.isToday ? 1.6 : 1,
                       ),
@@ -3042,7 +3046,9 @@ abstinence_slip_details: $slipDetailsText
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
                       size: 18,
-                      color: task.isCompleted ? Colors.green : const Color(0xFFB0B0B0),
+                      color: task.isCompleted
+                          ? Colors.green
+                          : const Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3232,7 +3238,9 @@ abstinence_slip_details: $slipDetailsText
                           ? Icons.check_circle
                           : Icons.radio_button_unchecked,
                       size: 18,
-                      color: task.isCompleted ? Colors.green : const Color(0xFFB0B0B0),
+                      color: task.isCompleted
+                          ? Colors.green
+                          : const Color(0xFFB0B0B0),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -3815,8 +3823,9 @@ abstinence_slip_details: $slipDetailsText
                   child: _buildCalendarCashflowMetricTile(
                     label: '差額',
                     value: _formatSignedYen(cashflow.netTotal.toDouble()),
-                    color:
-                        cashflow.netTotal >= 0 ? Colors.indigo : const Color(0xFFFF6B35),
+                    color: cashflow.netTotal >= 0
+                        ? Colors.indigo
+                        : const Color(0xFFFF6B35),
                   ),
                 ),
               ],
@@ -5551,8 +5560,10 @@ abstinence_slip_details: $slipDetailsText
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: isSelected
-                                ? const Color(0xFFFF6B35).withValues(alpha: 0.62)
-                                : const Color(0xFFB0B0B0).withValues(alpha: 0.25),
+                                ? const Color(0xFFFF6B35)
+                                    .withValues(alpha: 0.62)
+                                : const Color(0xFFB0B0B0)
+                                    .withValues(alpha: 0.25),
                           ),
                         ),
                         child: Text(
