@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase で間隔反復学習 (FSRS) を実装した — AI大学の記憶定着システム"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter × Supabase で間隔反復学習 (FSRS) を実装した — AI大学の記憶定着システム

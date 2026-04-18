@@ -1,7 +1,7 @@
 ---
 title: "Spaced Repetition in Flutter + Supabase — AI University Memory System"
 tags: Flutter,Supabase,buildinpublic,webdev,FlutterTips
-published: false
+published: true
 ---
 
 # Spaced Repetition in Flutter + Supabase — AI University Memory System
