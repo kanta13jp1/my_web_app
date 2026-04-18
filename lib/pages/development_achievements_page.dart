@@ -67,11 +67,15 @@ class _DevelopmentAchievementsPageState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -84,8 +88,10 @@ class _DevelopmentAchievementsPageState
                       itemBuilder: (context, i) {
                         final item = _items[i] as Map<String, dynamic>? ?? {};
                         return ListTile(
-                          leading: const Icon(Icons.check_circle,
-                              color: Colors.green),
+                          leading: const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          ),
                           title: Text(
                             item['title']?.toString() ?? '(タイトルなし)',
                             style: const TextStyle(fontWeight: FontWeight.w600),
@@ -99,7 +105,9 @@ class _DevelopmentAchievementsPageState
                             item['completed_at']?.toString().substring(0, 10) ??
                                 '',
                             style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
                           ),
                         );
                       },

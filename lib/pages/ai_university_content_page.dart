@@ -66,11 +66,15 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -83,8 +87,10 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                       itemBuilder: (context, i) {
                         final item = _items[i] as Map<String, dynamic>? ?? {};
                         return ListTile(
-                          leading: const Icon(Icons.school,
-                              color: Color(0xFF6366F1)),
+                          leading: const Icon(
+                            Icons.school,
+                            color: Color(0xFF6366F1),
+                          ),
                           title: Text(
                             '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
                             style: const TextStyle(fontWeight: FontWeight.w600),
@@ -98,7 +104,9 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                             item['published_at']?.toString().substring(0, 10) ??
                                 '',
                             style: const TextStyle(
-                                fontSize: 11, color: Colors.grey),
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
                           ),
                         );
                       },

@@ -56,11 +56,15 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchJudgment, child: const Text('再試行')),
+                        onPressed: _fetchJudgment,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -78,8 +82,9 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                                 const Text(
                                   'AI デイリー判定結果',
                                   style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 const SizedBox(height: 12),
                                 ..._result!.entries.map(
@@ -95,7 +100,8 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                                           child: Text(
                                             '${e.key}:',
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.w600),
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
                                         Expanded(
