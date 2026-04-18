@@ -78,7 +78,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       case 'editor':
         return Colors.blue;
       case 'viewer':
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
       default:
         return Colors.purple;
     }
@@ -135,8 +135,11 @@ class _AccessControlPageState extends State<AccessControlPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.admin_panel_settings,
-                size: 64, color: Color(0xFF9CA3AF)),
+            Icon(
+              Icons.admin_panel_settings,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 12),
             Text('ロールが定義されていません', style: TextStyle(color: Color(0xFF9CA3AF))),
           ],

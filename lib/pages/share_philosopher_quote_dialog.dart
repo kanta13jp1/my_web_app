@@ -266,7 +266,7 @@ class _SharePhilosopherQuoteDialogState
                               icon: const Icon(Icons.share, size: 20),
                               label: const Text('Twitter'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF1DA1F2),
+                                backgroundColor: const Color(0xFF1DA1F2),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -280,7 +280,7 @@ class _SharePhilosopherQuoteDialogState
                               icon: const Icon(Icons.share, size: 20),
                               label: const Text('Facebook'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF1877F2),
+                                backgroundColor: const Color(0xFF1877F2),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -294,7 +294,7 @@ class _SharePhilosopherQuoteDialogState
                               icon: const Icon(Icons.share, size: 20),
                               label: const Text('LINE'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF06C755),
+                                backgroundColor: const Color(0xFF06C755),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -342,10 +342,10 @@ class _SharePhilosopherQuoteDialogState
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color:
-                                Color(0xFF9CA3AF).withValues(alpha: 0.1),
+                                const Color(0xFF9CA3AF).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Color(0xFF9CA3AF)
+                              color: const Color(0xFF9CA3AF)
                                   .withValues(alpha: 0.3),
                             ),
                           ),

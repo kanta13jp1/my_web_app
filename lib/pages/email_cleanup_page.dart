@@ -83,7 +83,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     for (final p in _providers) {
       if (p.$1 == provider) return p.$4;
     }
-    return Color(0xFF757575);
+    return const Color(0xFF757575);
   }
 
   Future<void> _addAccount() async {
@@ -437,12 +437,12 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
           decoration: BoxDecoration(
             color: progress >= 1.0
                 ? Colors.green.shade50
-                : Color(0xFFEDE7F6),
+                : const Color(0xFFEDE7F6),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             progress >= 1.0 ? Icons.check_circle : Icons.checklist,
-            color: progress >= 1.0 ? Colors.green : Color(0xFF4338CA),
+            color: progress >= 1.0 ? Colors.green : const Color(0xFF4338CA),
           ),
         ),
         title: Text(
@@ -481,7 +481,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       fontSize: 13,
                       decoration:
                           _routineChecks[i] ? TextDecoration.lineThrough : null,
-                      color: _routineChecks[i] ? Color(0xFF9CA3AF) : null,
+                      color: _routineChecks[i] ? const Color(0xFF9CA3AF) : null,
                     ),
                   ),
                   controlAffinity: ListTileControlAffinity.leading,
@@ -641,7 +641,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                           fontWeight: label != null
                               ? FontWeight.normal
                               : FontWeight.w700,
-                          color: label != null ? Color(0xFF9CA3AF) : null,
+                          color: label != null ? const Color(0xFF9CA3AF) : null,
                         ),
                       ),
                     ],

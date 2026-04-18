@@ -105,12 +105,12 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isDark ? Color(0xFF4B5563) : Color(0xFFE0E7FF),
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
       color: isDark
-          ? Color(0xFF1E1B4B).withAlpha(80)
-          : Color(0xFFF5F3FF),
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
@@ -120,12 +120,12 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
               height: 44,
               decoration: BoxDecoration(
                 color:
-                    isDark ? Color(0xFF4B5563) : Color(0xFFE0E7FF),
+                    isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.person_outline,
-                color: isDark ? Colors.white70 : Color(0xFF4338CA),
+                color: isDark ? Colors.white70 : const Color(0xFF4338CA),
                 size: 24,
               ),
             ),
@@ -139,7 +139,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : Color(0xFF3730A3),
+                      color: isDark ? Colors.white : const Color(0xFF3730A3),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -147,7 +147,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                     '$displayFieldsが未設定です。',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white70 : Color(0xFF4B5563),
+                      color: isDark ? Colors.white70 : const Color(0xFF4B5563),
                       height: 1.4,
                     ),
                   ),
@@ -156,7 +156,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                     '設定すると他のユーザーに見つけてもらいやすくなります。',
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.white54 : Color(0xFF6B7280),
+                      color: isDark ? Colors.white54 : const Color(0xFF6B7280),
                       height: 1.4,
                     ),
                   ),
@@ -171,7 +171,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                       Navigator.of(context).pushNamed('/profile-settings'),
                   style: TextButton.styleFrom(
                     foregroundColor:
-                        isDark ? Colors.white70 : Color(0xFF4338CA),
+                        isDark ? Colors.white70 : const Color(0xFF4338CA),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,

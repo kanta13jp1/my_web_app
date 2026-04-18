@@ -54,7 +54,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ミーティング管理'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -107,7 +107,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor:
-                                  Color(0xFF009688).withAlpha(30),
+                                  const Color(0xFF009688).withAlpha(30),
                               child: const Icon(
                                 Icons.video_camera_front,
                                 color: Color(0xFF009688),

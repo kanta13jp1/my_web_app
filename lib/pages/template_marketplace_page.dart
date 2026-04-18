@@ -241,14 +241,14 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('テンプレート広場'),
-        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         elevation: 0,
       ),
       body: Column(
@@ -262,7 +262,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
 
   Widget _buildCategoryTabs(bool isDark) {
     return Container(
-      color: isDark ? Color(0xFF1E293B) : Colors.white,
+      color: isDark ? const Color(0xFF1E293B) : Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -276,7 +276,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                 label: Text(cat),
                 selected: selected,
                 onSelected: (_) => setState(() => _selectedCategory = cat),
-                selectedColor: Color(0xFF6366F1),
+                selectedColor: const Color(0xFF6366F1),
                 labelStyle: TextStyle(
                   color: selected
                       ? Colors.white
@@ -301,7 +301,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
   }
 
   Widget _buildCard(_TemplateEntry t, bool isDark) {
-    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     return Card(
       color: cardColor,
       elevation: 0,
@@ -309,7 +309,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isDark ? Color(0xFF334155) : Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
       child: ListTile(
@@ -327,7 +327,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           t.title,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : Color(0xFF1E293B),
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
           ),
         ),
         subtitle: Text(

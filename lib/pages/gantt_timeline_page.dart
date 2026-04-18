@@ -626,12 +626,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isPast ? Colors.red.shade50 : Color(0xFFFFF8E1),
+      color: isPast ? Colors.red.shade50 : const Color(0xFFFFF8E1),
       child: ListTile(
         dense: true,
         leading: Icon(
           Icons.flag,
-          color: isPast ? Colors.red : Color(0xFFFFA000),
+          color: isPast ? Colors.red : const Color(0xFFFFA000),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
         trailing: dueDate != null
@@ -640,11 +640,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   _formatDate(dueDate),
                   style: TextStyle(
                     fontSize: 12,
-                    color: isPast ? Colors.red : Color(0xFFFF8F00),
+                    color: isPast ? Colors.red : const Color(0xFFFF8F00),
                   ),
                 ),
                 backgroundColor:
-                    isPast ? Colors.red.shade100 : Color(0xFFFFECB3),
+                    isPast ? Colors.red.shade100 : const Color(0xFFFFECB3),
               )
             : null,
       ),
@@ -667,7 +667,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       case 'blocked':
         statusColor = Colors.red;
       default:
-        statusColor = Color(0xFF9CA3AF);
+        statusColor = const Color(0xFF9CA3AF);
     }
 
     String statusLabel;

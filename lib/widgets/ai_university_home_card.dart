@@ -211,9 +211,9 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Color(0x1FFFFFFF),
+        color: const Color(0x1FFFFFFF),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0x33FFFFFF)),
+        border: Border.all(color: const Color(0x33FFFFFF)),
       ),
       child: Text(
         label,
@@ -338,12 +338,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                 border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0xFFFF6B35).withValues(alpha: 0.10),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.10),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
                   BoxShadow(
-                    color: Color(0xFF3D5AFE).withValues(alpha: 0.12),
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.12),
                     blurRadius: 32,
                     offset: const Offset(0, 8),
                   ),
@@ -361,11 +361,11 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         height: 48,
                         decoration: BoxDecoration(
                           color:
-                              Color(0xFFFF6B35).withValues(alpha: 0.18),
+                              const Color(0xFFFF6B35).withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color:
-                                Color(0xFFFF6B35).withValues(alpha: 0.28),
+                                const Color(0xFFFF6B35).withValues(alpha: 0.28),
                           ),
                         ),
                         child: const Icon(
@@ -397,13 +397,13 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                                 _buildStatusPill(
                                   icon: Icons.auto_awesome,
                                   label: _buildRefreshLabel(),
-                                  color: Color(0xFFFFC107),
+                                  color: const Color(0xFFFFC107),
                                 ),
                                 if (_dueCardCount > 0)
                                   _buildStatusPill(
                                     icon: Icons.replay_rounded,
                                     label: '復習 $_dueCardCount問',
-                                    color: Color(0xFF3D5AFE),
+                                    color: const Color(0xFF3D5AFE),
                                   ),
                               ],
                             ),
@@ -478,7 +478,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: Icons.hub_outlined,
                           label: '掲載AI',
                           value: providerCountText,
-                          accent: Color(0xFF3D5AFE),
+                          accent: const Color(0xFF3D5AFE),
                         ),
                       ),
                       SizedBox(
@@ -487,7 +487,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: Icons.check_circle_outline,
                           label: '学習済み',
                           value: '$_answeredCount社',
-                          accent: Color(0xFF4CAF50),
+                          accent: const Color(0xFF4CAF50),
                         ),
                       ),
                       SizedBox(
@@ -496,7 +496,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: Icons.local_fire_department_outlined,
                           label: '連続学習',
                           value: '$_currentStreak日',
-                          accent: Color(0xFFFF6B35),
+                          accent: const Color(0xFFFF6B35),
                         ),
                       ),
                       SizedBox(
@@ -505,7 +505,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: Icons.workspace_premium_outlined,
                           label: 'バッジ',
                           value: '$_badgeCount個',
-                          accent: Color(0xFFFFD700),
+                          accent: const Color(0xFFFFD700),
                         ),
                       ),
                     ],
@@ -593,7 +593,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                         icon: const Icon(Icons.play_arrow_rounded),
                         label: Text(primaryCta),
                         style: FilledButton.styleFrom(
-                          backgroundColor: Color(0xFFFF6B35),
+                          backgroundColor: const Color(0xFFFF6B35),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -611,7 +611,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: const Icon(Icons.replay_rounded),
                           label: Text('復習する ($_dueCardCount問)'),
                           style: FilledButton.styleFrom(
-                            backgroundColor: Color(0xFF3D5AFE),
+                            backgroundColor: const Color(0xFF3D5AFE),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
@@ -648,7 +648,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                           icon: const Icon(Icons.play_arrow_rounded),
                           label: Text(primaryCta),
                           style: FilledButton.styleFrom(
-                            backgroundColor: Color(0xFFFF6B35),
+                            backgroundColor: const Color(0xFFFF6B35),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,

@@ -176,12 +176,12 @@ class _NoteListPageState extends State<NoteListPage> {
 
   Color _reminderColor(DateTime reminderDate) {
     if (_isReminderOverdue(reminderDate)) {
-      return Color(0xFFB91C1C);
+      return const Color(0xFFB91C1C);
     }
     if (_isReminderDueToday(reminderDate)) {
-      return Color(0xFFF57C00);
+      return const Color(0xFFF57C00);
     }
-    return Color(0xFF0F766E);
+    return const Color(0xFF0F766E);
   }
 
   List<Map<String, dynamic>> _reminderEntries(
@@ -663,10 +663,10 @@ class _NoteListPageState extends State<NoteListPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Color(0xFF6366F1).withValues(alpha: 0.08),
+        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: Color(0xFF6366F1).withValues(alpha: 0.16),
+          color: const Color(0xFF6366F1).withValues(alpha: 0.16),
         ),
       ),
       child: Text(
@@ -786,15 +786,15 @@ class _NoteListPageState extends State<NoteListPage> {
     final content = _noteContent(note);
     final reminderDate = _reminderDateOf(note);
     final accentColor = highlightShareCandidate
-        ? Color(0xFF6366F1)
+        ? const Color(0xFF6366F1)
         : (highlightReminder
-            ? Color(0xFF0D9488)
-            : (isPinned ? Color(0xFFFF6B35) : Color(0xFF6366F1)));
+            ? const Color(0xFF0D9488)
+            : (isPinned ? const Color(0xFFFF6B35) : const Color(0xFF6366F1)));
     final fallbackAccentColor = isFavorite &&
             !highlightReminder &&
             !highlightShareCandidate &&
             !isPinned
-        ? Color(0xFFFF6B35)
+        ? const Color(0xFFFF6B35)
         : accentColor;
 
     return Card(
@@ -845,7 +845,7 @@ class _NoteListPageState extends State<NoteListPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Color(0xFF6366F1).withValues(alpha: 0.1),
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: const Text(
@@ -942,7 +942,7 @@ class _NoteListPageState extends State<NoteListPage> {
               tooltip: isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
               icon: Icon(isFavorite ? Icons.star : Icons.star_border),
               color: isFavorite
-                  ? Color(0xFFFF6B35)
+                  ? const Color(0xFFFF6B35)
                   : Theme.of(context).colorScheme.outlineVariant,
               onPressed: () {
                 _toggleFavorite(context, note);
@@ -1052,13 +1052,13 @@ class _NoteListPageState extends State<NoteListPage> {
           pageTitle,
           key: const Key('note_list_page_title'),
         ),
-        backgroundColor: Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF6366F1),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             key: const Key('note_list_page_favorites_filter'),
             icon: Icon(_showFavoritesOnly ? Icons.star : Icons.star_border),
-            color: _showFavoritesOnly ? Color(0xFFFFD54F) : Colors.white,
+            color: _showFavoritesOnly ? const Color(0xFFFFD54F) : Colors.white,
             tooltip: _showFavoritesOnly ? 'すべてのメモを表示' : 'お気に入りのみ表示',
             onPressed: _toggleFavoritesOnly,
           ),
@@ -1111,7 +1111,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         icon: const Icon(Icons.add),
                         label: const Text('新しいメモを作成'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF6366F1),
+                          backgroundColor: const Color(0xFF6366F1),
                           foregroundColor: Colors.white,
                         ),
                         onPressed: () => _navigateToEditor(context),
@@ -1192,7 +1192,7 @@ class _NoteListPageState extends State<NoteListPage> {
       floatingActionButton: FloatingActionButton(
         key: const Key('note_list_page_fab'),
         onPressed: () => _navigateToEditor(context),
-        backgroundColor: Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF6366F1),
         child: const Icon(Icons.add),
       ),
     );

@@ -177,8 +177,11 @@ class _AiAgentPageState extends State<AiAgentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.smart_toy_outlined,
-              size: 64, color: Color(0xFF9CA3AF)),
+          const Icon(
+            Icons.smart_toy_outlined,
+            size: 64,
+            color: Color(0xFF9CA3AF),
+          ),
           const SizedBox(height: 16),
           const Text(
             'AIエージェントがまだいません',
@@ -213,7 +216,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
           child: ListTile(
             leading: Icon(
               Icons.smart_toy,
-              color: isActive ? Colors.indigo : Color(0xFF9CA3AF),
+              color: isActive ? Colors.indigo : const Color(0xFF9CA3AF),
             ),
             title: Text(
               flow['name'] as String? ?? '',

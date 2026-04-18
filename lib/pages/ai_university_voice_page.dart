@@ -171,9 +171,9 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // DESIGN.md: background = 0xFF0A0A0A (surface0)
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
@@ -198,17 +198,17 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
             Container(
               decoration: BoxDecoration(
                 // DESIGN.md: surface1 = 0xFF1A1A1A
-                color: Color(0xFF1A1A1A),
+                color: const Color(0xFF1A1A1A),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Color(0xFF3D5AFE).withValues(alpha: 0.3),
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.3),
                 ),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: DropdownButton<String>(
                 value: _selectedProvider,
                 isExpanded: true,
-                dropdownColor: Color(0xFF1A1A1A),
+                dropdownColor: const Color(0xFF1A1A1A),
                 style: const TextStyle(color: Colors.white),
                 underline: const SizedBox.shrink(),
                 items: _providers
@@ -228,7 +228,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF6B35),
+                  backgroundColor: const Color(0xFFFF6B35),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -250,7 +250,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   // DESIGN.md: surface2 = 0xFF1E1E1E
-                  color: Color(0xFF1E1E1E),
+                  color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -310,7 +310,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1E1E1E),
+                      backgroundColor: const Color(0xFF1E1E1E),
                       side: const BorderSide(color: Color(0xFF3D5AFE)),
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
@@ -347,7 +347,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                     hintText: '回答を入力してください...',
                     hintStyle: const TextStyle(color: Colors.white38),
                     filled: true,
-                    fillColor: Color(0xFF1E1E1E),
+                    fillColor: const Color(0xFF1E1E1E),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Color(0xFF3D5AFE)),
@@ -361,7 +361,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                       // DESIGN.md: primary CTA = orange
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF6B35),
+                          backgroundColor: const Color(0xFFFF6B35),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -392,13 +392,13 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: _feedbackText.startsWith('正解')
-                        ? Color(0xFF4CAF50).withValues(alpha: 0.1)
-                        : Color(0xFFE53935).withValues(alpha: 0.1),
+                        ? const Color(0xFF4CAF50).withValues(alpha: 0.1)
+                        : const Color(0xFFE53935).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _feedbackText.startsWith('正解')
-                          ? Color(0xFF4CAF50).withValues(alpha: 0.4)
-                          : Color(0xFFE53935).withValues(alpha: 0.4),
+                          ? const Color(0xFF4CAF50).withValues(alpha: 0.4)
+                          : const Color(0xFFE53935).withValues(alpha: 0.4),
                     ),
                   ),
                   child: Text(

@@ -661,7 +661,7 @@ ${_compatibilityMatch.description}''';
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF1DA1F2),
+              backgroundColor: const Color(0xFF1DA1F2),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

@@ -167,8 +167,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                         Icon(
                           Icons.calendar_today,
                           color: _connected
-                              ? Color(0xFF34A853)
-                              : Color(0xFF9CA3AF),
+                              ? const Color(0xFF34A853)
+                              : const Color(0xFF9CA3AF),
                           size: 32,
                         ),
                         const SizedBox(width: 12),
@@ -191,8 +191,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                                     height: 8,
                                     decoration: BoxDecoration(
                                       color: _connected
-                                          ? Color(0xFF34A853)
-                                          : Color(0xFF9CA3AF),
+                                          ? const Color(0xFF34A853)
+                                          : const Color(0xFF9CA3AF),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -201,8 +201,8 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                                     _connected ? '接続済み' : '未接続',
                                     style: TextStyle(
                                       color: _connected
-                                          ? Color(0xFF34A853)
-                                          : Color(0xFF9CA3AF),
+                                          ? const Color(0xFF34A853)
+                                          : const Color(0xFF9CA3AF),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -217,7 +217,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                             icon: const Icon(Icons.link, size: 16),
                             label: const Text('接続する'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF4285F4),
+                              backgroundColor: const Color(0xFF4285F4),
                               foregroundColor: Colors.white,
                             ),
                           ),
@@ -272,7 +272,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                               : const Icon(Icons.sync, size: 16),
                           label: Text(_isSyncing ? '同期中...' : '今すぐ同期'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4285F4),
+                            backgroundColor: const Color(0xFF4285F4),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
@@ -357,7 +357,7 @@ class _CalendarTile extends StatelessWidget {
     try {
       tileColor = Color(int.parse('FF$colorHex', radix: 16));
     } catch (_) {
-      tileColor = Color(0xFF4285F4);
+      tileColor = const Color(0xFF4285F4);
     }
     return ListTile(
       leading: Container(
@@ -393,7 +393,7 @@ class _FeatureItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: Color(0xFF0284C7)),
+          Icon(icon, size: 16, color: const Color(0xFF0284C7)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(text, style: const TextStyle(fontSize: 13)),

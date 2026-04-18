@@ -459,7 +459,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
               border: const OutlineInputBorder(),
               filled: true,
               fillColor:
-                  isDark ? Color(0xFF111827) : Color(0xFFF9FAFB),
+                  isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
             ),
             style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
           ),
@@ -660,8 +660,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark
-                          ? Color(0xFF9CA3AF)
-                          : Color(0xFF4B5563),
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF4B5563),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -674,8 +674,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark
-                              ? Color(0xFF9CA3AF)
-                              : Color(0xFF4B5563),
+                              ? const Color(0xFF9CA3AF)
+                              : const Color(0xFF4B5563),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -782,8 +782,8 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           color: engRate >= 5
                               ? Colors.orange
                               : isDark
-                                  ? Color(0xFF9CA3AF)
-                                  : Color(0xFF4B5563),
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF4B5563),
                         ),
                       ),
                     ],

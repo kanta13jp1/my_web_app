@@ -251,7 +251,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: Color(0xFFFFC107),
+                backgroundColor: const Color(0xFFFFC107),
                 child: Text(
                   'Lv$level',
                   style: const TextStyle(
@@ -279,7 +279,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                       value: progress.clamp(0.0, 1.0),
                       backgroundColor: Colors.white24,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFFFFC107)),
+                        Color(0xFFFFC107),
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -305,7 +306,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
               _statChip(
                 Icons.stars,
                 '${_badges.where((b) => b['earned'] == true).length}バッジ',
-                Color(0xFFFFC107),
+                const Color(0xFFFFC107),
               ),
             ],
           ),
@@ -352,7 +353,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
               child: ListTile(
                 leading: Icon(
                   completed ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: completed ? Colors.green : Color(0xFF9CA3AF),
+                  color: completed ? Colors.green : const Color(0xFF9CA3AF),
                 ),
                 title: Text(
                   c['title'] as String? ?? '',
@@ -437,12 +438,12 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: earned
-              ? Color(0xFFFFECB3)
+              ? const Color(0xFFFFECB3)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: earned
-                ? Color(0xFFFFC107)
+                ? const Color(0xFFFFC107)
                 : Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
         ),
@@ -452,7 +453,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             Icon(
               _badgeIcon(icon),
               size: 18,
-              color: earned ? Color(0xFFFFA000) : Color(0xFF9CA3AF),
+              color: earned ? const Color(0xFFFFA000) : const Color(0xFF9CA3AF),
             ),
             const SizedBox(width: 4),
             Text(
@@ -460,7 +461,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
               style: TextStyle(
                 fontSize: 12,
                 color:
-                    earned ? Color(0xFFFF6F00) : Color(0xFF9CA3AF),
+                    earned ? const Color(0xFFFF6F00) : const Color(0xFF9CA3AF),
                 fontWeight: earned ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -482,9 +483,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           final xp = entry['totalXp'] as int? ?? 0;
           final level = entry['level'] as int? ?? 1;
           final streak = entry['streakDays'] as int? ?? 0;
-          Color rankColor = Color(0xFF9CA3AF);
+          Color rankColor = const Color(0xFF9CA3AF);
           if (rank == 1) {
-            rankColor = Color(0xFFFFC107);
+            rankColor = const Color(0xFFFFC107);
           } else if (rank == 2) {
             rankColor = Colors.blueGrey;
           } else if (rank == 3) {

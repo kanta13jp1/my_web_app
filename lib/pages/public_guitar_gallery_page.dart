@@ -126,9 +126,9 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Row(
           children: [
             Icon(Icons.music_note, color: Color(0xFFFF6B35)),
@@ -146,7 +146,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort, color: Colors.white),
             tooltip: 'ソート',
-            color: Color(0xFF2A2A2A),
+            color: const Color(0xFF2A2A2A),
             onSelected: (val) {
               setState(() => _sortBy = val);
               _fetchGallery(reset: true);
@@ -159,7 +159,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                     _sortLabel(s),
                     style: TextStyle(
                       color:
-                          _sortBy == s ? Color(0xFFFF6B35) : Colors.white,
+                          _sortBy == s ? const Color(0xFFFF6B35) : Colors.white,
                     ),
                   ),
                 ),
@@ -194,7 +194,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
             ElevatedButton(
               onPressed: () => _fetchGallery(reset: true),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF6B35),
+                backgroundColor: const Color(0xFFFF6B35),
               ),
               child: const Text('再読み込み'),
             ),
@@ -234,7 +234,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               icon: const Icon(Icons.mic),
               label: const Text('ギタースタジオへ'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF6B35),
+                backgroundColor: const Color(0xFFFF6B35),
                 foregroundColor: Colors.white,
               ),
             ),
@@ -248,7 +248,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () => _fetchGallery(reset: true),
-            color: Color(0xFFFF6B35),
+            color: const Color(0xFFFF6B35),
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: _recordings.length + (_offset < _total ? 1 : 0),
@@ -267,7 +267,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
 
   Widget _buildHeader() {
     return Container(
-      color: Color(0xFF1A1A1A),
+      color: const Color(0xFF1A1A1A),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
@@ -279,7 +279,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Color(0xFFFF6B35).withValues(alpha: 0.2),
+              color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -317,12 +317,12 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
     } catch (_) {}
 
     return Card(
-      color: Color(0xFF1E1E1E),
+      color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: Color(0xFFFF6B35).withValues(alpha: 0.2),
+          color: const Color(0xFFFF6B35).withValues(alpha: 0.2),
         ),
       ),
       child: Padding(
@@ -335,7 +335,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Color(0xFFFF6B35).withValues(alpha: 0.15),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
@@ -458,7 +458,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                   icon: const Icon(Icons.play_arrow, size: 16),
                   label: const Text('再生'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF6B35),
+                    backgroundColor: const Color(0xFFFF6B35),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -491,7 +491,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
           onPressed: () => _fetchGallery(),
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: Color(0xFFFF6B35)),
-            foregroundColor: Color(0xFFFF6B35),
+            foregroundColor: const Color(0xFFFF6B35),
           ),
           child: const Text('さらに読み込む'),
         ),
@@ -503,7 +503,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Color(0xFF2A2A2A),
+        color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -531,7 +531,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Color(0xFFFF6B35).withValues(alpha: 0.15),
+        color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

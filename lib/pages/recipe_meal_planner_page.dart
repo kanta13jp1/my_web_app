@@ -186,11 +186,16 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.calendar_today,
-                size: 64, color: Color(0xFF9CA3AF)),
+            const Icon(
+              Icons.calendar_today,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             const SizedBox(height: 12),
-            const Text('週間プランがありません',
-                style: TextStyle(color: Color(0xFF9CA3AF))),
+            const Text(
+              '週間プランがありません',
+              style: TextStyle(color: Color(0xFF9CA3AF)),
+            ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () async {
@@ -272,7 +277,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             name,
             style: TextStyle(
               decoration: bought ? TextDecoration.lineThrough : null,
-              color: bought ? Color(0xFF9CA3AF) : null,
+              color: bought ? const Color(0xFF9CA3AF) : null,
             ),
           ),
           subtitle: Text('$category${qty.isNotEmpty ? " · $qty" : ""}'),

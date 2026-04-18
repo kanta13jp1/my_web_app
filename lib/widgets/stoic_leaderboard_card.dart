@@ -46,9 +46,9 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? Color(0xFF1A2233) : Colors.white;
-    final textColor = isDark ? Colors.white : Color(0xFF1E293B);
-    final subColor = isDark ? Color(0xFF94A3B8) : Color(0xFF64748B);
+    final cardColor = isDark ? const Color(0xFF1A2233) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final subColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     const stoicColor = Color(0xFF10B981);
 
     return Container(

@@ -74,12 +74,12 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
         decoration: BoxDecoration(
           color: allDone
               ? Colors.green.withAlpha(isDark ? 25 : 15)
-              : (isDark ? Color(0xFF1A2233) : Colors.white),
+              : (isDark ? const Color(0xFF1A2233) : Colors.white),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: allDone
                 ? Colors.green.withAlpha(60)
-                : (isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0)),
+                : (isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0)),
           ),
         ),
         child: Row(
@@ -112,7 +112,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                       fontWeight: FontWeight.w700,
                       color: allDone
                           ? Colors.green
-                          : (isDark ? Colors.white : Color(0xFF1E293B)),
+                          : (isDark ? Colors.white : const Color(0xFF1E293B)),
                     ),
                   ),
                   const SizedBox(height: 4),

@@ -344,7 +344,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
         (goal['milestones'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final deadline = goal['deadline'] as String?;
 
-    final tfColor = _timeframeColors[timeframe] ?? Color(0xFF607D8B);
+    final tfColor = _timeframeColors[timeframe] ?? const Color(0xFF607D8B);
     final tfLabel = _timeframeLabels[timeframe] ?? timeframe;
 
     return Card(

@@ -238,15 +238,15 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
-    final card = isDark ? Color(0xFF1E293B) : Colors.white;
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final card = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('思考キャプチャ'),
-        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         elevation: 0,
         actions: [
           IconButton(
@@ -259,7 +259,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
         children: [
           // Quick capture bar
           Container(
-            color: isDark ? Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Row(
               children: [
@@ -270,13 +270,13 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                       hintText: '今浮かんだことを即記録...',
                       hintStyle: TextStyle(
                         color: isDark
-                            ? Color(0xFF6B7280)
-                            : Color(0xFF9CA3AF),
+                            ? const Color(0xFF6B7280)
+                            : const Color(0xFF9CA3AF),
                       ),
                       filled: true,
                       fillColor: isDark
-                          ? Color(0xFF0F172A)
-                          : Color(0xFFF1F5F9),
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFFF1F5F9),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide.none,
@@ -293,7 +293,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 FilledButton(
                   onPressed: _saving ? null : _quickCapture,
                   style: FilledButton.styleFrom(
-                    backgroundColor: Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF6366F1),
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(12),
                   ),
@@ -313,7 +313,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
           ),
           // Filters
           Container(
-            color: isDark ? Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -410,10 +410,10 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: selected
-                ? (color ?? Color(0xFF6366F1))
+                ? (color ?? const Color(0xFF6366F1))
                 : (isDark
                     ? Theme.of(context).colorScheme.surfaceContainerHighest
-                    : Color(0xFFF1F5F9)),
+                    : const Color(0xFFF1F5F9)),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -442,7 +442,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
     final reflection = thought['reflection'] as String?;
     final importance = thought['importance'] as int? ?? 3;
     final capturedAt = thought['captured_at'] as String?;
-    final color = _typeColors[type] ?? Color(0xFF9CA3AF);
+    final color = _typeColors[type] ?? const Color(0xFF9CA3AF);
 
     return Card(
       color: cardColor,
@@ -496,8 +496,8 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                         Icons.star,
                         size: 12,
                         color: i < importance
-                            ? Color(0xFFF59E0B)
-                            : Color(0xFFD1D5DB),
+                            ? const Color(0xFFF59E0B)
+                            : const Color(0xFFD1D5DB),
                       ),
                     ),
                   ),
@@ -517,7 +517,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 content,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? Colors.white : Color(0xFF1E293B),
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
                 ),
               ),
               if (reflection != null && reflection.isNotEmpty) ...[
@@ -567,7 +567,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white : Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
             ),
           ),
           const SizedBox(height: 8),

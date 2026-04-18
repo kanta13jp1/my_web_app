@@ -130,7 +130,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFFFF6B35),
+              backgroundColor: const Color(0xFFFF6B35),
               foregroundColor: Colors.white,
             ),
             child: const Text('作成'),
@@ -143,7 +143,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
   Color _meetingTypeColor(String? type) {
     switch (type) {
       case 'video':
-        return Color(0xFF3D5AFE);
+        return const Color(0xFF3D5AFE);
       case 'audio':
         return Colors.green;
       case 'webinar':
@@ -151,7 +151,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       case 'screen_share':
         return Colors.orange;
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -173,10 +173,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('ビデオ会議'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
         actions: [
@@ -202,7 +202,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createRoom,
-        backgroundColor: Color(0xFFFF6B35),
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         tooltip: '会議を作成',
         child: const Icon(Icons.add),
@@ -265,7 +265,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
         final type = room['type']?.toString();
         final participantCount = room['participant_count'] ?? 0;
         return Card(
-          color: Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: _meetingTypeColor(type).withAlpha(30),
@@ -326,7 +326,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       itemBuilder: (context, i) {
         final min = _minutes[i] as Map<String, dynamic>;
         return Card(
-          color: Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E),
           child: ListTile(
             leading: const CircleAvatar(
               backgroundColor: Color(0x333D5AFE),
@@ -381,7 +381,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
         final item = _actionItems[i] as Map<String, dynamic>;
         final done = item['completed'] == true;
         return Card(
-          color: Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: done
@@ -436,7 +436,7 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
           physics: const NeverScrollableScrollPhysics(),
           children: items.map((item) {
             return Card(
-              color: Color(0xFF1E1E1E),
+              color: const Color(0xFF1E1E1E),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(

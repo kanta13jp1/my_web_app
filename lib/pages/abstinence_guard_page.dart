@@ -351,7 +351,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       appBar: AppBar(
         title: const Text('禁欲ガード'),
         backgroundColor: Colors.redAccent,
-        foregroundColor: Color(0xFFE5E7EB),
+        foregroundColor: const Color(0xFFE5E7EB),
       ),
       body: _isLoading || snapshot == null
           ? const Center(child: CircularProgressIndicator())
@@ -1169,7 +1169,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                       key: Key('abstinence_guard_slip_${state.item.id}'),
                       style: FilledButton.styleFrom(
                         backgroundColor: Colors.redAccent,
-                        foregroundColor: Color(0xFFE5E7EB),
+                        foregroundColor: const Color(0xFFE5E7EB),
                       ),
                       onPressed: () => _incrementSlip(state.item.id),
                       icon: const Icon(Icons.warning_amber_rounded, size: 18),

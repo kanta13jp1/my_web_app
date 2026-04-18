@@ -181,14 +181,16 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
                             Icon(
                               Icons.receipt_long,
                               size: 48,
-                              color: isDark ? Colors.grey[600] : Colors.grey[400],
+                              color:
+                                  isDark ? Colors.grey[600] : Colors.grey[400],
                             ),
                             const SizedBox(height: 8),
                             Text(
                               '請求書がありません',
                               style: TextStyle(
-                                color:
-                                    isDark ? Colors.grey[500] : Colors.grey[600],
+                                color: isDark
+                                    ? Colors.grey[500]
+                                    : Colors.grey[600],
                               ),
                             ),
                           ],

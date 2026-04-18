@@ -73,30 +73,30 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isDark ? Color(0xFF4B5563) : Color(0xFFE0E7FF),
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
       color: isDark
-          ? Color(0xFF1E1B4B).withAlpha(80)
-          : Color(0xFFF5F3FF),
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: ListTile(
         leading: Icon(
           Icons.person_add,
-          color: isDark ? Colors.white70 : Color(0xFF4338CA),
+          color: isDark ? Colors.white70 : const Color(0xFF4338CA),
         ),
         title: Text(
           'プロフィールを作成しましょう',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : Color(0xFF3730A3),
+            color: isDark ? Colors.white : const Color(0xFF3730A3),
           ),
         ),
         subtitle:
             const Text('他のユーザーに見つけてもらいやすくなります', style: TextStyle(fontSize: 11)),
         trailing: Icon(
           Icons.chevron_right,
-          color: isDark ? Colors.white70 : Color(0xFF4338CA),
+          color: isDark ? Colors.white70 : const Color(0xFF4338CA),
         ),
         onTap: () => Navigator.of(context)
             .pushNamed('/profile-settings')
@@ -115,9 +115,9 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Color(0xFFECFDF5),
+          color: const Color(0xFFECFDF5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Color(0xFF6EE7B7)),
+          border: Border.all(color: const Color(0xFF6EE7B7)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -154,12 +154,12 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isDark ? Color(0xFF4B5563) : Color(0xFFE0E7FF),
+          color: isDark ? const Color(0xFF4B5563) : const Color(0xFFE0E7FF),
         ),
       ),
       color: isDark
-          ? Color(0xFF1E1B4B).withAlpha(80)
-          : Color(0xFFF5F3FF),
+          ? const Color(0xFF1E1B4B).withAlpha(80)
+          : const Color(0xFFF5F3FF),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -172,8 +172,8 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: isDark
-                      ? Color(0xFF4B5563)
-                      : Color(0xFFE0E7FF),
+                      ? const Color(0xFF4B5563)
+                      : const Color(0xFFE0E7FF),
                   backgroundImage:
                       profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
                           ? NetworkImage(profile.avatarUrl!)
@@ -200,7 +200,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color:
-                              isDark ? Colors.white : Color(0xFF3730A3),
+                              isDark ? Colors.white : const Color(0xFF3730A3),
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -210,7 +210,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                           fontSize: 11,
                           color: isDark
                               ? Colors.grey[400]
-                              : Color(0xFF6B7280),
+                              : const Color(0xFF6B7280),
                         ),
                       ),
                     ],
@@ -221,7 +221,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                       .pushNamed('/profile-settings')
                       .then((_) => _load()),
                   style: TextButton.styleFrom(
-                    foregroundColor: Color(0xFF4338CA),
+                    foregroundColor: const Color(0xFF4338CA),
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     shape: RoundedRectangleBorder(
@@ -244,13 +244,13 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 value: pct / 100,
                 minHeight: 8,
                 backgroundColor:
-                    isDark ? Colors.grey[800] : Color(0xFFE0E7FF),
+                    isDark ? Colors.grey[800] : const Color(0xFFE0E7FF),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   pct >= 75
-                      ? Color(0xFF059669)
+                      ? const Color(0xFF059669)
                       : pct >= 50
-                          ? Color(0xFFF59E0B)
-                          : Color(0xFF4338CA),
+                          ? const Color(0xFFF59E0B)
+                          : const Color(0xFF4338CA),
                 ),
               ),
             ),
@@ -262,7 +262,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 '未設定: ${missingFields.map((f) => f.label).join(' / ')}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? Colors.grey[400] : Color(0xFF9CA3AF),
+                  color: isDark ? Colors.grey[400] : const Color(0xFF9CA3AF),
                 ),
               ),
             ],

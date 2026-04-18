@@ -104,7 +104,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
-          backgroundColor: Color(0xFF1E1E1E),
+          backgroundColor: const Color(0xFF1E1E1E),
           title: const Text('イベントを追加', style: TextStyle(color: Colors.white)),
           content: SingleChildScrollView(
             child: Column(
@@ -125,12 +125,12 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Color(0xFF333333)),
+                    border: Border.all(color: const Color(0xFF333333)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButton<String>(
                     value: _category,
-                    dropdownColor: Color(0xFF1E1E1E),
+                    dropdownColor: const Color(0xFF1E1E1E),
                     style: const TextStyle(color: Colors.white),
                     underline: const SizedBox.shrink(),
                     isExpanded: true,
@@ -155,7 +155,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
             ElevatedButton(
               onPressed: _saving ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFF6B35),
+                backgroundColor: const Color(0xFFFF6B35),
                 foregroundColor: Colors.white,
               ),
               child: _saving
@@ -197,9 +197,9 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF121212),
+        backgroundColor: const Color(0xFF121212),
         title: const Text('家族カレンダー', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -213,7 +213,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
         children: [
           // 月ナビゲーション
           Container(
-            color: Color(0xFF121212),
+            color: const Color(0xFF121212),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -274,7 +274,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                             ElevatedButton.icon(
                               onPressed: _showAddDialog,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFFFF6B35),
+                                backgroundColor: const Color(0xFFFF6B35),
                                 foregroundColor: Colors.white,
                               ),
                               icon: const Icon(Icons.add),
@@ -290,7 +290,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                           final e = _events[i];
                           final cat = e['category'] as String? ?? 'その他';
                           final color =
-                              _categoryColors[cat] ?? Color(0xFF9CA3AF);
+                              _categoryColors[cat] ?? const Color(0xFF9CA3AF);
                           final dateStr = e['event_date'] != null
                               ? DateTime.parse(e['event_date'].toString())
                                   .toLocal()
@@ -298,7 +298,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                                   .substring(0, 10)
                               : '';
                           return Card(
-                            color: Color(0xFF1E1E1E),
+                            color: const Color(0xFF1E1E1E),
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
                               leading: Container(
@@ -361,7 +361,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
       ),
       floatingActionButton: _events.isNotEmpty
           ? FloatingActionButton(
-              backgroundColor: Color(0xFFFF6B35),
+              backgroundColor: const Color(0xFFFF6B35),
               onPressed: _showAddDialog,
               child: const Icon(Icons.add, color: Colors.white),
             )

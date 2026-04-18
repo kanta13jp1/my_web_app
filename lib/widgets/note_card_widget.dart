@@ -77,7 +77,7 @@ class NoteCardWidget extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Color(0xFFE5E7EB),
+                    color: const Color(0xFFE5E7EB),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -305,7 +305,7 @@ class NoteCardWidget extends StatelessWidget {
     return Container(
       width: aspectRatio.width.toDouble(),
       constraints: BoxConstraints(minHeight: aspectRatio.height.toDouble()),
-      color: Color(0xFF1a1a1a),
+      color: const Color(0xFF1a1a1a),
       padding: const EdgeInsets.all(80),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -395,7 +395,7 @@ class NoteCardWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 64 * fontScale,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFe65100),
+                    color: const Color(0xFFe65100),
                     height: 1.3,
                   ),
                 ),
@@ -413,7 +413,7 @@ class NoteCardWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFe65100),
+                      color: const Color(0xFFe65100),
                     ),
                   ),
                 ),
@@ -427,7 +427,7 @@ class NoteCardWidget extends StatelessWidget {
             displayContent,
             style: TextStyle(
               fontSize: 42 * fontScale,
-              color: Color(0xFF5d4037),
+              color: const Color(0xFF5d4037),
               height: 1.6,
             ),
           ),
@@ -435,7 +435,7 @@ class NoteCardWidget extends StatelessWidget {
           const SizedBox(height: 40),
 
           // フッター
-          _buildFooter(Colors.orange[200]!, Color(0xFFe65100), fontScale),
+          _buildFooter(Colors.orange[200]!, const Color(0xFFe65100), fontScale),
         ],
       ),
     );

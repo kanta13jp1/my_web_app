@@ -143,7 +143,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
           child: ListTile(
             leading: Icon(
               Icons.qr_code,
-              color: low ? Colors.red : Color(0xFF9CA3AF),
+              color: low ? Colors.red : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: sku.isNotEmpty ? Text('SKU: $sku') : null,

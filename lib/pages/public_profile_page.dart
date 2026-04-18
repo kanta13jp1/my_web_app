@@ -151,14 +151,14 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           Icon(
             Icons.person_off_outlined,
             size: 64,
-            color: isDark ? Color(0xFF4B5563) : Color(0xFF9CA3AF),
+            color: isDark ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
           ),
           const SizedBox(height: 16),
           Text(
             'プロフィールが見つかりません',
             style: TextStyle(
               fontSize: 18,
-              color: isDark ? Color(0xFF9CA3AF) : Color(0xFF4B5563),
+              color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
             ),
           ),
           const SizedBox(height: 8),
@@ -166,7 +166,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             '非公開または存在しないユーザーです',
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? Color(0xFF4B5563) : Color(0xFF9CA3AF),
+              color: isDark ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
             ),
           ),
           const SizedBox(height: 24),
@@ -191,7 +191,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundColor: Color(0xFF6366F1).withAlpha(30),
+                backgroundColor: const Color(0xFF6366F1).withAlpha(30),
                 backgroundImage:
                     _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
                 child: _avatarUrl == null
@@ -217,7 +217,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     if (_location?.isNotEmpty == true) ...[
@@ -228,8 +228,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                             Icons.location_on_outlined,
                             size: 14,
                             color: isDark
-                                ? Color(0xFF9CA3AF)
-                                : Color(0xFF4B5563),
+                                ? const Color(0xFF9CA3AF)
+                                : const Color(0xFF4B5563),
                           ),
                           const SizedBox(width: 2),
                           Text(
@@ -237,8 +237,8 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                             style: TextStyle(
                               fontSize: 12,
                               color: isDark
-                                  ? Color(0xFF9CA3AF)
-                                  : Color(0xFF4B5563),
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF4B5563),
                             ),
                           ),
                         ],
@@ -265,7 +265,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               style: TextStyle(
                 fontSize: 14,
                 color:
-                    isDark ? Color(0xFFD1D5DB) : Color(0xFF475569),
+                    isDark ? const Color(0xFFD1D5DB) : const Color(0xFF475569),
                 height: 1.5,
               ),
             ),
@@ -276,11 +276,11 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: isDark ? Color(0xFF1A2233) : Color(0xFFF8FAFC),
+              color: isDark ? const Color(0xFF1A2233) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color:
-                    isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0),
+                    isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
               ),
             ),
             child: Row(
@@ -372,7 +372,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                   FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: Color(0xFF6366F1),
+                      foregroundColor: const Color(0xFF6366F1),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 12,
@@ -414,14 +414,14 @@ class _StatChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: isDark ? Colors.white : Color(0xFF1E293B),
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
           ),
         ),
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            color: isDark ? Color(0xFF9CA3AF) : Color(0xFF4B5563),
+            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
           ),
         ),
       ],

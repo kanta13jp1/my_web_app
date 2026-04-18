@@ -103,21 +103,21 @@ class _AiSearchPageState extends State<AiSearchPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? Color(0xFF0F172A) : Color(0xFFF8FAFC);
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
         title: const Text('ノート検索'),
-        backgroundColor: isDark ? Color(0xFF1E293B) : Colors.white,
-        foregroundColor: isDark ? Colors.white : Color(0xFF1E293B),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        foregroundColor: isDark ? Colors.white : const Color(0xFF1E293B),
         elevation: 0,
       ),
       body: Column(
         children: [
           // 検索バー
           Container(
-            color: isDark ? Color(0xFF1E293B) : Colors.white,
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,8 +145,8 @@ class _AiSearchPageState extends State<AiSearchPage> {
                     ),
                     filled: true,
                     fillColor: isDark
-                        ? Color(0xFF0F172A)
-                        : Color(0xFFF1F5F9),
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFFF1F5F9),
                   ),
                   textInputAction: TextInputAction.search,
                   onSubmitted: _search,
@@ -162,7 +162,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                             : Icons.text_fields,
                         size: 13,
                         color: _searchMode == 'ai'
-                            ? Color(0xFF6366F1)
+                            ? const Color(0xFF6366F1)
                             : Colors.grey[500],
                       ),
                       const SizedBox(width: 4),
@@ -175,7 +175,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                         style: TextStyle(
                           fontSize: 11,
                           color: _searchMode == 'ai'
-                              ? Color(0xFF6366F1)
+                              ? const Color(0xFF6366F1)
                               : Colors.grey[500],
                         ),
                       ),
@@ -281,7 +281,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
     final title = _noteTitle(note);
     final excerpt = _noteExcerpt(note);
     final tags = _noteTags(note);
-    final cardColor = isDark ? Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Card(
       color: cardColor,
@@ -290,7 +290,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: isDark ? Color(0xFF334155) : Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
         ),
       ),
       child: Padding(
@@ -304,7 +304,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -334,7 +334,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Color(0xFF6366F1).withAlpha(20),
+                      color: const Color(0xFF6366F1).withAlpha(20),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(

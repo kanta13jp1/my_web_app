@@ -104,16 +104,16 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [Color(0xFF1A2233), Color(0xFF0D1424)]
-              : [Color(0xFFF0F9FF), Color(0xFFE0F2FE)],
+              ? [const Color(0xFF1A2233), const Color(0xFF0D1424)]
+              : [const Color(0xFFF0F9FF), const Color(0xFFE0F2FE)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
-              ? Color(0xFF1D4ED8).withAlpha(80)
-              : Color(0xFF7DD3FC),
+              ? const Color(0xFF1D4ED8).withAlpha(80)
+              : const Color(0xFF7DD3FC),
         ),
       ),
       child: Column(
@@ -138,7 +138,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : Color(0xFF0C4A6E),
+                  color: isDark ? Colors.white : const Color(0xFF0C4A6E),
                 ),
               ),
             ],
@@ -175,7 +175,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
             '使用状況を X でシェアして仲間を増やしましょう！',
             style: TextStyle(
               fontSize: 11,
-              color: isDark ? Color(0xFF94A3B8) : Color(0xFF0369A1),
+              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF0369A1),
             ),
           ),
           const SizedBox(height: 10),
@@ -187,11 +187,11 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
               label: const Text('X (Twitter) でシェア'),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
-                    isDark ? Colors.white : Color(0xFF0C4A6E),
+                    isDark ? Colors.white : const Color(0xFF0C4A6E),
                 side: BorderSide(
                   color: isDark
-                      ? Color(0xFF1D4ED8).withAlpha(150)
-                      : Color(0xFF38BDF8),
+                      ? const Color(0xFF1D4ED8).withAlpha(150)
+                      : const Color(0xFF38BDF8),
                 ),
                 textStyle: const TextStyle(
                   fontSize: 12,
@@ -226,7 +226,7 @@ class _StatChip extends StatelessWidget {
             isDark ? Colors.white.withAlpha(15) : Colors.white.withAlpha(200),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white.withAlpha(30) : Color(0xFFBAE6FD),
+          color: isDark ? Colors.white.withAlpha(30) : const Color(0xFFBAE6FD),
         ),
       ),
       child: Row(
@@ -235,7 +235,7 @@ class _StatChip extends StatelessWidget {
           Icon(
             icon,
             size: 12,
-            color: isDark ? Colors.white70 : Color(0xFF0369A1),
+            color: isDark ? Colors.white70 : const Color(0xFF0369A1),
           ),
           const SizedBox(width: 4),
           Text(
@@ -243,7 +243,7 @@ class _StatChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white70 : Color(0xFF0369A1),
+              color: isDark ? Colors.white70 : const Color(0xFF0369A1),
             ),
           ),
         ],

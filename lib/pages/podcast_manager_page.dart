@@ -151,7 +151,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
                       : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Icon(
                     isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: isPlaying ? Colors.white : Color(0xFF9CA3AF),
+                    color: isPlaying ? Colors.white : const Color(0xFF9CA3AF),
                   ),
                 ),
                 if (listened)
@@ -173,7 +173,7 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
               title,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: listened ? Color(0xFF9CA3AF) : null,
+                color: listened ? const Color(0xFF9CA3AF) : null,
               ),
             ),
             subtitle: Text(channel.isNotEmpty ? channel : '—'),

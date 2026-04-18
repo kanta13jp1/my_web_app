@@ -550,7 +550,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             const Text(
               'AI情勢分析 (Batch Updated):',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF)),
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF9CA3AF),
+              ),
             ),
             const SizedBox(height: 8),
             Text(cand['ai_analysis'] ?? '分析データなし'),
@@ -583,7 +585,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Color(0xB3FFFFFF),
+          unselectedLabelColor: const Color(0xB3FFFFFF),
           indicatorColor: Colors.amber,
           isScrollable: true,
           tabs: const [
@@ -709,8 +711,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   else if (_lastBatchLog?['status'] == 'ERROR')
                     const Icon(Icons.error, color: Colors.red, size: 16)
                   else
-                    const Icon(Icons.access_time,
-                        color: Color(0xFF9CA3AF), size: 16),
+                    const Icon(
+                      Icons.access_time,
+                      color: Color(0xFF9CA3AF),
+                      size: 16,
+                    ),
 
                   const SizedBox(width: 8),
 
@@ -926,8 +931,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  const Text('獲得予測議席',
-                      style: TextStyle(color: Color(0xFF9CA3AF))),
+                  const Text(
+                    '獲得予測議席',
+                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                  ),
                   Text(
                     '$seats / 465',
                     style: const TextStyle(
@@ -1130,7 +1137,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             label: const Text('ポスター/チラシを撮影・診断'),
             style: FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
-              backgroundColor: Color(0xFF009688),
+              backgroundColor: const Color(0xFF009688),
             ),
           ),
         ),
@@ -1159,8 +1166,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       leading: Icon(
                         Icons.image,
                         color: score >= 80
-                            ? Color(0xFF009688)
-                            : Color(0xFF9CA3AF),
+                            ? const Color(0xFF009688)
+                            : const Color(0xFF9CA3AF),
                       ),
                       title: Text(
                         '診断スコア: $score点',

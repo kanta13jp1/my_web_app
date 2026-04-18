@@ -93,12 +93,12 @@ class _GrowthRoadmapProgressCardState extends State<GrowthRoadmapProgressCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
-        isDark ? Color(0xFF1A2233) : Color(0xFFFFFFFF);
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF);
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : Color(0xFF1E293B);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final subTextColor =
-        isDark ? Color(0xFF94A3B8) : Color(0xFF64748B);
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Container(
       key: const Key('growth_roadmap_progress_card'),
@@ -202,7 +202,7 @@ class _PlanProgressRow extends StatelessWidget {
     final currentStr = _fmt(currentCount);
     final targetStr = _fmt(plan.target);
     final userBarColor =
-        userRatio >= 1.0 ? Color(0xFF22C55E) : Color(0xFF6366F1);
+        userRatio >= 1.0 ? const Color(0xFF22C55E) : const Color(0xFF6366F1);
 
     // ---- 機能実装進捗 ----
     final hasFeatures = plan.featuresTotal > 0;
@@ -214,7 +214,7 @@ class _PlanProgressRow extends StatelessWidget {
     final featFilled = (featRatio * _barSegments).round();
     final featBarText = _buildBarText(featFilled);
     final featBarColor =
-        featRatio >= 1.0 ? Color(0xFF22C55E) : Color(0xFF10B981);
+        featRatio >= 1.0 ? const Color(0xFF22C55E) : const Color(0xFF10B981);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -354,11 +354,11 @@ extension _FeatureStatusExt on _FeatureStatus {
       };
 
   Color get color => switch (this) {
-        _FeatureStatus.done => Color(0xFF22C55E),
-        _FeatureStatus.partial => Color(0xFFF59E0B),
-        _FeatureStatus.inProgress => Color(0xFF3B82F6),
-        _FeatureStatus.notYet => Color(0xFF94A3B8),
-        _FeatureStatus.unique => Color(0xFFA855F7),
+        _FeatureStatus.done => const Color(0xFF22C55E),
+        _FeatureStatus.partial => const Color(0xFFF59E0B),
+        _FeatureStatus.inProgress => const Color(0xFF3B82F6),
+        _FeatureStatus.notYet => const Color(0xFF94A3B8),
+        _FeatureStatus.unique => const Color(0xFFA855F7),
       };
 
   IconData get icon => switch (this) {
@@ -2535,11 +2535,11 @@ class _CompetitorFeatureComparisonCardState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
-        isDark ? Color(0xFF1A2233) : Color(0xFFFFFFFF);
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF);
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : Color(0xFF1E293B);
-    final subColor = isDark ? Color(0xFF94A3B8) : Color(0xFF64748B);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
+    final subColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     final rows = _currentRows;
 
@@ -2662,9 +2662,9 @@ class _CompetitorFeatureComparisonCardState
                     ),
                   )
                   .toList(),
-              labelColor: Color(0xFF6366F1),
+              labelColor: const Color(0xFF6366F1),
               unselectedLabelColor: subColor,
-              indicatorColor: Color(0xFF6366F1),
+              indicatorColor: const Color(0xFF6366F1),
               indicatorSize: TabBarIndicatorSize.label,
               dividerColor: borderColor,
               padding: EdgeInsets.zero,
@@ -2683,10 +2683,10 @@ class _CompetitorFeatureComparisonCardState
                       selected: selected,
                       onSelected: (_) => setState(() => _filterCategory = cat),
                       selectedColor:
-                          Color(0xFF6366F1).withValues(alpha: 0.15),
-                      checkmarkColor: Color(0xFF6366F1),
+                          const Color(0xFF6366F1).withValues(alpha: 0.15),
+                      checkmarkColor: const Color(0xFF6366F1),
                       side: BorderSide(
-                        color: selected ? Color(0xFF6366F1) : borderColor,
+                        color: selected ? const Color(0xFF6366F1) : borderColor,
                       ),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
@@ -2842,7 +2842,7 @@ class _OverallProgressBar extends StatelessWidget {
             value: ratio,
             minHeight: 8,
             backgroundColor:
-                isDark ? Color(0xFF2D3748) : Color(0xFFE2E8F0),
+                isDark ? const Color(0xFF2D3748) : const Color(0xFFE2E8F0),
             valueColor: const AlwaysStoppedAnimation<Color>(
               Color(0xFF6366F1),
             ),
@@ -2878,12 +2878,12 @@ class _FeatureRowTile extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       decoration: BoxDecoration(
         color: isDark
-            ? Color(0xFF0F172A).withValues(alpha: 0.4)
+            ? const Color(0xFF0F172A).withValues(alpha: 0.4)
             : Colors.grey.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: row.status == _FeatureStatus.unique
-              ? Color(0xFFA855F7).withValues(alpha: 0.3)
+              ? const Color(0xFFA855F7).withValues(alpha: 0.3)
               : borderColor,
         ),
       ),

@@ -75,8 +75,8 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isDark
-                ? [Color(0xFF1E1B4B), Color(0xFF312E81)]
-                : [Color(0xFFF5F3FF), Color(0xFFEDE9FE)],
+                ? [const Color(0xFF1E1B4B), const Color(0xFF312E81)]
+                : [const Color(0xFFF5F3FF), const Color(0xFFEDE9FE)],
           ),
         ),
         child: Padding(
@@ -108,7 +108,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                     tooltip: '次の名言',
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                    color: Color(0xFF7C3AED),
+                    color: const Color(0xFF7C3AED),
                   ),
                 ],
               ),
@@ -119,7 +119,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   height: 1.7,
-                  color: isDark ? Colors.white : Color(0xFF1E1B4B),
+                  color: isDark ? Colors.white : const Color(0xFF1E1B4B),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -170,7 +170,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                       '画像を開く',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFF7C3AED).withAlpha(180),
+                        color: const Color(0xFF7C3AED).withAlpha(180),
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -204,16 +204,16 @@ class _ActionChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Color(0xFF7C3AED).withAlpha(20),
+          color: const Color(0xFF7C3AED).withAlpha(20),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: Color(0xFF7C3AED).withAlpha(60),
+            color: const Color(0xFF7C3AED).withAlpha(60),
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 12, color: Color(0xFF7C3AED)),
+            Icon(icon, size: 12, color: const Color(0xFF7C3AED)),
             const SizedBox(width: 4),
             Text(
               label,

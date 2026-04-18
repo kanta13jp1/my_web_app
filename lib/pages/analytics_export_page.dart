@@ -65,7 +65,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('分析データエクスポート'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -113,7 +113,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (t) => Chip(
                                 label: Text(t),
-                                backgroundColor: Color(0xFFE0F2F1),
+                                backgroundColor: const Color(0xFFE0F2F1),
                               ),
                             )
                             .toList(),
@@ -136,7 +136,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (f) => Chip(
                                 label: Text(f.toUpperCase()),
-                                backgroundColor: Color(0xFFB2DFDB),
+                                backgroundColor: const Color(0xFFB2DFDB),
                               ),
                             )
                             .toList(),
@@ -167,8 +167,10 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A009688),
-                              child: Icon(Icons.download,
-                                  color: Color(0xFF009688)),
+                              child: Icon(
+                                Icons.download,
+                                color: Color(0xFF009688),
+                              ),
                             ),
                             title: Text(
                               item['type']?.toString() ??

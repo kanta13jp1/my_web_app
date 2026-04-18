@@ -1586,12 +1586,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return Theme.of(context).colorScheme.primary;
     }
     if (reminderDate.isBefore(DateTime.now())) {
-      return Color(0xFFB91C1C);
+      return const Color(0xFFB91C1C);
     }
     if (DateUtils.isSameDay(reminderDate, DateTime.now())) {
-      return Color(0xFFF57C00);
+      return const Color(0xFFF57C00);
     }
-    return Color(0xFF0F766E);
+    return const Color(0xFF0F766E);
   }
 
   Widget _buildReminderBanner(BuildContext context) {
@@ -1699,7 +1699,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       key: const Key('note_editor_selected_ai_model_chip'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Color(0xFF1A1A1A).withValues(alpha: 0.08),
+        color: const Color(0xFF1A1A1A).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -2143,7 +2143,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           IconButton(
             key: const Key('note_editor_page_favorite_button'),
             icon: Icon(_isFavorite ? Icons.star : Icons.star_border),
-            color: _isFavorite ? Color(0xFFFF6B35) : null,
+            color: _isFavorite ? const Color(0xFFFF6B35) : null,
             onPressed: _toggleFavorite,
             tooltip: _isFavorite ? 'お気に入り解除' : 'お気に入りに追加',
           ),
@@ -2478,11 +2478,11 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           final c = _comments[i];
                           return Container(
                             decoration: BoxDecoration(
-                              color: Color(0xFF6366F1)
+                              color: const Color(0xFF6366F1)
                                   .withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: Color(0xFF6366F1)
+                                color: const Color(0xFF6366F1)
                                     .withValues(alpha: 0.15),
                               ),
                             ),

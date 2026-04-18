@@ -265,7 +265,7 @@ class _DisconnectedView extends StatelessWidget {
           icon: const Icon(Icons.link),
           label: const Text('MoneyForward に接続する'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF00B900),
+            backgroundColor: const Color(0xFF00B900),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 48),
             textStyle: const TextStyle(fontSize: 16),
@@ -352,7 +352,7 @@ class _AccountsTab extends StatelessWidget {
             ),
           ),
         Card(
-          color: Color(0xFF00B900),
+          color: const Color(0xFF00B900),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -396,7 +396,7 @@ class _AccountsTab extends StatelessWidget {
                   label: Text(isSyncing ? '取得中...' : '今すぐ更新'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: Color(0xFF00B900),
+                    foregroundColor: const Color(0xFF00B900),
                   ),
                 ),
               ],
@@ -415,7 +415,7 @@ class _AccountsTab extends StatelessWidget {
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor:
-                      Color(0xFF00B900).withValues(alpha: 0.1),
+                      const Color(0xFF00B900).withValues(alpha: 0.1),
                   child: const Icon(
                     Icons.account_balance,
                     color: Color(0xFF00B900),

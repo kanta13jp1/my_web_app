@@ -200,10 +200,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('Wiki・データベース'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
@@ -264,11 +264,16 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.article_outlined,
-                size: 64, color: Color(0xFF9CA3AF)),
+            const Icon(
+              Icons.article_outlined,
+              size: 64,
+              color: Color(0xFF9CA3AF),
+            ),
             const SizedBox(height: 16),
-            const Text('Wikiページがありません',
-                style: TextStyle(color: Color(0xFF9CA3AF))),
+            const Text(
+              'Wikiページがありません',
+              style: TextStyle(color: Color(0xFF9CA3AF)),
+            ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _createPage(),
@@ -294,9 +299,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           return Card(
             elevation: isSelected ? 4 : 1,
             color: isSelected
-                ? Color(0xFF4F46E5).withValues(alpha: 0.08)
+                ? const Color(0xFF4F46E5).withValues(alpha: 0.08)
                 : null,
-            shadowColor: isSelected ? null : Color(0xFF1E1E1E),
+            shadowColor: isSelected ? null : const Color(0xFF1E1E1E),
             child: ListTile(
               leading:
                   const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
@@ -348,8 +353,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           children: [
             Icon(Icons.touch_app_outlined, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 16),
-            Text('左のタブからページを選択してください',
-                style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '左のタブからページを選択してください',
+              style: TextStyle(color: Color(0xFF9CA3AF)),
+            ),
           ],
         ),
       );
@@ -370,7 +377,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             const Text(
               '内容',
               style: TextStyle(
-                  fontWeight: FontWeight.bold, color: Color(0xFF9CA3AF)),
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF9CA3AF),
+              ),
             ),
             const SizedBox(height: 8),
             Container(
@@ -431,7 +440,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   row['content']?.toString() ?? row['data']?.toString() ?? '';
               final createdAt = row['createdAt']?.toString() ?? '';
               return Card(
-                color: Color(0xFF1E1E1E),
+                color: const Color(0xFF1E1E1E),
                 child: ListTile(
                   leading:
                       const Icon(Icons.data_array, color: Color(0xFF4F46E5)),

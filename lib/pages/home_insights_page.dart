@@ -55,7 +55,7 @@ class HomeInsightsPage extends StatelessWidget {
             title: 'ユーザーマニュアル',
             subtitle: '迷ったときの機能一覧と操作手順を確認する',
             icon: Icons.menu_book_outlined,
-            color: Color(0xFF6366F1),
+            color: const Color(0xFF6366F1),
             routeName: '/user-manual',
           ),
           const SizedBox(height: 20),
@@ -181,10 +181,10 @@ class HomeInsightsPage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isDark ? Color(0xFF1A2233) : Colors.white,
+          color: isDark ? const Color(0xFF1A2233) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0),
+            color: isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0),
           ),
         ),
         child: Row(

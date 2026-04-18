@@ -165,12 +165,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
             children: [
               _buildRoleIcon(Icons.psychology, 'CSO', '戦略', Colors.blueGrey),
               _buildRoleIcon(
-                  Icons.attach_money, 'CFO', '財務', Color(0xFF009688)),
+                Icons.attach_money,
+                'CFO',
+                '財務',
+                const Color(0xFF009688),
+              ),
               _buildRoleIcon(
                 Icons.health_and_safety,
                 'CHO',
                 '健康',
-                Color(0xFF00695C),
+                const Color(0xFF00695C),
               ),
               _buildRoleIcon(Icons.diversity_3, 'CHRO', '人事', Colors.pink),
               _buildRoleIcon(Icons.campaign, 'CMO', '広報', Colors.purple),
@@ -192,8 +196,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         const SizedBox(height: 4),
         Text(role, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-        Text(label,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF))),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+        ),
       ],
     );
   }
@@ -269,7 +275,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final steps = [
       (
         Icons.wb_sunny,
-        Color(0xFFFFC107),
+        const Color(0xFFFFC107),
         'モーニングブリーフィング',
         '今日の最優先タスクをAIが提案します。\nホーム画面「CEO OFFICE」→「モーニングブリーフィング」'
       ),
@@ -281,7 +287,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
       (
         Icons.upload_file,
-        Color(0xFF009688),
+        const Color(0xFF009688),
         'Notionから移行する',
         '既存のデータをそのままインポートできます。\nホーム画面「GROWTH / 成長導線」→「インポート」'
       ),

@@ -267,12 +267,12 @@ class _DevelopmentAchievementsCardState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
-        isDark ? Color(0xFF1A2233) : Color(0xFFFFFFFF);
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFFFFFFF);
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : Color(0xFF1E293B);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final subTextColor =
-        isDark ? Color(0xFF94A3B8) : Color(0xFF64748B);
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     return Container(
       decoration: BoxDecoration(
@@ -308,7 +308,7 @@ class _DevelopmentAchievementsCardState
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline, size: 20),
-                color: Color(0xFF10B981),
+                color: const Color(0xFF10B981),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 tooltip: '実績を追加',
@@ -321,8 +321,8 @@ class _DevelopmentAchievementsCardState
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Color(0xFF0F172A)
-                      : Color(0xFFF1F5F9),
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: borderColor),
                 ),
@@ -405,7 +405,7 @@ class _DevelopmentAchievementsCardState
                           margin: const EdgeInsets.only(top: 1, right: 8),
                           decoration: BoxDecoration(
                             color:
-                                Color(0xFF10B981).withValues(alpha: 0.15),
+                                const Color(0xFF10B981).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Center(

@@ -377,7 +377,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                             fontWeight: FontWeight.w600,
                             decoration:
                                 done ? TextDecoration.lineThrough : null,
-                            color: done ? Color(0xFF9CA3AF) : null,
+                            color: done ? const Color(0xFF9CA3AF) : null,
                           ),
                         ),
                         onTap: () => _toggleSchedule(s.$1),
@@ -466,7 +466,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                     : 0,
                 backgroundColor: Colors.white24,
                 valueColor: AlwaysStoppedAnimation(
-                  paidOff ? Colors.greenAccent : Color(0xFFFFC107),
+                  paidOff ? Colors.greenAccent : const Color(0xFFFFC107),
                 ),
                 minHeight: 8,
               ),
@@ -572,7 +572,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation(
-                  isPaidOff ? Colors.green : Color(0xFFFFA000),
+                  isPaidOff ? Colors.green : const Color(0xFFFFA000),
                 ),
                 minHeight: 6,
               ),

@@ -10,9 +10,9 @@ class NoteSearchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? Color(0xFF1E293B) : Colors.white;
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final borderColor =
-        isDark ? Color(0xFF334155) : Color(0xFFE2E8F0);
+        isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 
     return Card(
       color: cardBg,
@@ -34,7 +34,7 @@ class NoteSearchCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Color(0xFF6366F1).withAlpha(20),
+                  color: const Color(0xFF6366F1).withAlpha(20),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
@@ -53,7 +53,7 @@ class NoteSearchCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     const SizedBox(height: 2),

@@ -50,7 +50,7 @@ class _RewardsPageState extends State<RewardsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(' ステータス報酬'),
-        backgroundColor: Color(0xFFFFC107),
+        backgroundColor: const Color(0xFFFFC107),
         foregroundColor: Colors.black,
       ),
       body: _isLoading
@@ -66,8 +66,8 @@ class _RewardsPageState extends State<RewardsPage> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Color(0xFFFFD54F),
-                          Colors.orange.shade400
+                          const Color(0xFFFFD54F),
+                          Colors.orange.shade400,
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -177,7 +177,7 @@ class _RewardsPageState extends State<RewardsPage> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: isUnlocked
-                ? Color(0xFFFFECB3)
+                ? const Color(0xFFFFECB3)
                 : Theme.of(context).colorScheme.surfaceContainerHigh,
             shape: BoxShape.circle,
           ),
@@ -185,7 +185,7 @@ class _RewardsPageState extends State<RewardsPage> {
             icon,
             size: 30,
             color:
-                isUnlocked ? Color(0xFFFF8F00) : Color(0xFF9CA3AF),
+                isUnlocked ? const Color(0xFFFF8F00) : const Color(0xFF9CA3AF),
           ),
         ),
         const SizedBox(height: 8),
@@ -195,7 +195,7 @@ class _RewardsPageState extends State<RewardsPage> {
             fontSize: 12,
             color: isUnlocked
                 ? Theme.of(context).colorScheme.onSurface
-                : Color(0xFF9CA3AF),
+                : const Color(0xFF9CA3AF),
             fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
           ),
           textAlign: TextAlign.center,

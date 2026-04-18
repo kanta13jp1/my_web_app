@@ -105,7 +105,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
       case '手術・処置':
         return Colors.red;
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -124,7 +124,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('医療・健康ノート'),
-        backgroundColor: Color(0xFF00796B),
+        backgroundColor: const Color(0xFF00796B),
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -174,8 +174,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark
-                              ? Color(0xFF6B7280)
-                              : Color(0xFF9CA3AF),
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -194,8 +194,8 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         hintStyle: TextStyle(
                           fontSize: 12,
                           color: isDark
-                              ? Color(0xFF6B7280)
-                              : Color(0xFF9CA3AF),
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFF9CA3AF),
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -212,7 +212,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                       child: FilledButton(
                         onPressed: _saving ? null : _saveNote,
                         style: FilledButton.styleFrom(
-                          backgroundColor: Color(0xFF009688),
+                          backgroundColor: const Color(0xFF009688),
                         ),
                         child: _saving
                             ? const SizedBox(
@@ -311,7 +311,9 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                     trailing: Text(
                       dateStr,
                       style: const TextStyle(
-                          fontSize: 11, color: Color(0xFF9CA3AF)),
+                        fontSize: 11,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ),
                   ),
                 );

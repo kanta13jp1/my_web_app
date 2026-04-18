@@ -68,7 +68,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('サポートチケット'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -87,7 +87,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                   ),
                 )
               : _tickets.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -96,11 +96,13 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                             size: 64,
                             color: Color(0xFF4DB6AC),
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
+                          SizedBox(height: 16),
+                          Text(
                             '未返信チケットはありません',
                             style: TextStyle(
-                                fontSize: 16, color: Color(0xFF9CA3AF)),
+                              fontSize: 16,
+                              color: Color(0xFF9CA3AF),
+                            ),
                           ),
                         ],
                       ),
@@ -147,7 +149,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                     label: Text(
                                       ticket['status']?.toString() ?? 'open',
                                     ),
-                                    backgroundColor: Color(0xFFE0F2F1),
+                                    backgroundColor: const Color(0xFFE0F2F1),
                                   ),
                                 ),
                               );

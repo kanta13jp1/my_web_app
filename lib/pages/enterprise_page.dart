@@ -66,7 +66,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E293B),
         foregroundColor: Colors.white,
         title: const Text('自分株式会社 for Teams'),
         actions: [
@@ -161,7 +161,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                 label: const Text('無料で導入相談する'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: Color(0xFF1E293B),
+                  foregroundColor: const Color(0xFF1E293B),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 14,
@@ -366,7 +366,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
         horizontal: isMobile ? 24 : 80,
         vertical: 56,
       ),
-      color: Color(0xFFF8FAFF),
+      color: const Color(0xFFF8FAFF),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -434,7 +434,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
           const SizedBox(height: 24),
           Table(
             border: TableBorder.all(
-              color: Color(0xFFE2E8F0),
+              color: const Color(0xFFE2E8F0),
               width: 1,
             ),
             columnWidths: const {
@@ -488,7 +488,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
       child: Text(
         text,
         style: TextStyle(
-          color: highlight ? Color(0xFF34D399) : Colors.white,
+          color: highlight ? const Color(0xFF34D399) : Colors.white,
           fontWeight: FontWeight.bold,
           fontSize: 13,
         ),
@@ -503,8 +503,8 @@ class _EnterprisePageState extends State<EnterprisePage> {
       child: Icon(
         has ? Icons.check_circle : Icons.remove,
         color: has
-            ? (highlight ? Color(0xFF10B981) : Color(0xFF6B7280))
-            : Color(0xFFD1D5DB),
+            ? (highlight ? const Color(0xFF10B981) : const Color(0xFF6B7280))
+            : const Color(0xFFD1D5DB),
         size: 20,
       ),
     );
@@ -517,7 +517,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
         horizontal: isMobile ? 24 : 80,
         vertical: 56,
       ),
-      color: Color(0xFF1E293B),
+      color: const Color(0xFF1E293B),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -543,9 +543,9 @@ class _EnterprisePageState extends State<EnterprisePage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Color(0xFF10B981).withValues(alpha: 0.2),
+                color: const Color(0xFF10B981).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Color(0xFF10B981)),
+                border: Border.all(color: const Color(0xFF10B981)),
               ),
               child: const Row(
                 children: [
@@ -628,7 +628,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                             : const Icon(Icons.send),
                         label: Text(_isSubmitting ? '送信中...' : '無料で相談する'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF10B981),
+                          backgroundColor: const Color(0xFF10B981),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           textStyle: const TextStyle(
@@ -799,7 +799,7 @@ class _CostComparisonRow extends StatelessWidget {
                 Container(
                   height: 8,
                   decoration: BoxDecoration(
-                    color: Color(0xFFF1F5F9),
+                    color: const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -808,7 +808,7 @@ class _CostComparisonRow extends StatelessWidget {
                   child: Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: Color(0xFFEF4444),
+                      color: const Color(0xFFEF4444),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -859,12 +859,12 @@ class _UseCaseCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Color(0xFF3949AB).withValues(alpha: 0.1),
+                  color: const Color(0xFF3949AB).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   useCase.icon,
-                  color: Color(0xFF3949AB),
+                  color: const Color(0xFF3949AB),
                   size: 20,
                 ),
               ),
@@ -894,7 +894,7 @@ class _UseCaseCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Color(0xFFF1F5F9),
+              color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(

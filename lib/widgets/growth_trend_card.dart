@@ -108,11 +108,11 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: isDark
-              ? Color(0xFF6366F1).withAlpha(40)
-              : Color(0xFFDDD6FE),
+              ? const Color(0xFF6366F1).withAlpha(40)
+              : const Color(0xFFDDD6FE),
         ),
       ),
-      color: isDark ? Color(0xFF0F172A) : Colors.white,
+      color: isDark ? const Color(0xFF0F172A) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -131,7 +131,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : Color(0xFF1E293B),
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
                   ),
                 ),
                 const Spacer(),
@@ -209,13 +209,13 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                           );
                         }).toList(),
                         isCurved: true,
-                        color: Color(0xFF6366F1),
+                        color: const Color(0xFF6366F1),
                         barWidth: 2.5,
                         isStrokeCapRound: true,
                         dotData: const FlDotData(show: false),
                         belowBarData: BarAreaData(
                           show: true,
-                          color: Color(0xFF6366F1).withAlpha(30),
+                          color: const Color(0xFF6366F1).withAlpha(30),
                         ),
                       ),
                     ],

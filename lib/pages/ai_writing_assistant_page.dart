@@ -105,7 +105,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
         elevation: 0,
       ),
       backgroundColor:
-          isDark ? Color(0xFF0A0A0A) : Color(0xFFF8F9FA),
+          isDark ? const Color(0xFF0A0A0A) : const Color(0xFFF8F9FA),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -141,7 +141,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
               label: Text(_isLoading ? '処理中...' : 'AI に依頼する'),
               style: FilledButton.styleFrom(
                 backgroundColor:
-                    _actions[_selectedAction]?.$3 ?? Color(0xFF6366F1),
+                    _actions[_selectedAction]?.$3 ?? const Color(0xFF6366F1),
                 minimumSize: const Size.fromHeight(52),
               ),
             ),
@@ -169,7 +169,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.white12 : Colors.black12,
@@ -245,7 +245,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? Colors.white12 : Colors.black12,
@@ -278,7 +278,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? Colors.white12 : Colors.black12,
@@ -309,7 +309,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
   Widget _buildInputField(bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark ? Colors.white12 : Colors.black12,
@@ -347,7 +347,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
     final actionInfo = _actions[_selectedAction];
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: (actionInfo?.$3 ?? Colors.grey).withValues(alpha: 0.35),
@@ -380,7 +380,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                   IconButton(
                     icon: const Icon(Icons.open_in_new, size: 18),
                     tooltip: 'Xに投稿',
-                    color: Color(0xFF1DA1F2),
+                    color: const Color(0xFF1DA1F2),
                     onPressed: () async {
                       final encoded = Uri.encodeComponent(
                         _resultController.text.length > 280

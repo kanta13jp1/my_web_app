@@ -43,7 +43,7 @@ class _ProviderMeta {
 final _unknownMeta = _ProviderMeta(
   name: 'AI',
   emoji: '🤖',
-  color: Color(0xFF607D8B),
+  color: const Color(0xFF607D8B),
   officialUrl: '',
 );
 
@@ -53,553 +53,553 @@ final Map<String, _ProviderMeta> _providerMeta = {
   'google': _ProviderMeta(
     name: 'Google',
     emoji: '🔵',
-    color: Color(0xFF4285F4),
+    color: const Color(0xFF4285F4),
     officialUrl: 'https://ai.google.dev/',
   ),
   'openai': _ProviderMeta(
     name: 'OpenAI',
     emoji: '⚫',
-    color: Color(0xFF10A37F),
+    color: const Color(0xFF10A37F),
     officialUrl: 'https://platform.openai.com/',
   ),
   'anthropic': _ProviderMeta(
     name: 'Anthropic',
     emoji: '🟠',
-    color: Color(0xFFD4690E),
+    color: const Color(0xFFD4690E),
     officialUrl: 'https://docs.anthropic.com/',
   ),
   'microsoft': _ProviderMeta(
     name: 'Microsoft',
     emoji: '🔷',
-    color: Color(0xFF00A4EF),
+    color: const Color(0xFF00A4EF),
     officialUrl: 'https://azure.microsoft.com/ja-jp/solutions/ai/',
   ),
   'meta': _ProviderMeta(
     name: 'Meta',
     emoji: '🟣',
-    color: Color(0xFF0866FF),
+    color: const Color(0xFF0866FF),
     officialUrl: 'https://ai.meta.com/',
   ),
   'x': _ProviderMeta(
     name: 'xAI',
     emoji: '⚡',
-    color: Color(0xFF1DA1F2),
+    color: const Color(0xFF1DA1F2),
     officialUrl: 'https://x.ai/',
   ),
   'deepseek': _ProviderMeta(
     name: 'DeepSeek',
     emoji: '🐋',
-    color: Color(0xFF4D6BFE),
+    color: const Color(0xFF4D6BFE),
     officialUrl: 'https://platform.deepseek.com/',
   ),
   'mistral': _ProviderMeta(
     name: 'Mistral',
     emoji: '💨',
-    color: Color(0xFFFF7000),
+    color: const Color(0xFFFF7000),
     officialUrl: 'https://docs.mistral.ai/',
   ),
   'cohere': _ProviderMeta(
     name: 'Cohere',
     emoji: '🏢',
-    color: Color(0xFF39B5F0),
+    color: const Color(0xFF39B5F0),
     officialUrl: 'https://dashboard.cohere.com/',
   ),
   'core': _ProviderMeta(
     name: 'Core',
     emoji: '⚙️',
-    color: Color(0xFF00BFFF),
+    color: const Color(0xFF00BFFF),
     officialUrl: 'https://www.coreweave.com/',
   ),
   'perplexity': _ProviderMeta(
     name: 'Perplexity',
     emoji: '🔍',
-    color: Color(0xFF20808D),
+    color: const Color(0xFF20808D),
     officialUrl: 'https://docs.perplexity.ai/',
   ),
   'amazon': _ProviderMeta(
     name: 'Amazon',
     emoji: '🔶',
-    color: Color(0xFFFF9900),
+    color: const Color(0xFFFF9900),
     officialUrl: 'https://aws.amazon.com/jp/bedrock/',
   ),
   'groq': _ProviderMeta(
     name: 'Groq',
     emoji: '🔥',
-    color: Color(0xFFF55036),
+    color: const Color(0xFFF55036),
     officialUrl: 'https://console.groq.com/',
   ),
   'stability': _ProviderMeta(
     name: 'Stability AI',
     emoji: '🎨',
-    color: Color(0xFF6C35DE),
+    color: const Color(0xFF6C35DE),
     officialUrl: 'https://platform.stability.ai/',
   ),
   'huggingface': _ProviderMeta(
     name: 'Hugging Face',
     emoji: '🤗',
-    color: Color(0xFFFFD21E),
+    color: const Color(0xFFFFD21E),
     officialUrl: 'https://huggingface.co/',
   ),
   'nvidia': _ProviderMeta(
     name: 'Nvidia',
     emoji: '🟢',
-    color: Color(0xFF76B900),
+    color: const Color(0xFF76B900),
     officialUrl: 'https://build.nvidia.com/',
   ),
   'ibm': _ProviderMeta(
     name: 'IBM watsonx',
     emoji: '🔵',
-    color: Color(0xFF0F62FE),
+    color: const Color(0xFF0F62FE),
     officialUrl: 'https://cloud.ibm.com/watsonx',
   ),
   'sakana': _ProviderMeta(
     name: 'Sakana AI',
     emoji: '🐟',
-    color: Color(0xFF00B4D8),
+    color: const Color(0xFF00B4D8),
     officialUrl: 'https://huggingface.co/SakanaAI',
   ),
   'ai21': _ProviderMeta(
     name: 'AI21 Labs',
     emoji: '🧬',
-    color: Color(0xFF1E40AF),
+    color: const Color(0xFF1E40AF),
     officialUrl: 'https://docs.ai21.com/',
   ),
   'aleph_alpha': _ProviderMeta(
     name: 'Aleph Alpha',
     emoji: '🇩🇪',
-    color: Color(0xFF4A90D9),
+    color: const Color(0xFF4A90D9),
     officialUrl: 'https://docs.aleph-alpha.com/',
   ),
   'baidu': _ProviderMeta(
     name: 'Baidu ERNIE',
     emoji: '🔴',
-    color: Color(0xFF2932E1),
+    color: const Color(0xFF2932E1),
     officialUrl: 'https://cloud.baidu.com/',
   ),
   'elevenlabs': _ProviderMeta(
     name: 'ElevenLabs',
     emoji: '🎙️',
-    color: Color(0xFF1A1A1A),
+    color: const Color(0xFF1A1A1A),
     officialUrl: 'https://elevenlabs.io/docs',
   ),
   'fireworks_ai': _ProviderMeta(
     name: 'Fireworks AI',
     emoji: '🎆',
-    color: Color(0xFFFF6B00),
+    color: const Color(0xFFFF6B00),
     officialUrl: 'https://docs.fireworks.ai/',
   ),
   'ideogram': _ProviderMeta(
     name: 'Ideogram AI',
     emoji: '🖼️',
-    color: Color(0xFF6B21A8),
+    color: const Color(0xFF6B21A8),
     officialUrl: 'https://developer.ideogram.ai/',
   ),
   'ollama': _ProviderMeta(
     name: 'Ollama',
     emoji: '🦙',
-    color: Color(0xFF1A1A1A),
+    color: const Color(0xFF1A1A1A),
     officialUrl: 'https://ollama.com/',
   ),
   'openrouter': _ProviderMeta(
     name: 'OpenRouter',
     emoji: '🔀',
-    color: Color(0xFF6240C8),
+    color: const Color(0xFF6240C8),
     officialUrl: 'https://openrouter.ai/docs',
   ),
   'oracle': _ProviderMeta(
     name: 'Oracle',
     emoji: '🔴',
-    color: Color(0xFFC74634),
+    color: const Color(0xFFC74634),
     officialUrl: 'https://www.oracle.com/artificial-intelligence/',
   ),
   'reka': _ProviderMeta(
     name: 'Reka',
     emoji: '⚡',
-    color: Color(0xFF6C47FF),
+    color: const Color(0xFF6C47FF),
     officialUrl: 'https://docs.reka.ai/quick-start',
   ),
   'replicate': _ProviderMeta(
     name: 'Replicate',
     emoji: '🔄',
-    color: Color(0xFF0F0F0F),
+    color: const Color(0xFF0F0F0F),
     officialUrl: 'https://replicate.com/docs',
   ),
   'runway': _ProviderMeta(
     name: 'Runway',
     emoji: '🎬',
-    color: Color(0xFF0F0F0F),
+    color: const Color(0xFF0F0F0F),
     officialUrl: 'https://docs.runwayml.com/',
   ),
   'suno': _ProviderMeta(
     name: 'Suno AI',
     emoji: '🎵',
-    color: Color(0xFF1C1C2E),
+    color: const Color(0xFF1C1C2E),
     officialUrl: 'https://suno.com/',
   ),
   'together_ai': _ProviderMeta(
     name: 'Together AI',
     emoji: '🤝',
-    color: Color(0xFF0066CC),
+    color: const Color(0xFF0066CC),
     officialUrl: 'https://docs.together.ai/',
   ),
   'udio': _ProviderMeta(
     name: 'Udio',
     emoji: '🎸',
-    color: Color(0xFF9B59B6),
+    color: const Color(0xFF9B59B6),
     officialUrl: 'https://www.udio.com/',
   ),
   'voyage': _ProviderMeta(
     name: 'Voyage AI',
     emoji: '⚓',
-    color: Color(0xFF0F4C81),
+    color: const Color(0xFF0F4C81),
     officialUrl: 'https://docs.voyageai.com/',
   ),
   'writer': _ProviderMeta(
     name: 'Writer',
     emoji: '✍️',
-    color: Color(0xFF7C3AED),
+    color: const Color(0xFF7C3AED),
     officialUrl: 'https://dev.writer.com/docs',
   ),
   'luma': _ProviderMeta(
     name: 'Luma AI',
     emoji: '🎬',
-    color: Color(0xFF00D4FF),
+    color: const Color(0xFF00D4FF),
     officialUrl: 'https://api.lumalabs.ai',
   ),
   'kling': _ProviderMeta(
     name: 'Kling AI',
     emoji: '🎥',
-    color: Color(0xFFFF6B35),
+    color: const Color(0xFFFF6B35),
     officialUrl: 'https://klingai.com',
   ),
   'qwen': _ProviderMeta(
     name: 'Qwen (Alibaba)',
     emoji: '🌐',
-    color: Color(0xFFFF6A00),
+    color: const Color(0xFFFF6A00),
     officialUrl: 'https://dashscope.aliyuncs.com',
   ),
   'moonshot': _ProviderMeta(
     name: 'Moonshot AI',
     emoji: '🌙',
-    color: Color(0xFF6366F1),
+    color: const Color(0xFF6366F1),
     officialUrl: 'https://www.moonshot.cn',
   ),
   'pika': _ProviderMeta(
     name: 'Pika Labs',
     emoji: '⚡',
-    color: Color(0xFF6C63FF),
+    color: const Color(0xFF6C63FF),
     officialUrl: 'https://pika.art',
   ),
   'assemblyai': _ProviderMeta(
     name: 'AssemblyAI',
     emoji: '🎙️',
-    color: Color(0xFF00BFA5),
+    color: const Color(0xFF00BFA5),
     officialUrl: 'https://www.assemblyai.com',
   ),
   'twelve_labs': _ProviderMeta(
     name: 'Twelve Labs',
     emoji: '🎞️',
-    color: Color(0xFF4A90D9),
+    color: const Color(0xFF4A90D9),
     officialUrl: 'https://twelvelabs.io',
   ),
   'midjourney': _ProviderMeta(
     name: 'Midjourney',
     emoji: '🎨',
-    color: Color(0xFF000000),
+    color: const Color(0xFF000000),
     officialUrl: 'https://www.midjourney.com',
   ),
   'hailuo': _ProviderMeta(
     name: 'Hailuo AI',
     emoji: '🎬',
-    color: Color(0xFF0066FF),
+    color: const Color(0xFF0066FF),
     officialUrl: 'https://hailuoai.com',
   ),
   'adobe_firefly': _ProviderMeta(
     name: 'Adobe Firefly',
     emoji: '🔥',
-    color: Color(0xFFFF0000),
+    color: const Color(0xFFFF0000),
     officialUrl: 'https://firefly.adobe.com',
   ),
   '01ai': _ProviderMeta(
     name: '01.AI (Yi)',
     emoji: '🀄',
-    color: Color(0xFF1A73E8),
+    color: const Color(0xFF1A73E8),
     officialUrl: 'https://www.01.ai',
   ),
   'coze': _ProviderMeta(
     name: 'Coze',
     emoji: '🤖',
-    color: Color(0xFF5B61FF),
+    color: const Color(0xFF5B61FF),
     officialUrl: 'https://www.coze.com',
   ),
   'apple': _ProviderMeta(
     name: 'Apple Intelligence',
     emoji: '🍎',
-    color: Color(0xFF1D1D1F),
+    color: const Color(0xFF1D1D1F),
     officialUrl: 'https://apple.com/apple-intelligence',
   ),
   'allenai': _ProviderMeta(
     name: 'Allen AI (OLMo)',
     emoji: '🔬',
-    color: Color(0xFF2196F3),
+    color: const Color(0xFF2196F3),
     officialUrl: 'https://allenai.org',
   ),
   'naver': _ProviderMeta(
     name: 'Naver (HyperCLOVA X)',
     emoji: '🟩',
-    color: Color(0xFF03C75A),
+    color: const Color(0xFF03C75A),
     officialUrl: 'https://clova.ai',
   ),
   'databricks': _ProviderMeta(
     name: 'Databricks',
     emoji: '🧱',
-    color: Color(0xFFFF3621),
+    color: const Color(0xFFFF3621),
     officialUrl: 'https://www.databricks.com/product/machine-learning',
   ),
   'samsung': _ProviderMeta(
     name: 'Samsung Galaxy AI',
     emoji: '📱',
-    color: Color(0xFF1428A0),
+    color: const Color(0xFF1428A0),
     officialUrl: 'https://www.samsung.com/ai',
   ),
   'zhipu': _ProviderMeta(
     name: 'Zhipu AI (GLM)',
     emoji: '🔮',
-    color: Color(0xFF4E5FFF),
+    color: const Color(0xFF4E5FFF),
     officialUrl: 'https://www.zhipuai.cn',
   ),
   'character_ai': _ProviderMeta(
     name: 'Character.AI',
     emoji: '🎭',
-    color: Color(0xFF000000),
+    color: const Color(0xFF000000),
     officialUrl: 'https://character.ai',
   ),
   'inflection': _ProviderMeta(
     name: 'Inflection AI (Pi)',
     emoji: '💙',
-    color: Color(0xFF6B48FF),
+    color: const Color(0xFF6B48FF),
     officialUrl: 'https://pi.ai',
   ),
   'adept': _ProviderMeta(
     name: 'Adept AI',
     emoji: '🖥️',
-    color: Color(0xFF2B5CE6),
+    color: const Color(0xFF2B5CE6),
     officialUrl: 'https://www.adept.ai/',
   ),
   'cerebras': _ProviderMeta(
     name: 'Cerebras',
     emoji: '⚡',
-    color: Color(0xFFFFD700),
+    color: const Color(0xFFFFD700),
     officialUrl: 'https://www.cerebras.ai/',
   ),
   'prover': _ProviderMeta(
     name: 'Prover',
     emoji: '🧮',
-    color: Color(0xFF9370DB),
+    color: const Color(0xFF9370DB),
     officialUrl: 'https://www.prover.io/',
   ),
   'lmsys': _ProviderMeta(
     name: 'LMSYS / Chatbot Arena',
     emoji: '🏆',
-    color: Color(0xFF1E40AF),
+    color: const Color(0xFF1E40AF),
     officialUrl: 'https://lmsys.org/',
   ),
   'falcon_tii': _ProviderMeta(
     name: 'Falcon (TII)',
     emoji: '🦅',
-    color: Color(0xFF059669),
+    color: const Color(0xFF059669),
     officialUrl: 'https://falconllm.tii.ae/',
   ),
   'black_forest_labs': _ProviderMeta(
     name: 'Black Forest Labs (FLUX)',
     emoji: '🌲',
-    color: Color(0xFF111827),
+    color: const Color(0xFF111827),
     officialUrl: 'https://blackforestlabs.ai/',
   ),
   'liquid_ai': _ProviderMeta(
     name: 'Liquid AI',
     emoji: '💧',
-    color: Color(0xFF0EA5E9),
+    color: const Color(0xFF0EA5E9),
     officialUrl: 'https://liquid.ai/',
   ),
   'snowflake': _ProviderMeta(
     name: 'Snowflake AI',
     emoji: '❄️',
-    color: Color(0xFF29B5E8),
+    color: const Color(0xFF29B5E8),
     officialUrl: 'https://www.snowflake.com/en/data-cloud/cortex/',
   ),
   'cognition': _ProviderMeta(
     name: 'Cognition AI (Devin)',
     emoji: '🤖',
-    color: Color(0xFF7C3AED),
+    color: const Color(0xFF7C3AED),
     officialUrl: 'https://cognition.ai/',
   ),
   'scale_ai': _ProviderMeta(
     name: 'Scale AI',
     emoji: '⚖️',
-    color: Color(0xFF7C3AED),
+    color: const Color(0xFF7C3AED),
     officialUrl: 'https://scale.com/',
   ),
   'poolside': _ProviderMeta(
     name: 'Poolside AI',
     emoji: '🏊',
-    color: Color(0xFF0F172A),
+    color: const Color(0xFF0F172A),
     officialUrl: 'https://poolside.ai/',
   ),
   'harvey': _ProviderMeta(
     name: 'Harvey AI',
     emoji: '⚖️',
-    color: Color(0xFF2C5282),
+    color: const Color(0xFF2C5282),
     officialUrl: 'https://www.harvey.ai/',
   ),
   'manus': _ProviderMeta(
     name: 'Manus AI',
     emoji: '🤖',
-    color: Color(0xFF553C9A),
+    color: const Color(0xFF553C9A),
     officialUrl: 'https://manus.im/',
   ),
   'hedra': _ProviderMeta(
     name: 'Hedra AI',
     emoji: '🎭',
-    color: Color(0xFF9C4DCC),
+    color: const Color(0xFF9C4DCC),
     officialUrl: 'https://www.hedra.com/',
   ),
   'heygen': _ProviderMeta(
     name: 'HeyGen',
     emoji: '🎬',
-    color: Color(0xFF1976D2),
+    color: const Color(0xFF1976D2),
     officialUrl: 'https://www.heygen.com/',
   ),
   'recraft': _ProviderMeta(
     name: 'Recraft',
     emoji: '🎨',
-    color: Color(0xFFE74C3C),
+    color: const Color(0xFFE74C3C),
     officialUrl: 'https://www.recraft.ai/',
   ),
   'krea': _ProviderMeta(
     name: 'Krea',
     emoji: '⚡',
-    color: Color(0xFF7B68EE),
+    color: const Color(0xFF7B68EE),
     officialUrl: 'https://www.krea.ai/',
   ),
   'tencent': _ProviderMeta(
     name: 'Tencent Hunyuan',
     emoji: '🐉',
-    color: Color(0xFF1E88E5),
+    color: const Color(0xFF1E88E5),
     officialUrl: 'https://hunyuan.tencent.com/',
   ),
   'bytedance': _ProviderMeta(
     name: 'ByteDance Doubao',
     emoji: '🎵',
-    color: Color(0xFF6366F1),
+    color: const Color(0xFF6366F1),
     officialUrl: 'https://www.doubao.com/',
   ),
   'inception_labs': _ProviderMeta(
     name: 'Inception (Mercury)',
     emoji: '💨',
-    color: Color(0xFF00BFA5),
+    color: const Color(0xFF00BFA5),
     officialUrl: 'https://www.inceptionlabs.ai/',
   ),
   'world_labs': _ProviderMeta(
     name: 'World Labs',
     emoji: '🌍',
-    color: Color(0xFF2E7D32),
+    color: const Color(0xFF2E7D32),
     officialUrl: 'https://www.worldlabs.ai/',
   ),
   'runware': _ProviderMeta(
     name: 'Runware (Sonic)',
     emoji: '⚡',
-    color: Color(0xFF5E17EB),
+    color: const Color(0xFF5E17EB),
     officialUrl: 'https://runware.ai/',
   ),
   'sambanova': _ProviderMeta(
     name: 'SambaNova',
     emoji: '🔴',
-    color: Color(0xFFE03E3E),
+    color: const Color(0xFFE03E3E),
     officialUrl: 'https://sambanova.ai/',
   ),
   'lightricks': _ProviderMeta(
     name: 'Lightricks LTX-2',
     emoji: '🎬',
-    color: Color(0xFFFF4D6D),
+    color: const Color(0xFFFF4D6D),
     officialUrl: 'https://ltx.io/model/ltx-2',
   ),
   'arcee_ai': _ProviderMeta(
     name: 'Arcee AI Trinity',
     emoji: '🇺🇸',
-    color: Color(0xFF1E40AF),
+    color: const Color(0xFF1E40AF),
     officialUrl: 'https://www.arcee.ai/trinity',
   ),
   'minimax': _ProviderMeta(
     name: 'MiniMax (Hailuo)',
     emoji: '🌊',
-    color: Color(0xFF00B4D8),
+    color: const Color(0xFF00B4D8),
     officialUrl: 'https://www.minimax.io',
   ),
   'moondream': _ProviderMeta(
     name: 'Moondream VLM',
     emoji: '🌙',
-    color: Color(0xFF8B5CF6),
+    color: const Color(0xFF8B5CF6),
     officialUrl: 'https://moondream.ai/',
   ),
   'rakuten_ai': _ProviderMeta(
     name: 'Rakuten AI 3.0',
     emoji: '🎌',
-    color: Color(0xFFBF0000),
+    color: const Color(0xFFBF0000),
     officialUrl: 'https://huggingface.co/Rakuten',
   ),
   'pfn': _ProviderMeta(
     name: 'PFN (PLaMo)',
     emoji: '🗾',
-    color: Color(0xFF0BAF55),
+    color: const Color(0xFF0BAF55),
     officialUrl: 'https://www.preferred.jp/en/business/genai',
   ),
   'siliconflow': _ProviderMeta(
     name: 'SiliconFlow',
     emoji: '🧪',
-    color: Color(0xFF6E56CF),
+    color: const Color(0xFF6E56CF),
     officialUrl: 'https://siliconflow.cn/',
   ),
   'novita_ai': _ProviderMeta(
     name: 'Novita AI',
     emoji: '🎨',
-    color: Color(0xFF00B5C7),
+    color: const Color(0xFF00B5C7),
     officialUrl: 'https://novita.ai/',
   ),
   'deepinfra': _ProviderMeta(
     name: 'DeepInfra',
     emoji: '⚡',
-    color: Color(0xFF6B3FFF),
+    color: const Color(0xFF6B3FFF),
     officialUrl: 'https://deepinfra.com/',
   ),
   'nebius': _ProviderMeta(
     name: 'Nebius AI Studio',
     emoji: '🌐',
-    color: Color(0xFF0052CC),
+    color: const Color(0xFF0052CC),
     officialUrl: 'https://nebius.com/ai-studio',
   ),
   'fal_ai': _ProviderMeta(
     name: 'fal.ai',
     emoji: '🎬',
-    color: Color(0xFFFF4D6D),
+    color: const Color(0xFFFF4D6D),
     officialUrl: 'https://fal.ai/',
   ),
   'fish_audio': _ProviderMeta(
     name: 'Fish Audio',
     emoji: '🐟',
-    color: Color(0xFF1E88E5),
+    color: const Color(0xFF1E88E5),
     officialUrl: 'https://fish.audio/',
   ),
   'atlas_cloud': _ProviderMeta(
     name: 'Atlas Cloud',
     emoji: '🗺️',
-    color: Color(0xFF1976D2),
+    color: const Color(0xFF1976D2),
     officialUrl: 'https://www.atlascloud.ai/',
   ),
   'mira_network': _ProviderMeta(
     name: 'Mira Network',
     emoji: '🔗',
-    color: Color(0xFF8E44AD),
+    color: const Color(0xFF8E44AD),
     officialUrl: 'https://docs.mira.network/',
   ),
 };
@@ -2962,7 +2962,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   Text(
                     '自分株式会社',
                     style: TextStyle(
-                      color: Color(0xFFE5E7EB).withValues(alpha: 0.6),
+                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.6),
                       fontSize: 11,
                     ),
                   ),
@@ -2971,7 +2971,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ],
           ),
           const SizedBox(height: 14),
-          Divider(color: Color(0xFFE5E7EB).withValues(alpha: 0.24)),
+          Divider(color: const Color(0xFFE5E7EB).withValues(alpha: 0.24)),
           const SizedBox(height: 14),
           // 達成数メッセージ
           Text(
@@ -2996,7 +2996,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 decoration: BoxDecoration(
                   color: learned
                       ? m.color.withValues(alpha: 0.71)
-                      : Color(0xFFE5E7EB).withValues(alpha: 0.08),
+                      : const Color(0xFFE5E7EB).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -3004,8 +3004,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   style: TextStyle(
                     fontSize: 11,
                     color: learned
-                        ? Color(0xFFE5E7EB)
-                        : Color(0xFFE5E7EB).withValues(alpha: 0.38),
+                        ? const Color(0xFFE5E7EB)
+                        : const Color(0xFFE5E7EB).withValues(alpha: 0.38),
                     fontWeight: learned ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
@@ -3017,10 +3017,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Color(0xFFFFC107).withValues(alpha: 0.16),
+              color: const Color(0xFFFFC107).withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: Color(0xFFFFC107).withValues(alpha: 0.31),
+                color: const Color(0xFFFFC107).withValues(alpha: 0.31),
               ),
             ),
             child: Row(
@@ -3207,8 +3207,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI 大学'),
-        backgroundColor: Color(0xFF1A1A1A),
-        foregroundColor: Color(0xFFE5E7EB),
+        backgroundColor: const Color(0xFF1A1A1A),
+        foregroundColor: const Color(0xFFE5E7EB),
         actions: [
           IconButton(
             icon: const Icon(Icons.leaderboard),
@@ -3252,9 +3252,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           controller: tc,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          indicatorColor: Color(0xFFE5E7EB),
-          labelColor: Color(0xFFE5E7EB),
-          unselectedLabelColor: Color(0xFFB0B0B0),
+          indicatorColor: const Color(0xFFE5E7EB),
+          labelColor: const Color(0xFFE5E7EB),
+          unselectedLabelColor: const Color(0xFFB0B0B0),
           tabs: _providers.map((id) {
             final m = _meta(id);
             return Tab(text: '${m.emoji} ${m.name}');
@@ -3265,7 +3265,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         children: [
           if (_error != null)
             Container(
-              color: Color(0xFFFFC107).withValues(alpha: 0.15),
+              color: const Color(0xFFFFC107).withValues(alpha: 0.15),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               child: Row(
                 children: [
@@ -3307,7 +3307,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Widget _buildProviderTab(String providerId, bool isDark) {
     final m = _meta(providerId);
     final rows = _content[providerId];
-    final surface = isDark ? Color(0xFF1E1E1E) : Color(0xFF1E1E1E);
+    final surface = isDark ? const Color(0xFF1E1E1E) : const Color(0xFF1E1E1E);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -3373,7 +3373,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   Text(
                     updatedAt,
                     style: TextStyle(
-                      color: Color(0xFFE5E7EB).withValues(alpha: 0.7),
+                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -3526,10 +3526,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFF6B35).withValues(alpha: 0.12),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(0xFFFF6B35).withValues(alpha: 0.35),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
@@ -3658,10 +3658,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: Color(0xFF3D5AFE).withValues(alpha: 0.15),
+                  color: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Color(0xFF3D5AFE).withValues(alpha: 0.4),
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
                   ),
                 ),
                 child: Text(
@@ -3693,10 +3693,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFF6B35).withValues(alpha: 0.08),
+                  color: const Color(0xFFFF6B35).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(0xFFFF6B35).withValues(alpha: 0.3),
+                    color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(

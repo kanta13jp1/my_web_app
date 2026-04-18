@@ -117,7 +117,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('週次ダイジェスト'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),

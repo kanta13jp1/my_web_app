@@ -36,7 +36,7 @@ class WelcomeNewUserCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color:
-                Color(0xFF4F46E5).withValues(alpha: isDark ? 0.4 : 0.25),
+                const Color(0xFF4F46E5).withValues(alpha: isDark ? 0.4 : 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

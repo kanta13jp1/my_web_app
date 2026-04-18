@@ -616,7 +616,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           content: Text(
             '$message${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
           ),
-          backgroundColor: Color(0xFF4CAF50),
+          backgroundColor: const Color(0xFF4CAF50),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -695,7 +695,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             '$message${publicUrl != null ? '\n共有URL: $publicUrl' : ''}',
           ),
           backgroundColor:
-              shared ? Color(0xFF4CAF50) : Color(0xFFFF9800),
+              shared ? const Color(0xFF4CAF50) : const Color(0xFFFF9800),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -1557,9 +1557,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       return _buildSharedRecordingScaffold();
     }
     return Scaffold(
-      backgroundColor: Color(0xFF1A1A2E),
+      backgroundColor: const Color(0xFF1A1A2E),
       appBar: AppBar(
-        backgroundColor: Color(0xFF16213E),
+        backgroundColor: const Color(0xFF16213E),
         foregroundColor: Colors.white,
         title: const Row(
           children: [
@@ -1595,7 +1595,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   Widget _buildSharedRecordingScaffold() {
     final recording = _sharedRecording;
     return Scaffold(
-      backgroundColor: Color(0xFF0F172A),
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -1685,12 +1685,12 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _isPlayingShared
-                  ? Color(0xFF818CF8).withValues(alpha: 0.2)
+                  ? const Color(0xFF818CF8).withValues(alpha: 0.2)
                   : Colors.white.withValues(alpha: 0.05),
               boxShadow: _isPlayingShared
                   ? [
                       BoxShadow(
-                        color: Color(0xFF818CF8).withValues(alpha: 0.3),
+                        color: const Color(0xFF818CF8).withValues(alpha: 0.3),
                         blurRadius: 30,
                         spreadRadius: 10,
                       ),
@@ -1701,7 +1701,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               iconSize: 64,
               tooltip: _isPlayingShared ? '一時停止' : '再生',
               icon: Icon(_isPlayingShared ? Icons.pause : Icons.play_arrow),
-              color: _isPlayingShared ? Color(0xFF818CF8) : Colors.white,
+              color: _isPlayingShared ? const Color(0xFF818CF8) : Colors.white,
               onPressed: _playSharedRecording,
             ),
           ),
@@ -1762,7 +1762,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             icon: const Icon(Icons.rocket_launch),
             label: const Text('自分株式会社を無料で始める'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF818CF8),
+              backgroundColor: const Color(0xFF818CF8),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
@@ -1807,7 +1807,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             border: Border(
               bottom: BorderSide(
                 color:
-                    isSelected ? Color(0xFFE94560) : Colors.transparent,
+                    isSelected ? const Color(0xFFE94560) : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -1816,7 +1816,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Color(0xFFE94560) : Colors.white60,
+              color: isSelected ? const Color(0xFFE94560) : Colors.white60,
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -1909,11 +1909,11 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               ),
               selected: isSelected,
               onSelected: (_) => setState(() => _selectedPreset = p),
-              backgroundColor: Color(0xFF16213E),
-              selectedColor: Color(0xFFE94560),
+              backgroundColor: const Color(0xFF16213E),
+              selectedColor: const Color(0xFFE94560),
               checkmarkColor: Colors.white,
               side: BorderSide(
-                color: isSelected ? Color(0xFFE94560) : Colors.white24,
+                color: isSelected ? const Color(0xFFE94560) : Colors.white24,
               ),
             );
           }).toList(),
@@ -1928,7 +1928,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             const SizedBox(width: 8),
             DropdownButton<String>(
               value: _selectedTuning,
-              dropdownColor: Color(0xFF16213E),
+              dropdownColor: const Color(0xFF16213E),
               style: const TextStyle(color: Colors.white),
               underline: const SizedBox(),
               items: _tuningNames
@@ -1954,15 +1954,15 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
       decoration: BoxDecoration(
-        color: Color(0xFF16213E),
+        color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: _isRecording ? Color(0xFFE94560) : Colors.white12,
+          color: _isRecording ? const Color(0xFFE94560) : Colors.white12,
         ),
         boxShadow: _isRecording
             ? [
                 BoxShadow(
-                  color: Color(0xFFE94560).withValues(alpha: 0.3),
+                  color: const Color(0xFFE94560).withValues(alpha: 0.3),
                   blurRadius: 20,
                   spreadRadius: 4,
                 ),
@@ -1976,7 +1976,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             style: TextStyle(
               fontSize: 56,
               fontWeight: FontWeight.bold,
-              color: _isRecording ? Color(0xFFE94560) : Colors.white38,
+              color: _isRecording ? const Color(0xFFE94560) : Colors.white38,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
@@ -2060,8 +2060,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
                   color: Color.lerp(
-                    Color(0xFFE94560),
-                    Color(0xFFFF9800),
+                    const Color(0xFFE94560),
+                    const Color(0xFFFF9800),
                     level.clamp(0.0, 1.0),
                   ),
                   borderRadius: BorderRadius.circular(2),
@@ -2079,7 +2079,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             child: LinearProgressIndicator(
               value: active ? level.clamp(0.0, 1.0) : 0.0,
               backgroundColor: Colors.white12,
-              color: level > 0.7 ? Colors.orange : Color(0xFFE94560),
+              color: level > 0.7 ? Colors.orange : const Color(0xFFE94560),
             ),
           ),
         ),
@@ -2095,10 +2095,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         height: 80,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Color(0xFFE94560),
+          color: const Color(0xFFE94560),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFFE94560).withValues(alpha: 0.5),
+              color: const Color(0xFFE94560).withValues(alpha: 0.5),
               blurRadius: 16,
               spreadRadius: 2,
             ),
@@ -2136,7 +2136,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         height: 60,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Color(0xFFE94560).withValues(alpha: 0.8),
+          color: const Color(0xFFE94560).withValues(alpha: 0.8),
         ),
         child: const Icon(Icons.stop, color: Colors.white, size: 28),
       ),
@@ -2151,10 +2151,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         height: 64,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Color(0xFF4CAF50),
+          color: const Color(0xFF4CAF50),
           boxShadow: [
             BoxShadow(
-              color: Color(0xFF4CAF50).withValues(alpha: 0.4),
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.4),
               blurRadius: 12,
             ),
           ],
@@ -2173,8 +2173,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: _isSharingFile
-              ? Color(0xFF0F3460).withValues(alpha: 0.5)
-              : Color(0xFF1DA1F2),
+              ? const Color(0xFF0F3460).withValues(alpha: 0.5)
+              : const Color(0xFF1DA1F2),
         ),
         child: _isSharingFile
             ? const Padding(
@@ -2236,9 +2236,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Color(0xFF4CAF50).withValues(alpha: 0.2),
+          color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Color(0xFF4CAF50)),
+          border: Border.all(color: const Color(0xFF4CAF50)),
         ),
         child: Column(
           children: [
@@ -2274,7 +2274,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         : const Icon(Icons.ios_share, size: 16),
                     label: Text('ファイル共有 ($_shareableAudioLabel)'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1DA1F2),
+                      backgroundColor: const Color(0xFF1DA1F2),
                       foregroundColor: Colors.white,
                     ),
                   ),
@@ -2302,10 +2302,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Color(0xFF1DA1F2).withValues(alpha: 0.12),
+                  color: const Color(0xFF1DA1F2).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: Color(0xFF1DA1F2).withValues(alpha: 0.3),
+                    color: const Color(0xFF1DA1F2).withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -2368,7 +2368,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       icon: const Icon(Icons.share, size: 16),
                       label: const Text('共有リンクをコピー'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Color(0xFF4CAF50),
+                        foregroundColor: const Color(0xFF4CAF50),
                         side: const BorderSide(color: Color(0xFF4CAF50)),
                       ),
                     ),
@@ -2401,7 +2401,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           : const Icon(Icons.open_in_new, size: 16),
                       label: const Text('Xに投稿'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF1DA1F2),
+                        backgroundColor: const Color(0xFF1DA1F2),
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -2415,7 +2415,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFF16213E),
+                  color: const Color(0xFF16213E),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white12),
                 ),
@@ -2458,7 +2458,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF16213E),
+        color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -2523,13 +2523,13 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               Switch(
                 value: _isPublic,
                 onChanged: (v) => setState(() => _isPublic = v),
-                activeThumbColor: Color(0xFFE94560),
+                activeThumbColor: const Color(0xFFE94560),
               ),
               const Spacer(),
               Text(
                 _isPublic ? '他ユーザーに公開' : '自分だけ',
                 style: TextStyle(
-                  color: _isPublic ? Color(0xFFE94560) : Colors.white38,
+                  color: _isPublic ? const Color(0xFFE94560) : Colors.white38,
                   fontSize: 12,
                 ),
               ),
@@ -2552,7 +2552,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   : const Icon(Icons.save),
               label: Text(_isSaving ? '保存中...' : '保存する'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFE94560),
+                backgroundColor: const Color(0xFFE94560),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
@@ -2567,7 +2567,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Color(0xFF16213E),
+        color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -2580,7 +2580,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _isMetronomeActive
-                    ? Color(0xFFE94560)
+                    ? const Color(0xFFE94560)
                     : Colors.white12,
               ),
               child: Icon(
@@ -2595,7 +2595,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             'メトロノーム $_bpm BPM',
             style: TextStyle(
               color:
-                  _isMetronomeActive ? Color(0xFFE94560) : Colors.white54,
+                  _isMetronomeActive ? const Color(0xFFE94560) : Colors.white54,
               fontSize: 13,
             ),
           ),
@@ -2606,7 +2606,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               value: _bpm.toDouble(),
               min: 40,
               max: 240,
-              activeColor: Color(0xFFE94560),
+              activeColor: const Color(0xFFE94560),
               inactiveColor: Colors.white12,
               onChanged: (v) {
                 setState(() => _bpm = v.round());
@@ -2640,14 +2640,14 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   chord,
                   style: TextStyle(
                     color:
-                        isSelected ? Color(0xFFE94560) : Colors.white70,
+                        isSelected ? const Color(0xFFE94560) : Colors.white70,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 selected: isSelected,
                 selectedTileColor:
-                    Color(0xFFE94560).withValues(alpha: 0.1),
+                    const Color(0xFFE94560).withValues(alpha: 0.1),
                 onTap: () {
                   setState(() => _selectedChord = chord);
                   _fetchChordDetail(chord);
@@ -2753,8 +2753,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       shape: BoxShape.circle,
                       color: isActive
                           ? (isAccent
-                              ? Color(0xFFE94560)
-                              : Color(0xFF0F3460))
+                              ? const Color(0xFFE94560)
+                              : const Color(0xFF0F3460))
                           : Colors.white12,
                     ),
                     child: Center(
@@ -2787,7 +2787,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             min: 30,
             max: 300,
             divisions: 270,
-            activeColor: Color(0xFFE94560),
+            activeColor: const Color(0xFFE94560),
             inactiveColor: Colors.white24,
             label: '$_bpm',
             onChanged: (v) {
@@ -2831,8 +2831,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         _startMetronome();
                       }
                     },
-                    selectedColor: Color(0xFFE94560),
-                    backgroundColor: Color(0xFF16213E),
+                    selectedColor: const Color(0xFFE94560),
+                    backgroundColor: const Color(0xFF16213E),
                     labelStyle: TextStyle(
                       color:
                           _beatsPerMeasure == b ? Colors.white : Colors.white60,
@@ -2851,16 +2851,16 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _isMetronomeActive
-                    ? Color(0xFFE94560)
-                    : Color(0xFF16213E),
+                    ? const Color(0xFFE94560)
+                    : const Color(0xFF16213E),
                 border: Border.all(
-                  color: Color(0xFFE94560),
+                  color: const Color(0xFFE94560),
                   width: 2,
                 ),
                 boxShadow: _isMetronomeActive
                     ? [
                         BoxShadow(
-                          color: Color(0xFFE94560).withValues(alpha: 0.4),
+                          color: const Color(0xFFE94560).withValues(alpha: 0.4),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
@@ -2942,7 +2942,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     }
     return RefreshIndicator(
       onRefresh: _fetchRecordings,
-      color: Color(0xFFE94560),
+      color: const Color(0xFFE94560),
       child: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _recordings.length,
@@ -2963,7 +2963,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           final exportFormat = r['exportFormat'] as String? ?? 'wav';
           final aiFeedback = _recordingAiFeedbackOf(r);
           return Card(
-            color: Color(0xFF16213E),
+            color: const Color(0xFF16213E),
             margin: const EdgeInsets.only(bottom: 8),
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -3040,7 +3040,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Colors.white38,
                           size: 20,
                         ),
-                        color: Color(0xFF16213E),
+                        color: const Color(0xFF16213E),
                         onSelected: (value) {
                           if (value == 'delete' && recordingId.isNotEmpty) {
                             _deleteRecording(recordingId);
@@ -3092,7 +3092,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Color(0xFF0F3460),
+                        color: const Color(0xFF0F3460),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.white10),
                       ),
@@ -3281,7 +3281,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
 
     return RefreshIndicator(
       onRefresh: _fetchPracticeStats,
-      color: Color(0xFFE94560),
+      color: const Color(0xFFE94560),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24),
@@ -3294,8 +3294,8 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: streak > 0
-                      ? [Color(0xFFE94560), Color(0xFFBF360C)]
-                      : [Color(0xFF16213E), Color(0xFF16213E)],
+                      ? [const Color(0xFFE94560), const Color(0xFFBF360C)]
+                      : [const Color(0xFF16213E), const Color(0xFF16213E)],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -3392,12 +3392,12 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF16213E),
+        color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Color(0xFFE94560), size: 28),
+          Icon(icon, color: const Color(0xFFE94560), size: 28),
           const SizedBox(height: 8),
           Text(
             value,
@@ -3475,7 +3475,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: Color(0xFF7C3AED),
+                    foregroundColor: const Color(0xFF7C3AED),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 12,
@@ -3535,7 +3535,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Color(0xFF16213E),
+        color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -3543,7 +3543,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         children: [
           Row(
             children: [
-              Icon(icon, color: Color(0xFF7C3AED), size: 20),
+              Icon(icon, color: const Color(0xFF7C3AED), size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -3613,7 +3613,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFF0F3460),
+                color: const Color(0xFF0F3460),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -3672,7 +3672,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Color(0xFF0F3460),
+              color: const Color(0xFF0F3460),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white12),
             ),
@@ -3687,7 +3687,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xFFE94560),
+                        color: const Color(0xFFE94560),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -3742,7 +3742,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 : const Icon(Icons.playlist_add, size: 18),
             label: Text(_isAddingToKanban ? '追加中...' : 'カンバンボード（To Do）にすべて追加'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Color(0xFFE94560),
+              foregroundColor: const Color(0xFFE94560),
               side: const BorderSide(color: Color(0xFFE94560)),
             ),
           ),
@@ -3821,7 +3821,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       width: 80,
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       decoration: BoxDecoration(
-        color: Color(0xFF0F3460),
+        color: const Color(0xFF0F3460),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -3882,7 +3882,7 @@ class _ChordDiagramPainter extends CustomPainter {
     final gridPaint = Paint()
       ..color = Colors.white24
       ..strokeWidth = 1;
-    final dotPaint = Paint()..color = Color(0xFFE94560);
+    final dotPaint = Paint()..color = const Color(0xFFE94560);
     const textStyle = TextStyle(color: Colors.white60, fontSize: 11);
 
     // 縦線

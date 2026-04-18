@@ -122,7 +122,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('パーソナルダッシュボード'),
-        backgroundColor: Color(0xFF0891B2),
+        backgroundColor: const Color(0xFF0891B2),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -216,14 +216,14 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 '総ノート数',
                 totalNotes.toString(),
                 Icons.note_alt,
-                Color(0xFF7C3AED),
+                const Color(0xFF7C3AED),
                 noteGrowth > 0 ? '+$noteGrowth 今週' : null,
               ),
               _kpiCard(
                 'タスク完了',
                 tasksCompleted.toString(),
                 Icons.task_alt,
-                Color(0xFF059669),
+                const Color(0xFF059669),
                 taskRate > 0
                     ? '達成率 ${(taskRate * 100).toStringAsFixed(0)}%'
                     : null,
@@ -232,14 +232,14 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 '集中時間',
                 focusHours,
                 Icons.timer,
-                Color(0xFFDC2626),
+                const Color(0xFFDC2626),
                 focusMinutes > 0 ? '合計 $focusMinutes分' : null,
               ),
               _kpiCard(
                 '習慣ストリーク',
                 '$habitStreak日',
                 Icons.local_fire_department,
-                Color(0xFFF59E0B),
+                const Color(0xFFF59E0B),
                 habitStreak >= 7 ? '🔥 週間達成！' : null,
               ),
             ],
@@ -260,7 +260,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: taskRate.clamp(0.0, 1.0),
-                backgroundColor: Color(0xFFE2E8F0),
+                backgroundColor: const Color(0xFFE2E8F0),
                 valueColor:
                     const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
                 minHeight: 12,
@@ -345,7 +345,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -434,7 +434,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           _barChartSection(
             'ノート作成数',
             Icons.note_alt,
-            Color(0xFF7C3AED),
+            const Color(0xFF7C3AED),
             _weeklyActivity,
             'notes',
             maxNotes,
@@ -444,7 +444,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           _barChartSection(
             'タスク完了数',
             Icons.task_alt,
-            Color(0xFF059669),
+            const Color(0xFF059669),
             _weeklyActivity,
             'tasks',
             maxTasks,
@@ -598,8 +598,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                             margin: const EdgeInsets.symmetric(horizontal: 3),
                             decoration: BoxDecoration(
                               color: val > 0
-                                  ? Color(0xFFDC2626)
-                                  : Color(0xFFDC2626)
+                                  ? const Color(0xFFDC2626)
+                                  : const Color(0xFFDC2626)
                                       .withValues(alpha: 0.15),
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(4),
@@ -673,9 +673,9 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Color(0xFFF0FDF4),
+              color: const Color(0xFFF0FDF4),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Color(0xFFBBF7D0)),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,8 +728,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: completedToday
-              ? Color(0xFF059669)
-              : Color(0xFFE2E8F0),
+              ? const Color(0xFF059669)
+              : const Color(0xFFE2E8F0),
         ),
         boxShadow: [
           BoxShadow(
@@ -746,14 +746,14 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             height: 40,
             decoration: BoxDecoration(
               color: completedToday
-                  ? Color(0xFF059669)
-                  : Color(0xFFF1F5F9),
+                  ? const Color(0xFF059669)
+                  : const Color(0xFFF1F5F9),
               shape: BoxShape.circle,
             ),
             child: Icon(
               completedToday ? Icons.check : Icons.radio_button_unchecked,
               size: 20,
-              color: completedToday ? Colors.white : Color(0xFF94A3B8),
+              color: completedToday ? Colors.white : const Color(0xFF94A3B8),
             ),
           ),
           const SizedBox(width: 12),
@@ -775,8 +775,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   style: TextStyle(
                     fontSize: 11,
                     color: completedToday
-                        ? Color(0xFF059669)
-                        : Color(0xFF94A3B8),
+                        ? const Color(0xFF059669)
+                        : const Color(0xFF94A3B8),
                   ),
                 ),
               ],

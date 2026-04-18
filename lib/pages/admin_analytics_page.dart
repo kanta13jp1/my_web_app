@@ -773,7 +773,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('CS返信に失敗しました: $e'),
-          backgroundColor: Color(0xFFB91C1C),
+          backgroundColor: const Color(0xFFB91C1C),
         ),
       );
     }
@@ -946,7 +946,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('X投稿に失敗しました: $e'),
-          backgroundColor: Color(0xFFB91C1C),
+          backgroundColor: const Color(0xFFB91C1C),
         ),
       );
     } finally {
@@ -1095,7 +1095,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('送信エラー: $e'),
-            backgroundColor: Color(0xFFB91C1C),
+            backgroundColor: const Color(0xFFB91C1C),
           ),
         );
       }
@@ -1285,7 +1285,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           TextButton(
             style:
-                TextButton.styleFrom(foregroundColor: Color(0xFFB91C1C)),
+                TextButton.styleFrom(foregroundColor: const Color(0xFFB91C1C)),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('リセット実行'),
           ),
@@ -1328,7 +1328,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('エラーが発生しました: $e'),
-            backgroundColor: Color(0xFFB91C1C),
+            backgroundColor: const Color(0xFFB91C1C),
           ),
         );
         setState(() => _isLoading = false);
@@ -1416,8 +1416,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           '経営分析ダッシュボード',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Color(0xFF6366F1),
-        foregroundColor: Color(0xFFE5E7EB),
+        backgroundColor: const Color(0xFF6366F1),
+        foregroundColor: const Color(0xFFE5E7EB),
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
@@ -1448,7 +1448,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Card(
-                      color: Color(0xFF1A1A2E),
+                      color: const Color(0xFF1A1A2E),
                       child: ListTile(
                         leading: const Icon(
                           Icons.monitor_heart,
@@ -1479,7 +1479,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     ),
                     const SizedBox(height: 8),
                     Card(
-                      color: Color(0xFF1A1A2E),
+                      color: const Color(0xFF1A1A2E),
                       child: ListTile(
                         leading: const Icon(
                           Icons.edit_note,
@@ -1686,7 +1686,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       priorityChannelLabel: priorityChannelLabel,
     );
     final accentColor =
-        achieved ? Color(0xFF0D9488) : Color(0xFFB91C1C);
+        achieved ? const Color(0xFF0D9488) : const Color(0xFFB91C1C);
     final todayCvr =
         todayViews == 0 ? 0.0 : (todayRegistrations / todayViews * 100);
     final diagnosisLabel = achieved
@@ -1695,18 +1695,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             ? '流入不足'
             : growthAction.bottleneckLabel;
     final diagnosisColor = achieved
-        ? Color(0xFF0D9488)
+        ? const Color(0xFF0D9488)
         : todayViews == 0
-            ? Color(0xFFFF6B35)
+            ? const Color(0xFFFF6B35)
             : todayFunnel.trialRuns == 0
-                ? Color(0xFF0D9488)
+                ? const Color(0xFF0D9488)
                 : todayFunnel.saveClicks == 0
-                    ? Color(0xFF6366F1)
+                    ? const Color(0xFF6366F1)
                     : todayFunnel.magicLinkSends == 0
-                        ? Color(0xFFFF6B35)
+                        ? const Color(0xFFFF6B35)
                         : todayFunnel.inboxOpens == 0
-                            ? Color(0xFF92400E)
-                            : Color(0xFFB91C1C);
+                            ? const Color(0xFF92400E)
+                            : const Color(0xFFB91C1C);
     final actionTitle = achieved ? null : growthAction.title;
     final actionDetail = achieved ? null : growthAction.detail;
     final actionIcon = achieved ? null : growthAction.icon;
@@ -1824,7 +1824,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               _buildMiniKpiChip(
                 label: '今日のLP View数',
                 value: '$todayViews',
-                color: Color(0xFF6366F1),
+                color: const Color(0xFF6366F1),
               ),
               _buildMiniKpiChip(
                 label: '今日のCVR',
@@ -1835,13 +1835,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 _buildMiniKpiChip(
                   label: '今日体験',
                   value: '${todayFunnel.trialRuns}',
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
               if (todayViews > 0)
                 _buildMiniKpiChip(
                   label: '今日送信',
                   value: '${todayFunnel.magicLinkSends}',
-                  color: Color(0xFFFF6B35),
+                  color: const Color(0xFFFF6B35),
                 ),
               _buildMiniKpiChip(
                 label: '登録率',
@@ -1852,7 +1852,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 _buildMiniKpiChip(
                   label: '最優先チャネル',
                   value: priorityChannelLabel,
-                  color: Color(0xFF475569),
+                  color: const Color(0xFF475569),
                 ),
             ],
           ),
@@ -1924,7 +1924,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
                             backgroundColor: diagnosisColor,
-                            foregroundColor: Color(0xFFE5E7EB),
+                            foregroundColor: const Color(0xFFE5E7EB),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 10,
@@ -2043,37 +2043,37 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   label: 'LP View',
                   value: '$lpViews',
                   icon: Icons.visibility,
-                  color: Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                 ),
                 _buildFunnelStepItem(
                   label: '体験実行',
                   value: '${funnel.trialRuns}',
                   icon: Icons.play_circle_outline,
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 _buildFunnelStepItem(
                   label: '保存CTA',
                   value: '${funnel.saveClicks}',
                   icon: Icons.save_outlined,
-                  color: Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                 ),
                 _buildFunnelStepItem(
                   label: 'Magic Link送信',
                   value: '${funnel.magicLinkSends}',
                   icon: Icons.mail_outline,
-                  color: Color(0xFF7C3AED),
+                  color: const Color(0xFF7C3AED),
                 ),
                 _buildFunnelStepItem(
                   label: '受信箱を開く',
                   value: '${funnel.inboxOpens}',
                   icon: Icons.mark_email_read_outlined,
-                  color: Color(0xFFFF6B35),
+                  color: const Color(0xFFFF6B35),
                 ),
                 _buildFunnelStepItem(
                   label: '実登録',
                   value: '$registrations',
                   icon: Icons.person_add,
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
               ],
             ),
@@ -2085,34 +2085,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 _buildMiniKpiChip(
                   label: 'LP→体験率',
                   value: _formatRate(funnel.trialRuns, lpViews),
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 _buildMiniKpiChip(
                   label: '体験→保存率',
                   value: _formatRate(funnel.saveClicks, funnel.trialRuns),
-                  color: Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                 ),
                 _buildMiniKpiChip(
                   label: '保存→送信率',
                   value: _formatRate(funnel.magicLinkSends, funnel.saveClicks),
-                  color: Color(0xFF7C3AED),
+                  color: const Color(0xFF7C3AED),
                 ),
                 _buildMiniKpiChip(
                   label: '送信→登録率',
                   value: _formatRate(registrations, funnel.magicLinkSends),
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 if (remainingRegistrations > 0)
                   _buildMiniKpiChip(
                     label: '最大ボトルネック',
                     value: funnelAction.bottleneckLabel,
-                    color: Color(0xFF475569),
+                    color: const Color(0xFF475569),
                   ),
                 if (remainingRegistrations > 0)
                   _buildMiniKpiChip(
                     label: '目標達成に必要な送信',
                     value: '$neededMagicLinks件',
-                    color: Color(0xFFB91C1C),
+                    color: const Color(0xFFB91C1C),
                   ),
               ],
             ),
@@ -2168,7 +2168,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   ) {
     return Card(
       elevation: 4,
-      shadowColor: Color(0x42000000),
+      shadowColor: const Color(0x42000000),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
@@ -2219,43 +2219,43 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   '今日のLP View',
                   '$todayViews',
                   Icons.visibility,
-                  Color(0xFF6366F1),
+                  const Color(0xFF6366F1),
                 ),
                 _buildStatItem(
                   '今日登録',
                   '$todayRegistrations',
                   Icons.person_add,
-                  Color(0xFF6366F1),
+                  const Color(0xFF6366F1),
                 ),
                 _buildStatItem(
                   '今日体験',
                   '${todayFunnel.trialRuns}',
                   Icons.play_circle_outline,
-                  Color(0xFF0D9488),
+                  const Color(0xFF0D9488),
                 ),
                 _buildStatItem(
                   '今日Magic Link送信',
                   '${todayFunnel.magicLinkSends}',
                   Icons.mail_outline,
-                  Color(0xFF7C3AED),
+                  const Color(0xFF7C3AED),
                 ),
                 _buildStatItem(
                   '累計登録',
                   '$totalRegistrations',
                   Icons.group,
-                  Color(0xFF7C3AED),
+                  const Color(0xFF7C3AED),
                 ),
                 _buildStatItem(
                   '30日シェア',
                   '$shares',
                   Icons.share,
-                  Color(0xFFFF6B35),
+                  const Color(0xFFFF6B35),
                 ),
                 _buildStatItem(
                   '累計LP View',
                   '$totalLpViews',
                   Icons.analytics,
-                  Color(0xFF0D9488),
+                  const Color(0xFF0D9488),
                 ),
               ],
             ),
@@ -2308,34 +2308,34 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 _buildMiniKpiChip(
                   label: '今日の体験前離脱',
                   value: '$todayDropBeforeTrial',
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 _buildMiniKpiChip(
                   label: '30日体験前離脱',
                   value: '$totalDropBeforeTrial',
-                  color: Color(0xFF475569),
+                  color: const Color(0xFF475569),
                 ),
                 _buildMiniKpiChip(
                   label: '連続登録ゼロ日',
                   value: '$zeroRegistrationStreakDays日',
-                  color: Color(0xFFB91C1C),
+                  color: const Color(0xFFB91C1C),
                 ),
                 _buildMiniKpiChip(
                   label: '直近7日平均LP',
                   value: averageViewsLast7Days.toStringAsFixed(1),
-                  color: Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                 ),
                 _buildMiniKpiChip(
                   label: '30日体験率',
                   value: totalTrialRate,
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 _buildMiniKpiChip(
                   label: '直近登録効率',
                   value: registrationsPerLpView == null
                       ? '登録未発生'
                       : '$registrationsPerLpView LP/登録',
-                  color: Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                 ),
               ],
             ),
@@ -2404,17 +2404,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 _buildMiniKpiChip(
                   label: 'Allowed',
                   value: '$_allowedToolExecutionCount',
-                  color: Color(0xFF0D9488),
+                  color: const Color(0xFF0D9488),
                 ),
                 _buildMiniKpiChip(
                   label: 'Blocked',
                   value: '$_blockedToolExecutionCount',
-                  color: Color(0xFFB91C1C),
+                  color: const Color(0xFFB91C1C),
                 ),
                 _buildMiniKpiChip(
                   label: 'Blocked Rate',
                   value: '${blockedRate.toStringAsFixed(1)}%',
-                  color: Color(0xFFFF6B35),
+                  color: const Color(0xFFFF6B35),
                 ),
               ],
             ),
@@ -2464,7 +2464,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         child: LinearProgressIndicator(
                           minHeight: 6,
                           value: ratio,
-                          backgroundColor: Color(0xFFB91C1C).withValues(
+                          backgroundColor: const Color(0xFFB91C1C).withValues(
                             alpha: 0.08,
                           ),
                           valueColor: const AlwaysStoppedAnimation<Color>(
@@ -2497,13 +2497,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: allowed
-                      ? Color(0xFF0D9488).withValues(alpha: 0.05)
-                      : Color(0xFFB91C1C).withValues(alpha: 0.06),
+                      ? const Color(0xFF0D9488).withValues(alpha: 0.05)
+                      : const Color(0xFFB91C1C).withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: allowed
-                        ? Color(0xFF0D9488).withValues(alpha: 0.2)
-                        : Color(0xFFB91C1C).withValues(alpha: 0.25),
+                        ? const Color(0xFF0D9488).withValues(alpha: 0.2)
+                        : const Color(0xFFB91C1C).withValues(alpha: 0.25),
                   ),
                 ),
                 child: Column(
@@ -2515,8 +2515,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           allowed ? Icons.check_circle : Icons.block,
                           size: 16,
                           color: allowed
-                              ? Color(0xFF0D9488)
-                              : Color(0xFFB91C1C),
+                              ? const Color(0xFF0D9488)
+                              : const Color(0xFFB91C1C),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
@@ -2598,9 +2598,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   }
 
   Color _getCvrColor(double cvr) {
-    if (cvr >= 10) return Color(0xFF0D9488);
-    if (cvr >= 5) return Color(0xFFFF6B35);
-    return Color(0xFFB91C1C);
+    if (cvr >= 10) return const Color(0xFF0D9488);
+    if (cvr >= 5) return const Color(0xFFFF6B35);
+    return const Color(0xFFB91C1C);
   }
 
   Widget _buildStatItem(
@@ -2681,7 +2681,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         child: Container(
                           width: barWidth,
                           decoration: BoxDecoration(
-                            color: Color(0xFFDBEAFE),
+                            color: const Color(0xFFDBEAFE),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -2691,7 +2691,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         child: Container(
                           width: barWidth,
                           decoration: BoxDecoration(
-                            color: Color(0xFF6366F1),
+                            color: const Color(0xFF6366F1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -2894,57 +2894,57 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       case 'x_share':
         return Colors.black;
       case 'qr_scan':
-        return Color(0xFF0D9488);
+        return const Color(0xFF0D9488);
       case 'facebook':
-        return Color(0xFF1877F2);
+        return const Color(0xFF1877F2);
       case 'line':
-        return Color(0xFF06C755);
+        return const Color(0xFF06C755);
       case 'copy_link':
-        return Color(0xFF7C3AED);
+        return const Color(0xFF7C3AED);
       case 'share_x':
         return Theme.of(context).colorScheme.onSurface;
       case 'share_line':
-        return Color(0xFF06C755);
+        return const Color(0xFF06C755);
       case 'share_facebook':
-        return Color(0xFF1877F2);
+        return const Color(0xFF1877F2);
       case 'share_copy':
-        return Color(0xFF7C3AED);
+        return const Color(0xFF7C3AED);
       case 'public_memo_share':
-        return Color(0xFFFF6B35);
+        return const Color(0xFFFF6B35);
       case 'public_memo_copy':
         return Colors.amber.shade700;
       case 'touch_landing':
-        return Color(0xFF475569);
+        return const Color(0xFF475569);
       case 'touch_import':
-        return Color(0xFF818CF8);
+        return const Color(0xFF818CF8);
       case 'touch_public_memo':
-        return Color(0xFFFF6B35);
+        return const Color(0xFFFF6B35);
       case 'touch_referral':
-        return Color(0xFF0D9488);
+        return const Color(0xFF0D9488);
       case 'touch_comparison':
-        return Color(0xFFA78BFA);
+        return const Color(0xFFA78BFA);
       case 'import_preview_notion':
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
       case 'import_preview_evernote':
-        return Color(0xFF059669);
+        return const Color(0xFF059669);
       case 'import_preview_markdown':
         return Colors.brown.shade400;
       case 'import_signup_cta':
-        return Color(0xFF7C3AED);
+        return const Color(0xFF7C3AED);
       case 'public_memo_signup_cta':
-        return Color(0xFFEC4899);
+        return const Color(0xFFEC4899);
       case 'signup_submit_landing':
-        return Color(0xFF0D9488);
+        return const Color(0xFF0D9488);
       case 'signup_submit_import':
-        return Color(0xFF4338CA);
+        return const Color(0xFF4338CA);
       case 'signup_submit_public_memo':
-        return Color(0xFFFF6B35);
+        return const Color(0xFFFF6B35);
       case 'signup_submit_referral':
-        return Color(0xFF0F766E);
+        return const Color(0xFF0F766E);
       case 'signup_submit_comparison':
-        return Color(0xFF6D28D9);
+        return const Color(0xFF6D28D9);
       default:
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
     }
   }
 
@@ -3096,8 +3096,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: isPositive
-                        ? Color(0xFF10B981)
-                        : Color(0xFFEF4444),
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
                   ),
                 ),
               ],
@@ -3147,18 +3147,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               spacing: 12,
               runSpacing: 4,
               children: [
-                _miniStat(Icons.visibility, '$views', Color(0xFF6366F1)),
+                _miniStat(Icons.visibility, '$views', const Color(0xFF6366F1)),
                 _miniStat(
                   Icons.play_circle_outline,
                   '${dayFunnel.trialRuns}',
-                  Color(0xFF0D9488),
+                  const Color(0xFF0D9488),
                 ),
                 _miniStat(
                   Icons.mail_outline,
                   '${dayFunnel.magicLinkSends}',
-                  Color(0xFF7C3AED),
+                  const Color(0xFF7C3AED),
                 ),
-                _miniStat(Icons.person_add, '$conv', Color(0xFF6366F1)),
+                _miniStat(Icons.person_add, '$conv', const Color(0xFF6366F1)),
               ],
             ),
             trailing: Container(
@@ -3224,19 +3224,19 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         _profileStatChip(
           Icons.check_circle,
           '$complete 完成',
-          Color(0xFF0D9488),
+          const Color(0xFF0D9488),
         ),
         const SizedBox(width: 8),
         _profileStatChip(
           Icons.pending,
           '$partial 途中',
-          Color(0xFFFF6B35),
+          const Color(0xFFFF6B35),
         ),
         const SizedBox(width: 8),
         _profileStatChip(
           Icons.warning_amber,
           '$empty 未設定',
-          Color(0xFFB91C1C),
+          const Color(0xFFB91C1C),
         ),
       ],
     );
@@ -3388,11 +3388,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
                       Color profileColor;
                       if (!hasProfile || completionPct < 34) {
-                        profileColor = Color(0xFFB91C1C);
+                        profileColor = const Color(0xFFB91C1C);
                       } else if (completionPct < 67) {
-                        profileColor = Color(0xFFFF6B35);
+                        profileColor = const Color(0xFFFF6B35);
                       } else {
-                        profileColor = Color(0xFF0D9488);
+                        profileColor = const Color(0xFF0D9488);
                       }
 
                       return Padding(
@@ -3403,16 +3403,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             CircleAvatar(
                               radius: 18,
                               backgroundColor: isGoogle
-                                  ? Color(0xFFE8F5E9)
-                                  : Color(0xFFE8EAF6),
+                                  ? const Color(0xFFE8F5E9)
+                                  : const Color(0xFFE8EAF6),
                               child: Text(
                                 email.isNotEmpty ? email[0].toUpperCase() : '?',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   color: isGoogle
-                                      ? Color(0xFF388E3C)
-                                      : Color(0xFF3949AB),
+                                      ? const Color(0xFF388E3C)
+                                      : const Color(0xFF3949AB),
                                 ),
                               ),
                             ),
@@ -3442,8 +3442,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: isGoogle
-                                              ? Color(0xFFE8F5E9)
-                                              : Color(0xFFE8EAF6),
+                                              ? const Color(0xFFE8F5E9)
+                                              : const Color(0xFFE8EAF6),
                                           borderRadius:
                                               BorderRadius.circular(6),
                                         ),
@@ -3453,8 +3453,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                             fontSize: 10,
                                             fontWeight: FontWeight.w600,
                                             color: isGoogle
-                                                ? Color(0xFF388E3C)
-                                                : Color(0xFF3949AB),
+                                                ? const Color(0xFF388E3C)
+                                                : const Color(0xFF3949AB),
                                           ),
                                         ),
                                       ),
@@ -3552,7 +3552,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ),
                                       style: TextButton.styleFrom(
                                         foregroundColor:
-                                            Color(0xFF3949AB),
+                                            const Color(0xFF3949AB),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
                                           vertical: 2,
@@ -3622,11 +3622,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
 
     Color profileColor;
     if (!hasProfile || completionPct < 34) {
-      profileColor = Color(0xFFB91C1C);
+      profileColor = const Color(0xFFB91C1C);
     } else if (completionPct < 67) {
-      profileColor = Color(0xFFFF6B35);
+      profileColor = const Color(0xFFFF6B35);
     } else {
-      profileColor = Color(0xFF0D9488);
+      profileColor = const Color(0xFF0D9488);
     }
 
     // Build list of missing fields for the warning
@@ -3703,15 +3703,15 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: isGoogle
-                        ? Color(0xFFE8F5E9)
-                        : Color(0xFFE8EAF6),
+                        ? const Color(0xFFE8F5E9)
+                        : const Color(0xFFE8EAF6),
                     child: Text(
                       email.isNotEmpty ? email[0].toUpperCase() : '?',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isGoogle
-                            ? Color(0xFF388E3C)
-                            : Color(0xFF3949AB),
+                            ? const Color(0xFF388E3C)
+                            : const Color(0xFF3949AB),
                       ),
                     ),
                   ),
@@ -3740,7 +3740,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           Icon(
                             isPublic ? Icons.public : Icons.lock_outlined,
                             size: 12,
-                            color: Color(0xFF9CA3AF),
+                            color: const Color(0xFF9CA3AF),
                           ),
                           const SizedBox(width: 3),
                           Text(
@@ -3850,9 +3850,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Color(0xFF64748B),
+                            color: const Color(0xFF64748B),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Color(0xFFFDE68A)),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4036,7 +4036,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: Color(0xFF9CA3AF)),
+        Icon(icon, size: 14, color: const Color(0xFF9CA3AF)),
         const SizedBox(width: 6),
         Text(
           '$label: ',
@@ -4066,7 +4066,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         Icon(
           icon,
           size: 14,
-          color: isEmpty ? Color(0xFFF87171) : Color(0xFF9CA3AF),
+          color: isEmpty ? const Color(0xFFF87171) : const Color(0xFF9CA3AF),
         ),
         const SizedBox(width: 6),
         Text(
@@ -4081,7 +4081,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             isEmpty ? '未設定' : value,
             style: TextStyle(
               fontSize: 12,
-              color: isEmpty ? Color(0xFFF87171) : null,
+              color: isEmpty ? const Color(0xFFF87171) : null,
               fontStyle: isEmpty ? FontStyle.italic : FontStyle.normal,
             ),
             overflow: TextOverflow.ellipsis,
@@ -4173,11 +4173,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   Color statusColor;
                   switch (status) {
                     case 'in_progress':
-                      statusColor = Color(0xFF6366F1);
+                      statusColor = const Color(0xFF6366F1);
                     case 'done':
-                      statusColor = Color(0xFF0D9488);
+                      statusColor = const Color(0xFF0D9488);
                     default:
-                      statusColor = Color(0xFFFF6B35);
+                      statusColor = const Color(0xFFFF6B35);
                   }
 
                   return Column(
@@ -4188,7 +4188,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         leading: CircleAvatar(
                           radius: 16,
                           backgroundColor: index < 3
-                              ? Color(0xFFFEF3C7)
+                              ? const Color(0xFFFEF3C7)
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHighest,
@@ -4198,7 +4198,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: index < 3
-                                  ? Color(0xFF92400E)
+                                  ? const Color(0xFF92400E)
                                   : Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
@@ -4218,11 +4218,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   vertical: 1,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF6366F1)
+                                  color: const Color(0xFF6366F1)
                                       .withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                    color: Color(0xFF6366F1)
+                                    color: const Color(0xFF6366F1)
                                         .withValues(alpha: 0.24),
                                   ),
                                 ),
@@ -4248,7 +4248,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                     ? Icons.reply_outlined
                                     : Icons.edit_note_outlined,
                                 size: 18,
-                                color: Color(0xFF4338CA),
+                                color: const Color(0xFF4338CA),
                               ),
                             ),
                             PopupMenuButton<String>(
@@ -4310,11 +4310,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Color(0xFF6366F1)
+                              color: const Color(0xFF6366F1)
                                   .withValues(alpha: 0.04),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: Color(0xFF6366F1)
+                                color: const Color(0xFF6366F1)
                                     .withValues(alpha: 0.16),
                               ),
                             ),
@@ -4378,7 +4378,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     icon: const Icon(Icons.send, size: 16),
                     label: Text(_automationPostingX ? '投稿中...' : 'X投稿テスト'),
                     style: TextButton.styleFrom(
-                      foregroundColor: Color(0xFF4338CA),
+                      foregroundColor: const Color(0xFF4338CA),
                     ),
                   ),
                 IconButton(
@@ -4402,10 +4402,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFB91C1C).withValues(alpha: 0.07),
+                  color: const Color(0xFFB91C1C).withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: Color(0xFFB91C1C).withValues(alpha: 0.2),
+                    color: const Color(0xFFB91C1C).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Text(
@@ -4422,22 +4422,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   _buildAutomationMetricChip(
                     label: '総ユーザー',
                     value: '${_toInt(users['total'])}人',
-                    color: Color(0xFF6366F1),
+                    color: const Color(0xFF6366F1),
                   ),
                   _buildAutomationMetricChip(
                     label: '新規要望',
                     value: '${_toInt(featureRequests['newToday'])}件',
-                    color: Color(0xFFFF6B35),
+                    color: const Color(0xFFFF6B35),
                   ),
                   _buildAutomationMetricChip(
                     label: '未対応要望',
                     value: '${_toInt(featureRequests['openCount'])}件',
-                    color: Color(0xFF6366F1),
+                    color: const Color(0xFF6366F1),
                   ),
                   _buildAutomationMetricChip(
                     label: '直近実績',
                     value: '${recentAchievements.length}件',
-                    color: Color(0xFF0D9488),
+                    color: const Color(0xFF0D9488),
                   ),
                 ],
               ),
@@ -4475,7 +4475,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       leading: CircleAvatar(
                         radius: 14,
                         backgroundColor:
-                            Color(0xFF6366F1).withValues(alpha: 0.07),
+                            const Color(0xFF6366F1).withValues(alpha: 0.07),
                         child: Text(
                           '$votes',
                           style: const TextStyle(
@@ -4573,7 +4573,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     icon: const Icon(Icons.send, size: 16),
                     label: const Text('通知送信'),
                     style: TextButton.styleFrom(
-                      foregroundColor: Color(0xFF6366F1),
+                      foregroundColor: const Color(0xFF6366F1),
                     ),
                   ),
                 IconButton(
@@ -4724,11 +4724,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     Color statusColor(String status) {
       switch (status) {
         case 'posted':
-          return Color(0xFF0D9488);
+          return const Color(0xFF0D9488);
         case 'skipped':
-          return Color(0xFF9CA3AF);
+          return const Color(0xFF9CA3AF);
         default:
-          return Color(0xFFFF6B35);
+          return const Color(0xFFFF6B35);
       }
     }
 
@@ -4773,7 +4773,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               style: TextStyle(
                 fontSize: 12,
                 color:
-                    isDark ? Color(0xFF94A3B8) : Color(0xFF475569),
+                    isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
               ),
             ),
             const SizedBox(height: 12),
@@ -4792,8 +4792,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
-                        ? Color(0xFF94A3B8)
-                        : Color(0xFF475569),
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF475569),
                   ),
                 ),
               )
@@ -4843,8 +4843,8 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isDark
-                                        ? Color(0xFF94A3B8)
-                                        : Color(0xFF475569),
+                                        ? const Color(0xFF94A3B8)
+                                        : const Color(0xFF475569),
                                   ),
                                 ),
                               if (postUrl.isNotEmpty)
@@ -4969,9 +4969,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildComparisonCvrCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
-        isDark ? Color(0xFF1A2233) : Color(0xFFE5E7EB);
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final totalTouches = _comparisonTouches.values.fold(0, (a, b) => a + b);
     final cvrPct = totalTouches > 0
@@ -5020,16 +5020,16 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               _cvrStat(
                 '総到達数',
                 totalTouches.toString(),
-                Color(0xFFA78BFA),
+                const Color(0xFFA78BFA),
               ),
               const SizedBox(width: 16),
               _cvrStat(
                 '比較経由登録',
                 _comparisonSignups.toString(),
-                Color(0xFF059669),
+                const Color(0xFF059669),
               ),
               const SizedBox(width: 16),
-              _cvrStat('CVR', '$cvrPct%', Color(0xFFFF6B35)),
+              _cvrStat('CVR', '$cvrPct%', const Color(0xFFFF6B35)),
             ],
           ),
           const SizedBox(height: 12),
@@ -5063,9 +5063,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         child: LinearProgressIndicator(
                           value: pct.clamp(0.0, 1.0),
                           backgroundColor: isDark
-                              ? Color(0x1FE5E7EB)
-                              : Color(0xFF6366F1),
-                          color: Color(0xFF6366F1),
+                              ? const Color(0x1FE5E7EB)
+                              : const Color(0xFF6366F1),
+                          color: const Color(0xFF6366F1),
                           minHeight: 8,
                         ),
                       ),
@@ -5133,9 +5133,9 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
   Widget _buildGrowthAchievementSummaryCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardColor =
-        isDark ? Color(0xFF1A2233) : Color(0xFFE5E7EB);
+        isDark ? const Color(0xFF1A2233) : const Color(0xFFE5E7EB);
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     final periods = [
       (
@@ -5218,27 +5218,27 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             _growthStatRow(
               '新規ユーザー',
               '${_growthSummary!['newUsers'] ?? 0}人',
-              Color(0xFF6366F1),
+              const Color(0xFF6366F1),
             ),
             _growthStatRow(
               '累計ユーザー',
               '${_growthSummary!['totalUsersEver'] ?? 0}人',
-              Color(0xFF10B981),
+              const Color(0xFF10B981),
             ),
             _growthStatRow(
               '成長シグナル',
               '${_growthSummary!['acquisitionSignals'] ?? 0}件',
-              Color(0xFFF59E0B),
+              const Color(0xFFF59E0B),
             ),
             _growthStatRow(
               '紹介成立',
               '${_growthSummary!['referralsCompleted'] ?? 0}件',
-              Color(0xFFEC4899),
+              const Color(0xFFEC4899),
             ),
             _growthStatRow(
               'インポート試行',
               '${_growthSummary!['importPreviews'] ?? 0}件',
-              Color(0xFF0EA5E9),
+              const Color(0xFF0EA5E9),
             ),
           ],
         ],
@@ -5303,7 +5303,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Color(0xFFB91C1C),
+                      color: const Color(0xFFB91C1C),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -5330,14 +5330,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             if (!_appFeedbacksLoading) ...[
               Row(
                 children: [
-                  _feedbackCountChip('未対応', newCount, Color(0xFFB91C1C)),
+                  _feedbackCountChip('未対応', newCount, const Color(0xFFB91C1C)),
                   const SizedBox(width: 8),
                   _feedbackCountChip(
                     '確認済',
                     _appFeedbacks
                         .where((f) => f['status'] == 'reviewed')
                         .length,
-                    Color(0xFFFF6B35),
+                    const Color(0xFFFF6B35),
                   ),
                   const SizedBox(width: 8),
                   _feedbackCountChip(
@@ -5345,7 +5345,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     _appFeedbacks
                         .where((f) => f['status'] == 'implemented')
                         .length,
-                    Color(0xFF0D9488),
+                    const Color(0xFF0D9488),
                   ),
                 ],
               ),
@@ -5419,10 +5419,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
     final id = fb['id'] as int;
 
     final statusColor = status == 'new'
-        ? Color(0xFFB91C1C)
+        ? const Color(0xFFB91C1C)
         : status == 'reviewed'
-            ? Color(0xFFFF6B35)
-            : Color(0xFF0D9488);
+            ? const Color(0xFFFF6B35)
+            : const Color(0xFF0D9488);
     final categoryIcon = category == 'feature'
         ? Icons.lightbulb_outline
         : category == 'bug'
@@ -5518,7 +5518,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      foregroundColor: Color(0xFF0D9488),
+                      foregroundColor: const Color(0xFF0D9488),
                     ),
                     child: const Text('対応完了', style: TextStyle(fontSize: 11)),
                   ),

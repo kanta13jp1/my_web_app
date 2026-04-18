@@ -53,16 +53,16 @@ class _HorseProviderLeaderboardPageState
   Color _providerColor(String provider) {
     switch (provider.toLowerCase()) {
       case 'google':
-        return Color(0xFF4285F4);
+        return const Color(0xFF4285F4);
       case 'openai':
-        return Color(0xFF10A37F);
+        return const Color(0xFF10A37F);
       case 'anthropic':
-        return Color(0xFFFF6B35);
+        return const Color(0xFFFF6B35);
       case 'x':
       case 'xai':
-        return Color(0xFF94A3B8);
+        return const Color(0xFF94A3B8);
       default:
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
     }
   }
 
@@ -70,16 +70,16 @@ class _HorseProviderLeaderboardPageState
     Color color;
     switch (rank) {
       case 1:
-        color = Color(0xFFFFC107);
+        color = const Color(0xFFFFC107);
         break;
       case 2:
-        color = Color(0xFF9CA3AF);
+        color = const Color(0xFF9CA3AF);
         break;
       case 3:
         color = Colors.brown[300]!;
         break;
       default:
-        color = Color(0xFF475569);
+        color = const Color(0xFF475569);
     }
     return Container(
       width: 28,
@@ -104,10 +104,10 @@ class _HorseProviderLeaderboardPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AI競馬 プロバイダー別的中率'),
-        backgroundColor: Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF0A0A0A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -161,7 +161,7 @@ class _HorseProviderLeaderboardPageState
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Color(0xFF1A1A1A),
+                            color: const Color(0xFF1A1A1A),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Row(
@@ -236,13 +236,13 @@ class _HorseProviderLeaderboardPageState
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              color: Color(0xFF141414),
+                              color: const Color(0xFF141414),
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: rank == 1
-                                    ? Color(0xFFFFC107)
+                                    ? const Color(0xFFFFC107)
                                         .withValues(alpha: 0.3)
-                                    : Color(0xFF1F1F1F),
+                                    : const Color(0xFF1F1F1F),
                               ),
                             ),
                             child: Row(
@@ -282,7 +282,7 @@ class _HorseProviderLeaderboardPageState
                                     '${(firstHitRate * 100).toStringAsFixed(1)}%',
                                     style: TextStyle(
                                       color: firstHitRate > 0.3
-                                          ? Color(0xFF4ADE80)
+                                          ? const Color(0xFF4ADE80)
                                           : Colors.white,
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,

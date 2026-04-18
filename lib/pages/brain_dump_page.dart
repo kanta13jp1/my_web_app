@@ -88,9 +88,9 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF121212),
+        backgroundColor: const Color(0xFF121212),
         title: const Text('ブレインダンプ', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -100,7 +100,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
           children: [
             // 入力エリア
             Card(
-              color: Color(0xFF1E1E1E),
+              color: const Color(0xFF1E1E1E),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -143,12 +143,12 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               border:
-                                  Border.all(color: Color(0xFF333333)),
+                                  Border.all(color: const Color(0xFF333333)),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: DropdownButton<String>(
                               value: _selectedCategory,
-                              dropdownColor: Color(0xFF1E1E1E),
+                              dropdownColor: const Color(0xFF1E1E1E),
                               style: const TextStyle(color: Colors.white),
                               underline: const SizedBox.shrink(),
                               isExpanded: true,
@@ -169,7 +169,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                         ElevatedButton(
                           onPressed: _saving ? null : _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFFF6B35),
+                            backgroundColor: const Color(0xFFFF6B35),
                             foregroundColor: Colors.white,
                           ),
                           child: _saving
@@ -206,12 +206,12 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                         final processed =
                             item['is_processed'] as bool? ?? false;
                         return Card(
-                          color: Color(0xFF1E1E1E),
+                          color: const Color(0xFF1E1E1E),
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: Checkbox(
                               value: processed,
-                              activeColor: Color(0xFF4CAF50),
+                              activeColor: const Color(0xFF4CAF50),
                               onChanged: (_) =>
                                   _toggle(item['id'].toString(), processed),
                             ),

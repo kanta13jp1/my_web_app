@@ -170,8 +170,11 @@ class _DanshariPageState extends State<DanshariPage> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.history,
-                            color: Color(0xFF9CA3AF), size: 16),
+                        const Icon(
+                          Icons.history,
+                          color: Color(0xFF9CA3AF),
+                          size: 16,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           '最終更新: $dateStr',

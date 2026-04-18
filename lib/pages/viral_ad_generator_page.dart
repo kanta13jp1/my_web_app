@@ -353,7 +353,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 : const Icon(Icons.auto_awesome),
             label: Text(_loading ? '生成中...' : '広告スクリプトを生成'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF6366F1),
+              backgroundColor: const Color(0xFF6366F1),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -397,10 +397,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? Color(0xFF6366F1).withAlpha(25)
+              ? const Color(0xFF6366F1).withAlpha(25)
               : (isDark ? Colors.grey[800] : Colors.grey[100]),
           border: Border.all(
-            color: selected ? Color(0xFF6366F1) : Colors.transparent,
+            color: selected ? const Color(0xFF6366F1) : Colors.transparent,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -603,7 +603,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Color(0xFF6366F1).withAlpha(20),
+                        color: const Color(0xFF6366F1).withAlpha(20),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -637,7 +637,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                           (h) => Chip(
                             label: Text('$h:00'),
                             backgroundColor:
-                                Color(0xFF6366F1).withAlpha(25),
+                                const Color(0xFF6366F1).withAlpha(25),
                           ),
                         )
                         .toList(),
@@ -777,11 +777,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             leading: CircleAvatar(
               backgroundColor: status == 'posted'
                   ? Colors.green.withAlpha(30)
-                  : Color(0xFF6366F1).withAlpha(25),
+                  : const Color(0xFF6366F1).withAlpha(25),
               child: Icon(
                 status == 'posted' ? Icons.check : Icons.auto_awesome,
                 color:
-                    status == 'posted' ? Colors.green : Color(0xFF6366F1),
+                    status == 'posted' ? Colors.green : const Color(0xFF6366F1),
                 size: 20,
               ),
             ),
@@ -885,7 +885,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       case 'script_only':
         return Colors.orange;
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 

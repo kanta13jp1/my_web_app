@@ -212,8 +212,11 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                   child: Row(
                     children: [
                       if (rating > 0) ...[
-                        const Icon(Icons.star,
-                            size: 14, color: Color(0xFFFFC107)),
+                        const Icon(
+                          Icons.star,
+                          size: 14,
+                          color: Color(0xFFFFC107),
+                        ),
                         Text(
                           ' $rating',
                           style: const TextStyle(fontSize: 12),

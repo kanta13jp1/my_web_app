@@ -95,9 +95,9 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF1A1A2E),
+        backgroundColor: const Color(0xFF1A1A2E),
         title: const Text(
           'Claude Design Importer',
           style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 16),
@@ -108,9 +108,9 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Color(0xFFFF6B35),
-          labelColor: Color(0xFFFF6B35),
-          unselectedLabelColor: Color(0xFF94A3B8),
+          indicatorColor: const Color(0xFFFF6B35),
+          labelColor: const Color(0xFFFF6B35),
+          unselectedLabelColor: const Color(0xFF94A3B8),
           tabs: const [
             Tab(text: 'Input'),
             Tab(text: 'Token Diff'),
@@ -146,9 +146,9 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Color(0xFF1A1A2E),
+                color: const Color(0xFF1A1A2E),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Color(0xFF334155)),
+                border: Border.all(color: const Color(0xFF334155)),
               ),
               child: TextField(
                 controller: _jsonController,
@@ -180,7 +180,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Color(0xFF065F46),
+                color: const Color(0xFF065F46),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -212,7 +212,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                   icon: const Icon(Icons.play_arrow, size: 16),
                   label: const Text('Parse'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -224,7 +224,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                   icon: const Icon(Icons.compare_arrows, size: 16),
                   label: const Text('Diff vs DESIGN.md'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFFFF6B35),
+                    foregroundColor: const Color(0xFFFF6B35),
                     side: const BorderSide(color: Color(0xFFFF6B35)),
                   ),
                 ),
@@ -236,7 +236,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                   icon: const Icon(Icons.code, size: 16),
                   label: const Text('Generate'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Color(0xFF0D9488),
+                    foregroundColor: const Color(0xFF0D9488),
                     side: const BorderSide(color: Color(0xFF0D9488)),
                   ),
                 ),
@@ -283,17 +283,17 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
   Widget _buildDiffSummary() {
     final d = _diff!;
     return Container(
-      color: Color(0xFF1A1A2E),
+      color: const Color(0xFF1A1A2E),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _diffChip('+ ${d.addedCount}', Color(0xFF0D9488)),
+          _diffChip('+ ${d.addedCount}', const Color(0xFF0D9488)),
           const SizedBox(width: 8),
-          _diffChip('- ${d.removedCount}', Color(0xFFB91C1C)),
+          _diffChip('- ${d.removedCount}', const Color(0xFFB91C1C)),
           const SizedBox(width: 8),
-          _diffChip('~ ${d.modifiedCount}', Color(0xFFFF6B35)),
+          _diffChip('~ ${d.modifiedCount}', const Color(0xFFFF6B35)),
           const SizedBox(width: 8),
-          _diffChip('= ${d.unchangedCount}', Color(0xFF475569)),
+          _diffChip('= ${d.unchangedCount}', const Color(0xFF475569)),
         ],
       ),
     );
@@ -317,10 +317,10 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
 
   Widget _buildDiffTile(TokenChange change) {
     final kindColor = switch (change.kind) {
-      ChangeKind.added => Color(0xFF0D9488),
-      ChangeKind.removed => Color(0xFFB91C1C),
-      ChangeKind.modified => Color(0xFFFF6B35),
-      ChangeKind.unchanged => Color(0xFF475569),
+      ChangeKind.added => const Color(0xFF0D9488),
+      ChangeKind.removed => const Color(0xFFB91C1C),
+      ChangeKind.modified => const Color(0xFFFF6B35),
+      ChangeKind.unchanged => const Color(0xFF475569),
     };
     final kindSymbol = switch (change.kind) {
       ChangeKind.added => '+',
@@ -391,7 +391,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
     return Column(
       children: [
         Container(
-          color: Color(0xFF1A1A2E),
+          color: const Color(0xFF1A1A2E),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [

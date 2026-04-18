@@ -63,9 +63,9 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       case 'sales':
         return Colors.purple;
       case 'support':
-        return Color(0xFF009688);
+        return const Color(0xFF009688);
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 

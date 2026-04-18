@@ -183,8 +183,8 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
                   leading: Icon(
                     _deviceIcon(type),
                     color: isOn
-                        ? Color(0xFFFFC107)
-                        : Color(0xFF9CA3AF),
+                        ? const Color(0xFFFFC107)
+                        : const Color(0xFF9CA3AF),
                   ),
                   title: Text(name),
                   subtitle: value != null ? Text('$value') : null,
@@ -228,7 +228,7 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.auto_mode,
-              color: enabled ? Colors.green : Color(0xFF9CA3AF),
+              color: enabled ? Colors.green : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: Text(

@@ -144,8 +144,11 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.rss_feed,
-                                size: 48, color: Color(0xFF9CA3AF)),
+                            Icon(
+                              Icons.rss_feed,
+                              size: 48,
+                              color: Color(0xFF9CA3AF),
+                            ),
                             SizedBox(height: 8),
                             Text(
                               'RSSフィードがありません\n上のフォームからURLを追加してください',

@@ -66,7 +66,7 @@ class _GlobalHeaderClockBarState extends State<GlobalHeaderClockBar> {
     final isDark = theme.brightness == Brightness.dark;
     final accent = theme.colorScheme.primary;
     final backgroundColor =
-        isDark ? Color(0xFF0B1220) : Color(0xFFF4F7FF);
+        isDark ? const Color(0xFF0B1220) : const Color(0xFFF4F7FF);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.08);

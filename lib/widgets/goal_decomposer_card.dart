@@ -213,7 +213,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: Color(0xFF4F46E5).withAlpha(20),
+                      color: const Color(0xFF4F46E5).withAlpha(20),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
@@ -289,7 +289,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                       label: const Text('12部署のサブタスクをプレビュー'),
                       onPressed: _generatePreview,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Color(0xFF4F46E5),
+                        foregroundColor: const Color(0xFF4F46E5),
                         side: const BorderSide(color: Color(0xFF4F46E5)),
                         textStyle: const TextStyle(fontSize: 12),
                       ),
@@ -356,7 +356,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                           ),
                           onPressed: _loading ? null : _assignTasks,
                           style: FilledButton.styleFrom(
-                            backgroundColor: Color(0xFF4F46E5),
+                            backgroundColor: const Color(0xFF4F46E5),
                             textStyle: const TextStyle(fontSize: 12),
                           ),
                         ),

@@ -178,7 +178,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Embedding Lab'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -244,9 +244,9 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Card(
+          const Card(
             color: Color(0xFF00796B),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(12),
               child: Row(
                 children: [
@@ -316,7 +316,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     fontFamily: 'monospace',
                     fontSize: 13,
                     color: _singleResult.isEmpty
-                        ? Color(0xFF9CA3AF)
+                        ? const Color(0xFF9CA3AF)
                         : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),

@@ -225,7 +225,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                                   Text(t, style: const TextStyle(fontSize: 12)),
                               onDeleted: () =>
                                   setDialogState(() => _newTags.remove(t)),
-                              deleteIconColor: Color(0xFF9CA3AF),
+                              deleteIconColor: const Color(0xFF9CA3AF),
                             ),
                           )
                           .toList(),
@@ -268,7 +268,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           _buildStatChip(
             Icons.local_offer,
             '${_allTags.length} タグ',
-            Color(0xFF009688),
+            const Color(0xFF009688),
           ),
         ],
       ),
@@ -375,11 +375,11 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: isRead
-              ? Color(0xFF9CA3AF).withValues(alpha: 0.15)
+              ? const Color(0xFF9CA3AF).withValues(alpha: 0.15)
               : Colors.blue.withValues(alpha: 0.15),
           child: Icon(
             isRead ? Icons.bookmark : Icons.bookmark_add,
-            color: isRead ? Color(0xFF9CA3AF) : Colors.blue,
+            color: isRead ? const Color(0xFF9CA3AF) : Colors.blue,
             size: 20,
           ),
         ),
@@ -419,7 +419,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(0xFF009688).withValues(alpha: 0.1),
+                          color: const Color(0xFF009688).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(

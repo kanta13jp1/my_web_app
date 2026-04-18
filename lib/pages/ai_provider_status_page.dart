@@ -79,10 +79,10 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
         : kAiProviderRegistry.where((e) => e.status == _filter).toList();
 
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AIプロバイダー実装状況'),
-        backgroundColor: Color(0xFF0A0A0A),
+        backgroundColor: const Color(0xFF0A0A0A),
         elevation: 0,
       ),
       body: Column(
@@ -183,7 +183,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
         ),
         selected: active,
         selectedColor: Color(baseColor),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         side: BorderSide(color: Color(baseColor).withValues(alpha: 0.4)),
         onSelected: (_) => setState(() => _filter = status),
       ),
@@ -195,9 +195,9 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Color(0xFF141414),
+        color: const Color(0xFF141414),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFF1F1F1F)),
+        border: Border.all(color: const Color(0xFF1F1F1F)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +323,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                       style: TextStyle(fontSize: 12),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Color(0xFFF97316),
+                      foregroundColor: const Color(0xFFF97316),
                       side: const BorderSide(color: Color(0xFFF97316)),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                     ),

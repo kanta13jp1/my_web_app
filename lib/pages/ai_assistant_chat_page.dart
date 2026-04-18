@@ -226,7 +226,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: Color(0xFF1A1A2E),
+        backgroundColor: const Color(0xFF1A1A2E),
       ),
     );
   }
@@ -447,7 +447,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                     vertical: 10,
                   ),
                   filled: true,
-                  fillColor: Color(0xFF2A2A2A), // surface3
+                  fillColor: const Color(0xFF2A2A2A), // surface3
                 ),
                 onSubmitted: (_) => _sendMessage(),
                 maxLines: 3,

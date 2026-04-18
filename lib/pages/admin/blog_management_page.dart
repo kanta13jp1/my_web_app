@@ -252,10 +252,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
     final views = e['views_count'] as int? ?? 0;
 
     final platformColor =
-        platform == 'qiita' ? Color(0xFF55C500) : Color(0xFF08090A);
+        platform == 'qiita' ? const Color(0xFF55C500) : const Color(0xFF08090A);
     final platformBg = platform == 'qiita'
-        ? Color(0xFF55C500).withAlpha(20)
-        : Color(0xFFFFFFFF).withAlpha(10);
+        ? const Color(0xFF55C500).withAlpha(20)
+        : const Color(0xFFFFFFFF).withAlpha(10);
 
     return Card(
       color: _card,

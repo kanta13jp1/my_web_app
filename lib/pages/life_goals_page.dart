@@ -82,15 +82,15 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
   Color _levelColor(String level) {
     switch (level) {
       case 'dream':
-        return Color(0xFF8B5CF6);
+        return const Color(0xFF8B5CF6);
       case 'big':
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
       case 'medium':
-        return Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6);
       case 'small':
-        return Color(0xFF10B981);
+        return const Color(0xFF10B981);
       default:
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
     }
   }
 
@@ -190,7 +190,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                                 ? Icons.star
                                 : Icons.star_border,
                             size: 22,
-                            color: Color(0xFFF59E0B),
+                            color: const Color(0xFFF59E0B),
                           ),
                         ),
                       ),
@@ -325,7 +325,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
         onPressed: () => _showAddGoalDialog(level: _levels[_tabs.index]),
         icon: const Icon(Icons.add),
         label: const Text('追加'),
-        backgroundColor: Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF6366F1),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -387,7 +387,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Color(0xFF1E293B),
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
               ),
             ),
             const SizedBox(height: 8),
@@ -397,7 +397,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
               style: TextStyle(
                 fontSize: 13,
                 color:
-                    isDark ? Color(0xFF9CA3AF) : Color(0xFF4B5563),
+                    isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                 height: 1.5,
               ),
             ),
@@ -471,9 +471,9 @@ class _GoalCard extends StatelessWidget {
     DateTime? targetDate;
     if (targetDateStr != null) targetDate = DateTime.tryParse(targetDateStr);
 
-    final bgColor = isDark ? Color(0xFF1A2233) : Colors.white;
+    final bgColor = isDark ? const Color(0xFF1A2233) : Colors.white;
     final borderColor =
-        isDark ? Color(0xFF2A3A55) : Color(0xFFE2E8F0);
+        isDark ? const Color(0xFF2A3A55) : const Color(0xFFE2E8F0);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -519,7 +519,7 @@ class _GoalCard extends StatelessWidget {
                               ? Colors.green
                               : (isDark
                                   ? Colors.white
-                                  : Color(0xFF1E293B)),
+                                  : const Color(0xFF1E293B)),
                           decoration:
                               isCompleted ? TextDecoration.lineThrough : null,
                         ),
@@ -531,8 +531,8 @@ class _GoalCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark
-                                  ? Color(0xFF9CA3AF)
-                                  : Color(0xFF4B5563),
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF4B5563),
                             ),
                           ),
                           if (targetDate != null) ...[
@@ -541,8 +541,8 @@ class _GoalCard extends StatelessWidget {
                               Icons.calendar_today,
                               size: 10,
                               color: isDark
-                                  ? Color(0xFF9CA3AF)
-                                  : Color(0xFF4B5563),
+                                  ? const Color(0xFF9CA3AF)
+                                  : const Color(0xFF4B5563),
                             ),
                             const SizedBox(width: 2),
                             Text(
@@ -550,8 +550,8 @@ class _GoalCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark
-                                    ? Color(0xFF9CA3AF)
-                                    : Color(0xFF4B5563),
+                                    ? const Color(0xFF9CA3AF)
+                                    : const Color(0xFF4B5563),
                               ),
                             ),
                           ],
@@ -626,8 +626,8 @@ class _GoalCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   color: isDark
-                      ? Color(0xFF9CA3AF)
-                      : Color(0xFF4B5563),
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF4B5563),
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -725,8 +725,8 @@ class _GoalCard extends StatelessWidget {
                     Icons.account_tree_outlined,
                     size: 13,
                     color: isDark
-                        ? Color(0xFF9CA3AF)
-                        : Color(0xFF4B5563),
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF4B5563),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -734,8 +734,8 @@ class _GoalCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark
-                          ? Color(0xFF9CA3AF)
-                          : Color(0xFF4B5563),
+                          ? const Color(0xFF9CA3AF)
+                          : const Color(0xFF4B5563),
                     ),
                   ),
                 ],

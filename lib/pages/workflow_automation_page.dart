@@ -109,17 +109,17 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       case 'error':
         return Colors.red;
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('AIワークフロー自動化'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         elevation: 0,
         foregroundColor: Colors.white,
         actions: [
@@ -178,8 +178,11 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined,
-                size: 48, color: Color(0xFF9CA3AF)),
+            Icon(
+              Icons.account_tree_outlined,
+              size: 48,
+              color: Color(0xFF9CA3AF),
+            ),
             SizedBox(height: 8),
             Text(
               'ワークフローがありません\nテンプレートから作成してください',
@@ -260,7 +263,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
             trailing: ElevatedButton(
               onPressed: () => _createFromTemplate(tmpl),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF6366F1),
+                backgroundColor: const Color(0xFF6366F1),
                 foregroundColor: Colors.white,
               ),
               child: const Text('作成'),
@@ -312,7 +315,9 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                     Text(
                       item.$1,
                       style: const TextStyle(
-                          fontSize: 12, color: Color(0xFF9CA3AF)),
+                        fontSize: 12,
+                        color: Color(0xFF9CA3AF),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],

@@ -126,7 +126,7 @@ class _GiftRegistryPageState extends State<GiftRegistryPage> {
                             leading: Icon(
                               Icons.card_giftcard,
                               color: reserved
-                                  ? Color(0xFF9CA3AF)
+                                  ? const Color(0xFF9CA3AF)
                                   : Colors.pink,
                             ),
                             title: Text(title),

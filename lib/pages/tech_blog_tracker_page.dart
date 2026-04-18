@@ -225,10 +225,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
     final todayCount = _todayPosts.map((p) => p['platform']).toSet().length;
 
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('技術ブログ投稿管理'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -387,14 +387,14 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           final posted = _isPostedToday(platform.id);
           final post = _getTodayPost(platform.id);
           return Card(
-            color: Color(0xFF1E1E1E),
+            color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
               leading: Container(
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: (posted ? platform.color : Color(0xFF9CA3AF))
+                  color: (posted ? platform.color : const Color(0xFF9CA3AF))
                       .withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
@@ -455,7 +455,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                         posted ? Icons.check_circle : Icons.circle_outlined,
                         size: 14,
                         color:
-                            posted ? platform.color : Color(0xFF9CA3AF),
+                            posted ? platform.color : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -464,7 +464,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color:
-                              posted ? platform.color : Color(0xFF9CA3AF),
+                              posted ? platform.color : const Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -501,7 +501,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               style: TextStyle(
                 fontSize: 12,
                 color:
-                    isDark ? Color(0xFF9CA3AF) : Color(0xFF4B5563),
+                    isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
               ),
             ),
           ],
@@ -511,7 +511,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           'blog-draft タスクが自動生成した下書き（blog_posts テーブル）',
           style: TextStyle(
             fontSize: 11,
-            color: isDark ? Color(0xFF6B7280) : Color(0xFF6B7280),
+            color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
           ),
         ),
         const SizedBox(height: 8),
@@ -534,13 +534,13 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           final isPosted = status == 'posted';
 
           return Card(
-            color: Color(0xFF1E1E1E),
+            color: const Color(0xFF1E1E1E),
             margin: const EdgeInsets.only(bottom: 6),
             child: ListTile(
               dense: true,
               leading: Icon(
                 isPosted ? Icons.check_circle : Icons.edit_note,
-                color: isPosted ? Colors.green : Color(0xFF6366F1),
+                color: isPosted ? Colors.green : const Color(0xFF6366F1),
                 size: 22,
               ),
               title: Text(
@@ -557,8 +557,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark
-                      ? Color(0xFF9CA3AF)
-                      : Color(0xFF4B5563),
+                      ? const Color(0xFF9CA3AF)
+                      : const Color(0xFF4B5563),
                 ),
               ),
               trailing: Container(
@@ -566,7 +566,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 decoration: BoxDecoration(
                   color: isPosted
                       ? Colors.green.withAlpha(20)
-                      : Color(0xFF6366F1).withAlpha(20),
+                      : const Color(0xFF6366F1).withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -574,7 +574,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isPosted ? Colors.green : Color(0xFF6366F1),
+                    color: isPosted ? Colors.green : const Color(0xFF6366F1),
                   ),
                 ),
               ),

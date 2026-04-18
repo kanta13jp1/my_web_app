@@ -61,8 +61,11 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
     final optionsText = _optionsController.text.trim();
     if (question.isEmpty || optionsText.isEmpty) return;
 
-    final options =
-        optionsText.split(',').map((o) => o.trim()).where((o) => o.isNotEmpty).toList();
+    final options = optionsText
+        .split(',')
+        .map((o) => o.trim())
+        .where((o) => o.isNotEmpty)
+        .toList();
     if (options.length < 2) {
       setState(() => _errorMessage = '選択肢をカンマ区切りで2つ以上入力してください');
       return;
@@ -185,14 +188,16 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
                             Icon(
                               Icons.poll_outlined,
                               size: 48,
-                              color: isDark ? Colors.grey[600] : Colors.grey[400],
+                              color:
+                                  isDark ? Colors.grey[600] : Colors.grey[400],
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'アンケートがありません',
                               style: TextStyle(
-                                color:
-                                    isDark ? Colors.grey[500] : Colors.grey[600],
+                                color: isDark
+                                    ? Colors.grey[500]
+                                    : Colors.grey[600],
                               ),
                             ),
                           ],

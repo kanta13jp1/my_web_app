@@ -162,7 +162,7 @@ class _RankRow extends StatelessWidget {
         const SizedBox(width: 8),
         CircleAvatar(
           radius: 14,
-          backgroundColor: Color(0xFF6366F1).withAlpha(30),
+          backgroundColor: const Color(0xFF6366F1).withAlpha(30),
           backgroundImage:
               entry.avatarUrl != null ? NetworkImage(entry.avatarUrl!) : null,
           child: entry.avatarUrl == null
@@ -185,7 +185,7 @@ class _RankRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: rank <= 3 ? FontWeight.w700 : FontWeight.w500,
-              color: isDark ? Colors.white : Color(0xFF1E293B),
+              color: isDark ? Colors.white : const Color(0xFF1E293B),
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -196,7 +196,7 @@ class _RankRow extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: rank == 1
-                ? Color(0xFFEAB308)
+                ? const Color(0xFFEAB308)
                 : (isDark ? Colors.grey[300] : Colors.grey[700]),
           ),
         ),

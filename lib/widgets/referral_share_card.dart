@@ -96,14 +96,14 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isDark
-              ? [Color(0xFF1E2A4A), Color(0xFF1A2233)]
-              : [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
+              ? [const Color(0xFF1E2A4A), const Color(0xFF1A2233)]
+              : [const Color(0xFFEEF2FF), const Color(0xFFE0E7FF)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Color(0xFF3B4A78) : Color(0xFFC7D2FE),
+          color: isDark ? const Color(0xFF3B4A78) : const Color(0xFFC7D2FE),
         ),
       ),
       child: Column(
@@ -115,7 +115,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: Color(0xFF6366F1).withAlpha(30),
+                  color: const Color(0xFF6366F1).withAlpha(30),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -134,7 +134,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : Color(0xFF1E293B),
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
                       ),
                     ),
                     Text(
@@ -142,8 +142,8 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                       style: TextStyle(
                         fontSize: 11,
                         color: isDark
-                            ? Color(0xFF94A3B8)
-                            : Color(0xFF64748B),
+                            ? const Color(0xFF94A3B8)
+                            : const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -157,13 +157,13 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Color(0xFF0F172A)
+                    ? const Color(0xFF0F172A)
                     : Colors.white.withAlpha(180),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isDark
-                      ? Color(0xFF3B4A78)
-                      : Color(0xFFE0E7FF),
+                      ? const Color(0xFF3B4A78)
+                      : const Color(0xFFE0E7FF),
                 ),
               ),
               child: Row(
@@ -202,9 +202,9 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor:
-                        _copied ? Colors.green : Color(0xFF6366F1),
+                        _copied ? Colors.green : const Color(0xFF6366F1),
                     side: BorderSide(
-                      color: _copied ? Colors.green : Color(0xFF6366F1),
+                      color: _copied ? Colors.green : const Color(0xFF6366F1),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
@@ -221,7 +221,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                     style: TextStyle(fontSize: 12),
                   ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Color(0xFF000000),
+                    backgroundColor: const Color(0xFF000000),
                     padding: const EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
@@ -237,7 +237,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                   color: Color(0xFF6366F1),
                 ),
                 style: IconButton.styleFrom(
-                  backgroundColor: Color(0xFF6366F1).withAlpha(20),
+                  backgroundColor: const Color(0xFF6366F1).withAlpha(20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

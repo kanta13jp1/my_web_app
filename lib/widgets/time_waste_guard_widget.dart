@@ -179,13 +179,13 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                     decoration: BoxDecoration(
                       color: totalSlips > 0
                           ? Colors.red.shade50
-                          : Color(0xFFEDE7F6),
+                          : const Color(0xFFEDE7F6),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       totalSlips > 0 ? Icons.warning_amber : Icons.shield,
                       color:
-                          totalSlips > 0 ? Colors.red : Color(0xFF4338CA),
+                          totalSlips > 0 ? Colors.red : const Color(0xFF4338CA),
                     ),
                   ),
                   const SizedBox(width: 12),

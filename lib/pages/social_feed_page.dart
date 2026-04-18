@@ -53,7 +53,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ソーシャルフィード'),
-        backgroundColor: Color(0xFF009688),
+        backgroundColor: const Color(0xFF009688),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -119,7 +119,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                           CircleAvatar(
                                             radius: 16,
                                             backgroundColor:
-                                                Color(0xFF009688)
+                                                const Color(0xFF009688)
                                                     .withAlpha(30),
                                             child: Text(
                                               (post['username']

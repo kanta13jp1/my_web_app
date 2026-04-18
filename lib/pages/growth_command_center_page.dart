@@ -47,16 +47,16 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
 
   Widget _buildBriefCard(Map<String, dynamic> brief) {
     final priorityColor = switch (brief['priority']?.toString()) {
-      'critical' => Color(0xFFE53935),
-      'high' => Color(0xFFFF6B35),
-      'medium' => Color(0xFFFFC107),
-      _ => Color(0xFF707070),
+      'critical' => const Color(0xFFE53935),
+      'high' => const Color(0xFFFF6B35),
+      'medium' => const Color(0xFFFFC107),
+      _ => const Color(0xFF707070),
     };
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: [
@@ -132,10 +132,10 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
         : <Map<String, dynamic>>[];
 
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('グロース司令部'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         bottom: PreferredSize(
@@ -156,7 +156,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                 icon: const Icon(Icons.rocket_launch),
                 label: const Text('コマンドセンターを起動'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF6B35),
+                  backgroundColor: const Color(0xFFFF6B35),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.symmetric(

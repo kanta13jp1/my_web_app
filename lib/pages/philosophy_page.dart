@@ -43,9 +43,9 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   Widget build(BuildContext context) {
     final video = _videos[_selectedVideoIdx];
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           '基本理念 — 自分株式会社',
           style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 18),
@@ -95,7 +95,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           colors: [Color(0xFF1A1A1A), Color(0xFF0F0F1F)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Color(0xFF333333), width: 1),
+        border: Border.all(color: const Color(0xFF333333), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +104,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             width: 48,
             height: 4,
             decoration: BoxDecoration(
-              color: Color(0xFFFF6B35),
+              color: const Color(0xFFFF6B35),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -157,17 +157,17 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
               label: Text('${v.label}  •  ${v.duration}'),
               selected: selected,
               onSelected: (_) => setState(() => _selectedVideoIdx = i),
-              selectedColor: Color(0xFFFF6B35),
-              backgroundColor: Color(0xFF2A2A2A),
+              selectedColor: const Color(0xFFFF6B35),
+              backgroundColor: const Color(0xFF2A2A2A),
               labelStyle: TextStyle(
-                color: selected ? Colors.white : Color(0xFFCBD5E1),
+                color: selected ? Colors.white : const Color(0xFFCBD5E1),
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
               ),
               side: BorderSide(
                 color: selected
-                    ? Color(0xFFFF6B35)
-                    : Color(0xFF444444),
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFF444444),
               ),
             ),
           );
@@ -208,7 +208,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
           icon: const Icon(Icons.open_in_new, size: 16),
           label: const Text('YouTube で見る'),
           style: TextButton.styleFrom(
-            foregroundColor: Color(0xFFFF6B35),
+            foregroundColor: const Color(0xFFFF6B35),
           ),
         ),
       ],
@@ -225,7 +225,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             Container(
               width: 4,
               height: 24,
-              color: Color(0xFFFF6B35),
+              color: const Color(0xFFFF6B35),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -269,9 +269,9 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFF333333), width: 1),
+        border: Border.all(color: const Color(0xFF333333), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,7 +282,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: Color(0x33FF6B35),
+                  color: const Color(0x33FF6B35),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
@@ -333,7 +333,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             Container(
               width: 4,
               height: 24,
-              color: Color(0xFF7986CB),
+              color: const Color(0xFF7986CB),
             ),
             const SizedBox(width: 12),
             const Text(
@@ -361,14 +361,14 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Color(0xFF1E1E1E),
+        color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(0xFF333333), width: 1),
+        border: Border.all(color: const Color(0xFF333333), width: 1),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent,
-          unselectedWidgetColor: Color(0xFF94A3B8),
+          unselectedWidgetColor: const Color(0xFF94A3B8),
         ),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(
@@ -376,8 +376,8 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             vertical: 4,
           ),
           childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          collapsedIconColor: Color(0xFF7986CB),
-          iconColor: Color(0xFF7986CB),
+          collapsedIconColor: const Color(0xFF7986CB),
+          iconColor: const Color(0xFF7986CB),
           title: Text(
             c.title,
             style: const TextStyle(
@@ -429,7 +429,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 ),
                 tableBody: const TextStyle(color: Color(0xFFCBD5E1)),
                 tableBorder: TableBorder.all(
-                  color: Color(0xFF444444),
+                  color: const Color(0xFF444444),
                 ),
               ),
             ),
@@ -474,7 +474,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             onPressed: () => Navigator.of(context).pushNamed('/'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: Color(0xFFCC4A1A),
+              foregroundColor: const Color(0xFFCC4A1A),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

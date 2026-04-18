@@ -190,7 +190,7 @@ class _CompetitorProgressGrid extends StatelessWidget {
                         pct >= 80
                             ? Colors.green
                             : pct >= 50
-                                ? Color(0xFFF97316)
+                                ? const Color(0xFFF97316)
                                 : Colors.red,
                       ),
                     ),

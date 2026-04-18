@@ -77,10 +77,10 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A0A0A),
+      backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         title: const Text('パスワード管理'),
-        backgroundColor: Color(0xFF1A1A1A),
+        backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -89,7 +89,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: Color(0xFFFF6B35),
+        backgroundColor: const Color(0xFFFF6B35),
         foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
@@ -141,7 +141,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
         final strength = e['strength'] as String?;
         final isRevealed = _revealed.contains(id);
         return Card(
-          color: Color(0xFF1E1E1E),
+          color: const Color(0xFF1E1E1E),
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: Icon(
@@ -196,7 +196,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1E1E1E),
         title: const Text('パスワードを追加'),
         content: Column(
           mainAxisSize: MainAxisSize.min,

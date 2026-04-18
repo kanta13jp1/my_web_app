@@ -596,8 +596,11 @@ class _TeamCard extends StatelessWidget {
                           ),
                         );
                       },
-                      child: const Icon(Icons.copy,
-                          size: 16, color: Color(0xFF9CA3AF)),
+                      child: const Icon(
+                        Icons.copy,
+                        size: 16,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ),
                   ],
                 ),

@@ -304,17 +304,17 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
   Color _bookingTypeColor(String type) {
     switch (type) {
       case 'hotel':
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
       case 'flight':
-        return Color(0xFF0EA5E9);
+        return const Color(0xFF0EA5E9);
       case 'train':
-        return Color(0xFF10B981);
+        return const Color(0xFF10B981);
       case 'rental_car':
-        return Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B);
       case 'restaurant':
-        return Color(0xFFEF4444);
+        return const Color(0xFFEF4444);
       default:
-        return Color(0xFF9CA3AF);
+        return const Color(0xFF9CA3AF);
     }
   }
 
@@ -348,7 +348,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
               ? _selectedTrip!['name']?.toString() ?? '旅行プランナー'
               : '旅行プランナー',
         ),
-        backgroundColor: Color(0xFF0EA5E9),
+        backgroundColor: const Color(0xFF0EA5E9),
         foregroundColor: Colors.white,
         leading: _selectedTrip != null
             ? IconButton(
@@ -397,7 +397,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
       floatingActionButton: _selectedTrip == null
           ? FloatingActionButton(
               onPressed: _createTrip,
-              backgroundColor: Color(0xFF0EA5E9),
+              backgroundColor: const Color(0xFF0EA5E9),
               tooltip: '新しい旅行プランを作成',
               child: const Icon(Icons.add, color: Colors.white),
             )
@@ -476,7 +476,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: Color(0xFF0EA5E9).withValues(alpha: 0.15),
+              backgroundColor: const Color(0xFF0EA5E9).withValues(alpha: 0.15),
               child: const Icon(Icons.flight_takeoff, color: Color(0xFF0EA5E9)),
             ),
             title:
@@ -682,7 +682,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                         value: false,
                         onChanged: (_) {},
                         title: Text(_packingItems[index]),
-                        activeColor: Color(0xFF0EA5E9),
+                        activeColor: const Color(0xFF0EA5E9),
                       ),
                     );
                   },

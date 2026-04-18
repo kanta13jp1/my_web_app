@@ -161,13 +161,13 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? Color(0xFF2D2000).withAlpha(200)
-                        : Color(0xFFFFFBEB),
+                        ? const Color(0xFF2D2000).withAlpha(200)
+                        : const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: Theme.of(context).brightness == Brightness.dark
-                          ? Color(0xFF92400E).withAlpha(180)
-                          : Color(0xFFFDE68A),
+                          ? const Color(0xFF92400E).withAlpha(180)
+                          : const Color(0xFFFDE68A),
                     ),
                   ),
                   child: _submitSuccess
@@ -230,7 +230,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                             FilledButton(
                               onPressed: _submitting ? null : _submit,
                               style: FilledButton.styleFrom(
-                                backgroundColor: Color(0xFFD97706),
+                                backgroundColor: const Color(0xFFD97706),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -300,12 +300,12 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                       ),
                       decoration: BoxDecoration(
                         color:
-                            rank <= 3 ? Color(0xFFFEFCE8) : Colors.white,
+                            rank <= 3 ? const Color(0xFFFEFCE8) : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: rank <= 3
-                              ? Color(0xFFFDE68A)
-                              : Color(0xFFE2E8F0),
+                              ? const Color(0xFFFDE68A)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Row(
@@ -318,8 +318,8 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: rank <= 3
-                                    ? Color(0xFFD97706)
-                                    : Color(0xFF94A3B8),
+                                    ? const Color(0xFFD97706)
+                                    : const Color(0xFF94A3B8),
                               ),
                             ),
                           ),
@@ -343,8 +343,8 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                               ),
                               decoration: BoxDecoration(
                                 color: voted
-                                    ? Color(0xFF3949AB)
-                                    : Color(0xFFEEF2FF),
+                                    ? const Color(0xFF3949AB)
+                                    : const Color(0xFFEEF2FF),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -355,7 +355,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                     size: 14,
                                     color: voted
                                         ? Colors.white
-                                        : Color(0xFF3949AB),
+                                        : const Color(0xFF3949AB),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -365,7 +365,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                       fontWeight: FontWeight.w700,
                                       color: voted
                                           ? Colors.white
-                                          : Color(0xFF3949AB),
+                                          : const Color(0xFF3949AB),
                                     ),
                                   ),
                                 ],
