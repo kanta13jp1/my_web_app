@@ -10791,3 +10791,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - deploy-prod run 24599230257 (12c6ce19) → **success** ✅
 - orphan branches: 全パターン 0件 ✅
 - 修正済み: 上記3ファイル + cross-instance-pr (dart format before push) 作成
+
+### Windowsアプリ版#95 (2026-04-18 PM)
+- **AI大学 UI sync**: registry 89 entries vs UI 84 mismatch を発見
+  - `siliconflow` + `novita_ai` (migration + ai-hub + yml + registry 完備) → UI 3 maps 追加で 86社昇格
+  - `deepinfra` + `nebius` は backend-only (registry + ai-hub のみ) → cross-instance-pr で PS版に判断委ねる
+- **更新**: `gemini_university_v2_page.dart` (3 maps) / `CLAUDE.md` / `COMPRESSED_PROMPT_V3.md` provider list / `ai_provider_status_page.dart` / `ai_provider_registry.dart` / `ai-hub/index.ts` の N社 84→86
+- **品質**: dart format 0 changed / flutter analyze 0 issues / deno lint clean
+- **Cross-instance-pr**: `20260418_deepinfra_nebius_clarify.md` 作成 (Option A=88社昇格 推奨)

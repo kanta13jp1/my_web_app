@@ -554,6 +554,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0BAF55),
     officialUrl: 'https://www.preferred.jp/en/business/genai',
   ),
+  'siliconflow': _ProviderMeta(
+    name: 'SiliconFlow',
+    emoji: '🧪',
+    color: const Color(0xFF6E56CF),
+    officialUrl: 'https://siliconflow.cn/',
+  ),
+  'novita_ai': _ProviderMeta(
+    name: 'Novita AI',
+    emoji: '🎨',
+    color: const Color(0xFF00B5C7),
+    officialUrl: 'https://novita.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1070,6 +1082,26 @@ final Map<String, _Quiz> _quizzes = {
       'PLaMo / MN-Core',
       'Chainer / TPU',
       'Sakana / Groq',
+    ],
+    correct: 1,
+  ),
+  'siliconflow': _Quiz(
+    question: 'SiliconFlow の特徴的な提供サービスは?',
+    options: [
+      'クローズド独自モデル専用 API',
+      'OpenAI 互換 API でオープンソースモデル多数をホスティング',
+      'GPU レンタル単機能のみ',
+      '画像生成専用クラウド',
+    ],
+    correct: 1,
+  ),
+  'novita_ai': _Quiz(
+    question: 'Novita AI が強みとするモダリティは?',
+    options: [
+      'テキスト LLM 単独',
+      '画像・動画・音声を含むマルチモーダル GPU 推論クラウド',
+      'コードのみ',
+      '音楽生成専用',
     ],
     correct: 1,
   ),
@@ -2417,6 +2449,45 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 - PLaMo API (エンタープライズ商談)
 - PLaMo Chat (B2B assistant)
 - 研究者無料枠 (大学・NPO)
+''',
+  'siliconflow': '''
+# SiliconFlow
+
+中国・上海発の AI Infrastructure クラウド。**OpenAI 互換 API** で 100+ オープンソースモデルをワンエンドポイントで提供。
+
+## 主要モデル
+- Qwen / DeepSeek / Llama / Mistral 系の最新版
+- FLUX / Stable Diffusion 系画像生成
+- 音声 (Whisper / 各種 TTS)
+
+## 強み
+- **OpenAI 互換** — 既存 SDK そのまま使える
+- 中国・東南アジアの低遅延ノード
+- GPU 不要・トークン課金
+
+## API
+- `https://api.siliconflow.cn/v1/chat/completions`
+- 無料枠あり (登録時クレジット)
+''',
+  'novita_ai': '''
+# Novita AI
+
+シンガポール・米国発の **GPU 推論クラウド**。テキスト + 画像 + 動画 + 音声のマルチモーダル API を 1 つで提供。
+
+## 主要モデル
+- Llama / Qwen / DeepSeek (OpenAI 互換 LLM)
+- Stable Video Diffusion / 各種画像生成
+- Whisper / 音声合成
+- カスタム LoRA 追加可能
+
+## 強み
+- **マルチモーダル統合** — 1 アカウントで全モダリティ
+- A100/H100 GPU を時間貸し / トークン貸し選択可
+- LoRA + ファインチューニング即時デプロイ
+
+## API
+- `https://api.novita.ai/v3/openai/chat/completions`
+- 画像/動画 endpoint は別パス
 ''',
 };
 
