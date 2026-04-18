@@ -507,12 +507,12 @@ $hashtags
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.campaign, size: 64, color: Colors.grey),
+            const Icon(Icons.campaign, size: 64, color: Color(0xFFB0B0B0)),
             const SizedBox(height: 16),
             Text(
               _descriptionText(channelKey),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: Color(0xFFB0B0B0)),
             ),
             const SizedBox(height: 24),
             if (_isLoading)

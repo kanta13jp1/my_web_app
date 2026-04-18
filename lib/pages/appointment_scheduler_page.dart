@@ -100,12 +100,13 @@ class _AppointmentSchedulerPageState extends State<AppointmentSchedulerPage> {
                           Icon(
                             Icons.calendar_today_outlined,
                             size: 64,
-                            color: Colors.grey,
+                            color: Color(0xFFB0B0B0),
                           ),
                           SizedBox(height: 16),
                           Text(
                             '予約はありません',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                            style: TextStyle(
+                                fontSize: 16, color: Color(0xFFB0B0B0)),
                           ),
                         ],
                       ),

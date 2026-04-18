@@ -105,7 +105,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                                 '',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Colors.grey,
+                              color: Color(0xFFB0B0B0),
                             ),
                           ),
                         );

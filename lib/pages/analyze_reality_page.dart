@@ -94,7 +94,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
           children: [
             const Text(
               '現状や課題を入力すると AI が分析します',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(fontSize: 14, color: Color(0xFFB0B0B0)),
             ),
             const SizedBox(height: 12),
             TextField(

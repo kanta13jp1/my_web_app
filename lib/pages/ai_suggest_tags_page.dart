@@ -78,7 +78,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
           children: [
             const Text(
               'テキストを入力してタグを自動提案',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(fontSize: 14, color: Color(0xFFB0B0B0)),
             ),
             const SizedBox(height: 12),
             TextField(
