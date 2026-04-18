@@ -3337,7 +3337,8 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontSize: 15,
       fontWeight: FontWeight.w600,
     ),
-    strong: const TextStyle(color: Color(0xFFE5E7EB), fontWeight: FontWeight.bold),
+    strong:
+        const TextStyle(color: Color(0xFFE5E7EB), fontWeight: FontWeight.bold),
     em: const TextStyle(
       color: Color(0xFFB0B0B0),
       fontStyle: FontStyle.italic,
