@@ -388,9 +388,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           fontWeight: FontWeight.bold,
                           color: score >= 900
                               ? Colors.green
-                              : (score >= 500
-                                  ? Colors.orange
-                                  : const Color(0xFF9CA3AF)),
+                              : (score >= 500 ? Colors.orange : const Color(0xFF9CA3AF)),
                         ),
                       ),
                       const Text(

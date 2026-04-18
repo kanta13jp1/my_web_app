@@ -195,8 +195,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
             const SizedBox(height: 4),
             Text(
               _error!,
-              style:
-                  const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
               textAlign: TextAlign.center,
             ),
           ],
@@ -239,8 +238,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor:
-                        (_statusColors[status] ?? const Color(0xFF9CA3AF))
-                            .withAlpha(40),
+                        (_statusColors[status] ?? const Color(0xFF9CA3AF)).withAlpha(40),
                     child: Icon(
                       Icons.work,
                       color: _statusColors[status] ?? const Color(0xFF9CA3AF),

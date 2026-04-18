@@ -278,8 +278,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                          const Color(0xFFFFC107)),
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(const Color(0xFFFFC107)),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -452,18 +452,14 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             Icon(
               _badgeIcon(icon),
               size: 18,
-              color: earned
-                  ? const Color(0xFFFFC107).shade700
-                  : const Color(0xFF9CA3AF),
+              color: earned ? const Color(0xFFFFC107).shade700 : const Color(0xFF9CA3AF),
             ),
             const SizedBox(width: 4),
             Text(
               name,
               style: TextStyle(
                 fontSize: 12,
-                color: earned
-                    ? const Color(0xFFFFC107).shade900
-                    : const Color(0xFF9CA3AF),
+                color: earned ? const Color(0xFFFFC107).shade900 : const Color(0xFF9CA3AF),
                 fontWeight: earned ? FontWeight.bold : FontWeight.normal,
               ),
             ),

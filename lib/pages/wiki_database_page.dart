@@ -264,11 +264,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.article_outlined,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.article_outlined, size: 64, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 16),
-            const Text('Wikiページがありません',
-                style: TextStyle(color: const Color(0xFF9CA3AF))),
+            const Text('Wikiページがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: () => _createPage(),
@@ -346,11 +344,9 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.touch_app_outlined,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.touch_app_outlined, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 16),
-            Text('左のタブからページを選択してください',
-                style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('左のタブからページを選択してください', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -370,8 +366,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           if (content.isNotEmpty) ...[
             const Text(
               '内容',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: const Color(0xFF9CA3AF)),
+              style: TextStyle(fontWeight: FontWeight.bold, color: const Color(0xFF9CA3AF)),
             ),
             const SizedBox(height: 8),
             Container(
@@ -425,8 +420,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           ),
           const SizedBox(height: 8),
           if (_tableRows.isEmpty)
-            const Text('テーブルデータなし',
-                style: TextStyle(color: const Color(0xFF9CA3AF)))
+            const Text('テーブルデータなし', style: TextStyle(color: const Color(0xFF9CA3AF)))
           else
             ..._tableRows.map((row) {
               final content2 =

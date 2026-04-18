@@ -186,8 +186,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 if (pending)
                   FilledButton.tonal(

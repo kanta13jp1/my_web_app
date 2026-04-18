@@ -119,8 +119,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                           CircleAvatar(
                                             radius: 16,
                                             backgroundColor:
-                                                const Color(0xFF009688)
-                                                    .withAlpha(30),
+                                                const Color(0xFF009688).withAlpha(30),
                                             child: Text(
                                               (post['username']
                                                           ?.toString()
@@ -177,8 +176,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                 post['likes'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color:
-                                                      const Color(0xFF9CA3AF),
+                                                  color: const Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                               const SizedBox(width: 12),
@@ -194,8 +192,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                 post['comments'].toString(),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color:
-                                                      const Color(0xFF9CA3AF),
+                                                  color: const Color(0xFF9CA3AF),
                                                 ),
                                               ),
                                             ],

@@ -2452,7 +2452,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style:
+                  const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
             ),
             Text(
               value,
@@ -3487,10 +3488,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   value: e.key,
                   child: Row(
                     children: [
-                      Icon(
-                        _categoryIcons[e.key],
-                        color: const Color(0xFF9CA3AF),
-                      ),
+                      Icon(_categoryIcons[e.key],
+                          color: const Color(0xFF9CA3AF),),
                       const SizedBox(width: 8),
                       Text(e.value),
                     ],
@@ -4290,9 +4289,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             const Text(
                               ' / ',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF9CA3AF),
-                              ),
+                                  fontSize: 12, color: Color(0xFF9CA3AF),),
                             ),
                             Text(
                               _difficultyLabels[difficulty] ?? '',
@@ -5016,17 +5013,12 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           // ★ 追加: 繰り返しバッジ
           if (recurrenceLabel != null)
             Chip(
-              avatar: const Icon(
-                Icons.repeat,
-                size: 12,
-                color: Color(0xFFE5E7EB),
-              ),
+              avatar: const Icon(Icons.repeat,
+                  size: 12, color: Color(0xFFE5E7EB),),
               label: Text(
                 recurrenceLabel,
                 style: const TextStyle(
-                  color: Color(0xFFE5E7EB),
-                  fontSize: 10,
-                ),
+                    color: Color(0xFFE5E7EB), fontSize: 10,),
               ),
               backgroundColor: const Color(0xFFA78BFA),
               padding: EdgeInsets.zero,
@@ -5041,11 +5033,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(
-                _categoryIcons[category],
-                size: 12,
-                color: const Color(0xFF9CA3AF),
-              ),
+              Icon(_categoryIcons[category],
+                  size: 12, color: const Color(0xFF9CA3AF),),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -5090,9 +5079,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   Text(
                     '$subDone/$subTotal',
                     style: const TextStyle(
-                      fontSize: 10,
-                      color: Color(0xFF9CA3AF),
-                    ),
+                        fontSize: 10, color: Color(0xFF9CA3AF),),
                   ),
                 ],
               ),
@@ -5184,11 +5171,8 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.inventory_2_outlined,
-                size: 64,
-                color: Color(0xFF9CA3AF),
-              ),
+              Icon(Icons.inventory_2_outlined,
+                  size: 64, color: Color(0xFF9CA3AF),),
               SizedBox(height: 16),
               Text(
                 'ストックされたタスクはありません。',

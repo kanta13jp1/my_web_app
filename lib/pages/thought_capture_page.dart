@@ -269,9 +269,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     decoration: InputDecoration(
                       hintText: '今浮かんだことを即記録...',
                       hintStyle: TextStyle(
-                        color: isDark
-                            ? const Color(0xFF6B7280)
-                            : const Color(0xFF9CA3AF),
+                        color: isDark ? const Color(0xFF6B7280) : const Color(0xFF9CA3AF),
                       ),
                       filled: true,
                       fillColor: isDark

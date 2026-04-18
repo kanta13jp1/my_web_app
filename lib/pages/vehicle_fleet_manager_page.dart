@@ -129,11 +129,9 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.directions_car,
-                size: 64, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.directions_car, size: 64, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('車両が登録されていません',
-                style: TextStyle(color: const Color(0xFF9CA3AF))),
+            Text('車両が登録されていません', style: TextStyle(color: const Color(0xFF9CA3AF))),
           ],
         ),
       );
@@ -157,8 +155,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.directions_car,
-                color:
-                    status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
+                color: status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
               ),
             ),
             title:
@@ -179,9 +176,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                   status == 'active' ? '稼働中' : '停止中',
                   style: TextStyle(
                     fontSize: 11,
-                    color: status == 'active'
-                        ? Colors.green
-                        : const Color(0xFF9CA3AF),
+                    color: status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
                   ),
                 ),
               ],
@@ -195,8 +190,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
   Widget _buildTripsTab() {
     if (_tripLogs.isEmpty) {
       return const Center(
-        child: Text('走行記録がありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('走行記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -230,8 +224,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),
@@ -244,8 +237,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
   Widget _buildMaintenanceTab() {
     if (_maintenance.isEmpty) {
       return const Center(
-        child: Text('メンテナンス記録がありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('メンテナンス記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     return ListView.builder(
@@ -275,8 +267,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
                 if (nextDue.length >= 10)
                   Text(

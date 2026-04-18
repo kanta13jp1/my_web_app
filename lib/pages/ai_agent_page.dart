@@ -177,8 +177,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.smart_toy_outlined,
-              size: 64, color: const Color(0xFF9CA3AF)),
+          Icon(Icons.smart_toy_outlined, size: 64, color: const Color(0xFF9CA3AF)),
           const SizedBox(height: 16),
           Text(
             'AIエージェントがまだいません',

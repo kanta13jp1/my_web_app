@@ -113,8 +113,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (t) => Chip(
                                 label: Text(t),
-                                backgroundColor:
-                                    const Color(0xFF009688).shade50,
+                                backgroundColor: const Color(0xFF009688).shade50,
                               ),
                             )
                             .toList(),
@@ -137,8 +136,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                             .map(
                               (f) => Chip(
                                 label: Text(f.toUpperCase()),
-                                backgroundColor:
-                                    const Color(0xFF009688).shade100,
+                                backgroundColor: const Color(0xFF009688).shade100,
                               ),
                             )
                             .toList(),
@@ -169,8 +167,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0x1A009688),
-                              child: Icon(Icons.download,
-                                  color: const Color(0xFF009688)),
+                              child: Icon(Icons.download, color: const Color(0xFF009688)),
                             ),
                             title: Text(
                               item['type']?.toString() ??

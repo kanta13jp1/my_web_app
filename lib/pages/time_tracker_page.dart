@@ -303,8 +303,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                   ),
                   Text(
                     _viewLabel(_view),
-                    style: const TextStyle(
-                        fontSize: 12, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                   ),
                 ],
               ),
@@ -327,8 +326,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
         Expanded(
           child: _entries.isEmpty
               ? const Center(
-                  child: Text('記録がありません',
-                      style: TextStyle(color: const Color(0xFF9CA3AF))),
+                  child: Text('記録がありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -409,8 +407,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   Widget _buildProjectsTab() {
     if (_projects.isEmpty) {
       return const Center(
-        child: Text('プロジェクトデータがありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('プロジェクトデータがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     final maxHours = _projects.fold<double>(0, (m, p) {

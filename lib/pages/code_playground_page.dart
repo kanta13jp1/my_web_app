@@ -608,8 +608,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           ),
           const SizedBox(height: 8),
           if (breakdown.isEmpty)
-            const Text('データなし',
-                style: TextStyle(color: const Color(0xFF9CA3AF)))
+            const Text('データなし', style: TextStyle(color: const Color(0xFF9CA3AF)))
           else
             ...breakdown.map((b) {
               final lang = b['language'] as String? ?? '';

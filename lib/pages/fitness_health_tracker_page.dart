@@ -314,8 +314,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
             ),
             Text(
               label,
-              style:
-                  const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
+              style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
             ),
           ],
         ),

@@ -292,8 +292,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.assignment,
-                size: 48, color: const Color(0xFF9CA3AF)),
+            const Icon(Icons.assignment, size: 48, color: const Color(0xFF9CA3AF)),
             const SizedBox(height: 12),
             const Text(
               'タスクがありません',
@@ -338,8 +337,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
                 if (createdAt.length >= 10)
                   Text(
                     createdAt.substring(0, 10),
-                    style: const TextStyle(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                    style: const TextStyle(fontSize: 11, color: const Color(0xFF9CA3AF)),
                   ),
               ],
             ),

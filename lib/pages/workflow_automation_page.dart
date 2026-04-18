@@ -178,8 +178,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.account_tree_outlined,
-                size: 48, color: const Color(0xFF9CA3AF)),
+            Icon(Icons.account_tree_outlined, size: 48, color: const Color(0xFF9CA3AF)),
             SizedBox(height: 8),
             Text(
               'ワークフローがありません\nテンプレートから作成してください',
@@ -274,8 +273,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Widget _buildStatsTab() {
     if (_stats == null) {
       return const Center(
-        child: Text('統計データがありません',
-            style: TextStyle(color: const Color(0xFF9CA3AF))),
+        child: Text('統計データがありません', style: TextStyle(color: const Color(0xFF9CA3AF))),
       );
     }
     final items = [
@@ -312,8 +310,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                     const SizedBox(height: 4),
                     Text(
                       item.$1,
-                      style: const TextStyle(
-                          fontSize: 12, color: const Color(0xFF9CA3AF)),
+                      style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                       textAlign: TextAlign.center,
                     ),
                   ],

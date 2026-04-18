@@ -161,9 +161,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
               Container(
                 height: 200,
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? const Color(0xFF111827)
-                      : const Color(0xFFE5E7EB),
+                  color: isDark ? const Color(0xFF111827) : const Color(0xFFE5E7EB),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF9CA3AF)),
                 ),
@@ -322,9 +320,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                           _result!['witty_comment'] ?? '',
                           style: TextStyle(
                             fontStyle: FontStyle.italic,
-                            color: isDark
-                                ? const Color(0xFFD1D5DB)
-                                : const Color(0xFF1F2937),
+                            color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF1F2937),
                           ),
                         ),
                       ),

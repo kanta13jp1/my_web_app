@@ -219,9 +219,7 @@ class _ReferralPageState extends State<ReferralPage> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? const Color(0xFFD1D5DB)
-                              : const Color(0xFF374151),
+                          color: isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -275,9 +273,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           '招待コード: $_referralCode',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF4B5563),
+                            color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                           ),
                         ),
                       ],
@@ -418,9 +414,7 @@ class _ReferralPageState extends State<ReferralPage> {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF4B5563),
+                    color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                   ),
                 ),
               ],

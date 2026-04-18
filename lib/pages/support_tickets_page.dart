@@ -99,8 +99,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                           const SizedBox(height: 16),
                           const Text(
                             '未返信チケットはありません',
-                            style: TextStyle(
-                                fontSize: 16, color: const Color(0xFF9CA3AF)),
+                            style: TextStyle(fontSize: 16, color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -147,8 +146,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                     label: Text(
                                       ticket['status']?.toString() ?? 'open',
                                     ),
-                                    backgroundColor:
-                                        const Color(0xFF009688).shade50,
+                                    backgroundColor: const Color(0xFF009688).shade50,
                                   ),
                                 ),
                               );

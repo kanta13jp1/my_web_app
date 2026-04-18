@@ -533,8 +533,7 @@ class _TeamCard extends StatelessWidget {
                   )
                 else if (!isOwner && onLeave != null)
                   IconButton(
-                    icon: const Icon(Icons.exit_to_app,
-                        color: const Color(0xFF9CA3AF)),
+                    icon: const Icon(Icons.exit_to_app, color: const Color(0xFF9CA3AF)),
                     tooltip: 'チームを退出',
                     onPressed: onLeave,
                   ),
@@ -596,8 +595,8 @@ class _TeamCard extends StatelessWidget {
                           ),
                         );
                       },
-                      child: const Icon(Icons.copy,
-                          size: 16, color: const Color(0xFF9CA3AF)),
+                      child:
+                          const Icon(Icons.copy, size: 16, color: const Color(0xFF9CA3AF)),
                     ),
                   ],
                 ),

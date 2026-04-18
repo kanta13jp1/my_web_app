@@ -259,8 +259,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                 children: [
                   Text(
                     '「${_searchCtrl.text}」の検索結果: ${_memos.length}件',
-                    style: const TextStyle(
-                        color: const Color(0xFF9CA3AF), fontSize: 12),
+                    style: const TextStyle(color: const Color(0xFF9CA3AF), fontSize: 12),
                   ),
                   const Spacer(),
                   TextButton(onPressed: _fetchMemos, child: const Text('クリア')),
@@ -300,8 +299,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                                 const SizedBox(height: 16),
                                 const Text(
                                   '音声メモがありません',
-                                  style:
-                                      TextStyle(color: const Color(0xFF9CA3AF)),
+                                  style: TextStyle(color: const Color(0xFF9CA3AF)),
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
@@ -352,13 +350,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
           subtitle: Row(
             children: [
               if (durationSec > 0) ...[
-                const Icon(Icons.timer_outlined,
-                    size: 12, color: const Color(0xFF9CA3AF)),
+                const Icon(Icons.timer_outlined, size: 12, color: const Color(0xFF9CA3AF)),
                 const SizedBox(width: 2),
                 Text(
                   '${durationSec ~/ 60}:${(durationSec % 60).toString().padLeft(2, '0')}',
-                  style: const TextStyle(
-                      fontSize: 12, color: const Color(0xFF9CA3AF)),
+                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -367,8 +363,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                   createdAt.length > 10
                       ? createdAt.substring(0, 10)
                       : createdAt,
-                  style: const TextStyle(
-                      fontSize: 12, color: const Color(0xFF9CA3AF)),
+                  style: const TextStyle(fontSize: 12, color: const Color(0xFF9CA3AF)),
                 ),
             ],
           ),

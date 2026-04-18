@@ -454,8 +454,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                       Icon(
                         posted ? Icons.check_circle : Icons.circle_outlined,
                         size: 14,
-                        color:
-                            posted ? platform.color : const Color(0xFF9CA3AF),
+                        color: posted ? platform.color : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -463,8 +462,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color:
-                              posted ? platform.color : const Color(0xFF9CA3AF),
+                          color: posted ? platform.color : const Color(0xFF9CA3AF),
                         ),
                       ),
                     ],
@@ -500,8 +498,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               '${_scheduleDrafts.length}件',
               style: TextStyle(
                 fontSize: 12,
-                color:
-                    isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
+                color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
               ),
             ),
           ],
@@ -556,9 +553,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 '$dateLabel  |  $platformLabels',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark
-                      ? const Color(0xFF9CA3AF)
-                      : const Color(0xFF4B5563),
+                  color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
                 ),
               ),
               trailing: Container(

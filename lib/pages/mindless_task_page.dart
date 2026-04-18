@@ -3398,7 +3398,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 const SizedBox(height: 4),
                 const Text(
                   '「脱線したら、時間制限を合図に元の目的へ戻る」',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style:
+                      TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
                 ),
               ],
             ),
@@ -3580,8 +3581,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                           : isSuppressedByCriticalLock
                                                               ? Colors.blueGrey
                                                               : const Color(
-                                                                  0xFF9CA3AF,
-                                                                ),
+                                                                  0xFF9CA3AF,),
                                                       size: 20,
                                                     ),
                                                     const SizedBox(width: 8),
@@ -3628,8 +3628,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                               : null,
                                                           color: isDone
                                                               ? const Color(
-                                                                  0xFF9CA3AF,
-                                                                )
+                                                                  0xFF9CA3AF,)
                                                               : isSuppressedByCriticalLock
                                                                   ? Colors
                                                                       .black54
