@@ -10567,3 +10567,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Horse Racing Auto Update: 5件 all cancelled — timeout-minutes:20 超過が原因 → 45分に修正
 - orphan blog-publish branches: 2本 → merge + 削除完了 (published:trueは既にmain済みのためdrop)
 - 修正済み: horse-racing-update.yml timeout 20→45分
+
+### VSCode版#92 完了 (2026-04-18 09:30) — Rule17完了 + DESIGN.md準拠 60%→65%
+- daily-report.yml GH006修正: Checkout に BYPASS_RULES token追加
+- orphan branches: 全パターン0件確認
+- gemini_university_v2_page.dart DESIGN.md準拠4件修正:
+  - AppBar 0xFF0A0A0A → surface1 (0xFF1A1A1A)
+  - share card gradient → [surface1, surface2]
+  - provider tab header alpha 0.78/0.51 → 0.20/0.10
+  - URL label fontSize 10 → 11 (labelSmall最小値)
+- WBS更新: DESIGN.md準拠 60%→65%
+- EF: 16本 / flutter analyze 0エラー
