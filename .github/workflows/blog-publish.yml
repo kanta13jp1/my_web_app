@@ -281,7 +281,8 @@ jobs:
       - name: Step 5 - Mark draft as published
         if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DRAFT_PATH="${{ steps.meta.outputs.draft_path }}"
           DRAFT_PATH_EN="${{ github.event.inputs.draft_path_en }}"
@@ -323,6 +324,7 @@ jobs:
             COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
             [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
             git commit -m "$COMMIT_MSG"
+            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             git push origin HEAD:main
             echo "✅ [SCHEDULED] published:true に更新 → main push 完了"
           else

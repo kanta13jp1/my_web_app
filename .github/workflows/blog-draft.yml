@@ -131,6 +131,8 @@ jobs:
           steps.skip_check.outputs.skip == 'false' &&
           steps.gitlog.outputs.has_log == 'true' &&
           github.event.inputs.dry_run != 'true'
+        env:
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DRAFT_JA="${{ steps.period.outputs.draft_ja }}"
           DRAFT_EN="${{ steps.period.outputs.draft_en }}"
@@ -142,6 +144,7 @@ jobs:
             echo "ℹ️ No changes to commit"
           else
             git commit -m "自動: ブログドラフト $TARGET_DATE (日本語+英語)"
+            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             git push origin HEAD:main
           fi
 

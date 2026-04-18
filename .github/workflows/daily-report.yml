@@ -278,6 +278,7 @@ jobs:
       - name: Step 7 - コミット & main直接push
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DATE=${{ steps.report.outputs.date }}
 
@@ -294,6 +295,7 @@ jobs:
           fi
 
           git commit -m "自動: 日次レポート ${DATE} (GitHub Actions)"
+          git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin main
           echo "✅ main直接push完了"
 

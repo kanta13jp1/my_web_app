@@ -62,6 +62,7 @@ jobs:
       - name: Step 3 - コミット & main直接push
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES }}
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
         run: |
           DATE=$(TZ=Asia/Tokyo date +%Y-%m-%d)
 
@@ -81,6 +82,7 @@ jobs:
 
           VIDEOS="${{ steps.fetch.outputs.videos_fetched }}"
           git commit -m "自動: YouTube分析スナップショット ${DATE} (${VIDEOS}件)"
+          git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin main
           echo "✅ main直接push完了"
 
