@@ -10838,3 +10838,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **PS#121 並行衝突**: deepinfra+nebius 88社昇格と同時進行 → stash + rebase + 3 conflict 手動解決 (yml + UI _providerMeta + UI _fallback)
 - **更新**: migration 2本 + registry +2 (notImplemented) + UI 3 maps +2 + yml +2 RSS + CLAUDE.md/COMPRESSED list / N社 88→90 (3 files)
 - **品質**: dart format 0 changed / flutter analyze 0 issues / deno lint clean
+
+### PS版#122 (2026-04-18 PM)
+- **T-1 第122弾**: AI大学88社達成記事 JA+EN draft dispatch → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/ai-university-hits-88-providers-adding-deepinfra-and-nebius-ai-studio-2mkb
+  - orphan branch `blog-publish/24600148987-20260418-164829` マージ + 削除 ✅
+- **migration collision修正**: Win版#96 の fal.ai(180000) + Fish Audio(190000) を 200000/210000 にリネーム
+  - deepinfra(180000) / nebius(190000) と重複していた timestamp を解消
+- **claude_design importer 実装**: `lib/dev/claude_design/` 4ファイル + `test/dev/` 3テスト + main.dart route追加
+  - `/dev/claude-design-importer` ルート (admin-only) 追加
+  - `20260418_claude_design_flutter_importer.md` cross-instance-pr 完了
+- **docs/DESIGN_TOOLING_SETUP.md**: Rule 21 Claude Design ワークフロー追記
+- **deploy-prod**: migration collision解消 → in_progress (確認中)
