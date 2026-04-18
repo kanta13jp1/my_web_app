@@ -10926,3 +10926,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### PS版#129 Rule17 WF health check (2026-04-18 PM)
 - 全WF最新SUCCESS ✅ / orphan 0件 / leakage 0件
+
+### PS版#129 (2026-04-18 PM)
+- **Rule17**: 全WF SUCCESS ✅ / orphan 0件
+- **T-1 第129弾**: AI大学ランキング・リーダーボード JA+EN → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/building-a-leaderboard-with-flutter-supabase-ai-university-3-1lnb
+  - ROW_NUMBER()ビュー + 並列Future + is_publicバッジ解説
+  - orphan branch マージ + 削除 ✅
