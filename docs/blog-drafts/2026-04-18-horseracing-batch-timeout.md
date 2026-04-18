@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Function 150秒タイムアウトを batch ループで回避した"
 tags: Supabase,Deno,Flutter,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Supabase Edge Function 150秒タイムアウトを batch ループで回避した
