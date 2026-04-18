@@ -1,7 +1,7 @@
 ---
 title: "Flutter CIが2288エラーで壊れた話 — dart fix --apply 一発回復の手順"
 tags: Flutter,Dart,CI/CD,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Flutter CIが2288エラーで壊れた話 — dart fix --apply 一発回復の手順

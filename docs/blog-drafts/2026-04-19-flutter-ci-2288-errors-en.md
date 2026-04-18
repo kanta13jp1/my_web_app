@@ -1,7 +1,7 @@
 ---
 title: "Flutter CI Broke With 2288 Errors — How dart fix --apply Saved Us"
 tags: Flutter,Dart,CI/CD,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Flutter CI Broke With 2288 Errors — How `dart fix --apply` Saved Us
