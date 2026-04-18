@@ -1094,7 +1094,9 @@ class _NoteListPageState extends State<NoteListPage> {
                       Text(
                         _showFavoritesOnly ? 'お気に入りのメモはまだありません' : 'まだメモがありません',
                         style: const TextStyle(
-                            fontSize: 18, color: Color(0xFFB0B0B0)),
+                          fontSize: 18,
+                          color: Color(0xFFB0B0B0),
+                        ),
                       ),
                       if (_showFavoritesOnly) ...[
                         const SizedBox(height: 12),
