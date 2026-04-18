@@ -487,7 +487,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon = Icons.style;
         break;
       case template.CardTemplate.gradient:
-        color = Colors.purple;
+        color = const Color(0xFF3D5AFE);
         icon = Icons.gradient;
         break;
       case template.CardTemplate.darkMode:
@@ -495,7 +495,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon = Icons.dark_mode;
         break;
       case template.CardTemplate.colorful:
-        color = Colors.orange;
+        color = const Color(0xFFFF6B35);
         icon = Icons.color_lens;
         break;
     }
@@ -580,7 +580,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.warning_amber, color: Colors.orange, size: 32),
+            Icon(Icons.warning_amber, color: Color(0xFFFF6B35), size: 32),
             SizedBox(width: 12),
             Text('画像数が多いです'),
           ],
@@ -614,7 +614,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
+              backgroundColor: const Color(0xFFFF6B35),
             ),
             child: const Text('このまま続行'),
           ),

@@ -23,8 +23,8 @@ class PhilosopherQuoteCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             Colors.blue.shade900,
-            Colors.purple.shade900,
-            Colors.indigo.shade900,
+            const Color(0xFF1A237E),
+            const Color(0xFF1A237E),
           ],
         ),
       ),

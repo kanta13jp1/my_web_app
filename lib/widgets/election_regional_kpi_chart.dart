@@ -299,12 +299,12 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               _buildSummaryItem(
                                 '新人擁立 合計',
                                 totalNew.toString(),
-                                Colors.orange.shade700,
+                                const Color(0xFFFF9800),
                               ),
                               _buildSummaryItem(
                                 '総合計',
                                 totalTarget.toString(),
-                                Colors.indigo.shade700,
+                                const Color(0xFF303F9F),
                               ),
                             ],
                           ),
@@ -355,7 +355,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                             enabled: true,
                             touchTooltipData: BarTouchTooltipData(
                               getTooltipColor: (group) =>
-                                  Colors.blueGrey.shade900,
+                                  const Color(0xFF263238),
                               getTooltipItem:
                                   (group, groupIndex, rod, rodIndex) {
                                 final data = widget.prefectures[group.x];
@@ -365,7 +365,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                             data.additionalSeatTarget;
                                 final newTargetColor = isAchieved
                                     ? Colors.green.shade400
-                                    : Colors.orange.shade400;
+                                    : const Color(0xFFFF9800);
 
                                 return BarTooltipItem(
                                   '${data.prefecture}\n',
@@ -487,7 +487,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                 newTarget >= additionalTarget;
                             final newTargetColor = isAchieved
                                 ? Colors.green.shade400
-                                : Colors.orange.shade400;
+                                : const Color(0xFFFF9800);
 
                             return BarChartGroupData(
                               x: index,
@@ -521,7 +521,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                       children: [
                         _buildLegend(Colors.blue.shade300, '現職維持目標'),
                         const SizedBox(width: 16),
-                        _buildLegend(Colors.orange.shade400, '新人擁立目標 (未達)'),
+                        _buildLegend(const Color(0xFFFF9800), '新人擁立目標 (未達)'),
                         const SizedBox(width: 16),
                         _buildLegend(Colors.green.shade400, '新人擁立目標 (達成)'),
                       ],
@@ -625,8 +625,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     p.endorsementConfirmed
                         ? Icons.check_circle
                         : Icons.warning_amber_rounded,
-                    color:
-                        p.endorsementConfirmed ? Colors.green : Colors.orange,
+                    color: p.endorsementConfirmed
+                        ? Colors.green
+                        : const Color(0xFFFF6B35),
                   ),
                   title: Text(
                     p.prefecture,
@@ -708,7 +709,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
           showCheckboxColumn: false,
           sortColumnIndex: _sortColumnIndex,
           sortAscending: _sortAscending,
-          headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFECEFF1)),
           columns: [
             DataColumn(label: const Text('公認内定期限'), onSort: _onSort),
             DataColumn(

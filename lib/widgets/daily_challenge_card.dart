@@ -116,7 +116,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withAlpha(40),
+                      color: const Color(0xFFFFC107).withAlpha(40),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -125,7 +125,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                         const Icon(
                           Icons.star,
                           size: 13,
-                          color: Colors.amber,
+                          color: Color(0xFFFFC107),
                         ),
                         const SizedBox(width: 3),
                         Text(
@@ -133,7 +133,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: Colors.amber,
+                            color: Color(0xFFFFC107),
                           ),
                         ),
                       ],
@@ -288,14 +288,15 @@ class _ChallengeRow extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.star, size: 12, color: Colors.amber),
+                  const Icon(Icons.star,
+                      size: 12, color: Color(0xFFFFC107),),
                   const SizedBox(width: 2),
                   Text(
                     '${challenge.rewardPoints}pt',
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Colors.amber,
+                      color: Color(0xFFFFC107),
                     ),
                   ),
                 ],
@@ -349,7 +350,7 @@ class _ChallengeRow extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.amber,
+                      color: const Color(0xFFFFC107),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(

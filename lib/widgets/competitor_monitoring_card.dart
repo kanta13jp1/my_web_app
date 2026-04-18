@@ -84,7 +84,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.monitor_heart, color: Colors.teal),
+                const Icon(Icons.monitor_heart, color: Color(0xFF3D5AFE)),
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
@@ -160,7 +160,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                       style: const TextStyle(fontSize: 12),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: const Color(0xFF3D5AFE),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 8,
@@ -209,7 +209,9 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
               '${ms}ms',
               style: TextStyle(
                 fontSize: 12,
-                color: ms > 2000 ? Colors.orange : const Color(0xFFB0B0B0),
+                color: ms > 2000
+                    ? const Color(0xFFFF6B35)
+                    : const Color(0xFFB0B0B0),
               ),
             ),
           const SizedBox(width: 8),
@@ -224,7 +226,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
 
   Color _availColor(double pct) {
     if (pct >= 90) return Colors.green;
-    if (pct >= 70) return Colors.orange;
+    if (pct >= 70) return const Color(0xFFFF6B35);
     return Colors.red;
   }
 }

@@ -15,7 +15,7 @@ class NoteAnalysisDialog extends StatelessWidget {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.analytics, color: Colors.purple),
+          Icon(Icons.analytics, color: Color(0xFF3D5AFE)),
           SizedBox(width: 8),
           Text('AI分析レポート'),
         ],
@@ -50,8 +50,9 @@ class NoteAnalysisDialog extends StatelessWidget {
                   .map(
                     (tag) => Chip(
                       label: Text(tag),
-                      backgroundColor: Colors.purple.shade50,
-                      labelStyle: const TextStyle(color: Colors.purple),
+                      backgroundColor: const Color(0xFFE8EAF6),
+                      labelStyle:
+                          const TextStyle(color: Color(0xFF3D5AFE)),
                     ),
                   )
                   .toList(),

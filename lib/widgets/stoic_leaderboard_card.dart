@@ -70,7 +70,7 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events, color: Colors.amber.shade400),
+              const Icon(Icons.emoji_events, color: Color(0xFFFFCA28)),
               const SizedBox(width: 8),
               Text(
                 '全国 精神性・防衛資産ランキング',
@@ -140,10 +140,10 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
     required Color subColor,
   }) {
     final Color rankColor = rank == 1
-        ? Colors.amber
+        ? const Color(0xFFFFC107)
         : (rank == 2
             ? Theme.of(context).colorScheme.outlineVariant
-            : (rank == 3 ? Colors.brown.shade300 : subColor));
+            : (rank == 3 ? const Color(0xFFA1887F) : subColor));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),

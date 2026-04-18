@@ -172,13 +172,13 @@ class _AchievementNotificationWidgetState
                             const Icon(
                               Icons.emoji_events,
                               size: 16,
-                              color: Colors.amber,
+                              color: Color(0xFFFFC107),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '実績解除！',
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.amber,
+                                color: const Color(0xFFFFC107),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),

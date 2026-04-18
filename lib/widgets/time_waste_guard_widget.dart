@@ -159,7 +159,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: totalSlips > 0 ? Colors.red.shade200 : Colors.indigo.shade100,
+          color: totalSlips > 0 ? Colors.red.shade200 : const Color(0xFFC5CAE9),
         ),
       ),
       child: Column(
