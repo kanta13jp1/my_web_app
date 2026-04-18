@@ -1,7 +1,7 @@
 ---
 title: "Capture a Flutter Widget as PNG and Download It — Web Share Card"
 tags: Flutter,Supabase,buildinpublic,webdev,FlutterTips
-published: false
+published: true
 ---
 
 # Capture a Flutter Widget as PNG and Download It — Web Share Card

@@ -1,7 +1,7 @@
 ---
 title: "Flutter Web でウィジェットをPNG画像化してダウンロードする — SNSシェアカード実装"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter Web でウィジェットをPNG画像化してダウンロードする — SNSシェアカード実装
