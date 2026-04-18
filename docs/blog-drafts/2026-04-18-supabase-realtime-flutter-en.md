@@ -1,7 +1,7 @@
 ---
 title: "Building a Realtime Activity Feed with Supabase and Flutter"
 tags: Flutter,Supabase,buildinpublic,webdev,AI
-published: false
+published: true
 ---
 
 # Building a Realtime Activity Feed with Supabase and Flutter

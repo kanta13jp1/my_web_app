@@ -1,7 +1,7 @@
 ---
 title: "Supabase Realtime × Flutter でリアルタイムアクティビティフィードを作った"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Supabase Realtime × Flutter でリアルタイムアクティビティフィードを作った
