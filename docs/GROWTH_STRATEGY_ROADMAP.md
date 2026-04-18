@@ -10923,3 +10923,6 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/building-a-badge-achievement-system-with-flutter-supabase-58ji
   - award_ai_university_badge RPC (ON CONFLICT DO NOTHING + FOUND) + 7アクションEF + Flutter count 解説
   - orphan branch マージ + 削除 ✅
+
+### PS版#129 Rule17 WF health check (2026-04-18 PM)
+- 全WF最新SUCCESS ✅ / orphan 0件 / leakage 0件
