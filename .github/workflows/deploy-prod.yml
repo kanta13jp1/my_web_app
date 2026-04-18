@@ -109,7 +109,8 @@ jobs:
           # Using || true so deleting a non-existent function never fails the CI.
           # --- core-hub に統合 ---
           supabase functions delete public-memo-share || true
-          supabase functions delete memo-reactions || true
+          # memo-reactions: standalone 復活 (Win版#85, IP-based 匿名リアクション)
+          # supabase functions delete memo-reactions || true
           supabase functions delete get-ogp || true
           supabase functions delete get-public-memo-ogp || true
           supabase functions delete note-comments || true
@@ -235,7 +236,8 @@ jobs:
           supabase functions delete agent-task-router || true
           supabase functions delete agent-performance-monitor || true
           supabase functions delete reply-support-request || true
-          supabase functions delete get-public-memo-preview || true
+          # get-public-memo-preview: standalone 復活 (Win版#85, server-side OGP for /public-memo)
+          # supabase functions delete get-public-memo-preview || true
           supabase functions delete development-stats || true
           supabase functions delete check-competitor-updates || true
           supabase functions delete viral-growth-pipeline || true
@@ -275,7 +277,13 @@ jobs:
           supabase functions deploy lifestyle-hub --no-verify-jwt
           supabase functions deploy local-election-intelligence --no-verify-jwt
 
-          # Total: 16 functions deployed (ハードキャップ50本に対し16本 — 余裕34本)
+          # --- Public-facing standalone (2本: server-side OGP + 匿名 IP-based reactions) ---
+          # 一度 core-hub に統合したが、IP-based 匿名トラッキング・server-side OGP rendering の
+          # 都合で分離維持 (Win版#85, 2026-04-18)
+          supabase functions deploy get-public-memo-preview --no-verify-jwt
+          supabase functions deploy memo-reactions --no-verify-jwt
+
+          # Total: 18 functions deployed (ハードキャップ50本に対し18本 — 余裕32本)
           #
           # Hub対応表:
           # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
