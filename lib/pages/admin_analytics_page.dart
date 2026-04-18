@@ -2623,7 +2623,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         Text(label,
-            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF),)),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF),),),
       ],
     );
   }
@@ -4122,7 +4122,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('リクエストはまだありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF),)),
+                    style: TextStyle(color: Color(0xFF9CA3AF),),),
               )
             else
               ListView.separated(
@@ -4572,7 +4572,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Text('登録者はまだいません',
-                    style: TextStyle(color: Color(0xFF9CA3AF),)),
+                    style: TextStyle(color: Color(0xFF9CA3AF),),),
               )
             else
               ListView.separated(
