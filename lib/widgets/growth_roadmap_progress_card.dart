@@ -417,8 +417,8 @@ const _notionFeatureRows = <_FeatureRow>[
     category: 'ノート編集',
     feature: 'ファイル添付',
     competitorDetail: '画像・PDF 等をブロックとして埋め込み',
-    status: _FeatureStatus.notYet,
-    appDetail: '未実装',
+    status: _FeatureStatus.implemented,
+    appDetail: 'file_picker で画像・PDF 等を note_attachments テーブルに添付保存 (追加・削除対応)',
   ),
   _FeatureRow(
     category: 'ノート編集',

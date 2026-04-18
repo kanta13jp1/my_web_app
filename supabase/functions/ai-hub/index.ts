@@ -2041,6 +2041,34 @@ serve(async (req: Request) => {
         return json({ success: true, transcript: transcriptText });
       }
 
+      case "home.recommend": {
+        // Windows版#94: home_tier AI おすすめ機能 (VSCode#98)
+        // 現状はヒューリスティックで user_feature_usage を集計し、
+        // 直近未使用のシステム固定機能を返す (Gemini 推論は次段階)
+        const userId = String(body.user_id ?? "");
+        if (!userId) return json({ error: "user_id required" }, 400);
+        const { data: usage } = await admin.from("user_feature_usage")
+          .select("feature_id, last_used_at, use_count")
+          .eq("user_id", userId)
+          .order("last_used_at", { ascending: false })
+          .limit(30);
+        const recent = new Set((usage ?? []).map((r: Record<string, unknown>) => String(r.feature_id)));
+        const recommendations: Array<Record<string, unknown>> = [];
+        const suggestions = [
+          { id: "ai-search", title: "AI 検索", reason: "自然言語で過去メモを横断検索" },
+          { id: "daily-judgment", title: "今日のデイリー判定", reason: "AI が当日の行動を評価" },
+          { id: "ai-assistant-chat", title: "AI アシスタントチャット", reason: "MAGI 3 モデル並列思考" },
+          { id: "ai-summarizer", title: "AI 要約", reason: "長文を要点だけに圧縮" },
+          { id: "home-insights", title: "成長・支援ダッシュボード", reason: "学習・開発・成長の統合ビュー" },
+          { id: "horseracing-predictor", title: "競馬 AI 予想", reason: "マルチプロバイダーアンサンブル予想" },
+          { id: "ai-university", title: "AI 大学", reason: "FSRS で AI 最新動向を学習" },
+        ];
+        for (const s of suggestions) {
+          if (!recent.has(s.id)) recommendations.push(s);
+          if (recommendations.length >= 5) break;
+        }
+        return json({ success: true, recommendations });
+      }
 
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
