@@ -10,6 +10,7 @@ import '../widgets/development_achievements_card.dart';
 import '../widgets/edge_function_summary_card.dart';
 import '../widgets/goal_decomposer_card.dart';
 import '../widgets/growth_trend_card.dart';
+import '../widgets/home_back_button.dart';
 import '../widgets/leaderboard_card.dart';
 import '../widgets/note_search_card.dart';
 import '../widgets/growth_roadmap_progress_card.dart';
@@ -24,7 +25,11 @@ class HomeInsightsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('成長・支援ダッシュボード')),
+      appBar: AppBar(
+        title: const Text('成長・支援ダッシュボード'),
+        // Windows版#94: 戻るボタンで URL も '/' に更新する (リロード時に元ページに戻らない)
+        leading: const HomeBackButton(),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
         children: [
