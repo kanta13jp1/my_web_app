@@ -144,6 +144,7 @@ jobs:
             echo "ℹ️ No changes to commit"
           else
             git commit -m "自動: ブログドラフト $TARGET_DATE (日本語+英語)"
+            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
             git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             git push origin HEAD:main
           fi

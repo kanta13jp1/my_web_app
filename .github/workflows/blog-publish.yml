@@ -324,6 +324,7 @@ jobs:
             COMMIT_MSG="docs: ブログ記事投稿完了 $(basename "$DRAFT_PATH")"
             [ -n "$DRAFT_PATH_EN" ] && COMMIT_MSG="$COMMIT_MSG + $(basename "$DRAFT_PATH_EN")"
             git commit -m "$COMMIT_MSG"
+            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
             git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             git push origin HEAD:main
             echo "✅ [SCHEDULED] published:true に更新 → main push 完了"

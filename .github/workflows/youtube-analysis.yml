@@ -82,6 +82,7 @@ jobs:
 
           VIDEOS="${{ steps.fetch.outputs.videos_fetched }}"
           git commit -m "自動: YouTube分析スナップショット ${DATE} (${VIDEOS}件)"
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
           git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
           git push origin main
           echo "✅ main直接push完了"

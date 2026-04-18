@@ -66,6 +66,7 @@ jobs:
             echo "ℹ️ No correction proposals generated"
           else
             git commit -m "自動: 過去記事の訂正案を生成 (admin承認待ち)"
+            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
             git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
             git push origin HEAD:main
           fi
