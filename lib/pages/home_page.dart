@@ -2536,7 +2536,7 @@ abstinence_slip_details: $slipDetailsText
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_month, color: const Color(0xFFB0B0B0)),
+              const Icon(Icons.calendar_month, color: Color(0xFFB0B0B0)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

@@ -10640,3 +10640,4 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - cross-instance-pr 20260418_ai_hub_auto_tier_routing.md → done/ へ移動
 - deno lint clean / push success (commit 2359b5bc)
 - 依存: VSCode版 AiProviderEntry.tier フィールド追加 (20260418_ai_provider_tier_field.md) は別途対応待ち
+- T-1 第117弾: AI Hub 35 Providers (SiliconFlow + Novita AI) → https://dev.to/kanta13jp1/jibun-corps-ai-hub-reaches-35-providers-adding-siliconflow-and-novita-ai-moa
