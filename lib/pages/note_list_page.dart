@@ -959,10 +959,16 @@ class _NoteListPageState extends State<NoteListPage> {
                     _publishNote(context, note);
                     break;
                   case _NoteCardAction.unpublish:
-                    _unpublishNote(context, note);
+                    _unpublishNote(
+                      context,
+                      note,
+                    );
                     break;
                   case _NoteCardAction.delete:
-                    _deleteNote(context, note);
+                    _deleteNote(
+                      context,
+                      note,
+                    );
                     break;
                 }
               },
