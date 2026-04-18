@@ -10587,3 +10587,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### ai-hub プロバイダー推移 (更新)
 - PS#108:14→20, PS#109:20→23, PS#110:23→25, PS#111:25→27, PS#113:27→29, PS#115:29→31
+
+### VSCode版#93 完了 (2026-04-18 10:00) — ノートタグ機能 (β版向け Notion対抗)
+- migration: notes.tags text[] カラム追加 (GIN index)
+- note_editor_page: タグ入力フィールド (カンマ区切り入力 + save時DB保存)
+- note_list_page: FilterChipタグフィルター + ノートカードtagチップ表示 (orange token)
+- flutter analyze 0エラー / deploy-prod pending (FSRS + tags migration適用中)
+- WBS: ノート機能強化 β版 完了 / DESIGN.md準拠 65%維持
