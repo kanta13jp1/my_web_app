@@ -10781,3 +10781,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/bypassing-supabase-edge-function-150s-timeout-with-batch-loops-1dnm
 - **Rule 17**: horse-racing-update 最新run success ✅ / orphan 0件 ✅
 - **deploy-prod**: run 24599168751 進行中 (25b7626c)
+
+### Rule 17 WF health check (2026-04-18 PS版#120 最終)
+- 全 WF success率: 13/17 (deploy-prod 4失敗→修正完了)
+- 失敗 WF: deploy-prod のみ (VSCode版#100 dart format未適用 cascade)
+  - `admin_analytics_page.dart`: const Color().shade 13箇所 + trailing_commas 6箇所
+  - `asset_management_page.dart`: DESIGN token stash残留コミット
+  - `morning_briefing_page.dart`: dart format未適用
+- deploy-prod run 24599230257 (12c6ce19) → **success** ✅
+- orphan branches: 全パターン 0件 ✅
+- 修正済み: 上記3ファイル + cross-instance-pr (dart format before push) 作成
