@@ -566,6 +566,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF00B5C7),
     officialUrl: 'https://novita.ai/',
   ),
+  'deepinfra': _ProviderMeta(
+    name: 'DeepInfra',
+    emoji: '⚡',
+    color: const Color(0xFF6B3FFF),
+    officialUrl: 'https://deepinfra.com/',
+  ),
+  'nebius': _ProviderMeta(
+    name: 'Nebius AI Studio',
+    emoji: '🌐',
+    color: const Color(0xFF0052CC),
+    officialUrl: 'https://nebius.com/ai-studio',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2488,6 +2500,46 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 ## API
 - `https://api.novita.ai/v3/openai/chat/completions`
 - 画像/動画 endpoint は別パス
+''',
+  'deepinfra': '''
+# DeepInfra
+
+**200+ オープンモデルを業界最安水準で提供する推論インフラ**。Llama・Mistral・Qwen など主要モデルを OpenAI 互換 API で利用可能。
+
+## 主要モデル
+- `meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo` (デフォルト)
+- `meta-llama/Meta-Llama-3.1-8B-Instruct` (超高速・低コスト)
+- `Qwen2.5-72B-Instruct` (日本語強化)
+- `deepseek-r1` (推論特化 MoE)
+
+## 強み
+- GPT-4o 比で最大 10 分の 1 のコスト
+- 200+ モデルを 1 つの API キーで利用
+- バッチ推論・並列リクエスト最適化
+
+## API
+- `https://api.deepinfra.com/v1/openai/chat/completions`
+- 自分株式会社では **Budget Tier** に分類
+''',
+  'nebius': '''
+# Nebius AI Studio
+
+**旧 Yandex グループが欧州で展開する高性能 AI クラウド**。GDPR 準拠の欧州データセンターで最新オープンモデルを提供。
+
+## 主要モデル
+- `meta-llama/Llama-3.3-70B-Instruct` (デフォルト・Llama 3.1 後継)
+- `meta-llama/Llama-3.1-405B-Instruct` (最高品質)
+- `Qwen/Qwen2.5-72B-Instruct` (多言語)
+- `deepseek-ai/DeepSeek-V3` (最新 MoE)
+
+## 強み
+- 欧州 GDPR 準拠データ処理
+- Yandex 技術チームによる運営
+- 高スループット・エンタープライズ対応
+
+## API
+- `https://api.studio.nebius.com/v1/chat/completions`
+- 自分株式会社では **Performance Tier** に分類
 ''',
 };
 

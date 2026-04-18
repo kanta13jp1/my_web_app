@@ -89,6 +89,8 @@ jobs:
           upsert_provider "pfn"         "https://www.preferred.jp/en/feed/"                   "Preferred Networks (PLaMo)"
           upsert_provider "siliconflow" "https://siliconflow.cn/blog/rss.xml"                 "SiliconFlow"
           upsert_provider "novita_ai"   "https://novita.ai/blog/rss.xml"                      "Novita AI"
+          upsert_provider "deepinfra"   "https://deepinfra.com/blog/rss.xml"                  "DeepInfra"
+          upsert_provider "nebius"      "https://nebius.com/blog/rss.xml"                     "Nebius AI Studio"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
