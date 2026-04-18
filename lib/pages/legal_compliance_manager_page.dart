@@ -142,7 +142,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.description,
-              color: urgent ? Colors.red : Colors.blue,
+              color: urgent ? Colors.red : const Color(0xFF3D5AFE),
             ),
             title: Text(
               title,

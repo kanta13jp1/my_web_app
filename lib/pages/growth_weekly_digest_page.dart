@@ -66,7 +66,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                 _buildMetric(
                   'タッチ',
                   channel['touches'],
-                  Colors.blue,
+                  const Color(0xFF3D5AFE),
                 ),
                 const SizedBox(width: 16),
                 _buildMetric(

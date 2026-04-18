@@ -114,7 +114,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       case 'low':
         return const Color(0xFF9CA3AF);
       default:
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
     }
   }
 
@@ -664,7 +664,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                             const Icon(
                               Icons.repeat,
                               size: 14,
-                              color: Colors.blue,
+                              color: Color(0xFF3D5AFE),
                             ),
                           ],
                         ],

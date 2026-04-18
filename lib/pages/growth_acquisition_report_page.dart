@@ -74,7 +74,10 @@ class _GrowthAcquisitionReportPageState
                 children: [
                   Text(
                     '$touches',
-                    style: const TextStyle(fontSize: 18, color: Colors.blue),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF3D5AFE),
+                    ),
                   ),
                   const Text('タッチ', style: TextStyle(fontSize: 10)),
                 ],
@@ -124,7 +127,7 @@ class _GrowthAcquisitionReportPageState
     return Scaffold(
       appBar: AppBar(
         title: const Text('獲得レポート'),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),

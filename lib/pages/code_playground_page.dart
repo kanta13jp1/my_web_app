@@ -449,10 +449,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
 
   Widget _langIcon(String lang) {
     final Map<String, Color> langColors = {
-      'javascript': Colors.yellow.shade700,
-      'typescript': Colors.blue,
+      'javascript': const Color(0xFFFFA000),
+      'typescript': const Color(0xFF3D5AFE),
       'python': Colors.green,
-      'dart': Colors.lightBlue,
+      'dart': const Color(0xFF3D5AFE),
       'rust': const Color(0xFFFF6B35),
       'go': const Color(0xFF00BCD4),
       'java': Colors.red,
@@ -588,7 +588,12 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           Row(
             children: [
               Expanded(
-                child: _statCard('総スニペット', '$total件', Icons.code, Colors.blue),
+                child: _statCard(
+                  '総スニペット',
+                  '$total件',
+                  Icons.code,
+                  const Color(0xFF3D5AFE),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

@@ -177,7 +177,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     'ブランドランク (レベル)',
                     'Lv.$level',
                     Icons.stars,
-                    Colors.blue,
+                    const Color(0xFF3D5AFE),
                   ),
                   const SizedBox(height: 24),
                   _buildActionCard(

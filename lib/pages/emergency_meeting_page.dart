@@ -1620,7 +1620,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case MeetingFocus.balanced:
         return const Color(0xFF607D8B);
       case MeetingFocus.continuation:
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case MeetingFocus.abstinence:
         return Colors.redAccent;
     }
@@ -2960,7 +2960,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             ? const BorderSide(color: Color(0xFFFF6B35), width: 2)
             : BorderSide.none,
       ),
-      color: isCeo ? Colors.blue[50] : Colors.white,
+      color: isCeo ? const Color(0xFFE3F2FD) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -3175,7 +3175,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           if (_executionHubError != null)
             Text(
               'Dispatch warning: $_executionHubError',
-              style: const TextStyle(color: Colors.orangeAccent, height: 1.4),
+              style: const TextStyle(color: Color(0xFFFF6B35), height: 1.4),
             ),
           if (_executionHubLogs.isNotEmpty)
             ..._executionHubLogs.map(
@@ -3318,7 +3318,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
         border:
-            Border.all(color: Colors.lightBlueAccent.withValues(alpha: 0.8)),
+            Border.all(color: const Color(0xFF3D5AFE).withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3327,7 +3327,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             children: [
               const Icon(
                 Icons.trending_up,
-                color: Colors.lightBlueAccent,
+                color: Color(0xFF3D5AFE),
                 size: 18,
               ),
               const SizedBox(width: 8),
@@ -3335,7 +3335,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 child: Text(
                   'なんとなくやりたくないことをやる（48時間）',
                   style: TextStyle(
-                    color: Colors.lightBlueAccent,
+                    color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -3354,7 +3354,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             value: progress,
             backgroundColor: Colors.white24,
             valueColor: const AlwaysStoppedAnimation<Color>(
-              Colors.lightBlueAccent,
+              Color(0xFF3D5AFE),
             ),
           ),
           const SizedBox(height: 4),
@@ -3379,10 +3379,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.lightBlueAccent.withValues(alpha: 0.14),
+              color: const Color(0xFF3D5AFE).withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: Colors.lightBlueAccent.withValues(alpha: 0.6),
+                color: const Color(0xFF3D5AFE).withValues(alpha: 0.6),
               ),
             ),
             child: Column(
@@ -3391,7 +3391,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 const Text(
                   '今日の最重要1件',
                   style: TextStyle(
-                    color: Colors.lightBlueAccent,
+                    color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -3535,7 +3535,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               dense: true,
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
-              activeColor: Colors.lightBlueAccent,
+              activeColor: const Color(0xFF3D5AFE),
               checkColor: Colors.black,
               secondary: IconButton(
                 key: Key('continuation_pin_action_$i'),
@@ -3645,8 +3645,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           LinearProgressIndicator(
             value: abstinenceProgress,
             backgroundColor: Colors.white24,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(Colors.orangeAccent),
+            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B35)),
           ),
           const SizedBox(height: 8),
           Text(
@@ -3711,7 +3710,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             const SizedBox(height: 6),
             const Text(
               '抑止力が弱めです。ロックを2つ以上ONにして再発を防止してください。',
-              style: TextStyle(color: Colors.orangeAccent),
+              style: TextStyle(color: Color(0xFFFF6B35)),
             ),
           ],
           const SizedBox(height: 8),
@@ -3962,18 +3961,18 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       decoration: BoxDecoration(
         color: ready
             ? Colors.greenAccent.withValues(alpha: 0.16)
-            : Colors.orangeAccent.withValues(alpha: 0.16),
+            : const Color(0xFFFF6B35).withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: ready
               ? Colors.greenAccent.withValues(alpha: 0.55)
-              : Colors.orangeAccent.withValues(alpha: 0.55),
+              : const Color(0xFFFF6B35).withValues(alpha: 0.55),
         ),
       ),
       child: Text(
         ready ? '$label OK' : '$label 要対応',
         style: TextStyle(
-          color: ready ? Colors.greenAccent : Colors.orangeAccent,
+          color: ready ? Colors.greenAccent : const Color(0xFFFF6B35),
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -3985,16 +3984,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.orangeAccent.withValues(alpha: 0.15),
+        color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orangeAccent),
+        border: Border.all(color: const Color(0xFFFF6B35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
             Icons.warning_amber_rounded,
-            color: Colors.orangeAccent,
+            color: Color(0xFFFF6B35),
             size: 18,
           ),
           const SizedBox(width: 8),
@@ -4047,7 +4046,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
   Color _getRoleColor(String role) {
     switch (role) {
       case 'CEO':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'CSO':
         return const Color(0xFFEF6C00);
       case 'CFO':

@@ -21,7 +21,7 @@ class _DataBackupPageState extends State<DataBackupPage> {
 
   static const _exportTargets = [
     _ExportTarget('notes', 'ノート', Icons.note, Color(0xFFFFC107)),
-    _ExportTarget('tasks', 'タスク', Icons.task, Colors.blue),
+    _ExportTarget('tasks', 'タスク', Icons.task, Color(0xFF3D5AFE)),
     _ExportTarget('habits', '習慣', Icons.loop, Colors.green),
     _ExportTarget(
       'finances',
@@ -160,12 +160,12 @@ class _DataBackupPageState extends State<DataBackupPage> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: const Color(0xFFE3F2FD),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Column(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue),
+                    Icon(Icons.info_outline, color: Color(0xFF3D5AFE)),
                     SizedBox(height: 4),
                     Text(
                       'data_backups テーブルを作成すると履歴が表示されます',

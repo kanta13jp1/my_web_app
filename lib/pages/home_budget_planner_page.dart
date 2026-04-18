@@ -26,8 +26,8 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
 
   static const _categories = [
     _Category('食費', Icons.restaurant, Color(0xFFFF6B35)),
-    _Category('交通費', Icons.directions_car, Colors.blue),
-    _Category('光熱費', Icons.bolt, Colors.yellow),
+    _Category('交通費', Icons.directions_car, Color(0xFF3D5AFE)),
+    _Category('光熱費', Icons.bolt, Color(0xFFFFC107)),
     _Category('娯楽', Icons.sports_esports, Color(0xFF3D5AFE)),
     _Category('医療', Icons.medical_services, Colors.red),
     _Category('教育', Icons.school, Colors.green),
@@ -140,7 +140,7 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                         size: 48,
                       ),
                       SizedBox(height: 8),

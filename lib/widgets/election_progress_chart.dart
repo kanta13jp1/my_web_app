@@ -42,7 +42,7 @@ class ElectionProgressChart extends StatelessWidget {
                   centerSpaceRadius: 50,
                   sections: [
                     PieChartSectionData(
-                      color: Colors.blue.shade600,
+                      color: const Color(0xFF1E88E5),
                       value: currentValue <= 0 ? 1 : currentValue,
                       title: '現在\n$currentTotal人',
                       radius: 60,

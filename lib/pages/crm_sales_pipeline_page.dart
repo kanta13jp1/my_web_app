@@ -41,7 +41,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
 
   static const _stageColors = {
     'lead': Color(0xFF9CA3AF),
-    'qualified': Colors.blue,
+    'qualified': Color(0xFF3D5AFE),
     'proposal': Color(0xFFFF6B35),
     'negotiation': Color(0xFF3D5AFE),
     'closed_won': Colors.green,
@@ -564,7 +564,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '総案件数',
                   '$total件',
                   Icons.business_center,
-                  Colors.blue,
+                  const Color(0xFF3D5AFE),
                 ),
               ),
               const SizedBox(width: 12),
@@ -627,7 +627,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                     'パイプライン中',
                     openValue,
                     wonValue + lostValue + openValue,
-                    Colors.blue,
+                    const Color(0xFF3D5AFE),
                   ),
                   const SizedBox(height: 8),
                   _valueBar(

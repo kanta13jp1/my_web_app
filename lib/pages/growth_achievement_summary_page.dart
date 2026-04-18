@@ -160,7 +160,7 @@ class _GrowthAchievementSummaryPageState
                               '獲得シグナル',
                               d['acquisitionSignals'],
                               Icons.trending_up,
-                              Colors.blue,
+                              const Color(0xFF3D5AFE),
                             ),
                             _buildStatCard(
                               '紹介完了',

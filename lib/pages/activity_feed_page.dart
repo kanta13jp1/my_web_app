@@ -187,7 +187,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       case 'milestone':
         return {'icon': Icons.celebration, 'color': const Color(0xFF3D5AFE)};
       case 'share':
-        return {'icon': Icons.share, 'color': Colors.blue};
+        return {'icon': Icons.share, 'color': const Color(0xFF3D5AFE)};
       case 'level_up':
         return {'icon': Icons.trending_up, 'color': const Color(0xFF009688)};
       case 'stats_page_visit': // 統計ページ訪問のスタイルを追加

@@ -518,7 +518,7 @@ class _WardrobePageState extends State<WardrobePage>
                 _actionBtn(
                   '寄付',
                   Icons.favorite,
-                  Colors.blue,
+                  const Color(0xFF3D5AFE),
                   () => _updateStatus(item, 'donate'),
                 ),
                 const SizedBox(width: 6),
@@ -632,7 +632,11 @@ class _WardrobePageState extends State<WardrobePage>
                     children: [
                       _summaryItem('総数', '$total件', const Color(0xFF795548)),
                       _summaryItem('保持', '${counts['keep']}件', Colors.green),
-                      _summaryItem('寄付', '${counts['donate']}件', Colors.blue),
+                      _summaryItem(
+                        '寄付',
+                        '${counts['donate']}件',
+                        const Color(0xFF3D5AFE),
+                      ),
                       _summaryItem(
                         '売却',
                         '${counts['sell']}件',
@@ -721,13 +725,13 @@ class _WardrobePageState extends State<WardrobePage>
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.blue[50],
+                                      color: const Color(0xFFE3F2FD),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: const Text(
                                       '寄付',
                                       style: TextStyle(
-                                        color: Colors.blue,
+                                        color: Color(0xFF3D5AFE),
                                         fontSize: 11,
                                       ),
                                     ),
@@ -856,7 +860,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'keep':
         return Colors.green;
       case 'donate':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'sell':
         return const Color(0xFFFF6B35);
       case 'discard':
@@ -877,7 +881,7 @@ class _WardrobePageState extends State<WardrobePage>
       case 'ネイビー':
         return const Color(0xFF001F5B);
       case 'ブルー':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'グリーン':
         return Colors.green;
       case 'レッド':

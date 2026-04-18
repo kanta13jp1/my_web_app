@@ -145,7 +145,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                                 _forecast!['quarterly_forecast']?.toString() ??
                                     '-',
                                 Icons.bar_chart,
-                                Colors.blue,
+                                const Color(0xFF3D5AFE),
                               ),
                               _buildMetricCard(
                                 '年間予測',

@@ -2802,7 +2802,7 @@ $input
                         fontWeight:
                             row.isOurs ? FontWeight.w800 : FontWeight.w600,
                         color: row.isOurs
-                            ? Colors.yellowAccent
+                            ? const Color(0xFFFFC107)
                             : const Color(0xFF64748B),
                       ),
                     ),
@@ -3041,8 +3041,9 @@ $input
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F7FF),
                     borderRadius: BorderRadius.circular(16),
-                    border:
-                        Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -3052,7 +3053,7 @@ $input
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Colors.blue,
+                          color: Color(0xFF3D5AFE),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -3271,8 +3272,9 @@ $input
                   decoration: BoxDecoration(
                     color: const Color(0xFFF2F7FF),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

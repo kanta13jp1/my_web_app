@@ -780,7 +780,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                               _buildSummaryChip(
                                 label: '記憶ログ',
                                 value: '${_snapshot.recentMemories.length}',
-                                color: Colors.blue,
+                                color: const Color(0xFF3D5AFE),
                               ),
                               _buildSummaryChip(
                                 label: '通信ログ',
@@ -1271,7 +1271,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 _buildMiniTag(
                   icon: Icons.memory,
                   label: '記憶 $memoryCount',
-                  color: Colors.blue,
+                  color: const Color(0xFF3D5AFE),
                 ),
                 if (agent.lastActiveAt != null)
                   _buildMiniTag(
@@ -1578,7 +1578,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: const Icon(Icons.memory, color: Colors.blue),
+        leading: const Icon(Icons.memory, color: Color(0xFF3D5AFE)),
         title: Text(
           owner == null
               ? memory.memoryLayer
@@ -1609,7 +1609,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         break;
       case 'acknowledged':
       case 'in_progress':
-        color = Colors.blue;
+        color = const Color(0xFF3D5AFE);
         break;
       default:
         color = const Color(0xFFFF6B35);
@@ -1832,7 +1832,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               runSpacing: 6,
               children: [
                 _buildDeptTag('CEO室', 'CEO', const Color(0xFFFFC107)),
-                _buildDeptTag('CFO室', 'CFO', Colors.blue),
+                _buildDeptTag('CFO室', 'CFO', const Color(0xFF3D5AFE)),
                 _buildDeptTag('CMO室', 'CMO', Colors.green),
                 _buildDeptTag('CHO室', 'CHO', Colors.red),
                 _buildDeptTag('CHRO室', 'CHRO', const Color(0xFF3D5AFE)),

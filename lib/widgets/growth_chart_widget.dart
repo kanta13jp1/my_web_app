@@ -14,7 +14,7 @@ class GrowthChartWidget extends StatelessWidget {
     required this.metrics,
     required this.title,
     required this.valueExtractor,
-    this.lineColor = Colors.blue,
+    this.lineColor = const Color(0xFF3D5AFE),
   });
 
   @override

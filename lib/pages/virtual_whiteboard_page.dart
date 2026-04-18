@@ -300,7 +300,7 @@ class _VirtualWhiteboardPageState extends State<VirtualWhiteboardPage>
     try {
       return Color(int.parse('0xFF${hex.replaceAll('#', '')}'));
     } catch (_) {
-      return Colors.yellow.shade200;
+      return const Color(0xFFFFE082);
     }
   }
 

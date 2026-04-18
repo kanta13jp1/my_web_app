@@ -52,7 +52,7 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
       case 'fix':
         return Colors.red;
       case 'improvement':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       default:
         return const Color(0xFFB0B0B0);
     }

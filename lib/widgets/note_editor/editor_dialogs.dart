@@ -84,12 +84,15 @@ Future<void> showReminderDialog({
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: Colors.blue),
+                      const Icon(
+                        Icons.info_outline,
+                        color: Color(0xFF3D5AFE),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -160,7 +163,7 @@ Future<void> showCategoryDialog({
               leading: const Icon(Icons.clear),
               title: const Text('カテゴリなし'),
               trailing: selectedCategoryId == null
-                  ? const Icon(Icons.check, color: Colors.blue)
+                  ? const Icon(Icons.check, color: Color(0xFF3D5AFE))
                   : null,
               onTap: () {
                 onCategorySelected(null);
@@ -189,7 +192,7 @@ Future<void> showCategoryDialog({
                 ),
                 title: Text(category.name),
                 trailing: selectedCategoryId == category.id
-                    ? const Icon(Icons.check, color: Colors.blue)
+                    ? const Icon(Icons.check, color: Color(0xFF3D5AFE))
                     : null,
                 onTap: () {
                   onCategorySelected(category.id);

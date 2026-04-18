@@ -116,7 +116,7 @@ class NoteCardWidget extends StatelessWidget {
   Widget _buildModernCard() {
     final categoryColor = category != null
         ? Color(int.parse(category!.color.substring(1), radix: 16) + 0xFF000000)
-        : Colors.blue;
+        : const Color(0xFF3D5AFE);
     final displayContent = contentChunk ?? note.content;
     final fontScale = cardStyle.fontSize.scale;
     final aspectRatio = cardStyle.aspectRatio;

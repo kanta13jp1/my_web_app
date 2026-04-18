@@ -578,14 +578,14 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                                 vertical: 1,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.blue.shade50,
+                                color: const Color(0xFFE3F2FD),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
                                 '自動',
                                 style: TextStyle(
                                   fontSize: 9,
-                                  color: Colors.blue,
+                                  color: Color(0xFF3D5AFE),
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),

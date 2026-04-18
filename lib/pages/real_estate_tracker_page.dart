@@ -618,7 +618,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             '総資産評価額',
             '¥${_fmt(totalValue.toDouble())}',
             Icons.account_balance,
-            Colors.blue,
+            const Color(0xFF3D5AFE),
           ),
           const SizedBox(height: 8),
           Row(

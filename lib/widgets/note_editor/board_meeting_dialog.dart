@@ -131,7 +131,7 @@ class BoardMeetingDialog extends StatelessWidget {
       case 'CEO':
         return Colors.red;
       case 'CTO':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'CMO':
         return const Color(0xFFFF6B35);
       case 'CFO':

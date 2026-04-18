@@ -282,9 +282,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         horizontal: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: const Color(0xFFE3F2FD),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue.shade100),
+                        border: Border.all(color: const Color(0xFFBBDEFB)),
                       ),
                       child: Column(
                         children: [
@@ -294,7 +294,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                               _buildSummaryItem(
                                 '現職維持 合計',
                                 totalRetain.toString(),
-                                Colors.blue.shade700,
+                                const Color(0xFF1976D2),
                               ),
                               _buildSummaryItem(
                                 '新人擁立 合計',
@@ -377,8 +377,8 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     TextSpan(
                                       text:
                                           '現職維持: ${data.incumbentRetentionTarget}\n',
-                                      style: TextStyle(
-                                        color: Colors.blue.shade300,
+                                      style: const TextStyle(
+                                        color: Color(0xFF64B5F6),
                                         fontSize: 12,
                                         fontWeight: FontWeight.normal,
                                       ),
@@ -500,7 +500,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     BarChartRodStackItem(
                                       0,
                                       retainTarget,
-                                      Colors.blue.shade300,
+                                      const Color(0xFF64B5F6),
                                     ),
                                     BarChartRodStackItem(
                                       retainTarget,
@@ -519,7 +519,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildLegend(Colors.blue.shade300, '現職維持目標'),
+                        _buildLegend(const Color(0xFF64B5F6), '現職維持目標'),
                         const SizedBox(width: 16),
                         _buildLegend(const Color(0xFFFF9800), '新人擁立目標 (未達)'),
                         const SizedBox(width: 16),
@@ -745,7 +745,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             return DataRow(
               onSelectChanged: (_) => _showMonthlyDetailsDialog(context, month),
               color: unconfirmed > 0
-                  ? WidgetStateProperty.all(Colors.yellow.shade50)
+                  ? WidgetStateProperty.all(const Color(0xFFFFF8E1))
                   : (total > 0 && unconfirmed == 0)
                       ? WidgetStateProperty.all(Colors.green.shade50)
                       : null,

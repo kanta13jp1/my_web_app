@@ -199,13 +199,13 @@ ${_compatibilityMatch.description}''';
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
+                      color: const Color(0xFFBBDEFB),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       'あなた',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.blue.shade900,
+                            color: const Color(0xFF0D47A1),
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -216,7 +216,7 @@ ${_compatibilityMatch.description}''';
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2,
-                          color: Colors.blue.shade900,
+                          color: const Color(0xFF0D47A1),
                         ),
                   ),
                   const SizedBox(height: 4),
@@ -594,7 +594,7 @@ ${_compatibilityMatch.description}''';
           children: [
             Row(
               children: [
-                Icon(Icons.lightbulb, color: Colors.blue.shade700),
+                const Icon(Icons.lightbulb, color: Color(0xFF1976D2)),
                 const SizedBox(width: 8),
                 Text(
                   '関係を深めるヒント',
@@ -614,14 +614,14 @@ ${_compatibilityMatch.description}''';
                     Container(
                       margin: const EdgeInsets.only(top: 4),
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFBBDEFB),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.tips_and_updates,
                         size: 16,
-                        color: Colors.blue.shade700,
+                        color: Color(0xFF1976D2),
                       ),
                     ),
                     const SizedBox(width: 12),

@@ -162,7 +162,12 @@ class _SummaryTab extends StatelessWidget {
         Icons.bedtime,
         const Color(0xFF3D5AFE)
       ),
-      ('水分摂取', '${data!['water_ml'] ?? '—'} ml', Icons.water_drop, Colors.blue),
+      (
+        '水分摂取',
+        '${data!['water_ml'] ?? '—'} ml',
+        Icons.water_drop,
+        const Color(0xFF3D5AFE)
+      ),
     ];
     return RefreshIndicator(
       onRefresh: () async {},

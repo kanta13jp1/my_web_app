@@ -105,7 +105,7 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: Colors.blue.shade100,
+                              backgroundColor: const Color(0xFFBBDEFB),
                               child: Text(
                                 id.toUpperCase().substring(0, 1),
                                 style: const TextStyle(
@@ -121,7 +121,7 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                             trailing: Text(
                               'CVR: $conv%',
                               style: const TextStyle(
-                                color: Colors.blue,
+                                color: Color(0xFF3D5AFE),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

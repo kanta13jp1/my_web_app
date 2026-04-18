@@ -772,8 +772,8 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
 
   Widget _buildRecordTypeChip(String type, ColorScheme colorScheme) {
     final colors = {
-      'A': Colors.blue,
-      'AAAA': Colors.blue.shade700,
+      'A': const Color(0xFF3D5AFE),
+      'AAAA': const Color(0xFF1976D2),
       'CNAME': const Color(0xFF3D5AFE),
       'MX': const Color(0xFFFF6B35),
       'TXT': const Color(0xFF3D5AFE),

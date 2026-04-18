@@ -26,7 +26,12 @@ class _ThoughtInterruptDiagnosisPageState
       question: 'Q1: 集中が途切れた時、最初に何をしますか？',
       icon: Icons.psychology_alt,
       options: [
-        _DiagOption('sns', 'SNS をチェック', Icons.thumb_up, Colors.blue),
+        _DiagOption(
+          'sns',
+          'SNS をチェック',
+          Icons.thumb_up,
+          const Color(0xFF3D5AFE),
+        ),
         _DiagOption(
           'mobile_games',
           'ゲームを開く',
@@ -107,7 +112,12 @@ class _ThoughtInterruptDiagnosisPageState
           Icons.lunch_dining,
           const Color(0xFFF97316),
         ),
-        _DiagOption('afternoon', '午後 (14〜17時)', Icons.cloud, Colors.blue),
+        _DiagOption(
+          'afternoon',
+          '午後 (14〜17時)',
+          Icons.cloud,
+          const Color(0xFF3D5AFE),
+        ),
         _DiagOption(
           'evening',
           '夕方 (17〜20時)',
@@ -438,7 +448,7 @@ class _ThoughtInterruptDiagnosisPageState
         if (peakTime.isNotEmpty)
           Card(
             child: ListTile(
-              leading: const Icon(Icons.access_time, color: Colors.blue),
+              leading: const Icon(Icons.access_time, color: Color(0xFF3D5AFE)),
               title: const Text('集中が途切れやすい時間帯'),
               subtitle: Text(peakTime),
             ),

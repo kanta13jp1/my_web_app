@@ -668,7 +668,7 @@ class _MindMapPageState extends State<MindMapPage> {
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.blue.shade100,
+        color: const Color(0xFFBBDEFB),
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(

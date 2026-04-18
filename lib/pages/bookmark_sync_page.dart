@@ -257,7 +257,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          _buildStatChip(Icons.bookmarks, '$total件', Colors.blue),
+          _buildStatChip(Icons.bookmarks, '$total件', const Color(0xFF3D5AFE)),
           const SizedBox(width: 8),
           _buildStatChip(
             Icons.mark_email_unread,
@@ -371,15 +371,15 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isRead ? null : Colors.blue.shade50,
+      color: isRead ? null : const Color(0xFFE3F2FD),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: isRead
               ? const Color(0xFF9CA3AF).withValues(alpha: 0.15)
-              : Colors.blue.withValues(alpha: 0.15),
+              : const Color(0xFF3D5AFE).withValues(alpha: 0.15),
           child: Icon(
             isRead ? Icons.bookmark : Icons.bookmark_add,
-            color: isRead ? const Color(0xFF9CA3AF) : Colors.blue,
+            color: isRead ? const Color(0xFF9CA3AF) : const Color(0xFF3D5AFE),
             size: 20,
           ),
         ),
@@ -398,7 +398,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
               url,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: Colors.blue),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF3D5AFE)),
             ),
             if (description.isNotEmpty)
               Text(

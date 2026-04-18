@@ -234,7 +234,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                   '$totalWorkouts',
                   '総ワークアウト',
                   Icons.fitness_center,
-                  Colors.blue,
+                  const Color(0xFF3D5AFE),
                 ),
               ),
               const SizedBox(width: 12),

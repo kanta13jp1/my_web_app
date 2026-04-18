@@ -370,10 +370,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
           // 説明
           Card(
             elevation: 0,
-            color: Colors.blue.withAlpha(15),
+            color: const Color(0xFF3D5AFE).withAlpha(15),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.blue.withAlpha(40)),
+              side: BorderSide(color: const Color(0xFF3D5AFE).withAlpha(40)),
             ),
             child: const Padding(
               padding: EdgeInsets.all(12),
@@ -631,7 +631,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       _summaryTile(
                         '動画数',
                         '${latestRows.length}',
-                        Colors.blue,
+                        const Color(0xFF3D5AFE),
                       ),
                       const SizedBox(width: 8),
                       _summaryTile(
@@ -844,7 +844,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
       case 'ショート':
         return Colors.red;
       case 'ライブ':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       default:
         return const Color(0xFFFF6B35);
     }

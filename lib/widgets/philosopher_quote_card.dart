@@ -17,14 +17,14 @@ class PhilosopherQuoteCard extends StatelessWidget {
     return Container(
       width: 1200,
       height: 630, // OGP標準サイズ
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade900,
-            const Color(0xFF1A237E),
-            const Color(0xFF1A237E),
+            Color(0xFF0D47A1),
+            Color(0xFF1A237E),
+            Color(0xFF1A237E),
           ],
         ),
       ),
@@ -68,7 +68,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                       const Icon(
                         Icons.format_quote,
                         size: 40,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                       ),
                       const SizedBox(height: 20),
 
@@ -92,7 +92,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                             width: 5,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: Colors.blue,
+                              color: const Color(0xFF3D5AFE),
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -106,7 +106,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
+                                    color: Color(0xFF3D5AFE),
                                   ),
                                 ),
                                 if (quote.authorDescription != null)
@@ -146,7 +146,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: const Color(0xFF3D5AFE),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(

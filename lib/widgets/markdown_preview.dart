@@ -82,10 +82,10 @@ class MarkdownPreview extends StatelessWidget {
           fontStyle: FontStyle.italic,
         ),
         blockquoteDecoration: BoxDecoration(
-          color: Colors.blue[50],
-          border: Border(
+          color: const Color(0xFFE3F2FD),
+          border: const Border(
             left: BorderSide(
-              color: Colors.blue[300]!,
+              color: Color(0xFF64B5F6),
               width: 4,
             ),
           ),
@@ -117,7 +117,7 @@ class MarkdownPreview extends StatelessWidget {
         tableColumnWidth: const FlexColumnWidth(),
         // リンクスタイル
         a: const TextStyle(
-          color: Colors.blue,
+          color: Color(0xFF3D5AFE),
           decoration: TextDecoration.underline,
         ),
         // チェックボックス

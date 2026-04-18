@@ -69,7 +69,7 @@ class _SharePhilosopherQuoteDialogState
                     children: [
                       const Icon(
                         Icons.format_quote,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                         size: 28,
                       ),
                       const SizedBox(width: 12),
@@ -115,10 +115,12 @@ class _SharePhilosopherQuoteDialogState
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.05),
+                            color:
+                                const Color(0xFF3D5AFE).withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blue.withValues(alpha: 0.2),
+                              color: const Color(0xFF3D5AFE)
+                                  .withValues(alpha: 0.2),
                             ),
                           ),
                           child: Column(
@@ -128,7 +130,7 @@ class _SharePhilosopherQuoteDialogState
                                 children: [
                                   const Icon(
                                     Icons.format_quote,
-                                    color: Colors.blue,
+                                    color: Color(0xFF3D5AFE),
                                     size: 24,
                                   ),
                                   const SizedBox(width: 8),
@@ -137,7 +139,7 @@ class _SharePhilosopherQuoteDialogState
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
+                                      color: Color(0xFF3D5AFE),
                                     ),
                                   ),
                                 ],

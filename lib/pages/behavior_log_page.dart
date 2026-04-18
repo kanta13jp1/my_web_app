@@ -388,8 +388,9 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                       ? Icons.directions_run
                       : Icons.chat_bubble_outline,
                   size: 18,
-                  color:
-                      kind == 'action' ? Colors.blue : const Color(0xFF3D5AFE),
+                  color: kind == 'action'
+                      ? const Color(0xFF3D5AFE)
+                      : const Color(0xFF3D5AFE),
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -398,7 +399,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: kind == 'action'
-                        ? Colors.blue
+                        ? const Color(0xFF3D5AFE)
                         : const Color(0xFF3D5AFE),
                   ),
                 ),

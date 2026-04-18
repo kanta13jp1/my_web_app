@@ -26,7 +26,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
     ('📺', 'アニメ・ドラマ', Colors.red),
     ('🎵', '音楽', Color(0xFFFF6B35)),
     ('🔧', 'スキル習得', Color(0xFFFF6B35)),
-    ('📝', '資格・試験', Colors.blue),
+    ('📝', '資格・試験', Color(0xFF3D5AFE)),
     ('🏋️', 'トレーニング', Colors.green),
     ('🗂️', 'その他', Color(0xFFB0B0B0)),
   ];

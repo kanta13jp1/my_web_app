@@ -205,7 +205,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   icon: const Icon(Icons.photo_library),
                   label: const Text('アルバムから選択'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orangeAccent,
+                    backgroundColor: const Color(0xFFFF6B35),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -236,7 +236,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     final decision = _result!['decision'] as String;
     final isDiscard = decision == 'DISCARD';
     final color = isDiscard
-        ? Colors.blue
+        ? const Color(0xFF3D5AFE)
         : Colors.green; // Discard=Blue(Cool), Keep=Green(Safe)
 
     return Card(
@@ -287,7 +287,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                       style: TextStyle(
                         fontSize: 18,
                         color: (_result!['spark_joy_score'] as int) < 50
-                            ? Colors.blue
+                            ? const Color(0xFF3D5AFE)
                             : Colors.red,
                         fontWeight: FontWeight.bold,
                       ),

@@ -350,7 +350,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
             subtitle:
                 'Capture onboarding notes, support memos, and team context.',
             icon: Icons.sticky_note_2_outlined,
-            color: Colors.blue,
+            color: const Color(0xFF3D5AFE),
             page: const NoteListPage(),
           ),
           _buildActionCard(

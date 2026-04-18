@@ -460,8 +460,9 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                           _isDryRun ? 'ドライランで実行' : 'X に投稿する',
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              _isDryRun ? const Color(0xFFFF6B35) : Colors.blue,
+                          backgroundColor: _isDryRun
+                              ? const Color(0xFFFF6B35)
+                              : const Color(0xFF3D5AFE),
                           foregroundColor: Colors.white,
                         ),
                       ),

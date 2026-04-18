@@ -889,7 +889,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
     IconData icon;
     switch (node) {
       case 'MELCHIOR':
-        color = Colors.lightBlue;
+        color = const Color(0xFF3D5AFE);
         icon = Icons.psychology_alt;
         break;
       case 'BALTHASAR':

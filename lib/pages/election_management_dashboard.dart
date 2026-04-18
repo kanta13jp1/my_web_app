@@ -291,7 +291,8 @@ class _ElectionManagementDashboardState
               barRods: [
                 BarChartRodData(
                   toY: count,
-                  color: count >= 700 ? Colors.redAccent : Colors.blue,
+                  color:
+                      count >= 700 ? Colors.redAccent : const Color(0xFF3D5AFE),
                   width: 24,
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(4)),
@@ -319,7 +320,7 @@ class _ElectionManagementDashboardState
             leading: CircleAvatar(
               backgroundColor: p['gender'] == '女性'
                   ? const Color(0xFFF8BBD0)
-                  : Colors.blue.shade100,
+                  : const Color(0xFFBBDEFB),
               child: Text(
                 p['gender'] == '女性' ? '👩' : '👨',
                 style: const TextStyle(fontSize: 20),
@@ -332,9 +333,9 @@ class _ElectionManagementDashboardState
                 const SizedBox(height: 6),
                 Text(
                   '${p['region']} ${p['municipality']} / ${p['type']}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade800,
+                    color: Color(0xFF1565C0),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -398,7 +399,7 @@ class _ElectionManagementDashboardState
                       if (candidateCount == 0) {
                         tileColor = Colors.red.shade100;
                       } else if (candidateCount == 1) {
-                        tileColor = Colors.yellow.shade100;
+                        tileColor = const Color(0xFFFFECB3);
                       } else if (candidateCount >= 2) {
                         tileColor = Colors.green.shade100;
                       }
@@ -416,7 +417,7 @@ class _ElectionManagementDashboardState
                         shape: isSelectedDate
                             ? RoundedRectangleBorder(
                                 side: const BorderSide(
-                                  color: Colors.blue,
+                                  color: Color(0xFF3D5AFE),
                                   width: 2,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
@@ -575,11 +576,12 @@ class _ElectionManagementDashboardState
                         margin: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.blue.shade100
+                              ? const Color(0xFFBBDEFB)
                               : Colors.transparent,
                           shape: BoxShape.circle,
-                          border:
-                              isToday ? Border.all(color: Colors.blue) : null,
+                          border: isToday
+                              ? Border.all(color: const Color(0xFF3D5AFE))
+                              : null,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,

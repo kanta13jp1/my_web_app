@@ -177,7 +177,9 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
-                            color: isDark ? Colors.blue[900] : Colors.blue[50],
+                            color: isDark
+                                ? const Color(0xFF0D47A1)
+                                : const Color(0xFFE3F2FD),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Column(
@@ -185,7 +187,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                               Icon(
                                 Icons.wb_cloudy,
                                 size: 64,
-                                color: Colors.blue,
+                                color: Color(0xFF3D5AFE),
                               ),
                               SizedBox(height: 8),
                               Text('天気データがありません'),
@@ -209,7 +211,7 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                             return ListTile(
                               leading: Icon(
                                 _weatherIcon(day['condition']?.toString()),
-                                color: Colors.blue,
+                                color: const Color(0xFF3D5AFE),
                               ),
                               title: Text(day['date']?.toString() ?? '-'),
                               trailing: Text(

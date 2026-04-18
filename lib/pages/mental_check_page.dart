@@ -158,7 +158,7 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                     _buildSlider(
                       label: '集中力',
                       value: _focusLevel,
-                      color: Colors.blue,
+                      color: const Color(0xFF3D5AFE),
                       onChanged: (v) => setState(() => _focusLevel = v),
                     ),
                     const SizedBox(height: 12),

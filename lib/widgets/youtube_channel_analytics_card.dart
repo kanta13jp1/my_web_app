@@ -352,7 +352,7 @@ class _YoutubeChannelAnalyticsCardState
             _buildSummaryChip(
               '動画数',
               '${_videos.length}本',
-              Colors.blue,
+              const Color(0xFF3D5AFE),
             ),
             const SizedBox(width: 8),
             _buildSummaryChip(
@@ -665,7 +665,7 @@ class _YoutubeChannelAnalyticsCardState
       case 'ショート':
         return Colors.red;
       case 'ライブ':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       default:
         return const Color(0xFFFF6B35);
     }

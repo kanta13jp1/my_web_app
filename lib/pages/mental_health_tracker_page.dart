@@ -220,7 +220,11 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              const Icon(Icons.info_outline, color: Colors.blue, size: 40),
+              const Icon(
+                Icons.info_outline,
+                color: Color(0xFF3D5AFE),
+                size: 40,
+              ),
               const SizedBox(height: 8),
               const Text('mental_health_records テーブルを作成すると履歴が表示されます'),
               const SizedBox(height: 4),

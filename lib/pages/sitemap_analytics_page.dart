@@ -126,7 +126,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
           Icons.visibility,
           'ページビュー',
           '$totalViews',
-          Colors.blue,
+          const Color(0xFF3D5AFE),
         ),
         _buildStatRow(
           Icons.people,
@@ -208,7 +208,11 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.link, size: 16, color: Colors.blue),
+                    const Icon(
+                      Icons.link,
+                      size: 16,
+                      color: Color(0xFF3D5AFE),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -221,7 +225,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
                       '$views PV',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                       ),
                     ),
                   ],

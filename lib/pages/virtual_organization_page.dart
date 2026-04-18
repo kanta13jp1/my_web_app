@@ -354,7 +354,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       case 'active':
       case 'running':
       case 'in_progress':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'completed':
       case 'done':
         return Colors.green;

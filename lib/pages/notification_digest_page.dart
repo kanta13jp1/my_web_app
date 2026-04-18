@@ -170,7 +170,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                   '本日受信',
                                   '${_digest!['today_count'] ?? 0}件',
                                   Icons.today,
-                                  Colors.blue,
+                                  const Color(0xFF3D5AFE),
                                   isDark,
                                 ),
                                 const SizedBox(height: 8),

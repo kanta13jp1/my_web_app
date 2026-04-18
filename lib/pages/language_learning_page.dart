@@ -823,7 +823,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 '単語帳',
                 '$deckCount',
                 Icons.library_books,
-                Colors.blue,
+                const Color(0xFF3D5AFE),
               ),
               _buildStatCard(
                 '総カード数',
@@ -848,7 +848,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
           const SizedBox(height: 16),
           // Tips card
           Card(
-            color: Colors.blue.shade50,
+            color: const Color(0xFFE3F2FD),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(

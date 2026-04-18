@@ -587,7 +587,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
       case 'success':
         return Colors.green;
       case 'running':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'error':
         return Colors.red;
       case 'skipped':

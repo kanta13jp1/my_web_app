@@ -27,7 +27,7 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
 
   static const _statusColors = {
     'active': Colors.green,
-    'completed': Colors.blue,
+    'completed': Color(0xFF3D5AFE),
     'pending': Color(0xFFFF6B35),
     'cancelled': Colors.red,
   };
@@ -189,7 +189,11 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.info_outline, color: Colors.blue, size: 48),
+            const Icon(
+              Icons.info_outline,
+              color: Color(0xFF3D5AFE),
+              size: 48,
+            ),
             const SizedBox(height: 8),
             const Text('freelance_projects テーブルを作成すると案件管理が使えます'),
             const SizedBox(height: 4),

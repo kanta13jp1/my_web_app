@@ -575,7 +575,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
             // Tasks section
             Row(
               children: [
-                const Icon(Icons.task, color: Colors.blue, size: 20),
+                const Icon(
+                  Icons.task,
+                  color: Color(0xFF3D5AFE),
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'タスク (${_tasks.length}件)',
@@ -663,7 +667,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
       case 'done':
         statusColor = Colors.green;
       case 'in_progress':
-        statusColor = Colors.blue;
+        statusColor = const Color(0xFF3D5AFE);
       case 'blocked':
         statusColor = Colors.red;
       default:

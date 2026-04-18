@@ -108,10 +108,10 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.blue.shade50, const Color(0xFFE8EAF6)],
+            colors: [Color(0xFFE3F2FD), Color(0xFFE8EAF6)],
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -131,7 +131,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                   widget.myType,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade900,
+                        color: const Color(0xFF0D47A1),
                         letterSpacing: 3,
                       ),
                 ),
@@ -146,7 +146,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                   child: Text(
                     personalityType.nameJa,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.blue.shade900,
+                          color: const Color(0xFF0D47A1),
                         ),
                   ),
                 ),
@@ -304,7 +304,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
         rankIcon = Icons.emoji_events;
         break;
       default:
-        rankColor = Colors.blue.shade700;
+        rankColor = const Color(0xFF1976D2);
         rankIcon = Icons.star;
     }
 
@@ -500,7 +500,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
           color: isSelected
               ? const Color(0xFFFFA726)
               : isMyType
-                  ? Colors.blue.shade300
+                  ? const Color(0xFF64B5F6)
                   : Theme.of(context).colorScheme.surfaceContainerHighest,
           width: isSelected || isMyType ? 2 : 1,
         ),
@@ -519,7 +519,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
             color: isSelected
                 ? const Color(0xFFFFF3E0)
                 : isMyType
-                    ? Colors.blue.shade50
+                    ? const Color(0xFFE3F2FD)
                     : Colors.white,
             borderRadius: BorderRadius.circular(12),
           ),
@@ -533,7 +533,7 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                       color: isSelected
                           ? const Color(0xFFE65100)
                           : isMyType
-                              ? Colors.blue.shade900
+                              ? const Color(0xFF0D47A1)
                               : Theme.of(context).colorScheme.onSurface,
                       letterSpacing: 1.2,
                     ),
@@ -555,14 +555,14 @@ class _CompatibilityCheckPageState extends State<CompatibilityCheckPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
+                    color: const Color(0xFFBBDEFB),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(
+                  child: const Text(
                     'あなた',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.blue.shade900,
+                      color: Color(0xFF0D47A1),
                       fontWeight: FontWeight.bold,
                     ),
                   ),

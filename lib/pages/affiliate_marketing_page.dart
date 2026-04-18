@@ -65,7 +65,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
               '総クリック数',
               _summary!['total_clicks']?.toString() ?? '0',
               Icons.touch_app,
-              Colors.blue,
+              const Color(0xFF3D5AFE),
             ),
             _buildStat(
               'コンバージョン',

@@ -64,7 +64,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                   padding: const EdgeInsets.all(24),
                   child: Row(
                     children: [
-                      const Icon(Icons.share, color: Colors.blue, size: 28),
+                      const Icon(
+                        Icons.share,
+                        color: Color(0xFF3D5AFE),
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       const Flexible(
                         child: Text(
@@ -130,7 +134,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                   decoration: BoxDecoration(
                                     border: Border.all(
                                       color: isSelected
-                                          ? Colors.blue
+                                          ? const Color(0xFF3D5AFE)
                                           : const Color(0xFFE0E0E0),
                                       width: isSelected ? 3 : 1,
                                     ),
@@ -149,7 +153,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                               ? FontWeight.bold
                                               : FontWeight.normal,
                                           color: isSelected
-                                              ? Colors.blue
+                                              ? const Color(0xFF3D5AFE)
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .onSurface,
@@ -483,7 +487,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
         icon = Icons.minimize;
         break;
       case template.CardTemplate.modern:
-        color = Colors.blue;
+        color = const Color(0xFF3D5AFE);
         icon = Icons.style;
         break;
       case template.CardTemplate.gradient:

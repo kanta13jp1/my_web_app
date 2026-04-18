@@ -76,7 +76,7 @@ class NoteAnalysisDialog extends StatelessWidget {
                       const Icon(
                         Icons.check_box_outline_blank,
                         size: 20,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                       ),
                       const SizedBox(width: 8),
                       Expanded(child: Text(item)),

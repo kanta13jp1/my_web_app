@@ -123,7 +123,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             '閲覧数',
             _formatNum(_totalViews),
             Icons.visibility_outlined,
-            color: Colors.blueAccent,
+            color: const Color(0xFF3D5AFE),
           ),
           const SizedBox(width: 8),
           _statCard(
@@ -305,7 +305,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               children: [
                 _engStat(Icons.favorite, '$likes', const Color(0xFFFF6B35)),
                 const SizedBox(width: 16),
-                _engStat(Icons.comment, '$comments', Colors.blueAccent),
+                _engStat(Icons.comment, '$comments', const Color(0xFF3D5AFE)),
                 const SizedBox(width: 16),
                 _engStat(Icons.visibility, _formatNum(views), Colors.white38),
                 const Spacer(),

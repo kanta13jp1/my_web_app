@@ -644,10 +644,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                     const SizedBox(height: 16),
 
                     // ヒントカード
-                    Card(
-                      color: Colors.blue.shade50,
+                    const Card(
+                      color: Color(0xFFE3F2FD),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -655,24 +655,24 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               children: [
                                 Icon(
                                   Icons.lightbulb_outline,
-                                  color: Colors.blue.shade700,
+                                  color: Color(0xFF1976D2),
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8),
                                 Text(
                                   'ヒント',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.blue.shade700,
+                                    color: Color(0xFF1976D2),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8),
                             Text(
                               '表示名を設定すると、リーダーボードであなたの名前が表示されます。\n'
                               '「生年月日」を設定すると、ダッシュボードの死生観クロックが有効になります。',
                               style: TextStyle(
-                                color: Colors.blue.shade900,
+                                color: Color(0xFF0D47A1),
                                 fontSize: 13,
                               ),
                             ),

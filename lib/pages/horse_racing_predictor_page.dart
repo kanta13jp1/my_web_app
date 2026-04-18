@@ -1106,7 +1106,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     if (grade.startsWith('G1')) return const Color(0xFFFFC107);
     if (grade.startsWith('G2')) return const Color(0xFFD1D5DB);
     if (grade.startsWith('G3')) return const Color(0xFFA1887F);
-    if (grade == 'リステッド') return Colors.blue[300]!;
+    if (grade == 'リステッド') return const Color(0xFF64B5F6);
     if (grade == 'オープン') return const Color(0xFFBA68C8);
     return const Color(0xFF4B5563);
   }

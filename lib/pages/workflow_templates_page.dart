@@ -55,7 +55,7 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       case 'finance':
         return Colors.green;
       case 'hr':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'engineering':
         return const Color(0xFFFF6B35);
       case 'marketing':

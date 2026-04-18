@@ -551,7 +551,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                     color: status == 'completed'
                         ? Colors.green
                         : status == 'active'
-                            ? Colors.blue
+                            ? const Color(0xFF3D5AFE)
                             : const Color(0xFF9CA3AF),
                   ),
                   title: Text(

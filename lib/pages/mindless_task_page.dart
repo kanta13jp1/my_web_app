@@ -2074,14 +2074,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.lightBlue.shade100),
+        border: Border.all(color: const Color(0xFFB3E5FC)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.bolt, color: Colors.blue.shade700),
+              const Icon(Icons.bolt, color: Color(0xFF1976D2)),
               const SizedBox(width: 6),
               const Expanded(
                 child: Text(
@@ -3459,13 +3459,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                 ),
                                 left: isCurrentHour
                                     ? const BorderSide(
-                                        color: Colors.blue,
+                                        color: Color(0xFF3D5AFE),
                                         width: 4,
                                       )
                                     : BorderSide.none,
                               ),
                               color: isCurrentHour
-                                  ? Colors.blue.withValues(alpha: 0.05)
+                                  ? const Color(0xFF3D5AFE)
+                                      .withValues(alpha: 0.05)
                                   : null,
                             ),
                             child: Row(
@@ -3481,7 +3482,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: isCurrentHour
-                                          ? Colors.blue
+                                          ? const Color(0xFF3D5AFE)
                                           : const Color(0xFF9CA3AF),
                                     ),
                                   ),

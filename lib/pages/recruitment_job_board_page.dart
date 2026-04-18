@@ -201,7 +201,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
         final stage = a['stage'] as String? ?? 'applied';
         final date = a['appliedAt'] as String? ?? '';
         final stageColors = <String, Color>{
-          'applied': Colors.blue,
+          'applied': const Color(0xFF3D5AFE),
           'screening': const Color(0xFFFF6B35),
           'interview': const Color(0xFF3D5AFE),
           'offer': const Color(0xFF009688),

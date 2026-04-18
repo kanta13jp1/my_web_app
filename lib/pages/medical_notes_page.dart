@@ -97,7 +97,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
   Color _categoryColor(String cat) {
     switch (cat) {
       case '通院記録':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case '処方薬':
         return Colors.green;
       case '健康診断':

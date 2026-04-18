@@ -719,7 +719,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                       _budgetStat(
                         '総予算',
                         '¥${_formatNum(totalBudget)}',
-                        Colors.blue,
+                        const Color(0xFF3D5AFE),
                       ),
                       _budgetStat('支出', '¥${_formatNum(spent)}', Colors.red),
                       _budgetStat(

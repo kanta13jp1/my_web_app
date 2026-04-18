@@ -127,8 +127,8 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                               final n = _notifications[i];
                               final severity =
                                   n['severity'] as String? ?? 'info';
-                              final color =
-                                  _severityColors[severity] ?? Colors.blue;
+                              final color = _severityColors[severity] ??
+                                  const Color(0xFF3D5AFE);
                               final isRead = n['is_read'] as bool? ?? false;
                               return Card(
                                 margin: const EdgeInsets.only(bottom: 6),

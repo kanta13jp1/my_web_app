@@ -305,7 +305,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ),
       (
         Icons.edit_note,
-        Colors.blue,
+        const Color(0xFF3D5AFE),
         '最初のメモを書く',
         '考えていることを何でも書いてみてください。\nホーム画面「CMO/CKO OFFICE」→「新規事業起案」'
       ),

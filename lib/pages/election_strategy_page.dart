@@ -640,7 +640,9 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 final prob = cand['win_probability'] as int? ?? 50;
                 final color = prob >= 80
                     ? Colors.red
-                    : (prob >= 50 ? const Color(0xFFFF6B35) : Colors.blue);
+                    : (prob >= 50
+                        ? const Color(0xFFFF6B35)
+                        : const Color(0xFF3D5AFE));
                 return Marker(
                   point: LatLng(cand['latitude'], cand['longitude']),
                   width: 60,
@@ -976,7 +978,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             20,
             80,
             (v) => setState(() => _youthTurnout = v),
-            Colors.blue,
+            const Color(0xFF3D5AFE),
           ),
           _slider(
             '無党派層獲得',
@@ -1066,7 +1068,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               : Theme.of(context).colorScheme.surface,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isS ? Colors.red : Colors.blue,
+              backgroundColor: isS ? Colors.red : const Color(0xFF3D5AFE),
               child: Text(
                 rank,
                 style: const TextStyle(

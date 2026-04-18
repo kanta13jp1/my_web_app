@@ -209,7 +209,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
           child: ListTile(
-            leading: const Icon(Icons.route, color: Colors.blue),
+            leading: const Icon(Icons.route, color: Color(0xFF3D5AFE)),
             title: Text(
               '${from.isNotEmpty ? from : "出発地"} → ${to.isNotEmpty ? to : "目的地"}',
               style: const TextStyle(fontSize: 13),

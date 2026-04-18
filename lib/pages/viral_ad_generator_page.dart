@@ -882,7 +882,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
       case 'posted':
         return Colors.green;
       case 'ready_to_post':
-        return Colors.blue;
+        return const Color(0xFF3D5AFE);
       case 'script_only':
         return const Color(0xFFFF6B35);
       default:

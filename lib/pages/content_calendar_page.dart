@@ -163,7 +163,7 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                     children: [
                       const Icon(
                         Icons.info_outline,
-                        color: Colors.blue,
+                        color: Color(0xFF3D5AFE),
                         size: 48,
                       ),
                       const SizedBox(height: 8),

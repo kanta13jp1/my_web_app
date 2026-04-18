@@ -559,7 +559,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
       case 'メモ':
         return const _BehaviorReviewStyle(
           icon: Icons.note_alt_outlined,
-          color: Colors.blue,
+          color: Color(0xFF3D5AFE),
         );
       default:
         return const _BehaviorReviewStyle(

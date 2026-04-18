@@ -106,7 +106,7 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                           child: ListTile(
                             leading: const Icon(
                               Icons.local_parking,
-                              color: Colors.blue,
+                              color: Color(0xFF3D5AFE),
                             ),
                             title: Text(
                               spotName,
