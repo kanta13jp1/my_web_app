@@ -590,6 +590,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF1E88E5),
     officialUrl: 'https://fish.audio/',
   ),
+  'atlas_cloud': _ProviderMeta(
+    name: 'Atlas Cloud',
+    emoji: '🗺️',
+    color: const Color(0xFF1976D2),
+    officialUrl: 'https://www.atlascloud.ai/',
+  ),
+  'mira_network': _ProviderMeta(
+    name: 'Mira Network',
+    emoji: '🔗',
+    color: const Color(0xFF8E44AD),
+    officialUrl: 'https://docs.mira.network/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1146,6 +1158,26 @@ final Map<String, _Quiz> _quizzes = {
       'Fish Speech S1',
       'Bark Tiny',
       'XTTS-v3',
+    ],
+    correct: 1,
+  ),
+  'atlas_cloud': _Quiz(
+    question: 'Atlas Cloud の独自性は?',
+    options: [
+      'テキスト LLM 専用',
+      '世界初のフルモーダル inference platform (chat/画像/音声/動画 統合 OpenAI 互換)',
+      '画像生成のみ',
+      'ブロックチェーン専業',
+    ],
+    correct: 1,
+  ),
+  'mira_network': _Quiz(
+    question: 'Mira Network が解決する主要問題は?',
+    options: [
+      'GPU 不足',
+      'AI 出力の信頼性 (hallucination) を分散検証で保証',
+      'モデルの ファインチューニング コスト',
+      'TTS の音声品質',
     ],
     correct: 1,
   ),
@@ -2613,6 +2645,51 @@ RDU (Reconfigurable Dataflow Unit) 型 AI 推論チップで、GPU 比 5倍高�
 ## API
 - `https://api.fish.audio/v1/tts`
 - OSS: https://github.com/fishaudio/fish-speech
+''',
+  'atlas_cloud': '''
+# Atlas Cloud
+
+世界初の **フルモーダル inference platform**。チャット・推論・画像・音声・動画を **OpenAI 互換 API 1 本** で呼び出せる。
+
+## 主要モデルコレクション
+- **OpenAI** — gpt-5.4 / gpt-5 / gpt-4o
+- **DeepSeek** — V3 / R1 (推論特化)
+- **Qwen** — Qwen3-235B / Qwen2.5-72B
+- **GLM** — 智譜 AI 中国 LLM
+- **MiniMax** — m2.1 動画/音声統合
+- **Flux** — FLUX.1 [dev] / [schnell] 画像生成
+
+## 強み
+- 唯一のフルモーダル統合 (chat + image + video + audio in 1 API)
+- 300+ モデルを 1 アカウントで利用
+- 透過的 per-token 課金 + 無料クレジット
+- production 向け SLA 低遅延
+
+## API
+- `https://api.atlascloud.ai/v1/chat/completions`
+- OpenAI SDK の base URL を変えるだけで動く
+''',
+  'mira_network': '''
+# Mira Network
+
+AI 出力を **暗号学的に検証可能** にする decentralized blockchain protocol。AI の幻覚問題を「複数ノードによる分散検証」で解決する trust layer。
+
+## 主要モデル
+- **mira/llama3.1** — Mira 検証最適化 Llama
+- **GPT-4o** — 検証付き OpenAI フラッグシップ
+- **Llama 3.1 405B** — 検証付き OSS 最大級
+
+## 強み
+- AI 出力の信頼性を暗号学的に保証
+- 分散ノードによる majority consensus
+- 主要 LLM に検証 layer を被せて使える
+- 500K+ users / 200K daily inferences
+
+## API
+- Python SDK: `pip install mira-sdk`
+- **Verified Generate**: 1 コール で生成 + 検証
+- **Verify only**: 既存出力の検証
+- 利用には \$MIRA トークン (crypto) 必須
 ''',
 };
 

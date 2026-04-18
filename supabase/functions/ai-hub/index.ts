@@ -368,6 +368,14 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  atlas_cloud: {
+    displayName: "Atlas Cloud",
+    envKey: "ATLAS_CLOUD_API_KEY",
+    chatUrl: "https://api.atlascloud.ai/v1/chat/completions",
+    defaultModel: "deepseek-v3",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 type Tier = "free" | "budget" | "performance" | "premium";
@@ -1847,7 +1855,7 @@ serve(async (req: Request) => {
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
       case "provider.chat": {
-        // 汎用プロバイダー呼び出し (AI大学90社の実装済みAIに統一インターフェースで話しかける)
+        // 汎用プロバイダー呼び出し (AI大学92社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");
