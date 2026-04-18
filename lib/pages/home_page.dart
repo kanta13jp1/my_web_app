@@ -4579,9 +4579,25 @@ abstinence_slip_details: $slipDetailsText
                             ),
                             _buildRecentToolsMenu(context, isCompact),
                             const SizedBox(height: 16),
-                            const DevelopmentAchievementsCard(),
-                            const SizedBox(height: 16),
-                            const EdgeFunctionSummaryCard(),
+                            // 開発・成長実績 (アコーディオン / 初期折りたたみ)
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_section_dev_achievements',
+                              title: '開発・成長実績',
+                              icon: Icons.bar_chart,
+                              iconColor: Color(0xFF10B981),
+                              initiallyExpanded: false,
+                              child: DevelopmentAchievementsCard(),
+                            ),
+                            const SizedBox(height: 12),
+                            // Edge Functions 実装状況 (アコーディオン / 初期折りたたみ)
+                            const CollapsibleHomeSection(
+                              storageKey: 'home_section_edge_functions',
+                              title: 'Edge Functions 実装状況',
+                              icon: Icons.bolt_outlined,
+                              iconColor: Color(0xFF6366F1),
+                              initiallyExpanded: false,
+                              child: EdgeFunctionSummaryCard(),
+                            ),
                             const SizedBox(height: 16),
                             _buildUiStatusButton(context),
                             const SizedBox(height: 40),
