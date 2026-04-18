@@ -10545,3 +10545,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - ai-university-update: checkout token方式 (PS#113)
   - daily-report: checkout token + extraheader unset 両方 (VSCode#92 + PS#114)
   - blog-draft/publish/verify/youtube-analysis: extraheader unset方式 (PS#114)
+
+### PS版#114 T-1 第114弾 (2026-04-18) — I Deleted the Button
+- T-1 第114弾: I Deleted the Button — Migrating Flutter AI Features from UI-Triggered to Hourly Cron Batch
+  - https://dev.to/kanta13jp1/i-deleted-the-button-migrating-flutter-ai-features-from-ui-triggered-to-hourly-cron-batch-3jc0
