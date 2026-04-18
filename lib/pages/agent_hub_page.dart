@@ -233,7 +233,7 @@ class _RoutingTab extends StatelessWidget {
           ),
         ),
         if (workload is List)
-          ...((workload as List).cast<Map<String, dynamic>>().map(
+          ...(workload.cast<Map<String, dynamic>>().map(
                 (w) => Card(
                   margin: const EdgeInsets.only(top: 8),
                   child: ListTile(
