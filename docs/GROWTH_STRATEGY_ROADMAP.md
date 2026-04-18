@@ -10911,3 +10911,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - URL: https://dev.to/kanta13jp1/building-a-learning-streak-system-with-flutter-supabase-like-duolingo-182h
   - update_ai_university_streak RPC + EF + Flutter home card 実装解説
   - orphan branch マージ + 削除 ✅
+
+### PS版#128 Rule17 WF health check (2026-04-18 PM)
+- **全WF**: deploy-prod最新SUCCESS ✅ / orphan 0件 ✅
+- **unstaged leakage**: home_page.dart → git checkout --で解消
+- **修正済み**: なし (pre-fix failure のみ)
