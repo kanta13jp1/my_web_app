@@ -674,7 +674,7 @@ class _NoteListPageState extends State<NoteListPage> {
         style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: const Color(0xFF6366F1),
+          color: Color(0xFF6366F1),
         ),
       ),
     );
@@ -850,19 +850,19 @@ class _NoteListPageState extends State<NoteListPage> {
                     ),
                     child: const Text(
                       '共有候補',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF6366F1),
+                        color: Color(0xFF6366F1),
                       ),
                     ),
                   ),
                 if (isFavorite) ...[
                   const SizedBox(width: 8),
-                  Icon(
+                  const Icon(
                     Icons.star,
                     size: 18,
-                    color: const Color(0xFFFF6B35),
+                    color: Color(0xFFFF6B35),
                   ),
                 ],
               ],
@@ -1088,13 +1088,13 @@ class _NoteListPageState extends State<NoteListPage> {
                       const Icon(
                         Icons.note_alt_outlined,
                         size: 64,
-                        color: const Color(0xFFB0B0B0),
+                        color: Color(0xFFB0B0B0),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _showFavoritesOnly ? 'お気に入りのメモはまだありません' : 'まだメモがありません',
                         style:
-                            const TextStyle(fontSize: 18, color: const Color(0xFFB0B0B0)),
+                            const TextStyle(fontSize: 18, color: Color(0xFFB0B0B0)),
                       ),
                       if (_showFavoritesOnly) ...[
                         const SizedBox(height: 12),
