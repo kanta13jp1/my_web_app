@@ -1,7 +1,7 @@
 ---
 title: "自分株式会社の AI Hub に 4 段階コスト自動ルーティングを実装した"
 tags: Flutter,Supabase,Deno,AI,buildinpublic
-published: false
+published: true
 ---
 
 # AI Hub に 4 段階コスト自動ルーティングを実装した

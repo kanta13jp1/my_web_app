@@ -1,7 +1,7 @@
 ---
 title: "Building a 4-Tier AI Cost Auto-Routing System with Supabase Edge Functions"
 tags: Flutter,Supabase,Deno,AI,buildinpublic
-published: false
+published: true
 ---
 
 # Building a 4-Tier AI Cost Auto-Routing System with Supabase Edge Functions
