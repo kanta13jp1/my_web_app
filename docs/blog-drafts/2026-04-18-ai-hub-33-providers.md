@@ -1,7 +1,7 @@
 ---
 title: "AI Hub Phase 8: DeepInfra と Liquid AI を追加して33プロバイダー達成"
 tags: Flutter,Supabase,buildinpublic,AI,Deno
-published: false
+published: true
 ---
 
 # AI Hub Phase 8: DeepInfra と Liquid AI を追加して33プロバイダー達成
