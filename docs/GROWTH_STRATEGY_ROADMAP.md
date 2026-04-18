@@ -10763,3 +10763,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - run 24598378012 (Win版#94b commit 028a5e13) → **success** ✅
 - CI完全復旧: flutter analyze 0エラー / dart format クリーン / deploy成功
 - 修正サマリー: `_FeatureStatus.implemented` → `.done` が最後のブロッカーだった
+
+### Rule 17 WF health check (2026-04-18 VSCode版#100)
+- 全 WF success率: 最新 deploy-prod ✅ success (run 24598378012)
+- 失敗 WF:
+  - **deploy-prod 過去4件**: `_FeatureStatus.implemented` 参照エラー → c86fd8e6 で修正済み ✅
+  - **horse-racing-update**: `TimeoutError: The read operation timed out` (NAR netkeiba 一時障害) → 対応不要
+- orphan branches: 全0件 ✅
+- 修正済み: deploy-prod CI は現在 success
