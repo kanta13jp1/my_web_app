@@ -88,8 +88,7 @@ class _DevelopmentAchievementsPageState
                               color: Colors.green),
                           title: Text(
                             item['title']?.toString() ?? '(タイトルなし)',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
                             item['description']?.toString() ?? '',
@@ -97,9 +96,7 @@ class _DevelopmentAchievementsPageState
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: Text(
-                            item['completed_at']
-                                    ?.toString()
-                                    .substring(0, 10) ??
+                            item['completed_at']?.toString().substring(0, 10) ??
                                 '',
                             style: const TextStyle(
                                 fontSize: 11, color: Colors.grey),

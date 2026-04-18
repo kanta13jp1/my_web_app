@@ -87,8 +87,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                               color: Color(0xFF6366F1)),
                           title: Text(
                             '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: Text(
                             item['title']?.toString() ?? '',

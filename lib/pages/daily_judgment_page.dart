@@ -60,8 +60,7 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                           style: const TextStyle(color: Colors.red)),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                          onPressed: _fetchJudgment,
-                          child: const Text('再試行')),
+                          onPressed: _fetchJudgment, child: const Text('再試行')),
                     ],
                   ),
                 )
