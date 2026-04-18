@@ -389,7 +389,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
               const SizedBox(height: 10),
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
               ),
               const SizedBox(height: 4),
               Text(
@@ -526,7 +526,8 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                   const SizedBox(height: 8),
                   Text(
                     DateFormat('yyyy/MM/dd HH:mm').format(entry.timestamp),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    style:
+                        const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
                   ),
                 ],
               ),

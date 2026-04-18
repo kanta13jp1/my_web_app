@@ -306,8 +306,8 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
     final createdAt = check['created_at'] as String?;
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     final verdictColor = verdict != null
-        ? (_verdictColors[verdict] ?? Colors.grey)
-        : Colors.grey;
+        ? (_verdictColors[verdict] ?? const Color(0xFFB0B0B0))
+        : const Color(0xFFB0B0B0);
 
     return Card(
       color: cardColor,

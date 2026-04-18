@@ -195,7 +195,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       case 'chrome':
         return const Color(0xFF4285F4);
       default:
-        return Colors.grey;
+        return const Color(0xFFB0B0B0);
     }
   }
 
@@ -328,7 +328,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             decoration: isOrganized ? TextDecoration.lineThrough : null,
-            color: isOrganized ? Colors.grey : null,
+            color: isOrganized ? const Color(0xFFB0B0B0) : null,
           ),
         ),
         subtitle: Text(

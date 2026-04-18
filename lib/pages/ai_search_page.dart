@@ -163,7 +163,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                         size: 13,
                         color: _searchMode == 'ai'
                             ? const Color(0xFF6366F1)
-                            : Colors.grey[500],
+                            : const Color(0xFF9E9E9E),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -176,7 +176,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                           fontSize: 11,
                           color: _searchMode == 'ai'
                               ? const Color(0xFF6366F1)
-                              : Colors.grey[500],
+                              : const Color(0xFF9E9E9E),
                         ),
                       ),
                       if (_results.isNotEmpty) ...[

@@ -350,7 +350,8 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
         color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: (actionInfo?.$3 ?? Colors.grey).withValues(alpha: 0.35),
+          color: (actionInfo?.$3 ?? const Color(0xFFB0B0B0))
+              .withValues(alpha: 0.35),
           width: 1.5,
         ),
       ),
