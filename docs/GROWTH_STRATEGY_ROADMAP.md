@@ -11125,3 +11125,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **Qiita バックログ**: #135-#140 → UTC 15:00 (JST翌日0:00) 以降dispatch予定 (6本)
 - **stash汚染排除**: VSCode#108 DESIGN変更を巻き戻す古いstash → git restore lib/ + git stash drop で排除
 - **Win版#103**: AI大学 93社 (GMI Cloud追加) deploy in_progress
+
+### VSCode版#109 (2026-04-19)
+- **DESIGN.md token batch**: Colors.blue/lightBlue/orangeAccent/yellow → brand hex 完了
+  - blue/lightBlue/blueAccent → const Color(0xFF3D5AFE) (brand indigo)
+  - orangeAccent → const Color(0xFFFF6B35) (brand orange)
+  - yellow/yellowAccent → const Color(0xFFFFC107) (brand amber)
+  - 81ファイル変更 / dart fix 2ステップ + dart format → 0エラー ✅
+  - 教訓: Python→dart format→git add は1 Bash invocation内で完結必須 (VSCode linter revert防止)
+- **DESIGN.md準拠: 100%** (全Material brand colors → brand hex tokens 完全排除)
+  - 残: Colors.white/black/transparent (neutral) / Colors.red/green (semantic) — intentional
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: AI大学学習リマインダーバッチ設定 / home_page.dart最終確認 / wrap-up
