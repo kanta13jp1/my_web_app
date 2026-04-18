@@ -1,7 +1,7 @@
 ---
 title: "Flutter × Supabase でランキング・リーダーボードを作った — AI大学の裏側"
 tags: Flutter,Supabase,buildinpublic,AI,個人開発
-published: false
+published: true
 ---
 
 # Flutter × Supabase でランキング・リーダーボードを作った — AI大学の裏側

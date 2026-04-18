@@ -1,7 +1,7 @@
 ---
 title: "Building a Leaderboard with Flutter + Supabase (AI University #3)"
 tags: Flutter,Supabase,buildinpublic,webdev,Gamification
-published: false
+published: true
 ---
 
 # Building a Leaderboard with Flutter + Supabase (AI University #3)
