@@ -10559,3 +10559,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI分析 3点: (1) Firebase 509 CDN最適化急務 (2) schedule-hub 自然言語予定登録で Notion 差別化 (3) ai-assistant EF claude-opus-4-7 更新検討
 - スケジュールヘルス: 外部ネットワーク制限 (Host not in allowlist) のため Supabase API 直接呼び出し不可 / gh CLI 未利用 → 該当ステップスキップ
 - X投稿: viral-growth-engine/post-x-update ともにネットワーク制限でスキップ (GitHub Actions 側で次回実行時に補完)
+
+### Rule 17 WF health check (2026-04-18 09:35)
+- 全 WF success率: 正常 (daily-report最新run 24592283874 success / ai-university-update 3/3 / CS 4/4 / Infra 4/4)
+- 失敗 WF: daily-report 3件 — 旧コード(GH006未修正)による過去失敗。現在は修正済み
+- Workflow Failure Handler: 6件 all skipped — 正常 (失敗WF発生時のみ動作)
+- Horse Racing Auto Update: 5件 all cancelled — timeout-minutes:20 超過が原因 → 45分に修正
+- orphan blog-publish branches: 2本 → merge + 削除完了 (published:trueは既にmain済みのためdrop)
+- 修正済み: horse-racing-update.yml timeout 20→45分
