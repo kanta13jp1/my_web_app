@@ -11579,6 +11579,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
+### PS版#6 horse-racing バッチ最適化 Session 7 — T-1記事投稿 (2026-04-20 00:47) ✅
+
+- **T-1記事**: NAR EUC-JP 文字化けループ 36分→3分(92%削減) blog draft 作成
+  - JP版: docs/blog-drafts/2026-04-19-horseracing-euc-jp-encoding-loop.md (Qiita 429 → 翌日リトライ)
+  - EN版: [dev.to 投稿成功](https://dev.to/kanta13jp1/how-a-japanese-encoding-bug-caused-a-36-minute-infinite-loop-in-our-horse-racing-scraper-570m)
+- **cross-instance-pr**: 20260419_migration_timestamp_collision_prevention → done/ へ移動 (PS#6対応済み確認)
+- **migration_timestamp 推奨帯**: PS版#6 = YYYYMMDD**20**XXXX
+
 ### PS版#6 horse-racing バッチ最適化 Session 6 (2026-04-19 23:20) ✅ **完了**
 - **最終確認 run 24630256000 (3分)** — 全指標ゼロ達成:
   - 文字化け CLEAN: **0件** (EUC-JP ループ完全停止) ✅
