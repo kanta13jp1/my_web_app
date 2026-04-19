@@ -11696,3 +11696,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan blog-publish: 0本 (#175分マージ・削除済み)
 - 本日T-1累計: 36本 (新過去最高更新)
 
+
+### PS版#1(続6) T-1 #177 dev.to投稿完了 (2026-04-19 20:00)
+- T-1 第177弾: git worktreeブランチからmainに直push — 複数インスタンス衝突リカバリ完全版
+  - https://dev.to/kanta13jp1/pushing-from-git-worktree-branches-to-main-multi-instance-conflict-recovery-guide-2oi2
+- orphan blog-publish: 0本 (#177分マージ・削除済み)
+- 本日T-1累計: 37本 (新過去最高更新)
