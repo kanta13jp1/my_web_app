@@ -10,7 +10,7 @@ AI大学の学習リマインダー通知をバッチで送る GitHub Actions cr
 
 ## 現状
 
-- `notification-center` Edge Function に `send_ai_university_reminders` action が実装済み
+- `notification-center` Edge Function に `send_study_reminders` action が実装済み
 - 3日以上未学習ユーザーへのリマインダー送信ロジックあり
 - **未設定**: GitHub Actions cron schedule で定期実行するワークフローがない
 
@@ -35,7 +35,7 @@ jobs:
             "${{ secrets.SUPABASE_URL }}/functions/v1/notification-center" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"action": "send_ai_university_reminders"}'
+            -d '{"action": "send_study_reminders"}'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -43,7 +43,7 @@ jobs:
 
 ## 確認事項
 
-1. `notification-center` EF の `send_ai_university_reminders` action が存在するか grep確認
+1. `notification-center` EF の `send_study_reminders` action が存在するか grep確認
 2. `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` secrets が GitHub に設定済みか確認
 3. EF 50本制限: 新規EF不要 (既存 notification-center の action追加なので問題なし)
 4. `flutter analyze` / `deno lint` への影響なし (GHA yml のみ)
