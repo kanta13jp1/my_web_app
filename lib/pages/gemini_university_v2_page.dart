@@ -2878,7 +2878,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Future<void> _shareProgress() async {
     final count = _answeredQuizzes.length;
     final total = _quizzes.length;
-    const url = 'https://my-web-app-b67f4.web.app/#/gemini-university';
+    const url = 'https://my-web-app-b67f4.web.app/#/ai-university';
 
     // A/B/C テスト: 3バリエーションをランダム選択
     final variant = Random().nextInt(3);
@@ -2888,20 +2888,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         // A: 正解数フォーカス
         text = '🎓 AI 大学でクイズ $count/$total 問正解！\n'
             'Google・OpenAI・Anthropic など主要AIを体系的に学習中。\n'
-            '$url\n'
-            '#AILearning #buildinpublic #FlutterWeb';
+            '$url';
       case 1:
         // B: プロバイダー制覇フォーカス
         text = '🏆 AI 大学で $count 社のAIプロバイダーを制覇中！\n'
             'Google・OpenAI・DeepSeek・Mistral など $total 社を比較学習できます。\n'
-            '$url\n'
-            '#AIUniversity #buildinpublic';
+            '$url';
       default:
         // C: ランキング/競争フォーカス
         text = '📊 AI 大学ランキングに挑戦中！正解 $count 問達成 🎯\n'
             '複数のAIを使い比べながら正しく理解。ランキングで競おう！\n'
-            '$url\n'
-            '#AILearning #FlutterWeb';
+            '$url';
     }
 
     await SharePlus.instance.share(ShareParams(text: text));

@@ -142,14 +142,12 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
         ? '🤖 自分株式会社の AI 大学で学習中！\n'
             '$providerCountTextのAIを1か所で横断しながら学べます。'
             '$learnedText$streakText\n'
-            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
-            '#AILearning #buildinpublic #FlutterWeb'
+            'https://my-web-app-b67f4.web.app/#/ai-university'
         : '🎓 最新AIの違いが3分でわかる！\n'
             'Google / OpenAI / Anthropic など $providerCountTextを '
             'クイズ+ニュースで横断学習。\n'
             '$learnedText$streakText\n'
-            'https://my-web-app-b67f4.web.app/#/gemini-university\n'
-            '#AI学習 #AIリテラシー';
+            'https://my-web-app-b67f4.web.app/#/ai-university';
 
     await SharePlus.instance.share(
       ShareParams(text: shareText),

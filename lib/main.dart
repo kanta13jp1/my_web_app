@@ -394,6 +394,7 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => const AiUniversityVoicePage(),
             );
+          case '/ai-university':
           case '/gemini-university':
             return MaterialPageRoute(
               builder: (_) => const AiUniversityPage(),
