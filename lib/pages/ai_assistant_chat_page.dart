@@ -438,10 +438,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                 ),
                 decoration: InputDecoration(
                   hintText: 'メッセージを入力...',
-                  hintStyle: const TextStyle(
-                    color: Colors.white38,
-                    height: 1.5,
-                  ),
+                  hintStyle:
+                      const TextStyle(color: Colors.white38, height: 1.5),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: const BorderSide(color: Colors.white12),
@@ -544,11 +542,8 @@ class _TypingDotsState extends State<_TypingDots>
       builder: (_, __) {
         return Text(
           '●' * _dotCount.value,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 14,
-            height: 1.5,
-          ),
+          style:
+              const TextStyle(color: Colors.white54, fontSize: 14, height: 1.5),
         );
       },
     );
