@@ -225,7 +225,7 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ## Multi-AI ワークフロー（毎回必ず実行）
 
-**設計思想**: Claude Code 4インスタンス (VSCode/Windowsアプリ/PowerShell/WEB版) を主軸に、Gemini Code Assist・CODEX・GitHub Copilot を補完役で活用。
+**設計思想**: Claude Code 5インスタンス (VSCode/Windowsアプリ/PowerShell/WEB/📱スマホ版) を主軸に、Gemini Code Assist・CODEX・GitHub Copilot を補完役で活用。
 「どの処理をどの AI に振るか」を設計することで、月 $20 プランで $200 相当の作業を実現する。
 Claude のトークンは「判断・編集・統合」のみに使い、重い分析は Google (NotebookLM/Gemini) に無料で投げる。
 
@@ -237,12 +237,20 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 | **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | なし。`PYTHONUTF8=1` 必須 |
 | **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | なし |
 | **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
+| **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
 
 **WEB版代替パターン**:
 - `notebooklm ask` → WebSearch で代替
 - `flutter analyze` → 実行不可→ VSCode版に cross-instance-pr で検証依頼
 - `deno lint` → 実行不可 → EF変更は VSCode版に依頼
 - git commit → GitHub MCP (`mcp__plugin_github_github__create_or_update_file`) で代替
+
+**📱 スマホ版運用パターン**:
+- 本番モバイル (iPhone/Android) で実機検証 → screenshot 添付 → GitHub Issue 自動作成
+- 軽量修正 (1ファイル数行) は GitHub MCP で完結 → PR 作成
+- 重い修正は `docs/cross-instance-prs/YYYYMMDD_mobile_<title>.md` で VSCode版/Win版に handoff
+- 専用 skill: `.claude/skills/mobile-bug-triage/SKILL.md` (Issue テンプレ + WCAG/Touch target チェックリスト)
+- **強み = 実機検証** (iOS Safari の細かい挙動・PWA 動作・touch gesture は Playwright で再現困難)
 
 ### AI振り分け早見表
 

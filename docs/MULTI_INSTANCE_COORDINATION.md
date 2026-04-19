@@ -1,7 +1,7 @@
-# 3インスタンス + マルチAI並行開発 — 競合防止ガイド
+# 5インスタンス + マルチAI並行開発 — 競合防止ガイド
 
 作成日: 2026-03-30
-最終更新: 2026-04-17 (Windowsアプリ版#本セッション — WEB版廃止・3インスタンス制に復帰)
+最終更新: 2026-04-19 (Windowsアプリ版#104 — 📱スマホ版追加・5インスタンス制へ)
 管理: PowerShell インスタンス (全体管理)
 
 ---
@@ -11,8 +11,43 @@
 | インスタンス | 担当領域 (write) | 専任責務 |
 | --- | --- | --- |
 | **VSCode版** | `lib/` (Dart/Flutter UI) + `supabase/functions/` (EF) + `docs/DESIGN.md` | Rule 16 Web/モバイル表示修正 / Rule 19 UI改善ツールチェーン / `flutter analyze 0エラー` / `deno lint 0エラー` |
-| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 |
+| **Windowsアプリ版** | `docs/` (DESIGN.md除く) + `supabase/migrations/` (seed + schema 両方) | Rule 10 (docs全件分析) 主担当 / AI大学プロバイダー追加 / seed データ管理 / 動画編集 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/MULTI_INSTANCE_COORDINATION.md` | Rule 17 CI/CD最適化 / Schedule タスク owner / クォータ監視管理 / MCP設定管理 / 全ブランチ CI 監視 / GitHub PR・Issue管理 |
+| **WEB版** | (write 不可・GitHub MCP のみ) | ブログ・競合リサーチ (notebooklm/dart/flutter 不可) |
+| **📱 スマホ版 (新)** | (write 不可・GitHub MCP のみ) | **実機 UAT** (iOS Safari/PWA/touch gesture) / モバイル不具合トリアージ / GitHub Issue 自動作成 / 軽量 PR (1ファイル数行) / 重い修正は VSCode版/Win版に handoff |
+
+### 📱 スマホ版 ワークフロー
+
+**強み**: Playwright で再現困難な iOS Safari の細かい挙動・PWA install 動作・touch gesture の実機検証
+
+**専用 skill**: `.claude/skills/mobile-bug-triage/SKILL.md` (Issue テンプレ + WCAG/Touch target チェックリスト 8 項目)
+
+**3 段階フロー**:
+
+1. **Phase A: 不具合発見 → Issue 化 (5分)**
+   - ユーザーがスマホ実機で screenshot 撮影
+   - スマホ版が画像分析 → `mcp__plugin_github_github__create_issue` で構造化 Issue 作成
+   - ラベル: `mobile-bug` `priority:<level>` 自動付与
+
+2. **Phase B: 修正分岐**
+   - **軽量 (1ファイル数行)**: スマホ版が GitHub MCP で直接 PR 作成
+   - **重い (lint cascade / 多ファイル)**: `docs/cross-instance-prs/YYYYMMDD_mobile_<title>.md` で VSCode版に handoff
+
+3. **Phase C: デプロイ後再検証**
+   - スマホ版が WebFetch + ユーザー実機確認
+   - OK なら Issue close (`mcp__plugin_github_github__update_issue`)
+
+### モバイル特化バグ早見表
+
+| 症状 | 原因 | 修正担当 |
+| --- | --- | --- |
+| 横スクロール発生 | viewport overflow | VSCode版 |
+| FAB 押せない | bottom safe-area 不足 | スマホ版 (簡単) |
+| キーボード起動で input 隠れる | resizeToAvoidBottomInset | VSCode版 |
+| iOS で 100vh 画面外 | CSS env(safe-area-inset-bottom) | VSCode版 (web/index.html) |
+| Touch target 小さい | `IconButton` minSize | スマホ版 (簡単) |
+| Dark mode contrast 不足 | DESIGN.md token 違反 | VSCode版 (Rule 12) |
+| PWA install ボタン出ない | manifest.json 不備 | Win版 (web/) |
 
 ### フォールバック AI ツール (Claude 制限時のみ)
 
