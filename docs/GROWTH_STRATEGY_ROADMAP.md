@@ -12093,3 +12093,25 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 理念的貢献: 動画自動化が「再現可能な資産」になった (Win#125 = 確立 / Win#129 = 再現で証明)
 - 懸念: なし
 
+
+### Windowsアプリ版#130 セッション (2026-04-20 03:00 JST)
+- **3 層メモリアーキテクチャ ドキュメント化** (NotebookLM `d89ae1f5` "Persistent Memory for Claude Code" 知見導入)
+  - L1: claude-mem (SQLite + Gemini圧縮 + ベクトル検索) — 既稼働
+  - L2: memory/*.md + auto-capture hook — 既稼働 (150+ entries)
+  - L3: NotebookLM Master Brain (jibun-master-brain) — 既稼働
+- **新規実装**:
+  - `docs/memory-architecture.md` 作成 (3 層整理 + Namespace + Decay 対策 + 既存資産 mapping)
+  - inject-rules.txt に `[MEMORY-DECAY]` rule 追加 (タイムスタンプ + shadow + cleanup + consolidate-memory)
+- **既導入確認** (NotebookLM 提案 7 項目中 6 項目):
+  - ✅ 3層アーキテクチャ / ✅ L1 claude-mem / ✅ L2 hooks+markdown
+  - ✅ Namespace (ファイル名 instance ID) / ✅ MEMORY.md インデックス / ✅ consolidate-memory skill
+- **未導入 (将来 enhancement)**: pgvector セマンティック検索 / 知識グラフ (Neo4j)
+
+### Philosophy Alignment (Win#130)
+
+- 主要実装: 3 層メモリアーキテクチャ docs + [MEMORY-DECAY] rule (NotebookLM d89ae1f5 統合)
+- 該当原則: 7 (資産=メモリ資産化) + 8 (KPI=過去知見の active 活用) + 6 (時間=Decay 対策で陳腐化排除)
+- 整合性スコア: 8/9 ✅ (1=ユーザーCEO感は間接 / 残8項目は積極貢献)
+- 理念的貢献: メモリ陳腐化 (Memory Decay) と肥大化 (Context Rot) を技術的負債化させない仕組みを文書+rule で 5 重ガード化
+- 懸念: pgvector / Neo4j 未導入 → 100+ セッション規模で再検討
+
