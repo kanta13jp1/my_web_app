@@ -14,7 +14,13 @@ class SystemFixedFeaturesList extends StatelessWidget {
         children: kHomeSystemFixed.map((f) {
           return ActionChip(
             avatar: Icon(f.icon, size: 16, color: f.color),
-            label: Text(f.label, style: const TextStyle(fontSize: 12)),
+            label: Text(
+              f.label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFE2E8F0),
+              ),
+            ),
             backgroundColor: const Color(0xFF1A1A1A),
             side: BorderSide(color: f.color.withValues(alpha: 0.3)),
             onPressed: () => Navigator.pushNamed(context, f.route),
