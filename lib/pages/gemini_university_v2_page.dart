@@ -699,6 +699,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFFF9933),
     officialUrl: 'https://cloud.olakrutrim.com/',
   ),
+  'deepgram': _ProviderMeta(
+    name: 'Deepgram',
+    emoji: '🎙️',
+    color: const Color(0xFF00B4D8),
+    officialUrl: 'https://deepgram.com/',
+  ),
+  'did': _ProviderMeta(
+    name: 'D-ID',
+    emoji: '🎬',
+    color: const Color(0xFF7B2FBE),
+    officialUrl: 'https://www.d-id.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1435,6 +1447,26 @@ final Map<String, _Quiz> _quizzes = {
       '10 言語',
       '15 言語',
       '22+ 言語',
+    ],
+    correct: 1,
+  ),
+  'deepgram': _Quiz(
+    question: 'Deepgram Nova-2 STT の料金は？',
+    options: [
+      r'$0.0012/min',
+      r'$0.0043/min',
+      r'$0.0120/min',
+      r'$0.0250/min',
+    ],
+    correct: 1,
+  ),
+  'did': _Quiz(
+    question: 'D-ID Talks API の入力として正しい組み合わせは？',
+    options: [
+      'テキスト + テキスト',
+      '画像 + 音声',
+      '動画 + テキスト',
+      '音声 + 音声',
     ],
     correct: 1,
   ),
@@ -3247,6 +3279,57 @@ client = OpenAI(
 
 ## 活用
 - インド市場アプリ / 農業 AI / 教育 / 多言語 CS ボット
+''',
+  'deepgram': '''
+# Deepgram
+
+音声 AI 専門企業。NASA・Twilio・NVIDIA が採用する業界最速 STT。
+
+## モデル
+- **Nova-3** — 最高精度・多言語・\$0.0052/min
+- **Nova-2** — 安定版・\$0.0043/min
+- **Aura-2 TTS** — 自然音声合成・\$0.0150/1K chars
+- **Voice Agent API** — LLM + STT + TTS 統合
+
+## API
+```python
+from deepgram import DeepgramClient, PrerecordedOptions
+client = DeepgramClient("API_KEY")
+response = client.listen.rest.v("1").transcribe_file(
+    {"buffer": audio},
+    PrerecordedOptions(model="nova-2", language="ja")
+)
+```
+
+## 特徴
+- \$200 無料クレジット（クレカ不要）
+- リアルタイム WebSocket STT 対応
+- スピーカー分離（Diarization）対応
+''',
+  'did': '''
+# D-ID
+
+静止画から**話すアバター動画**を生成する AI プラットフォーム。
+
+## 主な API
+- **Talks API** — 画像 + 音声 → リップシンク動画
+- **Clips API** — テキスト → アバター動画（TTS 統合）
+- **Agents API** — LLM + WebRTC リアルタイムアバター
+
+## API
+```python
+import requests, base64
+headers = {"Authorization": f"Basic {base64.b64encode(b'KEY:').decode()}"}
+r = requests.post("https://api.d-id.com/clips", headers=headers, json={
+    "presenter_id": "amy-jcwCkr1grs",
+    "script": {"type": "text", "input": "こんにちは！"}
+})
+```
+
+## 料金
+- Lite: \$5.99/月（10分）
+- Pro: \$49.99/月（15分・API 含む）
+- Advanced: \$299/月（65分）
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
