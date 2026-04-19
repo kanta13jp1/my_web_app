@@ -317,6 +317,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/ai-workflow-automation',
       'AIワークフロー自動化ページ > ワークフロー一覧・管理',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'knowledge-base',
+      'ナレッジベース (記事・FAQ管理)',
+      true,
+      '/knowledge-base',
+      'ナレッジベースページ > 記事検索・カテゴリ別閲覧',
+    ),
+    _FnDef(
+      'podcast-manager',
+      'ポッドキャストマネージャー',
+      true,
+      '/podcast-manager',
+      'ポッドキャストページ > 番組一覧・エピソード再生',
+    ),
+    _FnDef(
+      'virtual-pet',
+      'バーチャルペット',
+      true,
+      '/virtual-pet',
+      'バーチャルペットページ > ペット育成・ステータス確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
