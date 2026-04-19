@@ -11555,6 +11555,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
+### PS版#6 horse-racing バッチ最適化 Session 4 (2026-04-19 19:58)
+- **根本原因特定**: `time.sleep(1)` が 404 失敗馬でも無条件発火 → 1060頭 × 1秒 = **17.7分の純粋なスリープ**
+- **修正**: 404/失敗時は sleep をスキップ (成功時のみ待機) + 失敗 ID をバッチ PATCH
+- **効果試算**: 前走情報 29分 → ~3分 (初日のみ・翌時間以降は 0秒)
+- **検証**: run 24626765532 は 36分 (修正前最後の run) — 次 run で効果確認予定
+- commit: `52f8b40b`
+
+### PS版#6 horse-racing バッチ最適化 Session 3 (2026-04-19 19:30)
+- **追加**: `fetch_results()` で各レース結果保存後に `horseracing.evaluate_accuracy` 呼び出し
+- **追加**: アンサンブル予想の的中率を自動スコアリング (`horse_provider_leaderboard` 更新)
+- commit: `a061b192` (Session 3) / run 24626765532 監視中
+
 ### PS版#6 horse-racing バッチ最適化 Session 2 (2026-04-19 19:10)
 - **修正①**: migration: ALL 既存エントリを `prev_history_fetched=true` に backfill (404 馬含む)
 - **修正②**: `_fetch_entries_for_source`: N 回 DB クエリ → 1 回バッチ取得 (出走表 5分 → 秒)
