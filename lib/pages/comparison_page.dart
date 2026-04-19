@@ -1076,7 +1076,10 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                       Expanded(
                         child: Text(
                           p,
-                          style: const TextStyle(fontSize: 14, height: 1.6),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.6,
+                          ),
                         ),
                       ),
                     ],
@@ -1222,7 +1225,10 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               const Text(
                 'クレジットカード不要。30秒で登録完了。',
                 style: TextStyle(
-                    color: Color(0xFF9CA3AF), fontSize: 14, height: 1.6),
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 14,
+                  height: 1.6,
+                ),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
