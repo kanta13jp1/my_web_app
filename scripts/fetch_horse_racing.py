@@ -598,15 +598,22 @@ def _fetch_entries_for_source(
     race_ids = list(dict.fromkeys(race_id_pattern.findall(html_text)))
     print(f"  [{source.upper()}] {len(race_ids)} レースを検出")
 
+    # 既存レースを1回のクエリで一括取得 (N回DBクエリ → 1回)
+    existing_rows = supabase_rest("GET", "horse_races", params={
+        "race_date": f"eq.{target_date}",
+        "source": f"eq.{source}",
+        "select": "race_id_ext",
+    }) or []
+    existing_ids: set[str] = {r["race_id_ext"] for r in existing_rows if r.get("race_id_ext")}
+    skipped = sum(1 for rid in race_ids if rid in existing_ids)
+    if skipped:
+        print(f"  [{source.upper()}] {skipped} レースをスキップ (既存)")
+
     saved_races = 0
     saved_entries = 0
 
     for race_id_ext in race_ids:
-        existing = supabase_rest("GET", "horse_races", params={
-            "race_id_ext": f"eq.{race_id_ext}", "select": "id",
-        })
-        if existing:
-            print(f"    [SKIP] {race_id_ext} は既存")
+        if race_id_ext in existing_ids:
             continue
 
         shutuba_html = http_get(shutuba_url.format(race_id=race_id_ext))
