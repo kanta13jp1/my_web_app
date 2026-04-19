@@ -384,14 +384,29 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     final grade = race['grade'] as String? ?? '';
     final postTime = race['post_time'] as String?;
     final status = race['status'] as String? ?? 'scheduled';
-    final entries = (race['horse_entries'] as List?) ?? [];
-    final predictions = (race['horse_predictions'] as List?) ?? [];
-    final results = (race['horse_results'] as List?) ?? [];
-    final hasPrediction = predictions.isNotEmpty;
-    final hasResult = results.isNotEmpty;
-    final pred =
-        hasPrediction ? predictions.first as Map<String, dynamic> : null;
-    final result = hasResult ? results.first as Map<String, dynamic> : null;
+    // Win版#111: Supabase PostgREST embed は 1:M=List / 1:1=Map で返る。
+    //   horse_entries: 1:M (List)
+    //   horse_predictions / horse_results: 1:1 (Map or null)
+    // 過去 (PS版#119) は Map だった時期もあり、List 戻りバージョンと両方対応する。
+    final entriesRaw = race['horse_entries'];
+    final entries = entriesRaw is List
+        ? entriesRaw
+        : (entriesRaw is Map ? [entriesRaw] : const []);
+
+    Map<String, dynamic>? firstMap(dynamic v) {
+      if (v is Map<String, dynamic>) return v;
+      if (v is Map) return Map<String, dynamic>.from(v);
+      if (v is List && v.isNotEmpty) {
+        final first = v.first;
+        if (first is Map<String, dynamic>) return first;
+        if (first is Map) return Map<String, dynamic>.from(first);
+      }
+      return null;
+    }
+
+    final pred = firstMap(race['horse_predictions']);
+    final result = firstMap(race['horse_results']);
+    final hasResult = result != null;
     final isCorrect = result?['is_prediction_correct'] as bool?;
     final trifectaPaid = (result?['trifecta_paid'] as num?)?.toInt();
 
@@ -490,7 +505,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             padding: EdgeInsets.zero,
           ),
           children: [
-            if (hasPrediction && pred != null)
+            if (pred != null)
               _buildPredictionSection(pred, result)
             else
               Container(
@@ -605,7 +620,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ],
               ),
             ],
-            if (hasResult && result != null) ...[
+            if (result != null) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(10),
