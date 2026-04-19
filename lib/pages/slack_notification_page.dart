@@ -184,7 +184,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red.shade700),
+                    style: TextStyle(color: Colors.red.shade700, height: 1.5),
                   ),
                 ),
               ),
@@ -209,7 +209,10 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                       Expanded(
                         child: Text(
                           _successMessage!,
-                          style: TextStyle(color: Colors.green.shade700),
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
@@ -235,6 +238,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -253,7 +257,11 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                     const SizedBox(height: 8),
                     const Text(
                       'Slack App → Incoming Webhooks で取得できます',
-                      style: TextStyle(fontSize: 12, color: Colors.black45),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.black45,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -271,6 +279,7 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -338,7 +347,11 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
               const SizedBox(height: 24),
               const Text(
                 '最近の通知履歴',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               ..._history.take(5).map(
@@ -368,11 +381,11 @@ class _HistoryTile extends StatelessWidget {
         ),
         title: Text(
           history['event']?.toString() ?? 'イベント',
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(fontSize: 14, height: 1.5),
         ),
         subtitle: Text(
           history['sent_at']?.toString() ?? '',
-          style: const TextStyle(fontSize: 12),
+          style: const TextStyle(fontSize: 12, height: 1.5),
         ),
         trailing: Text(
           success ? '成功' : '失敗',
@@ -380,6 +393,7 @@ class _HistoryTile extends StatelessWidget {
             color: success ? Colors.green : Colors.red,
             fontSize: 12,
             fontWeight: FontWeight.bold,
+            height: 1.5,
           ),
         ),
       ),

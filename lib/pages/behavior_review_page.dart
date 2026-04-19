@@ -320,7 +320,11 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
           children: [
             Text(
               'あとで後悔しないための振り返り',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             SizedBox(height: 8),
             Text(
@@ -389,7 +393,11 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
               const SizedBox(height: 10),
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFB0B0B0),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -397,6 +405,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -423,7 +432,11 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                 SizedBox(width: 8),
                 Text(
                   'AI考察',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -455,7 +468,11 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                 SizedBox(width: 8),
                 Text(
                   'AIコラム「我が闘争」',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -503,6 +520,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                       Container(
@@ -520,6 +538,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: style.color,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -532,8 +551,11 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
                   const SizedBox(height: 8),
                   Text(
                     DateFormat('yyyy/MM/dd HH:mm').format(entry.timestamp),
-                    style:
-                        const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFB0B0B0),
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),

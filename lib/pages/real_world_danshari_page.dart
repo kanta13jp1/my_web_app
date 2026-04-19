@@ -136,7 +136,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     Text(
                       'あなたの部屋にある「捨てるか迷っているモノ」を撮影してください。\nCSOが容赦なく判定します。',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, height: 1.5),
                     ),
                   ],
                 ),
@@ -172,6 +172,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     'ここに写真が表示されます',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -259,6 +260,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
+                height: 1.5,
               ),
             ),
           ),
@@ -272,6 +274,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const Divider(),
@@ -280,7 +283,8 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   children: [
                     const Text(
                       'ときめきスコア: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                     ),
                     Text(
                       '${_result!['spark_joy_score']} / 100',
@@ -290,6 +294,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                             ? const Color(0xFF3D5AFE)
                             : Colors.red,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -297,11 +302,11 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 const SizedBox(height: 16),
                 const Text(
                   ' 判定理由:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                 ),
                 Text(
                   _result!['reason'] ?? '',
-                  style: const TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16, height: 1.5),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -331,6 +336,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                             color: isDark
                                 ? const Color(0xFFD1D5DB)
                                 : const Color(0xFF1F2937),
+                            height: 1.5,
                           ),
                         ),
                       ),

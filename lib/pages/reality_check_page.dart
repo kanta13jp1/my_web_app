@@ -294,7 +294,11 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
           children: [
             Text(
               '事実と解釈を分けて現実を見る',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             SizedBox(height: 8),
             Text(
@@ -344,7 +348,11 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
           children: [
             const Text(
               '今日の直視テーマ',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -358,7 +366,10 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
                   contentPadding: EdgeInsets.zero,
                   title: Text(
                     template.title,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
                   ),
                   subtitle: Text(template.prompt),
                   trailing: TextButton(
@@ -386,7 +397,11 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
           children: [
             const Text(
               '最近の現実直視ノート',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             if (_entries.isEmpty)
@@ -430,6 +445,7 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -453,7 +469,11 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 2),
           Text(value),
@@ -473,7 +493,8 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
         backgroundColor: color,
         child: Text(
           initial,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
+          style:
+              const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
         ),
       ),
       label: Text('$label  $value'),

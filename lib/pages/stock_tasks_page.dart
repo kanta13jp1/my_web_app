@@ -268,7 +268,8 @@ class _StockTasksPageState extends State<StockTasksPage> {
               children: [
                 Text(
                   _isSaturday ? '今日は土曜日。ストック見直しデーです。' : '次に時間ができたときの候補をここに蓄積。',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -280,6 +281,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurface,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -288,6 +290,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -342,7 +345,10 @@ class _StockTasksPageState extends State<StockTasksPage> {
                               child: Text(
                                 '思考ネタや行動タスクを\nストックしておきましょう',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Color(0xFF9CA3AF)),
+                                style: TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  height: 1.5,
+                                ),
                               ),
                             ),
                           ),
@@ -357,7 +363,10 @@ class _StockTasksPageState extends State<StockTasksPage> {
                             padding: EdgeInsets.symmetric(horizontal: 8),
                             child: Text(
                               '完了済み',
-                              style: TextStyle(color: Color(0xFF9CA3AF)),
+                              style: TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                height: 1.5,
+                              ),
                             ),
                           ),
                           const Divider(),
@@ -480,6 +489,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
               color: isCompleted
                   ? const Color(0xFF9CA3AF)
                   : Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
             ),
           ),
           subtitle: Padding(
@@ -498,6 +508,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
                     color: badgeColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),

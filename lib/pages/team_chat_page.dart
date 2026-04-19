@@ -154,7 +154,11 @@ class _TeamChatPageState extends State<TeamChatPage> {
               color: Colors.red.shade50,
               child: Text(
                 _errorMessage!,
-                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           Expanded(
@@ -179,7 +183,10 @@ class _TeamChatPageState extends State<TeamChatPage> {
                             ? const Center(
                                 child: Text(
                                   'メッセージがありません',
-                                  style: TextStyle(color: Colors.black45),
+                                  style: TextStyle(
+                                    color: Colors.black45,
+                                    height: 1.5,
+                                  ),
                                 ),
                               )
                             : ListView.builder(
@@ -233,6 +240,7 @@ class _ChannelSidebar extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: Colors.black54,
+                height: 1.5,
               ),
             ),
           ),
@@ -250,11 +258,12 @@ class _ChannelSidebar extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF3D5AFE),
+                      height: 1.5,
                     ),
                   ),
                   title: Text(
                     ch['name']?.toString() ?? '',
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
                   ),
                   onTap: () => onSelect(ch),
                 );
@@ -290,6 +299,7 @@ class _MessageBubble extends StatelessWidget {
                 fontSize: 12,
                 color: Color(0xFF303F9F),
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ),
@@ -305,6 +315,7 @@ class _MessageBubble extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -313,12 +324,16 @@ class _MessageBubble extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Colors.black45,
+                        height: 1.5,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(content, style: const TextStyle(fontSize: 14)),
+                Text(
+                  content,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
               ],
             ),
           ),

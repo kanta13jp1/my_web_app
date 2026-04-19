@@ -123,7 +123,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
           children: [
             Icon(Icons.work, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('求人がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '求人がありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -155,7 +158,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             subtitle: Text(
               [
@@ -170,11 +173,16 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
               children: [
                 Text(
                   '$appCount 名',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                 ),
                 const Text(
                   '応募者',
-                  style: TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -188,7 +196,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
   Widget _buildApplicantsTab() {
     if (_applicants.isEmpty) {
       return const Center(
-        child: Text('応募者がいません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          '応募者がいません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     return ListView.builder(
@@ -227,6 +238,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -239,7 +251,7 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 Chip(
                   label: Text(
                     stageLabels[stage] ?? stage,
-                    style: const TextStyle(fontSize: 10),
+                    style: const TextStyle(fontSize: 10, height: 1.5),
                   ),
                   backgroundColor: color.withValues(alpha: 0.15),
                   padding: EdgeInsets.zero,
@@ -247,8 +259,11 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),

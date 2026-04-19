@@ -184,7 +184,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
         ),
         title: const Text(
           'AI大学 音声学習',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, height: 1.5),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -209,7 +209,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                 value: _selectedProvider,
                 isExpanded: true,
                 dropdownColor: const Color(0xFF1A1A1A),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, height: 1.5),
                 underline: const SizedBox.shrink(),
                 items: _providers
                     .map(
@@ -275,6 +275,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                           style: const TextStyle(
                             color: Color(0xFF3D5AFE),
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         if (_ttsStatus == 'loading') ...[
@@ -323,6 +324,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                       style: TextStyle(
                         color: Color(0xFF3D5AFE),
                         fontSize: 16,
+                        height: 1.5,
                       ),
                     ),
                     onPressed: () => setState(() => _useTextInput = true),
@@ -334,18 +336,19 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                     onPressed: () => setState(() => _useTextInput = true),
                     child: const Text(
                       'テキスト入力に切替',
-                      style: TextStyle(color: Colors.white54),
+                      style: TextStyle(color: Colors.white54, height: 1.5),
                     ),
                   ),
                 ),
               ] else ...[
                 TextField(
                   controller: _textController,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white, height: 1.5),
                   maxLines: 3,
                   decoration: InputDecoration(
                     hintText: '回答を入力してください...',
-                    hintStyle: const TextStyle(color: Colors.white38),
+                    hintStyle:
+                        const TextStyle(color: Colors.white38, height: 1.5),
                     filled: true,
                     fillColor: const Color(0xFF1E1E1E),
                     border: OutlineInputBorder(
@@ -377,7 +380,7 @@ class _AiUniversityVoicePageState extends State<AiUniversityVoicePage> {
                       onPressed: () => setState(() => _useTextInput = false),
                       child: const Text(
                         '音声に戻る',
-                        style: TextStyle(color: Colors.white54),
+                        style: TextStyle(color: Colors.white54, height: 1.5),
                       ),
                     ),
                   ],
