@@ -1,7 +1,7 @@
 ---
 title: "Groq llama-3.3-70bをタグ提案に使う — 低レイテンシAIルーティングの実装パターン"
 tags: Groq,AI,Flutter,Supabase,個人開発
-published: false
+published: true
 ---
 
 # Groq llama-3.3-70bをタグ提案に使う

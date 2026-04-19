@@ -1,7 +1,7 @@
 ---
 title: "Using Groq llama-3.3-70b for Tag Suggestions — Low-Latency AI Routing Patterns"
 tags: Groq,AI,Flutter,Supabase,buildinpublic
-published: false
+published: true
 ---
 
 # Using Groq llama-3.3-70b for Tag Suggestions
