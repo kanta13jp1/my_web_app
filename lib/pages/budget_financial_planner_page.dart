@@ -538,7 +538,13 @@ $breakdown
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(label, style: const TextStyle(fontSize: 13)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.7,
+                      ),
+                    ),
                     Text(
                       '¥${_fmt.format(amount)}',
                       style: const TextStyle(
@@ -548,7 +554,7 @@ $breakdown
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 LinearProgressIndicator(
                   value: ratio.clamp(0.0, 1.0),
                   backgroundColor: cs.surfaceContainerHigh,
@@ -591,7 +597,7 @@ $breakdown
                         size: 18,
                         color: cs.primary,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           entry.value,
@@ -601,12 +607,12 @@ $breakdown
                       if (over)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: cs.errorContainer,
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             '超過',
@@ -761,7 +767,7 @@ $breakdown
                       ],
                     ),
                     const Divider(),
-                    Text(_aiAdvice!, style: const TextStyle(height: 1.6)),
+                    Text(_aiAdvice!, style: const TextStyle(height: 1.7)),
                   ],
                 ),
               ),
@@ -944,7 +950,7 @@ $breakdown
 
   Widget _simDetailRow(String label, double value, ColorScheme cs) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

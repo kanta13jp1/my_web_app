@@ -113,7 +113,11 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         children: [
           Text(
             reportData.title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 16),
           _buildSummaryCard(formatter, reportData, diff, diffColor, percentage),
@@ -164,7 +168,11 @@ class _FinancialReportPageState extends State<FinancialReportPage>
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFFB0B0B0),
+              height: 1.7,
+            ),
           ),
           Text(
             value,
@@ -172,6 +180,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: valueColor,
+              height: 1.4,
             ),
           ),
         ],
@@ -189,7 +198,11 @@ class _FinancialReportPageState extends State<FinancialReportPage>
           children: [
             const Text(
               '総資産推移',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -286,7 +299,13 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     }
     return SideTitleWidget(
       meta: meta,
-      child: Text(text, style: const TextStyle(fontSize: 10)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 10,
+          height: 1.5,
+        ),
+      ),
     );
   }
 
