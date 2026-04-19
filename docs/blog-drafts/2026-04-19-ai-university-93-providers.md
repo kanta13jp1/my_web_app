@@ -1,7 +1,7 @@
 ---
 title: "AIプロバイダー図鑑をSupabase+Flutterで作った — AI大学93社達成の設計"
 tags: Flutter,Supabase,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # AIプロバイダー図鑑をSupabase+Flutterで作った

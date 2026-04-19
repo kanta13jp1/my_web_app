@@ -1,7 +1,7 @@
 ---
 title: "Building an AI Provider Encyclopedia with Supabase + Flutter — 93 Providers and Counting"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Building an AI Provider Encyclopedia with Supabase + Flutter
