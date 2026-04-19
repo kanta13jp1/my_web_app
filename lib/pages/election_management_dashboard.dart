@@ -124,18 +124,23 @@ class _ElectionManagementDashboardState
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Colors.red,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     '現在の現職数: ${_monthlyKpi!['currentTotal']}人',
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   Text(
                     '必達目標数: ${_monthlyKpi!['targetTotal']}人',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                   const Divider(height: 24),
@@ -145,6 +150,7 @@ class _ElectionManagementDashboardState
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.redAccent,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -153,12 +159,16 @@ class _ElectionManagementDashboardState
                     style: const TextStyle(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     '※万が一達成できなければ解党の覚悟で臨む“工程管理”の勝負です。',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -167,14 +177,22 @@ class _ElectionManagementDashboardState
           const SizedBox(height: 24),
           const Text(
             '地方議員数の推移と目標',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           _buildTrendChart(),
           const SizedBox(height: 24),
           const Text(
             '都道府県連ごとの月次KPI配分',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           SingleChildScrollView(
@@ -188,37 +206,55 @@ class _ElectionManagementDashboardState
                 DataColumn(
                   label: Text(
                     '都道府県',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '現職維持目標',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '必達目標',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '新人擁立数',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '接戦区支援回数',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataColumn(
                   label: Text(
                     '公認内定時期',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -265,7 +301,10 @@ class _ElectionManagementDashboardState
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
                         _timeSeriesData[index]['label']?.toString() ?? '',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                     );
                   }
@@ -323,7 +362,10 @@ class _ElectionManagementDashboardState
                   : const Color(0xFFBBDEFB),
               child: Text(
                 p['gender'] == '女性' ? '👩' : '👨',
-                style: const TextStyle(fontSize: 20),
+                style: const TextStyle(
+                  fontSize: 20,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text('${p['name']} (${p['age']}歳) - ${p['gender']}'),
@@ -336,6 +378,7 @@ class _ElectionManagementDashboardState
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1565C0),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -427,7 +470,10 @@ class _ElectionManagementDashboardState
                           leading: const Icon(Icons.event),
                           title: Text(
                             '${s['electionName']} (${s['date']})',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              height: 1.5,
+                            ),
                           ),
                           subtitle: Text(
                             '${s['location']} - 国民民主党 候補者擁立数: $candidateCount人',
@@ -503,6 +549,7 @@ class _ElectionManagementDashboardState
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    height: 1.5,
                   ),
                 ),
                 IconButton(
@@ -527,6 +574,7 @@ class _ElectionManagementDashboardState
                           style: const TextStyle(
                             color: Color(0xFFB0B0B0),
                             fontSize: 12,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -592,6 +640,7 @@ class _ElectionManagementDashboardState
                                 fontWeight: isSelected || isToday
                                     ? FontWeight.bold
                                     : FontWeight.normal,
+                                height: 1.5,
                               ),
                             ),
                             if (hasSchedule) ...[

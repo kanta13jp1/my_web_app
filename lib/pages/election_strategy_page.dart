@@ -443,7 +443,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           children: [
             const Text(
               '戦略を提案',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -530,7 +534,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           children: [
             Text(
               '${cand['district']} : ${cand['name']}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -542,6 +550,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.red,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -552,6 +561,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF9CA3AF),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -666,6 +676,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -730,13 +741,17 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF3D5AFE),
+                          height: 1.5,
                         ),
                       ),
                       Text(
                         _isBusy
                             ? '分析実行中...'
                             : _formatLogDate(_lastBatchLog?['created_at']),
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -807,7 +822,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   SizedBox(width: 8),
                   Text(
                     'AI総本部: 情勢分析中...',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -844,14 +863,23 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             _logRow('実行日時', _formatLogDate(_lastBatchLog!['created_at'])),
             _logRow('処理件数', '${_lastBatchLog!['records_processed']} 件'),
             const SizedBox(height: 8),
-            const Text('メッセージ:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'メッセージ:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(8),
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Text(
                 _lastBatchLog!['message'] ?? '',
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
           ],
@@ -873,13 +901,21 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         children: [
           SizedBox(
             width: 80,
-            child:
-                Text(label, style: const TextStyle(color: Color(0xFF9CA3AF))),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -913,6 +949,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF3D5AFE),
+                        height: 1.5,
                       ),
                     ),
                     const Divider(),
@@ -920,7 +957,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     const SizedBox(height: 8),
                     Text(
                       '条件: $_victoryCondition',
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -935,7 +975,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 children: [
                   const Text(
                     '獲得予測議席',
-                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                   Text(
                     '$seats / 465',
@@ -943,6 +986,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF3D5AFE),
+                      height: 1.5,
                     ),
                   ),
                   if (seats >= 233)
@@ -951,6 +995,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       style: TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                 ],
@@ -1006,10 +1051,20 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
             Text(
               '${val.toStringAsFixed(1)}%',
-              style: TextStyle(fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: color,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -1051,6 +1106,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF3D5AFE),
+                height: 1.5,
               ),
             ),
           );
@@ -1074,12 +1130,16 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
             title: Text(
               station['name'] ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle:
                 Text('推定乗降客数: ${(passengers / 10000).toStringAsFixed(1)}万人/日'),
@@ -1173,7 +1233,10 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                       ),
                       title: Text(
                         '診断スコア: $score点',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                       subtitle: Text(item['ai_feedback'] ?? ''),
                     ),
@@ -1212,7 +1275,10 @@ class _ManualItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(desc, style: const TextStyle(fontSize: 13, height: 1.4)),

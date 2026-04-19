@@ -238,7 +238,11 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
         ),
         child: Text(
           _errorMessage!,
-          style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+          style: TextStyle(
+            color: Colors.red.shade700,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       ),
     );
@@ -306,11 +310,21 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
           children: [
             const Text(
               '曜日別 slip 数 (過去30日)',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             if (_byDayOfWeek.isEmpty)
-              const Text('データなし', style: TextStyle(color: Colors.black45))
+              const Text(
+                'データなし',
+                style: TextStyle(
+                  color: Colors.black45,
+                  height: 1.5,
+                ),
+              )
             else
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -329,6 +343,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                               color: isWorst ? Colors.red : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -349,6 +364,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                               color: isWorst ? Colors.red : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -375,11 +391,21 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
           children: [
             const Text(
               '時間帯別 slip 数 (過去30日)',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             if (_byHour.every((e) => e.count == 0))
-              const Text('データなし', style: TextStyle(color: Colors.black45))
+              const Text(
+                'データなし',
+                style: TextStyle(
+                  color: Colors.black45,
+                  height: 1.5,
+                ),
+              )
             else
               ..._byHour.map((h) {
                 final ratio = maxCount == 0 ? 0.0 : h.count / maxCount;
@@ -397,6 +423,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             color: isWorst ? Colors.red : Colors.black54,
                             fontWeight:
                                 isWorst ? FontWeight.bold : FontWeight.normal,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -433,6 +460,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                           color: isWorst ? Colors.red : Colors.black54,
                           fontWeight:
                               isWorst ? FontWeight.bold : FontWeight.normal,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -454,11 +482,21 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
           children: [
             const Text(
               '妨害要因ランキング (過去30日)',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             if (_byItem.isEmpty)
-              const Text('データなし', style: TextStyle(color: Colors.black45))
+              const Text(
+                'データなし',
+                style: TextStyle(
+                  color: Colors.black45,
+                  height: 1.5,
+                ),
+              )
             else
               ..._byItem.take(5).toList().asMap().entries.map((entry) {
                 final rank = entry.key + 1;
@@ -468,11 +506,17 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                   contentPadding: EdgeInsets.zero,
                   leading: Text(
                     medals[rank] ?? '$rank',
-                    style: const TextStyle(fontSize: 20),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      height: 1.5,
+                    ),
                   ),
                   title: Text(
                     item.label,
-                    style: const TextStyle(fontSize: 14),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
                   ),
                   trailing: Container(
                     padding:
@@ -489,6 +533,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                         color: rank == 1 ? Colors.red.shade700 : _primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -509,7 +554,11 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
           children: [
             const Text(
               '最近の slip 履歴',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ..._recentSlips.map((s) {
@@ -525,15 +574,31 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                   color: Color(0xFFFF6B35),
                   size: 18,
                 ),
-                title: Text(label, style: const TextStyle(fontSize: 13)),
+                title: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
                 subtitle: note != null && note.isNotEmpty
-                    ? Text(note, style: const TextStyle(fontSize: 11))
+                    ? Text(
+                        note,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
+                      )
                     : null,
                 trailing: Text(
                   slippedAt.length >= 10
                       ? slippedAt.substring(0, 10)
                       : slippedAt,
-                  style: const TextStyle(fontSize: 11, color: Colors.black45),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black45,
+                    height: 1.5,
+                  ),
                 ),
               );
             }),
@@ -609,11 +674,16 @@ class _KpiCard extends StatelessWidget {
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: color,
+              height: 1.5,
             ),
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 10, color: Colors.black54),
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.black54,
+              height: 1.5,
+            ),
           ),
           if (subtitle != null && subtitle!.isNotEmpty)
             Text(
@@ -622,6 +692,7 @@ class _KpiCard extends StatelessWidget {
                 fontSize: 10,
                 color: subtitleColor ?? Colors.black54,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
         ],

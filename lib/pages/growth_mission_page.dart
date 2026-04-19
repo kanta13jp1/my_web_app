@@ -302,6 +302,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -361,6 +362,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -391,6 +393,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -438,6 +441,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -507,6 +511,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -592,6 +597,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -601,7 +607,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                     const SizedBox(height: 16),
                     SelectableText(
                       'Referral code: $referralCode',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     SelectableText('Invite URL: $inviteUrl'),
@@ -659,6 +668,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -736,6 +746,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -751,7 +762,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       const SizedBox(height: 4),
                       Text(
                         '${_weeklyDigest.currentWeekStart} – ${_weeklyDigest.currentWeekEnd}',
-                        style: const TextStyle(color: Color(0xFFB0B0B0)),
+                        style: const TextStyle(
+                          color: Color(0xFFB0B0B0),
+                          height: 1.5,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 12),
@@ -817,6 +831,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -856,7 +871,11 @@ docs/GROWTH_STRATEGY_ROADMAP.md
           const SizedBox(height: 10),
           Text(
             value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(label),
@@ -874,7 +893,13 @@ docs/GROWTH_STRATEGY_ROADMAP.md
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 6),
         LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
         const SizedBox(height: 6),
@@ -894,7 +919,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
             width: 110,
             child: Text(
               channel.label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
           ),
           Expanded(
@@ -902,7 +930,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
               'touches: ${channel.touches} ($deltaSign${channel.touchesDelta})  '
               'sign-ups: ${channel.signupSubmits} ($submitDeltaSign${channel.signupSubmitsDelta})  '
               'CVR: ${channel.cvr}%',
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -927,7 +958,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         children: [
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text('Touches: $touches'),
@@ -960,7 +994,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(detail),
@@ -989,7 +1026,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
                 Expanded(
                   child: Text(
                     department.label,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 Chip(label: Text(department.priority)),
@@ -1032,7 +1072,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
           children: [
             Text(
               channel.name,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 6),
             Text('Audience: ${channel.audience}'),
@@ -1043,7 +1086,10 @@ docs/GROWTH_STRATEGY_ROADMAP.md
             const SizedBox(height: 8),
             Text(
               'CTA: ${channel.cta}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             FilledButton.tonalIcon(

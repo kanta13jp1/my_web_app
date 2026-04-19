@@ -270,7 +270,13 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _error!,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       FilledButton(
                         onPressed: _loadAll,
@@ -327,11 +333,15 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: color,
+                          height: 1.5,
                         ),
                       ),
                       Text(
                         '$count件',
-                        style: TextStyle(color: color),
+                        style: TextStyle(
+                          color: color,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -345,6 +355,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                         fontSize: 12,
                         color: color,
                         fontWeight: FontWeight.w500,
+                        height: 1.5,
                       ),
                     ),
                   )
@@ -381,7 +392,10 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                 Expanded(
                   child: Text(
                     name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -399,6 +413,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                       fontSize: 11,
                       color: _scoreColor(score),
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -412,6 +427,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -427,7 +443,11 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   const SizedBox(width: 4),
                   Text(
                     'ステージ変更',
-                    style: TextStyle(fontSize: 11, color: color),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: color,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -459,7 +479,10 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
             SizedBox(height: 4),
             Text(
               '「リード追加」からCRM管理を始めましょう',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -485,7 +508,10 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
               backgroundColor: stageColor.withValues(alpha: 0.2),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: TextStyle(color: stageColor),
+                style: TextStyle(
+                  color: stageColor,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text(name),
@@ -496,11 +522,17 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                 if (email != null)
                   Text(
                     email,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 Text(
                   '流入: ${_sourceLabels[source] ?? source}',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -522,6 +554,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                       fontSize: 12,
                       color: stageColor,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -531,6 +564,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   style: TextStyle(
                     fontSize: 11,
                     color: _scoreColor(score),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -613,6 +647,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -662,11 +697,15 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -682,13 +721,20 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 13)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
             Text(
               '¥${_formatYen(value)}',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
           ],

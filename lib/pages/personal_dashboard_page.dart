@@ -158,7 +158,10 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Color(0xFFB0B0B0)),
+                        style: const TextStyle(
+                          color: Color(0xFFB0B0B0),
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -201,7 +204,11 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
           const SizedBox(height: 4),
           Text(
             '更新: ${DateFormat('MM/dd HH:mm').format(DateTime.now())}',
-            style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF94A3B8),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           // KPI グリッド
@@ -254,6 +261,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -270,7 +278,11 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             const SizedBox(height: 4),
             Text(
               '${(taskRate * 100).toStringAsFixed(1)}% 完了',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
           ],
@@ -282,6 +294,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -305,6 +318,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -314,6 +328,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF94A3B8),
+                    height: 1.5,
                   ),
                 ),
               );
@@ -325,7 +340,11 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Text(
                   'ノートを作成するとここに表示されます',
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -370,6 +389,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                     fontSize: 11,
                     color: Color(0xFF64748B),
                     fontWeight: FontWeight.w500,
+                    height: 1.5,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -382,6 +402,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               fontSize: 24,
               fontWeight: FontWeight.w800,
               color: color,
+              height: 1.5,
             ),
           ),
           if (subtitle != null)
@@ -403,7 +424,10 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
       return const Center(
         child: Text(
           'データがありません',
-          style: TextStyle(color: Color(0xFF94A3B8)),
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -429,6 +453,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 20),
@@ -480,6 +505,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: color,
+                height: 1.5,
               ),
             ),
           ],
@@ -504,6 +530,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: color,
+                          height: 1.5,
                         ),
                       ),
                     const SizedBox(height: 2),
@@ -565,6 +592,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFFDC2626),
+                height: 1.5,
               ),
             ),
           ],
@@ -589,6 +617,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFFDC2626),
+                          height: 1.5,
                         ),
                       ),
                     const SizedBox(height: 2),
@@ -643,12 +672,17 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
           const Text(
             '毎日の習慣状況を把握してストリークを維持しよう',
-            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           if (_habitStats.isEmpty)
@@ -664,6 +698,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -698,6 +733,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF059669),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -771,6 +807,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1E293B),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -781,6 +818,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                     color: completedToday
                         ? const Color(0xFF059669)
                         : const Color(0xFF94A3B8),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -795,6 +833,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFFF59E0B),
+                  height: 1.5,
                 ),
               ),
               const Text(

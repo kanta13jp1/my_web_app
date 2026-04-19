@@ -144,12 +144,17 @@ class _MySkillsPageState extends State<MySkillsPage> {
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              style: const TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 12,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -179,12 +184,17 @@ class _MySkillsPageState extends State<MySkillsPage> {
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
               'よく使うプロンプトをスキルとして登録して\n1タップで再利用できます。',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 14,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -243,6 +253,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                         color: Colors.white,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -260,6 +271,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                       style: const TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 11,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -272,6 +284,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                   style: const TextStyle(
                     color: Color(0xFF94A3B8),
                     fontSize: 13,
+                    height: 1.5,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -300,6 +313,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                             style: const TextStyle(
                               color: Color(0xFF818CF8),
                               fontSize: 11,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -354,7 +368,11 @@ class _MySkillsPageState extends State<MySkillsPage> {
         backgroundColor: const Color(0xFF1E293B),
         title: const Text(
           '新規スキルを作成',
-          style: TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
         content: SingleChildScrollView(
           child: Column(
@@ -382,8 +400,13 @@ class _MySkillsPageState extends State<MySkillsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                height: 1.5,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -427,7 +450,11 @@ class _MySkillsPageState extends State<MySkillsPage> {
           backgroundColor: const Color(0xFF1E293B),
           title: Text(
             skillName,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
           content: SizedBox(
             width: 480,
@@ -456,6 +483,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -471,6 +499,7 @@ class _MySkillsPageState extends State<MySkillsPage> {
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -482,8 +511,13 @@ class _MySkillsPageState extends State<MySkillsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx2),
-              child:
-                  const Text('閉じる', style: TextStyle(color: Color(0xFF94A3B8))),
+              child: const Text(
+                '閉じる',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  height: 1.5,
+                ),
+              ),
             ),
             ElevatedButton.icon(
               onPressed: isRunning
@@ -526,17 +560,28 @@ class _MySkillsPageState extends State<MySkillsPage> {
         backgroundColor: const Color(0xFF1E293B),
         title: const Text(
           'スキルを削除',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            height: 1.5,
+          ),
         ),
         content: Text(
           '「$name」を削除しますか？この操作は取り消せません。',
-          style: const TextStyle(color: Color(0xFF94A3B8)),
+          style: const TextStyle(
+            color: Color(0xFF94A3B8),
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                const Text('キャンセル', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                height: 1.5,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -562,10 +607,18 @@ class _MySkillsPageState extends State<MySkillsPage> {
     return TextField(
       controller: ctrl,
       maxLines: maxLines,
-      style: const TextStyle(color: Colors.white, fontSize: 13),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        height: 1.5,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+        hintStyle: const TextStyle(
+          color: Color(0xFF64748B),
+          fontSize: 12,
+          height: 1.5,
+        ),
         filled: true,
         fillColor: const Color(0xFF0F172A),
         border: OutlineInputBorder(

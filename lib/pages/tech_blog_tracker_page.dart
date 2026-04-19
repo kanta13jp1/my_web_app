@@ -285,12 +285,17 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '直近30日: $totalDays日投稿 / 本日: $todayCount プラットフォーム',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -307,6 +312,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 color: Colors.white,
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
+                height: 1.5,
               ),
             ),
           ),
@@ -353,7 +359,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               child: Text(
                 DateFormat('yyyy年MM月dd日 (E)', 'ja').format(_selectedDate),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -380,7 +389,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       children: [
         const Text(
           '投稿プラットフォーム',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ...(_platforms.map((platform) {
@@ -401,7 +414,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 child: Center(
                   child: Text(
                     platform.emoji,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -410,6 +426,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: posted ? platform.color : null,
+                  height: 1.5,
                 ),
               ),
               subtitle: posted && post != null
@@ -417,7 +434,10 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                       post['title']?.toString().isNotEmpty == true
                           ? post['title'].toString()
                           : '投稿済み',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     )
@@ -426,6 +446,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.outlineVariant,
+                        height: 1.5,
                       ),
                     ),
               trailing: GestureDetector(
@@ -465,6 +486,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                           fontWeight: FontWeight.w600,
                           color:
                               posted ? platform.color : const Color(0xFF9CA3AF),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -493,7 +515,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
             const Expanded(
               child: Text(
                 'Schedule 自動生成ドラフト',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
             ),
             Text(
@@ -502,6 +528,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 fontSize: 12,
                 color:
                     isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
+                height: 1.5,
               ),
             ),
           ],
@@ -512,6 +539,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
           style: TextStyle(
             fontSize: 11,
             color: isDark ? const Color(0xFF6B7280) : const Color(0xFF6B7280),
+            height: 1.5,
           ),
         ),
         const SizedBox(height: 8),
@@ -548,6 +576,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -559,6 +588,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   color: isDark
                       ? const Color(0xFF9CA3AF)
                       : const Color(0xFF4B5563),
+                  height: 1.5,
                 ),
               ),
               trailing: Container(
@@ -575,6 +605,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: isPosted ? Colors.green : const Color(0xFF6366F1),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -603,7 +634,11 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
       children: [
         const Text(
           '投稿履歴（直近30日）',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ...sortedDates.take(14).map((date) {
@@ -634,6 +669,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -670,6 +706,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                               fontSize: 10,
                               color: platform.color,
                               fontWeight: FontWeight.w600,
+                              height: 1.5,
                             ),
                           ),
                         ),

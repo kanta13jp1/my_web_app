@@ -446,7 +446,10 @@ $breakdown
                     const SizedBox(height: 12),
                     Text(
                       '$_selectedMonth のデータがありません',
-                      style: TextStyle(color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
@@ -482,7 +485,14 @@ $breakdown
               children: [
                 Icon(icon, color: textColor, size: 18),
                 const SizedBox(width: 4),
-                Text(label, style: TextStyle(color: textColor, fontSize: 12)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 4),
@@ -494,6 +504,7 @@ $breakdown
                 color: textColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ],
@@ -550,6 +561,7 @@ $breakdown
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -601,7 +613,10 @@ $breakdown
                       Expanded(
                         child: Text(
                           entry.value,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                       if (over)
@@ -619,6 +634,7 @@ $breakdown
                             style: TextStyle(
                               color: cs.onErrorContainer,
                               fontSize: 11,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -631,6 +647,7 @@ $breakdown
                           style: TextStyle(
                             fontSize: 12,
                             color: budget > 0 ? cs.onSurface : cs.primary,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -658,6 +675,7 @@ $breakdown
                           fontSize: 12,
                           color: over ? cs.error : cs.onSurfaceVariant,
                           fontWeight: over ? FontWeight.bold : null,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -695,6 +713,7 @@ $breakdown
                           fontWeight: FontWeight.bold,
                           color: cs.onPrimaryContainer,
                           fontSize: 16,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -702,8 +721,11 @@ $breakdown
                   const SizedBox(height: 8),
                   Text(
                     '$_selectedMonth の支出データをAIが分析し、節約提案を生成します。',
-                    style:
-                        TextStyle(color: cs.onPrimaryContainer, fontSize: 13),
+                    style: TextStyle(
+                      color: cs.onPrimaryContainer,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
@@ -725,6 +747,7 @@ $breakdown
                         style: TextStyle(
                           color: cs.onPrimaryContainer.withValues(alpha: 0.7),
                           fontSize: 12,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -749,6 +772,7 @@ $breakdown
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: cs.onSurface,
+                            height: 1.5,
                           ),
                         ),
                         const Spacer(),
@@ -805,12 +829,19 @@ $breakdown
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: cs.onSurfaceVariant)),
+          Text(
+            label,
+            style: TextStyle(
+              color: cs.onSurfaceVariant,
+              height: 1.5,
+            ),
+          ),
           Text(
             '¥${_fmt.format(value.abs())}',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: value < 0 ? cs.error : cs.onSurface,
+              height: 1.5,
             ),
           ),
         ],
@@ -841,6 +872,7 @@ $breakdown
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: cs.onSurface,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -848,7 +880,11 @@ $breakdown
                   const SizedBox(height: 4),
                   Text(
                     '複利計算で将来の資産額を試算します',
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _simField('初期資産額 (円)', _initialAmountCtrl, prefixText: '¥'),
@@ -881,8 +917,11 @@ $breakdown
                   children: [
                     Text(
                       '${_yearsCtrl.text}年後の資産額',
-                      style:
-                          TextStyle(color: cs.onPrimaryContainer, fontSize: 14),
+                      style: TextStyle(
+                        color: cs.onPrimaryContainer,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -891,6 +930,7 @@ $breakdown
                         color: cs.primary,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -920,7 +960,11 @@ $breakdown
             const SizedBox(height: 8),
             Text(
               '※ シミュレーションは参考値です。実際の運用成績は異なります。',
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11),
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: 11,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -956,7 +1000,11 @@ $breakdown
         children: [
           Text(
             label,
-            style: TextStyle(color: cs.onPrimaryContainer, fontSize: 13),
+            style: TextStyle(
+              color: cs.onPrimaryContainer,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           Text(
             '¥${_fmt.format(value.round().abs())}',
@@ -964,6 +1012,7 @@ $breakdown
               color: cs.onPrimaryContainer,
               fontWeight: FontWeight.w600,
               fontSize: 13,
+              height: 1.5,
             ),
           ),
         ],
