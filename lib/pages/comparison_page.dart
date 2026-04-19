@@ -606,13 +606,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'google': const _CompetitorInfo(
     name: 'Google',
     emoji: '🔍',
-    tagline: 'Google Workspace・Keep・Tasks・カレンダーを1つに。完全無料の自分株式会社。',
-    searchKeyword: 'Google代替 GoogleKeep代替 GoogleWorkspace代替',
+    tagline: 'Google Planner Gem はメール・カレンダーのみ。自分株式会社は財務・健康・習慣・6部署を一元管理。',
+    searchKeyword: 'Google代替 GoogleKeep代替 GoogleWorkspace代替 GeminiPlanner代替',
     accentColor: Color(0xFF4285F4),
     painPoints: [
+      'Google Planner Gem (2026-04 GA) はGmail/Calendar/Driveのみ — Workspace外データを統合できない',
       'Google Keep・Tasks・Calendar・Docsがバラバラで横断的な生産性管理ができない',
-      'Google Workspace は月額680円〜、ビジネス向けは月額1,360円〜とコストが増える',
-      'メモ・タスク・カレンダー・資産管理を一元化できるツールがGoogleにはない',
+      'Google Workspace は月額680円〜、資産管理・習慣管理・AI大学などライフ全体をカバーしない',
     ],
     features: [
       _FeatureComparison(
@@ -637,6 +637,11 @@ final _competitorInfo = <String, _CompetitorInfo>{
       ),
       _FeatureComparison(
         feature: '習慣化・成長ロードマップ',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'Workspace外データ統合 (財務・健康・習慣)',
         competitorHas: false,
         weHave: true,
       ),
