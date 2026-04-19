@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Concurrency Trap — cancel-in-progress: false Still Drops Queued Runs"
 tags: GitHubActions,CI/CD,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # GitHub Actions Concurrency Trap

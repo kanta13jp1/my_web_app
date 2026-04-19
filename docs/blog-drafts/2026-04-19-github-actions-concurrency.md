@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions concurrencyの落とし穴 — cancel-in-progress: falseでもqueuedは消える"
 tags: GitHubActions,CI/CD,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # GitHub Actions concurrencyの落とし穴
