@@ -24,6 +24,26 @@ description: |
 
 ## 手順
 
+### Step 0: workdir 検証 (WORKDIR-ISOLATION・必須)
+
+```bash
+# 自 cwd が worktree か確認 (main repo 直接編集禁止)
+WORKTREE=$(git rev-parse --show-toplevel)
+echo "現在の workdir: $WORKTREE"
+case "$WORKTREE" in
+  */worktrees/instance-*) echo "✅ 専用 worktree で作業中" ;;
+  */worktrees/*) echo "⚠️ auto-generated worktree (固定名 worktree 推奨)" ;;
+  *)
+    echo "🚨 main repo 直接編集の危険! 即 worktree に切替えてください:"
+    echo "   bash .claude/scripts/setup-instance-worktree.sh <vscode|win|ps>"
+    echo "   cd .claude/worktrees/instance-<NAME>"
+    ;;
+esac
+```
+
+**期待結果**: `.claude/worktrees/instance-<NAME>` で作業中。それ以外は即切替。
+別インスタンスの `git stash` / `git pull --rebase` で uncommitted 変更が消えるリスクを根本回避。
+
 ### Step 1: ツールバージョン (Rule 14)
 
 ```bash
