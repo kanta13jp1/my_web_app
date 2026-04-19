@@ -11297,3 +11297,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - NotebookLM Master Brain (jibun-master-brain) に両ファイル蓄積 ✅
 - **Philosophy Alignment 平均**: 8.4/9 ✅ (8件全て実装可)
 - **次回候補**: 3階層 method UI 露出 (note_editor) / Cohere RAG / blog-publish 7原則 2/7→6/7 改善
+
+### PS版#152 T-1第152弾 (2026-04-19)
+- **T-1第152弾**: Supabase EF 50本ハードキャップ hub統合アーキテクチャ → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/keeping-supabase-edge-functions-under-50-the-hub-integration-architecture-3k4j
+- **CI修復確認**: leave/performance_review/pomodoro 3ページ trailing_commas + deprecated value→initialValue 22件修正済み
+- **T-1累計**: #143〜#152 (本日10本 / 4月合計大幅増)
+- **Qiita バックログ**: 16本 → UTC 15:00以降 dispatch予定
