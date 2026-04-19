@@ -11892,3 +11892,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 制約: API quota 10,000 units/day = 6 upload/day (5 動画/セッション = 1日1セッション可)
   - 増額申請可能: https://support.google.com/youtube/contact/yt_api_form
 
+### PS版#3 Session 4 (2026-04-19) — AI大学 110社達成 (Deepgram + D-ID)
+
+- **主要作業**: AI大学コンテンツ + UI 2プロバイダー追加
+  - Deepgram: Nova-2/3 STT ($0.0043-0.0052/min)、Aura-2 TTS、Voice Agent API、$200 free credit
+  - D-ID: Talks/Clips/Agents API、静止画→話すアバター動画、$4.70+/月プラン
+  - migration 2本 + UI (_providerMeta/_quizzes/_fallback) 追加
+  - COMPRESSED_PROMPT_V3.md 108社→110社 更新
+
+- **戦略的示唆**:
+  - Deepgram Voice Agent API → 将来的に ai-assistant EF の音声対話機能と統合可能
+  - D-ID Agents API → AI大学コンテンツをアバター動画で解説する機能の布石
+
+- **該当原則**: 5 (商品=ユーザー価値) / 8 (KPI=昨日の自分) / 2 (ミッション駆動)
+- **整合性スコア**: 8/9 ✅
+- **理念的貢献**: 音声・映像 AI プロバイダー追加でユーザーの学習範囲拡大
