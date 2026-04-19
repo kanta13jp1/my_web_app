@@ -121,13 +121,13 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'evernote': const _CompetitorInfo(
     name: 'Evernote',
     emoji: '🐘',
-    tagline: '2.5億人が使ったEvernoteの代替。データもそのまま移行できる。',
-    searchKeyword: 'Evernote代替',
+    tagline: 'Evernoteは2026-04からノート1,000件上限。自分株式会社は無制限＋AI整理で移行先筆頭。',
+    searchKeyword: 'Evernote代替 Evernote移行 EvernoteAlternative',
     accentColor: Color(0xFF00A82D),
     painPoints: [
-      'Evernoteの無料プランはデバイス2台まで',
-      '月額600円〜のプレミアム料金',
-      'AI機能がなく手動整理が必要',
+      'ノート件数: 2026-04施行の無料プラン上限1,000件 — 15年ユーザーが大量離脱中',
+      'デバイス2台まで・月額600円〜のプレミアムに移行しないとノートが見られなくなる',
+      'AI機能なし・手動タグ整理のみ — 自分株式会社はAIタグ自動付与で整理ゼロ',
     ],
     features: [
       _FeatureComparison(
@@ -152,7 +152,12 @@ final _competitorInfo = <String, _CompetitorInfo>{
         weHave: true,
       ),
       _FeatureComparison(
-        feature: 'ENEX インポート',
+        feature: 'ノート件数: 無制限 (Evernoteは1,000件上限)',
+        competitorHas: false,
+        weHave: true,
+      ),
+      _FeatureComparison(
+        feature: 'ENEX インポート (既存ノートをそのまま移行)',
         competitorHas: true,
         weHave: true,
       ),
