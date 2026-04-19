@@ -17,6 +17,7 @@ class AiDevPrinciplesPage extends StatefulWidget {
 
 class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
   int _selectedVideoIdx = 1; // default = A 完全版
+  int _selectedDevLessonIdx = 1; // default = A 字幕付き完全版 (開発教訓シリーズ)
 
   @override
   void initState() {
@@ -24,6 +25,12 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
     for (final v in _videos) {
       platform_view.registerIframeViewFactory(
         'aidev-youtube-${v.id}',
+        'https://www.youtube.com/embed/${v.id}',
+      );
+    }
+    for (final v in _devLessonsVideos) {
+      platform_view.registerIframeViewFactory(
+        'aidev-devlesson-${v.id}',
         'https://www.youtube.com/embed/${v.id}',
       );
     }
@@ -62,6 +69,8 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                   _sevenPrinciplesSection(),
                   const SizedBox(height: 48),
                   _existingFeaturesSection(),
+                  const SizedBox(height: 48),
+                  _devLessonsSection(),
                   const SizedBox(height: 48),
                   _checklistSection(),
                   const SizedBox(height: 48),
@@ -522,6 +531,118 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
   }
 
   // ─── CTA ──────────────────────────────────────────────────────────
+  // ─── 開発教訓動画シリーズ (Win版#125-127 自動生成) ─────────────
+  Widget _devLessonsSection() {
+    final video = _devLessonsVideos[_selectedDevLessonIdx];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0x33FF6B35),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Text(
+            '📺 開発教訓動画シリーズ',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFFF8C5A),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'カオスから教義へ：高速開発の教訓',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFFAFAFA),
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'NotebookLM Master Brain (Win版 100+ セッションの蓄積) から自動生成された動画。'
+          '混沌としていた開発プロセスから自己改善するパターンへ進化した過程を AI が解説。 '
+          '5 variant (原版 + 字幕付き4パターン) を埋め込み。',
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFFCBD5E1),
+            height: 1.8,
+          ),
+        ),
+        const SizedBox(height: 24),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(_devLessonsVideos.length, (i) {
+              final v = _devLessonsVideos[i];
+              final selected = i == _selectedDevLessonIdx;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text('${v.label}  •  ${v.duration}'),
+                  selected: selected,
+                  onSelected: (_) => setState(() => _selectedDevLessonIdx = i),
+                  selectedColor: const Color(0xFFFF6B35),
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  labelStyle: TextStyle(
+                    color: selected ? Colors.white : const Color(0xFFCBD5E1),
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  side: BorderSide(
+                    color: selected
+                        ? const Color(0xFFFF6B35)
+                        : const Color(0xFF444444),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 16),
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: HtmlElementView(viewType: 'aidev-devlesson-${video.id}'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                video.description,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                  height: 1.7,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton.icon(
+              onPressed: () => launchUrl(
+                Uri.parse('https://youtu.be/${video.id}'),
+                mode: LaunchMode.externalApplication,
+              ),
+              icon: const Icon(Icons.open_in_new, size: 16),
+              label: const Text('YouTube で見る'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFFF6B35),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _ctaSection() {
     return Container(
       padding: const EdgeInsets.all(28),
@@ -650,33 +771,33 @@ const _videos = [
 /// (Win版#125 追加・NotebookLM jibun-master-brain artifact dedb6b24)
 const _devLessonsVideos = [
   _Video(
-    id: 'TODO_NOTEBOOK_ORIGINAL',
+    id: 'hU477Zds9kQ',
     label: '編集前 (NotebookLM 原版)',
     duration: '7:01',
-    description:
-        'NotebookLM Master Brain の蓄積 (Win版 100+ セッション) から自動生成された動画。'
+    description: 'NotebookLM Master Brain の蓄積 (Win版 100+ セッション) から自動生成された動画。'
         '混沌としていた開発プロセスから自己改善するパターンへ進化した過程を解説。字幕無し。',
   ),
   _Video(
-    id: 'TODO_VARIANT_A',
+    id: 'Dmx51fPeE6A',
     label: 'A: 完全版 (字幕付き)',
     duration: '7:01',
     description: '日本語字幕焼き込み・全 169 字幕エントリ。LP 埋め込み・最忠実版。',
   ),
   _Video(
-    id: 'TODO_VARIANT_B',
+    id: 'bVytf2lbxjQ',
     label: 'B: warm cinematic',
     duration: '7:01',
-    description: '暖色グレード (brightness -3% / contrast +10% / saturation -15%) + 字幕。映画調。',
+    description:
+        '暖色グレード (brightness -3% / contrast +10% / saturation -15%) + 字幕。映画調。',
   ),
   _Video(
-    id: 'TODO_VARIANT_C',
+    id: 'mwTOsWb-OpM',
     label: 'C: neutral punch',
     duration: '7:01',
     description: 'クリアグレード (contrast +15% / saturation +5%) + 字幕。プレゼン向け視認性最大化。',
   ),
   _Video(
-    id: 'TODO_VARIANT_D',
+    id: 'AVd00T92YHE',
     label: 'D: プレミアム字幕版',
     duration: '7:01',
     description: '太字 22pt + 半透明黒背景 + Outline=3。SNS シェア・スマホ視聴用。',
