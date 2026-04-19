@@ -1,7 +1,7 @@
 ---
 title: "Claude Schedule Auto-Generated Flutter Pages That Failed CI — Quality Gates for AI-Generated Code"
 tags: ClaudeCode,Flutter,CI/CD,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Claude Schedule Auto-Generated Flutter Pages That Failed CI
