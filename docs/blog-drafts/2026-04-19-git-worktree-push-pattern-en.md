@@ -1,7 +1,7 @@
 ---
 title: "Pushing from git worktree branches to main — Multi-Instance Conflict Recovery Guide"
 tags: ClaudeCode,git,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Pushing from git worktree branches to main

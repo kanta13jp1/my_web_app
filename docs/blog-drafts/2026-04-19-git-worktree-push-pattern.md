@@ -1,7 +1,7 @@
 ---
 title: "git worktreeブランチからmainに直push — 複数インスタンス衝突リカバリ完全版"
 tags: ClaudeCode,git,buildinpublic,個人開発
-published: false
+published: true
 ---
 
 # git worktreeブランチからmainに直push
