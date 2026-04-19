@@ -11462,6 +11462,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
+### PS版#6 horse-racing バッチ最適化 (2026-04-19 18:54)
+- **修正**: `horse_entries` に `prev_history_fetched boolean DEFAULT false` 追加
+- **修正**: 前走情報取得ステップ — 404 失敗馬もフラグ立て → 次回以降スキップ
+- **効果**: `前走情報取得` ステップ 26分 → 初回のみ (以降ほぼ 0秒)
+- **ファイル**: `supabase/migrations/20260419060000_add_prev_history_fetched_flag.sql`
+- **ファイル**: `scripts/fetch_horse_racing.py` (fetch_horse_histories 関数)
+- commit: `5e9255e1`
+
 ### Rule 17 WF health check (PS版#1 · 2026-04-19 09:43)
 - 全 WF success率: 全0失敗 / deploy-prod 1 cancelled (並行push競合・想定内)
 - 失敗 WF: なし
