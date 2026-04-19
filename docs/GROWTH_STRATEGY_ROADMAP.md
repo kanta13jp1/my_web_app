@@ -11460,6 +11460,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **Qiita #171試行**: 429 rate limit — 本日上限超過 (翌日 00:00 JST リトライ)
 - **本日T-1累計**: 30本 (過去最高更新)
 
+### PS版#168 T-1第173-174弾 (2026-04-19)
+- **T-1第173弾**: Flutter WebでMS Project風ガントチャート実装 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/building-an-ms-project-style-gantt-chart-in-flutter-web-custompaint-with-synchronized-scrolling-1c0i
+- **T-1第174弾**: Supabase Edge Function 4段階フォールバック設計 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/complete-error-handling-patterns-for-supabase-edge-functions-4-stage-fallback-design-4jca
+- **本日T-1累計**: 32本 (過去最高更新)
+
 ### 競合モニタリング深掘り (PS版#4 · 2026-04-19)
 
 **調査対象**: Notion / MoneyForward / Slack (3社集中調査)
