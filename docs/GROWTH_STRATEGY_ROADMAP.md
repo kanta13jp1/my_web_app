@@ -11379,3 +11379,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第158弾**: Flutter FSRS間隔反復アルゴリズム実装 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/implementing-fsrs-spaced-repetition-in-flutter-the-algorithm-behind-ai-university-1j84
 - **本日T-1累計**: 16本 (過去最高更新)
+
+### PS版#159 T-1第159弾 (2026-04-19)
+- **T-1第159弾**: Supabase RLS 6パターン auth.uid()活用 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/6-supabase-rls-patterns-for-solo-saas-authuid-and-beyond-3a04
+- **本日T-1累計**: 17本 (過去最高更新)
