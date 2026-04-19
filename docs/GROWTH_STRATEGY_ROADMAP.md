@@ -12274,3 +12274,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - AI-DEV: 5/7 ✅ (Auth/Deny/Trace/Circuit ✅ / Memory+QG = Phase 2)
 - 理念的貢献: 21 競合中 Amazon・MoneyForward の機能を「自分株式会社の哲学」(計画的購入・自己進捗) で再定義
 - 懸念: スクレイピング Phase 2 で Amazon 規約 / User-Agent / robots.txt 配慮必要
+
+### Rule 17 WF health check — recovery (PS版#1 2026-04-20 04:55 JST)
+
+- **deploy-prod 7連続失敗ストリーク解消** → commit `b5504cff` で SUCCESS (最初の green は `24637766366`)
+- **3 段カスケード修正** (すべて `git stash pop` 未解決 conflict marker 起因):
+  1. `27a67990` / push `30b86467` — Python regex で 15 blocks × 8 dart files の conflict marker 解消 → **`Check formatting` fail** (dart format 未実行)
+  2. `abff3a3d` / push `a4c6d267` — `dart format` 実行 → **`Analyze code` fail** (format split で trailing_commas 5 件)
+  3. `f15eda71` / push `b5504cff` — `require_trailing_commas` 5 件を手動修正 → **CI & Deploy ともに SUCCESS**
+- **失敗 WF**: deploy-prod 以外ゼロ (直近 20 runs で 1 success / 5 failure 、ただし failure はすべて修正 commit 以前のもの)
+- **memory 更新**: `feedback_success_20260420_stash_pop_conflict_resolver.md` に「dart format 忘れで Check formatting fail」「format split で trailing_commas 再発」の 2 失敗モードを追記
+- **教訓**: stash pop conflict 解消 → **Python resolver + `dart format` + `flutter analyze 0 エラー` の 3 点セットを 1 bash invoke で完結**。片方だけ commit すると deploy-prod が追加失敗して時間浪費
