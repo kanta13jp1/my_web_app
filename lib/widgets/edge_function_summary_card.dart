@@ -449,6 +449,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/pomodoro-timer',
       'ポモドーロタイマーページ > 25分作業セッション開始・完了履歴確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'calendar-events',
+      'カレンダーイベント管理',
+      true,
+      '/calendar-events',
+      'カレンダーページ > イベント一覧・追加・編集',
+    ),
+    _FnDef(
+      'expense-tracker',
+      '支出トラッカー (家計簿)',
+      true,
+      '/expense-tracker',
+      '支出トラッカーページ > 支出記録・カテゴリ別集計',
+    ),
+    _FnDef(
+      'reading-list',
+      '読書リスト管理',
+      true,
+      '/reading-list',
+      '読書リストページ > 読書中・未読・完読リスト管理',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
