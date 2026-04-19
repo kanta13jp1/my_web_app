@@ -1,7 +1,7 @@
 ---
 title: "Building an MS Project-Style Gantt Chart in Flutter Web — CustomPaint with Synchronized Scrolling"
 tags: Flutter,buildinpublic,UI,webdev
-published: false
+published: true
 ---
 
 # Building an MS Project-Style Gantt Chart in Flutter Web

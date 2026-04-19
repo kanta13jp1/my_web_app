@@ -1,7 +1,7 @@
 ---
 title: "Cutting a 26-Minute Supabase Batch Job to Near Zero — The prev_fetched Flag Pattern"
 tags: Supabase,PostgreSQL,Python,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Cutting a 26-Minute Supabase Batch Job to Near Zero

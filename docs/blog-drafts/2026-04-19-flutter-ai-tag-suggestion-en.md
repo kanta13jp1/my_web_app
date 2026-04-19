@@ -1,7 +1,7 @@
 ---
 title: "Adding AI Tag Suggestions to Flutter Notes — Free Groq API for Real-Time Tagging"
 tags: Flutter,Supabase,Groq,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Adding AI Tag Suggestions to Flutter Notes
