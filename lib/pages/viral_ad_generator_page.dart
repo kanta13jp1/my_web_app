@@ -208,6 +208,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -303,7 +304,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 children: [
                   const Text(
                     '広告テンプレート',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ...[
@@ -324,7 +329,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           // 言語選択
           Row(
             children: [
-              const Text('言語: ', style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                '言語: ',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(width: 8),
               ChoiceChip(
                 label: const Text('日本語'),
@@ -361,7 +372,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
 
           if (_errorMessage != null) ...[
             const SizedBox(height: 8),
-            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(
+                color: Colors.red,
+                height: 1.5,
+              ),
+            ),
           ],
 
           // 生成結果
@@ -413,13 +430,17 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   Text(
                     desc,
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF9CA3AF),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -452,7 +473,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 const SizedBox(width: 8),
                 const Text(
                   '生成された広告',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
                 const Spacer(),
                 Container(
@@ -470,6 +495,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       fontSize: 11,
                       color: hasImage ? Colors.green : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -500,19 +526,33 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               ),
             ],
             const SizedBox(height: 12),
-            const Text('スクリプト:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'スクリプト:',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 4),
             ...script.map(
               (line) => Padding(
                 padding: const EdgeInsets.only(bottom: 2),
-                child:
-                    Text(line.toString(), style: const TextStyle(fontSize: 14)),
+                child: Text(
+                  line.toString(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
             const Text(
               'X投稿キャプション:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 4),
             Container(
@@ -528,7 +568,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 caption.length > 280
                     ? '${caption.substring(0, 280)}...'
                     : caption,
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -575,8 +618,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   children: [
                     const Text(
                       '📊 バイラル指標',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     _buildStatRow(
@@ -608,7 +654,10 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       ),
                       child: Text(
                         _viralStats!['current']?.toString() ?? '計測中...',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -627,7 +676,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 children: [
                   const Text(
                     '⏰ 最適X投稿時間帯 (JST)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -645,7 +698,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                   const SizedBox(height: 8),
                   const Text(
                     'Claude Schedule (daily-report) が自動で最適時間に広告を投稿します',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -663,7 +720,11 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                 children: [
                   const Text(
                     '🔄 広告ローテーション計画',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ...[
@@ -683,6 +744,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                             style: const TextStyle(
                               color: Color(0xFF9CA3AF),
                               fontSize: 12,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -722,13 +784,20 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
+              ),
               if (sub.isNotEmpty)
                 Text(
                   sub,
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF9CA3AF),
+                    height: 1.5,
                   ),
                 ),
             ],
@@ -748,12 +817,19 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             SizedBox(height: 16),
             Text(
               'まだ広告を生成していません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             SizedBox(height: 8),
             Text(
               '「生成」タブで広告を作成しましょう',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -787,12 +863,18 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             ),
             title: Text(
               _templateLabel(templateKey),
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(
               '${item['lang']?.toString().toUpperCase() ?? 'JA'}  |  ${createdAt.length > 10 ? createdAt.substring(0, 10) : createdAt}'
               '${postedAt != null ? '  |  投稿: ${postedAt.substring(0, 10)}' : ''}',
-              style: const TextStyle(fontSize: 11),
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.5,
+              ),
             ),
             trailing: status == 'posted' && tweetUrl != null
                 ? IconButton(
@@ -821,6 +903,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                         fontSize: 11,
                         color: _statusColor(status),
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                   ),

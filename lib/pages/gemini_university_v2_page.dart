@@ -3583,7 +3583,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           // ヘッダー
           Row(
             children: [
-              const Text('🎓', style: TextStyle(fontSize: 32)),
+              const Text(
+                '🎓',
+                style: TextStyle(
+                  fontSize: 32,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3594,6 +3600,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       color: Color(0xFFE5E7EB),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                   Text(
@@ -3601,6 +3608,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     style: TextStyle(
                       color: const Color(0xFFE5E7EB).withValues(alpha: 0.6),
                       fontSize: 11,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -3644,6 +3652,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         ? const Color(0xFFE5E7EB)
                         : const Color(0xFFE5E7EB).withValues(alpha: 0.38),
                     fontWeight: learned ? FontWeight.bold : FontWeight.normal,
+                    height: 1.5,
                   ),
                 ),
               );
@@ -3662,7 +3671,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             ),
             child: Row(
               children: [
-                const Text('📊', style: TextStyle(fontSize: 14)),
+                const Text(
+                  '📊',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'クイズ正解: $count / $total 問',
@@ -3670,6 +3685,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     color: Color(0xFFFFC107),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -3678,7 +3694,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           const SizedBox(height: 12),
           const Text(
             'my-web-app-b67f4.web.app',
-            style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 11),
+            style: TextStyle(
+              color: Color(0xFFB0B0B0),
+              fontSize: 11,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -3915,7 +3935,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Expanded(
                     child: Text(
                       'DBから取得できませんでした。フォールバック表示中。',
-                      style: TextStyle(fontSize: 12),
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -3992,7 +4015,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       ),
       child: Row(
         children: [
-          Text(m.emoji, style: const TextStyle(fontSize: 32)),
+          Text(
+            m.emoji,
+            style: const TextStyle(
+              fontSize: 32,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -4004,6 +4033,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     color: Color(0xFFE5E7EB),
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 if (updatedAt != null)
@@ -4012,12 +4042,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     style: TextStyle(
                       color: const Color(0xFFE5E7EB).withValues(alpha: 0.7),
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 if (rows == null || rows.isEmpty)
                   const Text(
                     'フォールバック表示',
-                    style: TextStyle(color: Color(0xFFB0B0B0), fontSize: 11),
+                    style: TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),
@@ -4054,19 +4089,30 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       fontWeight: FontWeight.w600,
       height: 1.4,
     ),
-    strong:
-        const TextStyle(color: Color(0xFFE5E7EB), fontWeight: FontWeight.bold),
+    strong: const TextStyle(
+      color: Color(0xFFE5E7EB),
+      fontWeight: FontWeight.bold,
+      height: 1.5,
+    ),
     em: const TextStyle(
       color: Color(0xFFB0B0B0),
       fontStyle: FontStyle.italic,
+      height: 1.5,
     ),
-    listBullet: const TextStyle(color: Color(0xFFB0B0B0)),
+    listBullet: const TextStyle(
+      color: Color(0xFFB0B0B0),
+      height: 1.5,
+    ),
     code: const TextStyle(
       color: Color(0xFF81C784),
       fontFamily: 'monospace',
       fontSize: 13,
+      height: 1.5,
     ),
-    blockquote: const TextStyle(color: Color(0xFFB0B0B0)),
+    blockquote: const TextStyle(
+      color: Color(0xFFB0B0B0),
+      height: 1.5,
+    ),
   );
 
   Widget _buildContentCard(
@@ -4090,11 +4136,16 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             color: Color(0xFFE5E7EB),
+            height: 1.5,
           ),
         ),
         subtitle: Text(
           _categoryLabel(category),
-          style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFFB0B0B0),
+            height: 1.5,
+          ),
         ),
         children: [
           Padding(
@@ -4186,6 +4237,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         color: Color(0xFFFF6B35),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -4202,6 +4254,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: m.color,
+                    height: 1.5,
                   ),
                 ),
                 if (answered) ...[
@@ -4213,7 +4266,11 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   ),
                   const Text(
                     ' +50pt',
-                    style: TextStyle(color: Color(0xFF4CAF50), fontSize: 12),
+                    style: TextStyle(
+                      color: Color(0xFF4CAF50),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ],
@@ -4221,7 +4278,10 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             const SizedBox(height: 12),
             Text(
               quiz.question,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ...List.generate(quiz.options.length, (i) {
@@ -4310,6 +4370,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     color: Color(0xFF3D5AFE),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -4325,7 +4386,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 8),
-                  Text('解説を生成中...', style: TextStyle(fontSize: 12)),
+                  Text(
+                    '解説を生成中...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
                 ],
               ),
             ] else if (_quizExplanations.containsKey(providerId)) ...[
@@ -4356,6 +4423,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                             color: Color(0xFFFF6B35),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
+                            height: 1.5,
                           ),
                         ),
                       ],

@@ -284,7 +284,13 @@ class _WardrobePageState extends State<WardrobePage>
                     final cat = _categories[i];
                     final selected = _filterCategory == cat;
                     return FilterChip(
-                      label: Text(cat, style: const TextStyle(fontSize: 12)),
+                      label: Text(
+                        cat,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
                       selected: selected,
                       selectedColor: const Color(0xFFBCAAA4),
                       onSelected: (_) => setState(() => _filterCategory = cat),
@@ -306,7 +312,10 @@ class _WardrobePageState extends State<WardrobePage>
                     return FilterChip(
                       label: Text(
                         _statusLabel(st),
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
                       ),
                       selected: selected,
                       selectedColor: _statusColor(st).withValues(alpha: 0.3),
@@ -328,6 +337,7 @@ class _WardrobePageState extends State<WardrobePage>
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -356,6 +366,7 @@ class _WardrobePageState extends State<WardrobePage>
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -417,6 +428,7 @@ class _WardrobePageState extends State<WardrobePage>
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
+                          height: 1.5,
                         ),
                       ),
                       Row(
@@ -454,6 +466,7 @@ class _WardrobePageState extends State<WardrobePage>
                       color: _statusColor(item.status),
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -466,6 +479,7 @@ class _WardrobePageState extends State<WardrobePage>
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -485,6 +499,7 @@ class _WardrobePageState extends State<WardrobePage>
                   style: TextStyle(
                     fontSize: 11,
                     color: isOld ? Colors.red : const Color(0xFF9CA3AF),
+                    height: 1.5,
                   ),
                 ),
                 if (isOld) ...[
@@ -498,7 +513,11 @@ class _WardrobePageState extends State<WardrobePage>
                     ),
                     child: const Text(
                       '長期未使用',
-                      style: TextStyle(color: Colors.red, fontSize: 10),
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 10,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -580,6 +599,7 @@ class _WardrobePageState extends State<WardrobePage>
                 fontSize: 11,
                 color: color,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ],
@@ -592,7 +612,13 @@ class _WardrobePageState extends State<WardrobePage>
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration:
             BoxDecoration(color: bg, borderRadius: BorderRadius.circular(4)),
-        child: Text(label, style: const TextStyle(fontSize: 10)),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            height: 1.5,
+          ),
+        ),
       );
 
   // =====================================================
@@ -624,7 +650,11 @@ class _WardrobePageState extends State<WardrobePage>
                 children: [
                   const Text(
                     'ワードローブサマリー',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -673,6 +703,7 @@ class _WardrobePageState extends State<WardrobePage>
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFFEF6C00),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -683,6 +714,7 @@ class _WardrobePageState extends State<WardrobePage>
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
+                      height: 1.5,
                     ),
                   ),
                   if (longUnused.isNotEmpty) ...[
@@ -704,7 +736,10 @@ class _WardrobePageState extends State<WardrobePage>
                                 Expanded(
                                   child: Text(
                                     item.name,
-                                    style: const TextStyle(fontSize: 13),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
                                 Text(
@@ -714,6 +749,7 @@ class _WardrobePageState extends State<WardrobePage>
                                   style: TextStyle(
                                     color: Colors.red[400],
                                     fontSize: 12,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -733,6 +769,7 @@ class _WardrobePageState extends State<WardrobePage>
                                       style: TextStyle(
                                         color: Color(0xFF3D5AFE),
                                         fontSize: 11,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ),
@@ -747,6 +784,7 @@ class _WardrobePageState extends State<WardrobePage>
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 12,
+                          height: 1.5,
                         ),
                       ),
                   ],
@@ -764,7 +802,11 @@ class _WardrobePageState extends State<WardrobePage>
                 children: [
                   const Text(
                     'カテゴリ別内訳',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   ..._categories.skip(1).map((cat) {
@@ -779,7 +821,10 @@ class _WardrobePageState extends State<WardrobePage>
                             width: 70,
                             child: Text(
                               cat,
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
                             ),
                           ),
                           Expanded(
@@ -801,6 +846,7 @@ class _WardrobePageState extends State<WardrobePage>
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -825,6 +871,7 @@ class _WardrobePageState extends State<WardrobePage>
               fontWeight: FontWeight.bold,
               fontSize: 18,
               color: color,
+              height: 1.5,
             ),
           ),
           Text(
@@ -832,6 +879,7 @@ class _WardrobePageState extends State<WardrobePage>
             style: TextStyle(
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],
@@ -994,7 +1042,11 @@ class _AddItemSheetState extends State<_AddItemSheet> {
         children: [
           const Text(
             '衣類を追加',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -1070,7 +1122,10 @@ class _AddItemSheetState extends State<_AddItemSheet> {
                     )
                   : const Text(
                       '追加する',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
             ),
           ),
