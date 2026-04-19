@@ -4,7 +4,7 @@ import '../models/ai_provider_registry.dart';
 
 /// AI大学 プロバイダー実装ステータス一覧
 ///
-/// 93社の実装状況をフィルタタブ付きで一覧表示する。
+/// 96社の実装状況をフィルタタブ付きで一覧表示する。
 /// ステータス: 未実装 / 実装済 / 要APIキー / 要課金
 class AiProviderStatusPage extends StatefulWidget {
   const AiProviderStatusPage({super.key});

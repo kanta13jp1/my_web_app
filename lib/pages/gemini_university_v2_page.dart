@@ -608,6 +608,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF76B900),
     officialUrl: 'https://www.gmicloud.ai/',
   ),
+  'inworld': _ProviderMeta(
+    name: 'Inworld AI',
+    emoji: '🎮',
+    color: const Color(0xFF9B59B6),
+    officialUrl: 'https://inworld.ai/',
+  ),
+  'coreweave': _ProviderMeta(
+    name: 'CoreWeave',
+    emoji: '🏭',
+    color: const Color(0xFFFF6B35),
+    officialUrl: 'https://www.coreweave.com/',
+  ),
+  'lambda_labs': _ProviderMeta(
+    name: 'Lambda Labs',
+    emoji: 'λ',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://lambda.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1194,6 +1212,36 @@ final Map<String, _Quiz> _quizzes = {
       'NVIDIA TensorRT-LLM + vLLM + FP8 量子化',
       'WebAssembly',
       'Bitcoin マイニング',
+    ],
+    correct: 1,
+  ),
+  'inworld': _Quiz(
+    question: 'Inworld Router の特徴として正しいものは?',
+    options: [
+      '単一プロバイダーのみ対応',
+      'OpenAI/Anthropic/Google など複数モデルを 1 つの OpenAI 互換 API で統合・自動フォールバック',
+      'GPU 販売のみ',
+      '画像生成専用',
+    ],
+    correct: 1,
+  ),
+  'coreweave': _Quiz(
+    question: 'CoreWeave の主要顧客として該当するのは?',
+    options: [
+      'Netflix のみ',
+      'OpenAI / Meta / Perplexity 等 Tier 1 AI 企業',
+      'ゲーム会社のみ',
+      '個人開発者のみ',
+    ],
+    correct: 1,
+  ),
+  'lambda_labs': _Quiz(
+    question: 'Lambda Labs Inference API の今後の方針として正しいのは?',
+    options: [
+      '更なる拡張が決定',
+      'wind-down (段階的廃止) 方針・今後は GPU 直接賃貸に集中',
+      '料金 10 倍に値上げ',
+      '完全クローズドβ化',
     ],
     correct: 1,
   ),
@@ -2727,6 +2775,83 @@ NVIDIA **TensorRT-LLM** バックエンドの低遅延 inference platform。100+
 ## API
 - `https://api.gmicloud.ai/v1/chat/completions`
 - OpenAI SDK の base URL 切替で動く
+''',
+  'inworld': '''
+# Inworld AI
+
+AI エージェント・キャラクター・音声システム構築プラットフォーム。**Inworld Router** で hundreds of models を OpenAI 互換 API 統合。
+
+## 主要サービス
+- **Router**: cost / latency / quality 動的ルーティング・自動フォールバック
+- **Agent Runtime**: C++ orchestration core (LLM + TTS + STT + tools・無料)
+- **Realtime API**: speech-to-speech (OpenAI Realtime protocol 互換)
+- **Inworld TTS**: 高品質低遅延 voice synthesis
+
+## 強み
+- 単一 API で OpenAI / Anthropic / Google etc 統合
+- live experiments + KPI 計測標準装備
+- ゲーム業界 NPC dialogue で老舗実績
+
+## 料金 (例)
+- **GPT 4o Mini**: \$0.15/M入力・\$0.60/M出力
+- **GPT 5 Mini**: \$0.25/M入力・\$2.00/M出力
+- Router 利用料: 無料 (モデル消費料のみ)
+
+## API
+- `https://api.inworld.ai/v1/chat/completions`
+- OpenAI SDK そのまま drop-in
+''',
+  'coreweave': '''
+# CoreWeave
+
+AI ネイティブ企業向け **GPU クラウド**。OpenAI / Meta / Perplexity 等の本番推論インフラを支える Tier 1 NVIDIA GPU プロバイダー。
+
+## 主要サービス
+- **GPU クラウド**: H100 / B200 / B300 / Vera Rubin NVL72 (2026 H2)
+- **AI Inference platform**: 大規模・低遅延・predictable cost
+- **Kubernetes ネイティブ**: K8s + InfiniBand multi-node
+- **Inworld Router 経由**: hundreds of models 利用可
+
+## 強み
+- NVIDIA 最新 GPU 業界最速展開 (B300, Vera Rubin NVL72)
+- InfiniBand 8 NIC/node で大規模並列推論
+- Reserved pricing で月額固定運用
+- SOC 2 / HIPAA / FedRAMP-ready
+
+## 料金 (例)
+- **H100**: \$2.39/hr (on-demand) — 業界平均より低価格
+- **B200**: \$3.49/hr
+- Reserved 1〜3 年で大幅 discount
+
+## アクセス
+- K8s + vLLM/SGLang デプロイ
+- Inworld Router 経由 OpenAI 互換 chat
+''',
+  'lambda_labs': '''
+# Lambda Labs
+
+AI/ML 特化 **GPU クラウド** 老舗 (2012〜)。元々は研究者向けに NVIDIA GPU 時間貸しで有名。**業界最安値級** H100 \$2.89/hr。
+
+## 主要サービス
+- **Lambda Cloud (GPU)**: H100 \$2.89/hr / B200 \$3.49/hr
+- **Lambda Inference API** (廃止予定 — 2025 wind-down 方針)
+- **1-Click Clusters**: H100 マルチノードを 1 クリック
+- **Lambda Stack**: PyTorch + CUDA bundled
+
+## 強み
+- **業界最安 GPU レンタル**: cheapest on-demand H100
+- AI 研究者御用達 (大学・スタートアップ実績多数)
+- Lambda Stack で NVIDIA ドライバ問題から解放
+
+## 料金
+- **H100 on-demand**: \$2.89/hr (最安)
+- **B200 on-demand**: \$3.49/hr
+- **A100 80GB**: \$1.79/hr
+- Reserved 1yr で 30〜50% discount
+
+## 注意
+- **Inference API は wind-down 中** — 新規プロジェクトは Inworld Router / DeepInfra 推奨
+- GPU 直接賃貸は引き続き継続
 ''',
 };
 

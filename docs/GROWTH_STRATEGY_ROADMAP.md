@@ -11557,3 +11557,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/complete-error-handling-patterns-for-supabase-edge-functions-4-stage-fallback-design-1100
 - 本日T-1累計: 34本 (新過去最高)
 - Qiita #171 → 429 rate limit (翌日 JST 00:00 以降リトライ)
+### Windowsアプリ版#118 セッション (2026-04-19 19:00 JST)
+- **AI大学 Step 0 discovery**: Inworld AI (9/9) + CoreWeave (8/9)
+- **AI大学 93→95社**: Inworld AI + CoreWeave 追加
+- **migration 2本**: 20260419190000 (Inworld) + 20260419200000 (CoreWeave)
+- **registry / UI / ai-hub PROVIDER_CONFIGS** 更新
+- **flutter analyze**: 0 エラー
+
+### Windowsアプリ版#119 セッション (2026-04-19 19:10 JST)
+- **AI大学 95→96社**: Lambda Labs 追加 (notImplemented・Inference API は wind-down 中)
+- **migration**: 20260419210000_seed_lambda_labs (overview/models/api 3レコード)
+- **registry**: 1 entry + 96社コメント
+- **UI**: _providerMeta + _quizzes + _fallback 各 1 entry (λ emoji)
+- **ai-university-update.yml**: RSS 1行
+- **CLAUDE.md / COMPRESSED_PROMPT**: 末尾に lambda_labs
+- **ai-hub PROVIDER_CONFIGS**: skip (廃止予定 API は登録しない判断)
+- **status_page + ai-hub コメント**: 96社更新
+

@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (93社, 2026-04-19時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (96社, 2026-04-19時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -711,6 +711,32 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     envKeyName: 'GMI_CLOUD_API_KEY',
     entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
     note: 'TensorRT-LLM 最適化・100+モデル・H100 \$2.10/hr・無料枠あり',
+  ),
+  AiProviderEntry(
+    id: 'inworld',
+    displayName: 'Inworld AI',
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
+    envKeyName: 'INWORLD_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note:
+        r'Router で hundreds of models 統合・GPT 4o Mini $0.15/M入力・Realtime API 互換',
+  ),
+  AiProviderEntry(
+    id: 'coreweave',
+    displayName: 'CoreWeave',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
+    entryPoint: '(未実装 — GPU クラウド・K8s デプロイ前提・Inworld Router 経由で chat 可能)',
+    note: r'OpenAI/Meta/Perplexity の本番 GPU・H100 $2.39/hr・B300/Vera Rubin 最速展開',
+  ),
+  AiProviderEntry(
+    id: 'lambda_labs',
+    displayName: 'Lambda Labs',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — Inference API は wind-down 中・GPU 直接賃貸が今後の主軸)',
+    note: r'業界最安GPU H100 $2.89/hr・Llama 3.3 70B $0.20/M (廃止予定)',
   ),
 ];
 
