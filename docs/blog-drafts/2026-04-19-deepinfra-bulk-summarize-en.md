@@ -1,7 +1,7 @@
 ---
 title: "Bulk Summarizing Notes with DeepInfra Llama-3.1-70B — $0.07 per Million Tokens"
 tags: AI,Flutter,Supabase,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Bulk Summarizing Notes with DeepInfra Llama-3.1-70B

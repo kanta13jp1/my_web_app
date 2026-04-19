@@ -1,7 +1,7 @@
 ---
 title: "DeepInfra Llama-3.1-70BでノートのAIバルク要約を実装した — コスト$0.07/1Mトークン"
 tags: AI,Flutter,Supabase,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # DeepInfra Llama-3.1-70BでノートのAIバルク要約を実装した
