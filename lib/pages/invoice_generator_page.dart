@@ -167,7 +167,11 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
           // リスト
@@ -193,6 +197,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
                                 color: isDark
                                     ? const Color(0xFF9E9E9E)
                                     : const Color(0xFF757575),
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -214,6 +219,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
                                 inv['client_name']?.toString() ?? '不明',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                               subtitle: Text(
@@ -224,6 +230,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF6366F1),
+                                  height: 1.5,
                                 ),
                               ),
                             ),

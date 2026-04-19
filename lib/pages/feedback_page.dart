@@ -91,7 +91,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
       appBar: AppBar(
         title: const Text(
           'ご意見・ご要望',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
         ),
         centerTitle: true,
         elevation: 0,
@@ -133,7 +133,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
               const SizedBox(height: 32),
               const Text(
                 'カテゴリ',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               Container(
@@ -164,7 +168,11 @@ class _FeedbackPageState extends State<FeedbackPage> {
               const SizedBox(height: 24),
               const Text(
                 '内容',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -222,6 +230,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),

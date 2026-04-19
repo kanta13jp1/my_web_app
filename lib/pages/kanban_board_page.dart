@@ -278,6 +278,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: color,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -296,6 +297,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: color,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -316,6 +318,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFFBDBDBD),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -372,6 +375,7 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                   decoration: currentCol == _colDone
                       ? TextDecoration.lineThrough
                       : null,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -435,7 +439,10 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                     children: [
                       Icon(Icons.delete_outline, size: 16, color: Colors.red),
                       SizedBox(width: 8),
-                      Text('削除', style: TextStyle(color: Colors.red)),
+                      Text(
+                        '削除',
+                        style: TextStyle(color: Colors.red, height: 1.5),
+                      ),
                     ],
                   ),
                 ),

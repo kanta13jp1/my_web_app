@@ -151,7 +151,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
                 SizedBox(width: 8),
                 Text(
                   'バックアップ状況',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -219,7 +223,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
           children: [
             const Text(
               'バックアップ対象',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ..._exportTargets.map(
@@ -252,7 +260,8 @@ class _DataBackupPageState extends State<DataBackupPage> {
       children: [
         const Text(
           'バックアップ履歴',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style:
+              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.5),
         ),
         const SizedBox(height: 8),
         ..._backupHistory.map(
@@ -266,7 +275,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
               subtitle: Text(b['targets']?.toString() ?? '全データ'),
               trailing: Text(
                 b['size_kb'] != null ? '${b['size_kb']} KB' : '',
-                style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFFB0B0B0),
+                  height: 1.5,
+                ),
               ),
             ),
           ),

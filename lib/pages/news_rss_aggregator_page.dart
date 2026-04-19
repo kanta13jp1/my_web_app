@@ -133,7 +133,11 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           Expanded(
@@ -152,7 +156,10 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                             SizedBox(height: 8),
                             Text(
                               'RSSフィードがありません\n上のフォームからURLを追加してください',
-                              style: TextStyle(color: Color(0xFF9CA3AF)),
+                              style: TextStyle(
+                                color: Color(0xFF9CA3AF),
+                                height: 1.5,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -187,6 +194,7 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
+                                height: 1.5,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -197,6 +205,7 @@ class _NewsRssAggregatorPageState extends State<NewsRssAggregatorPage> {
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: Color(0xFF9CA3AF),
+                                      height: 1.5,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,

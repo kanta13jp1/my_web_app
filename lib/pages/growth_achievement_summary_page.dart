@@ -75,6 +75,7 @@ class _GrowthAchievementSummaryPageState
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -86,6 +87,7 @@ class _GrowthAchievementSummaryPageState
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
           ],
@@ -112,7 +114,7 @@ class _GrowthAchievementSummaryPageState
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red, height: 1.5),
                   ),
                 )
               : SingleChildScrollView(
@@ -139,6 +141,7 @@ class _GrowthAchievementSummaryPageState
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -185,7 +188,8 @@ class _GrowthAchievementSummaryPageState
                       ] else
                         const Text(
                           'データがありません',
-                          style: TextStyle(color: Color(0xFFB0B0B0)),
+                          style:
+                              TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
                         ),
                     ],
                   ),

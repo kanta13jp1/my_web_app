@@ -94,7 +94,8 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red),
+                          style:
+                              const TextStyle(color: Colors.red, height: 1.5),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -124,6 +125,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                               color: isDark
                                   ? const Color(0xFF9E9E9E)
                                   : const Color(0xFF757575),
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -221,6 +223,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                         fontWeight: n['is_read'] == true
                                             ? FontWeight.normal
                                             : FontWeight.w600,
+                                        height: 1.5,
                                       ),
                                     ),
                                     subtitle: Text(
@@ -253,6 +256,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
           style: TextStyle(
             fontSize: 13,
             color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+            height: 1.5,
           ),
         ),
         const Spacer(),
@@ -262,6 +266,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: color,
+            height: 1.5,
           ),
         ),
       ],

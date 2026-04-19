@@ -133,7 +133,7 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
             },
             child: Text(
               '${_focusedMonth.year}/${_focusedMonth.month}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
           ),
           IconButton(
@@ -177,6 +177,7 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFFB0B0B0),
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -310,12 +311,16 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 Text(
                   item['status'] as String? ?? 'planned',
-                  style:
-                      const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFFB0B0B0),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),

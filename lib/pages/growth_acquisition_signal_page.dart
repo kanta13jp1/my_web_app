@@ -106,7 +106,11 @@ class _GrowthAcquisitionSignalPageState
           children: [
             const Text(
               '記録するシグナル',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -161,6 +165,7 @@ class _GrowthAcquisitionSignalPageState
                                     fontWeight: selected
                                         ? FontWeight.w600
                                         : FontWeight.normal,
+                                    height: 1.5,
                                   ),
                                 ),
                                 Text(
@@ -168,6 +173,7 @@ class _GrowthAcquisitionSignalPageState
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Color(0xFFB0B0B0),
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -184,14 +190,14 @@ class _GrowthAcquisitionSignalPageState
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red, height: 1.5),
               ),
             ],
             if (_successMessage != null) ...[
               const SizedBox(height: 8),
               Text(
                 _successMessage!,
-                style: const TextStyle(color: Colors.green),
+                style: const TextStyle(color: Colors.green, height: 1.5),
               ),
             ],
             const SizedBox(height: 12),
