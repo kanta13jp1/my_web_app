@@ -3643,7 +3643,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
         children: [
           Text(
             _monthLabelWithRole(month),
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -4077,7 +4081,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const Expanded(
                 child: Text(
                   '完済までの収監モード',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -4185,7 +4193,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 12),
           const Text(
             '本日の規律',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           ...rules.map((rule) {
@@ -4213,7 +4225,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 8),
           const Text(
             '最近の違反',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           if (recentViolations.isEmpty)
@@ -4904,7 +4920,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const Expanded(
                 child: Text(
                   'Watchlist',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
                 ),
               ),
               Text(
@@ -5092,8 +5112,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               const Text('純資産:', style: TextStyle(fontWeight: FontWeight.bold)),
               Text(
                 '¥${NumberFormat('#,###').format(totalAssets + totalLiabilities)}',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  height: 1.4,
+                ),
               ),
             ],
           ),
