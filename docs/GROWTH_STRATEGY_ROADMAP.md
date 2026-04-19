@@ -11318,3 +11318,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - orphan branches: blog-publish 0, cs-check 0, claude/* 4 → 全4本削除 (merged/closed)
 - Workflow Failure Handler: 4/7 success (3件 skipped扱い — 異常なし)
 - 修正済み: dart:ui_web conditional import fix (4c81d198) + claude/* orphan 4本削除
+
+### VSCode版#116-117 セッション (2026-04-19)
+- **personal_dashboard_page.dart** (design-skills実施)
+  - `fontSize: 9` → `10` (chart labels)、`EdgeInsets.all(14)` → `16`
+  - heading `fontSize:18` + `height: 1.4`、subtitle `fontSize:10` + `height: 1.5`
+- **ai_assistant_chat_page.dart** (design-skills実施)
+  - body/heading `fontSize:13/16` + `height: 1.6` (3箇所)
+  - bubble padding `horizontal: 14 → 12`、`vertical: 10 → 8` (4px grid)
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: agent_hub_page / activity_feed_page / wrap-up
