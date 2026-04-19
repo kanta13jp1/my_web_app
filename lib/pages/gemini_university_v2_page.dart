@@ -3932,7 +3932,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
   Future<void> _shareProgress() async {
     final count = _answeredQuizzes.length;
     final total = _quizzes.length;
-    const url = 'https://my-web-app-b67f4.web.app/#/ai-university';
+    const url = 'https://my-web-app-b67f4.web.app/ai-university';
 
     // A/B/C テスト: 3バリエーションをランダム選択
     final variant = Random().nextInt(3);

@@ -297,7 +297,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
   }
 
   String _buildShareUrl(String recordingId) {
-    return 'https://my-web-app-b67f4.web.app/#/guitar-recording-studio?share=$recordingId';
+    return 'https://my-web-app-b67f4.web.app/guitar-recording-studio?share=$recordingId';
   }
 
   String _mimeTypeForExtension(String extension) {
