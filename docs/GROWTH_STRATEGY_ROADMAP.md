@@ -11467,6 +11467,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/complete-error-handling-patterns-for-supabase-edge-functions-4-stage-fallback-design-4jca
 - **本日T-1累計**: 32本 (過去最高更新)
 
+### PS版#169 T-1第175-176弾 確認 (2026-04-19)
+- **T-1第175弾**: GitHub Actions concurrency trap cancel-in-progress:false → dev.to 投稿成功 (別instance dispatch)
+  - https://dev.to/kanta13jp1/github-actions-concurrency-trap-cancel-in-progress-false-still-drops-queued-runs-5hg3
+- **T-1第176弾**: Claude Code 10インスタンス並列 git worktree分離設計 → dev.to 投稿成功 (別instance dispatch)
+  - https://dev.to/kanta13jp1/running-10-claude-code-instances-in-parallel-git-worktree-isolation-design-2n18
+- **本日T-1累計**: 34本 (過去最高更新)
+
 ### 競合モニタリング深掘り (PS版#4 · 2026-04-19)
 
 **調査対象**: Notion / MoneyForward / Slack (3社集中調査)
