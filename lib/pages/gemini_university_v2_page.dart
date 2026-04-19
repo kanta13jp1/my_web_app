@@ -747,6 +747,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFFBBF24),
     officialUrl: 'https://wandb.ai/',
   ),
+  'modal': _ProviderMeta(
+    name: 'Modal Labs',
+    emoji: '⚡',
+    color: const Color(0xFF6366F1),
+    officialUrl: 'https://modal.com/',
+  ),
+  'pinecone': _ProviderMeta(
+    name: 'Pinecone',
+    emoji: '🌲',
+    color: const Color(0xFF10B981),
+    officialUrl: 'https://www.pinecone.io/',
+  ),
+  'langchain': _ProviderMeta(
+    name: 'LangChain',
+    emoji: '🔗',
+    color: const Color(0xFF1C7C54),
+    officialUrl: 'https://www.langchain.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1563,6 +1581,36 @@ final Map<String, _Quiz> _quizzes = {
       'LLM アプリのトレーシング・評価・コスト監視',
       'ハイパーパラメータの自動最適化',
       'データセットのバージョン管理',
+    ],
+    correct: 1,
+  ),
+  'modal': _Quiz(
+    question: 'Modal Labs の最大の特徴は？',
+    options: [
+      'ブラウザ上で Python を実行するサービス',
+      'Python デコレータ1行でローカル関数をクラウド GPU で実行',
+      'GPU のオークションサイト',
+      '機械学習モデルのマーケットプレイス',
+    ],
+    correct: 1,
+  ),
+  'pinecone': _Quiz(
+    question: 'Pinecone が RAG 構築で担う役割は？',
+    options: [
+      'LLM モデル本体をホスティングするサービス',
+      'テキストの感情分析を行うツール',
+      'ベクター埋め込みを高速検索するベクターデータベース',
+      'プロンプトを自動最適化するツール',
+    ],
+    correct: 2,
+  ),
+  'langchain': _Quiz(
+    question: 'LangChain の「RAG」フローで「Retriever」の役割は？',
+    options: [
+      'テキストを埋め込みベクターに変換する',
+      'ベクターストアから関連ドキュメントを検索して取得する',
+      'LLM に送るプロンプトを自動生成する',
+      'ドキュメントを適切なサイズに分割する',
     ],
     correct: 1,
   ),
@@ -3586,6 +3634,79 @@ wandb.log({"val_loss": 0.12, "accuracy": 0.95})
 ## 料金
 - Free: \$0（個人利用）
 - Team: \$50/ユーザー/月
+''',
+  'modal': '''
+# Modal Labs
+
+Python デコレータ**1行**でローカル関数をクラウド GPU で実行するサーバーレス基盤。
+
+## 特徴
+- `@app.function(gpu=modal.GPU.A100())` — GPU 選択即デプロイ
+- `.map()` で 1000 並列ジョブを数行で起動
+- 無料枠 \$30/月クレジット（継続）
+- アイドル時ゼロ課金
+
+## API
+```python
+import modal
+app = modal.App("inference")
+
+@app.function(gpu=modal.GPU.A10G())
+def run(prompt: str) -> str:
+    from transformers import pipeline
+    return pipeline("text-generation", model="gpt2")(prompt)[0]["generated_text"]
+
+# ローカルから即呼び出し
+with app.run():
+    print(run.remote("Hello, Modal!"))
+```
+''',
+  'pinecone': '''
+# Pinecone
+
+**RAG・セマンティック検索**のデファクト ベクターデータベース。数億ベクターをミリ秒で検索。
+
+## 特徴
+- フルマネージド・サーバーレス対応
+- ハイブリッド検索（密 + スパース）
+- メタデータフィルタリングで精密な絞り込み
+- Free プラン: 2GB ストレージ
+
+## API
+```python
+from pinecone import Pinecone, ServerlessSpec
+pc = Pinecone(api_key="KEY")
+pc.create_index("ai-university", dimension=1536, metric="cosine",
+    spec=ServerlessSpec(cloud="aws", region="us-east-1"))
+index = pc.Index("ai-university")
+index.upsert(vectors=[{"id": "1", "values": embedding, "metadata": {"text": "..."}}}])
+results = index.query(vector=query_emb, top_k=3, include_metadata=True)
+```
+''',
+  'langchain': '''
+# LangChain
+
+LLM アプリ構築の**事実上の標準フレームワーク**。GitHub スター 8 万超。Python / JS 両対応。
+
+## 主な機能
+- **Chains** — LLM 呼び出しを連結するパイプライン
+- **Agents** — ツールを自律選択する ReAct エージェント
+- **RAG** — Loader→Splitter→Embeddings→VectorStore→Retriever 標準フロー
+- **LangSmith** — 本番 LLM のデバッグ・評価・トレース
+
+## API
+```python
+from langchain_anthropic import ChatAnthropic
+from langchain.chains import RetrievalQA
+
+llm = ChatAnthropic(model="claude-sonnet-4-6")
+qa = RetrievalQA.from_chain_type(llm=llm, retriever=vectorstore.as_retriever())
+answer = qa.invoke("AI大学の特徴は？")
+```
+
+## 料金
+- LangChain: OSS 無料
+- LangSmith: 月 1 万トレース無料 → \$39/月〜
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
