@@ -11952,3 +11952,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - **懸念事項**: なし (全件 9/9 ✅クリア)
 
+
+### PS版#4 Session 10 (2026-04-21) — 競合レポート 2026-04-21 作成
+
+- **主要作業**: 5社調査 + cross-instance-pr 2件追加
+  - **🔴 Notion AI カレンダーGA**: schedule-hub / daily-judgment 直接競合に昇格 → LP更新依頼 (VSCode版)
+  - **🔴 Claude Opus 4.7 GA**: `claude-opus-4-7` model ID確定。ai-hub synthesis model 更新依頼 (Win版)
+    - 注意: 新トークナイザーで 0〜35% トークン追加消費の可能性 → コスト測定必要
+  - Perplexity Mac Agent: Live ($200/月 / 日本語未対応) → 脅威度 MEDIUM に確定
+  - 日本AI: LINE Travel / NTT tsuzumi 2 → 個人ライフ管理への直接競合なし
+
+- **累計 pending cross-instance-pr**: 8件 → Win版(4件)・VSCode版(3件)・PS版#1(1件)
+
+- **該当原則**: 2 (ミッション駆動) / 5 (商品=ユーザー価値) / 8 (KPI=昨日の自分)
+- **整合性スコア**: 7/9 ✅
