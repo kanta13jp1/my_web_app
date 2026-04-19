@@ -255,6 +255,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                           'この日のイベントはありません',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.outlineVariant,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -378,7 +379,13 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-                const Text('カラー:', style: TextStyle(fontSize: 13)),
+                const Text(
+                  'カラー:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
@@ -481,11 +488,20 @@ class _EventCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(timeLabel, style: const TextStyle(fontSize: 12)),
+            Text(
+              timeLabel,
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
             if (description.isNotEmpty)
               Text(
                 description,
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

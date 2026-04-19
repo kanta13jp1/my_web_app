@@ -149,7 +149,11 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
                 children: [
                   const Text(
                     '休暇申請',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -232,7 +236,11 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
           // 申請一覧
@@ -261,11 +269,17 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
                               title: Text(
                                 '${leave['leave_type'] ?? '-'}  '
                                 '${leave['start_date'] ?? '-'} 〜 ${leave['end_date'] ?? '-'}',
-                                style: const TextStyle(fontSize: 13),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
                               ),
                               subtitle: Text(
                                 leave['reason'] as String? ?? '',
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
                               ),
                               trailing: Chip(
                                 label: Text(
@@ -273,6 +287,7 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: _statusColor(status),
+                                    height: 1.5,
                                   ),
                                 ),
                                 backgroundColor:

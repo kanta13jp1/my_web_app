@@ -124,7 +124,13 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 8),
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              ),
             ],
             const SizedBox(height: 16),
             const Text(
@@ -132,6 +138,7 @@ class _CustomerFeedbackPageState extends State<CustomerFeedbackPage> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             const Divider(),

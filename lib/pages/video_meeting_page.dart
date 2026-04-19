@@ -216,7 +216,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -250,7 +253,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
             Text(
               '会議ルームがありません\n右下の＋ボタンで作成してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -314,7 +320,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
             SizedBox(height: 8),
             Text(
               '議事録がありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -369,7 +378,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
             SizedBox(height: 8),
             Text(
               'アクションアイテムがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -404,7 +416,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
             subtitle: Text(
               '担当: ${item['assignee'] ?? '未割り当て'}  |  '
               '期限: ${item['due_date'] ?? '-'}',
-              style: const TextStyle(fontSize: 11, height: 1.5),
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.5,
+              ),
             ),
           ),
         );
@@ -417,7 +432,10 @@ class _VideoMeetingPageState extends State<VideoMeetingPage>
       return const Center(
         child: Text(
           '統計データがありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }

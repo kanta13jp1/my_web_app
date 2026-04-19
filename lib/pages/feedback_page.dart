@@ -91,7 +91,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
       appBar: AppBar(
         title: const Text(
           'ご意見・ご要望',
-          style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         centerTitle: true,
         elevation: 0,

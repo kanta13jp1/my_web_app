@@ -120,7 +120,10 @@ class _HealthPageState extends State<HealthPage> {
                     ? const Center(
                         child: Text(
                           '健康ログはまだありません',
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -146,6 +149,7 @@ class _HealthPageState extends State<HealthPage> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF9CA3AF),
+                                  height: 1.5,
                                 ),
                               ),
                             ),

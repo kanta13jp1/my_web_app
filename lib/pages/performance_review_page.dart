@@ -185,7 +185,10 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                 const SizedBox(height: 14),
                 Text(
                   '自己評価: ${_selfScore.toInt()} / 5',
-                  style: const TextStyle(fontSize: 13, height: 1.5),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 Slider(
                   value: _selfScore,
@@ -249,7 +252,10 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                               r['goals'] as String? ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12, height: 1.5),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
                             ),
                             children: [
                               Padding(

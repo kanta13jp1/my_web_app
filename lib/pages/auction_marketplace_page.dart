@@ -83,7 +83,10 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -117,6 +120,7 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                               title,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
@@ -127,7 +131,10 @@ class _AuctionMarketplacePageState extends State<AuctionMarketplacePage> {
                             trailing: endAt != null
                                 ? Text(
                                     '終了: $endAt',
-                                    style: const TextStyle(fontSize: 12),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      height: 1.5,
+                                    ),
                                   )
                                 : null,
                           ),

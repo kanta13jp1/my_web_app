@@ -100,7 +100,10 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -121,7 +124,10 @@ class _SpreadsheetDatabasePageState extends State<SpreadsheetDatabasePage> {
                             padding: EdgeInsets.all(12),
                             child: Text(
                               'シート一覧',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                           ),
                           Expanded(

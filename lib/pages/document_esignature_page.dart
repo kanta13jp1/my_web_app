@@ -142,7 +142,10 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
             const SizedBox(height: 12),
             Text(
               pending ? '署名待ちの文書がありません' : '完了した文書がありません',
-              style: const TextStyle(color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -169,7 +172,10 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,8 +192,11 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 if (pending)
                   FilledButton.tonal(
@@ -205,7 +214,13 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
                         }
                       } catch (_) {}
                     },
-                    child: const Text('署名', style: TextStyle(fontSize: 12)),
+                    child: const Text(
+                      '署名',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
               ],
             ),

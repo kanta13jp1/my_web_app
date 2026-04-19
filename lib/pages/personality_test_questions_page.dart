@@ -314,6 +314,7 @@ class _AnswerButton extends StatelessWidget {
                       color: isEnabled
                           ? color
                           : colorScheme.onSurface.withValues(alpha: 0.5),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -327,6 +328,7 @@ class _AnswerButton extends StatelessWidget {
                     color: isEnabled
                         ? colorScheme.onSurface
                         : colorScheme.onSurface.withValues(alpha: 0.5),
+                    height: 1.5,
                   ),
                 ),
               ),

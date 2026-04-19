@@ -131,8 +131,10 @@ class _RewardsPageState extends State<RewardsPage> {
                         child: Text(
                           'まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     )

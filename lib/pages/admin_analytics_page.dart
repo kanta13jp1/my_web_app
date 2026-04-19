@@ -2806,7 +2806,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           child: Center(
             child: Text(
               'データなし',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ),
         ),

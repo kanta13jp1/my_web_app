@@ -224,7 +224,10 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
           Expanded(
             child: Text(
               'LINE Notify のアクセストークンを設定すると、タスク完了・習慣達成などの通知を LINE に自動送信できます。',
-              style: TextStyle(fontSize: 13, height: 1.5),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -254,8 +257,11 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
             Expanded(
               child: Text(
                 message,
-                style:
-                    TextStyle(color: color.shade700, fontSize: 13, height: 1.5),
+                style: TextStyle(
+                  color: color.shade700,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           ],
@@ -299,8 +305,11 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
             const SizedBox(height: 8),
             const Text(
               'LINE Notify のマイページ → トークンの発行 で取得できます',
-              style:
-                  TextStyle(fontSize: 12, color: Colors.black45, height: 1.5),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -403,11 +412,17 @@ class _HistoryTile extends StatelessWidget {
         ),
         title: Text(
           history['event']?.toString() ?? 'イベント',
-          style: const TextStyle(fontSize: 14, height: 1.5),
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           history['sent_at']?.toString() ?? '',
-          style: const TextStyle(fontSize: 12, height: 1.5),
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
         trailing: Text(
           success ? '成功' : '失敗',

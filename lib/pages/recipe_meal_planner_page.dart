@@ -143,7 +143,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             SizedBox(height: 12),
             Text(
               'レシピがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -166,12 +169,18 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 emoji,
-                style: const TextStyle(fontSize: 20, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 20,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text('$category${time > 0 ? " · $time分" : ""}'),
             trailing: calories > 0
@@ -202,7 +211,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             const SizedBox(height: 12),
             const Text(
               '週間プランがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -244,8 +256,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 day,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text('朝: $breakfast'),
@@ -267,7 +281,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             SizedBox(height: 12),
             Text(
               '買い物リストが空です',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),

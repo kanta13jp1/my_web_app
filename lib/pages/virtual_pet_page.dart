@@ -91,7 +91,13 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
         children: [
           SizedBox(
             width: 60,
-            child: Text(label, style: const TextStyle(fontSize: 13)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -104,7 +110,13 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
             ),
           ),
           const SizedBox(width: 8),
-          Text('${val.toInt()}%', style: const TextStyle(fontSize: 13)),
+          Text(
+            '${val.toInt()}%',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
@@ -134,7 +146,10 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -155,13 +170,16 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             if (_pet!['level'] != null)
                               Text(
                                 'Lv. ${_pet!['level']}',
-                                style:
-                                    const TextStyle(color: Color(0xFFB0B0B0)),
+                                style: const TextStyle(
+                                  color: Color(0xFFB0B0B0),
+                                  height: 1.5,
+                                ),
                               ),
                             const SizedBox(height: 16),
                             _buildStatBar(

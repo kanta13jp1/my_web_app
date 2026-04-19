@@ -425,7 +425,10 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 : isActive
                     ? '🔒'
                     : '🏛️',
-            style: const TextStyle(fontSize: 40, height: 1.5),
+            style: const TextStyle(
+              fontSize: 40,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(

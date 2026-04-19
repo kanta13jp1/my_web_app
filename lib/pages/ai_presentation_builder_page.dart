@@ -137,8 +137,13 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
                 color: Colors.red.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
-                  child:
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
+                  ),
                 ),
               ),
             const SizedBox(height: 16),
@@ -162,7 +167,11 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
                 SizedBox(width: 8),
                 Text(
                   'スライドを自動生成',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -247,7 +256,10 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
                 SizedBox(width: 8),
                 Text(
                   '生成されたスライド構成',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -266,7 +278,11 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
       children: [
         const Text(
           '過去の生成履歴',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ..._history.map(

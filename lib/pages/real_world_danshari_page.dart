@@ -136,7 +136,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                     Text(
                       'あなたの部屋にある「捨てるか迷っているモノ」を撮影してください。\nCSOが容赦なく判定します。',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, height: 1.5),
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -283,8 +286,10 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                   children: [
                     const Text(
                       'ときめきスコア: ',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     Text(
                       '${_result!['spark_joy_score']} / 100',
@@ -302,11 +307,17 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                 const SizedBox(height: 16),
                 const Text(
                   ' 判定理由:',
-                  style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 Text(
                   _result!['reason'] ?? '',
-                  style: const TextStyle(fontSize: 16, height: 1.5),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Container(

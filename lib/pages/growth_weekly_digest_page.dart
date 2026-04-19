@@ -104,7 +104,13 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
             height: 1.5,
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 11, height: 1.5)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
       ],
     );
   }
@@ -134,7 +140,10 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : SingleChildScrollView(
@@ -175,8 +184,10 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                       if (channels.isEmpty)
                         const Text(
                           'チャネルデータがありません',
-                          style:
-                              TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         )
                       else ...[
                         const Text(

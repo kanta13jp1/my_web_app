@@ -74,7 +74,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   Card(
@@ -88,6 +91,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -114,7 +118,11 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                   const SizedBox(height: 16),
                   const Text(
                     '請求履歴',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   const Divider(),
                   if (_invoices.isEmpty)
@@ -169,7 +177,10 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(color: Color(0xFFB0B0B0)),
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
           ),
           Expanded(child: Text(value)),

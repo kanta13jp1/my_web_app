@@ -177,7 +177,10 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                       ),
                     ),
                     backgroundColor: timerColor.withAlpha(30),
-                    labelStyle: TextStyle(color: timerColor, height: 1.5),
+                    labelStyle: TextStyle(
+                      color: timerColor,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -260,7 +263,10 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                       const SizedBox(width: 4),
                       Text(
                         '今日の完了数: $_completedPomodoros ポモドーロ',
-                        style: const TextStyle(fontSize: 13, height: 1.5),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -310,7 +316,10 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                 padding: EdgeInsets.all(24),
                 child: Text(
                   'セッション履歴はありません',
-                  style: TextStyle(color: Colors.grey, height: 1.5),
+                  style: TextStyle(
+                    color: Colors.grey,
+                    height: 1.5,
+                  ),
                 ),
               )
             else
@@ -331,11 +340,17 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                     ),
                     title: Text(
                       s['task_name'] as String? ?? '作業セッション',
-                      style: const TextStyle(fontSize: 13, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     subtitle: Text(
                       '${s['duration_minutes'] ?? 25}分  ${(s['completed_at'] as String? ?? '').substring(0, 10)}',
-                      style: const TextStyle(fontSize: 11, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                     ),
                   );
                 },

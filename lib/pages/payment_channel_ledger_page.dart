@@ -122,6 +122,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -134,6 +135,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: auditStatusColor,
+                                  height: 1.5,
                                 ),
                               )
                             else
@@ -142,6 +144,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.red,
+                                  height: 1.5,
                                 ),
                               ),
                           ],

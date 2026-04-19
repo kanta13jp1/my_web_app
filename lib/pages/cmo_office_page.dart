@@ -237,6 +237,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
+                    height: 1.5,
                   ),
                 ),
                 Text(
@@ -244,6 +245,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -269,8 +271,20 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
       child: ListTile(
         key: tileKey,
         leading: Icon(icon, color: color, size: 32),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),

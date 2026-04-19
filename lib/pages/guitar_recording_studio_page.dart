@@ -1898,7 +1898,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ),
       child: Text(
         msg,
-        style: const TextStyle(color: Colors.white70, height: 1.5),
+        style: const TextStyle(
+          color: Colors.white70,
+          height: 1.5,
+        ),
       ),
     );
   }

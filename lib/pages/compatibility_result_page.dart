@@ -374,7 +374,10 @@ ${_compatibilityMatch.description}''';
                 children: [
                   Text(
                     _compatibilityMatch.getCompatibilityEmoji(),
-                    style: const TextStyle(fontSize: 24),
+                    style: const TextStyle(
+                      fontSize: 24,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -658,6 +661,7 @@ ${_compatibilityMatch.description}''';
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             style: ElevatedButton.styleFrom(
@@ -686,6 +690,7 @@ ${_compatibilityMatch.description}''';
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             style: OutlinedButton.styleFrom(

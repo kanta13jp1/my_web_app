@@ -137,7 +137,10 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -149,7 +152,10 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                     ? const Center(
                         child: Text(
                           'コメントがありません',
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.separated(
@@ -165,7 +171,10 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                             subtitle: Text(
                               c['created_at']?.toString().substring(0, 16) ??
                                   '',
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
                             ),
                             trailing: isOwner
                                 ? IconButton(

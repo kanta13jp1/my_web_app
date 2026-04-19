@@ -443,7 +443,9 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
             const SizedBox(height: 10),
             SelectableText(
               reflection,
-              style: const TextStyle(height: 1.5),
+              style: const TextStyle(
+                height: 1.5,
+              ),
             ),
           ],
         ),

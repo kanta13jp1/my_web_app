@@ -72,7 +72,10 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -99,15 +102,20 @@ class _EmergencyContactsPageState extends State<EmergencyContactsPage> {
                             ),
                             title: Text(
                               contact['name']?.toString() ?? '名前不明',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Text(
                               contact['relationship']?.toString() ?? '',
                             ),
                             trailing: Text(
                               contact['phone']?.toString() ?? '',
-                              style: const TextStyle(color: Colors.red),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                height: 1.5,
+                              ),
                             ),
                           ),
                         );

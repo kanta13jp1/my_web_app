@@ -85,7 +85,10 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -113,6 +116,7 @@ class _ChangelogManagerPageState extends State<ChangelogManagerPage> {
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
+                                  height: 1.5,
                                 ),
                               ),
                             ),

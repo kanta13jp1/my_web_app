@@ -114,7 +114,10 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                 const SizedBox(height: 12),
                 const Text(
                   '10個の項目を入力:',
-                  style: TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 ...List.generate(

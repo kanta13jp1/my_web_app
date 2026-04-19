@@ -93,7 +93,10 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
                     ? Center(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : _articles.isEmpty
@@ -116,6 +119,7 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
                                     article['title']?.toString() ?? '(無題)',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(
@@ -129,8 +133,10 @@ class _KnowledgeBasePageState extends State<KnowledgeBasePage> {
                                       ? Chip(
                                           label: Text(
                                             article['category'].toString(),
-                                            style:
-                                                const TextStyle(fontSize: 11),
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              height: 1.5,
+                                            ),
                                           ),
                                           padding: EdgeInsets.zero,
                                         )

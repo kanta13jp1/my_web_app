@@ -107,7 +107,10 @@ class _MusicCollaborationPageState extends State<MusicCollaborationPage> {
                                 ? Chip(
                                     label: Text(
                                       '${session['collaborators']} 人',
-                                      style: const TextStyle(fontSize: 11),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   )
                                 : null,

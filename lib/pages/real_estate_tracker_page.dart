@@ -463,8 +463,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               ),
               title: Text(
                 name,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,7 +475,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   if (address.isNotEmpty)
                     Text(
                       address,
-                      style: const TextStyle(fontSize: 12, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   if (price > 0)
                     Text(
@@ -548,7 +553,10 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             padding: EdgeInsets.all(12),
             child: Text(
               '物件タブから物件を選択してください',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ),
         Expanded(

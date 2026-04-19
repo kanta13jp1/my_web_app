@@ -203,7 +203,10 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
       appBar: AppBar(
         title: const Text(
           'コミュニティ活動',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         centerTitle: true,
         elevation: 1,

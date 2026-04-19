@@ -80,7 +80,10 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -112,13 +115,17 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                               spotName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(reservedAt ?? status),
                             trailing: Chip(
                               label: Text(
                                 status,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
                               ),
                               backgroundColor: status == 'active'
                                   ? Colors.green.shade100

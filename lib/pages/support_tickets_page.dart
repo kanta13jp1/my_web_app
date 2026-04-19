@@ -83,7 +83,10 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : _tickets.isEmpty
@@ -102,6 +105,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                             style: TextStyle(
                               fontSize: 16,
                               color: Color(0xFF9CA3AF),
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -116,6 +120,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF009688),
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -138,6 +143,7 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                     ticket['title']?.toString() ?? '無題',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(

@@ -243,8 +243,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             const SizedBox(width: 8),
             const Text(
               'AI アシスタント',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             if (_isListening) ...[
               const SizedBox(width: 8),
@@ -437,10 +440,17 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             Expanded(
               child: TextField(
                 controller: _inputCtrl,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
                 decoration: InputDecoration(
                   hintText: 'メッセージを入力...',
-                  hintStyle: const TextStyle(color: Colors.white38),
+                  hintStyle: const TextStyle(
+                    color: Colors.white38,
+                    height: 1.5,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: const BorderSide(color: Colors.white12),
@@ -543,7 +553,11 @@ class _TypingDotsState extends State<_TypingDots>
       builder: (_, __) {
         return Text(
           '●' * _dotCount.value,
-          style: const TextStyle(color: Colors.white54, fontSize: 14),
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 14,
+            height: 1.5,
+          ),
         );
       },
     );

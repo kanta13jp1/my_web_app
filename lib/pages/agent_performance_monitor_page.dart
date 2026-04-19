@@ -81,7 +81,10 @@ class _AgentPerformanceMonitorPageState
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -104,12 +107,18 @@ class _AgentPerformanceMonitorPageState
                           SizedBox(height: 16),
                           Text(
                             'メトリクスデータなし',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              height: 1.5,
+                            ),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'AIエージェントのパフォーマンスを監視します',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Colors.grey,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -146,6 +155,7 @@ class _AgentPerformanceMonitorPageState
                                             'エージェント',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
+                                          height: 1.5,
                                         ),
                                       ),
                                       Text(
@@ -153,6 +163,7 @@ class _AgentPerformanceMonitorPageState
                                         style: const TextStyle(
                                           color: Colors.grey,
                                           fontSize: 12,
+                                          height: 1.5,
                                         ),
                                       ),
                                     ],
@@ -167,6 +178,7 @@ class _AgentPerformanceMonitorPageState
                                         color: _scoreColor(score),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
+                                        height: 1.5,
                                       ),
                                     ),
                                     Text(
@@ -175,6 +187,7 @@ class _AgentPerformanceMonitorPageState
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Colors.grey,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],

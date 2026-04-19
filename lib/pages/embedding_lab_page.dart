@@ -202,7 +202,10 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     child: const Text(
                       'テキスト埋め込み',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, height: 1.5),
+                      style: TextStyle(
+                        color: Colors.white,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -225,7 +228,10 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     child: const Text(
                       '類似度比較',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, height: 1.5),
+                      style: TextStyle(
+                        color: Colors.white,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -298,7 +304,11 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               padding: EdgeInsets.only(top: 6),
               child: Text(
                 '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(color: Colors.red, fontSize: 12, height: 1.5),
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -406,7 +416,11 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               padding: EdgeInsets.only(top: 6),
               child: Text(
                 '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(color: Colors.red, fontSize: 12, height: 1.5),
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),

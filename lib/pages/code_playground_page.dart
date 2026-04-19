@@ -381,11 +381,18 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               leading: _langIcon(lang),
               title: Text(
                 title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
-              subtitle:
-                  Text(lang, style: const TextStyle(fontSize: 12, height: 1.5)),
+              subtitle: Text(
+                lang,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -629,7 +636,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           if (breakdown.isEmpty)
             const Text(
               'データなし',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             )
           else
             ...breakdown.map((b) {
@@ -644,7 +654,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                       width: 90,
                       child: Text(
                         lang,
-                        style: const TextStyle(fontSize: 13, height: 1.5),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                     Expanded(
@@ -692,7 +705,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
             ),
             Text(
               label,
-              style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),

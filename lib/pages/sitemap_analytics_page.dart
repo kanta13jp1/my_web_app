@@ -188,7 +188,10 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
       return const Center(
         child: Text(
           'ページデータがありません',
-          style: TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFFB0B0B0),
+            height: 1.5,
+          ),
         ),
       );
     }

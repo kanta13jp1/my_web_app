@@ -125,7 +125,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
             SizedBox(height: 12),
             Text(
               '求人がありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -158,7 +161,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(
               [
@@ -173,8 +179,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
               children: [
                 Text(
                   '$appCount 名',
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const Text(
                   '応募者',
@@ -198,7 +206,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
       return const Center(
         child: Text(
           '応募者がいません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -251,7 +262,10 @@ class _RecruitmentJobBoardPageState extends State<RecruitmentJobBoardPage>
                 Chip(
                   label: Text(
                     stageLabels[stage] ?? stage,
-                    style: const TextStyle(fontSize: 10, height: 1.5),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
                   ),
                   backgroundColor: color.withValues(alpha: 0.15),
                   padding: EdgeInsets.zero,

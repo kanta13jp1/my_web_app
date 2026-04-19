@@ -150,7 +150,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -187,7 +190,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
             Text(
               'ワークフローがありません\nテンプレートから作成してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -217,7 +223,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                 Text('トリガー: ${wf['trigger_type'] ?? '-'}'),
                 Text(
                   'ステータス: $status',
-                  style: TextStyle(color: _statusColor(status), height: 1.5),
+                  style: TextStyle(
+                    color: _statusColor(status),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -239,7 +248,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       return const Center(
         child: Text(
           'テンプレートがありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -279,7 +291,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       return const Center(
         child: Text(
           '統計データがありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }

@@ -133,7 +133,10 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
             SizedBox(height: 12),
             Text(
               '車両が登録されていません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -164,7 +167,10 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(
               '${model.isNotEmpty ? "$model · " : ""}${plate.isNotEmpty ? plate : ""}',
@@ -204,7 +210,10 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
       return const Center(
         child: Text(
           '走行記録がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -224,7 +233,10 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
             leading: const Icon(Icons.route, color: Color(0xFF3D5AFE)),
             title: Text(
               '${from.isNotEmpty ? from : "出発地"} → ${to.isNotEmpty ? to : "目的地"}',
-              style: const TextStyle(fontSize: 13, height: 1.5),
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(vehicle),
             trailing: Column(
@@ -261,7 +273,10 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
       return const Center(
         child: Text(
           'メンテナンス記録がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }

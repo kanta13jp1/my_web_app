@@ -66,7 +66,13 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
         child: Column(
           children: [
             if (_errorMessage != null) ...[
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(height: 8),
             ],
             Expanded(
@@ -103,6 +109,7 @@ class _ExpenseTrackerPageState extends State<ExpenseTrackerPage> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,
+                                          height: 1.5,
                                         ),
                                       )
                                     : null,

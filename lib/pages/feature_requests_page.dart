@@ -208,8 +208,10 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                               controller: _titleCtrl,
                               decoration: InputDecoration(
                                 hintText: '例: カレンダー連携、Google Drive インポート…',
-                                hintStyle:
-                                    const TextStyle(fontSize: 13, height: 1.5),
+                                hintStyle: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -277,7 +279,10 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                       child: Text(
                         'まだリクエストがありません。\n最初のリクエストを送ってください！',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   )

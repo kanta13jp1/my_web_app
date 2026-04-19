@@ -67,7 +67,10 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -88,12 +91,16 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
                           child: ListTile(
                             leading: Text(
                               badge['icon_emoji'] as String? ?? '🏅',
-                              style: const TextStyle(fontSize: 28),
+                              style: const TextStyle(
+                                fontSize: 28,
+                                height: 1.5,
+                              ),
                             ),
                             title: Text(
                               badge['badge_name'] as String? ?? '',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(

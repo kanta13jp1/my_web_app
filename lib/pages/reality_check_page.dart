@@ -493,8 +493,11 @@ class _RealityCheckPageState extends State<RealityCheckPage> {
         backgroundColor: color,
         child: Text(
           initial,
-          style:
-              const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
       ),
       label: Text('$label  $value'),

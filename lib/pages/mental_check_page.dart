@@ -181,7 +181,10 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                         ),
                       ),
                       maxLines: 2,
-                      style: const TextStyle(fontSize: 13, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -225,7 +228,10 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     'まだ記録がありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               )
@@ -244,11 +250,17 @@ class _MentalCheckPageState extends State<MentalCheckPage> {
                         const Icon(Icons.psychology, color: Color(0xFF009688)),
                     title: Text(
                       log['content']?.toString().split('\n').first ?? '',
-                      style: const TextStyle(fontSize: 13, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     subtitle: Text(
                       log['content']?.toString() ?? '',
-                      style: const TextStyle(fontSize: 11, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),

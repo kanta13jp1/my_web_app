@@ -263,7 +263,10 @@ class _ChannelSidebar extends StatelessWidget {
                   ),
                   title: Text(
                     ch['name']?.toString() ?? '',
-                    style: const TextStyle(fontSize: 13, height: 1.5),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                   onTap: () => onSelect(ch),
                 );
@@ -332,7 +335,10 @@ class _MessageBubble extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   content,
-                  style: const TextStyle(fontSize: 14, height: 1.5),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),

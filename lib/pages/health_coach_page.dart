@@ -231,8 +231,10 @@ class _SummaryTab extends StatelessWidget {
                   children: [
                     const Text(
                       '今日の目標達成率',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     LinearProgressIndicator(

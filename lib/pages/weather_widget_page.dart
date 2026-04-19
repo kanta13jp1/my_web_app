@@ -93,7 +93,10 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -235,11 +238,18 @@ class _WeatherWidgetPageState extends State<WeatherWidgetPage> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFFB0B0B0),
+            height: 1.5,
+          ),
         ),
         Text(
           value,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
       ],
     );

@@ -125,7 +125,10 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
             SizedBox(height: 12),
             Text(
               'エピソードがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -208,7 +211,10 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
             SizedBox(height: 12),
             Text(
               'チャンネルがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -230,13 +236,18 @@ class _PodcastManagerPageState extends State<PodcastManagerPage>
               backgroundColor: const Color(0xFFE1BEE7),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : 'P',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(author.isNotEmpty ? author : '$episodeCount エピソード'),
             trailing: Chip(

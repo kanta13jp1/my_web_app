@@ -76,7 +76,10 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -106,14 +109,19 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                             ),
                             title: Text(
                               title,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Text(platform),
                             trailing: Chip(
                               label: Text(
                                 status,
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
                               ),
                               backgroundColor: status == 'ready'
                                   ? Colors.green.shade100

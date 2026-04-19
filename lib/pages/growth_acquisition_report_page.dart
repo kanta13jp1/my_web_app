@@ -66,8 +66,10 @@ class _GrowthAcquisitionReportPageState
               flex: 2,
               child: Text(
                 tp['label']?.toString() ?? tp['id']?.toString() ?? '',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
             ),
             Expanded(
@@ -83,7 +85,10 @@ class _GrowthAcquisitionReportPageState
                   ),
                   const Text(
                     'タッチ',
-                    style: TextStyle(fontSize: 10, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -99,7 +104,13 @@ class _GrowthAcquisitionReportPageState
                       height: 1.5,
                     ),
                   ),
-                  const Text('登録', style: TextStyle(fontSize: 10, height: 1.5)),
+                  const Text(
+                    '登録',
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -116,7 +127,10 @@ class _GrowthAcquisitionReportPageState
                   ),
                   const Text(
                     'CVR',
-                    style: TextStyle(fontSize: 10, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -152,7 +166,10 @@ class _GrowthAcquisitionReportPageState
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : SingleChildScrollView(
@@ -172,8 +189,10 @@ class _GrowthAcquisitionReportPageState
                       if (touchpoints.isEmpty)
                         const Text(
                           'データがありません',
-                          style:
-                              TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
                         )
                       else
                         ...touchpoints.map(_buildTouchpointRow),

@@ -58,7 +58,10 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -84,6 +87,7 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -101,6 +105,7 @@ class _DailyJudgmentPageState extends State<DailyJudgmentPage> {
                                             '${e.key}:',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w600,
+                                              height: 1.5,
                                             ),
                                           ),
                                         ),

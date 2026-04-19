@@ -143,7 +143,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
             SizedBox(height: 12),
             Text(
               'ペットが登録されていません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -166,12 +169,18 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 emoji,
-                style: const TextStyle(fontSize: 22, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 22,
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(
               '$species${breed.isNotEmpty ? " · $breed" : ""}${age > 0 ? " · $age歳" : ""}',
@@ -188,7 +197,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
       return const Center(
         child: Text(
           '健康記録がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -243,7 +255,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
       return const Center(
         child: Text(
           'ワクチン記録がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }

@@ -539,7 +539,11 @@ class UserManualPage extends StatelessWidget {
                 Text(
                   'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-28 (session34)',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: subColor),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: subColor,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -575,6 +579,7 @@ class UserManualPage extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: accentColor,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -603,6 +608,7 @@ class UserManualPage extends StatelessWidget {
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: color,
+          height: 1.5,
         ),
       ),
     );

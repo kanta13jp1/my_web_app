@@ -578,6 +578,7 @@ class _MindMapPageState extends State<MindMapPage> {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -588,7 +589,10 @@ class _MindMapPageState extends State<MindMapPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
               ),
             ),
           Expanded(

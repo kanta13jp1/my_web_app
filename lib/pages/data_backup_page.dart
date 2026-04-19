@@ -260,8 +260,11 @@ class _DataBackupPageState extends State<DataBackupPage> {
       children: [
         const Text(
           'バックアップ履歴',
-          style:
-              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.5),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ..._backupHistory.map(

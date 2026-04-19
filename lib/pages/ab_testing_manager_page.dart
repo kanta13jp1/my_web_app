@@ -110,7 +110,10 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                       ),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   Card(
@@ -124,6 +127,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -173,6 +177,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -182,7 +187,10 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                         padding: EdgeInsets.all(32),
                         child: Text(
                           'A/Bテストがありません',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(
+                            color: Colors.grey,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     )

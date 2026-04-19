@@ -418,7 +418,10 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               icon: const Icon(Icons.stop, color: Colors.red),
               label: const Text(
                 'セッションを中止',
-                style: TextStyle(color: Colors.red, height: 1.5),
+                style: TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
               ),
             ),
         ],
@@ -666,7 +669,11 @@ class _CircularTimer extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '集中中',
-                      style: TextStyle(color: color, fontSize: 12, height: 1.5),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),

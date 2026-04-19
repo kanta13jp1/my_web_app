@@ -111,7 +111,10 @@ class _AudioEffectsProcessorPageState extends State<AudioEffectsProcessorPage> {
                             trailing: Chip(
                               label: Text(
                                 effect['category']?.toString() ?? '',
-                                style: const TextStyle(fontSize: 11),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                ),
                               ),
                             ),
                           ),

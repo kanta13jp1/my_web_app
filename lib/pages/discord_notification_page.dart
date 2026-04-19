@@ -225,7 +225,10 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
           Expanded(
             child: Text(
               'Discord サーバーの Webhook URL を設定すると、タスク完了・習慣達成などの通知を Discord チャンネルに自動送信できます。',
-              style: TextStyle(fontSize: 13, height: 1.5),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -255,8 +258,11 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
             Expanded(
               child: Text(
                 message,
-                style:
-                    TextStyle(color: color.shade700, fontSize: 13, height: 1.5),
+                style: TextStyle(
+                  color: color.shade700,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           ],
@@ -300,8 +306,11 @@ class _DiscordNotificationPageState extends State<DiscordNotificationPage> {
             const SizedBox(height: 8),
             const Text(
               'Discord サーバー設定 → 連携サービス → ウェブフック で作成できます',
-              style:
-                  TextStyle(fontSize: 12, color: Colors.black45, height: 1.5),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -404,11 +413,17 @@ class _HistoryTile extends StatelessWidget {
         ),
         title: Text(
           history['event']?.toString() ?? 'イベント',
-          style: const TextStyle(fontSize: 14, height: 1.5),
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           history['sent_at']?.toString() ?? '',
-          style: const TextStyle(fontSize: 12, height: 1.5),
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
         trailing: Text(
           success ? '成功' : '失敗',

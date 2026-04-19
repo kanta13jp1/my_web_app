@@ -89,7 +89,11 @@ class _PublicMemoDirectoryPageState extends State<PublicMemoDirectoryPage> {
           children: [
             const Text(
               '公開メモから流入を増やす',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(

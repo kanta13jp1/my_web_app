@@ -228,8 +228,10 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
               const SizedBox(width: 8),
               Text(
                 '合計: ¥${totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const Spacer(),
               Text('${_projects.length}件'),
@@ -291,7 +293,10 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
             subtitle: Text(inv['client_name'] as String? ?? ''),
             trailing: Text(
               '¥${inv['amount'] ?? 0}',
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
           ),
         );

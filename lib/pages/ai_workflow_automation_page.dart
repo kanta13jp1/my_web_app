@@ -68,7 +68,10 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -96,6 +99,7 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                               wf['name'] as String? ?? '',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
@@ -107,6 +111,7 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: isActive ? Colors.green : Colors.grey,
+                                  height: 1.5,
                                 ),
                               ),
                             ),

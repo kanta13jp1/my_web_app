@@ -823,7 +823,10 @@ class _CostComparisonRow extends StatelessWidget {
         children: [
           Text(
             tool.icon,
-            style: const TextStyle(fontSize: 20, height: 1.5),
+            style: const TextStyle(
+              fontSize: 20,
+              height: 1.5,
+            ),
           ),
           const SizedBox(width: 8),
           SizedBox(

@@ -80,7 +80,10 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -110,19 +113,23 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
                                 id.toUpperCase().substring(0, 1),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
                             title: Text(
                               text,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             trailing: Text(
                               'CVR: $conv%',
                               style: const TextStyle(
                                 color: Color(0xFF3D5AFE),
                                 fontWeight: FontWeight.w600,
+                                height: 1.5,
                               ),
                             ),
                           ),

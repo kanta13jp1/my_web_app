@@ -179,7 +179,10 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 const SizedBox(height: 12),
                 Text(
                   '重要度: $importance',
-                  style: const TextStyle(fontSize: 13, height: 1.5),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 Slider(
                   value: importance.toDouble(),

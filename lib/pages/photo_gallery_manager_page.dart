@@ -129,7 +129,10 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
             SizedBox(height: 12),
             Text(
               'アルバムがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -161,12 +164,20 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 40, height: 1.5)),
+                Text(
+                  emoji,
+                  style: const TextStyle(
+                    fontSize: 40,
+                    height: 1.5,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   name,
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -215,7 +226,10 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
             child: Center(
               child: Text(
                 'このアルバムに写真がありません',
-                style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -234,8 +248,10 @@ class _PhotoGalleryManagerPageState extends State<PhotoGalleryManagerPage> {
               Expanded(
                 child: Text(
                   albumName,
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
               ),
               Text('${_photos.length} 枚'),

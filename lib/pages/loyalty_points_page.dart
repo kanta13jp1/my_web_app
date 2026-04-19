@@ -80,7 +80,10 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -110,8 +113,10 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                             ),
                             title: Text(
                               description,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle:
                                 Text(item['created_at']?.toString() ?? ''),
@@ -121,6 +126,7 @@ class _LoyaltyPointsPageState extends State<LoyaltyPointsPage> {
                                 color:
                                     type == 'earn' ? Colors.green : Colors.red,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                           ),

@@ -152,7 +152,10 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red.shade700, height: 1.5),
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -232,8 +235,10 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                         children: [
                           const Text(
                             '同期済み予定数',
-                            style:
-                                TextStyle(color: Colors.black54, height: 1.5),
+                            style: TextStyle(
+                              color: Colors.black54,
+                              height: 1.5,
+                            ),
                           ),
                           Text(
                             '$_syncedCount 件',
@@ -251,8 +256,10 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                           children: [
                             const Text(
                               '最終同期',
-                              style:
-                                  TextStyle(color: Colors.black54, height: 1.5),
+                              style: TextStyle(
+                                color: Colors.black54,
+                                height: 1.5,
+                              ),
                             ),
                             Text(
                               _lastSyncAt!,
@@ -385,7 +392,10 @@ class _CalendarTile extends StatelessWidget {
       title: Text(calendar['name']?.toString() ?? 'カレンダー'),
       subtitle: Text(
         '${calendar['event_count'] ?? 0} 件の予定',
-        style: const TextStyle(fontSize: 12, height: 1.5),
+        style: const TextStyle(
+          fontSize: 12,
+          height: 1.5,
+        ),
       ),
       trailing: Switch(
         value: calendar['enabled'] == true,
@@ -410,8 +420,13 @@ class _FeatureItem extends StatelessWidget {
           Icon(icon, size: 16, color: const Color(0xFF0284C7)),
           const SizedBox(width: 8),
           Expanded(
-            child:
-                Text(text, style: const TextStyle(fontSize: 13, height: 1.5)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
           ),
         ],
       ),

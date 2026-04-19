@@ -95,8 +95,10 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                     ? Center(
                         child: Text(
                           _errorMessage!,
-                          style:
-                              const TextStyle(color: Colors.red, height: 1.5),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : _posts.isEmpty

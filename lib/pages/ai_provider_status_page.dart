@@ -95,7 +95,10 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                 ? const Center(
                     child: Text(
                       '該当なし',
-                      style: TextStyle(color: Color(0xFF94A3B8), height: 1.5),
+                      style: TextStyle(
+                        color: Color(0xFF94A3B8),
+                        height: 1.5,
+                      ),
                     ),
                   )
                 : ListView.separated(
@@ -331,7 +334,10 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                         : const Icon(Icons.play_arrow, size: 16),
                     label: const Text(
                       'テスト呼び出し',
-                      style: TextStyle(fontSize: 12, height: 1.5),
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFF97316),

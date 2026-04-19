@@ -69,6 +69,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFF6B35),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 4),
@@ -94,7 +95,11 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
           children: [
             const Text(
               '現状や課題を入力すると AI が分析します',
-              style: TextStyle(fontSize: 14, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -124,7 +129,13 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
             const SizedBox(height: 20),
             if (_isLoading) const Center(child: CircularProgressIndicator()),
             if (_errorMessage != null)
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              ),
             if (_result != null)
               ..._result!.entries.map((e) => _buildResultCard(e.key, e.value)),
           ],

@@ -232,7 +232,10 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                       SizedBox(height: 12),
                       Text(
                         'プレイリストがありません',
-                        style: TextStyle(color: Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -292,6 +295,7 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -343,7 +347,10 @@ class _MusicPlaylistManagerPageState extends State<MusicPlaylistManagerPage> {
                   ? const Center(
                       child: Text(
                         'まだ曲がありません',
-                        style: TextStyle(color: Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
                     )
                   : ReorderableListView.builder(

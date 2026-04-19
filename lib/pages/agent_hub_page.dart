@@ -93,7 +93,10 @@ class _AgentHubPageState extends State<AgentHubPage>
               ? Center(
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : TabBarView(

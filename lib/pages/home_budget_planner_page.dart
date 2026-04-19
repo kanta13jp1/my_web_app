@@ -302,8 +302,11 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
       children: [
         const Text(
           '支出履歴',
-          style:
-              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.5),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ..._expenses.map((e) {
@@ -325,8 +328,10 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
               ),
               trailing: Text(
                 '¥${e['amount'] ?? 0}',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
             ),
           );

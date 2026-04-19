@@ -145,7 +145,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             SizedBox(height: 12),
             Text(
               '録画がありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -168,7 +171,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(
               [
@@ -213,7 +219,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             SizedBox(height: 12),
             Text(
               'スクリーンショットがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),

@@ -268,8 +268,10 @@ class _StockTasksPageState extends State<StockTasksPage> {
               children: [
                 Text(
                   _isSaturday ? '今日は土曜日。ストック見直しデーです。' : '次に時間ができたときの候補をここに蓄積。',
-                  style:
-                      const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

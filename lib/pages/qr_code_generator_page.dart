@@ -127,7 +127,10 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -135,7 +138,10 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
               const SizedBox(height: 12),
               const Text(
                 '生成された QR コード:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               Center(
@@ -147,7 +153,10 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
                   ),
                   child: Text(
                     _generatedUrl!,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -161,6 +170,7 @@ class _QrCodeGeneratorPageState extends State<QrCodeGeneratorPage> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 8),

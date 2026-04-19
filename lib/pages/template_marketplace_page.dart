@@ -348,7 +348,11 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           ),
           child: Text(
             t.category,
-            style: TextStyle(fontSize: 10, color: t.color, height: 1.5),
+            style: TextStyle(
+              fontSize: 10,
+              color: t.color,
+              height: 1.5,
+            ),
           ),
         ),
         onTap: () => _useTemplate(context, t),

@@ -145,7 +145,10 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
             const SizedBox(height: 16),
             Text(
               '気分: ${_moodIcons[_moodScore - 1]} ${_moodLabels[_moodScore - 1]}',
-              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             Slider(
               value: _moodScore.toDouble(),
@@ -157,7 +160,10 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
             const SizedBox(height: 8),
             Text(
               'ストレス: ${_stressLabels[_stressScore - 1]}',
-              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             Slider(
               value: _stressScore.toDouble(),
@@ -170,7 +176,10 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
             const SizedBox(height: 8),
             Text(
               '睡眠時間: $_sleepHours時間',
-              style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             Slider(
               value: _sleepHours.toDouble(),
@@ -258,8 +267,11 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
       children: [
         const Text(
           '過去の記録',
-          style:
-              TextStyle(fontSize: 16, fontWeight: FontWeight.bold, height: 1.5),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         ..._records.map(
@@ -268,7 +280,10 @@ class _MentalHealthTrackerPageState extends State<MentalHealthTrackerPage> {
             child: ListTile(
               leading: Text(
                 _moodIcons[(r['mood_score'] as int? ?? 3) - 1],
-                style: const TextStyle(fontSize: 24, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 24,
+                  height: 1.5,
+                ),
               ),
               title: Text(
                 '気分: ${_moodLabels[(r['mood_score'] as int? ?? 3) - 1]}  '

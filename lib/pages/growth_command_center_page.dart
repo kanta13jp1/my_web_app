@@ -106,7 +106,10 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
             const SizedBox(height: 6),
             Text(
               brief['objective']?.toString() ?? '',
-              style: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             if (brief['nextAction'] != null) ...[
               const SizedBox(height: 4),

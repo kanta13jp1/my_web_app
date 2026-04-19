@@ -373,7 +373,11 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: color, height: 1.5),
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -550,7 +554,10 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                         ),
                         child: const Text(
                           '実装へ',
-                          style: TextStyle(fontSize: 11, height: 1.5),
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     IconButton(

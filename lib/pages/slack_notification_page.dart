@@ -184,7 +184,10 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red.shade700, height: 1.5),
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),
@@ -381,11 +384,17 @@ class _HistoryTile extends StatelessWidget {
         ),
         title: Text(
           history['event']?.toString() ?? 'イベント',
-          style: const TextStyle(fontSize: 14, height: 1.5),
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           history['sent_at']?.toString() ?? '',
-          style: const TextStyle(fontSize: 12, height: 1.5),
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
         trailing: Text(
           success ? '成功' : '失敗',

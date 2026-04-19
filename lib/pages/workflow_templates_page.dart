@@ -92,7 +92,10 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -116,7 +119,10 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                           SizedBox(height: 8),
                           Text(
                             'テンプレートはありません',
-                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -144,8 +150,10 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                               item['name']?.toString() ??
                                   item['id']?.toString() ??
                                   'テンプレート',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Text(
                               '$stepCount ステップ${category != null ? ' · $category' : ''}',
@@ -167,6 +175,7 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                                         fontSize: 11,
                                         color: _categoryColor(category),
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                   )

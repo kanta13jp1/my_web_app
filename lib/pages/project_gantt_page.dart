@@ -480,7 +480,10 @@ class _OverallProgressCard extends StatelessWidget {
             children: [
               const Text(
                 '🚀',
-                style: TextStyle(fontSize: 24, height: 1.5),
+                style: TextStyle(
+                  fontSize: 24,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -715,7 +718,10 @@ class _FilterRow extends StatelessWidget {
           const SizedBox(width: 12),
           const Text(
             '│',
-            style: TextStyle(color: Color(0xFF333333), height: 1.5),
+            style: TextStyle(
+              color: Color(0xFF333333),
+              height: 1.5,
+            ),
           ),
           const SizedBox(width: 12),
           _chip(
@@ -808,7 +814,10 @@ class _CategorySection extends StatelessWidget {
             children: [
               Text(
                 categoryIcon,
-                style: const TextStyle(fontSize: 18, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 18,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1580,7 +1589,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           // カテゴリ絵文字
           Text(
             task.categoryIcon,
-            style: const TextStyle(fontSize: 12, height: 1.5),
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           const SizedBox(width: 6),
           Expanded(

@@ -126,7 +126,10 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
             SizedBox(height: 12),
             Text(
               '保存されたパスワードがありません',
-              style: TextStyle(color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -151,15 +154,24 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
               _strengthIcon(strength),
               color: _strengthColor(strength),
             ),
-            title:
-                Text(site, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              site,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
             subtitle: Text(username.isNotEmpty ? username : '—'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   isRevealed ? password : '••••••••',
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 IconButton(
                   icon: Icon(

@@ -119,8 +119,10 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                     ? Center(
                         child: Text(
                           _error!,
-                          style:
-                              const TextStyle(color: Colors.red, height: 1.5),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : _notifications.isEmpty

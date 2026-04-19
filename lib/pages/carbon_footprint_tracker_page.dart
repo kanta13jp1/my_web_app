@@ -77,7 +77,10 @@ class _CarbonFootprintTrackerPageState
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -112,6 +115,7 @@ class _CarbonFootprintTrackerPageState
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.green,
+                                height: 1.5,
                               ),
                             ),
                           ),

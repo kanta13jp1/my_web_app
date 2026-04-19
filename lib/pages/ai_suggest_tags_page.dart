@@ -127,7 +127,10 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red, height: 1.5),
+                  style: const TextStyle(
+                    color: Colors.red,
+                    height: 1.5,
+                  ),
                 ),
               ),
             if (_suggestion != null) ...[

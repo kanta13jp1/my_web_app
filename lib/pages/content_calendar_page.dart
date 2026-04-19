@@ -133,7 +133,10 @@ class _ContentCalendarPageState extends State<ContentCalendarPage> {
             },
             child: Text(
               '${_focusedMonth.year}/${_focusedMonth.month}',
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
           ),
           IconButton(

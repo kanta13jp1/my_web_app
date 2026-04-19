@@ -388,7 +388,11 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                   ),
                   child: Text(
                     tfLabel,
-                    style: TextStyle(fontSize: 11, color: tfColor, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: tfColor,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 if (deadline != null) ...[
@@ -441,8 +445,10 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                 if (description.isNotEmpty) ...[
                   Text(
                     description,
-                    style:
-                        const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+                    style: const TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -497,7 +503,10 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                         ),
                         label: const Text(
                           'キャンセル',
-                          style: TextStyle(color: Colors.red, height: 1.5),
+                          style: TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                         onPressed: () => _updateStatus(goalId, 'cancelled'),
                       ),
@@ -551,7 +560,10 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),

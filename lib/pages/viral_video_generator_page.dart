@@ -120,7 +120,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                     Chip(
                       label: Text(
                         'VS $scoreInt',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                       backgroundColor:
                           scoreInt >= 80 ? const Color(0xFFF57C00) : null,
@@ -161,7 +164,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                         (tag) => Chip(
                           label: Text(
                             tag.startsWith('#') ? tag : '#$tag',
-                            style: const TextStyle(fontSize: 11),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              height: 1.5,
+                            ),
                           ),
                           materialTapTargetSize:
                               MaterialTapTargetSize.shrinkWrap,
@@ -251,7 +257,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Text(
                                 _errorMessage!,
-                                style: const TextStyle(color: Colors.red),
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  height: 1.5,
+                                ),
                               ),
                             ),
                           SizedBox(
@@ -303,7 +312,10 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                           ),
                           subtitle: Text(
                             v['primaryHook']?.toString() ?? '',
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -322,11 +334,15 @@ class _ViralVideoGeneratorPageState extends State<ViralVideoGeneratorPage> {
                                         : Theme.of(context)
                                             .colorScheme
                                             .onSurface,
+                                    height: 1.5,
                                   ),
                                 ),
                               Text(
                                 _shortDate(v['createdAt']?.toString()),
-                                style: const TextStyle(fontSize: 11),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                ),
                               ),
                             ],
                           ),

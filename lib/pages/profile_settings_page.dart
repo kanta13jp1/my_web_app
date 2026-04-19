@@ -296,6 +296,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF6366F1),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -309,7 +310,10 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               ),
               child: Text(
                 url,
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -318,7 +322,13 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               children: [
                 OutlinedButton.icon(
                   icon: const Icon(Icons.copy, size: 14),
-                  label: const Text('コピー', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    'コピー',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: url));
                     if (!mounted) return;
@@ -663,6 +673,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1976D2),
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -674,6 +685,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                               style: TextStyle(
                                 color: Color(0xFF0D47A1),
                                 fontSize: 13,
+                                height: 1.5,
                               ),
                             ),
                           ],

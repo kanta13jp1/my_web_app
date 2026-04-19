@@ -123,7 +123,10 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
               ),
             ],
             const SizedBox(height: 24),
@@ -132,7 +135,11 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
             else if (_reactions != null) ...[
               const Text(
                 'リアクション',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -171,7 +178,13 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(r, style: const TextStyle(fontSize: 20)),
+                            Text(
+                              r,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                height: 1.5,
+                              ),
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               count.toString(),
@@ -183,6 +196,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
                                     : Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                           ],

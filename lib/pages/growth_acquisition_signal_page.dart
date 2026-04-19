@@ -190,14 +190,20 @@ class _GrowthAcquisitionSignalPageState
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, height: 1.5),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
               ),
             ],
             if (_successMessage != null) ...[
               const SizedBox(height: 8),
               Text(
                 _successMessage!,
-                style: const TextStyle(color: Colors.green, height: 1.5),
+                style: const TextStyle(
+                  color: Colors.green,
+                  height: 1.5,
+                ),
               ),
             ],
             const SizedBox(height: 12),

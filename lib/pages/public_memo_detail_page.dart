@@ -440,7 +440,13 @@ class _ReactionChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 18, height: 1.5)),
+            Text(
+              emoji,
+              style: const TextStyle(
+                fontSize: 18,
+                height: 1.5,
+              ),
+            ),
             if (count > 0) ...[
               const SizedBox(width: 4),
               Text(

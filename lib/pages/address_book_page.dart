@@ -90,7 +90,13 @@ class _AddressBookPageState extends State<AddressBookPage> {
             ),
             if (_errorMessage != null) ...[
               const SizedBox(height: 8),
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              ),
             ],
             const SizedBox(height: 16),
             Expanded(

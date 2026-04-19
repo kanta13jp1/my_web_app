@@ -142,7 +142,13 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
           children: [
             Icon(Icons.devices, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('デバイスがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              'デバイスがありません',
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       );
@@ -168,6 +174,7 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.primary,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -209,7 +216,13 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
           children: [
             Icon(Icons.auto_mode, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('自動化ルールがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '自動化ルールがありません',
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       );

@@ -62,6 +62,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFFB0B0B0),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -73,6 +74,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
           ],
@@ -103,7 +105,10 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(

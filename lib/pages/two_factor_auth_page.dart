@@ -258,7 +258,10 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
           if (_trustedDevices.isEmpty)
             const Text(
               '信頼済みデバイスがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             )
           else
             ..._trustedDevices.map((d) {

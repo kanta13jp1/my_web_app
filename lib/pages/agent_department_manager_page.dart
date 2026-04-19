@@ -75,7 +75,10 @@ class _AgentDepartmentManagerPageState
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -98,12 +101,18 @@ class _AgentDepartmentManagerPageState
                           SizedBox(height: 16),
                           Text(
                             '部署データなし',
-                            style: TextStyle(fontSize: 18),
+                            style: TextStyle(
+                              fontSize: 18,
+                              height: 1.5,
+                            ),
                           ),
                           SizedBox(height: 8),
                           Text(
                             'AIエージェントの部署を管理します',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Colors.grey,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -126,8 +135,10 @@ class _AgentDepartmentManagerPageState
                             ),
                             title: Text(
                               dept['name']?.toString() ?? '部署名不明',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Text(
                               dept['description']?.toString() ?? '',
@@ -139,6 +150,7 @@ class _AgentDepartmentManagerPageState
                               style: const TextStyle(
                                 color: Color(0xFF6366F1),
                                 fontWeight: FontWeight.w500,
+                                height: 1.5,
                               ),
                             ),
                           ),

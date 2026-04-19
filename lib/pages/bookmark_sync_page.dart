@@ -295,7 +295,11 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: color, height: 1.5),
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -418,7 +422,10 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                 description,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             if (tags.isNotEmpty) ...[
               const SizedBox(height: 4),
@@ -480,7 +487,13 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                 children: [
                   Icon(Icons.delete_outline, size: 16, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('削除', style: TextStyle(color: Colors.red, height: 1.5)),
+                  Text(
+                    '削除',
+                    style: TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -527,7 +540,10 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),

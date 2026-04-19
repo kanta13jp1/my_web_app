@@ -120,7 +120,10 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                       ),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   Card(
@@ -134,6 +137,7 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -192,6 +196,7 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -202,7 +207,10 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                         child: Text(
                           '習慣がまだありません。\n最初の習慣を追加しましょう！',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(
+                            color: Colors.grey,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     )

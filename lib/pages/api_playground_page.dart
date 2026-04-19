@@ -318,8 +318,11 @@ class _ApiPlaygroundPageState extends State<ApiPlaygroundPage> {
                     _responseBody.isEmpty
                         ? 'Response will appear here...'
                         : _responseBody,
-                    style:
-                        const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ),

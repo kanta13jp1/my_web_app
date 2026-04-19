@@ -92,11 +92,19 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFFB0B0B0),
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -130,7 +138,10 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -138,7 +149,11 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                   if (_summary != null) const SizedBox(height: 16),
                   const Text(
                     'キャンペーン一覧',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (_campaigns.isEmpty)

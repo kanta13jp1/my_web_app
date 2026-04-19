@@ -100,7 +100,10 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
               ? Center(
                   child: Text(
                     _error!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : CustomScrollView(
@@ -118,6 +121,7 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -154,7 +158,11 @@ class _CompetitorProgressGrid extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
               '競合別進捗率',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
           ),
           ...competitors.map((c) {
@@ -169,12 +177,19 @@ class _CompetitorProgressGrid extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(name, style: const TextStyle(fontSize: 13)),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
                       Text(
                         '${pct.round()}%',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ],

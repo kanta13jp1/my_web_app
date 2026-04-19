@@ -68,7 +68,10 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -93,7 +96,10 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                           ),
                           title: Text(
                             '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              height: 1.5,
+                            ),
                           ),
                           subtitle: Text(
                             item['title']?.toString() ?? '',
@@ -106,6 +112,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFFB0B0B0),
+                              height: 1.5,
                             ),
                           ),
                         );

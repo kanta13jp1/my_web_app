@@ -124,7 +124,10 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
             SizedBox(height: 12),
             Text(
               '商品が登録されていません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -166,8 +169,11 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
                 if (low)
                   const Text(
                     '在庫不足',
-                    style:
-                        TextStyle(fontSize: 10, color: Colors.red, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),
@@ -182,7 +188,10 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
       return const Center(
         child: Text(
           '入出庫記録がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }

@@ -163,7 +163,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const Text(
             'GPT・Claude・Geminiを統合したMAGIシステムが、\nあなたの専属役員として\n24時間365日、経営をサポートします。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            style: TextStyle(
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 40),
           Wrap(
@@ -303,8 +306,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           const Text(
             'この名前はAI役員からの報告書に使用されます',
-            style:
-                TextStyle(fontSize: 12, color: Color(0xFF9CA3AF), height: 1.5),
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
         ],
       ),

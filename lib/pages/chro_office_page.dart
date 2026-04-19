@@ -131,7 +131,13 @@ class _ChroOfficePageState extends State<ChroOfficePage> {
           backgroundColor: const Color(0xFFC5CAE9),
           child: Icon(icon, color: const Color(0xFF283593)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: page == null

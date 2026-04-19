@@ -114,7 +114,10 @@ class _GrowthAchievementSummaryPageState
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : SingleChildScrollView(
@@ -188,8 +191,10 @@ class _GrowthAchievementSummaryPageState
                       ] else
                         const Text(
                           'データがありません',
-                          style:
-                              TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
                         ),
                     ],
                   ),

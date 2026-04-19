@@ -422,6 +422,7 @@ $hashtags
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 16),
@@ -432,6 +433,7 @@ $hashtags
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 16),
@@ -484,6 +486,7 @@ $hashtags
         fontSize: 12,
         fontWeight: FontWeight.w700,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
+        height: 1.5,
       ),
     );
   }
@@ -512,7 +515,10 @@ $hashtags
             Text(
               _descriptionText(channelKey),
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFB0B0B0)),
+              style: const TextStyle(
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             if (_isLoading)

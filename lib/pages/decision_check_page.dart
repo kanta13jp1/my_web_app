@@ -120,7 +120,10 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   const SizedBox(height: 12),
                   Text(
                     '過去に同じ決意をした回数: $pastAttempts 回',
-                    style: const TextStyle(fontSize: 13, height: 1.5),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                   Slider(
                     value: pastAttempts.toDouble(),
@@ -283,7 +286,10 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
         backgroundColor: const Color(0xFF6366F1),
         label: const Text(
           '決意をチェック',
-          style: TextStyle(color: Colors.white, height: 1.5),
+          style: TextStyle(
+            color: Colors.white,
+            height: 1.5,
+          ),
         ),
         icon: const Icon(Icons.psychology, color: Colors.white),
       ),

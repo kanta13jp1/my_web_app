@@ -575,6 +575,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
               fontWeight: FontWeight.bold,
               color: Color(0xFFFF8C5A),
               letterSpacing: 0.5,
+              height: 1.5,
             ),
           ),
         ),
@@ -618,6 +619,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                     color: selected ? Colors.white : const Color(0xFFCBD5E1),
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                    height: 1.5,
                   ),
                   side: BorderSide(
                     color: selected
@@ -687,6 +689,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
               fontWeight: FontWeight.bold,
               color: Color(0xFFF472B6),
               letterSpacing: 0.5,
+              height: 1.5,
             ),
           ),
         ),
@@ -730,6 +733,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                     color: selected ? Colors.white : const Color(0xFFCBD5E1),
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                    height: 1.5,
                   ),
                   side: BorderSide(
                     color: selected

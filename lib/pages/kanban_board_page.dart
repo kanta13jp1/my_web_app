@@ -441,7 +441,10 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                       SizedBox(width: 8),
                       Text(
                         '削除',
-                        style: TextStyle(color: Colors.red, height: 1.5),
+                        style: TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),

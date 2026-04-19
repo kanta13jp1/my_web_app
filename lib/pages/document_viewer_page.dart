@@ -97,7 +97,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                 children: [
                   Text(
                     widget.document.categoryIcon,
-                    style: const TextStyle(fontSize: 16),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -106,6 +109,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).primaryColor,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -129,7 +133,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                       const SizedBox(height: 16),
                       Text(
                         _error!,
-                        style: const TextStyle(fontSize: 16),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
@@ -170,7 +177,10 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                 children: [
                                   Text(
                                     widget.document.categoryIcon,
-                                    style: const TextStyle(fontSize: 32),
+                                    style: const TextStyle(
+                                      fontSize: 32,
+                                      height: 1.5,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -195,6 +205,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                             color: Theme.of(context)
                                                 .colorScheme
                                                 .onSurfaceVariant,
+                                            height: 1.5,
                                           ),
                                         ),
                                       ],
@@ -227,6 +238,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                                           .colorScheme
                                           .onSurfaceVariant,
                                       fontFamily: 'monospace',
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],

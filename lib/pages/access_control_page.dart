@@ -141,7 +141,13 @@ class _AccessControlPageState extends State<AccessControlPage>
               color: Color(0xFF9CA3AF),
             ),
             SizedBox(height: 12),
-            Text('ロールが定義されていません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              'ロールが定義されていません',
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       );
@@ -165,7 +171,10 @@ class _AccessControlPageState extends State<AccessControlPage>
             ),
             title: Text(
               displayName,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text('$userCount ユーザー'),
             children: [
@@ -180,7 +189,10 @@ class _AccessControlPageState extends State<AccessControlPage>
                           (p) => Chip(
                             label: Text(
                               '$p',
-                              style: const TextStyle(fontSize: 11),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                              ),
                             ),
                             padding: EdgeInsets.zero,
                             materialTapTargetSize:
@@ -200,7 +212,13 @@ class _AccessControlPageState extends State<AccessControlPage>
   Widget _buildLogsTab() {
     if (_accessLogs.isEmpty) {
       return const Center(
-        child: Text('アクセスログがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          'アクセスログがありません',
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
+        ),
       );
     }
     return ListView.builder(
@@ -226,8 +244,11 @@ class _AccessControlPageState extends State<AccessControlPage>
             trailing: timestamp.length >= 10
                 ? Text(
                     timestamp.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   )
                 : null,
           ),

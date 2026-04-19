@@ -112,7 +112,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
             const SizedBox(height: 12),
             const Text(
               'テンプレートがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -139,7 +142,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
             leading: const CircleAvatar(child: Icon(Icons.email)),
             title: Text(
               name,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(subject.isNotEmpty ? subject : category),
             trailing: Column(
@@ -147,8 +153,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
               children: [
                 Text(
                   '$usedCount 回',
-                  style:
-                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const Text(
                   '使用',
@@ -189,8 +197,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
                   children: [
                     const Text(
                       '件名: ',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     Expanded(child: Text(subject)),
                   ],
@@ -201,7 +211,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
           if (vars.isNotEmpty) ...[
             const Text(
               '変数:',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 6),
             Wrap(
@@ -212,7 +225,10 @@ class _EmailTemplateBuilderPageState extends State<EmailTemplateBuilderPage> {
           ],
           const Text(
             '本文:',
-            style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Container(

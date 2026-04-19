@@ -234,12 +234,16 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w700,
+              height: 1.5,
             ),
           ),
           SizedBox(height: 8),
           Text(
             '検索、最近使った機能、部署別の整理から最短で目的の画面へ移動できます。',
-            style: TextStyle(color: Colors.white70, height: 1.5),
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -403,6 +407,7 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   color: entry.color,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -438,7 +443,9 @@ class _WorkMenuPageState extends State<WorkMenuPage> {
       ),
       child: Text(
         message,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              height: 1.5,
+            ),
       ),
     );
   }

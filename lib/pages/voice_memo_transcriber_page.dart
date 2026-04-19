@@ -280,7 +280,10 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                           children: [
                             Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Colors.red),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                height: 1.5,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton(

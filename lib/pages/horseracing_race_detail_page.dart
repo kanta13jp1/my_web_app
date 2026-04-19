@@ -249,7 +249,10 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     ? const Center(
                         child: Text(
                           '出走馬データなし',
-                          style: TextStyle(color: Color(0xFF94A3B8)),
+                          style: TextStyle(
+                            color: Color(0xFF94A3B8),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : _buildMatrix(sortedEntries, providerNames),
@@ -583,6 +586,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -639,6 +643,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                           : const Color(0xFF64748B),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                 ),

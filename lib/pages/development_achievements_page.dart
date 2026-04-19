@@ -69,7 +69,10 @@ class _DevelopmentAchievementsPageState
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -94,7 +97,10 @@ class _DevelopmentAchievementsPageState
                           ),
                           title: Text(
                             item['title']?.toString() ?? '(タイトルなし)',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              height: 1.5,
+                            ),
                           ),
                           subtitle: Text(
                             item['description']?.toString() ?? '',
@@ -107,6 +113,7 @@ class _DevelopmentAchievementsPageState
                             style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFFB0B0B0),
+                              height: 1.5,
                             ),
                           ),
                         );

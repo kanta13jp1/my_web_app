@@ -130,7 +130,10 @@ class _DanshariPageState extends State<DanshariPage> {
           const SizedBox(height: 8),
           const Text(
             'CSO: 「素晴らしい意思決定でした、CEO。」',
-            style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            style: TextStyle(
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 24),
           ElevatedButton(

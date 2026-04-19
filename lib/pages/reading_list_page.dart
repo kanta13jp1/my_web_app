@@ -66,7 +66,13 @@ class _ReadingListPageState extends State<ReadingListPage> {
         child: Column(
           children: [
             if (_errorMessage != null) ...[
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(height: 8),
             ],
             Expanded(

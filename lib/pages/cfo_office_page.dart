@@ -127,7 +127,13 @@ class _CfoOfficePageState extends State<CfoOfficePage> {
           backgroundColor: Colors.green[100],
           child: Icon(icon, color: Colors.green[800]),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: page != null

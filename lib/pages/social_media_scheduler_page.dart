@@ -219,7 +219,10 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -251,7 +254,10 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
             const SizedBox(height: 8),
             Text(
               emptyMessage,
-              style: const TextStyle(color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -284,7 +290,10 @@ class _SocialMediaSchedulerPageState extends State<SocialMediaSchedulerPage>
             subtitle: Text(
               '${platform?.toUpperCase() ?? '-'}  |  '
               '${post['scheduled_at'] ?? post['published_at'] ?? post['created_at'] ?? '-'}',
-              style: const TextStyle(fontSize: 11),
+              style: const TextStyle(
+                fontSize: 11,
+                height: 1.5,
+              ),
             ),
           ),
         );

@@ -123,7 +123,10 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -133,7 +136,11 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
             else if (_images.isNotEmpty) ...[
               const Text(
                 '生成済み画像',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               Expanded(

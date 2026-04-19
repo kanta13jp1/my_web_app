@@ -71,7 +71,10 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                     children: [
                       Text(
                         'エラー: $_error',
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -115,6 +118,7 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -125,6 +129,7 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                               '${e.key + 1}位',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             title: Text(
@@ -158,16 +163,29 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 32)),
+        Text(
+          icon,
+          style: const TextStyle(
+            fontSize: 32,
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(
           value,
           style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
+            height: 1.5,
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
       ],
     );
   }

@@ -127,7 +127,13 @@ class _ChoOfficePageState extends State<ChoOfficePage> {
           backgroundColor: const Color(0xFFB2DFDB),
           child: Icon(icon, color: const Color(0xFF00695C)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
+        ),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: page != null

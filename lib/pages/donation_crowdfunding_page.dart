@@ -76,7 +76,10 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -110,6 +113,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -130,6 +134,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                                   '¥${raised.toStringAsFixed(0)} / ¥${goal.toStringAsFixed(0)}',
                                   style: const TextStyle(
                                     color: Color(0xFFFF6B35),
+                                    height: 1.5,
                                   ),
                                 ),
                               ],

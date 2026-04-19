@@ -72,7 +72,10 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -92,7 +95,10 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                           SizedBox(height: 8),
                           Text(
                             'ミーティングはありません',
-                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -117,6 +123,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                               item['title']?.toString() ?? '(無題)',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
@@ -131,6 +138,7 @@ class _MeetingManagerPageState extends State<MeetingManagerPage> {
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF009688),
+                                height: 1.5,
                               ),
                             ),
                           ),

@@ -80,7 +80,10 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -113,8 +116,10 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                             ),
                             title: Text(
                               description,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Text(tx['created_at']?.toString() ?? ''),
                             trailing: Text(
@@ -124,6 +129,7 @@ class _DigitalWalletPageState extends State<DigitalWalletPage> {
                                     ? Colors.green
                                     : Colors.red,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                           ),

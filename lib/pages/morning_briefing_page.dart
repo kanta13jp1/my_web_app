@@ -2341,7 +2341,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           const SizedBox(height: 24),
           const Text(
             'カテゴリ別内訳',
-            style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(

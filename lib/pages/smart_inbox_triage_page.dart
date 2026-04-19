@@ -89,7 +89,10 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -109,7 +112,10 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                           SizedBox(height: 8),
                           Text(
                             '受信メッセージはありません',
-                            style: TextStyle(color: Color(0xFFB0B0B0)),
+                            style: TextStyle(
+                              color: Color(0xFFB0B0B0),
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -138,6 +144,7 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                                   '(件名なし)',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
@@ -164,6 +171,7 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                                         fontSize: 11,
                                         color: _priorityColor(priority),
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                   )

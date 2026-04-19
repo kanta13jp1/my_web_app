@@ -507,7 +507,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -565,7 +568,9 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                   Expanded(
                     child: Text(
                       item,
-                      style: const TextStyle(height: 1.5),
+                      style: const TextStyle(
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],

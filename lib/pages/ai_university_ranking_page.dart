@@ -1062,7 +1062,10 @@ class _RankBadge extends StatelessWidget {
         child: medal != null
             ? Text(
                 medal!,
-                style: const TextStyle(fontSize: 28),
+                style: const TextStyle(
+                  fontSize: 28,
+                  height: 1.5,
+                ),
               )
             : Text(
                 '#$rank',

@@ -122,7 +122,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
             SizedBox(height: 12),
             Text(
               '契約書がありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -149,7 +152,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Text(party.isNotEmpty ? party : status),
             trailing: expiry.isNotEmpty
@@ -190,7 +196,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
       return const Center(
         child: Text(
           'チェック項目がありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -208,7 +217,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             '$completed / ${_checklist.length} 完了',
-            style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
         ),
         Expanded(

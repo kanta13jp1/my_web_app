@@ -74,7 +74,10 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
+                    style: const TextStyle(
+                      color: Colors.red,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : SingleChildScrollView(
@@ -94,8 +97,10 @@ class _GrowthShareSignalPageState extends State<GrowthShareSignalPage> {
                       if (d == null)
                         const Text(
                           'データがありません',
-                          style:
-                              TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+                          style: TextStyle(
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
                         )
                       else ...[
                         Card(

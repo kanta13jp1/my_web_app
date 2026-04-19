@@ -224,6 +224,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                           const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         );
                       },

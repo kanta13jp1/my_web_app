@@ -107,8 +107,10 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                     ? Center(
                         child: Text(
                           _errorMessage!,
-                          style:
-                              const TextStyle(color: Colors.red, height: 1.5),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : _results.isEmpty

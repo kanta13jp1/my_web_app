@@ -463,7 +463,10 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
               const SizedBox(height: 12),
               const Text(
                 '退避した別件',
-                style: TextStyle(fontWeight: FontWeight.w700, height: 1.5),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               ..._distractionNotes.map(
@@ -521,7 +524,10 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         children: [
           Text(
             record.anchorText,
-            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -584,8 +590,11 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         backgroundColor: color,
         child: Text(
           initial,
-          style:
-              const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
       ),
       label: Text('$label  $value'),

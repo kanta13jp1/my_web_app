@@ -186,7 +186,10 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         ),
                         isDense: true,
                       ),
-                      style: const TextStyle(fontSize: 13, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     TextField(
@@ -207,7 +210,10 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         ),
                       ),
                       maxLines: 4,
-                      style: const TextStyle(fontSize: 13, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -251,7 +257,10 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     '医療・健康ノートはまだありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               )
@@ -301,7 +310,10 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(fontSize: 13, height: 1.5),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.5,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -311,7 +323,10 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                     subtitle: note['content']?.toString().isNotEmpty == true
                         ? Text(
                             note['content']?.toString() ?? '',
-                            style: const TextStyle(fontSize: 11, height: 1.5),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              height: 1.5,
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           )

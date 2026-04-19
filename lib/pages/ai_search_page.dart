@@ -232,7 +232,10 @@ class _AiSearchPageState extends State<AiSearchPage> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red[400], height: 1.5),
+                style: TextStyle(
+                  color: Colors.red[400],
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(

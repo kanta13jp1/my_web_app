@@ -203,7 +203,10 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
               children: [
                 const Text(
                   '📜',
-                  style: TextStyle(fontSize: 40, height: 1.5),
+                  style: TextStyle(
+                    fontSize: 40,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -383,7 +386,13 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
             height: 1.5,
           ),
         ),
-        leading: const Text('📜', style: TextStyle(fontSize: 20, height: 1.5)),
+        leading: const Text(
+          '📜',
+          style: TextStyle(
+            fontSize: 20,
+            height: 1.5,
+          ),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

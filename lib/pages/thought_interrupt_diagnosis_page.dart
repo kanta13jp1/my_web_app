@@ -362,7 +362,10 @@ class _ThoughtInterruptDiagnosisPageState
                           _currentStep < _questions.length - 1
                               ? '次へ →'
                               : '診断結果を見る',
-                          style: const TextStyle(fontSize: 16, height: 1.5),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.5,
+                          ),
                         ),
                 ),
               ),
@@ -414,8 +417,10 @@ class _ThoughtInterruptDiagnosisPageState
                       SizedBox(width: 6),
                       Text(
                         'あなたの主な思考妨害',
-                        style:
-                            TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),

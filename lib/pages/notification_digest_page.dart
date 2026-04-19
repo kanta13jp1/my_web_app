@@ -94,8 +94,10 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
-                          style:
-                              const TextStyle(color: Colors.red, height: 1.5),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(

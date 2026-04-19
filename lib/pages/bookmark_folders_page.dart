@@ -242,6 +242,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -250,6 +251,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -288,6 +290,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                                   .colorScheme
                                   .onSurfaceVariant,
                               fontSize: 13,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -329,11 +332,15 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
             fontWeight: FontWeight.w600,
             decoration: isOrganized ? TextDecoration.lineThrough : null,
             color: isOrganized ? const Color(0xFFB0B0B0) : null,
+            height: 1.5,
           ),
         ),
         subtitle: Text(
           '${platform == 'x' ? 'X (Twitter)' : platform == 'chrome' ? 'Chrome' : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
-          style: const TextStyle(fontSize: 11),
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.5,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),

@@ -174,7 +174,11 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             ),
           // リスト
@@ -200,6 +204,7 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
                                 color: isDark
                                     ? const Color(0xFF9E9E9E)
                                     : const Color(0xFF757575),
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -226,6 +231,7 @@ class _PollSurveyPageState extends State<PollSurveyPage> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 15,
+                                      height: 1.5,
                                     ),
                                   ),
                                   const SizedBox(height: 8),

@@ -80,7 +80,10 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -106,6 +109,7 @@ class _MindmapDiagramPageState extends State<MindmapDiagramPage> {
                             style: TextStyle(
                               fontSize: 16,
                               color: Color(0xFFB0B0B0),
+                              height: 1.5,
                             ),
                           ),
                         ],
