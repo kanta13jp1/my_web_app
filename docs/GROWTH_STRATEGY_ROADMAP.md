@@ -12001,3 +12001,26 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **deno lint**: clean ✅
 - **次回**: 各セッション開始/終了で WBS が必ず最新化される運用へ移行
 
+
+### Philosophy Alignment (Windowsアプリ版#128・WBS 自動同期)
+
+本セッション作業の理念整合性 (Rule 22):
+
+- **主要実装**:
+  - WBS 自動同期 仕組み (3 層ガード: inject-rules + skill + tools-hub 5 EF actions)
+  - inject-rules.txt に [WBS-SYNC] rule 永続注入
+  - 動画 #2 (欠陥の修正：コメントがコードを変えた 10:40) download + Scribe (4117 words / 42.8s)
+
+- **該当原則**:
+  - 6 (資本=時間) — WBS 陳腐化解消で「次に何やるか迷う」時間を排除
+  - 7 (資産負債) — WBS 動的維持で進捗データ資産化 (migration 負債解消)
+  - 8 (KPI=昨日の自分) — 進捗可視化で 10 インスタンス全員が「昨日比」を確認可能
+
+- **整合性スコア**: 9/9 ✅
+
+- **理念的貢献**:
+  - 10 インスタンス制が機能するための infra 完成 (WBS = 共通脳)
+  - 各インスタンスが session-start で「次タスク」を WBS から取得 = 自律分散運用
+
+- **懸念**: なし (rule 注入で全インスタンス強制 → 陳腐化リスク根絶)
+
