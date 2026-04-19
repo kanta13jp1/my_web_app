@@ -11450,7 +11450,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/how-i-applied-design-tokens-across-200-flutter-pages-in-one-commit-c4
 - **T-1第170弾**: Claude Code 3インスタンス並行運用 $20で$200開発 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/running-3-parallel-claude-code-instances-to-get-200-of-dev-work-for-20month-3pmc
-- **本日T-1累計**: 28本 (過去最高更新)
+- **本日T-1累計**: 28本 (過去最高更新) ※ 別instanceがflutter-ai-tag-suggestion + supabase-batch-optimization追加で実質30本
 
 ### PS版#1(続2) T-1第171-172弾 (2026-04-19 19:05)
 - **T-1第171弾**: Flutter AIタグ提案機能 Groq無料枠実装 → dev.to 投稿成功
