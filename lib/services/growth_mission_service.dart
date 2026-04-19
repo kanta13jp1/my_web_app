@@ -487,6 +487,10 @@ class GrowthMissionService {
   static const _pendingReferralCodeKey = 'growth_pending_referral_code';
   static const _referralAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+  // #551 Phase 1: guest→user 遷移時のみ guest_presence.delete を発火し
+  // heartbeat ごとの無駄な DELETE を抑止する。
+  static String? _lastGuestCleanupSession;
+
   final SupabaseClient? _clientOverride;
 
   const GrowthMissionService({
@@ -617,11 +621,14 @@ $inviteUrl
           onConflict: 'user_id,session_id',
         );
 
-        await client
-            .from('guest_presence')
-            .delete()
-            .eq('session_id', sessionId)
-            .select();
+        if (_lastGuestCleanupSession != sessionId) {
+          await client
+              .from('guest_presence')
+              .delete()
+              .eq('session_id', sessionId)
+              .select();
+          _lastGuestCleanupSession = sessionId;
+        }
       } else {
         await client.from('guest_presence').upsert(
           <String, dynamic>{
@@ -635,8 +642,6 @@ $inviteUrl
     } catch (error) {
       debugPrint('Growth presence sync failed: $error');
     }
-
-    await refreshAggregateMetrics();
   }
 
   Future<void> refreshAggregateMetrics() async {
@@ -1364,6 +1369,7 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
   final GrowthMissionService _service;
   final GrowthAcquisitionService _acquisitionService;
   Timer? _heartbeatTimer;
+  Timer? _metricsTimer;
   String _currentPagePath = '/';
 
   GrowthPresenceNavigatorObserver({
@@ -1406,13 +1412,20 @@ class GrowthPresenceNavigatorObserver extends NavigatorObserver {
     unawaited(_service.capturePendingReferralFromUri());
     unawaited(_service.applyPendingReferralIfPossible());
     _heartbeatTimer?.cancel();
+    _metricsTimer?.cancel();
     if (!_service.isPresenceTrackingAvailable) {
       return;
     }
 
+    // #551 Phase 1: heartbeat を 45 秒 → 2 分に延長 + refreshAggregateMetrics
+    // を 5 分毎の別 Timer に切り出して 1 分あたりの fetch 頻度を 1/4 以下に削減。
     unawaited(_service.syncPresence(pagePath: _currentPagePath));
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+    unawaited(_service.refreshAggregateMetrics());
+    _heartbeatTimer = Timer.periodic(const Duration(minutes: 2), (_) {
       unawaited(_service.syncPresence(pagePath: _currentPagePath));
+    });
+    _metricsTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+      unawaited(_service.refreshAggregateMetrics());
     });
   }
 
