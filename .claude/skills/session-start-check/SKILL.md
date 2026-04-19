@@ -34,6 +34,27 @@ PYTHONUTF8=1 python3 scripts/check_versions.py
 - 変更があれば `docs/tool-versions.md` 更新 + 制約解消チェック
 - Windows でない (WEB版) の場合は `scripts/check_versions.py --web` は不可 → WebFetch で手動確認
 
+### Step 1.5: Worktree 確認 (PS版・Win版 必須)
+
+```bash
+# PS版
+pwd  # → C:/Users/kanta/GitHub/my_web_app_ps であることを確認
+git branch --show-current  # → ps-main
+
+# Win版
+pwd  # → C:/Users/kanta/GitHub/my_web_app_win であることを確認
+git branch --show-current  # → win-main
+```
+
+**main repo (`my_web_app`) にいる場合は即移動**:
+```bash
+# PS版ならここで cd して以後全ての操作は ps worktree で行う
+cd C:/Users/kanta/GitHub/my_web_app_ps
+git pull --rebase origin main
+```
+
+VSCode版のみ main repo での作業が許可されている。
+
 ### Step 2: cross-instance-prs の状態
 
 ```bash
@@ -103,3 +124,15 @@ grep -E "^### 原則 [0-9]" docs/PHILOSOPHY.md | head -10
 - **現在のインスタンス確認**: ユーザーの最新発話 (例: "現在のインスタンスはWindowsアプリ版です") を基準にする
 - **高衝突リスク時**: ROADMAP 書き込みは最後にまとめて rebase+push
 - **stale PR は即削除**: 並行インスタンスが archive commit しても root 残すケースが頻発
+- **Worktree 違反検出**: `pwd` が main repo を指していて PS版/Win版なら即 `cd` で移動
+
+## Worktree 分離 (PS版・Win版)
+
+| インスタンス | 作業 cwd | ブランチ | push コマンド |
+|------------|---------|---------|-------------|
+| VSCode版 | `C:/Users/kanta/GitHub/my_web_app` | main | `git push origin main` |
+| PS版 | `C:/Users/kanta/GitHub/my_web_app_ps` | ps-main | `git push origin ps-main:main` |
+| Win版 | `C:/Users/kanta/GitHub/my_web_app_win` | win-main | `git push origin win-main:main` |
+
+**git stash 禁止**: uncommitted 変更は即 commit (WIP commit で可)。
+stash の代わり: `git add -A && git commit -m "WIP" → git pull --rebase → git reset HEAD~1`
