@@ -11802,3 +11802,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - **整合性スコア**: 8/9 ✅ 実装可
 - **理念的貢献**: 検索基盤 (RAG) と MoE アーキテクチャの実用的学習コンテンツで AI 大学の差別化強化
+
+### Windowsアプリ版#123 セッション (2026-04-19 20:00 JST)
+- **EF cleanup 第3弾**: dead 121 EF (deploy/delete どちらにもない) のうち 54 EF directory 削除
+- 判定: dead 121 ∩ Flutter `functions.invoke` 参照ゼロ = 54 SAFE / 67 RISKY (Flutter 修正必要)
+- **削除前**: 178 dirs (Win#120 後)
+- **削除後**: 124 dirs (-54)
+- 1日累計 EF cleanup: -138 dirs (262 → 124)
+- 副次対応: deploy-prod.yml の delete リストに 54 行追加 (将来の deploy で本番からも確実に削除)
+- 削除例: api-docs-generator, audit-trail, backup-restore, ci-cd-pipeline, code-playground,
+  edge-function-test-runner, edge-function-ui-checker, marketplace, oauth-sso-provider,
+  payment-processor, push-notification-manager, smart-home-automation, voice-memo-transcriber 等
+
