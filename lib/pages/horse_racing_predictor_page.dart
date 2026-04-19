@@ -341,6 +341,22 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
       final p = r['horse_predictions'];
       return p != null && (p is List ? p.isNotEmpty : true);
     });
+
+    // Win版#112: netkeiba 風 開催地別カラム表示
+    final Map<String, List<Map<String, dynamic>>> byVenue = {};
+    for (final race in _todayRaces) {
+      final v = (race['venue'] as String? ?? '不明').trim();
+      byVenue.putIfAbsent(v, () => []).add(race);
+    }
+    for (final list in byVenue.values) {
+      list.sort((a, b) {
+        final na = (a['race_number'] as num?)?.toInt() ?? 99;
+        final nb = (b['race_number'] as num?)?.toInt() ?? 99;
+        return na.compareTo(nb);
+      });
+    }
+    final venues = byVenue.keys.toList()..sort();
+
     return Column(
       children: [
         if (!hasPredictions)
@@ -365,13 +381,123 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            itemCount: _todayRaces.length,
-            itemBuilder: (ctx, i) => _buildRaceCard(_todayRaces[i]),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final cols = w >= 1100
+                  ? 4
+                  : w >= 820
+                      ? 3
+                      : w >= 540
+                          ? 2
+                          : 1;
+              if (cols == 1) {
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  children: [
+                    for (final v in venues) ...[
+                      _buildVenueHeader(v, byVenue[v]!.length),
+                      ...byVenue[v]!.map(_buildRaceCard),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              }
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final v in venues)
+                      SizedBox(
+                        width: (w - 12 * (cols + 1)) / cols,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildVenueHeader(v, byVenue[v]!.length),
+                            ...byVenue[v]!.map(_buildRaceCard),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildVenueHeader(String venue, int raceCount) {
+    const narVenues = {
+      '金沢',
+      '園田',
+      '姫路',
+      '水沢',
+      '門別',
+      '盛岡',
+      '浦和',
+      '船橋',
+      '大井',
+      '川崎',
+      '笠松',
+      '名古屋',
+      '高知',
+      '佐賀',
+      '帯広',
+      '不明',
+    };
+    final isJra = !narVenues.contains(venue);
+    final color = isJra ? const Color(0xFF2563EB) : const Color(0xFF7C3AED);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isJra ? Icons.stadium : Icons.location_on,
+            color: color,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            venue,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              isJra ? 'JRA' : '地方',
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            '$raceCount R',
+            style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 
