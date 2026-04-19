@@ -663,6 +663,7 @@ class _NoteListPageState extends State<NoteListPage> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
+              height: 1.7,
             ),
           ),
           const SizedBox(height: 4),
@@ -670,6 +671,7 @@ class _NoteListPageState extends State<NoteListPage> {
             subtitle,
             style: TextStyle(
               fontSize: 12,
+              height: 1.6,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -889,8 +891,8 @@ class _NoteListPageState extends State<NoteListPage> {
             if (highlightShareCandidate) ...[
               const SizedBox(height: 8),
               Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   if (shareScore != null) _buildReasonChip('score $shareScore'),
                   ...shareReasons.take(4).map(_buildReasonChip),
@@ -905,7 +907,7 @@ class _NoteListPageState extends State<NoteListPage> {
             if (reminderDate != null) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 decoration: BoxDecoration(
                   color: _reminderColor(reminderDate).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -944,7 +946,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 ),
               ),
             ],
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               dateStr,
               style: TextStyle(
