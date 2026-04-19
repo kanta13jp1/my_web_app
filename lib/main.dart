@@ -33,6 +33,7 @@ import 'package:my_web_app/pages/ai_university_ranking_page.dart';
 import 'package:my_web_app/pages/ai_university_voice_page.dart';
 import 'package:my_web_app/pages/reality_check_page.dart';
 import 'package:my_web_app/pages/comparison_page.dart';
+import 'package:my_web_app/pages/note_list_page.dart';
 import 'package:my_web_app/pages/philosophy_page.dart';
 import 'package:my_web_app/pages/ai_dev_principles_page.dart';
 import 'package:my_web_app/pages/feature_requests_page.dart';
@@ -764,6 +765,12 @@ class MyApp extends StatelessWidget {
           case '/ai-provider-status':
             return MaterialPageRoute(
               builder: (_) => const AiProviderStatusPage(),
+            );
+          case '/note-list':
+            // Win版#110: feature_releases から「ノート」deep link
+            return MaterialPageRoute(
+              builder: (_) => const NoteListPage(),
+              settings: settings,
             );
           case '/asset-management':
             return MaterialPageRoute(
