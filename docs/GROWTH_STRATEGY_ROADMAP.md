@@ -11875,3 +11875,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - **該当原則**: 2 (ミッション駆動) / 5 (商品=ユーザー価値) / 6 (資本=時間)
 - **整合性スコア**: 7/9 ✅
+### Windowsアプリ版#126 セッション (2026-04-19 20:45 JST)
+- **YouTube アップロード自動化提案 + 雛形作成**:
+  - `scripts/upload_youtube.py`: YouTube Data API v3 + OAuth 2.0 完全自動化
+    - サブコマンド: `auth` (初回 OAuth) / `upload` (1本) / `batch` (manifest JSON で N本)
+    - resumable upload (大容量動画対応)
+    - retry on 5xx (defense-in-depth)
+    - privacyStatus=unlisted (Deny-by-default)
+    - JSON 結果 (video_id 配列) を ai_dev_principles_page.dart 自動置換用に出力
+  - `videos/master_brain/upload_manifest.json`: 5 動画 (原版+A/B/C/D) のメタデータ
+  - 必要セットアップ (1 回のみ・約 10 分):
+    1. Google Cloud Console で project + YouTube Data API v3 Enable
+    2. OAuth 2.0 client (Desktop App) → `~/.youtube/client_secret.json`
+    3. `pip install google-api-python-client google-auth-oauthlib google-auth-httplib2`
+    4. `python scripts/upload_youtube.py auth` でブラウザ認証 (refresh token 永続化)
+  - 制約: API quota 10,000 units/day = 6 upload/day (5 動画/セッション = 1日1セッション可)
+  - 増額申請可能: https://support.google.com/youtube/contact/yt_api_form
+

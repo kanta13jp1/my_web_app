@@ -1,0 +1,37 @@
+[
+  {
+    "file": "videos/master_brain/source.mp4",
+    "title": "【自分株式会社】カオスから教義へ：高速開発の教訓 (Master Brain 自動生成・原版)",
+    "description": "NotebookLM の Video Overview 機能で「自分株式会社」プロジェクトの開発記録 100+ セッションから自動生成された動画。混沌としていた開発プロセスから自己改善するパターンへ進化した過程を、AI が音声+ビジュアルで解説します。\n\n字幕無しの原版です。日本語字幕付きの完全版は別動画 (variant A) を参照ください。\n\n本シリーズ:\n- A: 字幕付き完全版\n- B: warm cinematic グレード版\n- C: neutral punch グレード版\n- D: プレミアム字幕版 (SNS/モバイル向け)\n\n#自分株式会社 #NotebookLM #AI #開発教訓 #BuildInPublic\n本サイト: https://my-web-app-b67f4.web.app/",
+    "tags": ["自分株式会社", "NotebookLM", "AI", "開発教訓", "BuildInPublic", "Flutter", "Supabase"],
+    "privacy": "unlisted"
+  },
+  {
+    "file": "videos/master_brain/output/variant_A.mp4",
+    "title": "【自分株式会社】カオスから教義へ：高速開発の教訓 (字幕付き完全版)",
+    "description": "NotebookLM が自動生成した動画に日本語字幕を焼き込んだ完全版です。LP 埋め込み・最忠実版。全 169 字幕エントリ (句点ベース)。\n\n#自分株式会社 #NotebookLM #AI #開発教訓 #BuildInPublic\n本サイト: https://my-web-app-b67f4.web.app/",
+    "tags": ["自分株式会社", "NotebookLM", "字幕付き", "AI", "開発教訓", "BuildInPublic"],
+    "privacy": "unlisted"
+  },
+  {
+    "file": "videos/master_brain/output/variant_B.mp4",
+    "title": "【自分株式会社】カオスから教義へ：高速開発の教訓 (warm cinematic 版)",
+    "description": "暖色グレード適用版。brightness -3% / contrast +10% / saturation -15% で映画調の落ち着いた雰囲気。日本語字幕付き。\n\n#自分株式会社 #NotebookLM #AI #開発教訓\n本サイト: https://my-web-app-b67f4.web.app/",
+    "tags": ["自分株式会社", "NotebookLM", "AI", "開発教訓", "字幕付き"],
+    "privacy": "unlisted"
+  },
+  {
+    "file": "videos/master_brain/output/variant_C.mp4",
+    "title": "【自分株式会社】カオスから教義へ：高速開発の教訓 (neutral punch 版)",
+    "description": "クリアグレード適用版。contrast +15% / saturation +5% で視認性最大化。プレゼン・モバイル視聴に最適。日本語字幕付き。\n\n#自分株式会社 #NotebookLM #AI #開発教訓\n本サイト: https://my-web-app-b67f4.web.app/",
+    "tags": ["自分株式会社", "NotebookLM", "AI", "開発教訓", "字幕付き"],
+    "privacy": "unlisted"
+  },
+  {
+    "file": "videos/master_brain/output/variant_D.mp4",
+    "title": "【自分株式会社】カオスから教義へ：高速開発の教訓 (プレミアム字幕版・SNS/モバイル向け)",
+    "description": "字幕を太字 22pt + 半透明黒背景 + Outline=3 で強化したプレミアム版。SNS シェア・スマホ視聴での視認性最大化。\n\n#自分株式会社 #NotebookLM #AI #開発教訓 #BuildInPublic\n本サイト: https://my-web-app-b67f4.web.app/",
+    "tags": ["自分株式会社", "NotebookLM", "AI", "開発教訓", "プレミアム字幕", "BuildInPublic"],
+    "privacy": "unlisted"
+  }
+]

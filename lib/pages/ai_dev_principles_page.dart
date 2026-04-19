@@ -646,6 +646,43 @@ const _videos = [
   ),
 ];
 
+/// 開発教訓動画シリーズ「カオスから教義へ：高速開発の教訓」
+/// (Win版#125 追加・NotebookLM jibun-master-brain artifact dedb6b24)
+const _devLessonsVideos = [
+  _Video(
+    id: 'TODO_NOTEBOOK_ORIGINAL',
+    label: '編集前 (NotebookLM 原版)',
+    duration: '7:01',
+    description:
+        'NotebookLM Master Brain の蓄積 (Win版 100+ セッション) から自動生成された動画。'
+        '混沌としていた開発プロセスから自己改善するパターンへ進化した過程を解説。字幕無し。',
+  ),
+  _Video(
+    id: 'TODO_VARIANT_A',
+    label: 'A: 完全版 (字幕付き)',
+    duration: '7:01',
+    description: '日本語字幕焼き込み・全 169 字幕エントリ。LP 埋め込み・最忠実版。',
+  ),
+  _Video(
+    id: 'TODO_VARIANT_B',
+    label: 'B: warm cinematic',
+    duration: '7:01',
+    description: '暖色グレード (brightness -3% / contrast +10% / saturation -15%) + 字幕。映画調。',
+  ),
+  _Video(
+    id: 'TODO_VARIANT_C',
+    label: 'C: neutral punch',
+    duration: '7:01',
+    description: 'クリアグレード (contrast +15% / saturation +5%) + 字幕。プレゼン向け視認性最大化。',
+  ),
+  _Video(
+    id: 'TODO_VARIANT_D',
+    label: 'D: プレミアム字幕版',
+    duration: '7:01',
+    description: '太字 22pt + 半透明黒背景 + Outline=3。SNS シェア・スマホ視聴用。',
+  ),
+];
+
 class _Principle {
   final int number;
   final String title;
