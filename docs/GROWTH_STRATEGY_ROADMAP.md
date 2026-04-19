@@ -11579,11 +11579,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
+### PS版#6 horse-racing バッチ最適化 Session 5 (2026-04-19 20:15)
+- **根本原因特定 (2段階目)**: NAR EUC-JP 文字化けループ — 毎時 56 レース削除→再挿入→535 頭 prev_history_fetched=false
+- **修正**: http_get に NAR URL 専用 EUC-JP 確定デコード追加
+- **期待効果**: 文字化けループ終了 → 毎時の新規エントリ 0 → fetch_horse_histories = ~0秒
+- commit: `1c8a6113`
+
 ### PS版#6 horse-racing バッチ最適化 Session 4 (2026-04-19 19:58)
 - **根本原因特定**: `time.sleep(1)` が 404 失敗馬でも無条件発火 → 1060頭 × 1秒 = **17.7分の純粋なスリープ**
 - **修正**: 404/失敗時は sleep をスキップ (成功時のみ待機) + 失敗 ID をバッチ PATCH
-- **効果試算**: 前走情報 29分 → ~3分 (初日のみ・翌時間以降は 0秒)
-- **検証**: run 24626765532 は 36分 (修正前最後の run) — 次 run で効果確認予定
+- **効果確認**: run 24627798689 = **11min56sec** (前回 36min) ✅ -24分削減
 - commit: `52f8b40b`
 
 ### PS版#6 horse-racing バッチ最適化 Session 3 (2026-04-19 19:30)
