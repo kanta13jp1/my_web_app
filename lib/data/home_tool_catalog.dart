@@ -89,6 +89,7 @@ import '../pages/workflow_automation_page.dart';
 import '../pages/social_media_scheduler_page.dart';
 import '../pages/video_meeting_page.dart';
 import '../pages/gantt_timeline_page.dart';
+import '../pages/project_gantt_page.dart';
 import '../pages/guitar_recording_studio_page.dart';
 import '../pages/public_guitar_gallery_page.dart';
 import '../pages/music_collaboration_page.dart';
@@ -1197,21 +1198,40 @@ List<HomeToolEntry> buildHomeToolCatalog({
       onOpen: (context) => _pushPage(context, const VideoMeetingPage()),
     ),
     HomeToolEntry(
+      id: 'project-gantt',
+      sectionId: 'growth',
+      title: '開発ロードマップ & WBS',
+      subtitle: 'マイルストーン・タスク・進捗率を一覧。WBS(Work Breakdown Structure)でプロジェクト全体を俯瞰',
+      icon: Icons.account_tree_outlined,
+      color: const Color(0xFF6366F1),
+      keywords: const <String>[
+        'WBS',
+        'Work Breakdown Structure',
+        '開発ロードマップ',
+        'ロードマップ',
+        'マイルストーン',
+        'タスク管理',
+        'プロジェクト管理',
+        '進捗率',
+        'ガント',
+        'プロジェクトガント',
+      ],
+      onOpen: (context) => _pushPage(context, const ProjectGanttPage()),
+    ),
+    HomeToolEntry(
       id: 'gantt-timeline',
       sectionId: 'growth',
-      title: 'ガントチャート',
-      subtitle: 'Notion Timeline/Microsoft Project競合。タスク依存・マイルストーン・クリティカルパス管理',
+      title: 'ガントチャート (Growth Timeline)',
+      subtitle: 'Notion Timeline/Microsoft Project競合。タスク依存・クリティカルパス管理',
       icon: Icons.view_timeline_outlined,
       color: const Color(0xFF8B5CF6),
       keywords: const <String>[
         'ガント',
         'タイムライン',
-        'プロジェクト管理',
+        'Growth',
         'スケジュール',
-        'マイルストーン',
         'クリティカルパス',
-        'WBS',
-        '進捗管理',
+        'タスク依存',
         'Notion',
       ],
       onOpen: (context) => _pushPage(context, const GanttTimelinePage()),
