@@ -11857,3 +11857,21 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - **該当原則**: 2 (ミッション駆動) / 5 (商品=ユーザー価値) / 6 (資本=時間・コスト削減)
 - **整合性スコア**: 7/9 ✅
+
+### PS版#4 Session 9 (2026-04-20) — Gemini sunset 緊急対応 + 新規脅威2社
+
+- **主要作業**: 競合レポート 2026-04-20 追補 + cross-instance-pr 2件追加
+  - **緊急**: Gemini 2.0 Flash-Lite sunset 2026-06-01 発覚 → `20260420_gemini_flash_lite_migration.md` (Win版)
+  - 新規脅威: Perplexity Mac Agent (daily-judgment競合) / Adobe Firefly Workflows (schedule競合)
+  - → `20260420_perplexity_adobe_firefly.md` (VSCode版 LP差別化)
+  - Claude Opus 4.7 リリース確認 → ai-hub synthesis model 更新検討 (Win版判断)
+
+- **cross-instance-pr 発行合計**: 本日2件 + 昨日4件 = 計6件 pending
+  - 🔴 HIGH: `20260420_gemini_flash_lite_migration.md` → Win版 (deadline 2026-06-01)
+  - 🔴 HIGH: `20260419_moneyforward_counter.md` → Win版 (deadline 2026-06末)
+  - 🟡 MED: `20260420_perplexity_adobe_firefly.md` → VSCode版
+  - 🟡 MED: `20260419_blog_publish_aidev_improvement.md` → PS版#1
+  - 🟢 LOW: `20260419_slack_mcp_integration.md` → Win版
+
+- **該当原則**: 2 (ミッション駆動) / 5 (商品=ユーザー価値) / 6 (資本=時間)
+- **整合性スコア**: 7/9 ✅
