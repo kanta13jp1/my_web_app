@@ -231,13 +231,21 @@ Claude のトークンは「判断・編集・統合」のみに使い、重い�
 
 ### インスタンス別 推奨モデル / 制約表
 
-| インスタンス | 推奨モデル | 推奨モード | 主な制約 |
-| --- | --- | --- | --- |
-| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | なし |
-| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | なし。`PYTHONUTF8=1` 必須 |
-| **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | なし |
-| **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
-| **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
+| インスタンス | 推奨モデル | 推奨モード | 作業ディレクトリ | 主な制約 |
+| --- | --- | --- | --- | --- |
+| **VSCode版** | `claude-haiku-4-5` (Auto Mode) | 通常 (重い設計は sonnet-4-6 に一時切替可) | `C:/Users/kanta/GitHub/my_web_app` (main repo) | なし |
+| **Windowsアプリ版** | `claude-haiku-4-5` (Auto Mode) | 通常 + CAVEMAN節約 | `C:/Users/kanta/GitHub/my_web_app_win` (win-main branch) | なし。`PYTHONUTF8=1` 必須 |
+| **PowerShell版** | ルーティン: `claude-haiku-4-5` / 設計: `claude-sonnet-4-6` | `/fast` (定型作業) | `C:/Users/kanta/GitHub/my_web_app_ps` (ps-main branch) | なし |
+| **WEB版** | `claude-sonnet-4-6` (変更不可の場合あり) | 通常 | GitHub MCP のみ | `notebooklm` / `flutter analyze` / `deno lint` / ローカルCLI **不可** |
+| **📱 スマホ版** | `claude-sonnet-4-6` | 通常 (画像分析重視) | GitHub MCP のみ | ローカルCLI **不可** / git/dart/flutter **不可** / **GitHub MCP のみ** で git 操作。**実機 UAT・モバイル不具合トリアージ専用** |
+
+**Worktree 運用ルール (PS版・Win版 必須)**:
+- セッション開始時: `cd C:/Users/kanta/GitHub/my_web_app_ps` (PS版) or `my_web_app_win` (Win版) で作業開始
+- `git pull --rebase origin main` で最新を取得 (stash 不要 — uncommitted 変更なし前提)
+- commit 後: `git push origin ps-main:main` (PS版) / `git push origin win-main:main` (Win版) で origin/main に push
+- push 後: `git pull --rebase origin main` で ps-main/win-main を最新に同期
+- **git stash 禁止**: uncommitted 変更は即 commit か WIP commit (`git commit -m "WIP"`) で退避
+- main repo (`C:/Users/kanta/GitHub/my_web_app`) は **VSCode版専任** — PS版・Win版は絶対に編集しない
 
 **WEB版代替パターン**:
 - `notebooklm ask` → WebSearch で代替
