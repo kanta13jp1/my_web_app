@@ -46,7 +46,12 @@ class NoteEditorPage extends StatefulWidget {
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
-enum NoteEditorAiStyle { normal, concise, formal, explanatory }
+enum NoteEditorAiStyle {
+  normal,
+  concise,
+  formal,
+  explanatory,
+}
 
 extension NoteEditorAiStyleX on NoteEditorAiStyle {
   String get commandValue {
@@ -165,8 +170,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     '/stamp',
     '/tabs',
   ];
-  static final List<NotePromptTemplate>
-  _builtInPromptTemplates = <NotePromptTemplate>[
+  static final List<NotePromptTemplate> _builtInPromptTemplates =
+      <NotePromptTemplate>[
     NotePromptTemplate(
       id: 'executive-brief',
       title: 'Executive Brief',
@@ -197,9 +202,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _aiService = widget.aiService ?? AIService(_supabase);
     _currentNoteId = widget.noteId;
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
-    _contentController = TextEditingController(
-      text: widget.initialContent ?? '',
-    );
+    _contentController =
+        TextEditingController(text: widget.initialContent ?? '');
     _slashCommandController = TextEditingController();
     _contentFocusNode = FocusNode();
     _autoSaveService = AutoSaveService();
@@ -288,8 +292,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return;
     }
 
-    final hasChanges =
-        _titleController.text != title ||
+    final hasChanges = _titleController.text != title ||
         _contentController.text != content ||
         _reminderDate?.toIso8601String() != reminderDate?.toIso8601String() ||
         _isFavorite != isFavorite;
@@ -301,9 +304,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _isFavorite = isFavorite;
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Local draft restored.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Local draft restored.')),
+      );
     }
   }
 
@@ -335,8 +338,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     _undoRedoService.clear();
     _undoRedoService.addSnapshot(_buildCurrentSnapshot());
 
-    final hasAnyInput =
-        _titleController.text.trim().isNotEmpty ||
+    final hasAnyInput = _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty ||
         _reminderDate != null ||
         _isFavorite;
@@ -365,9 +367,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<int?> _ensureNoteIdForAttachmentFlow() async {
@@ -469,9 +471,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     String mimeType,
   ) async {
     final extension = _extensionForMimeType(mimeType);
-    final effectiveFileName = fileName.trim().isEmpty
-        ? 'pasted-image.$extension'
-        : fileName;
+    final effectiveFileName =
+        fileName.trim().isEmpty ? 'pasted-image.$extension' : fileName;
     final file = PlatformFile(
       name: effectiveFileName,
       size: bytes.length,
@@ -608,8 +609,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   Future<void> _loadAiStylePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    final nextStyle =
-        _tryParseNoteEditorAiStyle(prefs.getString(_aiStylePreferenceKey)) ??
+    final nextStyle = _tryParseNoteEditorAiStyle(
+          prefs.getString(_aiStylePreferenceKey),
+        ) ??
         NoteEditorAiStyle.normal;
     if (!mounted) {
       _selectedAiStyle = nextStyle;
@@ -621,8 +623,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _loadPreferredAiModel() async {
-    final preferredModel = await widget.modelPreferenceService
-        .loadPreferredModel();
+    final preferredModel =
+        await widget.modelPreferenceService.loadPreferredModel();
     if (!mounted) {
       _selectedAiModel = preferredModel;
       return;
@@ -687,9 +689,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return DateTime.now().millisecondsSinceEpoch.toString();
     }
 
-    final existingIds = _savedPromptTemplates
-        .map((template) => template.id)
-        .toSet();
+    final existingIds =
+        _savedPromptTemplates.map((template) => template.id).toSet();
     if (!existingIds.contains(base)) {
       return base;
     }
@@ -772,8 +773,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return;
     }
 
-    final hasNoteContext =
-        _titleController.text.trim().isNotEmpty ||
+    final hasNoteContext = _titleController.text.trim().isNotEmpty ||
         _contentController.text.trim().isNotEmpty;
     if (!hasNoteContext) {
       _showMessage(
@@ -963,14 +963,12 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   void _appendTabsBlock() {
-    const tabsTemplate =
-        '## タブ 1\n\n（ここに内容を書く）\n\n---\n\n'
+    const tabsTemplate = '## タブ 1\n\n（ここに内容を書く）\n\n---\n\n'
         '## タブ 2\n\n（ここに内容を書く）\n\n---\n\n'
         '## タブ 3\n\n（ここに内容を書く）';
     final current = _contentController.text.trimRight();
-    final nextContent = current.isEmpty
-        ? tabsTemplate
-        : '$current\n\n$tabsTemplate';
+    final nextContent =
+        current.isEmpty ? tabsTemplate : '$current\n\n$tabsTemplate';
     _setContentText(nextContent);
   }
 
@@ -1190,15 +1188,17 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
           _contentController.text = data['content'] as String? ?? '';
           _reminderDate = data['reminder_date'] == null
               ? null
-              : DateTime.tryParse(data['reminder_date'].toString())?.toLocal();
+              : DateTime.tryParse(
+                  data['reminder_date'].toString(),
+                )?.toLocal();
           _isFavorite = _boolFromValue(data['is_favorite']);
         });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('メモの読み込みに失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('メモの読み込みに失敗しました: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -1217,16 +1217,13 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (user == null) throw Exception('Login is required.');
 
     if (_currentNoteId != null) {
-      await _supabase
-          .from('notes')
-          .update({
-            'title': title,
-            'content': content,
-            'reminder_date': _reminderDate?.toUtc().toIso8601String(),
-            'is_favorite': _isFavorite,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', _currentNoteId!);
+      await _supabase.from('notes').update({
+        'title': title,
+        'content': content,
+        'reminder_date': _reminderDate?.toUtc().toIso8601String(),
+        'is_favorite': _isFavorite,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', _currentNoteId!);
     } else {
       final dynamic inserted = await _supabase
           .from('notes')
@@ -1257,9 +1254,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Future<void> _saveManually() async {
     if (!_hasPersistableState && _currentNoteId == null) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('保存する内容がありません')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保存する内容がありません')),
+        );
       }
       return;
     }
@@ -1268,15 +1265,15 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       await _autoSaveService.saveImmediately(_saveNoteWithoutClosing);
       await _saveVersionSnapshot();
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('手動保存しました')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('手動保存しました')),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存に失敗しました: $e')),
+        );
       }
     }
   }
@@ -1306,9 +1303,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     if (user == null) return;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('タイトルを入力してから公開してください')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('タイトルを入力してから公開してください')),
+      );
       return;
     }
 
@@ -1347,9 +1344,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         ),
       );
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('公開に失敗しました')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('公開に失敗しました')),
+      );
     }
   }
 
@@ -1411,9 +1408,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('履歴の取得に失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('履歴の取得に失敗しました: $e')),
+        );
       }
       return;
     }
@@ -1464,8 +1461,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             : '不明';
                         final title =
                             (v['title'] as String?)?.isNotEmpty == true
-                            ? v['title'] as String
-                            : '無題';
+                                ? v['title'] as String
+                                : '無題';
                         return ListTile(
                           leading: const Icon(Icons.restore, size: 20),
                           title: Text(
@@ -1511,9 +1508,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                                       v['content'] as String? ?? '';
                                 });
                                 _autoSaveService.markAsModified();
-                                _autoSaveService.triggerAutoSave(
-                                  _saveNoteWithoutClosing,
-                                );
+                                _autoSaveService
+                                    .triggerAutoSave(_saveNoteWithoutClosing);
                               }
                             },
                           ),
@@ -1554,7 +1550,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました')),
+      SnackBar(
+        content: Text(
+          nextValue ? 'お気に入りに追加しました' : 'お気に入りを解除しました',
+        ),
+      ),
     );
   }
 
@@ -1671,9 +1671,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget _buildSlashCommandChip(String command) {
     return ActionChip(
       label: Text(command),
-      onPressed: _isRunningSlashCommand
-          ? null
-          : () => _prefillSlashCommand(command),
+      onPressed:
+          _isRunningSlashCommand ? null : () => _prefillSlashCommand(command),
     );
   }
 
@@ -1709,7 +1708,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         children: [
           const Icon(Icons.memory_rounded, size: 14),
           const SizedBox(width: 6),
-          Text('Default model: $model', overflow: TextOverflow.ellipsis),
+          Text(
+            'Default model: $model',
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
@@ -1724,9 +1726,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       return InputChip(
         key: key,
         label: Text(template.title),
-        onPressed: _isRunningSlashCommand
-            ? null
-            : () => _runPromptTemplate(template),
+        onPressed:
+            _isRunningSlashCommand ? null : () => _runPromptTemplate(template),
         onDeleted: _isRunningSlashCommand
             ? null
             : () => _deletePromptTemplate(template),
@@ -1735,9 +1736,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     return ActionChip(
       key: key,
       label: Text(template.title),
-      onPressed: _isRunningSlashCommand
-          ? null
-          : () => _runPromptTemplate(template),
+      onPressed:
+          _isRunningSlashCommand ? null : () => _runPromptTemplate(template),
     );
   }
 
@@ -1779,9 +1779,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 key: const Key('note_editor_prompt_library_add_button'),
-                onPressed: _isRunningSlashCommand
-                    ? null
-                    : _showPromptTemplateDialog,
+                onPressed:
+                    _isRunningSlashCommand ? null : _showPromptTemplateDialog,
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('New Prompt'),
               ),
@@ -1792,7 +1791,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Built-in prompts', style: theme.textTheme.labelLarge),
+                    Text(
+                      'Built-in prompts',
+                      style: theme.textTheme.labelLarge,
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -1802,7 +1804,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           .toList(growable: false),
                     ),
                     const SizedBox(height: 10),
-                    Text('Saved prompts', style: theme.textTheme.labelLarge),
+                    Text(
+                      'Saved prompts',
+                      style: theme.textTheme.labelLarge,
+                    ),
                     const SizedBox(height: 8),
                     if (_savedPromptTemplates.isEmpty)
                       Text(
@@ -1975,9 +1980,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget _buildEditorBody() {
     final theme = Theme.of(context);
     final isNarrow = MediaQuery.of(context).size.width < 600;
-    final outerPadding = isNarrow
-        ? const EdgeInsets.all(8.0)
-        : const EdgeInsets.all(16.0);
+    final outerPadding =
+        isNarrow ? const EdgeInsets.all(8.0) : const EdgeInsets.all(16.0);
     final titleFontSize = isNarrow ? 20.0 : 24.0;
     final String attachLabel;
     if (_isUploadingAttachment) {
@@ -2071,10 +2075,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 child: NoteImageDropZone(
                   onImageDropped: (bytes, fileName, mimeType) =>
                       _handlePastedImage(
-                        Uint8List.fromList(bytes),
-                        fileName,
-                        mimeType,
-                      ),
+                    Uint8List.fromList(bytes),
+                    fileName,
+                    mimeType,
+                  ),
                   child: _showMarkdownPreview
                       ? ValueListenableBuilder<TextEditingValue>(
                           valueListenable: _contentController,
@@ -2228,10 +2232,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                         color: Color(0xFF6366F1),
                         shape: BoxShape.circle,
                       ),
-                      constraints: const BoxConstraints(
-                        minWidth: 14,
-                        minHeight: 14,
-                      ),
+                      constraints:
+                          const BoxConstraints(minWidth: 14, minHeight: 14),
                       child: Text(
                         '$_commentCount',
                         style: const TextStyle(
@@ -2295,7 +2297,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     },
                   ),
                 },
-                child: Focus(autofocus: true, child: _buildEditorBody()),
+                child: Focus(
+                  autofocus: true,
+                  child: _buildEditorBody(),
+                ),
               ),
             ),
     );
@@ -2406,9 +2411,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('送信に失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('送信に失敗しました: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -2429,9 +2434,9 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('削除に失敗しました: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
       }
     }
   }
@@ -2487,101 +2492,100 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _comments.isEmpty
-                ? Center(
-                    child: Text(
-                      'コメントはまだありません\n最初のメモを追加しましょう',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                : ListView.separated(
-                    controller: scrollCtrl,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    itemCount: _comments.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final c = _comments[i];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF6366F1,
-                          ).withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: const Color(
-                              0xFF6366F1,
-                            ).withValues(alpha: 0.15),
+                    ? Center(
+                        child: Text(
+                          'コメントはまだありません\n最初のメモを追加しましょう',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        child: ListTile(
-                          dense: true,
-                          leading: const CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Color(0xFF6366F1),
-                            child: Icon(
-                              Icons.person,
-                              size: 16,
-                              color: Colors.white,
+                      )
+                    : ListView.separated(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        itemCount: _comments.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (_, i) {
+                          final c = _comments[i];
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1)
+                                  .withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFF6366F1)
+                                    .withValues(alpha: 0.15),
+                              ),
                             ),
-                          ),
-                          title: Text(
-                            c['content'] as String? ?? '',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          subtitle: Text(
-                            _formatDate(c['created_at']?.toString()),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              size: 18,
-                              color: Color(0xFFB91C1C),
-                            ),
-                            tooltip: '削除',
-                            onPressed: () async {
-                              final id = c['id']?.toString() ?? '';
-                              if (id.isEmpty) return;
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('コメントを削除しますか？'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: const Text('キャンセル'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: const Text(
-                                        '削除',
-                                        style: TextStyle(
-                                          color: Color(0xFFB91C1C),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                            child: ListTile(
+                              dense: true,
+                              leading: const CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Color(0xFF6366F1),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 16,
+                                  color: Colors.white,
                                 ),
-                              );
-                              if (ok == true) await _delete(id);
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                              ),
+                              title: Text(
+                                c['content'] as String? ?? '',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              subtitle: Text(
+                                _formatDate(c['created_at']?.toString()),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: Color(0xFFB91C1C),
+                                ),
+                                tooltip: '削除',
+                                onPressed: () async {
+                                  final id = c['id']?.toString() ?? '';
+                                  if (id.isEmpty) return;
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text('コメントを削除しますか？'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('キャンセル'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text(
+                                            '削除',
+                                            style: TextStyle(
+                                              color: Color(0xFFB91C1C),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (ok == true) await _delete(id);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
           ),
           const Divider(height: 1),
           Padding(

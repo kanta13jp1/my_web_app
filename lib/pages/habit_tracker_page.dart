@@ -189,7 +189,10 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                   const SizedBox(height: 16),
                   const Text(
                     '習慣リスト',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (_habits.isEmpty)
@@ -216,9 +219,8 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: _streakColor(
-                                streak,
-                              ).withAlpha(30),
+                              backgroundColor:
+                                  _streakColor(streak).withAlpha(30),
                               child: Icon(
                                 Icons.local_fire_department,
                                 color: _streakColor(streak),
@@ -236,8 +238,9 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                               ),
                               onPressed: doneToday
                                   ? null
-                                  : () =>
-                                        _checkIn(habit['id']?.toString() ?? ''),
+                                  : () => _checkIn(
+                                        habit['id']?.toString() ?? '',
+                                      ),
                             ),
                           ),
                         );
