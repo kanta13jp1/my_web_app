@@ -11490,6 +11490,36 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 詳細: `docs/competitor-reports/2026-04-19.md`
 
+### 競合モニタリング完全版 (PS版#4 Session2 · 2026-04-19) — 全21社カバー完了
+
+**追加調査**: GitHub / Microsoft / Discord / LINE / Meta / Google (6社)
+
+**最重要発見: Google Productivity Planner Gem**
+- Gmail + Calendar + Drive を集約した毎日の業務ブリーフィング機能
+- 当社 `daily-judgment` EF と機能重複が最も大きい直接競合
+- 対抗軸: Planner Gem は Google Workspace 内データのみ — 当社は財務・健康・習慣・6部署を横断する「人生全体」
+
+**LINE スーパーアプリ AI 化 (高脅威)**
+- LINE AI アシスタント (GPT-4o 搭載) が日本語チャット UI に直接統合
+- 日本ユーザーの日常 AI ハブ化が進行中
+- 対抗: LINE が提供しない「KPI = 昨日の自分」パーソナル目標管理で差別化
+
+**GitHub Copilot Autopilot (新トレンド)**
+- サブエージェントが他サブエージェントを呼び出す完全自律セッション
+- `gh skill` コマンドでエージェントスキル管理が標準化
+- 当社への示唆: AI アシスタントを「人生エージェント」として位置づける方向性を強化
+
+**アクション提案 (全社版・優先度更新)**
+| 優先度 | 施策 | 競合根拠 |
+|---|---|---|
+| 🔴 高 | Google Planner Gem 対抗: 財務+健康+習慣+6部署の統合を LP 前面に | 最重複機能領域 |
+| 🔴 高 | MoneyForward AI Cowork (7月) 前に個人特化財務 AI 強化 | 大企業路線との差別化 |
+| 🟠 中 | LINE 対抗: パーソナル目標管理 (KPI=昨日の自分) を前面に訴求 | 日本スーパーアプリ脅威 |
+| 🟠 中 | Slack MCP 活用: EF を MCP エンドポイントとして公開検討 | 競合が流通チャネル化 |
+| 🟡 低 | Notion Agent 対抗: 「決定支援」UI (AI提案→ユーザー承認) | CEO感原則への整合 |
+
+詳細: `docs/competitor-reports/2026-04-19.md` (全21社・完全版)
+
 ---
 
 ### PS版#6 horse-racing バッチ最適化 (2026-04-19 18:54)
