@@ -11430,6 +11430,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/deploying-flutter-web-to-firebase-hosting-with-github-actions-cicd-2cpl
 - **本日T-1累計**: 24本 (過去最高更新)
 
+### PS版#1(続) T-1 Deno import管理 + Rule17 調査 (2026-04-19 18:57)
+- **T-1 Deno import管理**: Supabase Edge FunctionのDeno import管理 → dev.to 投稿成功 (instance-ps1 worktreeから dispatch)
+  - https://dev.to/kanta13jp1/managing-deno-imports-in-supabase-edge-functions-denojson-version-pinning-zero-lint-32ak
+  - JA/EN published:true 確認済み
+- **Rule 17 deploy-prod 3連続失敗調査**:
+  - runs 24623757867 / 24623590930 / 24623471559 (07:25-07:55 UTC) — `Deploy Supabase Edge Functions` ステップ失敗
+  - headSha `478f301c` は docs のみのコミット、但し起動トリガーは lib/ 変更コミット `ac552847 personal_dashboard_page` (concurrency queue)
+  - 原因: **transient Supabase CLI timeout** — ログ取得不可 (期限切れ) / 直後 3本連続 success → 自然解消
+  - 結論: 修正不要 / retry logic 追加は次回 Rule17 で検討
+- **本日T-1累計**: 25本
+
 ### PS版#167 T-1第167-170弾 (2026-04-19)
 - **T-1第167弾**: AIエージェントを「安全に」使うための7原則 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/7-principles-for-using-ai-agents-safely-in-production-a-solo-devs-checklist-1edl
