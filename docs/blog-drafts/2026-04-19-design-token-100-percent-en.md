@@ -1,7 +1,7 @@
 ---
 title: "Completing a 300-File Flutter DESIGN Token Migration — Eliminating Every Material Color Constant"
 tags: Flutter,UI,buildinpublic,ClaudeCode,webdev
-published: false
+published: true
 ---
 
 # Completing a 300-File Flutter DESIGN Token Migration

@@ -1,7 +1,7 @@
 ---
 title: "FlutterのDESIGNトークン移行を100%完了した — 300+ファイルのMaterial色定数を全排除"
 tags: Flutter,UI,個人開発,buildinpublic,ClaudeCode
-published: false
+published: true
 ---
 
 # FlutterのDESIGNトークン移行を100%完了した
