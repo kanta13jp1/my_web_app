@@ -1126,6 +1126,56 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
+  /// バランス型 改善 (Win版#107): Nebius Llama-3.3-70B-Instruct で
+  /// 中品質・中コスト・EU GDPR 準拠データセンター。
+  ///
+  /// 使い分け:
+  /// - `improveText` (premium): gpt-4o $2.50/M ・最高品質・単発推敲
+  /// - **`improveTextBalanced`** (performance): Nebius $0.60/M ・バランス・量産推敲
+  /// - `summarizeTextBulk` (budget): DeepInfra $0.30/M ・最安・バルク要約
+  ///
+  /// EU 居住データ処理が必要な医療/法律/個人情報 ノートに最適。
+  Future<String> improveTextBalanced(
+    String content, {
+    String? styleInstruction,
+  }) async {
+    return await _retryWithBackoff(
+      () async {
+        final styleHint =
+            (styleInstruction != null && styleInstruction.isNotEmpty)
+                ? '\nスタイル指示: $styleInstruction'
+                : '';
+        final prompt = '''
+以下のテキストを推敲してください。元の意図を保ち、文体を整え、
+冗長な表現を削り、読みやすくします。$styleHint
+
+入力テキスト:
+$content
+
+出力 (推敲済テキストのみ・前置き不要):
+''';
+
+        final responseData = await _invokeFunction(
+          'ai-hub',
+          {
+            'action': 'provider.chat',
+            'provider': 'nebius',
+            'message': prompt,
+          },
+        );
+
+        if (responseData['success'] != true) {
+          throw Exception(
+            'Nebius balanced improve failed: ${responseData['message'] ?? responseData['detail'] ?? 'unknown'}',
+          );
+        }
+
+        return (responseData['text'] as String? ?? '').trim();
+      },
+      operationName: 'improveTextBalanced',
+    );
+  }
+
   /// Summarize note content.
   Future<String> summarizeText(
     String content, {
