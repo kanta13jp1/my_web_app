@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions Orphan Branch Accumulation — Designing blog-publish.yml for Protected Branches"
 tags: GitHub,CI/CD,buildinpublic,GitHubActions,devops
-published: false
+published: true
 ---
 
 # GitHub Actions Orphan Branch Accumulation

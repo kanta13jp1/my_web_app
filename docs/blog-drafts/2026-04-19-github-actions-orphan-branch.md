@@ -1,7 +1,7 @@
 ---
 title: "GitHub Actions orphan branch が溜まり続ける問題 — blog-publish.yml の設計と管理"
 tags: GitHub,CI/CD,個人開発,buildinpublic,GitHubActions
-published: false
+published: true
 ---
 
 # GitHub Actions orphan branch が溜まり続ける問題
