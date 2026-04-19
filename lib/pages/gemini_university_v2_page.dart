@@ -711,6 +711,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7B2FBE),
     officialUrl: 'https://www.d-id.com/',
   ),
+  'cartesia': _ProviderMeta(
+    name: 'Cartesia AI',
+    emoji: '🔊',
+    color: const Color(0xFF4F46E5),
+    officialUrl: 'https://cartesia.ai/',
+  ),
+  'tavus': _ProviderMeta(
+    name: 'Tavus',
+    emoji: '🎥',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://www.tavus.io/',
+  ),
+  'synthesia': _ProviderMeta(
+    name: 'Synthesia',
+    emoji: '🧑‍💼',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://www.synthesia.io/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1469,6 +1487,36 @@ final Map<String, _Quiz> _quizzes = {
       '音声 + 音声',
     ],
     correct: 1,
+  ),
+  'cartesia': _Quiz(
+    question: 'Cartesia Sonic モデルの特徴として正しいものは？',
+    options: [
+      'Transformer ベースの大規模モデル',
+      '状態空間モデルで 135ms 以下の超低遅延',
+      'オフライン専用・クラウド非対応',
+      '画像生成に特化したモデル',
+    ],
+    correct: 1,
+  ),
+  'tavus': _Quiz(
+    question: 'Tavus CVI (Conversational Video Interface) の説明として正しいものは？',
+    options: [
+      '静止画から動画を生成するバッチ処理 API',
+      'LLM と統合したリアルタイム会話動画エージェント',
+      'テキストから音声のみを生成する TTS サービス',
+      'SNS 投稿用の短尺動画自動生成ツール',
+    ],
+    correct: 1,
+  ),
+  'synthesia': _Quiz(
+    question: 'Synthesia が対応している言語数は？',
+    options: [
+      '50 言語',
+      '80 言語',
+      '140 言語',
+      '200 言語',
+    ],
+    correct: 2,
   ),
 };
 
@@ -3330,6 +3378,90 @@ r = requests.post("https://api.d-id.com/clips", headers=headers, json={
 - Lite: \$5.99/月（10分）
 - Pro: \$49.99/月（15分・API 含む）
 - Advanced: \$299/月（65分）
+''',
+  'cartesia': '''
+# Cartesia AI
+
+**状態空間モデル (SSM)** 「Sonic」で業界最速クラス 135ms 以下の超低遅延 TTS。
+
+## 特徴
+- **Sonic-2**: 135ms 以下・自然な感情表現
+- WebSocket ストリーミング対応
+- 感情制御（速度・ポジティブ感・驚きなど）
+- 音声クローニング（数秒サンプルから複製）
+
+## API
+```python
+import cartesia
+client = cartesia.Cartesia(api_key="KEY")
+audio = client.tts.bytes(
+    model_id="sonic-2",
+    transcript="こんにちは",
+    voice={"mode": "id", "id": "VOICE_ID"},
+    language="ja"
+)
+```
+
+## 料金
+- Free: 月 100 万文字
+- Growth: \$19/月〜（従量）
+''',
+  'tavus': '''
+# Tavus
+
+1本の動画から無数の個人化動画を生成。**CVI** (会話型ビデオ AI) でリアルタイム対話も実現。
+
+## 機能
+- **Phoenix-3**: 最高品質リップシンク
+- **Personal Replica**: 自分の顔・声でアバター化
+- **CVI API**: LLM + WebRTC リアルタイム会話動画
+
+## API
+```python
+import requests
+r = requests.post("https://tavusapi.com/v2/videos",
+    headers={"x-api-key": "KEY"},
+    json={
+        "replica_id": "r9340814e4",
+        "script": "こんにちは {name} さん！",
+        "variables": {"name": "田中"}
+    }
+)
+```
+
+## 料金
+- Developer: 無料（25分/月）
+- Starter: \$99/月（100分）
+''',
+  'synthesia': '''
+# Synthesia
+
+50,000+ 企業が使う**エンタープライズ AI 動画プラットフォーム**。評価額 \$1B ユニコーン。
+
+## 特徴
+- **230+ アバター**: 多様な人種・スタイル
+- **140 言語**: 自動翻訳 + リップシンク同期
+- **Personal Avatar**: 5 分録画でアバター化
+- **API**: スクリプト → 動画 URL を自動生成
+
+## API
+```python
+import requests
+r = requests.post("https://api.synthesia.io/v2/videos",
+    headers={"Authorization": "Bearer KEY"},
+    json={
+        "slides": [{
+            "script": "AI大学へようこそ！",
+            "avatar": "anna_costume1_cameraA",
+            "avatarSettings": {"voice": "ja-JP-NanamiNeural"}
+        }]
+    }
+)
+```
+
+## 料金
+- Free: 3本/月（透かし付き）
+- Starter: \$29/月（10本）
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
