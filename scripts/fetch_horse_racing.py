@@ -762,6 +762,8 @@ def fetch_results(target_date: str):
         }
         supabase_rest("POST", "horse_results", result_row)
         supabase_rest("PATCH", f"horse_races?id=eq.{race_db_id}", {"status": "completed"})
+        # ensemble 予想の精度をスコアリング → horse_provider_leaderboard に反映
+        tools_hub_call("horseracing.evaluate_accuracy", {"race_id": race_db_id})
 
         mark = "○ 的中" if is_correct else "× 外れ"
         src_label = f"[{source.upper()}]"
