@@ -515,6 +515,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/bookmark-sync',
       'ブックマーク同期ページ > ブックマーク一覧・デバイス間同期',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'budget-financial-planner',
+      '予算・財務プランナー',
+      true,
+      '/budget-financial-planner',
+      '予算管理ページ > 収支入力・予算設定・財務分析',
+    ),
+    _FnDef(
+      'carbon-footprint-tracker',
+      'カーボンフットプリントトラッカー',
+      true,
+      '/carbon-footprint',
+      'カーボンフットプリントページ > CO2排出量記録・削減目標管理',
+    ),
+    _FnDef(
+      'customer-feedback',
+      'カスタマーフィードバック管理',
+      true,
+      '/customer-feedback',
+      'フィードバックページ > 顧客フィードバック収集・分析・対応状況確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
