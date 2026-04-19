@@ -149,7 +149,8 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
                                   ),
                                   trailing: Chip(
                                     label: Text(
-                                        ticket['status']?.toString() ?? 'open'),
+                                      ticket['status']?.toString() ?? 'open',
+                                    ),
                                     backgroundColor: const Color(0xFFE0F2F1),
                                   ),
                                 ),

@@ -69,8 +69,11 @@ class _AgentPerformanceMonitorPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
@@ -90,8 +93,11 @@ class _AgentPerformanceMonitorPageState
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.monitor_heart,
-                              size: 64, color: Color(0xFF6366F1)),
+                          Icon(
+                            Icons.monitor_heart,
+                            size: 64,
+                            color: Color(0xFF6366F1),
+                          ),
                           SizedBox(height: 16),
                           Text(
                             'メトリクスデータなし',

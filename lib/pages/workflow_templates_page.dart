@@ -97,7 +97,9 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                       ),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -115,7 +117,9 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                           Text(
                             'テンプレートはありません',
                             style: TextStyle(
-                                color: Color(0xFF9CA3AF), height: 1.5),
+                              color: Color(0xFF9CA3AF),
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
