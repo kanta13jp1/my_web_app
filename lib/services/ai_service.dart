@@ -1156,6 +1156,52 @@ Generate a mind map for the following topic: **"{topic}"**
     );
   }
 
+  /// バルク要約 (Win版#106): DeepInfra Llama-3.1-70B-Instruct-Turbo で
+  /// 10x 安価に要約。複数ノート一括処理・自動定期要約・低優先度要約に最適。
+  ///
+  /// `summarizeText` は ai-assistant (openai/anthropic/google) で高品質。
+  /// 本メソッドは ai-hub:provider.chat (deepinfra) で **コスト最適化**。
+  ///
+  /// 料金目安: Llama-3.1-70B-Turbo $0.30/M tokens (vs gpt-4o $2.50/M = 8x安価)
+  /// 速度目安: ~2-3秒 / 500 tokens 入力
+  Future<String> summarizeTextBulk(
+    String content, {
+    int maxLines = 3,
+    String? language,
+  }) async {
+    return await _retryWithBackoff(
+      () async {
+        final lang =
+            (language != null && language.isNotEmpty) ? language : '日本語';
+        final prompt = '''
+以下のテキストを $lang で $maxLines 行以内に要約してください。
+箇条書きや前置き不要・要約本文のみ出力。
+
+テキスト:
+$content
+''';
+
+        final responseData = await _invokeFunction(
+          'ai-hub',
+          {
+            'action': 'provider.chat',
+            'provider': 'deepinfra',
+            'message': prompt,
+          },
+        );
+
+        if (responseData['success'] != true) {
+          throw Exception(
+            'DeepInfra bulk summarize failed: ${responseData['message'] ?? responseData['detail'] ?? 'unknown'}',
+          );
+        }
+
+        return (responseData['text'] as String? ?? '').trim();
+      },
+      operationName: 'summarizeTextBulk',
+    );
+  }
+
   /// Expand note content.
   Future<String> expandText(String content) async {
     return await _retryWithBackoff(
