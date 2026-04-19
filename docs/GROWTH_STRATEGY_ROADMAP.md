@@ -11370,6 +11370,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - NOTE: Must run Python+dart format+analyze+git add+commit in ONE bash invocation to prevent VSCode linter revert
   - flutter analyze 0 errors, dart format 0 changes
 
+## VSCode版#122 (2026-04-19)
+- DESIGN.md non-color fixes: horseracing_race_detail_page + ai_university_ranking_page
+  - horseracing_race_detail: spacing vertical:3→4/vertical:10→12, radius 4→8, 15+ TextStyle height additions (1.4 heading/bold, 1.5 label/small, 1.6 secondary)
+  - ai_university_ranking: SizedBox height:6→8/height:14→12/height:10→8/width:10→8 (12x), radius 14→12/10→8 (2x), score height 1.0→1.2
+  - KEY LEARNING: Trailing comma INSIDE TextStyle before `)` — `height: 1.5,)` not `height: 1.5)` — forces proper dart format expansion, prevents require_trailing_commas lint errors
+  - Ensemble label fix: split `)),` → `),\n),` to close TextStyle then Text separately
+  - flutter analyze 0 errors (2 commits: 7af3a25f + 64b762fb)
+
 ### PS版#157 T-1第157弾 (2026-04-19)
 - **T-1第157弾**: Flutter Supabase タグ機能 text[]配列+GIN+AI提案 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/adding-notion-style-tags-to-a-flutter-note-app-with-supabase-text-arrays-jg9
