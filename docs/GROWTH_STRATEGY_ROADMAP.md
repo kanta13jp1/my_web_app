@@ -11617,3 +11617,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - PostgREST embed shape 知識 → 同類バグの根本予防
 
 - **懸念事項**: なし (全件 7+ ✅クリア)
+
+---
+
+## PS版#5 on-call バグ修正セッション (2026-04-19)
+
+### 対応 Issues
+- **#506 #508 #509 #511 #512**: social-commerce-hub CI 失敗 — esm.sh 522 → npm: specifier 変更
+- **#517 (priority:HIGH)**: AI大学シェアURL `/gemini-university` → `/ai-university` + ハッシュタグ除去
+- **#519 (priority:medium)**: ホーム「最近使った機能」履歴ゼロ — `recordFeatureTap()` 統合
+- **#513 (priority:HIGH bug)**: ギタースタジオ AI フィードバックが実音未参照 → Gemini inline_data 対応
+
+### 実装詳細
+- `social-commerce-hub/index.ts`: npm: specifier で bundling 522 根本解消
+- `ai_university_home_card.dart` + `gemini_university_v2_page.dart` + `main.dart`: URL修正3箇所・ハッシュタグ削除6箇所
+- `home_page.dart`: `_runTrackedAction` に `unawaited(recordFeatureTap())` 追加
+- `guitar-recording-studio/index.ts`: `generateRecordingFeedback()` を Supabase Storage → Gemini audio inline_data に改修。戻り値 `{text, source}`。`ai_feedback_source` カラム追加 migration
+
+### Philosophy Alignment (Rule 22)
+- 5 (商品=ユーザー価値) — バグ修正 4 件でユーザー体験劣化を解消
+- 6 (資本=時間) — AI フィードバック精度向上でユーザーの練習時間価値最大化
+- 8 (KPI=昨日の自分) — ギターフィードバックが実音解析に→自己進捗精度向上
+
+### 残タスク
+- #514 #515 (feature) → VSCode版 or Win版スコープ
+- #520 (EF UI導線チェック) → 自動生成・stale 可能性高い
+
