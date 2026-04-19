@@ -11260,3 +11260,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **本日dev.to投稿累計**: T-1 #139〜#150 + 別1本 = 13本 (新記録更新)
 - **orphan branch**: 全0本 ✅
 - **Qiita バックログ**: 15本 → UTC 15:00 (JST 00:00) 以降 dispatch
+
+### VSCode版#115 セッション (2026-04-19)
+- **note_list_page.dart DESIGN.md violations修正** (design-skills subagent実施)
+  - `spacing/runSpacing: 6` → `8` (4px grid)
+  - `vertical: 6` → `8` (chip padding)
+  - `SizedBox(height: 6)` → `8` (4px grid)
+  - section header `fontSize:16` + `height: 1.7` 追加
+  - subtitle `fontSize:12` + `height: 1.6` 追加
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: personal_dashboard_page / voice_page / wrap-up
