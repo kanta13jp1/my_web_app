@@ -1,8 +1,7 @@
-import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:web/web.dart' as web;
+import '../utils/platform_view.dart' as platform_view;
 
 /// 自分株式会社 — 基本理念ページ
 ///
@@ -22,19 +21,9 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
   void initState() {
     super.initState();
     for (final v in _videos) {
-      ui_web.platformViewRegistry.registerViewFactory(
+      platform_view.registerIframeViewFactory(
         'youtube-${v.id}',
-        (int viewId) {
-          final iframe = web.HTMLIFrameElement()
-            ..src = 'https://www.youtube.com/embed/${v.id}'
-            ..allow = 'accelerometer; autoplay; clipboard-write; '
-                'encrypted-media; gyroscope; picture-in-picture'
-            ..setAttribute('allowfullscreen', 'true')
-            ..style.border = 'none'
-            ..style.width = '100%'
-            ..style.height = '100%';
-          return iframe;
-        },
+        'https://www.youtube.com/embed/${v.id}',
       );
     }
   }
