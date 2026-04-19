@@ -218,10 +218,7 @@ $hashtags
       // Fall back below.
     }
 
-    return <String, dynamic>{
-      'success': false,
-      'error': payloadText,
-    };
+    return <String, dynamic>{'success': false, 'error': payloadText};
   }
 
   List<String> _normalizeHashtags(dynamic rawHashtags, String channelKey) {
@@ -291,13 +288,13 @@ $hashtags
     final hint = lower.contains('404') || lower.contains('not found')
         ? 'AI関数の設定を確認してください。'
         : lower.contains('api key')
-            ? 'APIキー設定を確認してください。'
-            : '再実行するか、モデル設定を確認してください。';
+        ? 'APIキー設定を確認してください。'
+        : '再実行するか、モデル設定を確認してください。';
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('生成に失敗しました。$hint')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('生成に失敗しました。$hint')));
   }
 
   Future<void> _generatePressRelease() async {
@@ -328,8 +325,10 @@ $hashtags
 
       if (!mounted) return;
       setState(() {
-        _pressRelease =
-            _normalizePressReleaseResult(data['result'], channelKey);
+        _pressRelease = _normalizePressReleaseResult(
+          data['result'],
+          channelKey,
+        );
       });
     } catch (error) {
       _showRecoverableAiError(error.toString());
@@ -350,9 +349,11 @@ $hashtags
       _channelKey(),
     ).join(' ');
 
-    return <String>[title, body, hashtags]
-        .where((part) => part.isNotEmpty)
-        .join('\n\n');
+    return <String>[
+      title,
+      body,
+      hashtags,
+    ].where((part) => part.isNotEmpty).join('\n\n');
   }
 
   Future<void> _sharePressRelease() async {
@@ -360,10 +361,7 @@ $hashtags
 
     final title = (_pressRelease!['title'] ?? '').toString();
     await SharePlus.instance.share(
-      ShareParams(
-        text: _buildShareText(),
-        subject: title,
-      ),
+      ShareParams(text: _buildShareText(), subject: title),
     );
   }
 
@@ -376,17 +374,12 @@ $hashtags
       return;
     }
 
-    final uri = Uri.https(
-      'twitter.com',
-      '/intent/tweet',
-      <String, String>{'text': shareText},
-    );
+    final uri = Uri.https('twitter.com', '/intent/tweet', <String, String>{
+      'text': shareText,
+    });
 
     try {
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.platformDefault,
-      );
+      final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
       if (launched) return;
     } catch (_) {
       // Fall through to the generic share sheet.
@@ -395,9 +388,7 @@ $hashtags
     await _sharePressRelease();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('X を直接開けなかったため、共有シートを表示しました。'),
-      ),
+      const SnackBar(content: Text('X を直接開けなかったため、共有シートを表示しました。')),
     );
   }
 
@@ -441,10 +432,7 @@ $hashtags
             const SizedBox(height: 6),
             SelectableText(
               body,
-              style: const TextStyle(
-                fontSize: 15,
-                height: 1.7,
-              ),
+              style: const TextStyle(fontSize: 15, height: 1.7),
             ),
             const SizedBox(height: 16),
             _buildSectionLabel('ハッシュタグ'),
@@ -467,10 +455,7 @@ $hashtags
               ),
               child: SelectableText(
                 _buildShareText(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.6,
-                ),
+                style: const TextStyle(fontSize: 14, height: 1.6),
               ),
             ),
           ],
@@ -515,14 +500,7 @@ $hashtags
             Text(
               _descriptionText(channelKey),
               textAlign: TextAlign.center,
-<<<<<<< Updated upstream
-              style: const TextStyle(
-                color: Color(0xFFB0B0B0),
-                height: 1.5,
-              ),
-=======
               style: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
->>>>>>> Stashed changes
             ),
             const SizedBox(height: 24),
             if (_isLoading)

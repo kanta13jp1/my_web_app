@@ -8,14 +8,12 @@ class UserManualPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1E293B);
     final subColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
-    final accentColor =
-        isDark ? const Color(0xFF818CF8) : const Color(0xFF3949AB);
+    final accentColor = isDark
+        ? const Color(0xFF818CF8)
+        : const Color(0xFF3949AB);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('自分株式会社 ユーザーマニュアル'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('自分株式会社 ユーザーマニュアル'), elevation: 0),
       body: ListView(
         padding: const EdgeInsets.all(24.0),
         children: [
@@ -539,15 +537,7 @@ class UserManualPage extends StatelessWidget {
                 Text(
                   'マニュアルは機能追加・UI変更に合わせて随時更新されます。\n最終更新: 2026-03-28 (session34)',
                   textAlign: TextAlign.center,
-<<<<<<< Updated upstream
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: subColor,
-                    height: 1.5,
-                  ),
-=======
                   style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
->>>>>>> Stashed changes
                 ),
               ],
             ),
@@ -623,11 +613,7 @@ class UserManualPage extends StatelessWidget {
       padding: const EdgeInsets.only(left: 8.0),
       child: Text(
         content,
-        style: TextStyle(
-          fontSize: 14,
-          height: 1.8,
-          color: color,
-        ),
+        style: TextStyle(fontSize: 14, height: 1.8, color: color),
       ),
     );
   }

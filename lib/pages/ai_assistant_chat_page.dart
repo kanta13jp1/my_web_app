@@ -43,9 +43,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.3).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulseAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.3,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
     _pulseCtrl.stop();
     _initSpeech();
     _loadHistory();
@@ -168,10 +169,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({
-            'role': 'assistant',
-            'content': 'エラーが発生しました: $e',
-          });
+          _messages.add({'role': 'assistant', 'content': 'エラーが発生しました: $e'});
           _isLoading = false;
         });
         _scrollToBottom();
@@ -224,10 +222,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   void _showSnackBar(String msg) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: const Color(0xFF1A1A2E),
-      ),
+      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF1A1A2E)),
     );
   }
 
@@ -325,11 +320,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           const SizedBox(height: 16),
           const Text(
             'AI アシスタントと話しましょう',
-            style: TextStyle(
-              color: Colors.white38,
-              fontSize: 16,
-              height: 1.6,
-            ),
+            style: TextStyle(color: Colors.white38, fontSize: 16, height: 1.6),
           ),
           const SizedBox(height: 8),
           Text(
@@ -351,8 +342,9 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -447,15 +439,10 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                 ),
                 decoration: InputDecoration(
                   hintText: 'メッセージを入力...',
-<<<<<<< Updated upstream
                   hintStyle: const TextStyle(
                     color: Colors.white38,
                     height: 1.5,
                   ),
-=======
-                  hintStyle:
-                      const TextStyle(color: Colors.white38, height: 1.5),
->>>>>>> Stashed changes
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: const BorderSide(color: Colors.white12),
@@ -558,16 +545,11 @@ class _TypingDotsState extends State<_TypingDots>
       builder: (_, __) {
         return Text(
           '●' * _dotCount.value,
-<<<<<<< Updated upstream
           style: const TextStyle(
             color: Colors.white54,
             fontSize: 14,
             height: 1.5,
           ),
-=======
-          style:
-              const TextStyle(color: Colors.white54, fontSize: 14, height: 1.5),
->>>>>>> Stashed changes
         );
       },
     );

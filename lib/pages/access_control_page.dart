@@ -106,11 +106,11 @@ class _AccessControlPageState extends State<AccessControlPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? _buildError()
-              : TabBarView(
-                  controller: _tabController,
-                  children: [_buildRolesTab(), _buildLogsTab()],
-                ),
+          ? _buildError()
+          : TabBarView(
+              controller: _tabController,
+              children: [_buildRolesTab(), _buildLogsTab()],
+            ),
     );
   }
 
@@ -143,14 +143,7 @@ class _AccessControlPageState extends State<AccessControlPage>
             SizedBox(height: 12),
             Text(
               'ロールが定義されていません',
-<<<<<<< Updated upstream
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                height: 1.5,
-              ),
-=======
               style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
->>>>>>> Stashed changes
             ),
           ],
         ),
@@ -175,14 +168,7 @@ class _AccessControlPageState extends State<AccessControlPage>
             ),
             title: Text(
               displayName,
-<<<<<<< Updated upstream
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                height: 1.5,
-              ),
-=======
               style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
->>>>>>> Stashed changes
             ),
             subtitle: Text('$userCount ユーザー'),
             children: [
@@ -197,14 +183,7 @@ class _AccessControlPageState extends State<AccessControlPage>
                           (p) => Chip(
                             label: Text(
                               '$p',
-<<<<<<< Updated upstream
-                              style: const TextStyle(
-                                fontSize: 11,
-                                height: 1.5,
-                              ),
-=======
                               style: const TextStyle(fontSize: 11, height: 1.5),
->>>>>>> Stashed changes
                             ),
                             padding: EdgeInsets.zero,
                             materialTapTargetSize:
@@ -226,14 +205,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       return const Center(
         child: Text(
           'アクセスログがありません',
-<<<<<<< Updated upstream
-          style: TextStyle(
-            color: Color(0xFF9CA3AF),
-            height: 1.5,
-          ),
-=======
           style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
->>>>>>> Stashed changes
         ),
       );
     }

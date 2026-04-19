@@ -128,10 +128,15 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
   Future<void> _toggleOrganized(Map<String, dynamic> folder) async {
     final current = folder['is_organized'] == true;
     try {
-      await _supabase.from('bookmark_folders').update({
-        'is_organized': !current,
-        'last_organized_at': current ? null : DateTime.now().toIso8601String(),
-      }).eq('id', folder['id']);
+      await _supabase
+          .from('bookmark_folders')
+          .update({
+            'is_organized': !current,
+            'last_organized_at': current
+                ? null
+                : DateTime.now().toIso8601String(),
+          })
+          .eq('id', folder['id']);
       await _load();
     } catch (e) {
       debugPrint('Toggle error: $e');
@@ -162,10 +167,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
       await _supabase
           .from('bookmark_folders')
           .delete()
-          .eq(
-            'id',
-            folder['id'],
-          )
+          .eq('id', folder['id'])
           .select();
       await _load();
     } catch (e) {
@@ -206,10 +208,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
     final progress = total > 0 ? organized / total : 0.0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('ブックマーク整理'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('ブックマーク整理'), elevation: 0),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addFolder,
         icon: const Icon(Icons.add),
@@ -227,10 +226,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                     gradient: LinearGradient(
                       colors: progress >= 1.0
                           ? [Colors.green.shade600, Colors.green.shade400]
-                          : [
-                              const Color(0xFF1DA1F2),
-                              const Color(0xFF4285F4),
-                            ],
+                          : [const Color(0xFF1DA1F2), const Color(0xFF4285F4)],
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -260,8 +256,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                         child: LinearProgressIndicator(
                           value: progress,
                           backgroundColor: Colors.white24,
-                          valueColor:
-                              const AlwaysStoppedAnimation(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Colors.white,
+                          ),
                           minHeight: 8,
                         ),
                       ),
@@ -286,9 +283,9 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                             '整理対象のブックマークフォルダを登録してください',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               fontSize: 13,
                               height: 1.5,
                             ),
@@ -336,15 +333,12 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
           ),
         ),
         subtitle: Text(
-          '${platform == 'x' ? 'X (Twitter)' : platform == 'chrome' ? 'Chrome' : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
-<<<<<<< Updated upstream
-          style: const TextStyle(
-            fontSize: 11,
-            height: 1.5,
-          ),
-=======
+          '${platform == 'x'
+              ? 'X (Twitter)'
+              : platform == 'chrome'
+              ? 'Chrome'
+              : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
           style: const TextStyle(fontSize: 11, height: 1.5),
->>>>>>> Stashed changes
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -352,10 +346,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(
-                isOrganized ? Icons.undo : Icons.check,
-                size: 20,
-              ),
+              icon: Icon(isOrganized ? Icons.undo : Icons.check, size: 20),
               onPressed: () => _toggleOrganized(folder),
               tooltip: isOrganized ? '未整理に戻す' : '整理済みにする',
             ),
