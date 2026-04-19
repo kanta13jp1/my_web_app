@@ -11345,3 +11345,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - agent_hub: +height 1.5/1.7/1.4 to 5 TextStyles, BorderRadius 10→8
   - activity_feed: +height 1.7/1.6 to 3 TextStyles, BorderRadius 10→8
   - flutter analyze 0 errors, dart format 0 changes
+
+## VSCode版#119 (2026-04-19)
+- DESIGN.md non-color fixes: ai_agent_page + voice_memo_transcriber_page
+  - ai_agent: +height 1.7/1.4 to 3 TextStyles
+  - voice_memo_transcriber: +height 1.6/1.4/1.7/1.5 to 9 TextStyles, fixed require_trailing_commas
+  - flutter analyze 0 errors, dart format applied
