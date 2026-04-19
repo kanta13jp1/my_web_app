@@ -392,6 +392,30 @@ const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     buildBody: OPENAI_COMPAT_BODY,
     parseResponse: OPENAI_COMPAT_PARSE,
   },
+  hyperbolic: {
+    displayName: "Hyperbolic Labs",
+    envKey: "HYPERBOLIC_API_KEY",
+    chatUrl: "https://api.hyperbolic.xyz/v1/chat/completions",
+    defaultModel: "meta-llama/Meta-Llama-3.3-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  anyscale: {
+    displayName: "Anyscale",
+    envKey: "ANYSCALE_API_KEY",
+    chatUrl: "https://api.endpoints.anyscale.com/v1/chat/completions",
+    defaultModel: "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
+  cerebrium: {
+    displayName: "Cerebrium",
+    envKey: "CEREBRIUM_API_KEY",
+    chatUrl: "https://api.cerebrium.ai/v1/chat/completions",
+    defaultModel: "meta-llama/Llama-3.3-70B-Instruct",
+    buildBody: OPENAI_COMPAT_BODY,
+    parseResponse: OPENAI_COMPAT_PARSE,
+  },
 };
 
 type Tier = "free" | "budget" | "performance" | "premium";
@@ -1871,7 +1895,7 @@ serve(async (req: Request) => {
 
       // ── AI大学 v2: Voice ─────────────────────────────────────────────────
       case "provider.chat": {
-        // 汎用プロバイダー呼び出し (AI大学96社の実装済みAIに統一インターフェースで話しかける)
+        // 汎用プロバイダー呼び出し (AI大学100社の実装済みAIに統一インターフェースで話しかける)
         // 対応: OpenAI互換 8社 (openai/xai/deepseek/groq/sambanova/openrouter/fireworks/together/arcee_ai)
         //       + 独自API 3社 (mistral/perplexity/cohere) + anthropic/google (MAGI互換)
         const providerId = String(body.provider ?? "");

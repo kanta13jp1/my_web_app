@@ -627,6 +627,30 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7C3AED),
     officialUrl: 'https://lambda.ai/',
   ),
+  'hyperbolic': _ProviderMeta(
+    name: 'Hyperbolic Labs',
+    emoji: '🌐',
+    color: const Color(0xFF10B981),
+    officialUrl: 'https://www.hyperbolic.ai/',
+  ),
+  'anyscale': _ProviderMeta(
+    name: 'Anyscale',
+    emoji: '🚂',
+    color: const Color(0xFF3B82F6),
+    officialUrl: 'https://www.anyscale.com/',
+  ),
+  'cerebrium': _ProviderMeta(
+    name: 'Cerebrium',
+    emoji: '⚡',
+    color: const Color(0xFFEAB308),
+    officialUrl: 'https://www.cerebrium.ai/',
+  ),
+  'magic_ai': _ProviderMeta(
+    name: 'Magic AI',
+    emoji: '🪄',
+    color: const Color(0xFFEC4899),
+    officialUrl: 'https://magic.dev/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1245,6 +1269,46 @@ final Map<String, _Quiz> _quizzes = {
       '完全クローズドβ化',
     ],
     correct: 1,
+  ),
+  'hyperbolic': _Quiz(
+    question: 'Hyperbolic Labs の差別化ポイントとして正しいのは?',
+    options: [
+      '中央集権 GPU クラウド',
+      '分散 GPU + zk-snarks による検証可能 AI 推論',
+      '画像生成専用',
+      'CPU のみ',
+    ],
+    correct: 1,
+  ),
+  'anyscale': _Quiz(
+    question: 'Anyscale が商用化している OSS フレームワークは?',
+    options: [
+      'TensorFlow',
+      'Ray.io (UC Berkeley RISELab 発の分散コンピューティング)',
+      'PyTorch',
+      'Kubernetes',
+    ],
+    correct: 1,
+  ),
+  'cerebrium': _Quiz(
+    question: 'Cerebrium の serverless GPU の特徴は?',
+    options: [
+      '5 分以上の cold start',
+      'sub-second cold start + OpenAI 互換 endpoints',
+      'GPU 必須事前予約',
+      'CPU 専用',
+    ],
+    correct: 1,
+  ),
+  'magic_ai': _Quiz(
+    question: 'Magic AI の LTM-2-mini モデルが扱える context window サイズは?',
+    options: [
+      '8K token',
+      '128K token',
+      '100M token (≈ 10M 行のコード or 750 冊の小説)',
+      '無制限 (ストリーミング)',
+    ],
+    correct: 2,
   ),
 };
 
@@ -2853,6 +2917,97 @@ AI/ML 特化 **GPU クラウド** 老舗 (2012〜)。元々は研究者向けに
 ## 注意
 - **Inference API は wind-down 中** — 新規プロジェクトは Inworld Router / DeepInfra 推奨
 - GPU 直接賃貸は引き続き継続
+''',
+  'hyperbolic': '''
+# Hyperbolic Labs
+
+**分散 GPU クラウド + 検証可能 AI 推論**プラットフォーム。世界中の遊休 GPU を blockchain ベースで集約し AWS/GCP より圧倒的に低コスト。
+
+## 主要サービス
+- **GPU レンタル**: RTX 4090 \$0.50/hr / A100 \$1.80/hr / H100 \$3.20/hr
+- **Inference API**: Llama / DeepSeek / Qwen を OpenAI 互換で
+- **Verifiable AI**: zk-snarks で推論結果改竄検知
+- **Hyper-dOS**: 分散 GPU 統一管理
+
+## 強み
+- AWS/GCP の 1/2 〜 1/4 価格
+- zk proof による verifiability
+- データプライバシー (推論データ残らない)
+- 単一障害点なし
+
+## API
+- `https://api.hyperbolic.xyz/v1/chat/completions`
+- OpenAI SDK base_url 切替で動く
+''',
+  'anyscale': '''
+# Anyscale
+
+**Ray.io** (UC Berkeley RISELab 発・OSS 分散コンピューティング) の商用版。Anyscale Endpoints で OSS LLM を OpenAI 互換 serverless API として提供。
+
+## 主要サービス
+- **Endpoints**: Llama 3.1 / Mistral / Mixtral 等の serverless LLM
+- **Ray Serve**: 自前 LLM デプロイ・fine-tuning
+- **Jobs**: 分散学習・バッチ推論
+- **Workspaces**: notebook 環境
+
+## 強み
+- Ray ベース ML 特化分散
+- OpenAI 互換 drop-in
+- LoRA fine-tuning サービス
+- AWS Partner
+
+## 料金
+- **Llama 3.1 70B**: \$1.00/M token
+
+## API
+- `https://api.endpoints.anyscale.com/v1/chat/completions`
+''',
+  'cerebrium': '''
+# Cerebrium
+
+**serverless GPU/CPU プラットフォーム**。"Vercel for AI" 的位置付け。すべての endpoint が **OpenAI 互換** で sub-second cold start。
+
+## 主要サービス
+- **Serverless GPU/CPU**: H100 / A100 / RTX 4090 / CPU
+- **OpenAI 互換 endpoints**: `/chat/completions` + `/embedding`
+- **Voice Agents**: real-time speech-to-speech
+- **Video Models**: stable-diffusion-video 等
+
+## 強み
+- sub-second cold start
+- OpenAI 互換 (drop-in)
+- instant autoscaling (0→1000 RPS)
+- multi-region 低レイテンシ
+
+## 料金
+- **H100**: \$0.001167/sec (= \$4.20/hr)
+- **A100**: \$0.000556/sec (= \$2.00/hr)
+- cold start fee: なし
+''',
+  'magic_ai': '''
+# Magic AI
+
+ソフトウェア開発特化の AI 研究企業。**LTM-2-mini = 100M token context** モデル (Llama 3.1 405B 比 1000x 効率) で業界に衝撃。Google Cloud G4/G5 supercomputer 提携。
+
+## 100M token とは
+- ≈ 10,000,000 行のコード
+- ≈ 750 冊の小説
+- Llama 比 attention cost 1000x 安い
+
+## 主要サービス
+- **LTM-2-mini**: 100M token context モデル (research preview)
+- **コード補完**: 全 codebase + docs + libraries を context で生成
+- **HashHop benchmark**: 長文 context 内検索性能 SOTA
+
+## 強み
+- 業界最大 context (次点 Gemini 2M)
+- Llama 比超効率
+- Google Cloud G4 (H100) / G5 (Grace Blackwell) 提携
+- コード AI 特化
+
+## 注意
+- production API は未公開 (research preview のみ)
+- 累計調達 \$320M / 公開待機状態
 ''',
 };
 

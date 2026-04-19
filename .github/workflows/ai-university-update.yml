@@ -99,6 +99,10 @@ jobs:
           upsert_provider "inworld"     "https://inworld.ai/blog/rss.xml"                     "Inworld AI"
           upsert_provider "coreweave"   "https://www.coreweave.com/blog/rss.xml"              "CoreWeave"
           upsert_provider "lambda_labs" "https://lambda.ai/blog/rss.xml"                      "Lambda Labs"
+          upsert_provider "hyperbolic"  "https://hyperbolic.ai/blog/rss.xml"                  "Hyperbolic Labs"
+          upsert_provider "anyscale"    "https://www.anyscale.com/blog/rss.xml"               "Anyscale"
+          upsert_provider "cerebrium"   "https://www.cerebrium.ai/blog/rss.xml"               "Cerebrium"
+          upsert_provider "magic_ai"    "https://magic.dev/blog/rss.xml"                      "Magic AI"
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova

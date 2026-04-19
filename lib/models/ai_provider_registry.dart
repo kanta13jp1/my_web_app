@@ -95,7 +95,7 @@ class AiProviderEntry {
   });
 }
 
-/// AI大学 登録プロバイダー全件のステータスカタログ (96社, 2026-04-19時点)
+/// AI大学 登録プロバイダー全件のステータスカタログ (100社, 2026-04-19時点)
 ///
 /// 実装済み: ai-assistant / ai-hub / ai-search に統合済みのもの
 /// 要APIキー: コード対応済みだが Supabase Secrets に追加が必要
@@ -737,6 +737,41 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     tier: AiProviderTier.budget,
     entryPoint: '(未実装 — Inference API は wind-down 中・GPU 直接賃貸が今後の主軸)',
     note: r'業界最安GPU H100 $2.89/hr・Llama 3.3 70B $0.20/M (廃止予定)',
+  ),
+  AiProviderEntry(
+    id: 'hyperbolic',
+    displayName: 'Hyperbolic Labs',
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
+    envKeyName: 'HYPERBOLIC_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: r'分散GPU+検証可能AI・H100 $3.20/hr・RTX4090 $0.50/hr・zk-snarks 検証',
+  ),
+  AiProviderEntry(
+    id: 'anyscale',
+    displayName: 'Anyscale',
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.performance,
+    envKeyName: 'ANYSCALE_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: r'Ray.io 商用版・Llama 3.1 70B $1.00/M・LoRA fine-tuning 対応',
+  ),
+  AiProviderEntry(
+    id: 'cerebrium',
+    displayName: 'Cerebrium',
+    status: AiProviderStatus.apiKeyRequired,
+    tier: AiProviderTier.budget,
+    envKeyName: 'CEREBRIUM_API_KEY',
+    entryPoint: 'ai-hub:provider.chat (OpenAI 互換)',
+    note: r'serverless GPU・sub-second cold start・H100 $4.20/hr・voice/video 対応',
+  ),
+  AiProviderEntry(
+    id: 'magic_ai',
+    displayName: 'Magic AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
+    entryPoint: '(未実装 — research preview のみ・production API 未公開)',
+    note: r'100M token context (Llama比1000x効率)・コードAI特化・Google Cloud G4/G5提携',
   ),
 ];
 

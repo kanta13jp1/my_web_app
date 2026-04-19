@@ -819,10 +819,10 @@ AI大学はユーザー数拡大のための**最重要差別化機能**。毎�
 
 **背景**: `gemini_university_v2_page.dart` が Gemini 特化のハードコードコンテンツ。**プロバイダー数は固定せず毎セッションで追加候補を検討**し、毎週 Claude Schedule が最新情報を自動更新する仕組みに改修。
 
-#### 現在の登録プロバイダー (Windowsアプリ版#119: 96社)
+#### 現在の登録プロバイダー (Windowsアプリ版#121: 100社)
 
 ```text
-google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii, black_forest_labs, liquid_ai, snowflake, cognition, scale_ai, poolside, harvey, manus, hedra, heygen, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova, lightricks, arcee_ai, minimax, moondream, rakuten_ai, pfn, siliconflow, novita_ai, deepinfra, nebius, fal_ai, fish_audio, atlas_cloud, mira_network, gmi_cloud, inworld, coreweave, lambda_labs
+google, openai, anthropic, microsoft, meta, x, deepseek, mistral, perplexity, groq, cohere, core, amazon, stability, huggingface, nvidia, ibm, sakana, baidu, oracle, reka, aleph_alpha, together_ai, fireworks_ai, replicate, writer, ai21, voyage, elevenlabs, openrouter, ollama, runway, suno, ideogram, udio, luma, kling, pika, assemblyai, twelve_labs, qwen, moonshot, midjourney, hailuo, adobe_firefly, 01ai, coze, apple, databricks, samsung, zhipu, character_ai, inflection, allenai, naver, adept, cerebras, prover, lmsys, falcon_tii, black_forest_labs, liquid_ai, snowflake, cognition, scale_ai, poolside, harvey, manus, hedra, heygen, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova, lightricks, arcee_ai, minimax, moondream, rakuten_ai, pfn, siliconflow, novita_ai, deepinfra, nebius, fal_ai, fish_audio, atlas_cloud, mira_network, gmi_cloud, inworld, coreweave, lambda_labs, hyperbolic, anyscale, cerebrium, magic_ai
 ```
 
 新規プロバイダーを追加するたびにこのリストを更新する。
