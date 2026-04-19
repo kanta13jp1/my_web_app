@@ -3026,6 +3026,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             '$url';
     }
 
+    // Web: OS native share sheet omits X on Windows/desktop → open X intent
+    // directly. Native platforms keep the familiar SharePlus flow.
+    if (kIsWeb) {
+      final intent = Uri.parse(
+        'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(text)}',
+      );
+      await launchUrl(intent, mode: LaunchMode.externalApplication);
+      return;
+    }
     await SharePlus.instance.share(ShareParams(text: text));
   }
 

@@ -1,9 +1,11 @@
 import 'dart:math' show max, min;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// AI大学ホームカード — ホーム最上部に表示するキラーコンテンツバナー
 ///
@@ -149,6 +151,15 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
             '$learnedText$streakText\n'
             'https://my-web-app-b67f4.web.app/#/ai-university';
 
+    // Web: OS native share sheet omits X on Windows/desktop → open X intent
+    // directly. Native platforms keep the familiar SharePlus flow.
+    if (kIsWeb) {
+      final intent = Uri.parse(
+        'https://twitter.com/intent/tweet?text=${Uri.encodeComponent(shareText)}',
+      );
+      await launchUrl(intent, mode: LaunchMode.externalApplication);
+      return;
+    }
     await SharePlus.instance.share(
       ShareParams(text: shareText),
     );

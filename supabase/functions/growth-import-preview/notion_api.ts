@@ -301,6 +301,30 @@ async function searchNotionObjects<T>(
   return results;
 }
 
+// Strip Notion's heavy per-block metadata (annotations, mentions, timestamps,
+// parent refs, etc.) so recursive previews hold only the text we actually render.
+function slimNotionBlock(rawBlock: NotionBlockNode): NotionBlockNode {
+  const slim: NotionBlockNode = { type: rawBlock.type };
+  if (rawBlock.id) slim.id = rawBlock.id;
+  if (rawBlock.has_children) slim.has_children = rawBlock.has_children;
+
+  const inner = rawBlock[rawBlock.type] as NotionBlockInner | undefined;
+  if (inner) {
+    const slimInner: NotionBlockInner = {};
+    if (inner.rich_text?.length) {
+      slimInner.rich_text = inner.rich_text.map((text) => ({
+        plain_text: text.plain_text ?? "",
+      }));
+    }
+    if (inner.checked !== undefined) slimInner.checked = inner.checked;
+    if (inner.title !== undefined) slimInner.title = inner.title;
+    if (inner.language !== undefined) slimInner.language = inner.language;
+    slim[rawBlock.type] = slimInner;
+  }
+
+  return slim;
+}
+
 export async function fetchNotionBlockTree(
   blockId: string,
   options: BlockTreeOptions,
@@ -347,7 +371,7 @@ export async function fetchNotionBlockTree(
         }
 
         state.remainingBlocks--;
-        const block: NotionBlockNode = { ...rawBlock };
+        const block = slimNotionBlock(rawBlock);
 
         if (block.has_children && block.id) {
           if (depth >= maxDepth) {
@@ -386,7 +410,8 @@ export async function buildNotionApiPreview(
     "Content-Type": "application/json",
   };
 
-  const warnings: string[] = [];
+  const warningSet = new Set<string>();
+  const addWarning = (warning: string) => warningSet.add(warning);
   const notes: ImportedNoteDraft[] = [];
 
   const pages = await searchNotionObjects<NotionPage>(
@@ -406,9 +431,9 @@ export async function buildNotionApiPreview(
         ...options,
       });
       content = notionBlocksToText(blockTree.blocks);
-      warnings.push(...blockTree.warnings);
+      blockTree.warnings.forEach(addWarning);
     } catch {
-      warnings.push(`Failed to fetch content for "${title}".`);
+      addWarning(`Failed to fetch content for "${title}".`);
     }
 
     notes.push({
@@ -451,11 +476,11 @@ export async function buildNotionApiPreview(
       }
     }
   } catch {
-    warnings.push("Failed to search for Notion databases.");
+    addWarning("Failed to search for Notion databases.");
   }
 
   if (notes.length === 0) {
-    warnings.push(
+    addWarning(
       "No pages or database entries found. Check the integration token and page access permissions.",
     );
   }
@@ -465,7 +490,7 @@ export async function buildNotionApiPreview(
     sourceLabel: "Notion (API連携)",
     fileName: "notion_api",
     notes,
-    warnings,
+    warnings: Array.from(warningSet),
     previewMode: "edge-function",
   };
 }
