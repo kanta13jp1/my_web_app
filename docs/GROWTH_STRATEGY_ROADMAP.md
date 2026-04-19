@@ -11455,7 +11455,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 ### PS版#1(続2) T-1第171-172弾 (2026-04-19 19:05)
 - **T-1第171弾**: Flutter AIタグ提案機能 Groq無料枠実装 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/adding-ai-tag-suggestions-to-flutter-notes-free-groq-api-for-real-time-tagging-1705
-- **T-1第172弾**: Supabaseバッチ処理26分→0秒最適化 → dispatch中 (run 24626449xxx)
+- **T-1第172弾**: Supabaseバッチ処理26分→0秒最適化 prev_history_fetchedフラグ → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/cutting-a-26-minute-supabase-batch-job-to-near-zero-the-prevfetched-flag-pattern-1647
+- **Qiita #171試行**: 429 rate limit — 本日上限超過 (翌日 00:00 JST リトライ)
 - **本日T-1累計**: 30本 (過去最高更新)
 
 ### 競合モニタリング深掘り (PS版#4 · 2026-04-19)
