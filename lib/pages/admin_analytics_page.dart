@@ -1552,8 +1552,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 24),
                     const Text(
                       '過去30日間の推移 (LP View vs 実登録)',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -1576,16 +1579,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 24),
                     const Text(
                       '流入元チャネル (Source Breakdown)',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildSourceDistribution(sourceBreakdown),
                     const SizedBox(height: 24),
                     const Text(
                       'シェアチャネル (Share Actions)',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildSourceDistribution(shareChannelBreakdown),
@@ -1600,32 +1609,44 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 24),
                     const Text(
                       'Agent Tool Guard (Fail-close)',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildToolExecutionGuardCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '週次ダイジェスト',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildWeeklyDigestCard(context),
                     const SizedBox(height: 24),
                     const Text(
                       '登録ユーザー管理',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildAdminUsersCard(),
                     const SizedBox(height: 24),
                     const Text(
                       '機能リクエスト・自動化・ウェイトリスト',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildFeatureRequestsAdminCard(),
@@ -1648,8 +1669,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(height: 24),
                     const Text(
                       '日次レポート詳細',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _buildDailyList(),
@@ -2024,7 +2048,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -2142,7 +2170,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
@@ -2177,7 +2209,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             const Text(
               '今日CVR (実登録ベース)',
-              style: TextStyle(fontSize: 14, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 14,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 4),
             Row(
@@ -2290,7 +2326,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           children: [
             const Text(
               '登録管理の追加指標',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -2422,7 +2462,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(height: 14),
               const Text(
                 'Blocked Reasons',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               ..._blockedReasonBreakdown.entries.take(6).map((entry) {
@@ -2480,7 +2524,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             const SizedBox(height: 12),
             const Text(
               'Recent Tool Executions',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ...recentLogs.map((log) {
@@ -2622,7 +2670,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            height: 1.4,
+          ),
         ),
         Text(
           label,
@@ -2702,8 +2754,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const SizedBox(height: 8),
                 Text(
                   shouldShowLabel ? label : '',
-                  style:
-                      const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
+                  ),
                 ),
               ],
             );
@@ -2780,7 +2835,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     const SizedBox(width: 6),
                     Text(
                       _formatSourceName(e.key),
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     Text(
                       ' $percent%',
@@ -3141,7 +3199,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
             title: Text(
               dateStr,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                height: 1.4,
+              ),
             ),
             subtitle: Wrap(
               spacing: 12,
@@ -3182,7 +3244,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   ),
                   Text(
                     'CVR',
-                    style: TextStyle(fontSize: 10, color: _getCvrColor(cvr)),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _getCvrColor(cvr),
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -3313,7 +3379,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   horizontal: 12,
                 ),
               ),
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.6,
+              ),
               onChanged: (v) => setState(() => _userSearchQuery = v),
             ),
             const SizedBox(height: 8),
@@ -3548,7 +3617,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                                       ),
                                       label: const Text(
                                         'プロフィール詳細',
-                                        style: TextStyle(fontSize: 11),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          height: 1.5,
+                                        ),
                                       ),
                                       style: TextButton.styleFrom(
                                         foregroundColor:
@@ -3757,7 +3829,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 if (editMode)
                   const Chip(
-                    label: Text('編集中', style: TextStyle(fontSize: 10)),
+                    label: Text('編集中',
+                        style: TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        )),
                     backgroundColor: Color(0xFFE3F2FD),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -3887,7 +3963,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -3899,7 +3978,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 2,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -3913,7 +3995,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -3924,7 +4009,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -3935,7 +4023,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextField(
@@ -3946,7 +4037,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           isDense: true,
                           border: OutlineInputBorder(),
                         ),
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Row(
@@ -3959,7 +4053,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           const SizedBox(width: 6),
                           const Text(
                             '公開プロフィール',
-                            style: TextStyle(fontSize: 13),
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                            ),
                           ),
                           const Spacer(),
                           Switch(
@@ -4048,7 +4145,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+            ),
             overflow: TextOverflow.ellipsis,
             maxLines: 3,
           ),
@@ -4111,7 +4211,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Expanded(
                   child: Text(
                     '機能リクエスト管理',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 Text(
@@ -4208,11 +4312,18 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ),
                           ),
                         ),
-                        title:
-                            Text(title, style: const TextStyle(fontSize: 13)),
+                        title: Text(title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                            )),
                         subtitle: Row(
                           children: [
-                            Text(dateStr, style: const TextStyle(fontSize: 11)),
+                            Text(dateStr,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  height: 1.5,
+                                )),
                             if (adminReply != null) ...[
                               const SizedBox(width: 6),
                               Container(
@@ -4366,7 +4477,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Expanded(
                   child: Text(
                     '自動化オペレーション',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 if (_automationLoading)
@@ -4413,8 +4528,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 child: Text(
                   _automationError!,
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFB91C1C),
+                    height: 1.5,
+                  ),
                 ),
               )
             else ...[
@@ -4447,8 +4565,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(height: 16),
               Text(
                 'CSキュー (${_automationSupportTickets.length}件)',
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               if (_automationSupportTickets.isEmpty)
@@ -4488,10 +4609,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ),
                         ),
                       ),
-                      title: Text(title, style: const TextStyle(fontSize: 12)),
+                      title: Text(title,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.5,
+                          )),
                       subtitle: Text(
                         email == null || email.isEmpty ? 'メール未登録' : email,
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
                       ),
                       trailing: TextButton(
                         onPressed: () => _showSupportReplyDialog(ticket),
@@ -4524,7 +4652,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: color),
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
@@ -4629,10 +4761,17 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       size: 20,
                       color: Color(0xFF6366F1),
                     ),
-                    title: Text(email, style: const TextStyle(fontSize: 13)),
+                    title: Text(email,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                        )),
                     subtitle: Text(
                       '$source  $dateStr',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                     ),
                   );
                 },
@@ -4761,7 +4900,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Expanded(
                   child: Text(
                     'ブログ投稿管理',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 IconButton(
@@ -5000,7 +5143,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const SizedBox(width: 8),
               const Text(
                 '比較ページ別 CVR',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
               ),
               const Spacer(),
               if (_comparisonCvrLoading)
@@ -5039,7 +5186,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           if (sorted.isEmpty && !_comparisonCvrLoading)
             const Text(
               '比較ページへの到達データがまだありません',
-              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 13,
+                height: 1.6,
+              ),
             )
           else
             ...sorted.take(14).map((e) {
@@ -5096,7 +5247,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
         Text(
           value,
@@ -5173,7 +5328,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               const Expanded(
                 child: Text(
                   'グロース実績サマリー',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
                 ),
               ),
               if (_growthSummaryLoading)
@@ -5199,7 +5358,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             children: periods.map((p) {
               final (lbl, since) = p;
               return ActionChip(
-                label: Text(lbl, style: const TextStyle(fontSize: 12)),
+                label: Text(lbl,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    )),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 onPressed: () => _loadGrowthSummary(since: since, label: lbl),
@@ -5210,12 +5373,20 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           if (_growthSummary == null && !_growthSummaryLoading)
             const Text(
               'データなし',
-              style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                height: 1.6,
+              ),
             )
           else if (_growthSummary != null) ...[
             Text(
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             _growthStatRow(
@@ -5260,7 +5431,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
+          Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.6,
+                  ))),
           Text(
             value,
             style: TextStyle(
@@ -5298,7 +5474,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 const Expanded(
                   child: Text(
                     'ユーザーフィードバック',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 if (newCount > 0)
@@ -5368,7 +5548,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   'フィードバックはまだありません',
-                  style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: cs.onSurfaceVariant,
+                    height: 1.6,
+                  ),
                 ),
               )
             else
@@ -5408,8 +5592,12 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       ),
       child: Text(
         '$label $count',
-        style:
-            TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -5457,7 +5645,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     content,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.6,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -5509,7 +5700,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text('確認済にする', style: TextStyle(fontSize: 11)),
+                    child: const Text('確認済にする',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        )),
                   ),
                   const SizedBox(width: 4),
                   TextButton(
@@ -5523,7 +5718,11 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       foregroundColor: const Color(0xFF0D9488),
                     ),
-                    child: const Text('対応完了', style: TextStyle(fontSize: 11)),
+                    child: const Text('対応完了',
+                        style: TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        )),
                   ),
                 ],
               ),

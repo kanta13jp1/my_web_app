@@ -3445,7 +3445,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 const Expanded(
                   child: Text(
                     '本日18:00までに必ず完了（①〜⑤）',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
                   ),
                 ),
                 if (_isLoadingClosing)
@@ -3644,15 +3648,24 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           Text(
             '純資産: ${netWorth == null ? "未記録" : _formatYen(netWorth)}',
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           Text(
             '固定費: ${_formatYen(fixedCost)}',
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           Text(
             'タスク: $completedTasks/$totalTasks 完了',
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           Text(
             '未完了: $pendingTasks',
@@ -3834,7 +3847,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text(
                   '借金返済プラン',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
@@ -4540,13 +4557,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 ),
                 Text(
                   '①資産・②負債の全容把握',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
             const Text(
               '現金、銀行口座、クレカの未払い(マイナス入力)をすべて記録せよ。',
-              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             _buildAssetWatchlistSection(),
@@ -4895,7 +4920,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           const SizedBox(height: 6),
           const Text(
             'Keep important assets or liabilities pinned with a short memo.',
-            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           if (entries.isEmpty)
@@ -5105,13 +5134,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text(
                   '④収支の記録',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
             Text(
               'お金の流れをすべてリスト化する。表示中: $visibleMonthLabel（過去月に切替可）',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5132,7 +5169,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: val,
                             child: Text(
                               val,
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.6,
+                              ),
                             ),
                           ),
                         )
@@ -5258,7 +5298,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: source,
                             child: Text(
                               source.replaceAll('[', '').replaceAll(']', ''),
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.6,
+                              ),
                             ),
                           ),
                         )
@@ -5322,7 +5365,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 収入',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome)}',
@@ -5338,7 +5384,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 支出',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         '¥${NumberFormat('#,###').format(totalExpense)}',
@@ -5352,7 +5401,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   Column(
                     children: [
-                      const Text('収支差額', style: TextStyle(fontSize: 10)),
+                      const Text('収支差額',
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1.5,
+                          )),
                       Text(
                         '¥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
@@ -5399,10 +5452,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                               : const Color(0xFFB91C1C),
                           size: 20,
                         ),
-                        title: Text(desc, style: const TextStyle(fontSize: 13)),
+                        title: Text(desc,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              height: 1.6,
+                            )),
                         subtitle: Text(
                           '${DateFormat('MM/dd').format(date)} ・ タップで編集',
-                          style: const TextStyle(fontSize: 11),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            height: 1.5,
+                          ),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -5480,13 +5540,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text(
                   '④収支の記録',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
             Text(
               'お金の流れをすべてリスト化する。収入・支出に加えて口座間の振替も記録できます。表示中: $visibleMonthLabel（過去月に切替可）',
-              style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -5507,7 +5575,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: value,
                             child: Text(
                               value,
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.6,
+                              ),
                             ),
                           ),
                         )
@@ -5638,7 +5709,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                             value: source,
                             child: Text(
                               _sourceLabel(source),
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.6,
+                              ),
                             ),
                           ),
                         )
@@ -5672,7 +5746,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                                   value: source,
                                   child: Text(
                                     _sourceLabel(source),
-                                    style: const TextStyle(fontSize: 13),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      height: 1.6,
+                                    ),
                                   ),
                                 ),
                               )
@@ -5776,7 +5853,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 収入',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalIncome)}',
@@ -5792,7 +5872,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     children: [
                       Text(
                         '$visibleMonthLabel 支出',
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         '￥${NumberFormat('#,###').format(totalExpense)}',
@@ -5806,7 +5889,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   ),
                   Column(
                     children: [
-                      const Text('収支差額', style: TextStyle(fontSize: 10)),
+                      const Text('収支差額',
+                          style: TextStyle(
+                            fontSize: 10,
+                            height: 1.5,
+                          )),
                       Text(
                         '￥${NumberFormat('#,###').format(totalIncome - totalExpense)}',
                         style: TextStyle(
@@ -5878,11 +5965,17 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                     ),
                     title: Text(
                       _flowDisplayTitle(item),
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.6,
+                      ),
                     ),
                     subtitle: Text(
                       subtitleParts.join(' ・ '),
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -5982,8 +6075,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       const SizedBox(height: 6),
                       const Text(
                         '毎月自動で奪われる富を監視せよ。',
-                        style:
-                            TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       InkWell(
@@ -6308,13 +6404,21 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                 SizedBox(width: 8),
                 Text(
                   '⑤今月の必須タスク',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
             const Text(
               '今月中に必ず処理すべき事務手続き等を記録せよ。',
-              style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             _isLoadingTasks
@@ -6427,7 +6531,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  const Text('個別', style: TextStyle(fontSize: 10)),
+                  const Text('個別',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.5,
+                      )),
                   Switch(
                     value: _isStacked,
                     activeThumbColor: const Color(0xFF0D9488),
@@ -6438,7 +6546,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                       });
                     },
                   ),
-                  const Text('合計', style: TextStyle(fontSize: 10)),
+                  const Text('合計',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.5,
+                      )),
                 ],
               ),
             const SizedBox(height: 24),
@@ -6551,7 +6663,10 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   }
 
   Widget _bottomTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontSize: 10);
+    const style = TextStyle(
+      fontSize: 10,
+      height: 1.5,
+    );
     String text = '';
     if (value.toInt() < _sortedDates.length) {
       text = DateFormat('MM/dd')
@@ -6568,7 +6683,11 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
     return SideTitleWidget(
       meta: meta,
       space: 8,
-      child: Text(format.format(value), style: const TextStyle(fontSize: 10)),
+      child: Text(format.format(value),
+          style: const TextStyle(
+            fontSize: 10,
+            height: 1.5,
+          )),
     );
   }
 
