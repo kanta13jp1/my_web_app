@@ -1,7 +1,7 @@
 ---
 title: "Prose Balance Review with Nebius Llama-3.3-70B — Structural Writing Analysis at $0.10/1M"
 tags: AI,Flutter,Supabase,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Prose Balance Review with Nebius Llama-3.3-70B

@@ -1,7 +1,7 @@
 ---
 title: "NebiusのLlama-3.3-70BでFlutterノートのバランス推敲機能を実装した"
 tags: AI,Flutter,Supabase,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # NebiusのLlama-3.3-70BでFlutterノートのバランス推敲機能を実装した
