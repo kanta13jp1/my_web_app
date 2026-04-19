@@ -1,7 +1,7 @@
 ---
 title: "Adding a Mobile Claude Code Instance — Real Device Bug Triage With a 5th Instance"
 tags: ClaudeCode,Flutter,buildinpublic,mobile,productivity
-published: false
+published: true
 ---
 
 # Adding a Mobile Claude Code Instance

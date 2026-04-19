@@ -1,7 +1,7 @@
 ---
 title: "スマホ版Claude Codeで5インスタンス制に移行した話 — モバイルバグをリアルタイムにトリアージ"
 tags: ClaudeCode,個人開発,Flutter,buildinpublic,mobile
-published: false
+published: true
 ---
 
 # スマホ版Claude Codeで5インスタンス制に移行した話
