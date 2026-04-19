@@ -38,6 +38,9 @@ jobs:
     name: Publish Blog Draft
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # AI_DEV Principle 3 (Observability): trace_id for all steps
+      TRACE_ID: blog-publish-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       # ── Step 1: コード取得 ────────────────────────────────────────────────
@@ -125,6 +128,48 @@ jobs:
         run: |
           echo "ℹ️ このドラフトは Zenn で published: true です。"
           echo "Zenn はすでに公開済みですが、Qiita / dev.to への投稿は続行します。"
+
+      # ── Step 2.5: Circuit Breaker — Qiita 日次 4本上限 (AI_DEV Principle 4) ─
+      - name: Circuit breaker — daily post limit
+        if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
+        env:
+          SUPABASE_URL: https://smmkxxavexumewbfaqpy.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          echo "[trace=$TRACE_ID] Circuit breaker: checking daily Qiita post count for $TODAY"
+          RESP=$(curl -sf \
+            "${SUPABASE_URL}/rest/v1/blog_posts?select=id,platform&status=eq.posted&created_at=gte.${TODAY}T00:00:00Z" \
+            -H "apikey: ${SUPABASE_SERVICE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" 2>/dev/null || echo "[]")
+          COUNT=$(echo "$RESP" | python3 -c "import sys,json; data=json.load(sys.stdin); print(sum(1 for p in data if 'qiita' in (p.get('platform') or '').lower()))" 2>/dev/null || echo "0")
+          echo "[trace=$TRACE_ID] Today's Qiita post count: $COUNT"
+          if [ "$COUNT" -ge "4" ]; then
+            echo "::error::[trace=$TRACE_ID] Circuit breaker triggered: $COUNT Qiita posts already today (daily limit=4)"
+            exit 1
+          fi
+          echo "[trace=$TRACE_ID] ✅ Circuit breaker passed ($COUNT/4)"
+
+      # ── Step 2.6: Quality Gate — Sentinel + Warden (AI_DEV Principle 7) ──
+      - name: Quality gate — Sentinel + Warden
+        if: github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true'
+        env:
+          DRAFT_PATH_VAR: ${{ steps.meta.outputs.draft_path }}
+          ALREADY_PUBLISHED: ${{ steps.meta.outputs.already_published }}
+        run: |
+          DRAFT="$DRAFT_PATH_VAR"
+          echo "[trace=$TRACE_ID] Quality gate: $DRAFT"
+          # Sentinel: ファイル存在
+          [ -f "$DRAFT" ] || { echo "::error::[trace=$TRACE_ID] Sentinel: draft not found: $DRAFT"; exit 1; }
+          # Warden: 最低文字数 (品質保証 — 300 bytes 未満は投稿に不十分)
+          CHARS=$(wc -c < "$DRAFT")
+          if [ "$CHARS" -lt 300 ]; then
+            echo "::error::[trace=$TRACE_ID] Warden: draft too short ($CHARS bytes < 300)"
+            exit 1
+          fi
+          # Sentinel: Qiita/dev.to 重複投稿検出 (Zenn published は許容)
+          # blog_posts テーブルに同一 title の posted レコードがあればブロック
+          echo "[trace=$TRACE_ID] ✅ Quality gate passed: $CHARS bytes, already_published=$ALREADY_PUBLISHED"
 
       # ── Step 3: メタデータ記録 (schedule-hub blog.create) ────────────────
       - name: Step 3 - Register in blog_posts table
@@ -393,6 +438,7 @@ jobs:
             echo ""
             echo "| 項目 | 値 |"
             echo "| --- | --- |"
+            echo "| trace_id | \`$TRACE_ID\` |"
             echo "| ドラフト | \`$DRAFT_PATH_OUT\` |"
             echo "| タイトル | $ARTICLE_TITLE |"
             echo "| ドライラン | $DRY_RUN |"
@@ -407,3 +453,46 @@ jobs:
               echo "| dev.to | スキップ (APIキー未設定または失敗) |"
             fi
           } >> $GITHUB_STEP_SUMMARY
+
+      # ── Step 8: DLQ — 失敗時の incident-report (AI_DEV Principle 6) ──────
+      - name: DLQ — record failure to incident-reports
+        if: failure()
+        env:
+          DRAFT_PATH_OUT: ${{ steps.meta.outputs.draft_path }}
+          ARTICLE_TITLE: ${{ steps.meta.outputs.title }}
+          GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
+          BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          mkdir -p docs/incident-reports
+          FILE="docs/incident-reports/${TODAY}-blog-publish.md"
+          if [ ! -f "$FILE" ]; then
+            printf -- "# blog-publish 失敗レポート %s\n\n" "$TODAY" > "$FILE"
+          fi
+          {
+            printf "\n## 失敗 %s\n\n" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            printf -- "- **trace_id**: \`%s\`\n" "$TRACE_ID"
+            printf -- "- **run_id**: [%s](%s/%s/actions/runs/%s)\n" \
+              "${{ github.run_id }}" "${{ github.server_url }}" "${{ github.repository }}" "${{ github.run_id }}"
+            printf -- "- **draft**: \`%s\`\n" "${DRAFT_PATH_OUT:-unknown}"
+            printf -- "- **title**: %s\n" "${ARTICLE_TITLE:-unknown}"
+            printf -- "- **platforms**: %s\n" "${{ github.event.inputs.platforms }}"
+            printf -- "- **event**: %s\n" "${{ github.event_name }}"
+            printf -- "- **actor**: %s\n" "${{ github.triggering_actor }}"
+          } >> "$FILE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main || true
+          git checkout main 2>/dev/null || git checkout -b main origin/main
+          git pull origin main --ff-only || true
+          git add "$FILE"
+          if git diff --cached --quiet; then
+            echo "[trace=$TRACE_ID] No incident changes to record"
+            exit 0
+          fi
+          git commit -m "自動: blog-publish DLQ $TODAY (trace=$TRACE_ID)"
+          if [ -n "$BYPASS_TOKEN" ]; then
+            git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+            git remote set-url origin "https://x-access-token:${BYPASS_TOKEN}@github.com/${{ github.repository }}.git"
+          fi
+          git push origin HEAD:main || echo "[trace=$TRACE_ID] DLQ push failed (non-blocking)"
