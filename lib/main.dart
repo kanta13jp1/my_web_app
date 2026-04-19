@@ -245,6 +245,9 @@ import 'package:my_web_app/pages/habit_tracker_page.dart';
 import 'package:my_web_app/pages/agent_department_manager_page.dart';
 import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
 import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
+import 'package:my_web_app/pages/leave_management_page.dart';
+import 'package:my_web_app/pages/performance_review_page.dart';
+import 'package:my_web_app/pages/pomodoro_timer_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1373,6 +1376,18 @@ class MyApp extends StatelessWidget {
           case '/dev/claude-design-importer':
             return MaterialPageRoute(
               builder: (_) => const ClaudeDesignImporterPage(),
+            );
+          case '/leave-management':
+            return MaterialPageRoute(
+              builder: (_) => const LeaveManagementPage(),
+            );
+          case '/performance-review':
+            return MaterialPageRoute(
+              builder: (_) => const PerformanceReviewPage(),
+            );
+          case '/pomodoro-timer':
+            return MaterialPageRoute(
+              builder: (_) => const PomodoroTimerPage(),
             );
           default:
             return MaterialPageRoute(builder: (_) => const LandingPage());

@@ -427,6 +427,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/fitness-health-tracker',
       '健康管理ページ > 運動記録・健康指標・フィットネス目標',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'leave-management',
+      '休暇・休職管理',
+      true,
+      '/leave-management',
+      '休暇管理ページ > 休暇申請・承認状況確認',
+    ),
+    _FnDef(
+      'performance-review',
+      'パフォーマンスレビュー (自己評価・フィードバック)',
+      true,
+      '/performance-review',
+      'パフォーマンスレビューページ > 評価期間別レビュー提出・履歴確認',
+    ),
+    _FnDef(
+      'pomodoro-timer',
+      'ポモドーロタイマー (作業セッション記録)',
+      true,
+      '/pomodoro-timer',
+      'ポモドーロタイマーページ > 25分作業セッション開始・完了履歴確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
