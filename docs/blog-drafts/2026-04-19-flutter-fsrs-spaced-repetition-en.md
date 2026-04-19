@@ -1,7 +1,7 @@
 ---
 title: "Implementing FSRS Spaced Repetition in Flutter — The Algorithm Behind AI University"
 tags: Flutter,Supabase,AI,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Implementing FSRS Spaced Repetition in Flutter

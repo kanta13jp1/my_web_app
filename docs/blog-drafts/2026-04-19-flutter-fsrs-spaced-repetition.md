@@ -1,7 +1,7 @@
 ---
 title: "FlutterでFSRS間隔反復アルゴリズムを実装する — AI大学の学習エンジン"
 tags: Flutter,Supabase,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # FlutterでFSRS間隔反復アルゴリズムを実装する
