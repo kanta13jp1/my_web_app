@@ -3829,11 +3829,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
                 if (editMode)
                   const Chip(
-                    label: Text('編集中',
-                        style: TextStyle(
-                          fontSize: 10,
-                          height: 1.5,
-                        )),
+                    label: Text(
+                      '編集中',
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.5,
+                      ),
+                    ),
                     backgroundColor: Color(0xFFE3F2FD),
                     visualDensity: VisualDensity.compact,
                   ),
@@ -4312,18 +4314,22 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             ),
                           ),
                         ),
-                        title: Text(title,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              height: 1.6,
-                            )),
+                        title: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            height: 1.6,
+                          ),
+                        ),
                         subtitle: Row(
                           children: [
-                            Text(dateStr,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  height: 1.5,
-                                )),
+                            Text(
+                              dateStr,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                              ),
+                            ),
                             if (adminReply != null) ...[
                               const SizedBox(width: 6),
                               Container(
@@ -4609,11 +4615,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                           ),
                         ),
                       ),
-                      title: Text(title,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            height: 1.5,
-                          )),
+                      title: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                      ),
                       subtitle: Text(
                         email == null || email.isEmpty ? 'メール未登録' : email,
                         style: const TextStyle(
@@ -4761,11 +4769,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       size: 20,
                       color: Color(0xFF6366F1),
                     ),
-                    title: Text(email,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          height: 1.6,
-                        )),
+                    title: Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.6,
+                      ),
+                    ),
                     subtitle: Text(
                       '$source  $dateStr',
                       style: const TextStyle(
@@ -5358,11 +5368,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
             children: periods.map((p) {
               final (lbl, since) = p;
               return ActionChip(
-                label: Text(lbl,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.5,
-                    )),
+                label: Text(
+                  lbl,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
                 onPressed: () => _loadGrowthSummary(since: since, label: lbl),
@@ -5432,11 +5444,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
           ),
           const SizedBox(width: 8),
           Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.6,
-                  ))),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.6,
+              ),
+            ),
+          ),
           Text(
             value,
             style: TextStyle(
@@ -5700,11 +5715,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: const Text('確認済にする',
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.5,
-                        )),
+                    child: const Text(
+                      '確認済にする',
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 4),
                   TextButton(
@@ -5718,11 +5735,13 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       foregroundColor: const Color(0xFF0D9488),
                     ),
-                    child: const Text('対応完了',
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.5,
-                        )),
+                    child: const Text(
+                      '対応完了',
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 ],
               ),
