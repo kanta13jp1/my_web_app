@@ -202,7 +202,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     child: const Text(
                       'テキスト埋め込み',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, height: 1.5),
                     ),
                   ),
                 ),
@@ -225,7 +225,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     child: const Text(
                       '類似度比較',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, height: 1.5),
                     ),
                   ),
                 ),
@@ -255,7 +255,11 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   Expanded(
                     child: Text(
                       'gemini-embedding-001 — 768次元ベクトルを生成',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -294,7 +298,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               padding: EdgeInsets.only(top: 6),
               child: Text(
                 '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(color: Colors.red, fontSize: 12),
+                style: TextStyle(color: Colors.red, fontSize: 12, height: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -318,6 +322,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     color: _singleResult.isEmpty
                         ? const Color(0xFF9CA3AF)
                         : Theme.of(context).colorScheme.onSurface,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -346,7 +351,11 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                   Expanded(
                     child: Text(
                       '2つのテキストのコサイン類似度を計算します',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -397,7 +406,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
               padding: EdgeInsets.only(top: 6),
               child: Text(
                 '※ 設定画面で Gemini API キーを設定してください',
-                style: TextStyle(color: Colors.red, fontSize: 12),
+                style: TextStyle(color: Colors.red, fontSize: 12, height: 1.5),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -414,6 +423,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       style: TextStyle(
                         fontSize: 14,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -423,6 +433,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
                         color: _similarityColor(score),
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -456,6 +467,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                         style: TextStyle(
                           color: _similarityColor(score),
                           fontWeight: FontWeight.w600,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -464,7 +476,11 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                     const SizedBox(height: 8),
                     const Text(
                       '1.0 = 完全一致 / 0.0 = 無相関 / -1.0 = 逆の意味',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF9CA3AF),
+                        height: 1.5,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -488,6 +504,7 @@ class _EmbeddingLabPageState extends State<EmbeddingLabPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.outlineVariant,
+                        height: 1.5,
                       ),
                     ),
                   ],

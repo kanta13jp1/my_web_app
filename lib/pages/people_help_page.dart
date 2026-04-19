@@ -145,6 +145,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           color: color,
           fontWeight: FontWeight.w700,
           fontSize: 12,
+          height: 1.5,
         ),
       ),
     );
@@ -184,6 +185,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -252,6 +254,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                                   style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -262,6 +265,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                                         .colorScheme
                                         .onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -273,7 +277,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                       const SizedBox(height: 10),
                       Text(
                         _formatDateRange(request),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -340,7 +347,11 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
           const SizedBox(height: 16),
           const Text(
             'Quick Actions',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           _buildActionCard(
@@ -454,6 +465,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -495,7 +507,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -536,6 +548,7 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: color,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -728,6 +741,7 @@ class _CreateLeaveRequestDialogState extends State<_CreateLeaveRequestDialog> {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.error,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ],

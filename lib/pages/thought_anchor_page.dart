@@ -249,7 +249,11 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           children: [
             Text(
               'ひとつの考えを保持する',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             SizedBox(height: 8),
             Text(
@@ -294,7 +298,11 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           children: [
             const Text(
               'いま保持したい考え',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -372,7 +380,10 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           padding: const EdgeInsets.all(16),
           child: Text(
             'セッションを始めると、ここに残り時間と戻る言葉、退避メモが表示されます。',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
+            ),
           ),
         ),
       );
@@ -403,6 +414,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -443,6 +455,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurface,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -450,7 +463,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
               const SizedBox(height: 12),
               const Text(
                 '退避した別件',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(fontWeight: FontWeight.w700, height: 1.5),
               ),
               const SizedBox(height: 8),
               ..._distractionNotes.map(
@@ -475,7 +488,11 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
           children: [
             const Text(
               '最近のアンカー',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             if (_records.isEmpty)
@@ -504,7 +521,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         children: [
           Text(
             record.anchorText,
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.5),
           ),
           const SizedBox(height: 6),
           Text(
@@ -512,6 +529,7 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
             ),
           ),
           if (record.whyNow.trim().isNotEmpty) ...[
@@ -542,7 +560,11 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 2),
           Text(value),
@@ -562,7 +584,8 @@ class _ThoughtAnchorPageState extends State<ThoughtAnchorPage> {
         backgroundColor: color,
         child: Text(
           initial,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
+          style:
+              const TextStyle(color: Colors.white, fontSize: 12, height: 1.5),
         ),
       ),
       label: Text('$label  $value'),

@@ -79,6 +79,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -107,6 +108,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -140,6 +142,7 @@ class _SharePhilosopherQuoteDialogState
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF3D5AFE),
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
@@ -160,6 +163,7 @@ class _SharePhilosopherQuoteDialogState
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Color(0xFF9CA3AF),
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -193,6 +197,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
 
@@ -245,6 +250,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -253,6 +259,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF9CA3AF),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -318,6 +325,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -326,6 +334,7 @@ class _SharePhilosopherQuoteDialogState
                           style: TextStyle(
                             fontSize: 12,
                             color: Color(0xFF9CA3AF),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -337,6 +346,7 @@ class _SharePhilosopherQuoteDialogState
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF9CA3AF),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -356,6 +366,7 @@ class _SharePhilosopherQuoteDialogState
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.black87,
+                              height: 1.5,
                             ),
                             maxLines: 10,
                             overflow: TextOverflow.ellipsis,

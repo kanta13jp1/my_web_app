@@ -276,6 +276,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF10B981),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -322,6 +323,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               color: isDark
                                   ? Colors.white
                                   : const Color(0xFF1E293B),
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -332,6 +334,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -364,12 +367,13 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
               fontSize: 16,
               fontWeight: FontWeight.w800,
               color: color,
+              height: 1.5,
             ),
           ),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: color),
+            style: TextStyle(fontSize: 11, color: color, height: 1.5),
           ),
         ],
       ),
@@ -430,6 +434,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                           color:
                               isDark ? Colors.white : const Color(0xFF1E293B),
                           fontFamily: 'monospace',
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -438,6 +443,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                         style: TextStyle(
                           fontSize: 11,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                       if (uiLabel != null) ...[
@@ -460,6 +466,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                   color: hasUi
                                       ? const Color(0xFF6366F1)
                                       : const Color(0xFF9CA3AF),
+                                  height: 1.5,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -487,7 +494,11 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                               ),
                               child: Text(
                                 ok ? 'HTTP $status OK' : 'HTTP $status NG',
-                                style: TextStyle(fontSize: 10, color: color),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: color,
+                                  height: 1.5,
+                                ),
                               ),
                             );
                           },
@@ -539,7 +550,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                         ),
                         child: const Text(
                           '実装へ',
-                          style: TextStyle(fontSize: 11),
+                          style: TextStyle(fontSize: 11, height: 1.5),
                         ),
                       ),
                     IconButton(
@@ -582,6 +593,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                             color: isDark
                                 ? const Color(0xFFF59E0B)
                                 : const Color(0xFFB45309),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -614,6 +626,7 @@ class _EdgeFunctionStatusPageState extends State<EdgeFunctionStatusPage> {
                                     color: isDark
                                         ? Colors.white
                                         : const Color(0xFF1E293B),
+                                    height: 1.5,
                                   ),
                                 ),
                               ),

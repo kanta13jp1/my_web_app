@@ -347,6 +347,7 @@ class _OwnedTeamsTab extends StatelessWidget {
               'まだチームがありません',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -355,6 +356,7 @@ class _OwnedTeamsTab extends StatelessWidget {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 13,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -411,6 +413,7 @@ class _MemberTeamsTab extends StatelessWidget {
               '参加中のチームはありません',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -419,6 +422,7 @@ class _MemberTeamsTab extends StatelessWidget {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 13,
+                height: 1.5,
               ),
             ),
           ],
@@ -487,6 +491,7 @@ class _TeamCard extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF3D5AFE),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -500,6 +505,7 @@ class _TeamCard extends StatelessWidget {
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          height: 1.5,
                         ),
                       ),
                       if (isOwner)
@@ -519,6 +525,7 @@ class _TeamCard extends StatelessWidget {
                               fontSize: 11,
                               color: Color(0xFF3D5AFE),
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -547,6 +554,7 @@ class _TeamCard extends StatelessWidget {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: 14,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -575,6 +583,7 @@ class _TeamCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -583,6 +592,7 @@ class _TeamCard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
+                        height: 1.5,
                       ),
                     ),
                     const Spacer(),
@@ -710,6 +720,7 @@ class _JoinTeamDialogState extends State<_JoinTeamDialog> {
             style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 12),

@@ -396,6 +396,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           SizedBox(height: 10),
@@ -481,6 +482,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -500,6 +502,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   style: TextStyle(
                     color: active != null ? accent : Colors.green,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -525,6 +528,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 if (active.note.isNotEmpty) ...[
@@ -553,6 +557,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -564,6 +569,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -574,6 +580,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                       '・${item.title}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -653,6 +660,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                       style: TextStyle(
                         color: accent,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -661,6 +669,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                     _formatDate(item.createdAt),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -671,6 +680,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
               if (item.note.isNotEmpty) ...[
@@ -817,6 +827,7 @@ class _SummaryChip extends StatelessWidget {
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w700,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 2),
@@ -825,6 +836,7 @@ class _SummaryChip extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
+                  height: 1.5,
                 ),
               ),
             ],

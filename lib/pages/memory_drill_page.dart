@@ -114,7 +114,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                 const SizedBox(height: 12),
                 const Text(
                   '10個の項目を入力:',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 ...List.generate(
@@ -327,6 +327,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.w700,
+              height: 1.5,
             ),
           ),
           SizedBox(height: 10),
@@ -408,6 +409,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -427,6 +429,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                                 color: Colors.green,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -482,6 +485,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -507,6 +511,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                   style: TextStyle(
                     color: accent,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -564,6 +569,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -583,6 +589,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                                 : Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                         if (!_showAnswers && _showHints) ...[
@@ -594,6 +601,7 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -658,6 +666,7 @@ class _StatChip extends StatelessWidget {
                 style: TextStyle(
                   color: color.withValues(alpha: 0.88),
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 2),
@@ -666,6 +675,7 @@ class _StatChip extends StatelessWidget {
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
             ],

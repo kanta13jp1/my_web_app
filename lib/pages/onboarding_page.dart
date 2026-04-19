@@ -153,7 +153,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
         children: [
           const Text(
             '最強の経営布陣',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -219,10 +223,21 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: Icon(icon, color: color),
         ),
         const SizedBox(height: 4),
-        Text(role, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+        Text(
+          role,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: color,
+            height: 1.5,
+          ),
+        ),
         Text(
           label,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(
+            fontSize: 10,
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -247,6 +262,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               fontFamily: 'Serif',
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -287,7 +303,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 8),
           const Text(
             'この名前はAI役員からの報告書に使用されます',
-            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+            style:
+                TextStyle(fontSize: 12, color: Color(0xFF9CA3AF), height: 1.5),
           ),
         ],
       ),
@@ -330,7 +347,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 20),
           const Text(
             '就任おめでとうございます！',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -338,6 +359,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 28),
@@ -368,6 +390,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           color: color,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -387,6 +410,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                                 color: color,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -417,7 +441,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
               icon: const Icon(Icons.business_center),
               label: const Text(
                 '経営コックピットへ',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
