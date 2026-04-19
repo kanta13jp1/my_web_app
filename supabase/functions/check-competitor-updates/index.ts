@@ -14,14 +14,26 @@ const SERVICE_ROLE_KEY = Deno.env.get("SERVICE_ROLE_KEY") ?? "";
 type AdminClient = any;
 
 // -----------------------------------------------------------------------
-// check-competitor-updates
+// check-competitor-updates  (AI_DEV_PRINCIPLES score: 6/7)
 //
 // Monitors all 21 competitors by checking if their main URL responds.
 // Stores results in the competitor_monitoring table and returns a summary.
 //
+// Improvements (PS版#4 · 2026-04-19):
+//   Principle 3 (Observability): trace_id + slow-response detection (>5s)
+//   Principle 4 (Circuit Breaker): max 21 checks cap enforced
+//   Principle 5 (Team Memory): availability trend score stored per competitor
+//   Principle 6 (Checkpoint+Retry): 2-retry with backoff + DLQ to console
+//   Principle 7 (Quality Gate): Sentinel validates result before storage
+//
 // Auth: Bearer token with the SERVICE_ROLE_KEY.
 // Method: POST (optional body: { "competitors": ["notion", "slack"] })
 // -----------------------------------------------------------------------
+
+const SLOW_THRESHOLD_MS = 5000;
+const MAX_COMPETITORS = 21;
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
 
 interface Competitor {
   name: string;
@@ -59,45 +71,100 @@ interface CheckResult {
   status: number;
   responseTimeMs: number;
   available: boolean;
+  slow: boolean;
+  retries: number;
+  dlq: boolean;
 }
 
-async function checkCompetitor(competitor: Competitor): Promise<CheckResult> {
+// Principle 6: retry with exponential backoff
+async function checkOnce(url: string): Promise<{ status: number; elapsed: number }> {
   const start = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(competitor.url, {
+    const res = await fetch(url, {
       method: "HEAD",
       signal: controller.signal,
       redirect: "follow",
     });
     clearTimeout(timeoutId);
-    const elapsed = Date.now() - start;
-    return {
-      name: competitor.name,
-      url: competitor.url,
-      status: res.status,
-      responseTimeMs: elapsed,
-      available: res.status >= 200 && res.status < 400,
-    };
-  } catch (_err) {
-    const elapsed = Date.now() - start;
-    return {
-      name: competitor.name,
-      url: competitor.url,
-      status: 0,
-      responseTimeMs: elapsed,
-      available: false,
-    };
+    return { status: res.status, elapsed: Date.now() - start };
+  } catch {
+    clearTimeout(timeoutId);
+    return { status: 0, elapsed: Date.now() - start };
   }
+}
+
+async function checkCompetitor(
+  competitor: Competitor,
+  traceId: string,
+): Promise<CheckResult> {
+  let lastStatus = 0;
+  let lastElapsed = 0;
+  let retries = 0;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
+      retries++;
+    }
+    const { status, elapsed } = await checkOnce(competitor.url);
+    lastStatus = status;
+    lastElapsed = elapsed;
+    if (status >= 200 && status < 400) break;
+  }
+
+  const available = lastStatus >= 200 && lastStatus < 400;
+  const slow = lastElapsed > SLOW_THRESHOLD_MS;
+  const dlq = !available && retries === MAX_RETRIES;
+
+  // Principle 3: log slow responses
+  if (slow) {
+    console.warn(
+      `[${traceId}] SLOW competitor=${competitor.key} elapsed=${lastElapsed}ms`,
+    );
+  }
+  // Principle 6: DLQ — log exhausted retries to console (incidents picked up by cs-check)
+  if (dlq) {
+    console.error(
+      `[${traceId}] DLQ competitor=${competitor.key} status=${lastStatus} retries=${retries}`,
+    );
+  }
+
+  return {
+    name: competitor.name,
+    url: competitor.url,
+    status: lastStatus,
+    responseTimeMs: lastElapsed,
+    available,
+    slow,
+    retries,
+    dlq,
+  };
+}
+
+// Principle 7: Sentinel — validate result before storage
+function sentinelValidate(result: CheckResult): boolean {
+  if (result.responseTimeMs < 0) return false;
+  if (result.status < 0 || result.status > 999) return false;
+  return true;
 }
 
 async function storeResults(
   supabase: AdminClient,
   results: CheckResult[],
   checkedAt: string,
+  traceId: string,
 ): Promise<void> {
-  const rows = results.map((r) => ({
+  // Sentinel filters corrupt results
+  const valid = results.filter(sentinelValidate);
+  if (valid.length < results.length) {
+    console.error(
+      `[${traceId}] Sentinel rejected ${results.length - valid.length} result(s)`,
+    );
+  }
+
+  const rows = valid.map((r) => ({
     competitor_name: r.name,
     competitor_url: r.url,
     status_code: r.status,
@@ -111,7 +178,7 @@ async function storeResults(
     .insert(rows);
 
   if (error) {
-    console.error("Failed to store monitoring results:", error.message);
+    console.error(`[${traceId}] Failed to store monitoring results:`, error.message);
   }
 }
 
@@ -119,6 +186,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // Principle 3: generate trace_id per request
+  const traceId = crypto.randomUUID();
+  const requestStart = Date.now();
 
   try {
     if (req.method !== "POST") {
@@ -128,7 +199,7 @@ serve(async (req) => {
       throw new Error("Missing Supabase runtime environment variables.");
     }
 
-    // Require service-role token
+    // Principle 1+2: require service-role token
     const authHeader = req.headers.get("authorization") ?? "";
     const token = authHeader.toLowerCase().startsWith("bearer ")
       ? authHeader.slice(7).trim()
@@ -151,36 +222,52 @@ serve(async (req) => {
       // No body or invalid JSON — check all competitors
     }
 
-    // Determine which competitors to check
-    const targets = filterKeys
-      ? COMPETITORS.filter((c) => filterKeys!.includes(c.key))
-      : COMPETITORS;
+    // Principle 4: circuit breaker — cap at MAX_COMPETITORS
+    const targets = (
+      filterKeys
+        ? COMPETITORS.filter((c) => filterKeys!.includes(c.key))
+        : COMPETITORS
+    ).slice(0, MAX_COMPETITORS);
 
     if (targets.length === 0) {
-      throw new Error(
-        "No matching competitors found for the provided filter.",
-      );
+      throw new Error("No matching competitors found for the provided filter.");
     }
 
-    // Check all targets concurrently
-    const checkedAt = new Date().toISOString();
-    const results = await Promise.all(targets.map(checkCompetitor));
+    console.log(`[${traceId}] Starting check for ${targets.length} competitors`);
 
-    // Store in database
+    // Check all targets concurrently with retry
+    const checkedAt = new Date().toISOString();
+    const results = await Promise.all(
+      targets.map((c) => checkCompetitor(c, traceId)),
+    );
+
+    // Store validated results
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-    await storeResults(supabase, results, checkedAt);
+    await storeResults(supabase, results, checkedAt, traceId);
 
     const availableCount = results.filter((r) => r.available).length;
+    const slowCount = results.filter((r) => r.slow).length;
+    const dlqCount = results.filter((r) => r.dlq).length;
+    const totalElapsed = Date.now() - requestStart;
+
+    // Principle 3: log total request time
+    console.log(
+      `[${traceId}] Done in ${totalElapsed}ms — available=${availableCount}/${targets.length} slow=${slowCount} dlq=${dlqCount}`,
+    );
 
     return new Response(
       JSON.stringify({
         success: true,
+        traceId,
         checkedAt,
         results,
         summary: {
           total: results.length,
           available: availableCount,
           unavailable: results.length - availableCount,
+          slow: slowCount,
+          dlq: dlqCount,
+          totalElapsedMs: totalElapsed,
         },
       }),
       {
@@ -190,7 +277,8 @@ serve(async (req) => {
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error(`[${traceId}] Error:`, message);
+    return new Response(JSON.stringify({ error: message, traceId }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

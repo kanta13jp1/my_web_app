@@ -162,10 +162,10 @@ AI ツールで開発スピードが圧倒的に上がる一方、**目に見え
 | ai-hub provider.chat | ✅ | ✅ | △ | △ | △ | ✅ | △ | 4/7 |
 | blog-publish | ✅ | △ | △ | ❌ | △ | △ | ❌ | 2/7 |
 | blog-engagement | ✅ | ✅ | △ | ✅ MAX_REPLIES | ✅ | ❌ | ✅ | 5/7 |
-| competitor-monitoring | ✅ | ✅ | △ | ❌ | △ | ❌ | △ | 3/7 |
+| competitor-monitoring | ✅ | ✅ | ✅ trace_id+slow | ✅ 21件キャップ | △ | ✅ 2-retry+DLQ | ✅ Sentinel | 6/7 |
 | cs-check | ✅ | ✅ | △ | ❌ | ✅ | △ | ✅ | 4/7 |
 
-→ **competitor-monitoring + blog-publish が要改善**。それぞれ Win#101+ 候補。
+→ **blog-publish が最優先改善対象 (2/7)**。competitor-monitoring は 6/7 に改善済み (PS版#4 · 2026-04-19)。
 
 ---
 
@@ -174,3 +174,4 @@ AI ツールで開発スピードが圧倒的に上がる一方、**目に見え
 | 日付 | 変更 |
 | --- | --- |
 | 2026-04-19 | 初版 (Windowsアプリ版#100・NotebookLM 7e39f060 から蒸留) |
+| 2026-04-19 | competitor-monitoring 3/7 → 6/7 (PS版#4): trace_id・slow検出・21件Circuit Breaker・2-retry+DLQ・Sentinel追加 |
