@@ -367,7 +367,7 @@ class _RankingBody extends StatelessWidget {
             'クイズ正解数と学習社数の積み上がりが見える、いまの上位メンバーです。',
             style: _RankingTextStyles.bodySmall,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           for (final entry in entries) ...[
             _RankCard(
               badges: badgesByUser[entry.userId] ?? const [],
@@ -664,7 +664,7 @@ class _RankingHero extends StatelessWidget {
                     height: 48,
                     decoration: BoxDecoration(
                       color: _RankingPalette.orange.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: _RankingPalette.orange.withValues(alpha: 0.28),
                       ),
@@ -696,12 +696,12 @@ class _RankingHero extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         const Text(
                           'クイズの積み上げが、そのままランキングに反映されます。',
                           style: _RankingTextStyles.heading2,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           '${leader.displayName} が ${leader.totalCorrect}pt で首位。学習社数は最大 $maxProvidersStudied 社まで広がっています。',
                           style: _RankingTextStyles.body,
@@ -775,7 +775,7 @@ class _RankingHero extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       summaryBody,
                       style: _RankingTextStyles.bodySmall,
@@ -894,7 +894,7 @@ class _RankCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
                     Align(
                       alignment: Alignment.centerRight,
                       child: _ScoreColumn(
@@ -984,7 +984,7 @@ class _RankDetails extends StatelessWidget {
             ],
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1014,7 +1014,7 @@ class _RankDetails extends StatelessWidget {
           ],
         ),
         if (badges.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _BadgeWrap(
             title: '公開バッジ',
             badges: badges.take(3).toList(growable: false),
@@ -1097,7 +1097,7 @@ class _ScoreColumn extends StatelessWidget {
           'pt',
           style: _RankingTextStyles.caption,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
           rankLabel,
           style: _RankingTextStyles.caption.copyWith(
@@ -1140,11 +1140,11 @@ class _MetricTile extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 18, color: accent),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1191,7 +1191,7 @@ class _MySnapshotPanel extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1227,7 +1227,7 @@ class _MySnapshotPanel extends StatelessWidget {
             ],
           ),
           if (snapshot.badges.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _BadgeWrap(
               title: '最近の達成バッジ',
               badges: snapshot.badges.take(3).toList(growable: false),
@@ -1296,7 +1296,7 @@ class _BadgeWrap extends StatelessWidget {
             color: _RankingPalette.textTertiary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -1460,7 +1460,7 @@ class _RankingTextStyles {
   static const TextStyle score = TextStyle(
     fontSize: 24,
     fontWeight: FontWeight.w800,
-    height: 1.0,
+    height: 1.2,
   );
 }
 

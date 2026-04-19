@@ -176,10 +176,10 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
             if (raceNumber != null)
               Container(
                 margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${raceNumber}R',
@@ -187,14 +187,18 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     color: Colors.white,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
+                    height: 1.4,
                   ),
                 ),
               ),
             Expanded(
               child: Text(
                 raceName,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -211,7 +215,11 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 1.5),
                     )
                   : const Icon(Icons.refresh, size: 14),
-              label: const Text('ensemble再実行', style: TextStyle(fontSize: 11)),
+              label: const Text('ensemble再実行',
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.5,
+                  )),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF6366F1),
                 side: const BorderSide(color: Color(0xFF6366F1), width: 0.7),
@@ -258,7 +266,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF141414),
         border: Border(
@@ -301,6 +309,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
             color: color,
             fontSize: 12,
             fontWeight: FontWeight.w600,
+            height: 1.5,
           ),
         ),
       ],
@@ -323,7 +332,11 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
           const SizedBox(width: 6),
           const Text(
             'コンセンサス',
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+            style: TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 12,
+              height: 1.6,
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -332,12 +345,17 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
               color: Color(0xFFDC2626),
               fontWeight: FontWeight.bold,
               fontSize: 13,
+              height: 1.6,
             ),
           ),
           const Spacer(),
           Text(
             '信頼度 ${agreementRate.toStringAsFixed(0)}%',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 11,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -369,13 +387,21 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
             const DataColumn(
               label: Text(
                 '枠',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '馬番',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             // Provider columns
@@ -389,6 +415,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               );
@@ -401,37 +428,58 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                   color: Color(0xFFDC2626),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '馬名',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '性齢',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '騎手',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '馬体重',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ),
             const DataColumn(
               label: Text(
                 '単勝',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
               numeric: true,
             ),
@@ -458,7 +506,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     height: 24,
                     decoration: BoxDecoration(
                       color: frameColor,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                       border: waku == 1
                           ? Border.all(color: const Color(0xFFB0B0B0))
                           : null,
@@ -470,6 +518,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                         color: frameText,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -482,6 +531,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
+                      height: 1.4,
                     ),
                   ),
                 ),
@@ -496,6 +546,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                           color: color,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
+                          height: 1.4,
                         ),
                       ),
                     ),
@@ -513,6 +564,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                             color: color,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         );
                       },
@@ -541,6 +593,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     style: const TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 11,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -553,6 +606,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                       style: const TextStyle(
                         color: Color(0xFFCBD5E1),
                         fontSize: 11,
+                        height: 1.5,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -567,6 +621,7 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                     style: const TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 11,
+                      height: 1.5,
                     ),
                   ),
                 ),
