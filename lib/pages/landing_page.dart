@@ -1043,7 +1043,11 @@ $input
             icon: const Icon(Icons.rocket_launch, size: 18),
             label: const Text(
               '無料で始める（30秒）',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B35),
@@ -1175,7 +1179,11 @@ $input
             ),
             child: const Text(
               'シェア',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -1401,14 +1409,22 @@ $input
                 SizedBox(width: 8),
                 Text(
                   '他サービスからの移行は3ステップ',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             const Text(
               'データを失わずに、5分で完了します。',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+                height: 1.6,
+              ),
             ),
             const SizedBox(height: 16),
             ...steps.map((guide) {
@@ -1419,7 +1435,11 @@ $input
                   children: [
                     Row(
                       children: [
-                        Text(guide.icon, style: const TextStyle(fontSize: 18)),
+                        Text(guide.icon,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              height: 1.4,
+                            )),
                         const SizedBox(width: 6),
                         Text(
                           '${guide.competitor} からの移行',
@@ -1597,8 +1617,11 @@ $input
                       ),
                       Text(
                         '気になるサービスをタップして機能・価格を比較しよう',
-                        style:
-                            TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -1626,7 +1649,11 @@ $input
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(c.emoji, style: const TextStyle(fontSize: 14)),
+                        Text(c.emoji,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              height: 1.6,
+                            )),
                         const SizedBox(width: 6),
                         Text(
                           'vs ${c.name}',
@@ -1739,8 +1766,11 @@ $input
                 const Spacer(),
                 Text(
                   '全 $_achievementCount 件実装済み',
-                  style:
-                      const TextStyle(fontSize: 11, color: Color(0xFF6EE7B7)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF6EE7B7),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -2599,7 +2629,11 @@ $input
           const SizedBox(height: 6),
           const Text(
             'Notion・Evernote・MoneyForward・Google・LINE・Facebook の良いとこ取りに、AIと記憶ドリルをプラス。',
-            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 16),
           ...features.map((f) {
@@ -2657,7 +2691,11 @@ $input
               icon: const Icon(Icons.rocket_launch, size: 16),
               label: const Text(
                 '無料で全機能を使う',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF3949AB),
@@ -2746,7 +2784,11 @@ $input
         children: [
           const Row(
             children: [
-              Text('💰', style: TextStyle(fontSize: 20)),
+              Text('💰',
+                  style: TextStyle(
+                    fontSize: 20,
+                    height: 1.4,
+                  )),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2763,7 +2805,11 @@ $input
           const SizedBox(height: 4),
           const Text(
             '月額数千円のSaaS21本分の機能を、無料で使えます。',
-            style: TextStyle(fontSize: 13, color: Color(0xFF78350F)),
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF78350F),
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 14),
           ...rows.map((row) {
@@ -2880,7 +2926,11 @@ $input
           const SizedBox(height: 4),
           const Text(
             'クレジットカード不要。登録は30秒。',
-            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 16),
           ...steps.map((s) {
@@ -2937,7 +2987,11 @@ $input
               icon: const Icon(Icons.rocket_launch, size: 18),
               label: const Text(
                 '無料で始める（30秒）',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                ),
               ),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF3949AB),
@@ -2966,7 +3020,11 @@ $input
             children: [
               const Text(
                 '登録前の1アクション体験',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -3146,7 +3204,11 @@ $input
           children: [
             const Text(
               'よくある質問',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -3187,14 +3249,22 @@ $input
                   ),
                   child: const Text(
                     'この提案を保存するには登録が必要です。Magic Link なら、メール1通でそのまま保存を始められます。',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
               ],
               const Text(
                 '今すぐ無料ではじめる',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -3263,7 +3333,11 @@ $input
               const SizedBox(height: 8),
               const Text(
                 '新規登録もログインも、この1通で完了します。',
-                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF94A3B8),
+                  height: 1.5,
+                ),
               ),
               if (_showInboxShortcut) ...[
                 const SizedBox(height: 10),
@@ -3345,7 +3419,11 @@ $input
                   ),
                   child: const Text(
                     'Googleログインは設定済み環境でのみ表示します。現在は Magic Link を主導線にしています。',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),

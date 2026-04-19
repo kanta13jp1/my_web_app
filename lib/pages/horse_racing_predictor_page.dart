@@ -161,7 +161,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               child: Chip(
                 label: Text(
                   _selectedDate,
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
                 avatar: const Icon(Icons.calendar_today, size: 14),
                 padding: EdgeInsets.zero,
@@ -374,7 +377,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 Expanded(
                   child: Text(
                     'AI予想はバッチ処理 (毎時 cron) で自動生成されます。次回実行までお待ちください。',
-                    style: TextStyle(color: Color(0xFFFF6B35), fontSize: 12),
+                    style: TextStyle(
+                      color: Color(0xFFFF6B35),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -494,7 +501,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           const Spacer(),
           Text(
             '$raceCount R',
-            style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 12),
+            style: TextStyle(
+              color: color.withValues(alpha: 0.8),
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -616,7 +627,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               '$courseType${distance != null ? ' ${distance}m' : ''}',
               '${entries.length}頭',
             ].join(' · '),
-            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+            style: const TextStyle(
+              color: Color(0xFF6B7280),
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           trailing: Chip(
             label: Text(
@@ -813,7 +828,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 label: const Text('詳細マトリックス'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF6366F1),
-                  textStyle: const TextStyle(fontSize: 12),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
                 onPressed: () => Navigator.push(
                   context,
@@ -875,8 +893,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ),
                 child: Text(
                   '信頼度 ${(confidence * 100).toStringAsFixed(0)}%',
-                  style:
-                      const TextStyle(color: Color(0xFFFF6B35), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B35),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -903,7 +924,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             const SizedBox(height: 8),
             Text(
               reasoning,
-              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 11,
+                height: 1.5,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -979,7 +1004,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         if (!hasResult) {
           cardBg = const Color(0xFF1E1E1E);
           trailing = const Chip(
-            label: Text('未結果', style: TextStyle(fontSize: 11)),
+            label: Text('未結果',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.5,
+                )),
           );
         } else if (isCorrect == true) {
           cardBg = Colors.green.withValues(alpha: 0.06);
@@ -1018,7 +1047,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
             title: Text(
               raceName,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                height: 1.6,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1034,16 +1067,22 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 Text(
                   '${venue != null ? '$venue · ' : ''}'
                   '$raceDate · 信頼度${(confidence * 100).toStringAsFixed(0)}%',
-                  style:
-                      const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
                 ),
                 if (hasResult)
                   Text(
                     '実際: ${result['first_place'] ?? '?'} - '
                     '${result['second_place'] ?? '?'} - '
                     '${result['third_place'] ?? '?'}',
-                    style:
-                        const TextStyle(color: Color(0xFF4B5563), fontSize: 11),
+                    style: const TextStyle(
+                      color: Color(0xFF4B5563),
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),
@@ -1100,7 +1139,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 ),
                 Text(
                   '$resultsCount件の結果 / $hits件的中',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.6,
+                  ),
                 ),
               ],
             ),
@@ -1186,14 +1229,21 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   width: 110,
                   child: Text(
                     pair.$1,
-                    style:
-                        const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     pair.$2,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -1225,7 +1275,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
+                style: const TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
