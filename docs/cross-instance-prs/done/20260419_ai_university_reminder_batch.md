@@ -1,26 +1,25 @@
-# AI大学学習リマインダーバッチ設定依頼 (VSCode版#109 → PS版)
+# AI大学 学習リマインダーバッチ設定 依頼 (PS版担当)
 
-**日付**: 2026-04-19  
-**依頼元**: VSCode版#109  
-**担当**: PS版 (Rule 17 WF専任)
+**作成**: VSCode版#111 / 2026-04-19
+**宛先**: PowerShell版
+**優先度**: 中
 
 ## 概要
 
-AI大学学習リマインダーの **バッチ/スケジュール設定** が未完了。EF actionは実装済み。
+AI大学の学習リマインダー通知をバッチで送る GitHub Actions cron job を設定する。
 
-## 状況
+## 現状
 
-- `notification-center` EF に `learning-reminder` action が実装済み (VSCode版#83)
-- GitHub Actions の cron ジョブが未設定
-- ROADMAP で `🟢 中 | 学習リマインダー通知 (定期バッチ) | VSCode版 | EF action 実装済み / バッチ未設定` として記録
+- `notification-center` Edge Function に `send_study_reminders` action が実装済み
+- 3日以上未学習ユーザーへのリマインダー送信ロジックあり
+- **未設定**: GitHub Actions cron schedule で定期実行するワークフローがない
 
 ## 依頼内容
 
-`.github/workflows/` に新しい cron ジョブを追加:
+`.github/workflows/ai-university-reminder.yml` を作成して以下を実装:
 
 ```yaml
-# ai-university-reminder.yml
-name: AI University Learning Reminder
+name: AI大学 学習リマインダー
 on:
   schedule:
     - cron: '0 1 * * *'  # 毎日 JST 10:00 (UTC 01:00)
@@ -30,19 +29,27 @@ jobs:
   send-reminders:
     runs-on: ubuntu-latest
     steps:
-      - name: Send learning reminders
+      - name: Send AI university reminders
         run: |
           curl -X POST \
             "${{ secrets.SUPABASE_URL }}/functions/v1/notification-center" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"action": "learning-reminder", "type": "ai_university"}'
+            -d '{"action": "send_study_reminders"}'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 ```
+
+## 確認事項
+
+1. `notification-center` EF の `send_study_reminders` action が存在するか grep確認
+2. `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` secrets が GitHub に設定済みか確認
+3. EF 50本制限: 新規EF不要 (既存 notification-center の action追加なので問題なし)
+4. `flutter analyze` / `deno lint` への影響なし (GHA yml のみ)
 
 ## 完了条件
 
-- [ ] `.github/workflows/ai-university-reminder.yml` 作成
-- [ ] `deploy-prod.yml` に追加 (EFカウント確認)
-- [ ] 初回 workflow_dispatch で動作確認
-- [ ] ROADMAP 更新
-
+- workflow yml が main にマージ済み
+- workflow_dispatch で手動テスト成功
+- このファイルを `done/` に移動
