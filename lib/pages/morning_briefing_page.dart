@@ -1122,7 +1122,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         value: e.key,
                         child: Text(
                           e.value,
-                          style: TextStyle(color: _difficultyColors[e.key]),
+                          style: TextStyle(
+                            color: _difficultyColors[e.key],
+                            height: 1.5,
+                          ),
                         ),
                       );
                     }).toList(),
@@ -1150,7 +1153,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 ),
                 label: const Text(
                   '削除',
-                  style: TextStyle(color: Color(0xFFB91C1C)),
+                  style: TextStyle(
+                    color: Color(0xFFB91C1C),
+                    height: 1.5,
+                  ),
                 ),
               ),
               TextButton(
@@ -1247,13 +1253,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 children: [
                   Text(
                     '内容: $task',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   if (details != null && details.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     const Text(
                       '詳細:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(details),
@@ -1275,7 +1287,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     const SizedBox(height: 8),
                     const Text(
                       '振り返り:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     Text(reflection),
                   ],
@@ -1283,7 +1298,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   const Divider(height: 24),
                   const Text(
                     'サブタスク',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -1332,7 +1350,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       if (subtasks.isEmpty) {
                         return const Text(
                           'サブタスクはありません',
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         );
                       }
                       return Flexible(
@@ -1361,6 +1382,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   color: stCompleted
                                       ? const Color(0xFF9CA3AF)
                                       : null,
+                                  height: 1.5,
                                 ),
                               ),
                               trailing: IconButton(
@@ -1805,6 +1827,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: Color(0xFF4338CA),
+          height: 1.5,
         ),
       ),
     );
@@ -1841,6 +1864,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -1848,6 +1872,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             selectedModel,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -1857,6 +1882,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             )
           else
@@ -1874,6 +1900,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -1900,6 +1927,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -1914,6 +1942,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           );
                         }
@@ -2222,18 +2251,27 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF6366F1),
+                              height: 1.5,
                             ),
                             h2: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF6366F1),
+                              height: 1.5,
                             ),
                             h3: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
-                            p: const TextStyle(fontSize: 14, height: 1.5),
-                            listBullet: const TextStyle(fontSize: 16),
+                            p: const TextStyle(
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
+                            listBullet: const TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       ),
@@ -2301,7 +2339,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             ],
           ),
           const SizedBox(height: 24),
-          const Text('カテゴリ別内訳', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            'カテゴリ別内訳',
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+          ),
           const SizedBox(height: 16),
           SizedBox(
             height: 200,
@@ -2321,6 +2362,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFFE5E7EB),
+                      height: 1.5,
                     ),
                   );
                 }).toList(),
@@ -2352,7 +2394,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
           const SizedBox(height: 32),
           const Text(
             '時間の予実対比 (分)',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           SizedBox(
@@ -2378,6 +2423,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         const TextStyle(
                           color: Color(0xFF000000),
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       );
                     },
@@ -2393,6 +2439,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           color: Color(0xFF9CA3AF),
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
+                          height: 1.5,
                         );
                         String text = '';
                         if (value.toInt() == 0) text = '見積もり';
@@ -2452,11 +2499,19 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             Text(
               value,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -2520,6 +2575,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     color: accentColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2531,6 +2587,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 15,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -2539,6 +2596,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -2556,6 +2614,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
+              height: 1.5,
             ),
           ),
         ],
@@ -2690,12 +2749,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 child: ExpansionTile(
                   title: const Text(
                     '今日のミッション',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   subtitle: Text(
                     _isHeaderExpanded ? 'タップして閉じる' : 'タップして開く',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                   initiallyExpanded: _isHeaderExpanded,
@@ -2716,6 +2780,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                           if (_weatherData != null) ...[
@@ -2736,6 +2801,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -2780,6 +2846,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
+                                        height: 1.5,
                                       ),
                                     ),
                                     IconButton(
@@ -2822,6 +2889,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                                   _geminiApiKey!.isNotEmpty
                                               ? const Color(0xFF0D9488)
                                               : const Color(0xFFFF6B35),
+                                          height: 1.5,
                                         ),
                                       ),
                                     ),
@@ -2830,7 +2898,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 const SizedBox(height: 8),
                                 Text(
                                   '使用モデル: $_selectedModel',
-                                  style: const TextStyle(fontSize: 12),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 SingleChildScrollView(
@@ -2848,6 +2919,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ),
@@ -2865,6 +2937,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF9CA3AF),
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -2896,6 +2969,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF9CA3AF),
+                                    height: 1.5,
                                   ),
                                 ),
                                 PopupMenuButton<String>(
@@ -2936,12 +3010,14 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                       '今日の進捗 (Pt)',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                     Text(
                                       '${(progress * 100).toInt()}% ($completedPoints/$totalPoints pt)',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],
@@ -2975,6 +3051,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Color(0xFF9CA3AF),
+                                            height: 1.5,
                                           ),
                                         ),
                                       ],
@@ -3159,8 +3236,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               value: e.key,
                               child: Text(
                                 e.value,
-                                style:
-                                    TextStyle(color: _difficultyColors[e.key]),
+                                style: TextStyle(
+                                  color: _difficultyColors[e.key],
+                                  height: 1.5,
+                                ),
                               ),
                             );
                           }).toList(),
@@ -3319,6 +3398,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                               decoration:
                                                   TextDecoration.lineThrough,
                                               color: Color(0xFF9CA3AF),
+                                              height: 1.5,
                                             ),
                                           ),
                                           subtitle: Row(
@@ -3536,7 +3616,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   value: e.key,
                   child: Text(
                     e.value,
-                    style: TextStyle(color: _difficultyColors[e.key]),
+                    style: TextStyle(
+                      color: _difficultyColors[e.key],
+                      height: 1.5,
+                    ),
                   ),
                 );
               }).toList(),
@@ -3664,6 +3747,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               color: color,
               fontSize: 12,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
         ],
@@ -3763,6 +3847,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                           : Theme.of(context)
                                               .colorScheme
                                               .onSurface),
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -3783,6 +3868,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     color: Color(0xFF78350F),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
+                                    height: 1.5,
                                   ),
                                 ),
                               ),
@@ -3803,6 +3889,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                     color: Color(0xFF0F766E),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
+                                    height: 1.5,
                                   ),
                                 ),
                               ),
@@ -3906,6 +3993,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -3920,6 +4008,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3979,6 +4068,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -3989,6 +4079,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -4039,6 +4130,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -4049,6 +4141,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           if (firstTask != null && firstTask.isNotEmpty) ...[
@@ -4116,6 +4209,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                   style: TextStyle(
                     fontSize: dense ? 15 : 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -4125,6 +4219,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: dense ? 12 : 13,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
                 if (tasks.isNotEmpty) ...[
@@ -4134,6 +4229,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -4149,6 +4245,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     'この日に登録されているタスクはありません。',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -4271,6 +4368,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   .onSurface
                                   .withValues(alpha: 0.38)
                               : Theme.of(context).colorScheme.onSurface,
+                          height: 1.5,
                         ),
                       ),
                       subtitle: Padding(
@@ -4285,13 +4383,17 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             const SizedBox(width: 4),
                             Text(
                               _categoryLabels[category] ?? '',
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                              ),
                             ),
                             const Text(
                               ' / ',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF9CA3AF),
+                                height: 1.5,
                               ),
                             ),
                             Text(
@@ -4299,6 +4401,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _difficultyColors[difficulty],
+                                height: 1.5,
                               ),
                             ),
                             if (estimatedMinutes != null) ...[
@@ -4307,6 +4410,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF9CA3AF),
+                                  height: 1.5,
                                 ),
                               ),
                               const Icon(
@@ -4317,7 +4421,10 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                               const SizedBox(width: 2),
                               Text(
                                 '$estimatedMinutes分',
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
                               ),
                             ],
                           ],
@@ -4426,6 +4533,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -4435,6 +4543,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                         if (value.isNotEmpty) ...[
@@ -4446,6 +4555,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   .colorScheme
                                   .onSurfaceVariant,
                               fontSize: 12,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -4547,19 +4657,23 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               ),
               defaultTextStyle: TextStyle(
                 fontSize: isTwoWeeks ? 12 : (denseCalendar ? 13 : 14),
+                height: 1.5,
               ),
               weekendTextStyle: TextStyle(
                 fontSize: isTwoWeeks ? 12 : (denseCalendar ? 13 : 14),
+                height: 1.5,
               ),
             ),
             daysOfWeekStyle: DaysOfWeekStyle(
               weekdayStyle: TextStyle(
                 fontSize: isTwoWeeks ? 10 : (denseCalendar ? 11 : 12),
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
               weekendStyle: TextStyle(
                 fontSize: isTwoWeeks ? 10 : (denseCalendar ? 11 : 12),
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
             headerStyle: HeaderStyle(
@@ -4573,6 +4687,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 fontSize: 11,
                 color: Color(0xFF4338CA),
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
               titleCentered: true,
               headerPadding: EdgeInsets.symmetric(
@@ -4581,6 +4696,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               titleTextStyle: TextStyle(
                 fontSize: isTwoWeeks ? 14 : (denseCalendar ? 16 : 18),
                 fontWeight: FontWeight.w700,
+                height: 1.5,
               ),
               leftChevronMargin: EdgeInsets.zero,
               rightChevronMargin: EdgeInsets.zero,
@@ -4616,6 +4732,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                         color: Color(0xFFE5E7EB),
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -4800,6 +4917,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -4809,6 +4927,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                         if (value.isNotEmpty) ...[
@@ -4820,6 +4939,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                                   .colorScheme
                                   .onSurfaceVariant,
                               fontSize: 12,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -4999,6 +5119,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               fontWeight: (isOverdue || isDueToday) && !isLocked
                   ? FontWeight.bold
                   : null,
+              height: 1.5,
             ),
           ),
           // ★ 追加: 今日中バッジ
@@ -5006,7 +5127,11 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
             const Chip(
               label: Text(
                 '今日中',
-                style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 10),
+                style: TextStyle(
+                  color: Color(0xFFE5E7EB),
+                  fontSize: 10,
+                  height: 1.5,
+                ),
               ),
               backgroundColor: Color(0xFFFF6B35),
               padding: EdgeInsets.zero,
@@ -5026,6 +5151,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                 style: const TextStyle(
                   color: Color(0xFFE5E7EB),
                   fontSize: 10,
+                  height: 1.5,
                 ),
               ),
               backgroundColor: const Color(0xFFA78BFA),
@@ -5065,6 +5191,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     fontWeight: difficulty == 'hard' && !isLocked
                         ? FontWeight.w500
                         : null,
+                    height: 1.5,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -5092,6 +5219,7 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF9CA3AF),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -5192,13 +5320,20 @@ class _MorningBriefingPageState extends State<MorningBriefingPage>
               SizedBox(height: 16),
               Text(
                 'ストックされたタスクはありません。',
-                style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
               ),
               SizedBox(height: 8),
               Text(
                 '「いつかやる」タスクをここに追加して、頭をスッキリさせましょう。',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF9CA3AF)),
+                style: TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
               ),
             ],
           ),

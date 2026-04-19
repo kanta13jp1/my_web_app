@@ -762,6 +762,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -779,6 +780,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         'このノードからつなぐ先',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -999,6 +1001,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1006,6 +1009,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     '完了 ${completedLogs.length} 件 / 未完 ${pendingTasks.length} 件',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1013,6 +1017,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     '完了したタスク',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1036,6 +1041,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     'まだ残っているタスク',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1302,12 +1308,16 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '目的: ${guide.purpose}',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       ...List.generate(guide.steps.length, (index) {
@@ -1342,6 +1352,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       'チェック対象TODO',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w800,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ),
@@ -1350,6 +1361,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
@@ -1357,7 +1369,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                               const SizedBox(height: 6),
                               const Text(
                                 '普段見るメールアカウント、SMS、DMを登録して、朝の確認漏れを防ぐ。',
-                                style: TextStyle(fontSize: 12),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               if (_defenseCheckTargets.isEmpty)
@@ -1408,6 +1423,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                   : Theme.of(context)
                                                       .colorScheme
                                                       .onSurface,
+                                              height: 1.5,
                                             ),
                                           ),
                                         ),
@@ -1444,7 +1460,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       const SizedBox(height: 10),
                       Text(
                         '完了条件: ${guide.doneCriteria}',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -2086,12 +2105,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               const Expanded(
                 child: Text(
                   '100タスク量産モード',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
               ),
               Text(
                 ratioText,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -2104,6 +2129,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               color: _remainingTasksToTarget == 0
                   ? Colors.green
                   : Theme.of(context).colorScheme.onSurface,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -2143,6 +2169,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: _aPriorityMinimumDone ? Colors.green : Colors.redAccent,
+              height: 1.5,
             ),
           ),
         ],
@@ -2186,12 +2213,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               const Expanded(
                 child: Text(
                   '今日の必須タスク・ロック',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
               ),
               Text(
                 '$done/$total',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -2204,6 +2237,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               fontSize: 12,
               color: _isCriticalLockActive ? Colors.redAccent : Colors.green,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           if (_pendingCriticalTitles.isNotEmpty) ...[
@@ -2215,7 +2249,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 return Chip(
                   label: Text(
                     title,
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.5,
+                    ),
                   ),
                   visualDensity: VisualDensity.compact,
                 );
@@ -2245,6 +2282,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -2309,12 +2347,18 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               const Expanded(
                 child: Text(
                   'スマホ禁欲プロトコル',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
               ),
               Text(
                 '$_detoxCompletedCount/${_phoneDetoxActions.length}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ],
           ),
@@ -2324,6 +2368,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -2393,6 +2438,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               color: chipColor,
               fontSize: 12,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
         ],
@@ -2442,6 +2488,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               '表示形式',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
+                height: 1.5,
               ),
             ),
           ),
@@ -2495,6 +2542,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                   '一日の実行ログ俯瞰',
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2512,6 +2560,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             )
           else
@@ -2537,6 +2586,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2547,6 +2597,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                 ],
@@ -2575,6 +2626,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -2589,6 +2641,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             'タスクを追加すると、ここにフローチャート形式で導線を表示します。',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -2702,6 +2755,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             fontSize: 15,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2733,6 +2787,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -2842,6 +2897,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   '実行ログはまだありません',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
@@ -2853,6 +2909,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .onSurfaceVariant,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -2927,6 +2984,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                   fontSize: 11,
                                   color: Color(0xFF5D4037),
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -3000,6 +3058,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                   if (node.subtitle != null && node.subtitle!.isNotEmpty) ...[
@@ -3009,6 +3068,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -3057,7 +3117,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
               const Expanded(
                 child: Text(
                   '先に時間制限を決める（1つの手間）',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
               ),
               Text(
@@ -3065,6 +3128,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3075,6 +3139,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -3106,7 +3171,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     Expanded(
                       child: Text(
                         '読書ルーティン（喫茶店 + アルバム）',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -3117,6 +3185,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -3196,7 +3265,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         const SizedBox(width: 6),
                         Text(
                           'スマホ逸脱 $phoneSlipLabel',
-                          style: const TextStyle(color: Colors.redAccent),
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            height: 1.5,
+                          ),
                         ),
                         const Spacer(),
                         TextButton(
@@ -3286,7 +3358,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     '$_timeboxMode: $_timeboxGoal',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -3294,6 +3369,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -3347,6 +3423,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
+          height: 1.5,
         ),
       ),
     );
@@ -3373,6 +3450,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             style: const TextStyle(
               color: Color(0xFF455A64),
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
         ],
@@ -3406,12 +3484,17 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   '「脱線したら、時間制限を合図に元の目的へ戻る」',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -3484,6 +3567,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                       color: isCurrentHour
                                           ? const Color(0xFF3D5AFE)
                                           : const Color(0xFF9CA3AF),
+                                      height: 1.5,
                                     ),
                                   ),
                                 ),
@@ -3511,6 +3595,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                         .colorScheme
                                                         .outlineVariant,
                                                 fontSize: 12,
+                                                height: 1.5,
                                               ),
                                             ),
                                           ),
@@ -3631,6 +3716,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                           fontSize: 11,
                                                           fontWeight:
                                                               FontWeight.w700,
+                                                          height: 1.5,
                                                         ),
                                                       ),
                                                     ),
@@ -3652,6 +3738,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                                       .black54
                                                                   : Colors
                                                                       .black,
+                                                          height: 1.5,
                                                         ),
                                                       ),
                                                     ),
@@ -3689,6 +3776,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                             fontSize: 10,
                                                             fontWeight:
                                                                 FontWeight.w700,
+                                                            height: 1.5,
                                                           ),
                                                         ),
                                                       ),

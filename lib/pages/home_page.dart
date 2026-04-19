@@ -1677,6 +1677,7 @@ abstinence_slip_details: $slipDetailsText
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: textColor.withValues(alpha: 0.8),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1686,6 +1687,7 @@ abstinence_slip_details: $slipDetailsText
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                     color: textColor,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1694,6 +1696,7 @@ abstinence_slip_details: $slipDetailsText
                   style: TextStyle(
                     fontSize: 12,
                     color: textColor.withValues(alpha: 0.88),
+                    height: 1.5,
                   ),
                 ),
                 if (isAiNudgeLoading &&
@@ -1704,6 +1707,7 @@ abstinence_slip_details: $slipDetailsText
                     style: TextStyle(
                       fontSize: 12,
                       color: textColor.withValues(alpha: 0.72),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1714,6 +1718,7 @@ abstinence_slip_details: $slipDetailsText
                     style: TextStyle(
                       fontSize: 12,
                       color: textColor.withValues(alpha: 0.9),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1725,6 +1730,7 @@ abstinence_slip_details: $slipDetailsText
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: textColor,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1737,6 +1743,7 @@ abstinence_slip_details: $slipDetailsText
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: textColor,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1822,6 +1829,7 @@ abstinence_slip_details: $slipDetailsText
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xDE000000),
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1853,6 +1861,7 @@ abstinence_slip_details: $slipDetailsText
                       color: accentColor,
                       fontWeight: FontWeight.w800,
                       fontSize: 11,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -1949,6 +1958,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -1957,6 +1967,7 @@ abstinence_slip_details: $slipDetailsText
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
         ],
@@ -1986,6 +1997,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
+              height: 1.5,
             ),
           ),
         ],
@@ -2093,6 +2105,7 @@ abstinence_slip_details: $slipDetailsText
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.7)
                         : const Color(0x8A000000),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -2101,6 +2114,7 @@ abstinence_slip_details: $slipDetailsText
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -2111,6 +2125,7 @@ abstinence_slip_details: $slipDetailsText
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.7)
                         : const Color(0xDE000000),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -2198,6 +2213,7 @@ abstinence_slip_details: $slipDetailsText
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                         color: accent,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -2206,6 +2222,7 @@ abstinence_slip_details: $slipDetailsText
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -2224,6 +2241,7 @@ abstinence_slip_details: $slipDetailsText
                     color: accent,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2237,6 +2255,7 @@ abstinence_slip_details: $slipDetailsText
               color: isDark
                   ? Colors.white.withValues(alpha: 0.7)
                   : const Color(0xDE000000),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -2256,6 +2275,7 @@ abstinence_slip_details: $slipDetailsText
               color: isDark
                   ? Colors.white.withValues(alpha: 0.7)
                   : const Color(0xDE000000),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -2320,6 +2340,7 @@ abstinence_slip_details: $slipDetailsText
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2373,6 +2394,7 @@ abstinence_slip_details: $slipDetailsText
               color: isDark
                   ? Colors.white.withValues(alpha: 0.7)
                   : const Color(0xDE000000),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -2395,7 +2417,10 @@ abstinence_slip_details: $slipDetailsText
                     const Expanded(
                       child: Text(
                         '浪費耐性トレーニング',
-                        style: TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                     Container(
@@ -2412,6 +2437,7 @@ abstinence_slip_details: $slipDetailsText
                         style: const TextStyle(
                           color: Color(0xFF3D5AFE),
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -2428,6 +2454,7 @@ abstinence_slip_details: $slipDetailsText
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.7)
                         : const Color(0xDE000000),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -2464,7 +2491,10 @@ abstinence_slip_details: $slipDetailsText
                 children: [
                   Text(
                     '今日の主犯: $primaryLabel',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -2473,6 +2503,7 @@ abstinence_slip_details: $slipDetailsText
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.7)
                           : const Color(0xDE000000),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2481,6 +2512,7 @@ abstinence_slip_details: $slipDetailsText
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Color(0xFFE53935),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -2559,6 +2591,7 @@ abstinence_slip_details: $slipDetailsText
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2612,6 +2645,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: Color(0xFF888888),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -2625,6 +2659,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF888888),
+              height: 1.5,
             ),
           ),
           if (filterLabel != null) ...[
@@ -2636,6 +2671,7 @@ abstinence_slip_details: $slipDetailsText
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF888888),
+                height: 1.5,
               ),
             ),
           ],
@@ -2684,6 +2720,7 @@ abstinence_slip_details: $slipDetailsText
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF888888),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -2771,6 +2808,7 @@ abstinence_slip_details: $slipDetailsText
                                           ? const Color(0xFF666666)
                                           : const Color(0xFFB0B0B0)
                                   : const Color(0xFFB0B0B0),
+                              height: 1.5,
                             ),
                           ),
                           if (day.isCurrentMonth && day.hasCashflow) ...[
@@ -2974,6 +3012,7 @@ abstinence_slip_details: $slipDetailsText
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -2983,6 +3022,7 @@ abstinence_slip_details: $slipDetailsText
                         fontSize: 12,
                         color: Color(0xFF888888),
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -3029,7 +3069,10 @@ abstinence_slip_details: $slipDetailsText
               ),
               child: const Text(
                 'この日に登録されているタスクはありません。',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
             )
           else
@@ -3077,6 +3120,7 @@ abstinence_slip_details: $slipDetailsText
                               color: task.isCompleted
                                   ? const Color(0xFF888888)
                                   : null,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -3116,6 +3160,7 @@ abstinence_slip_details: $slipDetailsText
                   fontSize: 12,
                   color: Color(0xFF888888),
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -3166,6 +3211,7 @@ abstinence_slip_details: $slipDetailsText
                       style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -3175,6 +3221,7 @@ abstinence_slip_details: $slipDetailsText
                         fontSize: 12,
                         color: Color(0xFF888888),
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -3221,7 +3268,10 @@ abstinence_slip_details: $slipDetailsText
               ),
               child: const Text(
                 'この日に該当するタスクはありません。',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
             )
           else
@@ -3269,6 +3319,7 @@ abstinence_slip_details: $slipDetailsText
                               color: task.isCompleted
                                   ? const Color(0xFF888888)
                                   : null,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -3308,6 +3359,7 @@ abstinence_slip_details: $slipDetailsText
                   fontSize: 12,
                   color: Color(0xFF888888),
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -3362,6 +3414,7 @@ abstinence_slip_details: $slipDetailsText
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -3483,6 +3536,7 @@ abstinence_slip_details: $slipDetailsText
                 fontSize: 11,
                 color: color,
                 fontWeight: FontWeight.w700,
+                height: 1.5,
               ),
             ),
           ),
@@ -3592,6 +3646,7 @@ abstinence_slip_details: $slipDetailsText
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -3623,6 +3678,7 @@ abstinence_slip_details: $slipDetailsText
                               style: TextStyle(
                                 color: status.color,
                                 fontWeight: FontWeight.w800,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -3636,6 +3692,7 @@ abstinence_slip_details: $slipDetailsText
                     style: TextStyle(
                       color: status.color.withValues(alpha: 0.92),
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -3651,7 +3708,10 @@ abstinence_slip_details: $slipDetailsText
                     ),
                     child: Text(
                       '再発防止アクション: ${day.relapsePreventionAction}',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -3674,6 +3734,7 @@ abstinence_slip_details: $slipDetailsText
                       '未達項目へショートカット',
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -3805,6 +3866,7 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: Color(0xFF3D5AFE),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -3850,6 +3912,7 @@ abstinence_slip_details: $slipDetailsText
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF666666),
+                height: 1.5,
               ),
             ),
           ],
@@ -3899,6 +3962,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: color,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -3909,6 +3973,7 @@ abstinence_slip_details: $slipDetailsText
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
         ],
@@ -3938,6 +4003,7 @@ abstinence_slip_details: $slipDetailsText
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: accent,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -3971,6 +4037,7 @@ abstinence_slip_details: $slipDetailsText
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
+          height: 1.5,
         ),
       ),
     );
@@ -4083,6 +4150,7 @@ abstinence_slip_details: $slipDetailsText
                           color: Colors.white,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -4266,6 +4334,7 @@ abstinence_slip_details: $slipDetailsText
                                   color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                               subtitle: const Text(
@@ -4273,6 +4342,7 @@ abstinence_slip_details: $slipDetailsText
                                 style: TextStyle(
                                   color: Color(0xFF94A3B8),
                                   fontSize: 11,
+                                  height: 1.5,
                                 ),
                               ),
                               trailing: const Icon(
@@ -4395,12 +4465,16 @@ abstinence_slip_details: $slipDetailsText
                                               style: TextStyle(
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 14,
+                                                height: 1.5,
                                               ),
                                             ),
                                             SizedBox(height: 2),
                                             Text(
                                               '戦略提案・全部署横断指示・本日のタスク生成',
-                                              style: TextStyle(fontSize: 12),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                height: 1.5,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -4446,11 +4520,15 @@ abstinence_slip_details: $slipDetailsText
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
+                                    height: 1.5,
                                   ),
                                 ),
                                 subtitle: const Text(
                                   'マネフォ更新・体重記録など',
-                                  style: TextStyle(fontSize: 12),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 trailing: const Icon(Icons.chevron_right),
                                 onTap: () => _runTrackedAction(
@@ -4547,6 +4625,7 @@ abstinence_slip_details: $slipDetailsText
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                       color: Colors.white,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(
@@ -4554,6 +4633,7 @@ abstinence_slip_details: $slipDetailsText
                                     style: TextStyle(
                                       color:
                                           Colors.white.withValues(alpha: 0.7),
+                                      height: 1.5,
                                     ),
                                   ),
                                   trailing: const Icon(
@@ -4620,6 +4700,7 @@ abstinence_slip_details: $slipDetailsText
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                       color: Colors.white,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(
@@ -4628,6 +4709,7 @@ abstinence_slip_details: $slipDetailsText
                                     style: TextStyle(
                                       color:
                                           Colors.white.withValues(alpha: 0.7),
+                                      height: 1.5,
                                     ),
                                   ),
                                   trailing: const Icon(
@@ -4756,6 +4838,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: color,
+              height: 1.5,
             ),
           ),
           const SizedBox(width: 12),
@@ -4838,7 +4921,9 @@ abstinence_slip_details: $slipDetailsText
             ),
             child: const Text(
               'まだ履歴がありません。業務メニューや特別案件を開くと、ここに最近使った機能が並びます。',
-              style: TextStyle(height: 1.5),
+              style: TextStyle(
+                height: 1.5,
+              ),
             ),
           );
         }
@@ -4901,7 +4986,11 @@ abstinence_slip_details: $slipDetailsText
         ),
         title: const Text(
           '緊急役員会議',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
         subtitle: const Text('CEOとして全AI役員を招集し、直面している課題を解決します。'),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
@@ -4958,7 +5047,11 @@ abstinence_slip_details: $slipDetailsText
         ),
         title: Text(
           isHighlighted ? 'モーニング・ブリーフィング（最優先）' : 'モーニング・ブリーフィング',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           isHighlighted ? 'まず朝の優先順位を固定してください。' : '今日のタスクと優先順位を確認します。',
@@ -5039,6 +5132,7 @@ abstinence_slip_details: $slipDetailsText
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
+                          height: 1.5,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -5334,6 +5428,7 @@ abstinence_slip_details: $slipDetailsText
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: accentColor,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -5348,6 +5443,7 @@ abstinence_slip_details: $slipDetailsText
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: labelColor,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -5369,6 +5465,7 @@ abstinence_slip_details: $slipDetailsText
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: labelColor,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -5388,7 +5485,10 @@ abstinence_slip_details: $slipDetailsText
                     label: Text(actionLabel),
                     style: TextButton.styleFrom(
                       foregroundColor: accentColor,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      textStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -5421,6 +5521,7 @@ abstinence_slip_details: $slipDetailsText
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: labelColor,
+                height: 1.5,
               ),
             ),
           ),
@@ -5435,6 +5536,7 @@ abstinence_slip_details: $slipDetailsText
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: valueColor,
+                height: 1.5,
               ),
             ),
           ),
@@ -5462,6 +5564,7 @@ abstinence_slip_details: $slipDetailsText
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: labelColor,
+            height: 1.5,
           ),
         ),
         const SizedBox(height: 4),
@@ -5546,6 +5649,7 @@ abstinence_slip_details: $slipDetailsText
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 6),
@@ -5569,6 +5673,7 @@ abstinence_slip_details: $slipDetailsText
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -5641,6 +5746,7 @@ abstinence_slip_details: $slipDetailsText
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 6),
@@ -5691,6 +5797,7 @@ abstinence_slip_details: $slipDetailsText
                             fontSize: 13,
                             fontWeight:
                                 isSelected ? FontWeight.w800 : FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -5794,6 +5901,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 28,
               fontWeight: FontWeight.w800,
               color: titleColor,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -5826,6 +5934,7 @@ abstinence_slip_details: $slipDetailsText
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   );
@@ -5959,6 +6068,7 @@ abstinence_slip_details: $slipDetailsText
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.7)
                               : const Color(0x8A000000),
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.right,
                       );
@@ -5977,6 +6087,7 @@ abstinence_slip_details: $slipDetailsText
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.7)
                               : const Color(0x8A000000),
+                          height: 1.5,
                         ),
                       );
                     },
@@ -6005,6 +6116,7 @@ abstinence_slip_details: $slipDetailsText
                             color: isDark
                                 ? Colors.white.withValues(alpha: 0.7)
                                 : const Color(0x8A000000),
+                            height: 1.5,
                           ),
                         ),
                       );
@@ -6052,6 +6164,7 @@ abstinence_slip_details: $slipDetailsText
                           color:
                               isDark ? Colors.white : const Color(0xDE000000),
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       );
                     }).toList();
@@ -6119,7 +6232,11 @@ abstinence_slip_details: $slipDetailsText
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -6175,7 +6292,11 @@ abstinence_slip_details: $slipDetailsText
         children: [
           const Text(
             '浪費の内訳',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -6226,6 +6347,7 @@ abstinence_slip_details: $slipDetailsText
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
+                            height: 1.5,
                           ),
                         ),
                     ],
@@ -6269,6 +6391,7 @@ abstinence_slip_details: $slipDetailsText
                             breakdownEntries[i].key,
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -6279,6 +6402,7 @@ abstinence_slip_details: $slipDetailsText
                                   ? Colors.white.withValues(alpha: 0.7)
                                   : const Color(0x8A000000),
                               fontWeight: FontWeight.w600,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -6338,6 +6462,7 @@ abstinence_slip_details: $slipDetailsText
               color: isDark
                   ? Colors.white.withValues(alpha: 0.7)
                   : const Color(0x8A000000),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -6347,6 +6472,7 @@ abstinence_slip_details: $slipDetailsText
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: accent,
+              height: 1.5,
             ),
           ),
         ],
@@ -6562,6 +6688,7 @@ abstinence_slip_details: $slipDetailsText
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: labelColor,
+                      height: 1.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -7002,6 +7129,7 @@ class _CalendarLegend extends StatelessWidget {
             fontSize: 12,
             color: Color(0xFF666666),
             fontWeight: FontWeight.w600,
+            height: 1.5,
           ),
         ),
       ],
@@ -7070,11 +7198,15 @@ class _PersonalityTypeBanner extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
+                  height: 1.5,
                 ),
               ),
               subtitle: Text(
                 details.noteAdvice.first,
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -7108,11 +7240,18 @@ class _PersonalityTypeBanner extends StatelessWidget {
             ),
             title: const Text(
               '性格診断 (16タイプ)',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
             subtitle: const Text(
               'あなたの性格タイプに合ったメモ術・学習スタイルを診断',
-              style: TextStyle(fontSize: 12),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -7178,6 +7317,7 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          height: 1.5,
                         ),
                       ),
                       SizedBox(width: 8),
@@ -7190,6 +7330,7 @@ class _GuitarMainFeatureBanner extends StatelessWidget {
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -7225,6 +7366,7 @@ class _MainFeatureBadge extends StatelessWidget {
           fontSize: 9,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
+          height: 1.5,
         ),
       ),
     );
