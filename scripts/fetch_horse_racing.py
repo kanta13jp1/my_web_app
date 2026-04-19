@@ -516,19 +516,19 @@ def fetch_horse_histories(target_date: str) -> None:
         })
         if not entries:
             continue
+        failed_ids: list[str] = []
         for entry in entries:
             horse_id_ext = entry.get("horse_id_ext")
             if not horse_id_ext:
                 continue
             prev_info = fetch_prev_race_info(horse_id_ext, source, target_date)
-            time.sleep(1)
-            # 成功・失敗問わず fetched フラグを立てて次回スキップ
             if not prev_info:
-                supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
-                              {"prev_history_fetched": True})
+                # 404 failures are instant — no sleep needed; batch the PATCH
+                failed_ids.append(entry["id"])
                 total_skipped += 1
                 print(f"    [SKIP] {entry.get('horse_name', '?')}: 前走情報取得失敗 (フラグ設定)")
                 continue
+            time.sleep(1)  # レート制限: 成功した HTML ページ取得後のみ待機
             supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
                           {**prev_info, "prev_history_fetched": True})
             print(
@@ -538,6 +538,11 @@ def fetch_horse_histories(target_date: str) -> None:
                 f"{prev_info.get('prev_days_ago')}日前)"
             )
             total_updated += 1
+        # 失敗エントリを一括 PATCH (個別 DB コール削減)
+        if failed_ids:
+            ids_csv = ",".join(failed_ids)
+            supabase_rest("PATCH", f"horse_entries?id=in.({ids_csv})",
+                          {"prev_history_fetched": True})
 
     print(f"[DONE] {total_updated}頭更新, {total_skipped}頭スキップ (404済み)")
 
