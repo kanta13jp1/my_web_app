@@ -1,7 +1,7 @@
 ---
 title: "Flutter WebでMS Project風ガントチャートを実装 — CustomPaintで左右同期スクロール"
 tags: Flutter,個人開発,buildinpublic,UI
-published: false
+published: true
 ---
 
 # Flutter WebでMS Project風ガントチャートを実装
