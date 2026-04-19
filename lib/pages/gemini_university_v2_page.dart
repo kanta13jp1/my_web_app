@@ -729,6 +729,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0EA5E9),
     officialUrl: 'https://www.synthesia.io/',
   ),
+  'play_ht': _ProviderMeta(
+    name: 'PlayHT',
+    emoji: '🔉',
+    color: const Color(0xFFEF4444),
+    officialUrl: 'https://play.ht/',
+  ),
+  'descript': _ProviderMeta(
+    name: 'Descript',
+    emoji: '✂️',
+    color: const Color(0xFF8B5CF6),
+    officialUrl: 'https://www.descript.com/',
+  ),
+  'wandb': _ProviderMeta(
+    name: 'Weights & Biases',
+    emoji: '📊',
+    color: const Color(0xFFFBBF24),
+    officialUrl: 'https://wandb.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1517,6 +1535,36 @@ final Map<String, _Quiz> _quizzes = {
       '200 言語',
     ],
     correct: 2,
+  ),
+  'play_ht': _Quiz(
+    question: 'PlayHT Turbo v2 モデルの特徴は？',
+    options: [
+      '最高品質だが遅延が大きい',
+      '業界最速クラス 75ms の超低遅延 TTS',
+      'オフライン専用のローカルモデル',
+      '画像から音声を生成する特殊モデル',
+    ],
+    correct: 1,
+  ),
+  'descript': _Quiz(
+    question: 'Descript の「Overdub」機能の説明として正しいものは？',
+    options: [
+      '動画にオーバーレイ字幕を自動付与する機能',
+      '自分の声をクローンして後から音声を書き直せる機能',
+      'バックグラウンドノイズを除去する AI 機能',
+      '動画を自動でカット編集する機能',
+    ],
+    correct: 1,
+  ),
+  'wandb': _Quiz(
+    question: 'W&B Weave の主な用途は？',
+    options: [
+      '機械学習モデルの重み可視化',
+      'LLM アプリのトレーシング・評価・コスト監視',
+      'ハイパーパラメータの自動最適化',
+      'データセットのバージョン管理',
+    ],
+    correct: 1,
   ),
 };
 
@@ -3462,6 +3510,82 @@ r = requests.post("https://api.synthesia.io/v2/videos",
 ## 料金
 - Free: 3本/月（透かし付き）
 - Starter: \$29/月（10本）
+''',
+  'play_ht': '''
+# PlayHT
+
+900+ ボイス × 音声クローニングの老舗 TTS プラットフォーム。**Turbo v2** で 75ms の超低遅延。
+
+## モデル
+- **PlayHT 3.0 Ultra** — 最高品質・感情制御
+- **Turbo v2** — 75ms 超低遅延・エージェント向け
+- **Instant Clone** — 数秒サンプルで声複製
+
+## API
+```python
+from pyht import Client, TTSOptions, Format
+client = Client(user_id="UID", api_key="KEY")
+options = TTSOptions(voice="VOICE_ID", format=Format.FORMAT_MP3)
+for chunk in client.tts("こんにちは！", options):
+    f.write(chunk)
+```
+
+## 料金
+- Free: \$0（月 12,500 文字）
+- Creator: \$31.2/月（100 万文字）
+''',
+  'descript': '''
+# Descript
+
+「**テキスト編集で動画を切る**」革新的 AI 動画・音声編集ツール。
+
+## 主な AI 機能
+- **Overdub** — 自分の声クローンで言い間違い後修正
+- **Underlord** — テキスト削除 → 映像自動削除
+- **Studio Sound** — AI ノイズ除去で自宅録音をスタジオ品質に
+- **Eye Contact** — 目線を自動補正
+
+## API
+```python
+import requests
+headers = {"Authorization": "Bearer KEY"}
+r = requests.post("https://api.descript.com/v2/transcriptions",
+    headers=headers,
+    json={"upload_id": upload_id, "language": "ja"}
+)
+print(r.json()["transcript"])
+```
+
+## 料金
+- Free: \$0（1時間/月）
+- Creator: \$40/月（30時間・全 AI 機能）
+''',
+  'wandb': '''
+# Weights & Biases (W&B)
+
+ML 実験管理・LLMOps の**業界標準**。OpenAI・Anthropic・NVIDIA が利用。200 万人の ML エンジニアに支持。
+
+## 製品
+- **W&B Runs** — 実験メトリクス・GPU をリアルタイム追跡
+- **W&B Sweeps** — ベイズ最適化でハイパラ自動チューニング
+- **W&B Weave** — LLM トレーシング・コスト・評価
+- **W&B Artifacts** — モデル・データのバージョン管理
+
+## API
+```python
+import wandb, weave
+weave.init("my-llm-app")
+
+@weave.op()
+def call_llm(prompt: str) -> str:
+    return client.messages.create(...)
+
+wandb.log({"val_loss": 0.12, "accuracy": 0.95})
+```
+
+## 料金
+- Free: \$0（個人利用）
+- Team: \$50/ユーザー/月
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
