@@ -146,19 +146,28 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            value: _selectedFrequency,
+                            initialValue: _selectedFrequency,
                             decoration: const InputDecoration(
                               labelText: '頻度',
                               border: OutlineInputBorder(),
                             ),
                             items: const [
-                              DropdownMenuItem(value: 'daily', child: Text('毎日')),
-                              DropdownMenuItem(value: 'weekly', child: Text('毎週')),
                               DropdownMenuItem(
-                                  value: 'weekdays', child: Text('平日のみ')),
+                                value: 'daily',
+                                child: Text('毎日'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'weekly',
+                                child: Text('毎週'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'weekdays',
+                                child: Text('平日のみ'),
+                              ),
                             ],
-                            onChanged: (v) =>
-                                setState(() => _selectedFrequency = v ?? 'daily'),
+                            onChanged: (v) => setState(
+                              () => _selectedFrequency = v ?? 'daily',
+                            ),
                           ),
                           const SizedBox(height: 12),
                           SizedBox(
