@@ -1,7 +1,7 @@
 ---
 title: "FlutterノートアプリにAIタグ提案機能を実装 — Groq無料枠でリアルタイムタグ生成"
 tags: Flutter,Supabase,Groq,AI,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # FlutterノートアプリにAIタグ提案機能を実装
