@@ -339,6 +339,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/virtual-pet',
       'バーチャルペットページ > ペット育成・ステータス確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'access-control',
+      'アクセス制御 (ロール・権限管理)',
+      true,
+      '/access-control',
+      'アクセス制御ページ > ロール一覧・権限設定',
+    ),
+    _FnDef(
+      'loyalty-points',
+      'ロイヤルティポイント管理',
+      true,
+      '/loyalty-points',
+      'ロイヤルティポイントページ > ポイント残高・履歴確認',
+    ),
+    _FnDef(
+      'voice-memo-transcriber',
+      '音声メモ文字起こし',
+      true,
+      '/voice-memo',
+      '音声メモページ > 録音・文字起こし・一覧表示',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
