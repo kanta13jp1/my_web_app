@@ -11656,3 +11656,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/github-actions-concurrency-trap-cancel-in-progress-false-still-drops-queued-runs-5hg3
 - 本日T-1累計: 35本 (新過去最高更新)
 
+### PS版#1(続5) T-1 #176 dev.to投稿完了 (2026-04-19 19:45)
+- T-1 第176弾: Claude Codeを10インスタンス並列実行 — git worktreeで作業分離する設計
+  - https://dev.to/kanta13jp1/running-10-claude-code-instances-in-parallel-git-worktree-isolation-design-2n18
+- orphan blog-publish: 0本 (#175分マージ・削除済み)
+- 本日T-1累計: 36本 (新過去最高更新)
+
