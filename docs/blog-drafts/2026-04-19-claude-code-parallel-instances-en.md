@@ -1,7 +1,7 @@
 ---
 title: "Running 10 Claude Code Instances in Parallel — git worktree Isolation Design"
 tags: ClaudeCode,git,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Running 10 Claude Code Instances in Parallel
