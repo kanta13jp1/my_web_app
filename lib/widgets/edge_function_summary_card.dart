@@ -405,6 +405,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/app-analytics-dashboard',
       'アナリティクスページ > DAU・セッション数・人気ページ確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'address-book',
+      'アドレス帳 (連絡先管理)',
+      true,
+      '/address-book',
+      'アドレス帳ページ > 連絡先追加・検索・グループ管理',
+    ),
+    _FnDef(
+      'goal-tracker',
+      'ゴールトラッカー (目標管理)',
+      true,
+      '/goal-tracker',
+      'ゴール管理ページ > 目標設定・進捗追跡・達成確認',
+    ),
+    _FnDef(
+      'fitness-health-tracker',
+      'フィットネス・健康トラッカー',
+      true,
+      '/fitness-health-tracker',
+      '健康管理ページ > 運動記録・健康指標・フィットネス目標',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
