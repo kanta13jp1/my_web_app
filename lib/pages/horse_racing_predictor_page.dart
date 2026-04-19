@@ -1004,11 +1004,13 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
         if (!hasResult) {
           cardBg = const Color(0xFF1E1E1E);
           trailing = const Chip(
-            label: Text('未結果',
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.5,
-                )),
+            label: Text(
+              '未結果',
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
           );
         } else if (isCorrect == true) {
           cardBg = Colors.green.withValues(alpha: 0.06);

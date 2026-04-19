@@ -1435,11 +1435,13 @@ $input
                   children: [
                     Row(
                       children: [
-                        Text(guide.icon,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              height: 1.4,
-                            )),
+                        Text(
+                          guide.icon,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            height: 1.4,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           '${guide.competitor} からの移行',
@@ -1649,11 +1651,13 @@ $input
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(c.emoji,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.6,
-                            )),
+                        Text(
+                          c.emoji,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.6,
+                          ),
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'vs ${c.name}',
@@ -2784,11 +2788,13 @@ $input
         children: [
           const Row(
             children: [
-              Text('💰',
-                  style: TextStyle(
-                    fontSize: 20,
-                    height: 1.4,
-                  )),
+              Text(
+                '💰',
+                style: TextStyle(
+                  fontSize: 20,
+                  height: 1.4,
+                ),
+              ),
               SizedBox(width: 8),
               Expanded(
                 child: Text(

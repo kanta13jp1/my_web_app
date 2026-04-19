@@ -1785,12 +1785,14 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         children: [
           Icon(icon, size: 14, color: Colors.white70),
           const SizedBox(width: 8),
-          Text(text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                height: 1.5,
-              )),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
