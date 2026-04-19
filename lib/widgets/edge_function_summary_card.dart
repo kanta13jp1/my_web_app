@@ -559,6 +559,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/time-tracker',
       '時間トラッカーページ > タスク別作業時間記録・集計',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'document-esignature',
+      '電子署名 (ドキュメント署名管理)',
+      true,
+      '/document-esignature',
+      '電子署名ページ > ドキュメント署名依頼・署名状況確認',
+    ),
+    _FnDef(
+      'elearning-course-manager',
+      'eラーニングコース管理',
+      true,
+      '/elearning-course-manager',
+      'eラーニングページ > コース一覧・受講進捗確認',
+    ),
+    _FnDef(
+      'email-template-builder',
+      'メールテンプレートビルダー',
+      true,
+      '/email-template-builder',
+      'メールテンプレートページ > テンプレート作成・プレビュー・送信',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
