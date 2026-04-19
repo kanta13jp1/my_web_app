@@ -1,7 +1,7 @@
 ---
 title: "Supabaseバッチ処理の26分→0秒最適化 — prev_history_fetchedフラグパターン"
 tags: Supabase,PostgreSQL,Python,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # Supabaseバッチ処理の26分→0秒最適化
