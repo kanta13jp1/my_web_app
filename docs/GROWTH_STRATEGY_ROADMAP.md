@@ -11522,7 +11522,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
-### PS版#6 horse-racing バッチ最適化 (2026-04-19 18:54)
+### PS版#6 horse-racing バッチ最適化 Session 2 (2026-04-19 19:10)
+- **修正①**: migration: ALL 既存エントリを `prev_history_fetched=true` に backfill (404 馬含む)
+- **修正②**: `_fetch_entries_for_source`: N 回 DB クエリ → 1 回バッチ取得 (出走表 5分 → 秒)
+- **追加**: `cleanup_stale_races()`: 前日以前の scheduled レースを cancelled に一括更新
+- commits: `36ac8560` / `cd469d77` / `cab9f85f`
+
+### PS版#6 horse-racing バッチ最適化 Session 1 (2026-04-19 18:54)
 - **修正**: `horse_entries` に `prev_history_fetched boolean DEFAULT false` 追加
 - **修正**: 前走情報取得ステップ — 404 失敗馬もフラグ立て → 次回以降スキップ
 - **効果**: `前走情報取得` ステップ 26分 → 初回のみ (以降ほぼ 0秒)
