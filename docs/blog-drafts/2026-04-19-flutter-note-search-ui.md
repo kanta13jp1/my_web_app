@@ -1,7 +1,7 @@
 ---
 title: "Flutterメモ一覧に検索UIを追加した — SearchBar + Supabase全文検索の実装"
 tags: Flutter,Supabase,個人開発,buildinpublic,UI
-published: false
+published: true
 ---
 
 # Flutterメモ一覧に検索UIを追加した

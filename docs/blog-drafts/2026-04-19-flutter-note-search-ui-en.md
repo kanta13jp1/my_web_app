@@ -1,7 +1,7 @@
 ---
 title: "Adding Search UI to a Flutter Notes List — SearchBar + Supabase Full-Text Search"
 tags: Flutter,Supabase,buildinpublic,webdev,UI
-published: false
+published: true
 ---
 
 # Adding Search UI to a Flutter Notes List
