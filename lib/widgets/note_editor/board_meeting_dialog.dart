@@ -33,6 +33,7 @@ class BoardMeetingDialog extends StatelessWidget {
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -56,7 +57,10 @@ class BoardMeetingDialog extends StatelessWidget {
                           backgroundColor: _getRoleColor(role),
                           child: Text(
                             role.isNotEmpty ? role.substring(0, 1) : '?',
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              height: 1.5,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -70,6 +74,7 @@ class BoardMeetingDialog extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                   color: Color(0xFFB0B0B0),
+                                  height: 1.5,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -103,12 +108,16 @@ class BoardMeetingDialog extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     conclusion,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),

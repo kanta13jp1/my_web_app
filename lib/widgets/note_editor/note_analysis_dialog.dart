@@ -38,6 +38,7 @@ class NoteAnalysisDialog extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: _getSentimentColor(sentiment),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -51,7 +52,10 @@ class NoteAnalysisDialog extends StatelessWidget {
                     (tag) => Chip(
                       label: Text(tag),
                       backgroundColor: const Color(0xFFE8EAF6),
-                      labelStyle: const TextStyle(color: Color(0xFF3D5AFE)),
+                      labelStyle: const TextStyle(
+                        color: Color(0xFF3D5AFE),
+                        height: 1.5,
+                      ),
                     ),
                   )
                   .toList(),
@@ -64,7 +68,7 @@ class NoteAnalysisDialog extends StatelessWidget {
             if (actionItems.isEmpty)
               const Text(
                 '検出されたアクションはありません',
-                style: TextStyle(color: Color(0xFFB0B0B0)),
+                style: TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
               )
             else
               ...actionItems.map(
@@ -105,6 +109,7 @@ class NoteAnalysisDialog extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: Color(0xFFB0B0B0),
+          height: 1.5,
         ),
       ),
     );

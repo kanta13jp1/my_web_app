@@ -177,7 +177,10 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                           fb['content'],
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
                         ),
                         subtitle: Text(
                           '${timeago.format(date, locale: 'ja')} • $userId',
@@ -185,6 +188,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                             fontSize: 12,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                         children: [
@@ -195,7 +199,10 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                               children: [
                                 const Text(
                                   '詳細内容:',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(fb['content']),
@@ -206,6 +213,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: Color(0xFF5C6BC0),
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
@@ -218,13 +226,17 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
                                 const SizedBox(height: 16),
                                 const Text(
                                   'ステータス変更:',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 8),
                                 Row(

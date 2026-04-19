@@ -62,7 +62,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           'まだ履歴がありません',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
         ),
       );
     }
@@ -75,7 +75,8 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
           final label = item['feature_label'] as String? ??
               (item['feature_route'] as String).split('/').last;
           return ActionChip(
-            label: Text(label, style: const TextStyle(fontSize: 12)),
+            label:
+                Text(label, style: const TextStyle(fontSize: 12, height: 1.5)),
             backgroundColor: const Color(0xFF1A1A1A),
             side: const BorderSide(color: Color(0xFF2A2A2A)),
             onPressed: () => Navigator.pushNamed(

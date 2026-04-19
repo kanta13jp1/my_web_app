@@ -19,6 +19,7 @@ class SystemFixedFeaturesList extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 12,
                 color: Color(0xFFE2E8F0),
+                height: 1.5,
               ),
             ),
             backgroundColor: const Color(0xFF1A1A1A),

@@ -64,7 +64,11 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
             SizedBox(width: 10),
             Text(
               'AIがあなたにおすすめの機能を分析中...',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -75,7 +79,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           'おすすめ機能を取得できませんでした。後でお試しください。',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
         ),
       );
     }
@@ -98,6 +102,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: Colors.white,
+              height: 1.5,
             ),
           ),
           subtitle: reason.isNotEmpty
@@ -106,6 +111,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF94A3B8),
+                    height: 1.5,
                   ),
                 )
               : null,
