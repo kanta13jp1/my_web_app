@@ -45,8 +45,7 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
       final data = response.data;
       if (data is Map<String, dynamic> && data['leaves'] is List) {
         setState(
-          () => _leaves =
-              (data['leaves'] as List).cast<Map<String, dynamic>>(),
+          () => _leaves = (data['leaves'] as List).cast<Map<String, dynamic>>(),
         );
       } else {
         setState(() => _leaves = []);
@@ -67,13 +66,16 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
     }
     setState(() => _isLoading = true);
     try {
-      await _supabase.functions.invoke('leave-management', body: {
-        'action': 'create',
-        'leave_type': _leaveType,
-        'start_date': _startDate!.toIso8601String().substring(0, 10),
-        'end_date': _endDate!.toIso8601String().substring(0, 10),
-        'reason': _reasonCtrl.text,
-      });
+      await _supabase.functions.invoke(
+        'leave-management',
+        body: {
+          'action': 'create',
+          'leave_type': _leaveType,
+          'start_date': _startDate!.toIso8601String().substring(0, 10),
+          'end_date': _endDate!.toIso8601String().substring(0, 10),
+          'reason': _reasonCtrl.text,
+        },
+      );
       _reasonCtrl.clear();
       setState(() {
         _startDate = null;
@@ -151,7 +153,7 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _leaveType,
+                    initialValue: _leaveType,
                     decoration: const InputDecoration(
                       labelText: '休暇種別',
                       border: OutlineInputBorder(),
@@ -244,8 +246,7 @@ class _LeaveManagementPageState extends State<LeaveManagementPage> {
                         itemCount: _leaves.length,
                         itemBuilder: (context, i) {
                           final leave = _leaves[i];
-                          final status =
-                              leave['status'] as String? ?? '審査中';
+                          final status = leave['status'] as String? ?? '審査中';
                           return Card(
                             child: ListTile(
                               leading: CircleAvatar(

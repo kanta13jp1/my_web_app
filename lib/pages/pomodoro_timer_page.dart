@@ -102,8 +102,9 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('ポモドーロ完了！5分休憩しましょう'),
-              backgroundColor: Colors.green),
+            content: Text('ポモドーロ完了！5分休憩しましょう'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } else {
@@ -121,12 +122,15 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
 
   Future<void> _saveSession() async {
     try {
-      await _supabase.functions.invoke('pomodoro-timer', body: {
-        'action': 'save',
-        'task_name': _taskCtrl.text.isEmpty ? '作業セッション' : _taskCtrl.text,
-        'duration_minutes': _workMinutes,
-        'completed_at': DateTime.now().toIso8601String(),
-      });
+      await _supabase.functions.invoke(
+        'pomodoro-timer',
+        body: {
+          'action': 'save',
+          'task_name': _taskCtrl.text.isEmpty ? '作業セッション' : _taskCtrl.text,
+          'duration_minutes': _workMinutes,
+          'completed_at': DateTime.now().toIso8601String(),
+        },
+      );
       await _fetchSessions();
     } catch (_) {}
   }
@@ -140,9 +144,8 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final timerColor = _isWorking
-        ? const Color(0xFFFF6B35)
-        : const Color(0xFF4CAF50);
+    final timerColor =
+        _isWorking ? const Color(0xFFFF6B35) : const Color(0xFF4CAF50);
     final progress = _isWorking
         ? (_workMinutes * 60 - _secondsLeft) / (_workMinutes * 60)
         : (_breakMinutes * 60 - _secondsLeft) / (_breakMinutes * 60);
@@ -231,7 +234,9 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                           backgroundColor: timerColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                         onPressed: _startStop,
                       ),
@@ -266,44 +271,59 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                 children: [
                   const Icon(Icons.history, size: 16),
                   const SizedBox(width: 6),
-                  const Text('セッション履歴',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text(
+                    'セッション履歴',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
                   const Spacer(),
                   if (_isLoading)
                     const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2)),
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                 ],
               ),
             ),
             if (_errorMessage != null)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(_errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12)),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                ),
               ),
             if (_sessions.isEmpty && !_isLoading)
               const Padding(
                 padding: EdgeInsets.all(24),
-                child: Text('セッション履歴はありません',
-                    style: TextStyle(color: Colors.grey)),
+                child: Text(
+                  'セッション履歴はありません',
+                  style: TextStyle(color: Colors.grey),
+                ),
               )
             else
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 itemCount: _sessions.length > 10 ? 10 : _sessions.length,
                 itemBuilder: (context, i) {
                   final s = _sessions[i];
                   return ListTile(
                     dense: true,
-                    leading: const Icon(Icons.emoji_events,
-                        color: Colors.orange, size: 18),
-                    title: Text(s['task_name'] as String? ?? '作業セッション',
-                        style: const TextStyle(fontSize: 13)),
+                    leading: const Icon(
+                      Icons.emoji_events,
+                      color: Colors.orange,
+                      size: 18,
+                    ),
+                    title: Text(
+                      s['task_name'] as String? ?? '作業セッション',
+                      style: const TextStyle(fontSize: 13),
+                    ),
                     subtitle: Text(
                       '${s['duration_minutes'] ?? 25}分  ${(s['completed_at'] as String? ?? '').substring(0, 10)}',
                       style: const TextStyle(fontSize: 11),

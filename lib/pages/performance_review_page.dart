@@ -51,8 +51,8 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
       final data = response.data;
       if (data is Map<String, dynamic> && data['reviews'] is List) {
         setState(
-          () => _reviews =
-              (data['reviews'] as List).cast<Map<String, dynamic>>(),
+          () =>
+              _reviews = (data['reviews'] as List).cast<Map<String, dynamic>>(),
         );
       } else {
         setState(() => _reviews = []);
@@ -73,13 +73,16 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
     }
     setState(() => _isLoading = true);
     try {
-      await _supabase.functions.invoke('performance-review', body: {
-        'action': 'create',
-        'period': _reviewPeriod,
-        'goals': _goalCtrl.text,
-        'self_feedback': _feedbackCtrl.text,
-        'self_score': _selfScore.toInt(),
-      });
+      await _supabase.functions.invoke(
+        'performance-review',
+        body: {
+          'action': 'create',
+          'period': _reviewPeriod,
+          'goals': _goalCtrl.text,
+          'self_feedback': _feedbackCtrl.text,
+          'self_score': _selfScore.toInt(),
+        },
+      );
       _goalCtrl.clear();
       _feedbackCtrl.clear();
       await _fetchReviews();
@@ -139,7 +142,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                     ),
                   ),
                 DropdownButtonFormField<String>(
-                  value: _reviewPeriod,
+                  initialValue: _reviewPeriod,
                   decoration: const InputDecoration(
                     labelText: '評価期間',
                     border: OutlineInputBorder(),
@@ -176,8 +179,10 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                   maxLines: 3,
                 ),
                 const SizedBox(height: 14),
-                Text('自己評価: ${_selfScore.toInt()} / 5',
-                    style: const TextStyle(fontSize: 13)),
+                Text(
+                  '自己評価: ${_selfScore.toInt()} / 5',
+                  style: const TextStyle(fontSize: 13),
+                ),
                 Slider(
                   value: _selfScore,
                   min: 1,
@@ -218,8 +223,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                         return Card(
                           child: ExpansionTile(
                             leading: CircleAvatar(
-                              backgroundColor:
-                                  _scoreColor(score).withAlpha(30),
+                              backgroundColor: _scoreColor(score).withAlpha(30),
                               child: Text(
                                 score.toString(),
                                 style: TextStyle(
@@ -231,7 +235,9 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                             title: Text(
                               r['period'] as String? ?? '-',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                             ),
                             subtitle: Text(
                               r['goals'] as String? ?? '',
@@ -241,23 +247,34 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                             ),
                             children: [
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 0, 16, 12),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('目標・達成事項:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12)),
-                                    Text(r['goals'] as String? ?? '',
-                                        style: const TextStyle(fontSize: 12)),
+                                    const Text(
+                                      '目標・達成事項:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      r['goals'] as String? ?? '',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
                                     const SizedBox(height: 8),
-                                    const Text('自己振り返り:',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12)),
-                                    Text(r['self_feedback'] as String? ?? '',
-                                        style: const TextStyle(fontSize: 12)),
+                                    const Text(
+                                      '自己振り返り:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      r['self_feedback'] as String? ?? '',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
                                   ],
                                 ),
                               ),
