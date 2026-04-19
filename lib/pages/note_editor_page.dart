@@ -150,6 +150,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
   bool _showMarkdownPreview = false;
+  bool? _isSlashCommandBarExpanded;
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
@@ -1841,6 +1842,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget _buildSlashCommandBar(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isExpanded = _isSlashCommandBarExpanded ?? !isNarrow;
 
     return Container(
       key: const Key('note_editor_slash_command_bar'),
@@ -1853,7 +1856,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         border: Border.all(color: borderColor),
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 240),
+        constraints: BoxConstraints(maxHeight: isExpanded ? 240.0 : 64.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1874,82 +1877,99 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       ),
                     ),
                   ),
+                  IconButton(
+                    key: const Key('note_editor_slash_command_toggle'),
+                    icon: Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isSlashCommandBarExpanded = !isExpanded;
+                      });
+                    },
+                    tooltip: isExpanded ? '折りたたむ' : '展開する',
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const Key('note_editor_slash_command_field'),
-                controller: _slashCommandController,
-                enabled: !_isRunningSlashCommand,
-                onSubmitted: (_) => _runSlashCommand(),
-                decoration: InputDecoration(
-                  hintText: 'Try /summarize or /favorite',
-                  prefixIcon: const Icon(Icons.code_rounded),
-                  suffixIcon: _isRunningSlashCommand
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+              if (isExpanded) ...[
+                const SizedBox(height: 8),
+                TextField(
+                  key: const Key('note_editor_slash_command_field'),
+                  controller: _slashCommandController,
+                  enabled: !_isRunningSlashCommand,
+                  onSubmitted: (_) => _runSlashCommand(),
+                  decoration: InputDecoration(
+                    hintText: 'Try /summarize or /favorite',
+                    prefixIcon: const Icon(Icons.code_rounded),
+                    suffixIcon: _isRunningSlashCommand
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            key: const Key(
+                              'note_editor_slash_command_run_button',
+                            ),
+                            onPressed: _runSlashCommand,
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            tooltip: 'Run command',
                           ),
-                        )
-                      : IconButton(
-                          key:
-                              const Key('note_editor_slash_command_run_button'),
-                          onPressed: _runSlashCommand,
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          tooltip: 'Run command',
-                        ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Press Enter or use the play button to run a command.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_selectedAiModel != null && _selectedAiModel!.isNotEmpty) ...[
-                _buildPreferredModelChip(),
                 const SizedBox(height: 8),
+                Text(
+                  'Press Enter or use the play button to run a command.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (_selectedAiModel != null &&
+                    _selectedAiModel!.isNotEmpty) ...[
+                  _buildPreferredModelChip(),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  'Claude-style writing mode',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: NoteEditorAiStyle.values
+                      .map(_buildAiStyleChip)
+                      .toList(growable: false),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _selectedAiStyle.helperText,
+                  key: const Key('note_editor_ai_style_helper'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildPromptWorkbenchSection(context),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _slashCommandSuggestions
+                      .map(_buildSlashCommandChip)
+                      .toList(growable: false),
+                ),
               ],
-              Text(
-                'Claude-style writing mode',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: NoteEditorAiStyle.values
-                    .map(_buildAiStyleChip)
-                    .toList(growable: false),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _selectedAiStyle.helperText,
-                key: const Key('note_editor_ai_style_helper'),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildPromptWorkbenchSection(context),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _slashCommandSuggestions
-                    .map(_buildSlashCommandChip)
-                    .toList(growable: false),
-              ),
             ],
           ),
         ),
@@ -1959,11 +1979,27 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   Widget _buildEditorBody() {
     final theme = Theme.of(context);
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final outerPadding =
+        isNarrow ? const EdgeInsets.all(8.0) : const EdgeInsets.all(16.0);
+    final titleFontSize = isNarrow ? 20.0 : 24.0;
+    final String attachLabel;
+    if (_isUploadingAttachment) {
+      attachLabel = isNarrow ? '追加中...' : '画像を追加中...';
+    } else {
+      attachLabel = isNarrow ? '画像' : '画像を追加';
+    }
+    final String previewLabel;
+    if (_showMarkdownPreview) {
+      previewLabel = isNarrow ? '編集' : '編集に戻る';
+    } else {
+      previewLabel = 'プレビュー';
+    }
 
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: outerPadding,
           child: Column(
             children: [
               _buildReminderBanner(context),
@@ -1975,8 +2011,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   hintText: 'タイトル',
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(
-                  fontSize: 24,
+                style: TextStyle(
+                  fontSize: titleFontSize,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1997,9 +2033,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.image_outlined),
-                    label: Text(
-                      _isUploadingAttachment ? '画像を追加中...' : '画像を追加',
-                    ),
+                    label: Text(attachLabel),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
@@ -2012,17 +2046,19 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ? Icons.edit_note_outlined
                           : Icons.visibility_outlined,
                     ),
-                    label: Text(_showMarkdownPreview ? '編集に戻る' : 'プレビュー'),
+                    label: Text(previewLabel),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              if (!isNarrow) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+              ],
               if (_isLoadingAttachments) ...[
                 const SizedBox(height: 12),
                 const LinearProgressIndicator(minHeight: 2),
