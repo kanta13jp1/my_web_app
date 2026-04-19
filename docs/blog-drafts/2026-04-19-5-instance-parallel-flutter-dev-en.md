@@ -1,7 +1,7 @@
 ---
 title: "Running 5 Claude Code Instances in Parallel on One Flutter App"
 tags: ClaudeCode,Flutter,CI/CD,buildinpublic,webdev
-published: false
+published: true
 ---
 
 # Running 5 Claude Code Instances in Parallel on One Flutter App
