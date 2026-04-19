@@ -3007,9 +3007,9 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Divider(color: const Color(0xFFE5E7EB).withValues(alpha: 0.24)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           // 達成数メッセージ
           Text(
             '$count 社のAIを\n学習しました！',
@@ -3017,14 +3017,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
               color: Color(0xFFE5E7EB),
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              height: 1.4,
+              height: 1.7,
             ),
           ),
           const SizedBox(height: 16),
           // プロバイダーバッジ行
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: _providers.map((id) {
               final m = _meta(id);
               final learned = _answeredQuizzes.contains(id);
@@ -3440,16 +3440,19 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       color: Color(0xFFE5E7EB),
       fontSize: 20,
       fontWeight: FontWeight.bold,
+      height: 1.4,
     ),
     h2: const TextStyle(
       color: Color(0xFFB0B0B0),
       fontSize: 17,
       fontWeight: FontWeight.bold,
+      height: 1.4,
     ),
     h3: const TextStyle(
       color: Color(0xFF707070),
       fontSize: 15,
       fontWeight: FontWeight.w600,
+      height: 1.4,
     ),
     strong:
         const TextStyle(color: Color(0xFFE5E7EB), fontWeight: FontWeight.bold),
@@ -3561,7 +3564,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             if (dueCards.isNotEmpty) ...[
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -3576,7 +3579,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       color: Color(0xFFFF6B35),
                       size: 15,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
                       '今日の復習 ${dueCards.length}件',
                       style: const TextStyle(
@@ -3757,7 +3760,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       _quizExplanations[providerId]!,
                       style: const TextStyle(fontSize: 13, height: 1.6),
