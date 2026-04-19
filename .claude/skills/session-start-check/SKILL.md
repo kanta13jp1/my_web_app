@@ -115,6 +115,16 @@ grep -E "^### 原則 [0-9]" docs/PHILOSOPHY.md | head -10
 
 新機能設計時は `docs/PHILOSOPHY.md` 末尾のチェックリスト 9 項目を実施 (7+ ✅ で実装可)。
 
+### Step 4.5: WBS 優先タスク取得 (Win版#128 必須・WBS-SYNC rule)
+
+```bash
+INST=$(echo $INSTANCE | tr A-Z a-z | sed -E s/版.*//)  # win/vscode/ps
+curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub   -H "Authorization: Bearer "   -H "apikey: "   -H "Content-Type: application/json"   -d "{"action":"wbs.priority_for_instance","instance":"\"}"   | jq .top_tasks
+```
+
+優先タスク TOP 5 を確認 → 本セッションの着手タスクを決定。
+WBS 表示: https://my-web-app-b67f4.web.app/project-gantt
+
 ### Step 5: レポート生成
 
 以下の形式でユーザーに報告:

@@ -11982,3 +11982,21 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **該当原則**: 5 (商品=ユーザー価値) / 2 (ミッション駆動) / 8 (KPI=昨日の自分)
 - **整合性スコア**: 8/9 ✅
 - **理念的貢献**: 音声・動画 AI の専門プロバイダーカバレッジ強化でAI大学の差別化継続
+### Windowsアプリ版#128 セッション (2026-04-19 22:20 JST)
+- **WBS 自動同期 仕組み構築 (3 段階・A+B 実装 / C は cross-instance-pr で別 session)**:
+  - **問題**: project-gantt が migration UPDATE でしか更新されず陳腐化
+  - **A. 更新ガード** (rule + skill):
+    - inject-rules.txt に [WBS-SYNC] rule 追加 (毎ターン全インスタンス注入)
+    - session-start で wbs.priority_for_instance / wrap-up で wbs.update_progress 必須化
+  - **B. 優先タスク参照** (skill + EF action):
+    - session-start-check.md に Step 4.5 追加 (WBS 優先タスク TOP 5 取得)
+    - tools-hub に 5 actions 追加:
+      - `wbs.list_tasks`: instance + status filter で全タスク取得
+      - `wbs.update_progress`: 単発 update (100% で auto status=completed)
+      - `wbs.bulk_update`: 複数同時 update
+      - `wbs.add_task`: 新規追加
+      - `wbs.priority_for_instance`: 自インスタンス優先 TOP 5
+  - **C. 進捗自動同期** (option・別 session): commit message 解析 → WBS update GitHub Actions
+- **deno lint**: clean ✅
+- **次回**: 各セッション開始/終了で WBS が必ず最新化される運用へ移行
+

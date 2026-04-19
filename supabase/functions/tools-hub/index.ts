@@ -686,6 +686,118 @@ serve(async (req) => {
             .eq("is_prediction_correct", true).order("fetched_at", { ascending: false }).limit(5);
           return json({ success: true, stats: stats ?? {}, recent_hits: recentHits ?? [] });
         }
+        // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
+        case "wbs.list_tasks": {
+          // インスタンス + status でフィルタしてタスク一覧取得
+          // body: { instance?: 'all'|'vscode'|'windows'|'ps', status?: 'pending'|'in_progress'|'completed'|'blocked', limit?: 50 }
+          const inst = body.instance as string | undefined;
+          const status = body.status as string | undefined;
+          const limit = Math.min(Number(body.limit ?? 50), 200);
+          let q = admin.from("wbs_tasks")
+            .select("id, category, category_icon, title, description, instance, status, progress, start_date, end_date, milestone_code, priority, updated_at")
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(limit);
+          if (inst && inst !== "all") {
+            // instance='all' のタスクは全 instance に該当 → OR 条件
+            q = q.or(`instance.eq.${inst},instance.eq.all`);
+          }
+          if (status) q = q.eq("status", status);
+          const { data, error } = await q;
+          if (error) throw new Error(error.message);
+          // milestone 情報も同時取得
+          const { data: milestones } = await admin.from("wbs_milestones")
+            .select("code, name, target_date, goal_users, color");
+          return json({
+            success: true,
+            tasks: data ?? [],
+            milestones: milestones ?? [],
+            total: data?.length ?? 0,
+          });
+        }
+        case "wbs.update_progress": {
+          // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked', note?: string }
+          const id = String(body.id ?? "");
+          if (!id) return json({ error: "id required" }, 400);
+          const update: Record<string, unknown> = {};
+          if (body.progress !== undefined) {
+            const p = Math.max(0, Math.min(100, Number(body.progress)));
+            update.progress = p;
+            // 100% で auto status=completed
+            if (p === 100 && !body.status) update.status = "completed";
+          }
+          if (body.status) update.status = String(body.status);
+          if (Object.keys(update).length === 0) {
+            return json({ error: "progress or status required" }, 400);
+          }
+          const { data, error } = await admin.from("wbs_tasks")
+            .update(update).eq("id", id)
+            .select("id, title, status, progress").single();
+          if (error) throw new Error(error.message);
+          return json({ success: true, task: data });
+        }
+        case "wbs.bulk_update": {
+          // body: { updates: [{id, progress?, status?}, ...] }
+          const updates = (body.updates as Array<Record<string, unknown>>) ?? [];
+          if (updates.length === 0) return json({ error: "updates required" }, 400);
+          const results: Array<Record<string, unknown>> = [];
+          for (const u of updates) {
+            const id = String(u.id ?? "");
+            if (!id) { results.push({ error: "id required", input: u }); continue; }
+            const upd: Record<string, unknown> = {};
+            if (u.progress !== undefined) {
+              const p = Math.max(0, Math.min(100, Number(u.progress)));
+              upd.progress = p;
+              if (p === 100 && !u.status) upd.status = "completed";
+            }
+            if (u.status) upd.status = String(u.status);
+            if (Object.keys(upd).length === 0) {
+              results.push({ id, skipped: "no fields" });
+              continue;
+            }
+            const { error } = await admin.from("wbs_tasks").update(upd).eq("id", id);
+            results.push({ id, success: !error, error: error?.message });
+          }
+          const ok = results.filter((r) => r.success).length;
+          return json({ success: true, updated: ok, total: results.length, results });
+        }
+        case "wbs.add_task": {
+          // body: { category, title, description?, instance?, priority?, end_date?, milestone_code? }
+          const category = String(body.category ?? "");
+          const title = String(body.title ?? "");
+          if (!category || !title) {
+            return json({ error: "category and title required" }, 400);
+          }
+          const { data, error } = await admin.from("wbs_tasks").insert({
+            category,
+            category_icon: String(body.category_icon ?? "📋"),
+            title,
+            description: body.description ?? null,
+            instance: String(body.instance ?? "all"),
+            status: "pending",
+            progress: 0,
+            priority: String(body.priority ?? "medium"),
+            end_date: body.end_date ?? null,
+            milestone_code: body.milestone_code ?? null,
+          }).select("id, title").single();
+          if (error) throw new Error(error.message);
+          return json({ success: true, task: data });
+        }
+        case "wbs.priority_for_instance": {
+          // 指定インスタンスの優先タスク TOP 5 を返す (session-start-check 用)
+          // body: { instance: 'vscode'|'windows'|'ps' }
+          const inst = String(body.instance ?? "");
+          if (!inst) return json({ error: "instance required" }, 400);
+          const { data, error } = await admin.from("wbs_tasks")
+            .select("id, category, title, status, progress, priority, end_date, instance")
+            .or(`instance.eq.${inst},instance.eq.all`)
+            .in("status", ["pending", "in_progress"])
+            .order("priority", { ascending: false })
+            .order("end_date", { ascending: true, nullsFirst: false })
+            .limit(5);
+          if (error) throw new Error(error.message);
+          return json({ success: true, instance: inst, top_tasks: data ?? [] });
+        }
         case "horseracing.register_race": {
           const { data: r, error: re } = await admin.from("horse_races").insert({
             source: "manual", race_name: String(body.name ?? ""),
