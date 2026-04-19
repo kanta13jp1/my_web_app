@@ -341,10 +341,10 @@ jobs:
           # --- Public-facing standalone (2本: server-side OGP + 匿名 IP-based reactions) ---
           # 一度 core-hub に統合したが、IP-based 匿名トラッキング・server-side OGP rendering の
           # 都合で分離維持 (Win版#85, 2026-04-18)
-          supabase functions deploy get-public-memo-preview --no-verify-jwt
+          # get-public-memo-preview: directory deleted — removed from deploy (2026-04-19)
           supabase functions deploy memo-reactions --no-verify-jwt
 
-          # Total: 18 functions deployed (ハードキャップ50本に対し18本 — 余裕32本)
+          # Total: 17 functions deployed (ハードキャップ50本に対し17本 — 余裕33本)
           #
           # Hub対応表:
           # core-hub:         public-memo-share, memo-reactions, get-ogp, get-public-memo-ogp,
