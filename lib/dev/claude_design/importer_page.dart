@@ -100,7 +100,11 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
         backgroundColor: const Color(0xFF1A1A2E),
         title: const Text(
           'Claude Design Importer',
-          style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 16),
+          style: TextStyle(
+            color: Color(0xFFE2E8F0),
+            fontSize: 16,
+            height: 1.5,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFFE2E8F0)),
@@ -140,6 +144,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
             style: TextStyle(
               color: Color(0xFF94A3B8),
               fontSize: 12,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -158,10 +163,15 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                   color: Color(0xFFE2E8F0),
                   fontSize: 12,
                   fontFamily: 'monospace',
+                  height: 1.5,
                 ),
                 decoration: const InputDecoration(
                   hintText: '{ "tokens": { ... }, "components": [ ... ] }',
-                  hintStyle: TextStyle(color: Color(0xFF475569), fontSize: 12),
+                  hintStyle: TextStyle(
+                    color: Color(0xFF475569),
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(12),
                 ),
@@ -172,7 +182,11 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: const TextStyle(color: Color(0xFFB91C1C), fontSize: 12),
+              style: const TextStyle(
+                color: Color(0xFFB91C1C),
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -198,6 +212,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                     style: const TextStyle(
                       color: Color(0xFF34D399),
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -253,7 +268,10 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
       return const Center(
         child: Text(
           'Input タブで「Diff vs DESIGN.md」を実行してください',
-          style: TextStyle(color: Color(0xFF475569)),
+          style: TextStyle(
+            color: Color(0xFF475569),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -267,7 +285,10 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
               ? const Center(
                   child: Text(
                     'トークン差分なし — DESIGN.md と一致しています',
-                    style: TextStyle(color: Color(0xFF0D9488)),
+                    style: TextStyle(
+                      color: Color(0xFF0D9488),
+                      height: 1.5,
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -309,8 +330,12 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
       ),
       child: Text(
         label,
-        style:
-            TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -346,6 +371,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
               fontWeight: FontWeight.w700,
               fontSize: 14,
               fontFamily: 'monospace',
+              height: 1.5,
             ),
           ),
           const SizedBox(width: 8),
@@ -359,6 +385,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                     color: Color(0xFFE2E8F0),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
                 if (change.oldValue != null || change.newValue != null)
@@ -368,6 +395,7 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
                       color: Color(0xFF94A3B8),
                       fontSize: 11,
                       fontFamily: 'monospace',
+                      height: 1.5,
                     ),
                   ),
               ],
@@ -383,7 +411,10 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
       return const Center(
         child: Text(
           'Input タブで「Generate Flutter widgets」を実行してください',
-          style: TextStyle(color: Color(0xFF475569)),
+          style: TextStyle(
+            color: Color(0xFF475569),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -397,7 +428,11 @@ class _ClaudeDesignImporterPageState extends State<ClaudeDesignImporterPage>
             children: [
               const Text(
                 'Generated Dart code',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
               const Spacer(),
               IconButton(

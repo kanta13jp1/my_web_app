@@ -178,11 +178,11 @@ class $className extends StatelessWidget {
   static String _headingStyle(String level) {
     switch (level) {
       case 'h1':
-        return 'const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFFE2E8F0))';
+        return 'const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: Color(0xFFE2E8F0), height: 1.5,)';
       case 'h2':
-        return 'const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0))';
+        return 'const TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0), height: 1.5,)';
       default:
-        return 'const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0))';
+        return 'const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFFE2E8F0), height: 1.5,)';
     }
   }
 

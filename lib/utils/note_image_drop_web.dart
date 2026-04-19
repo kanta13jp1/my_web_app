@@ -166,6 +166,7 @@ class _NoteImageDropZoneState extends State<NoteImageDropZone> {
                           color: Color(0xFF6366F1),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          height: 1.5,
                         ),
                       ),
                     ],

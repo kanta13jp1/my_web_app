@@ -294,6 +294,7 @@ class NoteCardService {
               fontSize: 72,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              height: 1.5,
             ),
           ),
 
@@ -342,6 +343,7 @@ class NoteCardService {
                     fontSize: 36,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -375,6 +377,7 @@ class NoteCardService {
                   fontSize: 64,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  height: 1.5,
                 ),
               ),
               Text(
@@ -382,6 +385,7 @@ class NoteCardService {
                 style: const TextStyle(
                   fontSize: 32,
                   color: Colors.white70,
+                  height: 1.5,
                 ),
               ),
             ],
