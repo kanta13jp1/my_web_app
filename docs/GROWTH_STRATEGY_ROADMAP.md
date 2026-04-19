@@ -11362,3 +11362,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第156弾**: Claude Code 3層メモリシステム セッション間記憶設計 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/building-persistent-memory-for-claude-code-across-sessions-3-layer-architecture-f4n
 - **本日T-1累計**: 14本 (過去最高更新)
+
+## VSCode版#121 (2026-04-19)
+- DESIGN.md non-color fixes: guitar_recording_studio + horse_racing_predictor
+  - guitar: height 1.4/1.45→1.6 (5x), spacing 6→8/10→8 (5x), radius 10→12/20→999
+  - horse_racing: spacing 6→8/10→8/14→16 (8x), radius 4→8/6→8/10→12 (4x)
+  - NOTE: Must run Python+dart format+analyze+git add+commit in ONE bash invocation to prevent VSCode linter revert
+  - flutter analyze 0 errors, dart format 0 changes
