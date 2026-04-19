@@ -11914,3 +11914,33 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - #537: `schema_migrations` PK重複エラー — `20260419220000_seed_hyperbolic` と `20260419220000_add_ai_feedback_source_guitar` が同タイムスタンプ衝突 → seed_hyperbolic を `20260419340000` にリネーム → commit d1a59653 → close
 - **本セッション修正合計**: CI issue 3件クローズ (累計 #513/#522-524/#526-528/#530-534/#535-537 = 全12件)
 - **再発防止**: migration 作成前に `ls supabase/migrations/ | grep YYYYMMDD | sort` で既存タイムスタンプ確認を必須化
+
+### Philosophy Alignment (Windowsアプリ版#125-127・3 sessions・動画自動化)
+
+本セッション作業の理念整合性 (Rule 22):
+
+- **主要実装/改修**:
+  - Win#125: NotebookLM CLI download → ElevenLabs Scribe (2797 words) → SRT (169 entries) → ffmpeg 4 variant 字幕焼き
+  - Win#126: scripts/upload_youtube.py (YouTube Data API v3 OAuth + resumable upload + retry) + manifest 雛形
+  - Win#127: Python 自動置換 (TODO_VARIANT_X → 5 IDs) + ai_dev_principles_page.dart に「📺 開発教訓動画シリーズ」追加
+
+- **YouTube IDs (5 動画 unlisted)**:
+  - 原版: hU477Zds9kQ / A: Dmx51fPeE6A (default) / B: bVytf2lbxjQ / C: mwTOsWb-OpM / D: AVd00T92YHE
+
+- **該当原則 (集計)**:
+  - 5 (商品=ユーザー価値) — Win#125/127: 動画教材 5 本でユーザー学習機会拡充
+  - 6 (資本=時間) — Win#126: 5 動画 × 3 分手動 → 0 分自動化 (毎セッション 15 分節約)
+  - 7 (資産負債) — Win#126: refresh token 6 ヶ月永続化 / scripts/upload_youtube.py 資産化
+  - 8 (KPI=昨日の自分) — Win#127: 動画自動 embed 達成 = 昨日不可能だった完全自動化
+  - 9 (ウェルビーイング) — 全件: 単純作業排除 + 創造的作業に集中可
+
+- **整合性スコア (平均)**: 9/9 ✅ — 3 件全て最高スコア (動画自動化はミッション駆動 + 価値増大の典型)
+  - #125=9/9, #126=9/9, #127=9/9
+
+- **理念的貢献**:
+  - 「Master Brain → 動画 → 学習」自動 cycle 確立で複利的に価値増大
+  - 6 ヶ月放置可能 (refresh token) で cognitive load ゼロ運用
+  - Win#127 で完全自動化サイクル達成 → 教材ライブラリ無限拡張可能
+
+- **懸念事項**: なし (全件 9/9 ✅クリア)
+
