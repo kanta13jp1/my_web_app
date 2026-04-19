@@ -11429,3 +11429,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第166弾**: Flutter Web Firebase Hosting CI/CD完全ガイド → dev.to 投稿成功
   - https://dev.to/kanta13jp1/deploying-flutter-web-to-firebase-hosting-with-github-actions-cicd-2cpl
 - **本日T-1累計**: 24本 (過去最高更新)
+
+### Rule 17 WF health check (PS版#1 · 2026-04-19 09:43)
+- 全 WF success率: 全0失敗 / deploy-prod 1 cancelled (並行push競合・想定内)
+- 失敗 WF: なし
+- orphan branches: blog-publish 0 / cs-check 0 / claude/* 0
+- deploy-prod: cancel-in-progress: false ✅ / timeout 45min ✅
+- deploy-prod latest: 3本連続 success ✅
+- cross-instance-prs pending: 2件 (両方 Win版向け → PS#1スコープ外)
+- setup-instance-worktree.sh 新規作成 + instance-ps1/ps2 worktree作成
+- 修正済み: なし (全WF正常)
