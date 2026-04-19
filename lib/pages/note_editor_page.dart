@@ -1856,7 +1856,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         border: Border.all(color: borderColor),
       ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: isExpanded ? 240 : 64),
+        constraints: BoxConstraints(maxHeight: isExpanded ? 240.0 : 64.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1985,6 +1985,18 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         ? const EdgeInsets.all(8.0)
         : const EdgeInsets.all(16.0);
     final titleFontSize = isNarrow ? 20.0 : 24.0;
+    final String attachLabel;
+    if (_isUploadingAttachment) {
+      attachLabel = isNarrow ? '追加中...' : '画像を追加中...';
+    } else {
+      attachLabel = isNarrow ? '画像' : '画像を追加';
+    }
+    final String previewLabel;
+    if (_showMarkdownPreview) {
+      previewLabel = isNarrow ? '編集' : '編集に戻る';
+    } else {
+      previewLabel = 'プレビュー';
+    }
 
     return Stack(
       children: [
@@ -2023,11 +2035,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.image_outlined),
-                    label: Text(
-                      _isUploadingAttachment
-                          ? (isNarrow ? '追加中...' : '画像を追加中...')
-                          : (isNarrow ? '画像' : '画像を追加'),
-                    ),
+                    label: Text(attachLabel),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
@@ -2040,11 +2048,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ? Icons.edit_note_outlined
                           : Icons.visibility_outlined,
                     ),
-                    label: Text(
-                      _showMarkdownPreview
-                          ? (isNarrow ? '編集' : '編集に戻る')
-                          : 'プレビュー',
-                    ),
+                    label: Text(previewLabel),
                   ),
                 ],
               ),
