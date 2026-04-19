@@ -150,6 +150,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   bool _isRunningSlashCommand = false;
   bool _isApplyingSnapshot = false;
   bool _showMarkdownPreview = false;
+  bool? _isSlashCommandBarExpanded;
   int _commentCount = 0;
   NoteEditorAiStyle _selectedAiStyle = NoteEditorAiStyle.normal;
   String? _selectedAiModel;
@@ -1841,6 +1842,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   Widget _buildSlashCommandBar(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = theme.colorScheme.outline.withValues(alpha: 0.16);
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final isExpanded = _isSlashCommandBarExpanded ?? !isNarrow;
 
     return Container(
       key: const Key('note_editor_slash_command_bar'),
@@ -1853,7 +1856,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
         border: Border.all(color: borderColor),
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxHeight: 240),
+        constraints: BoxConstraints(maxHeight: isExpanded ? 240 : 64),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1874,8 +1877,22 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                       ),
                     ),
                   ),
+                  IconButton(
+                    key: const Key('note_editor_slash_command_toggle'),
+                    icon: Icon(
+                      isExpanded ? Icons.expand_less : Icons.expand_more,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isSlashCommandBarExpanded = !isExpanded;
+                      });
+                    },
+                    tooltip: isExpanded ? '折りたたむ' : '展開する',
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ],
               ),
+              if (isExpanded) ...[
               const SizedBox(height: 8),
               TextField(
                 key: const Key('note_editor_slash_command_field'),
@@ -1950,6 +1967,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                     .map(_buildSlashCommandChip)
                     .toList(growable: false),
               ),
+              ],
             ],
           ),
         ),
