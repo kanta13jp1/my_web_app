@@ -12218,3 +12218,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - `supabase/migrations/20260419510000_seed_oxen_ai_university.sql`
   - `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _quizzes + _fallback 更新)
 - **flutter analyze**: 0エラー
+
+### PowerShell版#2 セッション継続 (2026-04-20 04:50 JST) — t1-blog-dispatch skill Gate 2 追加
+
+- **背景**: 昨日 (04-19) の 37本 dev.to dispatch 時に `platforms="qiita,devto"` 混在で全 Qiita 側が 429 に。rolling 24h window 認識欠如が原因。
+- **対応**: `.claude/skills/t1-blog-dispatch/SKILL.md` に **Step 2.5 rolling-window pre-check** を追加。
+  - 直近 6h 以内に `too_many_requests` ログ or `qiita.com/kanta13jp1/items/` 成功 URL が含まれる run が 1 件でもあれば Qiita を外して devto-only で dispatch
+  - `Step 6 429 リカバリ`: dev.to=30秒 / Qiita=12h 待機を明確に区別
+  - `既知の落とし穴 #4`: 「翌日リトライ」→「rolling 24h window、最低 12h 待機」に訂正
+- **関連memory**: `memory/feedback_correction_20260420_qiita_rolling_limit.md` を skill から reference
+- **commit**: fa3ba53b
+
+### Philosophy Alignment (PS版#2 継続・2026-04-20)
+
+- 主要実装: t1-blog-dispatch skill Gate 2 (時間浪費防止の防御パターン)
+- 該当原則: 6 (資本=時間: 無駄 retry → 観察で早期判断) + 8 (KPI=昨日の自分: 昨日の失敗から学習) + 7 (資産=学習パターン蓄積)
+- 整合性スコア: 7/9 ✅
+- 理念的貢献: 過去の時間損失 (37本連発→全 Qiita 側 429 → 翌日も回復せず) を skill 層で防御化。今後の PS セッションは dispatch 前に rolling window 観察で Qiita 同時試行を自動回避
