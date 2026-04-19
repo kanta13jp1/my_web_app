@@ -11430,6 +11430,38 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/deploying-flutter-web-to-firebase-hosting-with-github-actions-cicd-2cpl
 - **本日T-1累計**: 24本 (過去最高更新)
 
+### 競合モニタリング深掘り (PS版#4 · 2026-04-19)
+
+**調査対象**: Notion / MoneyForward / Slack (3社集中調査)
+
+#### Notion (最重要脅威)
+- **Notion Agent カレンダー・メール統合** (2026-04-15 GA): 会議スケジュール自動設定・メール要約・クロスアプリタスク実行
+- **Custom Agents Workers runtime**: JavaScript/TypeScript をサンドボックスで実行 → AI Autofill がデータベース行を継続自動更新
+- **n8n 接続 + AI Meeting Notes API**: アクションアイテムのフォローアップを自動化
+- **示唆**: Notion はオールインワン Agentic Workspace を固めている。当社の「CEO感 (ユーザーが決定権)」が対抗軸 — エージェント出力を押し付けるのでなく *意思決定を表面化* する設計で差別化
+
+#### MoneyForward AI Cowork (2026-07 GA 予定)
+- **発表**: 2026-04-07 "Money Forward AI Vision 2026" で公開
+- **機能**: 経理・AP/AR・給与・HR 管理を自然言語で指示できる自律型バックオフィスエージェント (複数エージェント並行)
+- **目標**: 2030年に AI 関連 ARR ¥150億。早期アクセス受付中
+- **示唆**: 法人向け大企業路線 — 個人事業主・フリーランス向けの「自分株式会社財務部署」AI を先行強化することで小規模ユーザー獲得チャンス
+
+#### Slack MCP Server + Real-Time Search API (2026-04 GA)
+- **Slack MCP Server GA**: 外部 AI エージェントが Slack メッセージを標準ツールとして検索・読み書き可能に
+- **Slackbot MCP クライアント化**: 外部サービス (Salesforce 等) と能動連携、人間介在なし
+- **示唆**: Slack がエージェントハブ化 → 当社 EF を MCP エンドポイントとして公開し Slack 経由で呼び出せるようにすれば競合が流通チャネルになる可能性
+
+#### アクション提案 (優先度更新)
+| 優先度 | 施策 | 根拠 |
+|---|---|---|
+| 🔴 高 | MoneyForward AI Cowork GA (7月) 前に財務 AI 機能 個人特化で強化 | 大企業路線との差別化 |
+| 🟠 中 | Notion Agent 対抗: 「決定支援」UI (AI提案→ユーザー承認フロー) | CEO感原則への整合 |
+| 🟡 低 | ai-hub EF を MCP エンドポイントとして公開検討 | Slack 経由流通チャネル化 |
+
+詳細: `docs/competitor-reports/2026-04-19.md`
+
+---
+
 ### Rule 17 WF health check (PS版#1 · 2026-04-19 09:43)
 - 全 WF success率: 全0失敗 / deploy-prod 1 cancelled (並行push競合・想定内)
 - 失敗 WF: なし
