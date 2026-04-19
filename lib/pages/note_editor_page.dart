@@ -1977,11 +1977,16 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   Widget _buildEditorBody() {
     final theme = Theme.of(context);
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+    final outerPadding = isNarrow
+        ? const EdgeInsets.all(8.0)
+        : const EdgeInsets.all(16.0);
+    final titleFontSize = isNarrow ? 20.0 : 24.0;
 
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: outerPadding,
           child: Column(
             children: [
               _buildReminderBanner(context),
@@ -1993,8 +1998,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                   hintText: 'タイトル',
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(
-                  fontSize: 24,
+                style: TextStyle(
+                  fontSize: titleFontSize,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -2016,7 +2021,9 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           )
                         : const Icon(Icons.image_outlined),
                     label: Text(
-                      _isUploadingAttachment ? '画像を追加中...' : '画像を追加',
+                      _isUploadingAttachment
+                          ? (isNarrow ? '追加中...' : '画像を追加中...')
+                          : (isNarrow ? '画像' : '画像を追加'),
                     ),
                   ),
                   OutlinedButton.icon(
@@ -2030,17 +2037,21 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ? Icons.edit_note_outlined
                           : Icons.visibility_outlined,
                     ),
-                    label: Text(_showMarkdownPreview ? '編集に戻る' : 'プレビュー'),
+                    label: Text(_showMarkdownPreview
+                        ? (isNarrow ? '編集' : '編集に戻る')
+                        : (isNarrow ? 'プレビュー' : 'プレビュー')),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              if (!isNarrow) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Ctrl+V / Cmd+V で画像を貼り付け、または画像ファイルをドラッグ&ドロップすると自動でアップロードします。',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
+              ],
               if (_isLoadingAttachments) ...[
                 const SizedBox(height: 12),
                 const LinearProgressIndicator(minHeight: 2),
