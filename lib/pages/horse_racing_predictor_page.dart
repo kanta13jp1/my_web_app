@@ -153,7 +153,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           children: [
             const Text(
               '競馬AI予想',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(width: 8),
             GestureDetector(
@@ -237,6 +240,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -245,7 +249,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         child: Text(
                           _error!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(color: Color(0xFF9CA3AF)),
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            height: 1.5,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -311,7 +318,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       const SizedBox(height: 12),
                       Text(
                         '$_selectedDate のレースデータなし',
-                        style: const TextStyle(color: Color(0xFF9CA3AF)),
+                        style: const TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       const Text(
@@ -319,6 +329,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         style: TextStyle(
                           color: Color(0xFF9CA3AF),
                           fontSize: 12,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -327,6 +338,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         style: TextStyle(
                           color: Color(0xFF9CA3AF),
                           fontSize: 11,
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -480,6 +492,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               color: color,
               fontWeight: FontWeight.bold,
               fontSize: 14,
+              height: 1.5,
             ),
           ),
           const SizedBox(width: 8),
@@ -495,6 +508,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 color: color,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ),
@@ -584,6 +598,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 color: _gradeColor(grade),
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ),
@@ -606,6 +621,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -615,6 +631,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -640,6 +657,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                 color: statusColor,
                 fontSize: 11, // ここにカンマを追加します
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             backgroundColor: statusColor.withValues(alpha: 0.12),
@@ -668,6 +686,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       style: TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -681,6 +700,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   color: Color(0xFF9CA3AF),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 4),
@@ -736,6 +756,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
+                              height: 1.5,
                             ),
                           ),
                           if (prevStr != null)
@@ -744,6 +765,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                               style: TextStyle(
                                 color: prevColor,
                                 fontSize: 10,
+                                height: 1.5,
                               ),
                             ),
                         ],
@@ -756,6 +778,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       style: const TextStyle(
                         color: Color(0xFF9CA3AF),
                         fontSize: 11,
+                        height: 1.5,
                       ),
                     ),
                 ],
@@ -792,6 +815,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                                 isCorrect == true ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
+                            height: 1.5,
                           ),
                         ),
                         if (trifectaPaid != null && isCorrect == true) ...[
@@ -801,6 +825,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                             style: const TextStyle(
                               color: Colors.green,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -814,6 +839,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -882,6 +908,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -948,6 +975,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               color: color,
               fontSize: 10,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 2),
@@ -957,6 +985,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               color: Colors.white,
               fontSize: 12,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
@@ -976,7 +1005,10 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             SizedBox(height: 8),
             Text(
               '予想履歴がありません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -1025,6 +1057,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     color: Colors.green,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
             ],
@@ -1064,6 +1097,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     color: Color(0xFFFF6B35),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
                 Text(
@@ -1126,6 +1160,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1137,6 +1172,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     color: Colors.white,
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 Text(
@@ -1205,6 +1241,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               color: Colors.white70,
               fontSize: 13,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -1292,6 +1329,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               color: color,
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
         ],

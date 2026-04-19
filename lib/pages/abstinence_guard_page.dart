@@ -202,6 +202,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     style: const TextStyle(
                       color: Color(0xFF455A64),
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -377,6 +378,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -401,6 +403,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                                       '対象日: $targetDateLabel',
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ),
@@ -448,6 +451,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                                     style: TextStyle(
                                       color: dailyStatus.color,
                                       fontWeight: FontWeight.w800,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
@@ -461,6 +465,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           style: TextStyle(
                             color: dailyStatus.color.withValues(alpha: 0.92),
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -520,6 +525,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w700,
+          height: 1.5,
         ),
       ),
     );
@@ -553,6 +559,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -570,6 +577,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   style: TextStyle(
                     color: stageColor,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -585,6 +593,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: TextStyle(
               color: stageColor.withValues(alpha: 0.92),
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 12),
@@ -622,6 +631,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -672,6 +682,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -689,6 +700,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   style: const TextStyle(
                     color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -702,6 +714,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: const TextStyle(
               color: Color(0xFF455A64),
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -765,7 +778,10 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         title: Text(
           category.label,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -811,6 +827,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -861,6 +878,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -902,6 +920,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w800,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -923,6 +942,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                             style: TextStyle(
                               color: statusColor,
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -931,7 +951,10 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     const SizedBox(height: 6),
                     Text(
                       'Today: $progressText / slips ${protocol.slipCount}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (!protocol.isEnabled)
@@ -1002,6 +1025,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -1015,6 +1039,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 6),
@@ -1047,6 +1072,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     style: TextStyle(
                       color: color,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 );
@@ -1093,6 +1119,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -1107,6 +1134,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               state.isEnabled ? '今日は明確にやらない対象です。' : '必要なら今日の禁止対象に加える。',
               style: TextStyle(
                 color: Colors.black.withValues(alpha: 0.68),
+                height: 1.5,
               ),
             ),
             if (tags.isNotEmpty) ...[
@@ -1130,6 +1158,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                           style: TextStyle(
                             color: color,
                             fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -1147,7 +1176,10 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
               ),
               child: Text(
                 '代替行動: ${state.item.replacementAction}',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -1223,12 +1255,16 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),

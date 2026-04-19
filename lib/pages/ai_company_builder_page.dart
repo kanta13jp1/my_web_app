@@ -176,23 +176,33 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
               color: Color(0xFFE5E7EB),
               fontSize: 22,
               fontWeight: FontWeight.w700,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
             'Describe a business in one sentence. The system will run a gate review, create the business-layer manager agents, attach the shared tool layer, seed initial tasks, and write the first vault notes.',
-            style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+            style: TextStyle(
+              color: Color(0xB3E5E7EB),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _ideaController,
             minLines: 3,
             maxLines: 5,
-            style: const TextStyle(color: Color(0xFFE5E7EB)),
+            style: const TextStyle(
+              color: Color(0xFFE5E7EB),
+              height: 1.5,
+            ),
             decoration: InputDecoration(
               hintText:
                   'Example: Build an AI-native online school for Japanese startup founders.',
-              hintStyle: const TextStyle(color: Color(0x61FFFFFF)),
+              hintStyle: const TextStyle(
+                color: Color(0x61FFFFFF),
+                height: 1.5,
+              ),
               filled: true,
               fillColor: const Color(0xFFE5E7EB).withValues(alpha: 0.05),
               border: OutlineInputBorder(
@@ -213,6 +223,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   style: TextStyle(
                     color: Color(0xB3E5E7EB),
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -221,6 +232,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 style: const TextStyle(
                   color: Color(0xFFE5E7EB),
                   fontWeight: FontWeight.w700,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -268,7 +280,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         ),
         child: const Text(
           'No company instances yet. Run the builder once and the workspace will start storing managers, tool agents, tasks, workflows, and vault notes.',
-          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(
+            color: Color(0xB3E5E7EB),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -282,6 +297,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             color: Color(0xFFE5E7EB),
             fontSize: 18,
             fontWeight: FontWeight.w700,
+            height: 1.5,
           ),
         ),
         const SizedBox(height: 12),
@@ -324,6 +340,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                               color: Color(0xFFE5E7EB),
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -351,12 +368,16 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                           style: const TextStyle(
                             color: Color(0xFFE5E7EB),
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           _shortDate(row['created_at']),
-                          style: const TextStyle(color: Color(0x8AE5E7EB)),
+                          style: const TextStyle(
+                            color: Color(0x8AE5E7EB),
+                            height: 1.5,
+                          ),
                         ),
                       ],
                     ),
@@ -385,6 +406,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           color: tone,
           fontSize: 12,
           fontWeight: FontWeight.w700,
+          height: 1.5,
         ),
       ),
     );
@@ -403,6 +425,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             color: Color(0xFFE5E7EB),
             fontSize: 18,
             fontWeight: FontWeight.w700,
+            height: 1.5,
           ),
         ),
         const SizedBox(height: 12),
@@ -436,6 +459,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
               color: Color(0xFFE5E7EB),
               fontSize: 24,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -443,7 +467,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             metadata['offer']?.toString() ??
                 metadata['summary']?.toString() ??
                 '',
-            style: const TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+            style: const TextStyle(
+              color: Color(0xB3E5E7EB),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -465,6 +492,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
               color: Color(0xFFE5E7EB),
               fontSize: 16,
               fontWeight: FontWeight.w700,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -473,6 +501,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
             style: const TextStyle(
               color: Color(0xFFE5E7EB),
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -483,7 +512,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
           const SizedBox(height: 6),
           Text(
             metadata['recommendation']?.toString() ?? '',
-            style: const TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+            style: const TextStyle(
+              color: Color(0xB3E5E7EB),
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -500,7 +532,11 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
       ),
       child: Text(
         '$label: $value',
-        style: const TextStyle(color: Color(0xB3E5E7EB), fontSize: 12),
+        style: const TextStyle(
+          color: Color(0xB3E5E7EB),
+          fontSize: 12,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -519,12 +555,16 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 style: const TextStyle(
                   color: Color(0xFFE5E7EB),
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ),
             Text(
               '${score.toStringAsFixed(1)} / 10',
-              style: const TextStyle(color: Color(0xB3E5E7EB)),
+              style: const TextStyle(
+                color: Color(0xB3E5E7EB),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -573,12 +613,16 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   style: const TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   agent['role_title']?.toString() ?? '-',
-                  style: const TextStyle(color: Color(0xB3E5E7EB)),
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -632,19 +676,26 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                         style: const TextStyle(
                           color: Color(0xFFE5E7EB),
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                     ),
                     Text(
                       metadata['stage']?.toString() ?? '',
-                      style: const TextStyle(color: Color(0x8AE5E7EB)),
+                      style: const TextStyle(
+                        color: Color(0x8AE5E7EB),
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   task['description']?.toString() ?? '',
-                  style: const TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -652,6 +703,7 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   style: const TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -685,19 +737,26 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   style: const TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   metadata['path']?.toString() ?? '',
-                  style: const TextStyle(color: Color(0x8AE5E7EB)),
+                  style: const TextStyle(
+                    color: Color(0x8AE5E7EB),
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Text(
                   content.length > 220
                       ? '${content.substring(0, 220)}...'
                       : content,
-                  style: const TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -730,19 +789,26 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                   style: const TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   _shortDate(metadata['timestamp'] ?? entry['created_at']),
-                  style: const TextStyle(color: Color(0x8AE5E7EB)),
+                  style: const TextStyle(
+                    color: Color(0x8AE5E7EB),
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   details.entries
                       .map((item) => '${item.key}: ${item.value}')
                       .join('\n'),
-                  style: const TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+                  style: const TextStyle(
+                    color: Color(0xB3E5E7EB),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -763,7 +829,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
         ),
         child: const Text(
           'Select a company instance to inspect its manager layer, shared tool layer, seeded tasks, and vault notes.',
-          style: TextStyle(color: Color(0xB3E5E7EB), height: 1.5),
+          style: TextStyle(
+            color: Color(0xB3E5E7EB),
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -825,7 +894,10 @@ class _AiCompanyBuilderPageState extends State<AiCompanyBuilderPage> {
                 ),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Color(0xFFE5E7EB)),
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    height: 1.5,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

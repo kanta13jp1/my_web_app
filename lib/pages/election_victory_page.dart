@@ -1180,6 +1180,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             style: TextStyle(
               color: color,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -1189,6 +1190,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               color: color,
               fontSize: 28,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
         ],
@@ -1510,6 +1512,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -1819,6 +1822,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   const TextStyle(
                     color: Color(0xFFE5E7EB),
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 );
               }).toList();
@@ -2018,6 +2022,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 16,
+                                      height: 1.5,
                                     ),
                                   ),
                                   if (_prefectureStatusLabel(item)
@@ -2048,6 +2053,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                               context,
                                               item,
                                             ),
+                                            height: 1.5,
                                           ),
                                         ),
                                       ),
@@ -2075,6 +2081,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                             color: item.currentMembers == 0
                                 ? Theme.of(context).colorScheme.error
                                 : null,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -2326,6 +2333,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   color: passed
                       ? Theme.of(context).colorScheme.onSurfaceVariant
                       : const Color(0xFF1D4ED8),
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -2338,6 +2346,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   color: passed
                       ? Theme.of(context).colorScheme.onSurfaceVariant
                       : const Color(0xFF1D4ED8),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 2),
@@ -2346,6 +2355,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -2655,6 +2665,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.normal,
                       fontSize: 13,
+                      height: 1.5,
                     ),
                   ),
                   selectedColor: Theme.of(context).colorScheme.primary,
@@ -2829,6 +2840,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                           color: Color(0xFFE5E7EB),
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -3069,6 +3081,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -3085,6 +3098,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                         .colorScheme
                                         .onSurfaceVariant
                                     : null,
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -3117,6 +3131,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 ),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -3552,6 +3567,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           color: foregroundColor,
           fontSize: 12,
           fontWeight: FontWeight.w700,
+          height: 1.5,
         ),
       ),
     );
@@ -3582,6 +3598,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               style: TextStyle(
                 color: accentColor,
                 fontWeight: FontWeight.w800,
+                height: 1.5,
               ),
             )
           else if (lines.length > _pastElectionOutcomeAccordionThreshold)
@@ -3601,6 +3618,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   style: TextStyle(
                     color: accentColor,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 subtitle: Text(
@@ -3621,6 +3639,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               style: TextStyle(
                 color: accentColor,
                 fontWeight: FontWeight.w800,
+                height: 1.5,
               ),
             ),
           if (lines.length <= _pastElectionOutcomeAccordionThreshold)
@@ -3709,6 +3728,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             style: TextStyle(
               fontSize: 11,
               color: isWin ? Colors.green.shade800 : Colors.red.shade800,
+              height: 1.5,
             ),
           ),
           backgroundColor: isWin
@@ -3826,6 +3846,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3841,6 +3862,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     color: Color(0xFFE5E7EB),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3852,6 +3874,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             style: TextStyle(
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           if (displayCandidates.isNotEmpty) ...[
@@ -4061,6 +4084,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
+                          height: 1.5,
                         ),
                       ),
                       if (member.kana.trim().isNotEmpty) ...[
@@ -4373,6 +4397,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w700,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 10),
@@ -4382,6 +4407,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   color: color,
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 6),
@@ -4432,6 +4458,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 8),
@@ -4591,6 +4618,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 18,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -4683,6 +4711,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         style: TextStyle(
           color: chipColor.withValues(alpha: 0.95),
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
@@ -4700,6 +4729,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         style: TextStyle(
           color: color.withValues(alpha: 0.95),
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
@@ -4726,7 +4756,10 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(color: color.withValues(alpha: 0.95)),
+              style: TextStyle(
+                color: color.withValues(alpha: 0.95),
+                height: 1.5,
+              ),
             ),
           ),
         ],

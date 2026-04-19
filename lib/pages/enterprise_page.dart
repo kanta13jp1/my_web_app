@@ -74,7 +74,10 @@ class _EnterprisePageState extends State<EnterprisePage> {
             onPressed: () => Navigator.pushNamed(context, '/'),
             child: const Text(
               '個人プランを見る',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: Colors.white70,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -122,6 +125,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
           ),
@@ -169,6 +173,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -183,7 +188,10 @@ class _EnterprisePageState extends State<EnterprisePage> {
                     horizontal: 24,
                     vertical: 14,
                   ),
-                  textStyle: const TextStyle(fontSize: 16),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -240,12 +248,17 @@ class _EnterprisePageState extends State<EnterprisePage> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
             '1人あたり月額コストの比較 (10人チームで計算)',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+            style: TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 24),
           ...tools.map(
@@ -261,6 +274,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                   color: Color(0xFF1E293B),
+                  height: 1.5,
                 ),
               ),
               Text(
@@ -270,6 +284,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                   fontSize: 18,
                   color: Color(0xFFEF4444),
                   decoration: TextDecoration.lineThrough,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -295,12 +310,16 @@ class _EnterprisePageState extends State<EnterprisePage> {
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
+                        height: 1.5,
                       ),
                     ),
                     Text(
                       '10人チームで年間¥${(4100 * 10 * 12).toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}の節約',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -310,6 +329,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 28,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -376,6 +396,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -429,6 +450,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -464,7 +486,10 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       padding: const EdgeInsets.all(12),
                       child: Text(
                         c.feature,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                     _tableCell(c.us, highlight: true),
@@ -491,6 +516,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
           color: highlight ? const Color(0xFF34D399) : Colors.white,
           fontWeight: FontWeight.bold,
           fontSize: 13,
+          height: 1.5,
         ),
         textAlign: TextAlign.center,
       ),
@@ -527,6 +553,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -554,7 +581,11 @@ class _EnterprisePageState extends State<EnterprisePage> {
                   Expanded(
                     child: Text(
                       'お問い合わせを受け付けました。2営業日以内にご連絡いたします。',
-                      style: TextStyle(color: Colors.white, fontSize: 15),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -608,6 +639,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                         style: const TextStyle(
                           color: Color(0xFFFCA5A5),
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -634,6 +666,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                           textStyle: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -644,6 +677,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -671,6 +705,7 @@ class _EnterprisePageState extends State<EnterprisePage> {
             color: Colors.white.withValues(alpha: 0.85),
             fontSize: 14,
             fontWeight: FontWeight.w600,
+            height: 1.5,
           ),
         ),
         const SizedBox(height: 6),
@@ -678,10 +713,16 @@ class _EnterprisePageState extends State<EnterprisePage> {
           controller: controller,
           maxLines: maxLines,
           validator: validator,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(
+            color: Colors.white,
+            height: 1.5,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.35)),
+            hintStyle: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              height: 1.5,
+            ),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.08),
             border: OutlineInputBorder(
@@ -780,7 +821,10 @@ class _CostComparisonRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Text(tool.icon, style: const TextStyle(fontSize: 20)),
+          Text(
+            tool.icon,
+            style: const TextStyle(fontSize: 20, height: 1.5),
+          ),
           const SizedBox(width: 8),
           SizedBox(
             width: 100,
@@ -790,6 +834,7 @@ class _CostComparisonRow extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
                 color: Color(0xFF374151),
+                height: 1.5,
               ),
             ),
           ),
@@ -825,6 +870,7 @@ class _CostComparisonRow extends StatelessWidget {
                 fontSize: 12,
                 color: Color(0xFF6B7280),
                 fontWeight: FontWeight.w500,
+                height: 1.5,
               ),
               textAlign: TextAlign.right,
             ),
@@ -876,6 +922,7 @@ class _UseCaseCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                     color: Color(0xFF1E293B),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -902,6 +949,7 @@ class _UseCaseCard extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 color: Color(0xFF64748B),
+                height: 1.5,
               ),
             ),
           ),
