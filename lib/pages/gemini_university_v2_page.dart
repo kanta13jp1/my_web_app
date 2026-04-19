@@ -663,6 +663,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6366F1),
     officialUrl: 'https://www.stepfun.com/',
   ),
+  'modular': _ProviderMeta(
+    name: 'Modular',
+    emoji: '⚡',
+    color: const Color(0xFFF59E0B),
+    officialUrl: 'https://www.modular.com/',
+  ),
+  'radixark': _ProviderMeta(
+    name: 'RadixArk (SGLang)',
+    emoji: '🌐',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://github.com/sgl-project/sglang',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1339,6 +1351,26 @@ final Map<String, _Quiz> _quizzes = {
       '70B',
       '11B',
       '7B',
+    ],
+    correct: 2,
+  ),
+  'modular': _Quiz(
+    question: 'Modular が 2026年2月に買収した AI serving ライブラリは？',
+    options: [
+      'vLLM',
+      'BentoML',
+      'Triton Inference Server',
+      'Ray Serve',
+    ],
+    correct: 1,
+  ),
+  'radixark': _Quiz(
+    question: 'RadixArk の SGLang が持つ KV キャッシュ最適化技術の名称は？',
+    options: [
+      'FlashAttention',
+      'PagedAttention',
+      'RadixAttention',
+      'GroupedQueryAttention',
     ],
     correct: 2,
   ),
@@ -3059,6 +3091,55 @@ AI/ML 特化 **GPU クラウド** 老舗 (2012〜)。元々は研究者向けに
 - RAG の精度向上（embed + rerank の組み合わせ）
 - ベクトル DB（Pinecone / Weaviate / Qdrant）連携
 - 同一 API キーで全サービス利用可能
+''',
+  'modular': '''
+# Modular
+
+「kernel から cloud まで」の AI inference stack を 1 platform で提供。**MAX** (serving) + **Mojo** (言語) + **BentoML** (2026-02 買収) の統合企業。
+
+## 主要プロダクト
+- **Mojo**: Python 互換の systems 言語 (CUDA カーネルを Python で記述可能)
+- **MAX**: vLLM/SGLang 競合の高性能 inference serving
+- **BentoML 統合**: packaging + adaptive batching + K8s オーケストレーション
+
+## 特徴
+- multi-hardware (GPU / ASIC / CPU) を統一 API
+- MAX core は OSS / Enterprise 機能は商用
+- Llama 3.3 70B / Mistral / Qwen 対応
+
+## API
+```bash
+max serve --model llama3-70b
+# OpenAI 互換エンドポイントで即利用
+```
+''',
+  'radixark': '''
+# RadixArk (SGLang)
+
+**SGLang** (LLM 推論エンジン) のメンテナンス企業。Berkeley Sky Computing Lab 発 OSS からのスピンアウト。
+
+## RadixAttention
+- KV キャッシュを会話ターン間で共有
+- マルチターン会話で **5–10x スループット改善**
+- xAI (Grok 4) / DeepSeek / Cursor などが本番採用
+
+## 採用実績
+GitHub 16k+ stars。Tier 1 AI 企業多数。
+
+## API
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:30000/v1", api_key="EMPTY")
+response = client.chat.completions.create(
+    model="meta-llama/Llama-3.3-70B",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+## 資金調達
+- Series A: \$400M valuation (2026-01, Accel リード)
+- CEO: Ying Sheng (元 xAI research scientist)
 ''',
   'stepfun': '''
 # StepFun (阶跃星辰)
