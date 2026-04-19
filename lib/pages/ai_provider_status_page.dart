@@ -95,7 +95,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                 ? const Center(
                     child: Text(
                       '該当なし',
-                      style: TextStyle(color: Color(0xFF94A3B8)),
+                      style: TextStyle(color: Color(0xFF94A3B8), height: 1.5),
                     ),
                   )
                 : ListView.separated(
@@ -125,12 +125,17 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '実装済 ${counts[AiProviderStatus.implemented] ?? 0} / 要APIキー ${counts[AiProviderStatus.apiKeyRequired] ?? 0} / 要課金 ${counts[AiProviderStatus.paidPlanRequired] ?? 0} / 未実装 ${counts[AiProviderStatus.notImplemented] ?? 0}',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -179,6 +184,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
             color: active ? Colors.black : Colors.white,
             fontSize: 12,
             fontWeight: FontWeight.w600,
+            height: 1.5,
           ),
         ),
         selected: active,
@@ -211,6 +217,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                     color: Colors.white,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -230,6 +237,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                     color: color,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -253,6 +261,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                       color: Color(entry.tier!.colorValue),
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -266,6 +275,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
               color: Color(0xFF6366F1),
               fontSize: 11,
               fontFamily: 'monospace',
+              height: 1.5,
             ),
           ),
           if (entry.entryPoint != null) ...[
@@ -287,6 +297,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                 color: Color(0xFF94A3B8),
                 fontSize: 11,
                 fontFamily: 'monospace',
+                height: 1.5,
               ),
             ),
           ],
@@ -320,7 +331,7 @@ class _AiProviderStatusPageState extends State<AiProviderStatusPage>
                         : const Icon(Icons.play_arrow, size: 16),
                     label: const Text(
                       'テスト呼び出し',
-                      style: TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 12, height: 1.5),
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFF97316),

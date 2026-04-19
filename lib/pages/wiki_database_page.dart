@@ -238,7 +238,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -272,7 +272,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             const SizedBox(height: 16),
             const Text(
               'Wikiページがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -307,14 +307,15 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                   const Icon(Icons.article_outlined, color: Color(0xFF4F46E5)),
               title: Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
               subtitle: createdAt.isNotEmpty
                   ? Text(
                       createdAt.length > 10
                           ? createdAt.substring(0, 10)
                           : createdAt,
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12, height: 1.5),
                     )
                   : null,
               trailing: Row(
@@ -355,7 +356,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             SizedBox(height: 16),
             Text(
               '左のタブからページを選択してください',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -370,7 +371,11 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const Divider(height: 24),
           if (content.isNotEmpty) ...[
@@ -379,6 +384,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF9CA3AF),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -394,7 +400,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             const SizedBox(height: 16),
           ],
           if (_children.isNotEmpty) ...[
-            const Text('サブページ', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text(
+              'サブページ',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
             const SizedBox(height: 8),
             ..._children.map(
               (child) => ListTile(
@@ -421,7 +430,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
             children: [
               const Text(
                 'テーブルデータ',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
               const Spacer(),
               TextButton.icon(
@@ -433,7 +442,10 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
           ),
           const SizedBox(height: 8),
           if (_tableRows.isEmpty)
-            const Text('テーブルデータなし', style: TextStyle(color: Color(0xFF9CA3AF)))
+            const Text(
+              'テーブルデータなし',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            )
           else
             ..._tableRows.map((row) {
               final content2 =
@@ -454,7 +466,7 @@ class _WikiDatabasePageState extends State<WikiDatabasePage>
                           createdAt.length > 10
                               ? createdAt.substring(0, 10)
                               : createdAt,
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(fontSize: 12, height: 1.5),
                         )
                       : null,
                   dense: true,

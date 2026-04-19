@@ -97,7 +97,10 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('名刺を追加', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          '名刺を追加',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -117,7 +120,10 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'キャンセル',
+              style: TextStyle(color: Colors.white54, height: 1.5),
+            ),
           ),
           ElevatedButton(
             onPressed: _saving ? null : _save,
@@ -143,10 +149,10 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
 
   Widget _field(TextEditingController ctrl, String label) => TextField(
         controller: ctrl,
-        style: const TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.white, height: 1.5),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Colors.white54),
+          labelStyle: const TextStyle(color: Colors.white54, height: 1.5),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
             borderSide: const BorderSide(color: Color(0xFF333333)),
@@ -168,7 +174,10 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('名刺管理', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          '名刺管理',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -194,7 +203,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                       const SizedBox(height: 12),
                       const Text(
                         '名刺はまだありません',
-                        style: TextStyle(color: Colors.white38),
+                        style: TextStyle(color: Colors.white38, height: 1.5),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
@@ -230,6 +239,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                             style: const TextStyle(
                               color: Color(0xFFFF6B35),
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -238,6 +248,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                         subtitle: Column(
@@ -249,6 +260,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
+                                  height: 1.5,
                                 ),
                               ),
                             if ((c['title'] as String? ?? '').isNotEmpty)
@@ -257,6 +269,7 @@ class _BusinessCardManagerPageState extends State<BusinessCardManagerPage> {
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 11,
+                                  height: 1.5,
                                 ),
                               ),
                           ],

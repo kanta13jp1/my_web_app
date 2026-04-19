@@ -285,7 +285,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
               alignment: Alignment.centerLeft,
               child: Text(
                 '直近のワークアウト',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -310,11 +314,16 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -341,7 +350,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         subtitle: Text('$duration分 • ${calories}kcal'),
         trailing: Text(
           date.length >= 10 ? date.substring(0, 10) : date,
-          style: const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+          style: const TextStyle(
+            fontSize: 11,
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
         ),
       ),
     );
@@ -355,7 +368,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         children: [
           const Text(
             'ワークアウトを記録',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           // ワークアウト種類
@@ -419,7 +436,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
           if (_workouts.isNotEmpty) ...[
             const Text(
               '履歴',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ..._workouts.map((w) => _workoutTile(w)),
@@ -437,7 +458,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
         children: [
           const Text(
             '体重を記録',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -467,7 +492,11 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
           if (_weightHistory.isNotEmpty) ...[
             const Text(
               '体重推移',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             ListView.builder(
@@ -500,6 +529,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
+                      height: 1.5,
                     ),
                   ),
                   subtitle: Text(
@@ -511,6 +541,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                           style: TextStyle(
                             color: diff < 0 ? Colors.green : Colors.red,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         )
                       : null,

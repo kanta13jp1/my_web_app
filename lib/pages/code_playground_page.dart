@@ -236,8 +236,11 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   TextField(
                     controller: _codeCtrl,
                     maxLines: 10,
-                    style:
-                        const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'コード *',
                       border: OutlineInputBorder(),
@@ -378,9 +381,11 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
               leading: _langIcon(lang),
               title: Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
               ),
-              subtitle: Text(lang, style: const TextStyle(fontSize: 12)),
+              subtitle:
+                  Text(lang, style: const TextStyle(fontSize: 12, height: 1.5)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -403,6 +408,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                       fontFamily: 'monospace',
                       fontSize: 12,
                       color: Colors.green,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -466,8 +472,12 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
       backgroundColor: color.withValues(alpha: 0.15),
       child: Text(
         lang.isEmpty ? '?' : lang.substring(0, 1).toUpperCase(),
-        style:
-            TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -609,11 +619,18 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           const SizedBox(height: 16),
           const Text(
             '言語別内訳',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           if (breakdown.isEmpty)
-            const Text('データなし', style: TextStyle(color: Color(0xFF9CA3AF)))
+            const Text(
+              'データなし',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            )
           else
             ...breakdown.map((b) {
               final lang = b['language'] as String? ?? '';
@@ -625,7 +642,10 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   children: [
                     SizedBox(
                       width: 90,
-                      child: Text(lang, style: const TextStyle(fontSize: 13)),
+                      child: Text(
+                        lang,
+                        style: const TextStyle(fontSize: 13, height: 1.5),
+                      ),
                     ),
                     Expanded(
                       child: LinearProgressIndicator(
@@ -642,6 +662,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -663,9 +684,16 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
-            Text(label, style: const TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              label,
+              style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       ),

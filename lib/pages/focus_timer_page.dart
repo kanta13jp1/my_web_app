@@ -418,7 +418,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               icon: const Icon(Icons.stop, color: Colors.red),
               label: const Text(
                 'セッションを中止',
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.red, height: 1.5),
               ),
             ),
         ],
@@ -505,6 +505,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                     style: TextStyle(
                       fontSize: 12,
                       color: _scoreColor(focusScore),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -562,7 +563,10 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                   subtitle: Text(dateStr),
                   trailing: Text(
                     '$mins分',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               );
@@ -624,6 +628,7 @@ class _CircularTimer extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: color,
                   letterSpacing: 2,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 4),
@@ -641,6 +646,7 @@ class _CircularTimer extends StatelessWidget {
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -660,7 +666,7 @@ class _CircularTimer extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '集中中',
-                      style: TextStyle(color: color, fontSize: 12),
+                      style: TextStyle(color: color, fontSize: 12, height: 1.5),
                     ),
                   ],
                 ),
@@ -745,6 +751,7 @@ class _ModeChip extends StatelessWidget {
             color: active ? Colors.white : color,
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
+            height: 1.5,
           ),
         ),
       ),
@@ -786,6 +793,7 @@ class _StatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -800,6 +808,7 @@ class _StatCard extends StatelessWidget {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
             Text(
@@ -807,6 +816,7 @@ class _StatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
           ],

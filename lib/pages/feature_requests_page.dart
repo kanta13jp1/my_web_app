@@ -139,6 +139,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
+                          height: 1.5,
                         ),
                       ),
                       SizedBox(height: 4),
@@ -184,6 +185,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   color: Color(0xFF92400E),
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -198,6 +200,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF1E293B),
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -205,7 +208,8 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                               controller: _titleCtrl,
                               decoration: InputDecoration(
                                 hintText: '例: カレンダー連携、Google Drive インポート…',
-                                hintStyle: const TextStyle(fontSize: 13),
+                                hintStyle:
+                                    const TextStyle(fontSize: 13, height: 1.5),
                                 isDense: true,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -223,6 +227,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFFEF4444),
+                                  height: 1.5,
                                 ),
                               ),
                             ],
@@ -248,6 +253,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                       'リクエストを送信する',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
+                                        height: 1.5,
                                       ),
                                     ),
                             ),
@@ -271,7 +277,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                       child: Text(
                         'まだリクエストがありません。\n最初のリクエストを送ってください！',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF64748B)),
+                        style: TextStyle(color: Color(0xFF64748B), height: 1.5),
                       ),
                     ),
                   )
@@ -282,6 +288,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF374151),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -320,6 +327,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                 color: rank <= 3
                                     ? const Color(0xFFD97706)
                                     : const Color(0xFF94A3B8),
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -330,6 +338,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF1E293B),
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -366,6 +375,7 @@ class _FeatureRequestsPageState extends State<FeatureRequestsPage> {
                                       color: voted
                                           ? Colors.white
                                           : const Color(0xFF3949AB),
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],

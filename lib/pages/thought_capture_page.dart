@@ -177,7 +177,10 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   onChanged: (v) => setS(() => selectedStatus = v!),
                 ),
                 const SizedBox(height: 12),
-                Text('重要度: $importance', style: const TextStyle(fontSize: 13)),
+                Text(
+                  '重要度: $importance',
+                  style: const TextStyle(fontSize: 13, height: 1.5),
+                ),
                 Slider(
                   value: importance.toDouble(),
                   min: 1,
@@ -272,6 +275,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                         color: isDark
                             ? const Color(0xFF6B7280)
                             : const Color(0xFF9CA3AF),
+                        height: 1.5,
                       ),
                       filled: true,
                       fillColor: isDark
@@ -424,6 +428,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   ? Colors.white
                   : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              height: 1.5,
             ),
           ),
         ),
@@ -477,6 +482,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                         fontSize: 11,
                         color: color,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -486,6 +492,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                   const Spacer(),
@@ -518,6 +525,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                 style: TextStyle(
                   fontSize: 14,
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  height: 1.5,
                 ),
               ),
               if (reflection != null && reflection.isNotEmpty) ...[
@@ -527,6 +535,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -541,6 +550,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
                   style: TextStyle(
                     fontSize: 10,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -568,6 +578,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -577,6 +588,7 @@ class _ThoughtCapturePageState extends State<ThoughtCapturePage> {
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],
