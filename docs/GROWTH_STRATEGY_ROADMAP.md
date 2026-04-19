@@ -12075,3 +12075,21 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **該当原則**: 5 (商品=ユーザー価値) / 2 (ミッション駆動) / 8 (KPI=昨日の自分)
 - **整合性スコア**: 9/9 ✅
 - **理念的貢献**: AI開発インフラの知識をカバーし学習者の実用スキルを向上
+
+### Windowsアプリ版#129 セッション (2026-04-20 02:30 JST)
+- **動画 #2 完全自動化パイプライン完遂** (Win#125-127 確立 → 1 セッション再現):
+  - source: 欠陥の修正：コメントがコードを変えた (10:40 / artifact 1bded015 / Per-Business Scoring notebook)
+  - download → Scribe (4117 words) → SRT (275 entries) → ffmpeg 4 variant → YouTube unlisted upload (5/5) → Flutter embed
+  - YouTube IDs: nsBoA0Z0BNk (原版) / OJgmkQVnO70 (A) / XulNKygolcQ (B) / 9hjJOx6ZLoY (C) / pbw9rIOB9X0 (D)
+  - ai_dev_principles_page.dart に `_devLessons2Section()` (Pink #EC4899) 追加
+- **WBS-SYNC 履行**: migration `20260420010000` で本日達成 10 タスク追加 + 既存 3 タスク 100% 化
+- 累計: 動画 2 シリーズ × 5 variant = 10 YouTube unlisted (計 17:41)
+
+### Philosophy Alignment (Windowsアプリ版#129)
+
+- 主要実装: 動画 #2 完全自動化 (パイプライン再現性証明) + WBS-SYNC 初履行
+- 該当原則: 5 (商品=動画教材) + 8 (KPI=パイプライン再現性) + 9 (ウェルビーイング=自動化恩恵)
+- 整合性スコア: 9/9 ✅
+- 理念的貢献: 動画自動化が「再現可能な資産」になった (Win#125 = 確立 / Win#129 = 再現で証明)
+- 懸念: なし
+
