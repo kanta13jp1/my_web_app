@@ -1,7 +1,7 @@
 ---
 title: "7 Principles for Safe, Fast AI Feature Development — Distilled from Real Production Incidents"
 tags: AI,Flutter,buildinpublic,architecture,webdev
-published: false
+published: true
 ---
 
 # 7 Principles for Safe, Fast AI Feature Development
