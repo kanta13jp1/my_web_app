@@ -493,6 +493,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/ar-navigation',
       'ARナビページ > 目的地設定・AR経路表示',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'auction-marketplace',
+      'オークションマーケットプレイス',
+      true,
+      '/auction-marketplace',
+      'オークションページ > 出品・入札・落札管理',
+    ),
+    _FnDef(
+      'audio-effects-processor',
+      '音声エフェクトプロセッサー',
+      true,
+      '/audio-effects-processor',
+      '音声エフェクトページ > エフェクト適用・音声加工',
+    ),
+    _FnDef(
+      'bookmark-sync',
+      'ブックマーク同期',
+      true,
+      '/bookmark-sync',
+      'ブックマーク同期ページ > ブックマーク一覧・デバイス間同期',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
