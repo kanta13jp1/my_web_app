@@ -66,12 +66,17 @@ class _AgentDepartmentManagerPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchDepartments,
@@ -81,18 +86,25 @@ class _AgentDepartmentManagerPageState
                   ),
                 )
               : _departments.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.corporate_fare,
-                              size: 64, color: Color(0xFF6366F1)),
-                          const SizedBox(height: 16),
-                          const Text('部署データなし',
-                              style: TextStyle(fontSize: 18)),
-                          const SizedBox(height: 8),
-                          const Text('AIエージェントの部署を管理します',
-                              style: TextStyle(color: Colors.grey)),
+                          Icon(
+                            Icons.corporate_fare,
+                            size: 64,
+                            color: Color(0xFF6366F1),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            '部署データなし',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'AIエージェントの部署を管理します',
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     )
@@ -106,12 +118,16 @@ class _AgentDepartmentManagerPageState
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0xFF6366F1),
-                              child: Icon(Icons.corporate_fare,
-                                  color: Colors.white, size: 20),
+                              child: Icon(
+                                Icons.corporate_fare,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
                             title: Text(
                               dept['name']?.toString() ?? '部署名不明',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               dept['description']?.toString() ?? '',
@@ -121,8 +137,9 @@ class _AgentDepartmentManagerPageState
                             trailing: Text(
                               '${dept['agent_count'] ?? 0}エージェント',
                               style: const TextStyle(
-                                  color: Color(0xFF6366F1),
-                                  fontWeight: FontWeight.w500),
+                                color: Color(0xFF6366F1),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         );

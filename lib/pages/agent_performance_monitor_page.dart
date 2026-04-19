@@ -72,12 +72,17 @@ class _AgentPerformanceMonitorPageState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchMetrics,
@@ -87,18 +92,25 @@ class _AgentPerformanceMonitorPageState
                   ),
                 )
               : _metrics.isEmpty
-                  ? Center(
+                  ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.monitor_heart,
-                              size: 64, color: Color(0xFF6366F1)),
-                          const SizedBox(height: 16),
-                          const Text('メトリクスデータなし',
-                              style: TextStyle(fontSize: 18)),
-                          const SizedBox(height: 8),
-                          const Text('AIエージェントのパフォーマンスを監視します',
-                              style: TextStyle(color: Colors.grey)),
+                          Icon(
+                            Icons.monitor_heart,
+                            size: 64,
+                            color: Color(0xFF6366F1),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'メトリクスデータなし',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'AIエージェントのパフォーマンスを監視します',
+                            style: TextStyle(color: Colors.grey),
+                          ),
                         ],
                       ),
                     )
@@ -117,8 +129,11 @@ class _AgentPerformanceMonitorPageState
                                 CircleAvatar(
                                   backgroundColor:
                                       _scoreColor(score).withAlpha(30),
-                                  child: Icon(Icons.smart_toy,
-                                      color: _scoreColor(score), size: 20),
+                                  child: Icon(
+                                    Icons.smart_toy,
+                                    color: _scoreColor(score),
+                                    size: 20,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -130,12 +145,15 @@ class _AgentPerformanceMonitorPageState
                                         metric['agent_name']?.toString() ??
                                             'エージェント',
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.bold),
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                       Text(
                                         metric['task_type']?.toString() ?? '',
                                         style: const TextStyle(
-                                            color: Colors.grey, fontSize: 12),
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -155,7 +173,9 @@ class _AgentPerformanceMonitorPageState
                                       metric['tasks_completed']?.toString() ??
                                           '0件完了',
                                       style: const TextStyle(
-                                          fontSize: 11, color: Colors.grey),
+                                        fontSize: 11,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),

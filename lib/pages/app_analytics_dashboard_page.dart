@@ -53,9 +53,10 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
               children: [
                 Icon(icon, size: 16, color: color),
                 const SizedBox(width: 6),
-                Text(label,
-                    style:
-                        const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -92,12 +93,17 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          size: 48, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _fetchAnalytics,
@@ -114,7 +120,9 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                       const Text(
                         'アプリ利用状況',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       GridView.count(
@@ -156,7 +164,9 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                         const Text(
                           '人気ページ TOP 5',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         ...(() {
@@ -166,13 +176,17 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                             final page = p as Map<String, dynamic>;
                             return ListTile(
                               dense: true,
-                              leading: const Icon(Icons.web,
-                                  color: Color(0xFF6366F1)),
+                              leading: const Icon(
+                                Icons.web,
+                                color: Color(0xFF6366F1),
+                              ),
                               title: Text(page['path']?.toString() ?? ''),
                               trailing: Text(
-                                  '${page['views'] ?? 0}回',
-                                  style: const TextStyle(
-                                      color: Color(0xFF6366F1))),
+                                '${page['views'] ?? 0}回',
+                                style: const TextStyle(
+                                  color: Color(0xFF6366F1),
+                                ),
+                              ),
                             );
                           }).toList();
                         })(),
