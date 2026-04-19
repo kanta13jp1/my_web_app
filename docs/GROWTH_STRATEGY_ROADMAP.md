@@ -11430,6 +11430,17 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/deploying-flutter-web-to-firebase-hosting-with-github-actions-cicd-2cpl
 - **本日T-1累計**: 24本 (過去最高更新)
 
+### PS版#167 T-1第167-170弾 (2026-04-19)
+- **T-1第167弾**: AIエージェントを「安全に」使うための7原則 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/7-principles-for-using-ai-agents-safely-in-production-a-solo-devs-checklist-1edl
+- **T-1第168弾**: Flutter CIが2288エラーで壊れた話 — dart fix --apply 一発回復 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/flutter-ci-broke-with-2288-errors-how-dart-fix-apply-saved-us-5hdp
+- **T-1第169弾**: 200ページのFlutter Webアプリでデザイントークンを一括適用 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/how-i-applied-design-tokens-across-200-flutter-pages-in-one-commit-c4
+- **T-1第170弾**: Claude Code 3インスタンス並行運用 $20で$200開発 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/running-3-parallel-claude-code-instances-to-get-200-of-dev-work-for-20month-3pmc
+- **本日T-1累計**: 28本 (過去最高更新)
+
 ### 競合モニタリング深掘り (PS版#4 · 2026-04-19)
 
 **調査対象**: Notion / MoneyForward / Slack (3社集中調査)
