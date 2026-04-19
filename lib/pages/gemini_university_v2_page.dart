@@ -765,6 +765,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF1C7C54),
     officialUrl: 'https://www.langchain.com/',
   ),
+  'llamaindex': _ProviderMeta(
+    name: 'LlamaIndex',
+    emoji: '🦙',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://www.llamaindex.ai/',
+  ),
+  'qdrant': _ProviderMeta(
+    name: 'Qdrant',
+    emoji: '🎯',
+    color: const Color(0xFFDC143C),
+    officialUrl: 'https://qdrant.tech/',
+  ),
+  'roboflow': _ProviderMeta(
+    name: 'Roboflow',
+    emoji: '👁️',
+    color: const Color(0xFF6706CE),
+    officialUrl: 'https://roboflow.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1611,6 +1629,36 @@ final Map<String, _Quiz> _quizzes = {
       'ベクターストアから関連ドキュメントを検索して取得する',
       'LLM に送るプロンプトを自動生成する',
       'ドキュメントを適切なサイズに分割する',
+    ],
+    correct: 1,
+  ),
+  'llamaindex': _Quiz(
+    question: 'LlamaIndex が LangChain と比べて特に優れている点は？',
+    options: [
+      'チェーン・エージェント構築に特化している',
+      'データ取り込み・インデックス構築に特化しRAG精度が高い',
+      'SNS 投稿の自動生成に特化している',
+      'Python のみ対応で JavaScript は使えない',
+    ],
+    correct: 1,
+  ),
+  'qdrant': _Quiz(
+    question: 'Qdrant が Pinecone に対して持つ最大のアドバンテージは？',
+    options: [
+      'クラウド専用で管理が不要',
+      r'料金が $0.001/クエリと最安値',
+      'Rust 実装 + セルフホスト可能でデータをオンプレに保持できる',
+      'GPT-4 専用に最適化されている',
+    ],
+    correct: 2,
+  ),
+  'roboflow': _Quiz(
+    question: 'Roboflow が提供する「Supervision」ライブラリの主な用途は？',
+    options: [
+      'LLM のプロンプトを監視・改善するツール',
+      'コンピュータビジョンの推論結果を可視化・後処理するユーティリティ',
+      'クラウド GPU の使用量を監視するツール',
+      'アノテーター（人間）の作業を管理するシステム',
     ],
     correct: 1,
   ),
@@ -3707,6 +3755,85 @@ answer = qa.invoke("AI大学の特徴は？")
 ## 料金
 - LangChain: OSS 無料
 - LangSmith: 月 1 万トレース無料 → \$39/月〜
+''',
+  'llamaindex': '''
+# LlamaIndex
+
+LLM アプリ向け**データフレームワーク**。RAG のデータ取り込み・インデックス構築に特化。600+ 統合。
+
+## 特徴
+- **SimpleDirectoryReader** — フォルダ全体を1行で読み込み
+- **高度な検索** — HyDE/SubQuestion/Reranker
+- **LlamaParse** — PDF・PPT を高精度テキスト化 (1,000ページ/日 無料)
+- **LlamaHub** — 600+ ローダー・ツール・エージェント集
+
+## API
+```python
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.llms.anthropic import Anthropic
+from llama_index.core import Settings
+
+Settings.llm = Anthropic(model="claude-sonnet-4-6")
+docs = SimpleDirectoryReader("./data").load_data()
+index = VectorStoreIndex.from_documents(docs)
+response = index.as_query_engine().query("AI大学の特徴は？")
+```
+
+## 料金
+- LlamaIndex OSS: 無料
+- LlamaParse: 1,000ページ/日無料 → \$0.003/ページ
+''',
+  'qdrant': '''
+# Qdrant
+
+**Rust 実装のオープンソース・ベクターデータベース**。セルフホスト可能で Pinecone の有力代替。
+
+## 特徴
+- Docker 1行でセルフホスト (完全無料)
+- ペイロードフィルタリング (任意 JSON メタデータ)
+- 名前付きベクター (テキスト+画像マルチモーダル)
+- 量子化でメモリ最大 97% 削減
+
+## API
+```python
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+
+client = QdrantClient(host="localhost", port=6333)
+client.recreate_collection("docs", vectors_config=VectorParams(size=1536, distance=Distance.COSINE))
+client.upsert("docs", points=[PointStruct(id=1, vector=emb, payload={"text": "..."})])
+results = client.search("docs", query_vector=query_emb, limit=5)
+```
+
+## 料金
+- セルフホスト: 完全無料
+- Qdrant Cloud 無料枠: 1GB RAM 永久無料
+''',
+  'roboflow': '''
+# Roboflow
+
+**コンピュータビジョン AI** の構築・デプロイ統合プラットフォーム。YOLO/SAM/Grounding DINO 統合。
+
+## 特徴
+- アノテーション → データ拡張 → 学習 → デプロイを一気通貫
+- Roboflow Universe: 100,000+ 公開 CV データセット
+- Supervision ライブラリで推論結果を可視化
+- iOS/Android/Edge デバイスへのエクスポート対応
+
+## API
+```python
+from roboflow import Roboflow
+from ultralytics import YOLO
+
+rf = Roboflow(api_key="KEY")
+dataset = rf.workspace("ws").project("proj").version(1).download("yolov8")
+model = YOLO("yolov8n.pt")
+model.train(data=f"{dataset.location}/data.yaml", epochs=100)
+```
+
+## 料金
+- Free: 3プロジェクト・1,000枚/月
+- Starter: \$249/月
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)

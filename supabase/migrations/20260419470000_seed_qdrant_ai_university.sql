@@ -1,0 +1,28 @@
+-- PS版#3 Session 8: Qdrant — オープンソースのベクターデータベース
+INSERT INTO ai_university_content (provider, category, title, content, published_at)
+VALUES
+(
+  'qdrant',
+  'overview',
+  'Qdrant — オープンソースのハイパフォーマンス・ベクターデータベース',
+  E'## Qdrant とは\n\nQdrant (クアドラント) は 2021 年設立のベルリン発スタートアップ。\n**Rust で書かれた高性能オープンソース・ベクターデータベース**として、\nPinecone の有力な対抗馬。セルフホスト可能なため、データプライバシーが重要な\nエンタープライズから特に支持される。\n\nクラウドマネージドサービス (Qdrant Cloud) も提供。累計調達 $28M+。\n\n## Pinecone との比較\n\n| 観点 | Qdrant | Pinecone |\n|------|--------|----------|\n| **OSS** | ✅ Apache 2.0 | ❌ クローズドソース |\n| **セルフホスト** | ✅ Docker 1行 | ❌ クラウド専用 |\n| **性能** | ◎ Rust 実装で最高速 | ○ 商用チューニング |\n| **フィルタリング** | ◎ 複雑なペイロードフィルタ | ○ メタデータフィルタ |\n| **料金** | 無料 (セルフ) / 従量 (Cloud) | 従量課金 |\n\n## 主な特徴\n\n- **Rust 実装**: C/C++ に匹敵する速度・低メモリ消費\n- **ペイロードフィルタリング**: JSON 形式の任意メタデータで高速フィルタ\n- **スパースベクター対応**: BM25 などのスパース検索もネイティブサポート\n- **名前付きベクター**: 1ドキュメントに複数のベクター (テキスト+画像など) を格納\n- **量子化**: スカラー・プロダクト量子化でメモリ大幅削減\n- **分散クラスタ**: Raft コンセンサスで耐障害性\n\n## 活用事例\n\n- **RAG チャットボット**: セルフホストでデータを外部に出さない\n- **e コマース検索**: 画像+テキストのマルチモーダル検索\n- **推薦エンジン**: ユーザー嗜好ベクターで高速近傍探索\n- **コード検索**: GitHub リポジトリをベクター化してセマンティック検索',
+  '2026-04-20'
+),
+(
+  'qdrant',
+  'models',
+  'Qdrant 機能・コレクション設定一覧',
+  E'## コアコンセプト\n\n### Collections (コレクション)\n```python\nfrom qdrant_client.models import VectorParams, Distance\n\nclient.create_collection(\n    collection_name="ai_university",\n    vectors_config=VectorParams(\n        size=1536,        # embedding の次元数\n        distance=Distance.COSINE\n    )\n)\n```\n\n### Points (ベクター + ペイロード)\n```python\nfrom qdrant_client.models import PointStruct\npoints = [\n    PointStruct(\n        id=1,\n        vector=[0.1, 0.2, ...],\n        payload={\"provider\": \"anthropic\", \"category\": \"overview\", \"lang\": \"ja\"}\n    )\n]\nclient.upsert(collection_name="ai_university", points=points)\n```\n\n## 高度な検索機能\n\n### ペイロードフィルタリング\n```python\nfrom qdrant_client.models import Filter, FieldCondition, MatchValue\n\nresults = client.search(\n    collection_name="ai_university",\n    query_vector=query_embedding,\n    query_filter=Filter(\n        must=[\n            FieldCondition(key="category", match=MatchValue(value="api")),\n            FieldCondition(key="lang", match=MatchValue(value="ja"))\n        ]\n    ),\n    limit=5\n)\n```\n\n### 名前付きベクター (Multimodal)\n```python\nclient.create_collection(\n    collection_name="multimodal",\n    vectors_config={\n        "text": VectorParams(size=1536, distance=Distance.COSINE),\n        "image": VectorParams(size=512, distance=Distance.DOT)\n    }\n)\n```\n\n## 量子化 (メモリ最適化)\n\n| 手法 | メモリ削減 | 精度低下 | 推奨用途 |\n|------|-----------|---------|----------|\n| スカラー量子化 | ~75% 削減 | 軽微 | 本番推奨 |\n| プロダクト量子化 | ~97% 削減 | 中程度 | 大規模ストレージ |\n\n## 料金\n\n- **セルフホスト**: 完全無料\n- **Qdrant Cloud 無料枠**: 1GB RAM / 0.5 vCPU / 永久無料\n- **Qdrant Cloud 有料**: 従量課金 ($0.028/1M ベクター挿入〜)',
+  '2026-04-20'
+),
+(
+  'qdrant',
+  'api',
+  'Qdrant 使い方',
+  E'## インストール\n\n```bash\n# Docker でセルフホスト (推奨・ゼロコスト)\ndocker run -p 6333:6333 -p 6334:6334 \\\n  -v $(pwd)/qdrant_storage:/qdrant/storage \\\n  qdrant/qdrant\n\n# Python クライアント\npip install qdrant-client openai\n```\n\n## 基本的な RAG パイプライン\n\n```python\nfrom qdrant_client import QdrantClient\nfrom qdrant_client.models import Distance, VectorParams, PointStruct\nfrom openai import OpenAI\nimport uuid\n\n# ローカル Qdrant に接続 (セルフホスト)\nclient = QdrantClient(host="localhost", port=6333)\nopenai_client = OpenAI()\n\n# コレクション作成\nclient.recreate_collection(\n    collection_name="docs",\n    vectors_config=VectorParams(size=1536, distance=Distance.COSINE)\n)\n\n# ドキュメントをベクター化して挿入\ndocs = [\n    {\"text\": "Anthropic は Claude を開発する AI 安全性企業", "source": "ai_facts"},\n    {\"text\": "Qdrant は Rust 製の高速ベクターデータベース", "source": "db_facts"},\n]\n\npoints = []\nfor doc in docs:\n    embedding = openai_client.embeddings.create(\n        input=doc["text"], model="text-embedding-3-small"\n    ).data[0].embedding\n    points.append(PointStruct(\n        id=str(uuid.uuid4()),  # UUID ID サポート\n        vector=embedding,\n        payload={\"text\": doc["text"], \"source\": doc["source"]}\n    ))\n\nclient.upsert(collection_name="docs", points=points)\n\n# セマンティック検索\nquery = "ベクターDBで一番速いのは？"\nquery_emb = openai_client.embeddings.create(\n    input=query, model="text-embedding-3-small"\n).data[0].embedding\n\nresults = client.search(\n    collection_name="docs",\n    query_vector=query_emb,\n    limit=3,\n    with_payload=True\n)\n\nfor r in results:\n    print(f"Score: {r.score:.3f} — {r.payload[\'text\']}")\n```\n\n## Qdrant Cloud 接続 (マネージド)\n\n```python\nclient = QdrantClient(\n    url="https://your-cluster.cloud.qdrant.io",\n    api_key="YOUR_QDRANT_API_KEY"\n)\n```\n\n## LangChain / LlamaIndex との統合\n\n```python\n# LangChain\nfrom langchain_qdrant import Qdrant\nfrom langchain_openai import OpenAIEmbeddings\n\nvectorstore = Qdrant.from_documents(\n    documents=docs,\n    embedding=OpenAIEmbeddings(),\n    url="http://localhost:6333",\n    collection_name="ai_university"\n)\n\n# LlamaIndex\nfrom llama_index.vector_stores.qdrant import QdrantVectorStore\nimport qdrant_client\n\nqclient = qdrant_client.QdrantClient(location=":memory:")  # インメモリ\nvector_store = QdrantVectorStore(client=qclient, collection_name="ai_univ")\n```\n\n## 活用シーン\n\n- **AI 大学 RAG セルフホスト**: Docker + Qdrant でプロバイダー情報をベクター化\n- **コスト 0 の検索**: Supabase pgvector より高速なベクター検索をゼロコストで実現\n- **Flutter アプリとの統合**: EF 経由で Qdrant API に問い合わせて高品質検索',
+  '2026-04-20'
+)
+ON CONFLICT (provider, category) DO UPDATE SET
+  title = EXCLUDED.title,
+  content = EXCLUDED.content,
+  published_at = EXCLUDED.published_at;
