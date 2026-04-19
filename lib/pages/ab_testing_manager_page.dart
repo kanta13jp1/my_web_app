@@ -198,8 +198,9 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor:
-                                  status == 'running' ? Colors.green : Colors.grey,
+                              backgroundColor: status == 'running'
+                                  ? Colors.green
+                                  : Colors.grey,
                               child: const Icon(
                                 Icons.science,
                                 color: Colors.white,
@@ -212,8 +213,9 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                             ),
                             trailing: Chip(
                               label: Text(status),
-                              backgroundColor:
-                                  status == 'running' ? Colors.green.withAlpha(30) : null,
+                              backgroundColor: status == 'running'
+                                  ? Colors.green.withAlpha(30)
+                                  : null,
                             ),
                           ),
                         );
