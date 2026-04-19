@@ -11907,3 +11907,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **該当原則**: 5 (商品=ユーザー価値) / 8 (KPI=昨日の自分) / 2 (ミッション駆動)
 - **整合性スコア**: 8/9 ✅
 - **理念的貢献**: 音声・映像 AI プロバイダー追加でユーザーの学習範囲拡大
+
+### instance-ps5 セッション 2 (2026-04-19 21:06 JST)
+- **CI 障害対応 (on-call bug fix)**:
+  - #535/#536: `require_trailing_commas` エラー → 先行コミット (ee4111ab/655bc2e7) で解決済み確認 → close
+  - #537: `schema_migrations` PK重複エラー — `20260419220000_seed_hyperbolic` と `20260419220000_add_ai_feedback_source_guitar` が同タイムスタンプ衝突 → seed_hyperbolic を `20260419340000` にリネーム → commit d1a59653 → close
+- **本セッション修正合計**: CI issue 3件クローズ (累計 #513/#522-524/#526-528/#530-534/#535-537 = 全12件)
+- **再発防止**: migration 作成前に `ls supabase/migrations/ | grep YYYYMMDD | sort` で既存タイムスタンプ確認を必須化
