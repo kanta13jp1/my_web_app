@@ -120,7 +120,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   const SizedBox(height: 12),
                   Text(
                     '過去に同じ決意をした回数: $pastAttempts 回',
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
                   ),
                   Slider(
                     value: pastAttempts.toDouble(),
@@ -281,7 +281,10 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewCheckDialog,
         backgroundColor: const Color(0xFF6366F1),
-        label: const Text('決意をチェック', style: TextStyle(color: Colors.white)),
+        label: const Text(
+          '決意をチェック',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
         icon: const Icon(Icons.psychology, color: Colors.white),
       ),
       body: _loading
@@ -340,6 +343,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                         fontSize: 12,
                         color: verdictColor,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -349,6 +353,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -387,6 +392,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -421,6 +427,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
                 style: TextStyle(
                   fontSize: 10,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -443,6 +450,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
           fontSize: 11,
           color: color,
           fontWeight: FontWeight.w500,
+          height: 1.5,
         ),
       ),
     );
@@ -465,6 +473,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -474,6 +483,7 @@ class _DecisionCheckPageState extends State<DecisionCheckPage> {
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],

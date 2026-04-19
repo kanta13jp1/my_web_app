@@ -91,7 +91,10 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('ブレインダンプ', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'ブレインダンプ',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
@@ -108,16 +111,21 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                   children: [
                     const Text(
                       '頭の中を全部書き出す',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _textCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white, height: 1.5),
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: 'タスク・アイデア・心配事・なんでも...',
-                        hintStyle: const TextStyle(color: Colors.white38),
+                        hintStyle:
+                            const TextStyle(color: Colors.white38, height: 1.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide:
@@ -149,7 +157,10 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                             child: DropdownButton<String>(
                               value: _selectedCategory,
                               dropdownColor: const Color(0xFF1E1E1E),
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                height: 1.5,
+                              ),
                               underline: const SizedBox.shrink(),
                               isExpanded: true,
                               items: _categories
@@ -196,7 +207,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                   ? const Center(
                       child: Text(
                         '思いついたことを書き出してみよう',
-                        style: TextStyle(color: Colors.white38),
+                        style: TextStyle(color: Colors.white38, height: 1.5),
                       ),
                     )
                   : ListView.builder(
@@ -223,6 +234,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                                 decoration: processed
                                     ? TextDecoration.lineThrough
                                     : null,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
@@ -230,6 +242,7 @@ class _BrainDumpPageState extends State<BrainDumpPage> {
                               style: const TextStyle(
                                 color: Color(0xFFFF6B35),
                                 fontSize: 12,
+                                height: 1.5,
                               ),
                             ),
                             trailing: IconButton(

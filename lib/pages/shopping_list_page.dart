@@ -467,6 +467,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -493,7 +494,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             const Text(
               '買い物リストに日用品を追加して\n買い忘れを防ぎましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -518,7 +523,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'よくある日用品を追加',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ),
             Flexible(
@@ -565,7 +574,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           const SizedBox(width: 10),
           Text(
             '🛒 $count件の買い物が必要です',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -655,6 +668,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 color: isPurchased && !needs
                                     ? const Color(0xFF9CA3AF)
                                     : null,
+                                height: 1.5,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -678,6 +692,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                           if (price != null) ...[
@@ -689,6 +704,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -701,6 +717,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                           ],

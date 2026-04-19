@@ -463,20 +463,25 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               ),
               title: Text(
                 name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(typeLabel),
                   if (address.isNotEmpty)
-                    Text(address, style: const TextStyle(fontSize: 12)),
+                    Text(
+                      address,
+                      style: const TextStyle(fontSize: 12, height: 1.5),
+                    ),
                   if (price > 0)
                     Text(
                       '購入価格: ¥${_fmt(price.toDouble())}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF607D8B),
+                        height: 1.5,
                       ),
                     ),
                 ],
@@ -522,6 +527,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -542,7 +548,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
             padding: EdgeInsets.all(12),
             child: Text(
               '物件タブから物件を選択してください',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ),
         Expanded(
@@ -585,6 +591,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                         style: TextStyle(
                           color: isIncome ? Colors.green : Colors.red,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     );
@@ -609,7 +616,11 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         children: [
           const Text(
             'ポートフォリオ概要',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
           _statCard('物件数', '$count件', Icons.home_work, const Color(0xFF009688)),
@@ -682,14 +693,18 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
               children: [
                 Text(
                   label,
-                  style:
-                      const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
                 Text(
                   value,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
+                    height: 1.5,
                   ),
                 ),
               ],

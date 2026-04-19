@@ -89,6 +89,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -97,6 +98,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                   style: const TextStyle(
                     fontSize: 11,
                     color: Color(0xFF707070),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -104,7 +106,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
             const SizedBox(height: 6),
             Text(
               brief['objective']?.toString() ?? '',
-              style: const TextStyle(color: Color(0xFFB0B0B0)),
+              style: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
             ),
             if (brief['nextAction'] != null) ...[
               const SizedBox(height: 4),
@@ -113,6 +115,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                 style: const TextStyle(
                   color: Color(0xFF7986CB),
                   fontSize: 13,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -175,7 +178,10 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                   ? Center(
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Color(0xFFE53935)),
+                        style: const TextStyle(
+                          color: Color(0xFFE53935),
+                          height: 1.5,
+                        ),
                       ),
                     )
                   : SingleChildScrollView(
@@ -190,6 +196,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -202,6 +209,7 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFFFF6B35),
                                 letterSpacing: 1.2,
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -209,7 +217,10 @@ class _GrowthCommandCenterPageState extends State<GrowthCommandCenterPage> {
                           ] else
                             const Text(
                               'データがありません',
-                              style: TextStyle(color: Color(0xFF707070)),
+                              style: TextStyle(
+                                color: Color(0xFF707070),
+                                height: 1.5,
+                              ),
                             ),
                         ],
                       ),

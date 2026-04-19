@@ -147,6 +147,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -246,6 +247,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 16,
+                height: 1.5,
               ),
             ),
           ],
@@ -315,6 +317,7 @@ class _FilterChip extends StatelessWidget {
             color: selected ? Colors.white : null,
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             fontSize: 13,
+            height: 1.5,
           ),
         ),
       ),
@@ -388,6 +391,7 @@ class _NotifTile extends StatelessWidget {
                             fontSize: 10,
                             color: meta.color,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -407,6 +411,7 @@ class _NotifTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -417,6 +422,7 @@ class _NotifTile extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -425,6 +431,7 @@ class _NotifTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -437,6 +444,7 @@ class _NotifTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.primary,
+                        height: 1.5,
                       ),
                     ),
                   ],

@@ -141,7 +141,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
           children: [
             Icon(Icons.pets, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('ペットが登録されていません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              'ペットが登録されていません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -161,10 +164,15 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(emoji, style: const TextStyle(fontSize: 22)),
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 22, height: 1.5),
+              ),
             ),
-            title:
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
             subtitle: Text(
               '$species${breed.isNotEmpty ? " · $breed" : ""}${age > 0 ? " · $age歳" : ""}',
             ),
@@ -178,7 +186,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
   Widget _buildHealthTab() {
     if (_healthLogs.isEmpty) {
       return const Center(
-        child: Text('健康記録がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          '健康記録がありません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     return ListView.builder(
@@ -204,8 +215,11 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 if (weight != null)
                   Text(
@@ -213,6 +227,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
               ],
@@ -226,7 +241,10 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
   Widget _buildVaccinationTab() {
     if (_vaccinations.isEmpty) {
       return const Center(
-        child: Text('ワクチン記録がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          'ワクチン記録がありません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     return ListView.builder(
@@ -261,6 +279,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                           fontSize: 11,
                           color: overdue ? Colors.red : const Color(0xFF9CA3AF),
                           fontWeight: overdue ? FontWeight.bold : null,
+                          height: 1.5,
                         ),
                       ),
                       if (overdue)
@@ -270,6 +289,7 @@ class _PetCareManagerPageState extends State<PetCareManagerPage>
                             fontSize: 10,
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                     ],

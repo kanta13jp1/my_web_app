@@ -115,7 +115,11 @@ class _HealthCoachPageState extends State<HealthCoachPage>
               color: Colors.red.shade50,
               child: Text(
                 _errorMessage!,
-                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           Expanded(
@@ -197,6 +201,7 @@ class _SummaryTab extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 11,
                               color: Colors.black54,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -207,6 +212,7 @@ class _SummaryTab extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -225,7 +231,8 @@ class _SummaryTab extends StatelessWidget {
                   children: [
                     const Text(
                       '今日の目標達成率',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                     ),
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
@@ -242,6 +249,7 @@ class _SummaryTab extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -288,6 +296,7 @@ class _MealsTab extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFF6B35),
+                height: 1.5,
               ),
             ),
           ),
@@ -326,6 +335,7 @@ class _AdviceTab extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade700,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -390,7 +400,11 @@ class _HealthTipCard extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           body,

@@ -358,6 +358,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               fontSize: 12,
               color: tfColor,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
         ),
@@ -366,6 +367,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
           style: TextStyle(
             fontWeight: FontWeight.bold,
             decoration: isCompleted ? TextDecoration.lineThrough : null,
+            height: 1.5,
           ),
         ),
         subtitle: Column(
@@ -386,7 +388,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                   ),
                   child: Text(
                     tfLabel,
-                    style: TextStyle(fontSize: 11, color: tfColor),
+                    style: TextStyle(fontSize: 11, color: tfColor, height: 1.5),
                   ),
                 ),
                 if (deadline != null) ...[
@@ -402,6 +404,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -423,6 +426,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -437,7 +441,8 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                 if (description.isNotEmpty) ...[
                   Text(
                     description,
-                    style: const TextStyle(color: Color(0xFFB0B0B0)),
+                    style:
+                        const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -460,6 +465,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                           decoration: (m['done'] as bool? ?? false)
                               ? TextDecoration.lineThrough
                               : null,
+                          height: 1.5,
                         ),
                       ),
                       onChanged: isCompleted
@@ -491,7 +497,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                         ),
                         label: const Text(
                           'キャンセル',
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: Colors.red, height: 1.5),
                         ),
                         onPressed: () => _updateStatus(goalId, 'cancelled'),
                       ),
@@ -545,7 +551,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -585,6 +591,7 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
               isCompleted ? '完了した目標はありません' : 'アクティブな目標がありません',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             if (!isCompleted) ...[

@@ -378,6 +378,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                             decoration:
                                 done ? TextDecoration.lineThrough : null,
                             color: done ? const Color(0xFF9CA3AF) : null,
+                            height: 1.5,
                           ),
                         ),
                         onTap: () => _toggleSchedule(s.$1),
@@ -424,7 +425,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 : isActive
                     ? '🔒'
                     : '🏛️',
-            style: const TextStyle(fontSize: 40),
+            style: const TextStyle(fontSize: 40, height: 1.5),
           ),
           const SizedBox(height: 8),
           Text(
@@ -437,6 +438,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w900,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -447,6 +449,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 4),
@@ -455,6 +458,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 fontSize: 12,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 10),
@@ -479,6 +483,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 fontSize: 12,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 4),
@@ -502,7 +507,11 @@ class _PrisonModePageState extends State<PrisonModePage> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -545,6 +554,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       decoration: isPaidOff ? TextDecoration.lineThrough : null,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -562,6 +572,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 fontSize: 12,
                 color: isPaidOff ? Colors.green : Colors.red.shade700,
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 6),
