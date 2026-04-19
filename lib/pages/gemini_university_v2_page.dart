@@ -651,6 +651,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFEC4899),
     officialUrl: 'https://magic.dev/',
   ),
+  'jina_ai': _ProviderMeta(
+    name: 'Jina AI',
+    emoji: '🔍',
+    color: const Color(0xFF10B981),
+    officialUrl: 'https://jina.ai/',
+  ),
+  'stepfun': _ProviderMeta(
+    name: 'StepFun (阶跃星辰)',
+    emoji: '🚀',
+    color: const Color(0xFF6366F1),
+    officialUrl: 'https://www.stepfun.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1307,6 +1319,26 @@ final Map<String, _Quiz> _quizzes = {
       '128K token',
       '100M token (≈ 10M 行のコード or 750 冊の小説)',
       '無制限 (ストリーミング)',
+    ],
+    correct: 2,
+  ),
+  'jina_ai': _Quiz(
+    question: 'Jina AI の jina-embeddings-v3 の料金は？',
+    options: [
+      '\$0.002 / 1M tokens',
+      '\$0.02 / 1M tokens',
+      '\$0.20 / 1M tokens',
+      '\$2.00 / 1M tokens',
+    ],
+    correct: 1,
+  ),
+  'stepfun': _Quiz(
+    question: 'Step 3.5 Flash の MoE アーキテクチャで、1トークンあたり何パラメータが活性化する？',
+    options: [
+      '196B（全体）',
+      '70B',
+      '11B',
+      '7B',
     ],
     correct: 2,
   ),
@@ -3008,6 +3040,50 @@ AI/ML 特化 **GPU クラウド** 老舗 (2012〜)。元々は研究者向けに
 ## 注意
 - production API は未公開 (research preview のみ)
 - 累計調達 \$320M / 公開待機状態
+''',
+  'jina_ai': '''
+# Jina AI
+
+ベルリン発の**検索基盤（Search Foundation）**特化 AI スタートアップ。RAG パイプラインに必須の embeddings・reranking・web reader API を提供。
+
+## 主要モデル
+- **jina-embeddings-v3**: \$0.02 / 1M tokens、8192 token context、100言語以上対応
+- **jina-reranker-v3**: 0.6B パラメータ、多言語高精度リランキング
+- **jina-reader**: URL → Markdown 変換 API（無料）
+
+## 料金
+- Free: 100 RPM / 100K TPM（即試用可能）
+- Paid: \$0.02 / 1M tokens
+
+## 活用
+- RAG の精度向上（embed + rerank の組み合わせ）
+- ベクトル DB（Pinecone / Weaviate / Qdrant）連携
+- 同一 API キーで全サービス利用可能
+''',
+  'stepfun': '''
+# StepFun (阶跃星辰)
+
+元 Microsoft VP 創業の上海発スタートアップ。**Sparse MoE (196B / 11B 活性化)** × **256K context** × **OpenAI 互換 API** の組み合わせで高性能・低コストを実現。
+
+## Step 3.5 Flash（推奨）
+- MoE: 196B 総パラメータ、11B のみ活性化
+- コンテキスト: 256K tokens
+- 料金: \$0.10 / 1M input、\$0.30 / 1M output
+- Tool Calling ネイティブ対応
+- リリース: 2026年1月29日
+
+## OpenAI 互換
+```python
+client = OpenAI(
+  api_key="YOUR_KEY",
+  base_url="https://api.stepfun.com/v1"
+)
+```
+
+## 強み
+- コーディング・数学・推論でフロンティア水準
+- OpenAI からの移行コストがほぼゼロ
+- マルチモーダル（テキスト・画像・動画・音楽）
 ''',
 };
 
