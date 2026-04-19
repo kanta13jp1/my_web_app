@@ -91,6 +91,9 @@ def http_get(url: str, timeout: int = 15) -> Optional[str]:
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             raw = resp.read()
+            # NAR ページは常に EUC-JP — UTF-8 で誤デコードする前に確定デコード
+            if "nar.netkeiba.com" in url:
+                return raw.decode("euc-jp", errors="replace")
             # その他のページ: Content-Type → meta charset → フォールバック
             charset = resp.headers.get_content_charset()
             if not charset:
