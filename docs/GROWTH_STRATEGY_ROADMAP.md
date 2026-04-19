@@ -11169,3 +11169,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/using-groq-llama-33-70b-for-tag-suggestions-low-latency-ai-routing-patterns-8d5
 - **orphan branch**: 24621694325 → merge + delete ✅
 - **Qiita バックログ**: #135-#143 (9本) → UTC 15:00 (JST 00:00) 以降 dispatch
+
+### VSCode版#111 セッション (2026-04-19)
+- **cross-instance-pr**: AI大学リマインダーバッチ設定 → PS版依頼 (send_study_reminders action確認済み)
+- **gemini_university_v2_page.dart DESIGN.md非color違反修正** (design-skills subagent実施)
+  - `height: 1.4` → `1.7` (heading text line-height)
+  - `spacing/runSpacing: 6` → `8` (4px grid)
+  - `SizedBox(height: 14)` → `16` (4px grid)
+  - `SizedBox(width/height: 6)` → `8` (4px grid)
+  - `vertical: 7` → `8` (chip padding)
+  - `_mdStyle` h1/h2/h3 `height: 1.4` 追加
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: 他ページ typography/spacing確認 / LP DESIGN.md非color review / wrap-up
