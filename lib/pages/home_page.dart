@@ -55,6 +55,7 @@ import '../widgets/home_tier/system_fixed_features_list.dart';
 import '../widgets/home_tier/user_pinned_features_list.dart';
 import '../widgets/home_tier/new_features_list.dart';
 import '../widgets/home_tier/ai_recommended_features_list.dart';
+import '../utils/feature_tap_logger.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime Function()? nowProvider;
@@ -1484,6 +1485,7 @@ abstinence_slip_details: $slipDetailsText
     Future<dynamic> Function() action,
   ) async {
     await HomeToolUsageService.recordToolUse(toolId);
+    unawaited(recordFeatureTap(toolId, toolId));
     await action();
     if (!mounted) return;
     setState(() {
