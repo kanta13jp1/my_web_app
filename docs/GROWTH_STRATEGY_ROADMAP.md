@@ -11339,3 +11339,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第155弾**: Claude Code 5インスタンス並行Flutter開発 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/running-5-claude-code-instances-in-parallel-on-one-flutter-app-nmc
 - **本日T-1累計**: 13本 (過去最高更新)
+
+## VSCode版#118 (2026-04-19)
+- DESIGN.md non-color fixes: agent_hub_page + activity_feed_page
+  - agent_hub: +height 1.5/1.7/1.4 to 5 TextStyles, BorderRadius 10→8
+  - activity_feed: +height 1.7/1.6 to 3 TextStyles, BorderRadius 10→8
+  - flutter analyze 0 errors, dart format 0 changes
