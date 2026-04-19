@@ -783,6 +783,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6706CE),
     officialUrl: 'https://roboflow.com/',
   ),
+  'lightning_ai': _ProviderMeta(
+    name: 'Lightning AI',
+    emoji: '⚡',
+    color: const Color(0xFF792EE5),
+    officialUrl: 'https://lightning.ai/',
+  ),
+  'weave': _ProviderMeta(
+    name: 'W&B Weave',
+    emoji: '🧵',
+    color: const Color(0xFFFCB833),
+    officialUrl: 'https://weave.wandb.ai/',
+  ),
+  'oxen_ai': _ProviderMeta(
+    name: 'Oxen AI',
+    emoji: '🐂',
+    color: const Color(0xFF8B4513),
+    officialUrl: 'https://oxen.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1659,6 +1677,36 @@ final Map<String, _Quiz> _quizzes = {
       'コンピュータビジョンの推論結果を可視化・後処理するユーティリティ',
       'クラウド GPU の使用量を監視するツール',
       'アノテーター（人間）の作業を管理するシステム',
+    ],
+    correct: 1,
+  ),
+  'lightning_ai': _Quiz(
+    question: 'PyTorch Lightning の主な役割は？',
+    options: [
+      'クラウドへのモデルデプロイを自動化するツール',
+      'GPU/TPU 学習のボイラープレートを排除してコードを整理するフレームワーク',
+      'ハイパーパラメータを自動チューニングするツール',
+      'モデルの推論を高速化する量子化ライブラリ',
+    ],
+    correct: 1,
+  ),
+  'weave': _Quiz(
+    question: 'W&B Weave で @weave.op() デコレータをつけると何が起きる？',
+    options: [
+      '関数が GPU で並列実行される',
+      '関数の呼び出し・入出力・レイテンシが自動トレースされてダッシュボードに記録される',
+      '関数がキャッシュされて2回目以降は高速化される',
+      'プロンプトが自動最適化される',
+    ],
+    correct: 1,
+  ),
+  'oxen_ai': _Quiz(
+    question: 'Oxen AI が解決する「Git の限界」とは？',
+    options: [
+      'コードのバージョン管理ができない',
+      '大容量の ML データ (画像/CSV/Parquet) を効率的にバージョン管理できない',
+      'クラウドへのデプロイが複雑',
+      'チームコラボレーション機能がない',
     ],
     correct: 1,
   ),
@@ -3834,6 +3882,95 @@ model.train(data=f"{dataset.location}/data.yaml", epochs=100)
 ## 料金
 - Free: 3プロジェクト・1,000枚/月
 - Starter: \$249/月
+''',
+  'lightning_ai': '''
+# Lightning AI
+
+**PyTorch Lightning** 開発チームが作るクラウド AI 開発プラットフォーム。ローカル↔クラウドをシームレスに。
+
+## 特徴
+- GPU/TPU 学習のボイラープレートを完全排除
+- Lightning Fabric: 既存 PyTorch コードを2行でマルチGPU化
+- Lightning Studios: クラウド VS Code + GPU を1クリック起動
+- Lit-GPT: LLM ファインチューニングのリファレンス実装
+
+## API
+```python
+import lightning as L
+
+class LitModel(L.LightningModule):
+    def training_step(self, batch, batch_idx):
+        loss = self.model(batch)
+        self.log("train_loss", loss)
+        return loss
+
+trainer = L.Trainer(max_epochs=10, accelerator="auto", devices="auto")
+trainer.fit(model, dataloader)
+```
+
+## 料金
+- Free: CPU Studio 無料・GPU 10時間/月
+- Pro: \$39/月 (GPU 100時間)
+''',
+  'weave': '''
+# W&B Weave
+
+W&B の**LLM オブザーバビリティ**ツール。LLM チェーン・エージェントの動作を完全可視化。
+
+## 特徴
+- @weave.op() デコレータで任意関数を自動トレース
+- Evaluations: カスタムスコアラーでモデル出力品質を数値化
+- LangChain/LlamaIndex/Anthropic/OpenAI すべて対応
+- W&B ダッシュボードと統合 (実験管理との連携)
+
+## API
+```python
+import weave
+from anthropic import Anthropic
+
+weave.init("ai-university")
+client = Anthropic()
+
+@weave.op()
+def ask_claude(question: str) -> str:
+    response = client.messages.create(
+        model="claude-sonnet-4-6", max_tokens=1024,
+        messages=[{"role": "user", "content": question}]
+    )
+    return response.content[0].text
+
+answer = ask_claude("RAGとは？")
+# → Weave ダッシュボードでトレース確認
+```
+
+## 料金
+- Free: 月 100GB・チーム3人
+- Pro: \$50/人/月〜
+''',
+  'oxen_ai': '''
+# Oxen AI
+
+**ML データの Git**。画像/CSV/Parquet など大容量 ML データセットをバージョン管理。
+
+## 特徴
+- Git 同様のコマンド (clone/push/pull/branch/merge)
+- 部分クローン: 必要ファイルのみ取得
+- CSV/Parquet の行レベル diff 可視化
+- Oxen Hub: 100,000+ 公開データセット
+
+## API
+```bash
+oxen init && oxen remote add origin https://hub.oxen.ai/org/dataset
+oxen add train.csv images/
+oxen commit -m "v1.0 initial dataset"
+oxen push origin main
+oxen diff train.csv  # 行レベルの変更差分を確認
+```
+
+## 料金
+- OSS CLI: 完全無料
+- Oxen Hub 無料: 10GB
+- Pro: \$15/月 (100GB)
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
