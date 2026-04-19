@@ -361,6 +361,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/voice-memo',
       '音声メモページ > 録音・文字起こし・一覧表示',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'ab-testing-manager',
+      'A/Bテスト管理',
+      true,
+      '/ab-testing-manager',
+      'A/Bテスト管理ページ > テスト作成・結果確認',
+    ),
+    _FnDef(
+      'habit-tracker',
+      '習慣トラッカー',
+      true,
+      '/habit-tracker',
+      '習慣トラッカーページ > 習慣追加・チェックイン・ストリーク確認',
+    ),
+    _FnDef(
+      'social-media-scheduler',
+      'SNS投稿スケジューラー',
+      true,
+      '/social-media-scheduler',
+      'SNSスケジューラーページ > 投稿予約・プラットフォーム選択',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
