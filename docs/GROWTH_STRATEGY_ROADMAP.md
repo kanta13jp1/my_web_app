@@ -11579,13 +11579,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ---
 
-### PS版#6 horse-racing バッチ最適化 Session 6 (2026-04-19 22:05)
-- **遷移 run 24628893253 確認** (11min53sec):
-  - 42件の文字化けレコード [CLEAN] 削除 → NAR 56レース/535頭 EUC-JPで再登録 ✅
-  - fetch_horse_histories: `[DONE] 0頭更新, 535頭スキップ (404済み)` (4min45sec / no sleep)
-  - 535頭全員 `prev_history_fetched=true` に batch PATCH 済み
-- **次回 run 14:00 UTC (cron) で最終確認予定**:
-  - 期待: 文字化け CLEAN = 0件 / 新規登録 = 0頭 / fetch_horse_histories = ~0秒
+### PS版#6 horse-racing バッチ最適化 Session 6 (2026-04-19 23:20) ✅ **完了**
+- **最終確認 run 24630256000 (3分)** — 全指標ゼロ達成:
+  - 文字化け CLEAN: **0件** (EUC-JP ループ完全停止) ✅
+  - 新規登録: `[DONE] JRA: 0レース/0頭  NAR: 0レース/0頭` ✅
+  - fetch_horse_histories: `[DONE] 0頭更新, 0頭スキップ` (即完了) ✅
+  - **合計 ~3分 (baseline 36分 → 92%削減)**
+- 副作用修正: deploy-prod migration `230002` タイムスタンプ衝突 + `get-public-memo-preview` 欠損 EF 除去
+- **遷移 run 24628893253** (11min53sec): 42件 CLEAN + 535頭 EUC-JP 再登録
 
 ### PS版#6 horse-racing バッチ最適化 Session 5 (2026-04-19 20:15)
 - **根本原因特定 (2段階目)**: NAR EUC-JP 文字化けループ — 毎時 56 レース削除→再挿入→535 頭 prev_history_fetched=false
