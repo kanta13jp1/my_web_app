@@ -12136,6 +12136,22 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 理念的貢献: 自動投稿の暴走リスク (Qiita 429 / 自己返信ループ Win#98) を workflow レベルで事前遮断 = 無人運転の資産化
 - 懸念: なし (dry_run で全 gate スキップ可 — 開発時影響なし)
 
+### Rule 17 WF health check (2026-04-20, PS版#1)
+
+- **deploy-prod: 7 連続 failure** 原因特定 — `lib/pages/access_control_page.dart:151` の `===` は Dart syntax error ではなく **`git stash pop` 未解決 conflict marker** (`<<<<<<< Updated upstream` / `=======` / `>>>>>>> Stashed changes`)
+- **Grep で 8 ファイル検出**: `access_control_page.dart` (4 blocks) / `workflow_templates_page.dart` / `user_manual_page.dart` / `support_tickets_page.dart` / `cmo_page.dart` / `bookmark_folders_page.dart` / `ai_assistant_chat_page.dart` (2 blocks) / `agent_performance_monitor_page.dart` (3 blocks) = 計 **15 blocks**
+- **解決方針**: 両側セマンティック同一 (単なる改行差) → `Stashed changes` 側 (single-line) を採用 → `dart format` で最終正規化
+- **Python regex batch resolver**: `re.DOTALL` で conflict block 捕獲 → `group(2)` (Stashed 側) で置換 → 1 コマンドで 7 ファイル一括処理
+- **flutter analyze**: 8 ファイル対象 → `No issues found (192s)` ✅
+- **commit**: `27a67990` → push `30b86467` (ps-main → origin/main)
+- **教訓**: `git stash pop` の conflict は静かに残る → 次回 dart 編集で syntax error 顕在化 → deploy-prod 連鎖失敗。**stash 禁止ルール** (WORKDIR-ISOLATION) の補強例
+
+### Philosophy Alignment (PS版#1 Rule17)
+
+- 主要実装: 8 ファイル conflict marker 解消 + dart format + analyze 0 エラー → deploy-prod 復旧
+- 該当原則: 7 (負債=CI rot 削減) + 6 (時間=7連続 deploy 失敗の停止) + 4 (人事=開発チームが安心して push できる土台)
+- 整合性スコア: 8/9 ✅
+
 ### PS版#3 Session 8 (2026-04-20 04:15 JST)
 - **AI大学 3社追加** (LlamaIndex / Qdrant / Roboflow) → **122社**
   - LlamaIndex: RAGデータフレームワーク (LangChain補完・データ取込特化・LlamaParse)
