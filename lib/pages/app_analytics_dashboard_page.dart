@@ -55,7 +55,11 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                 const SizedBox(width: 6),
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -66,6 +70,7 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
           ],
@@ -102,7 +107,7 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -122,6 +127,7 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -166,6 +172,7 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -185,6 +192,7 @@ class _AppAnalyticsDashboardPageState extends State<AppAnalyticsDashboardPage> {
                                 '${page['views'] ?? 0}回',
                                 style: const TextStyle(
                                   color: Color(0xFF6366F1),
+                                  height: 1.5,
                                 ),
                               ),
                             );

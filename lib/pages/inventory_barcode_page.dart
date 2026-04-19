@@ -122,7 +122,10 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
           children: [
             Icon(Icons.inventory_2, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('商品が登録されていません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '商品が登録されていません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -157,12 +160,14 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
                     fontWeight: FontWeight.bold,
                     color: low ? Colors.red : null,
                     fontSize: 16,
+                    height: 1.5,
                   ),
                 ),
                 if (low)
                   const Text(
                     '在庫不足',
-                    style: TextStyle(fontSize: 10, color: Colors.red),
+                    style:
+                        TextStyle(fontSize: 10, color: Colors.red, height: 1.5),
                   ),
               ],
             ),
@@ -175,7 +180,10 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
   Widget _buildMovementsTab() {
     if (_movements.isEmpty) {
       return const Center(
-        child: Text('入出庫記録がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          '入出庫記録がありません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     return ListView.builder(
@@ -203,6 +211,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
                 color: isIn ? Colors.green : Colors.red,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                height: 1.5,
               ),
             ),
           ),

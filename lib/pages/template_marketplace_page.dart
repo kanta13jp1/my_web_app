@@ -282,6 +282,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
                       ? Colors.white
                       : (isDark ? Colors.white70 : Colors.black87),
                   fontSize: 13,
+                  height: 1.5,
                 ),
               ),
             );
@@ -328,6 +329,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: isDark ? Colors.white : const Color(0xFF1E293B),
+            height: 1.5,
           ),
         ),
         subtitle: Text(
@@ -335,6 +337,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           style: TextStyle(
             fontSize: 12,
             color: isDark ? Colors.white54 : const Color(0xFF757575),
+            height: 1.5,
           ),
         ),
         trailing: Container(
@@ -345,7 +348,7 @@ class _TemplateMarketplacePageState extends State<TemplateMarketplacePage> {
           ),
           child: Text(
             t.category,
-            style: TextStyle(fontSize: 10, color: t.color),
+            style: TextStyle(fontSize: 10, color: t.color, height: 1.5),
           ),
         ),
         onTap: () => _useTemplate(context, t),

@@ -77,7 +77,11 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
           children: [
             const Text(
               'テキストを入力してタグ・カテゴリを自動提案 (Groq llama-3.3-70b・無料・超高速)',
-              style: TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -123,14 +127,18 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
+                  style: const TextStyle(color: Colors.red, height: 1.5),
                 ),
               ),
             if (_suggestion != null) ...[
               if (_suggestion!.tags.isNotEmpty) ...[
                 const Text(
                   '提案されたタグ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -150,7 +158,11 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
               if (_suggestion!.category.isNotEmpty) ...[
                 const Text(
                   'メインカテゴリ',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -170,6 +182,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF3D5AFE),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -178,7 +191,11 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
               if (_suggestion!.reason.isNotEmpty) ...[
                 const Text(
                   'なぜこのタグ?',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(

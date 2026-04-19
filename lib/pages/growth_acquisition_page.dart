@@ -86,7 +86,7 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -116,7 +116,11 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
               children: [
                 const Text(
                   '獲得サマリー (30日)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _summaryRow('総タッチ数', '${summary['totalTouches'] ?? 0}'),
@@ -132,7 +136,8 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
         const SizedBox(height: 16),
         const Text(
           'タッチポイント別',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style:
+              TextStyle(fontSize: 15, fontWeight: FontWeight.bold, height: 1.5),
         ),
         const SizedBox(height: 8),
         if (touchpoints.isEmpty)
@@ -153,7 +158,8 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
                 ),
                 trailing: Text(
                   '${item['rate'] ?? '0.0'}%',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                 ),
               ),
             );
@@ -161,7 +167,8 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
         const SizedBox(height: 24),
         const Text(
           'シグナル記録',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+          style:
+              TextStyle(fontSize: 15, fontWeight: FontWeight.bold, height: 1.5),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -192,7 +199,10 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+          ),
         ],
       ),
     );

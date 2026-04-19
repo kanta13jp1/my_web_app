@@ -107,7 +107,8 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                     ? Center(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+                          style:
+                              const TextStyle(color: Colors.red, height: 1.5),
                         ),
                       )
                     : _results.isEmpty
@@ -123,7 +124,10 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                 SizedBox(height: 8),
                                 Text(
                                   'キーワードを入力して検索してください',
-                                  style: TextStyle(color: Color(0xFFB0B0B0)),
+                                  style: TextStyle(
+                                    color: Color(0xFFB0B0B0),
+                                    height: 1.5,
+                                  ),
                                 ),
                               ],
                             ),
@@ -148,6 +152,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                       style: const TextStyle(
                                         color: Color(0xFF3D5AFE),
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ),
@@ -155,6 +160,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                     item['title']?.toString() ?? '(無題)',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(
@@ -170,6 +176,7 @@ class _SemanticSearchPageState extends State<SemanticSearchPage> {
                                           style: const TextStyle(
                                             fontSize: 12,
                                             color: Color(0xFF3D5AFE),
+                                            height: 1.5,
                                           ),
                                         )
                                       : null,

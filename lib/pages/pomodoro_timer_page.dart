@@ -171,10 +171,13 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                   Chip(
                     label: Text(
                       _isWorking ? '作業中 🍅' : '休憩中 ☕',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                     backgroundColor: timerColor.withAlpha(30),
-                    labelStyle: TextStyle(color: timerColor),
+                    labelStyle: TextStyle(color: timerColor, height: 1.5),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -202,6 +205,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                             fontSize: 48,
                             fontWeight: FontWeight.bold,
                             color: timerColor,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -256,7 +260,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                       const SizedBox(width: 4),
                       Text(
                         '今日の完了数: $_completedPomodoros ポモドーロ',
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize: 13, height: 1.5),
                       ),
                     ],
                   ),
@@ -276,6 +280,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                   const Spacer(),
@@ -293,7 +298,11 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   _errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
               ),
             if (_sessions.isEmpty && !_isLoading)
@@ -301,7 +310,7 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                 padding: EdgeInsets.all(24),
                 child: Text(
                   'セッション履歴はありません',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: Colors.grey, height: 1.5),
                 ),
               )
             else
@@ -322,11 +331,11 @@ class _PomodoroTimerPageState extends State<PomodoroTimerPage> {
                     ),
                     title: Text(
                       s['task_name'] as String? ?? '作業セッション',
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 13, height: 1.5),
                     ),
                     subtitle: Text(
                       '${s['duration_minutes'] ?? 25}分  ${(s['completed_at'] as String? ?? '').substring(0, 10)}',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(fontSize: 11, height: 1.5),
                     ),
                   );
                 },

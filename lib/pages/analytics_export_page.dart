@@ -83,7 +83,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -103,6 +103,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -126,6 +127,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -145,8 +147,11 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                     ],
                     const Text(
                       'エクスポート履歴',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (_history.isEmpty)
@@ -155,7 +160,10 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           padding: EdgeInsets.all(32),
                           child: Text(
                             'エクスポート履歴はありません',
-                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       )
@@ -186,6 +194,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF9CA3AF),
+                                height: 1.5,
                               ),
                             ),
                           ),
