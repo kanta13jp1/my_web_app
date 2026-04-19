@@ -37,7 +37,11 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           '基本理念 — 自分株式会社',
-          style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 18),
+          style: TextStyle(
+            color: Color(0xFFE5E7EB),
+            fontSize: 18,
+            height: 1.5,
+          ),
         ),
         iconTheme: const IconThemeData(color: Color(0xFFE5E7EB)),
       ),
@@ -114,6 +118,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
               fontSize: 16,
               color: Color(0xFF7986CB),
               letterSpacing: 0.5,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 16),
@@ -152,6 +157,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 color: selected ? Colors.white : const Color(0xFFCBD5E1),
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                height: 1.5,
               ),
               side: BorderSide(
                 color: selected
@@ -223,6 +229,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFAFAFA),
+                height: 1.5,
               ),
             ),
           ],
@@ -281,6 +288,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                     color: Color(0xFFFF6B35),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -331,6 +339,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFAFAFA),
+                height: 1.5,
               ),
             ),
           ],
@@ -381,6 +390,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF7986CB),
+              height: 1.5,
             ),
           ),
           children: [
@@ -411,12 +421,19 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
                     left: BorderSide(color: Color(0xFFFF6B35), width: 3),
                   ),
                 ),
-                listBullet: const TextStyle(color: Color(0xFFCBD5E1)),
+                listBullet: const TextStyle(
+                  color: Color(0xFFCBD5E1),
+                  height: 1.5,
+                ),
                 tableHead: const TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Color(0xFFFAFAFA),
+                  height: 1.5,
                 ),
-                tableBody: const TextStyle(color: Color(0xFFCBD5E1)),
+                tableBody: const TextStyle(
+                  color: Color(0xFFCBD5E1),
+                  height: 1.5,
+                ),
                 tableBorder: TableBorder.all(
                   color: const Color(0xFF444444),
                 ),
@@ -446,6 +463,7 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -471,7 +489,11 @@ class _PhilosophyPageState extends State<PhilosophyPage> {
             ),
             child: const Text(
               'サービスを試す',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                height: 1.5,
+              ),
             ),
           ),
         ],

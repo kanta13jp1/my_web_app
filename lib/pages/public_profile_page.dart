@@ -128,7 +128,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               onPressed: _copyLink,
             ),
             IconButton(
-              icon: const Text('𝕏', style: TextStyle(fontSize: 16)),
+              icon: const Text(
+                '𝕏',
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+              ),
               tooltip: 'Xでシェア',
               onPressed: _shareOnX,
             ),
@@ -159,6 +165,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             style: TextStyle(
               fontSize: 18,
               color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -167,6 +174,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             style: TextStyle(
               fontSize: 13,
               color: isDark ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -203,6 +211,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF6366F1),
+                          height: 1.5,
                         ),
                       )
                     : null,
@@ -218,6 +227,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        height: 1.5,
                       ),
                     ),
                     if (_location?.isNotEmpty == true) ...[
@@ -239,6 +249,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                               color: isDark
                                   ? const Color(0xFF9CA3AF)
                                   : const Color(0xFF4B5563),
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -250,7 +261,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
               if (isOwnProfile)
                 OutlinedButton.icon(
                   icon: const Icon(Icons.edit, size: 14),
-                  label: const Text('編集', style: TextStyle(fontSize: 12)),
+                  label: const Text(
+                    '編集',
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
+                  ),
                   onPressed: () =>
                       Navigator.of(context).pushNamed('/profile-settings'),
                 ),
@@ -307,7 +324,13 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           // Social links
           if (_twitterHandle?.isNotEmpty == true)
             _SocialLink(
-              icon: const Text('𝕏', style: TextStyle(fontSize: 14)),
+              icon: const Text(
+                '𝕏',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
               label: '@$_twitterHandle',
               onTap: () => launchUrl(
                 Uri.parse('https://x.com/$_twitterHandle'),
@@ -366,6 +389,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                     style: TextStyle(
                       color: Colors.white.withAlpha(200),
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -381,7 +405,10 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
                     onPressed: () => Navigator.of(context).pushNamed('/'),
                     child: const Text(
                       '無料で始める',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ],
@@ -415,6 +442,7 @@ class _StatChip extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: isDark ? Colors.white : const Color(0xFF1E293B),
+            height: 1.5,
           ),
         ),
         Text(
@@ -422,6 +450,7 @@ class _StatChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             color: isDark ? const Color(0xFF9CA3AF) : const Color(0xFF4B5563),
+            height: 1.5,
           ),
         ),
       ],
@@ -456,6 +485,7 @@ class _SocialLink extends StatelessWidget {
                 fontSize: 13,
                 color: Color(0xFF6366F1),
                 decoration: TextDecoration.underline,
+                height: 1.5,
               ),
             ),
           ],

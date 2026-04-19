@@ -45,7 +45,11 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
         backgroundColor: const Color(0xFF1A1A1A),
         title: const Text(
           'AI 開発 7 原則 — 自分株式会社',
-          style: TextStyle(color: Color(0xFFE5E7EB), fontSize: 18),
+          style: TextStyle(
+            color: Color(0xFFE5E7EB),
+            fontSize: 18,
+            height: 1.5,
+          ),
         ),
         iconTheme: const IconThemeData(color: Color(0xFFE5E7EB)),
       ),
@@ -126,6 +130,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
               fontSize: 16,
               color: Color(0xFF26A69A),
               letterSpacing: 0.5,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 16),
@@ -182,6 +187,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 color: selected ? Colors.white : const Color(0xFFCBD5E1),
                 fontSize: 13,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                height: 1.5,
               ),
               side: BorderSide(
                 color: selected
@@ -249,6 +255,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFAFAFA),
+                height: 1.5,
               ),
             ),
           ],
@@ -307,6 +314,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                     color: Color(0xFF26A69A),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -382,6 +390,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFAFAFA),
+                height: 1.5,
               ),
             ),
           ],
@@ -415,6 +424,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                           fontSize: 14,
                           color: Color(0xFFFAFAFA),
                           fontWeight: FontWeight.w500,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -441,6 +451,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                               : f.score >= 4
                                   ? const Color(0xFFFACC15)
                                   : const Color(0xFFF97316),
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -498,6 +509,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFFFAFAFA),
+                height: 1.5,
               ),
             ),
           ],
@@ -518,10 +530,14 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 color: Color(0xFFCBD5E1),
                 height: 1.9,
               ),
-              listBullet: const TextStyle(color: Color(0xFFCBD5E1)),
+              listBullet: const TextStyle(
+                color: Color(0xFFCBD5E1),
+                height: 1.5,
+              ),
               strong: const TextStyle(
                 color: Color(0xFFFAFAFA),
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ),
@@ -660,6 +676,7 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -687,7 +704,11 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 ),
                 child: const Text(
                   '基本理念 9 原則を見る',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -706,7 +727,11 @@ class _AiDevPrinciplesPageState extends State<AiDevPrinciplesPage> {
                 ),
                 child: const Text(
                   'サービスを試す',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],

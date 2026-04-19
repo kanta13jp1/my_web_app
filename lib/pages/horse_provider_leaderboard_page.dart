@@ -96,6 +96,7 @@ class _HorseProviderLeaderboardPageState
           color: color,
           fontSize: 12,
           fontWeight: FontWeight.bold,
+          height: 1.5,
         ),
       ),
     );
@@ -133,7 +134,11 @@ class _HorseProviderLeaderboardPageState
                       const SizedBox(height: 12),
                       const Text(
                         'データ取得失敗',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -147,7 +152,10 @@ class _HorseProviderLeaderboardPageState
                   ? const Center(
                       child: Text(
                         'データがありません。予想が蓄積されると表示されます。',
-                        style: TextStyle(color: Color(0xFF94A3B8)),
+                        style: TextStyle(
+                          color: Color(0xFF94A3B8),
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     )
@@ -175,6 +183,7 @@ class _HorseProviderLeaderboardPageState
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
+                                    height: 1.5,
                                   ),
                                 ),
                               ),
@@ -185,6 +194,7 @@ class _HorseProviderLeaderboardPageState
                                   style: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
+                                    height: 1.5,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -196,6 +206,7 @@ class _HorseProviderLeaderboardPageState
                                   style: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
+                                    height: 1.5,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -207,6 +218,7 @@ class _HorseProviderLeaderboardPageState
                                   style: TextStyle(
                                     color: Color(0xFF94A3B8),
                                     fontSize: 11,
+                                    height: 1.5,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -261,6 +273,7 @@ class _HorseProviderLeaderboardPageState
                                           color: color,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
+                                          height: 1.5,
                                         ),
                                       ),
                                       if (model != provider)
@@ -271,6 +284,7 @@ class _HorseProviderLeaderboardPageState
                                           style: const TextStyle(
                                             color: Color(0xFF64748B),
                                             fontSize: 10,
+                                            height: 1.5,
                                           ),
                                         ),
                                     ],
@@ -286,6 +300,7 @@ class _HorseProviderLeaderboardPageState
                                           : Colors.white,
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
+                                      height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -297,6 +312,7 @@ class _HorseProviderLeaderboardPageState
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 13,
+                                      height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -308,6 +324,7 @@ class _HorseProviderLeaderboardPageState
                                     style: const TextStyle(
                                       color: Color(0xFF94A3B8),
                                       fontSize: 12,
+                                      height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

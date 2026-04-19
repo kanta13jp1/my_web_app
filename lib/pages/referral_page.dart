@@ -150,6 +150,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                 color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -159,6 +160,7 @@ class _ReferralPageState extends State<ReferralPage> {
                               style: TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13,
+                                height: 1.5,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -195,6 +197,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Color(0xFF065F46),
+                                        height: 1.5,
                                       ),
                                     ),
                                     const Text(
@@ -202,6 +205,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Color(0xFF059669),
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],
@@ -222,6 +226,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           color: isDark
                               ? const Color(0xFFD1D5DB)
                               : const Color(0xFF374151),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -252,6 +257,7 @@ class _ReferralPageState extends State<ReferralPage> {
                                   color: isDark
                                       ? const Color(0xFFD1D5DB)
                                       : Colors.black87,
+                                  height: 1.5,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -278,6 +284,7 @@ class _ReferralPageState extends State<ReferralPage> {
                             color: isDark
                                 ? const Color(0xFF9CA3AF)
                                 : const Color(0xFF4B5563),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -308,6 +315,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -344,6 +352,7 @@ class _ReferralPageState extends State<ReferralPage> {
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: isDark ? Colors.white : Colors.black87,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -397,6 +406,7 @@ class _ReferralPageState extends State<ReferralPage> {
                   color: color,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -412,6 +422,7 @@ class _ReferralPageState extends State<ReferralPage> {
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : Colors.black87,
+                    height: 1.5,
                   ),
                 ),
                 Text(
@@ -421,6 +432,7 @@ class _ReferralPageState extends State<ReferralPage> {
                     color: isDark
                         ? const Color(0xFF9CA3AF)
                         : const Color(0xFF4B5563),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -447,6 +459,7 @@ class _ReferralPageState extends State<ReferralPage> {
         style: TextStyle(
           fontSize: 12,
           color: isDark ? const Color(0xFFE5E7EB) : Colors.black87,
+          height: 1.5,
         ),
       ),
     );

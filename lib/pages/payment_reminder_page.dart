@@ -418,7 +418,11 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             const Text(
               '毎月の支払いを登録して\n忘れずにリマインドしましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -455,7 +459,11 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
               children: [
                 const Text(
                   '毎月の固定支出',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
                 Text(
                   '¥${fmt.format(_monthlyTotal)}',
@@ -463,6 +471,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -479,6 +488,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
+                height: 1.5,
               ),
             ),
           ),
@@ -501,7 +511,11 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
           const SizedBox(width: 10),
           Text(
             '⚠️ $count件の支払いが期日間近・超過です',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -566,6 +580,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,
+                                height: 1.5,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -587,6 +602,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                                   fontSize: 9,
                                   color: Color(0xFF3D5AFE),
                                   fontWeight: FontWeight.w700,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -600,6 +616,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                             fontSize: 11,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                     ],
@@ -614,6 +631,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                     Text(
@@ -621,6 +639,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                       style: TextStyle(
                         fontSize: 11,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -648,6 +667,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                       style: TextStyle(
                         fontSize: 10,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -676,7 +696,13 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                     const PopupMenuItem(value: 'paid', child: Text('支払い完了')),
                     const PopupMenuItem(
                       value: 'delete',
-                      child: Text('削除', style: TextStyle(color: Colors.red)),
+                      child: Text(
+                        '削除',
+                        style: TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -695,7 +721,13 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         color: bg,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(label, style: const TextStyle(fontSize: 10)),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          height: 1.5,
+        ),
+      ),
     );
   }
 }

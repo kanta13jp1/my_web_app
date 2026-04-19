@@ -105,20 +105,32 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
       builder: (_) => StatefulBuilder(
         builder: (ctx, setDialog) => AlertDialog(
           backgroundColor: const Color(0xFF1E1E1E),
-          title: const Text('イベントを追加', style: TextStyle(color: Colors.white)),
+          title: const Text(
+            'イベントを追加',
+            style: TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: _titleCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    height: 1.5,
+                  ),
                   decoration: _inputDecoration('タイトル *'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _memberCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    height: 1.5,
+                  ),
                   decoration: _inputDecoration('担当メンバー'),
                 ),
                 const SizedBox(height: 8),
@@ -131,7 +143,10 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                   child: DropdownButton<String>(
                     value: _category,
                     dropdownColor: const Color(0xFF1E1E1E),
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
                     underline: const SizedBox.shrink(),
                     isExpanded: true,
                     items: _categories
@@ -149,8 +164,13 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child:
-                  const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+              child: const Text(
+                'キャンセル',
+                style: TextStyle(
+                  color: Colors.white54,
+                  height: 1.5,
+                ),
+              ),
             ),
             ElevatedButton(
               onPressed: _saving ? null : _save,
@@ -177,7 +197,10 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
         labelText: hint,
-        labelStyle: const TextStyle(color: Colors.white54),
+        labelStyle: const TextStyle(
+          color: Colors.white54,
+          height: 1.5,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF333333)),
@@ -200,7 +223,13 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('家族カレンダー', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          '家族カレンダー',
+          style: TextStyle(
+            color: Colors.white,
+            height: 1.5,
+          ),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -234,6 +263,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
                 IconButton(
@@ -268,7 +298,10 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                             const SizedBox(height: 12),
                             const Text(
                               'この月のイベントはありません',
-                              style: TextStyle(color: Colors.white38),
+                              style: TextStyle(
+                                color: Colors.white38,
+                                height: 1.5,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
@@ -311,7 +344,10 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                               ),
                               title: Text(
                                 e['title'] as String? ?? '',
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  height: 1.5,
+                                ),
                               ),
                               subtitle: Row(
                                 children: [
@@ -329,6 +365,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                                       style: TextStyle(
                                         color: color,
                                         fontSize: 11,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ),
@@ -340,6 +377,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                                       style: const TextStyle(
                                         color: Colors.white54,
                                         fontSize: 12,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],
@@ -350,6 +388,7 @@ class _FamilyCalendarPageState extends State<FamilyCalendarPage> {
                                 style: const TextStyle(
                                   color: Colors.white38,
                                   fontSize: 12,
+                                  height: 1.5,
                                 ),
                               ),
                             ),

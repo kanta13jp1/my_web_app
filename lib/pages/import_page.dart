@@ -256,7 +256,11 @@ class _ImportPageState extends State<ImportPage> {
         children: [
           const Text(
             'Switch from Notion or Evernote',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -322,6 +326,7 @@ class _ImportPageState extends State<ImportPage> {
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
+                            height: 1.5,
                           ),
                         ),
                         Chip(
@@ -359,6 +364,7 @@ class _ImportPageState extends State<ImportPage> {
                             '- $warning',
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -402,6 +408,7 @@ class _ImportPageState extends State<ImportPage> {
                                   note.title,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
+                                    height: 1.5,
                                   ),
                                 ),
                               ),
@@ -413,7 +420,10 @@ class _ImportPageState extends State<ImportPage> {
                                     note.source == 'notion_database'
                                         ? 'DB entry'
                                         : 'Page',
-                                    style: const TextStyle(fontSize: 11),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      height: 1.5,
+                                    ),
                                   ),
                                   padding: EdgeInsets.zero,
                                   visualDensity: VisualDensity.compact,
@@ -488,7 +498,11 @@ class _ImportPageState extends State<ImportPage> {
                 const SizedBox(height: 12),
                 const Text(
                   'Notion (API直接連携)',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
@@ -535,6 +549,7 @@ class _ImportPageState extends State<ImportPage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -585,6 +600,7 @@ class _ImportPageState extends State<ImportPage> {
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -598,6 +614,7 @@ class _ImportPageState extends State<ImportPage> {
                 color: Theme.of(
                   context,
                 ).colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 16),
@@ -606,6 +623,7 @@ class _ImportPageState extends State<ImportPage> {
                 'ノートを永続的に保存するには無料アカウントを作成してください。',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 4),
@@ -616,6 +634,7 @@ class _ImportPageState extends State<ImportPage> {
                   color: Theme.of(
                     context,
                   ).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
@@ -629,6 +648,7 @@ class _ImportPageState extends State<ImportPage> {
                 '次は AI でノートを整理してみましょう。',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 16),

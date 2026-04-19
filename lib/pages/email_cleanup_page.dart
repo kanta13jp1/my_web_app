@@ -235,7 +235,11 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             children: [
               const Text(
                 '整理の結果を記録しましょう（任意）',
-                style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -452,6 +456,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
           style: const TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: 14,
+            height: 1.5,
           ),
         ),
         subtitle: progress < 1.0
@@ -482,6 +487,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       decoration:
                           _routineChecks[i] ? TextDecoration.lineThrough : null,
                       color: _routineChecks[i] ? const Color(0xFF9CA3AF) : null,
+                      height: 1.5,
                     ),
                   ),
                   controlAffinity: ListTileControlAffinity.leading,
@@ -512,7 +518,11 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             const Text(
               'メールアカウントを登録して\n整理リマインダーを設定しましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -558,12 +568,17 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
                   '「整理完了」をタップして記録しましょう',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF9CA3AF),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -635,6 +650,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
+                            height: 1.5,
                           ),
                         ),
                       Text(
@@ -645,6 +661,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                               ? FontWeight.normal
                               : FontWeight.w700,
                           color: label != null ? const Color(0xFF9CA3AF) : null,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -666,6 +683,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFFFF6B35),
+                        height: 1.5,
                       ),
                     ),
                   )
@@ -685,6 +703,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.green,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -732,7 +751,10 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       value: 'delete',
                       child: Text(
                         '削除',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ],
@@ -754,11 +776,16 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
           style: TextStyle(
             fontSize: 10,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
           ),
         ),
         Text(
           value,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            height: 1.5,
+          ),
         ),
       ],
     );

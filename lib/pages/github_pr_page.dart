@@ -156,7 +156,11 @@ class _GithubPrPageState extends State<GithubPrPage> {
               const SizedBox(height: 16),
               const Text(
                 'Pull Requests',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               ..._pullRequests.take(20).map((pr) => _PrTile(pr: pr)),
@@ -165,7 +169,10 @@ class _GithubPrPageState extends State<GithubPrPage> {
               const Center(
                 child: Text(
                   'Pull Request がありません',
-                  style: TextStyle(color: Colors.black45),
+                  style: TextStyle(
+                    color: Colors.black45,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -190,7 +197,10 @@ class _GithubPrPageState extends State<GithubPrPage> {
           Expanded(
             child: Text(
               'GitHub Personal Access Token とリポジトリを設定すると、PR 一覧・レビュー状況をアプリ内で確認できます。',
-              style: TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -220,7 +230,11 @@ class _GithubPrPageState extends State<GithubPrPage> {
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(color: color.shade700, fontSize: 13),
+                style: TextStyle(
+                  color: color.shade700,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ),
           ],
@@ -242,7 +256,11 @@ class _GithubPrPageState extends State<GithubPrPage> {
                 SizedBox(width: 8),
                 Text(
                   'GitHub 設定',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -270,7 +288,11 @@ class _GithubPrPageState extends State<GithubPrPage> {
             const SizedBox(height: 8),
             const Text(
               'Settings → Developer settings → Personal access tokens で発行できます',
-              style: TextStyle(fontSize: 12, color: Colors.black45),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black45,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -311,7 +333,11 @@ class _GithubPrPageState extends State<GithubPrPage> {
           children: [
             const Text(
               'リポジトリ統計',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -369,11 +395,16 @@ class _StatChip extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
+              height: 1.5,
             ),
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: Colors.black54),
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.black54,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -403,13 +434,19 @@ class _PrTile extends StatelessWidget {
         ),
         title: Text(
           pr['title']?.toString() ?? 'PR',
-          style: const TextStyle(fontSize: 14),
+          style: const TextStyle(
+            fontSize: 14,
+            height: 1.5,
+          ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
           '#${pr['number'] ?? ''} · ${pr['author'] ?? ''} · ${pr['updated_at'] ?? ''}',
-          style: const TextStyle(fontSize: 11),
+          style: const TextStyle(
+            fontSize: 11,
+            height: 1.5,
+          ),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -423,6 +460,7 @@ class _PrTile extends StatelessWidget {
               color: stateColor,
               fontSize: 11,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
         ),
