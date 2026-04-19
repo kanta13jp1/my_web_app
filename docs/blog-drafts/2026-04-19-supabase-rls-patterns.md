@@ -1,7 +1,7 @@
 ---
 title: "SupabaseのRLSを個人開発SaaSで使い倒す — auth.uid()と6つのポリシーパターン"
 tags: Supabase,PostgreSQL,個人開発,buildinpublic,security
-published: false
+published: true
 ---
 
 # SupabaseのRLSを個人開発SaaSで使い倒す

@@ -1,7 +1,7 @@
 ---
 title: "6 Supabase RLS Patterns for Solo SaaS — auth.uid() and Beyond"
 tags: Supabase,PostgreSQL,buildinpublic,security,webdev
-published: false
+published: true
 ---
 
 # 6 Supabase RLS Patterns for Solo SaaS
