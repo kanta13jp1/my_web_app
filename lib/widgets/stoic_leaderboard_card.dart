@@ -78,6 +78,7 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textColor,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -85,7 +86,11 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
           const SizedBox(height: 4),
           Text(
             '欲望をコントロールし、最も資産を防衛したトッププレイヤーたち',
-            style: TextStyle(fontSize: 12, color: subColor),
+            style: TextStyle(
+              fontSize: 12,
+              color: subColor,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           _isLoading
@@ -98,7 +103,10 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
               : _leaderboard.isEmpty
                   ? Text(
                       'まだデータがありません。最初のランカーになりましょう！',
-                      style: TextStyle(color: subColor),
+                      style: TextStyle(
+                        color: subColor,
+                        height: 1.5,
+                      ),
                     )
                   : ListView.separated(
                       shrinkWrap: true,
@@ -157,24 +165,37 @@ class _StoicLeaderboardCardState extends State<StoicLeaderboardCard> {
                 fontWeight: FontWeight.bold,
                 color: rankColor,
                 fontSize: 16,
+                height: 1.5,
               ),
             ),
           ),
           Expanded(
             child: Text(
               name,
-              style: TextStyle(fontWeight: FontWeight.w600, color: textColor),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: textColor,
+                height: 1.5,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text('Lv.$level', style: TextStyle(fontSize: 12, color: subColor)),
+          Text(
+            'Lv.$level',
+            style: TextStyle(
+              fontSize: 12,
+              color: subColor,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(width: 12),
           Text(
             '¥$savedMoney',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Color(0xFF10B981),
+              height: 1.5,
             ),
           ),
         ],

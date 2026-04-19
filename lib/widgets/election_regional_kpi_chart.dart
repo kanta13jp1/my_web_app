@@ -407,6 +407,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                         color: Color(0xFF64B5F6),
                                         fontSize: 12,
                                         fontWeight: FontWeight.normal,
+                                        height: 1.5,
                                       ),
                                     ),
                                     TextSpan(
@@ -629,6 +630,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
           ),
         ),
         const SizedBox(

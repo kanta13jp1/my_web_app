@@ -131,6 +131,7 @@ class _CollapsibleHomeSectionState extends State<CollapsibleHomeSection>
                         color: isDark
                             ? const Color(0xFFE2E8F0)
                             : const Color(0xFF1E293B),
+                        height: 1.5,
                       ),
                     ),
                   ),

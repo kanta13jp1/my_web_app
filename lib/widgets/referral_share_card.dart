@@ -135,6 +135,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -144,6 +145,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                         color: isDark
                             ? const Color(0xFF94A3B8)
                             : const Color(0xFF64748B),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -178,6 +180,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF6366F1),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -198,7 +201,10 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                   ),
                   label: Text(
                     _copied ? 'コピー済み' : 'リンクコピー',
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor:
@@ -218,7 +224,10 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
                   icon: const Icon(Icons.share, size: 14),
                   label: const Text(
                     'Xでシェア',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF000000),

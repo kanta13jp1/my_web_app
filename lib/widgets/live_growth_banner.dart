@@ -104,6 +104,7 @@ class _LiveGrowthBannerState extends State<LiveGrowthBanner> {
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -195,6 +196,7 @@ class _MetricChip extends StatelessWidget {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),

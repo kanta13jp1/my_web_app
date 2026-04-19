@@ -238,8 +238,11 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                         SizedBox(height: 2),
                         Text(
                           'ゴールを入力 → 部署別サブタスクに自動分解',
-                          style:
-                              TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
                         ),
                       ],
                     ),
@@ -275,6 +278,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                         color: isDark
                             ? const Color(0xFF9E9E9E)
                             : const Color(0xFFBDBDBD),
+                        height: 1.5,
                       ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),

@@ -157,7 +157,10 @@ class _AchievementNotificationWidgetState
                     child: Center(
                       child: Text(
                         widget.achievement.icon,
-                        style: const TextStyle(fontSize: 24),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   ),

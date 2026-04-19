@@ -113,6 +113,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                       color: allDone
                           ? Colors.green
                           : (isDark ? Colors.white : const Color(0xFF1E293B)),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -137,6 +138,7 @@ class _DailyHabitsSummaryCardState extends State<DailyHabitsSummaryCard> {
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: allDone ? Colors.green : const Color(0xFFFF6B35),
+                height: 1.5,
               ),
             ),
             const SizedBox(width: 4),

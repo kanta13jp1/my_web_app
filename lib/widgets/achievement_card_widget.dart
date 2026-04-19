@@ -39,7 +39,10 @@ class AchievementCardWidget extends StatelessWidget {
                   child: Center(
                     child: Text(
                       achievement.icon,
-                      style: const TextStyle(fontSize: 28),
+                      style: const TextStyle(
+                        fontSize: 28,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),

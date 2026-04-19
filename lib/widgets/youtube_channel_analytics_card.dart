@@ -216,6 +216,7 @@ class _YoutubeChannelAnalyticsCardState
                             color: isDark
                                 ? const Color(0xFFBDBDBD)
                                 : const Color(0xFF757575),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -318,6 +319,7 @@ class _YoutubeChannelAnalyticsCardState
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -388,6 +390,7 @@ class _YoutubeChannelAnalyticsCardState
                 fontSize: 11,
                 color:
                     isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                height: 1.5,
               ),
             ),
             const SizedBox(width: 8),
@@ -435,6 +438,7 @@ class _YoutubeChannelAnalyticsCardState
                             : (isDark
                                 ? const Color(0xFFBDBDBD)
                                 : const Color(0xFF616161)),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -461,6 +465,7 @@ class _YoutubeChannelAnalyticsCardState
                       color: isDark
                           ? const Color(0xFFBDBDBD)
                           : const Color(0xFF616161),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -475,6 +480,7 @@ class _YoutubeChannelAnalyticsCardState
                             color: isDark
                                 ? const Color(0xFFBDBDBD)
                                 : const Color(0xFF616161),
+                            height: 1.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -563,6 +569,7 @@ class _YoutubeChannelAnalyticsCardState
                         color: isDark
                             ? const Color(0xFFBDBDBD)
                             : const Color(0xFF757575),
+                        height: 1.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -590,8 +597,11 @@ class _YoutubeChannelAnalyticsCardState
                     ? const Center(
                         child: Text(
                           '—',
-                          style:
-                              TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFB0B0B0),
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : Column(

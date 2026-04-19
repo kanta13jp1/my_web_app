@@ -101,6 +101,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF1F2937),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -127,6 +128,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                     style: TextStyle(
                       fontSize: 11.5,
                       color: isDark ? Colors.white70 : const Color(0xFF374151),
+                      height: 1.5,
                     ),
                   ),
                 const SizedBox(height: 3),
@@ -153,6 +155,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                           fontFamily: 'monospace',
                           color:
                               isDark ? Colors.white : const Color(0xFF111827),
+                          height: 1.5,
                         ),
                       ),
                     );
@@ -176,6 +179,7 @@ class _ApiKeyStatusBannerState extends State<ApiKeyStatusBanner> {
                     style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFF991B1B),
+                      height: 1.5,
                     ),
                   ),
                 ],

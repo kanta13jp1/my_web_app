@@ -38,6 +38,7 @@ class AttachmentListWidget extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -77,7 +78,10 @@ class AttachmentListWidget extends StatelessWidget {
             // アイコン
             Text(
               attachment.icon,
-              style: const TextStyle(fontSize: 20),
+              style: const TextStyle(
+                fontSize: 20,
+                height: 1.5,
+              ),
             ),
             const SizedBox(width: 8),
             // ファイル名とサイズ
@@ -92,6 +96,7 @@ class AttachmentListWidget extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
+                      height: 1.5,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -102,6 +107,7 @@ class AttachmentListWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],

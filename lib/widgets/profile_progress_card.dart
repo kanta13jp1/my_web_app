@@ -90,10 +90,16 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
             fontSize: 13,
             fontWeight: FontWeight.w700,
             color: isDark ? Colors.white : const Color(0xFF3730A3),
+            height: 1.5,
           ),
         ),
-        subtitle:
-            const Text('他のユーザーに見つけてもらいやすくなります', style: TextStyle(fontSize: 11)),
+        subtitle: const Text(
+          '他のユーザーに見つけてもらいやすくなります',
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.5,
+          ),
+        ),
         trailing: Icon(
           Icons.chevron_right,
           color: isDark ? Colors.white70 : const Color(0xFF4338CA),
@@ -132,6 +138,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF065F46),
+                height: 1.5,
               ),
             ),
           ],
@@ -201,6 +208,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                           fontWeight: FontWeight.w700,
                           color:
                               isDark ? Colors.white : const Color(0xFF3730A3),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -211,6 +219,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                           color: isDark
                               ? const Color(0xFFBDBDBD)
                               : const Color(0xFF6B7280),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -230,7 +239,11 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                   ),
                   child: const Text(
                     '設定する',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -265,6 +278,7 @@ class _ProfileProgressCardState extends State<ProfileProgressCard> {
                   color: isDark
                       ? const Color(0xFFBDBDBD)
                       : const Color(0xFF9CA3AF),
+                  height: 1.5,
                 ),
               ),
             ],

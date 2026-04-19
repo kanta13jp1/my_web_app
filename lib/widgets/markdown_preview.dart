@@ -70,6 +70,7 @@ class MarkdownPreview extends StatelessWidget {
           fontFamily: 'monospace',
           fontSize: 14,
           color: Colors.red[700],
+          height: 1.5,
         ),
         codeblockDecoration: BoxDecoration(
           color: const Color(0xFF2B2B2B),
@@ -80,6 +81,7 @@ class MarkdownPreview extends StatelessWidget {
         blockquote: TextStyle(
           color: Theme.of(context).colorScheme.onSurface,
           fontStyle: FontStyle.italic,
+          height: 1.5,
         ),
         blockquoteDecoration: BoxDecoration(
           color: const Color(0xFFE3F2FD),
@@ -110,6 +112,7 @@ class MarkdownPreview extends StatelessWidget {
           fontWeight: FontWeight.bold,
           backgroundColor:
               Theme.of(context).colorScheme.surfaceContainerHighest,
+          height: 1.5,
         ),
         tableBody: const TextStyle(
           fontSize: 14,
@@ -120,6 +123,7 @@ class MarkdownPreview extends StatelessWidget {
         a: const TextStyle(
           color: Color(0xFF3D5AFE),
           decoration: TextDecoration.underline,
+          height: 1.5,
         ),
         // チェックボックス
         checkbox: const TextStyle(fontSize: 16, height: 1.5),
@@ -316,6 +320,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
             text: node.value,
             style: TextStyle(
               color: _getColorForClassName(node.className),
+              height: 1.5,
             ),
           ),
         );
@@ -408,6 +413,7 @@ class _CopyCodeButtonState extends State<_CopyCodeButton> {
               style: TextStyle(
                 fontSize: 11,
                 color: _copied ? const Color(0xFF10B981) : Colors.white54,
+                height: 1.5,
               ),
             ),
           ],

@@ -184,7 +184,11 @@ class _ElectionXPostComposerDialogState
             padding: EdgeInsets.only(left: 2, bottom: 8),
             child: Text(
               '投開票週末を選択',
-              style: TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 11,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
           ),
           SingleChildScrollView(
@@ -223,7 +227,10 @@ class _ElectionXPostComposerDialogState
           child: Text(
             '選択した週末に選挙データがありません。\n別の週末を選択するか、スケジュールを最新取得してください。',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFFB0B0B0)),
+            style: TextStyle(
+              color: Color(0xFFB0B0B0),
+              height: 1.5,
+            ),
           ),
         ),
       );
@@ -288,6 +295,7 @@ class _ElectionXPostComposerDialogState
                         ? Colors.red
                         : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: isOver ? FontWeight.bold : FontWeight.normal,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -456,6 +464,7 @@ class _WeekendChip extends StatelessWidget {
                 color: isSelected
                     ? Colors.white
                     : Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 2),
@@ -466,6 +475,7 @@ class _WeekendChip extends StatelessWidget {
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.85)
                     : Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 4),
@@ -489,6 +499,7 @@ class _WeekendChip extends StatelessWidget {
                       : hasElections
                           ? _xBlue
                           : Theme.of(context).colorScheme.outlineVariant,
+                  height: 1.5,
                 ),
               ),
             ),

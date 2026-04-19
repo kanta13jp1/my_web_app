@@ -140,6 +140,7 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : const Color(0xFF3730A3),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -182,14 +183,22 @@ class _ProfileCompletionBannerState extends State<ProfileCompletionBanner> {
                   ),
                   child: const Text(
                     '設定する',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => setState(() => _dismissed = true),
                   child: const Text(
                     '後で',
-                    style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],

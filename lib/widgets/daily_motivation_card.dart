@@ -99,6 +99,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF7C3AED),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -132,6 +133,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                       fontSize: 12,
                       color: Color(0xFF7C3AED),
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   if (quote.authorDescription != null) ...[
@@ -143,6 +145,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                         color: isDark
                             ? const Color(0xFFBDBDBD)
                             : const Color(0xFF757575),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -174,6 +177,7 @@ class _DailyMotivationCardState extends State<DailyMotivationCard> {
                         fontSize: 11,
                         color: const Color(0xFF7C3AED).withAlpha(180),
                         decoration: TextDecoration.underline,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -223,6 +227,7 @@ class _ActionChip extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF7C3AED),
+                height: 1.5,
               ),
             ),
           ],

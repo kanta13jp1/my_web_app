@@ -198,6 +198,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -209,6 +210,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                             color: totalSlips > 0
                                 ? Colors.red
                                 : const Color(0xFF757575),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -267,7 +269,10 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                         children: [
                           Text(
                             item.emoji,
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -280,6 +285,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                               color: isActive
                                   ? item.color
                                   : Theme.of(context).colorScheme.onSurface,
+                              height: 1.5,
                             ),
                           ),
                           if (slips > 0) ...[
@@ -299,6 +305,7 @@ class _TimeWasteGuardWidgetState extends State<TimeWasteGuardWidget> {
                                   color: Colors.white,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
+                                  height: 1.5,
                                 ),
                               ),
                             ),

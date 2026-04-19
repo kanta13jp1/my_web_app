@@ -60,6 +60,7 @@ class WelcomeNewUserCard extends StatelessWidget {
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -68,7 +69,11 @@ class WelcomeNewUserCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Text(
             'まず最初の4アクションから始めましょう',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -137,6 +142,7 @@ class _QuickActionChip extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
+                height: 1.5,
               ),
             ),
           ],

@@ -123,7 +123,11 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 18)),
+        Text(emoji,
+            style: const TextStyle(
+              fontSize: 18,
+              height: 1.5,
+            )),
         const SizedBox(height: 2),
         Text(
           value,
@@ -131,6 +135,7 @@ class _StatItem extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w800,
             color: isDark ? const Color(0xFFDDD6FE) : const Color(0xFF4C1D95),
+            height: 1.5,
           ),
         ),
         Text(
@@ -138,6 +143,7 @@ class _StatItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             color: isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+            height: 1.5,
           ),
         ),
       ],

@@ -57,6 +57,7 @@ class GrowthChartWidget extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
@@ -105,6 +106,7 @@ class GrowthChartWidget extends StatelessWidget {
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: Color(0xFFB0B0B0),
+                                height: 1.5,
                               ),
                             ),
                           );
@@ -122,6 +124,7 @@ class GrowthChartWidget extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 10,
                               color: Color(0xFFB0B0B0),
+                              height: 1.5,
                             ),
                           );
                         },
@@ -186,6 +189,7 @@ class GrowthChartWidget extends StatelessWidget {
                               const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             );
                           }

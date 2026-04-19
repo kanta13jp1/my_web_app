@@ -31,7 +31,11 @@ class ElectionProgressChart extends StatelessWidget {
           children: [
             const Text(
               '党全体 必達目標（700名）への進捗',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -50,6 +54,7 @@ class ElectionProgressChart extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        height: 1.5,
                       ),
                     ),
                     PieChartSectionData(
@@ -61,6 +66,7 @@ class ElectionProgressChart extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -70,7 +76,11 @@ class ElectionProgressChart extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               '目標: $target人 / 現在: $currentTotal人',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             if (caption != null && caption!.trim().isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -89,6 +99,7 @@ class ElectionProgressChart extends StatelessWidget {
                 fontSize: 12,
                 color: Colors.red,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ],

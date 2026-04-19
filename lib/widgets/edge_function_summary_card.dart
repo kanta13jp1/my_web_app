@@ -531,6 +531,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                             color: isDark
                                 ? const Color(0xFFBDBDBD)
                                 : const Color(0xFF757575),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -548,6 +549,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF6366F1),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(
@@ -607,6 +609,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFFFF6B35),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -648,6 +651,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                             color: isDark
                                 ? const Color(0xFFBDBDBD)
                                 : const Color(0xFF757575),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -697,6 +701,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFF9E9E9E),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -754,6 +759,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                 fontSize: 11,
                 color:
                     isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                height: 1.5,
               ),
             ),
           ),

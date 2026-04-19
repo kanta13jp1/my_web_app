@@ -210,6 +210,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -220,6 +221,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                   color: isDark
                       ? const Color(0xFF9E9E9E)
                       : const Color(0xFF9E9E9E),
+                  height: 1.5,
                 ),
               ),
             ],
@@ -237,6 +239,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                       color: isDark
                           ? const Color(0xFF9E9E9E)
                           : const Color(0xFFBDBDBD),
+                      height: 1.5,
                     ),
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
@@ -252,7 +255,10 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                       ),
                     ),
                   ),
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                   onSubmitted: (_) => _submit(),
                   textInputAction: TextInputAction.send,
                 ),
@@ -300,6 +306,7 @@ class _QuickTaskInputCardState extends State<QuickTaskInputCard> {
                       fontSize: 11,
                       color: _success ? Colors.green : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                 ),

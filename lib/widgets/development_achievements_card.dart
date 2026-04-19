@@ -221,6 +221,7 @@ class _DevelopmentAchievementsCardState
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF64748B),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(
@@ -250,6 +251,7 @@ class _DevelopmentAchievementsCardState
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF64748B),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -264,6 +266,7 @@ class _DevelopmentAchievementsCardState
                   fontSize: 12,
                   color: Color(0xFF94A3B8),
                   fontStyle: FontStyle.italic,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -319,6 +322,7 @@ class _DevelopmentAchievementsCardState
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                   color: Color(0xFF10B981),
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -444,6 +448,7 @@ class _DevelopmentAchievementsCardState
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF10B981),
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -458,6 +463,7 @@ class _DevelopmentAchievementsCardState
                                   fontSize: 13,
                                   color: textColor.withValues(alpha: 0.9),
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                               const SizedBox(

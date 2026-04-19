@@ -135,6 +135,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFFFFC107),
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -157,6 +158,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                 fontSize: 11,
                 color:
                     isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -208,6 +210,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -283,6 +286,7 @@ class _ChallengeRow extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
                     color: isCompleted ? const Color(0xFFB0B0B0) : null,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -301,6 +305,7 @@ class _ChallengeRow extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFFFFC107),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -315,6 +320,7 @@ class _ChallengeRow extends StatelessWidget {
                 fontSize: 11,
                 color:
                     isDark ? const Color(0xFFBDBDBD) : const Color(0xFF757575),
+                height: 1.5,
               ),
             ),
           ],
@@ -342,6 +348,7 @@ class _ChallengeRow extends StatelessWidget {
                   color: isDark
                       ? const Color(0xFFBDBDBD)
                       : const Color(0xFF757575),
+                  height: 1.5,
                 ),
               ),
               if (isCompleted && !rewardClaimed) ...[

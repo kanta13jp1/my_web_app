@@ -61,7 +61,10 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
               children: [
                 Text(
                   widget.attachment.icon,
-                  style: const TextStyle(fontSize: 24),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -73,6 +76,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -82,6 +86,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -192,6 +197,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -199,6 +205,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
               widget.attachment.formattedSize,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
@@ -213,6 +220,7 @@ class _AttachmentPreviewDialogState extends State<AttachmentPreviewDialog> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
           ],

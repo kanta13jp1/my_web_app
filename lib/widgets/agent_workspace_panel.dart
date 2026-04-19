@@ -67,6 +67,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -115,6 +116,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -132,6 +134,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   )

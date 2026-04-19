@@ -133,6 +133,7 @@ class _GrowthRoadmapProgressCardState extends State<GrowthRoadmapProgressCard> {
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
                   color: Color(0xFF6366F1),
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -265,6 +266,7 @@ class _PlanProgressRow extends StatelessWidget {
                         ? userBarColor
                         : subTextColor.withValues(alpha: 0.5),
                     letterSpacing: 2,
+                    height: 1.5,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -296,6 +298,7 @@ class _PlanProgressRow extends StatelessWidget {
                           ? featBarColor
                           : subTextColor.withValues(alpha: 0.5),
                       letterSpacing: 2,
+                      height: 1.5,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2590,6 +2593,7 @@ class _CompetitorFeatureComparisonCardState
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.2,
                             color: Color(0xFF6366F1),
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2844,6 +2848,7 @@ class _OverallProgressBar extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF6366F1),
+                height: 1.5,
               ),
             ),
           ],
@@ -2996,6 +3001,7 @@ class _FeatureRowTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 11,
                             color: statusColor.withValues(alpha: 0.85),
+                            height: 1.5,
                           ),
                         ),
                       ),

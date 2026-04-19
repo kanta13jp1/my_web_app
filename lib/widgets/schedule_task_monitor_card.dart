@@ -244,6 +244,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF6366F1),
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -276,6 +277,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     color: isDark
                         ? const Color(0xFFBDBDBD)
                         : const Color(0xFF757575),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -355,6 +357,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                       color: isDark
                           ? const Color(0xFFBDBDBD)
                           : const Color(0xFF757575),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -479,6 +482,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                           color: isDark
                               ? const Color(0xFFBDBDBD)
                               : const Color(0xFF757575),
+                          height: 1.5,
                         ),
                       ),
                     ],

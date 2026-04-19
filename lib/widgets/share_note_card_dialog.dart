@@ -165,6 +165,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                               : Theme.of(context)
                                                   .colorScheme
                                                   .onSurface,
+                                          height: 1.5,
                                         ),
                                       ),
                                     ],
@@ -230,6 +231,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFFB0B0B0),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(
@@ -652,7 +654,11 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
             ),
             const Text(
               '※ 大量の画像生成は時間がかかり、デバイスのメモリを消費します',
-              style: TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
           ],
         ),

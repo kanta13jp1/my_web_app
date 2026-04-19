@@ -165,7 +165,10 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
               child: Center(
                 child: Text(
                   _streakEmoji,
-                  style: const TextStyle(fontSize: 24),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -184,6 +187,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                           color: isDark
                               ? const Color(0xFFDDD6FE)
                               : const Color(0xFF4C1D95),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -196,6 +200,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                       color: isDark
                           ? const Color(0xFFBDBDBD)
                           : const Color(0xFF757575),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -223,6 +228,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                           color: isDark
                               ? const Color(0xFFBDBDBD)
                               : const Color(0xFF757575),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -236,7 +242,11 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                 children: [
                   const Text(
                     '最高記録',
-                    style: TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFFB0B0B0),
+                      height: 1.5,
+                    ),
                   ),
                   Text(
                     '$_bestStreak日',
@@ -244,6 +254,7 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF7C3AED),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -251,7 +262,13 @@ class _LoginStreakCardState extends State<LoginStreakCard> {
             if (_isMilestone(_streak)) ...[
               const SizedBox(width: 8),
               IconButton(
-                icon: const Text('𝕏', style: TextStyle(fontSize: 16)),
+                icon: const Text(
+                  '𝕏',
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
                 tooltip: 'Xでシェア',
                 onPressed: _shareOnX,
                 padding: EdgeInsets.zero,

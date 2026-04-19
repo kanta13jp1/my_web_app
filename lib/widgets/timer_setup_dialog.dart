@@ -73,6 +73,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -80,6 +81,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                           style: TextStyle(
                             fontSize: 12,
                             color: colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -95,6 +97,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 8),
@@ -115,6 +118,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 12),
@@ -154,6 +158,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 8),
@@ -178,6 +183,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 8),
@@ -294,6 +300,7 @@ class _TimerSetupDialogState extends State<TimerSetupDialog> {
           style: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
+            height: 1.5,
           ),
         ),
       ],

@@ -156,6 +156,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -166,6 +167,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     color: isDark
                         ? const Color(0xFFBDBDBD)
                         : const Color(0xFF757575),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -229,6 +231,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                       color: isDark
                           ? const Color(0xFFE0E0E0)
                           : const Color(0xFF374151),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -252,6 +255,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFFBDBDBD),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -271,6 +275,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFFBDBDBD),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -290,6 +295,7 @@ class _ActivityCalendarCardState extends State<ActivityCalendarCard> {
                     color: isDark
                         ? const Color(0xFF9E9E9E)
                         : const Color(0xFFBDBDBD),
+                    height: 1.5,
                   ),
                 ),
               ],

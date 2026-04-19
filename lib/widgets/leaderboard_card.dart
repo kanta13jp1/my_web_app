@@ -91,6 +91,7 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -101,6 +102,7 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
                     color: isDark
                         ? const Color(0xFFBDBDBD)
                         : const Color(0xFF757575),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -157,7 +159,10 @@ class _RankRow extends StatelessWidget {
           width: 28,
           child: Text(
             _rankEmoji,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -176,6 +181,7 @@ class _RankRow extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF6366F1),
+                    height: 1.5,
                   ),
                 )
               : null,
@@ -188,6 +194,7 @@ class _RankRow extends StatelessWidget {
               fontSize: 13,
               fontWeight: rank <= 3 ? FontWeight.w700 : FontWeight.w500,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
+              height: 1.5,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -200,6 +207,7 @@ class _RankRow extends StatelessWidget {
             color: rank == 1
                 ? const Color(0xFFEAB308)
                 : (isDark ? const Color(0xFFE0E0E0) : const Color(0xFF616161)),
+            height: 1.5,
           ),
         ),
       ],

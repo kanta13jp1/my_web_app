@@ -419,6 +419,7 @@ class NoteCardWidget extends StatelessWidget {
                       fontSize: 32 * fontScale,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFFe65100),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -479,6 +480,7 @@ class NoteCardWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 28 * fontScale,
                   color: textColor.withValues(alpha: 0.7),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(width: 40),
@@ -493,6 +495,7 @@ class NoteCardWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 28 * fontScale,
                   color: textColor.withValues(alpha: 0.7),
+                  height: 1.5,
                 ),
               ),
             ],
@@ -517,6 +520,7 @@ class NoteCardWidget extends StatelessWidget {
                   fontSize: 32 * fontScale,
                   fontWeight: FontWeight.bold,
                   color: textColor.withValues(alpha: 0.7),
+                  height: 1.5,
                 ),
               ),
             ],

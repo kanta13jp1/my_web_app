@@ -148,6 +148,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -167,6 +168,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFFFF6B35),
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -226,6 +228,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
                           fontWeight:
                               p.posted ? FontWeight.w700 : FontWeight.normal,
                           color: p.posted ? p.color : const Color(0xFFB0B0B0),
+                          height: 1.5,
                         ),
                       ),
                     );
@@ -248,6 +251,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
           style: TextStyle(
             fontSize: 10,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
           ),
         ),
         Text(
@@ -255,6 +259,7 @@ class _BlogPostSummaryCardState extends State<BlogPostSummaryCard> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
+            height: 1.5,
           ),
         ),
       ],

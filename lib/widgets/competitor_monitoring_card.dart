@@ -149,7 +149,10 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                 children: [
                   const Text(
                     'データがありません。',
-                    style: TextStyle(color: Color(0xFFB0B0B0)),
+                    style: TextStyle(
+                      color: Color(0xFFB0B0B0),
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   FilledButton.icon(
@@ -221,12 +224,17 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                 color: ms > 2000
                     ? const Color(0xFFFF6B35)
                     : const Color(0xFFB0B0B0),
+                height: 1.5,
               ),
             ),
           const SizedBox(width: 8),
           Text(
             timeStr,
-            style: const TextStyle(fontSize: 10, color: Color(0xFFB0B0B0)),
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFFB0B0B0),
+              height: 1.5,
+            ),
           ),
         ],
       ),

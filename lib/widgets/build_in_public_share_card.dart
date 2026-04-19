@@ -129,7 +129,11 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Text('𝕏', style: TextStyle(fontSize: 16)),
+                  child: Text('𝕏',
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.5,
+                      )),
                 ),
               ),
               const SizedBox(width: 10),
@@ -139,6 +143,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isDark ? Colors.white : const Color(0xFF0C4A6E),
+                  height: 1.5,
                 ),
               ),
             ],
@@ -176,6 +181,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
             style: TextStyle(
               fontSize: 11,
               color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF0369A1),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -183,7 +189,11 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _shareToX,
-              icon: const Text('𝕏', style: TextStyle(fontSize: 14)),
+              icon: const Text('𝕏',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.5,
+                  )),
               label: const Text('X (Twitter) でシェア'),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
@@ -196,6 +206,7 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
                 textStyle: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -244,6 +255,7 @@ class _StatChip extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white70 : const Color(0xFF0369A1),
+              height: 1.5,
             ),
           ),
         ],

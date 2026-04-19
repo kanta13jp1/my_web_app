@@ -54,6 +54,7 @@ class NoteSearchCard extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -62,6 +63,7 @@ class NoteSearchCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ],

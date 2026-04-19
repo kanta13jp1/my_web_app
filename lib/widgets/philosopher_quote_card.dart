@@ -107,6 +107,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF3D5AFE),
+                                    height: 1.5,
                                   ),
                                 ),
                                 if (quote.authorDescription != null)
@@ -115,6 +116,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 20,
                                       color: Color(0xFFB0B0B0),
+                                      height: 1.5,
                                     ),
                                   ),
                               ],
@@ -165,6 +167,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
+                                height: 1.5,
                               ),
                             ),
                             Text(
@@ -174,6 +177,7 @@ class PhilosopherQuoteCard extends StatelessWidget {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                           ],

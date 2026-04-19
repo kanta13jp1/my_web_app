@@ -132,6 +132,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -144,6 +145,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF6366F1),
+                        height: 1.5,
                       ),
                     ),
                     if (_growthDiff > 0)
@@ -153,6 +155,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                           fontSize: 10,
                           color: Colors.green,
                           fontWeight: FontWeight.w600,
+                          height: 1.5,
                         ),
                       ),
                   ],
@@ -193,6 +196,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                                 color: isDark
                                     ? const Color(0xFF9E9E9E)
                                     : const Color(0xFFBDBDBD),
+                                height: 1.5,
                               ),
                             );
                           },
@@ -234,6 +238,7 @@ class _GrowthTrendCardState extends State<GrowthTrendCard> {
                   color: isDark
                       ? const Color(0xFF9E9E9E)
                       : const Color(0xFFBDBDBD),
+                  height: 1.5,
                 ),
               ),
             ],
