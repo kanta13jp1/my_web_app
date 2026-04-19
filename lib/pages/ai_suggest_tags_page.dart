@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../services/ai_service.dart';
 
 /// AI タグ提案ページ
-/// テキストを入力すると AI が関連タグを提案する
+/// テキストを入力すると AI が関連タグ・カテゴリ・理由を提案する
+///
+/// Win版#117: 旧 ai-suggest-tags EF (実体は SVG quote generator) は本番から削除済み。
+/// 代わりに AIService.suggestTags() = ai-hub:provider.chat (Groq llama-3.3-70b 無料枠) を呼ぶ。
 class AiSuggestTagsPage extends StatefulWidget {
   const AiSuggestTagsPage({super.key});
 
@@ -11,15 +15,17 @@ class AiSuggestTagsPage extends StatefulWidget {
 }
 
 class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
-  final _supabase = Supabase.instance.client;
+  final _aiService = AIService();
   final _controller = TextEditingController();
+  final _titleController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-  List<String> _suggestedTags = [];
+  TagSuggestion? _suggestion;
 
   @override
   void dispose() {
     _controller.dispose();
+    _titleController.dispose();
     super.dispose();
   }
 
@@ -30,25 +36,18 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _suggestedTags = [];
+      _suggestion = null;
     });
 
     try {
-      final response = await _supabase.functions.invoke(
-        'ai-suggest-tags',
-        body: {'text': text},
+      final result = await _aiService.suggestTags(
+        content: text,
+        title: _titleController.text.trim().isEmpty
+            ? null
+            : _titleController.text.trim(),
       );
-
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        final tags = data['tags'];
-        setState(() {
-          _suggestedTags = tags is List
-              ? List<String>.from(tags.map((e) => e.toString()))
-              : [];
-        });
-      } else {
-        setState(() => _suggestedTags = []);
+      if (mounted) {
+        setState(() => _suggestion = result);
       }
     } catch (e) {
       if (mounted) {
@@ -71,20 +70,32 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
         backgroundColor: const Color(0xFF3D5AFE),
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'テキストを入力してタグを自動提案',
-              style: TextStyle(fontSize: 14, color: Color(0xFFB0B0B0)),
+              'テキストを入力してタグ・カテゴリを自動提案 (Groq llama-3.3-70b・無料・超高速)',
+              style: TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: 'タイトル (任意)',
+                hintText: '例: 競馬AI予想の振り返り',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
-              maxLines: 5,
+              maxLines: 8,
               decoration: InputDecoration(
+                labelText: '本文',
                 hintText: 'ノートの内容やメモを貼り付けてください...',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -108,25 +119,84 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
             const SizedBox(height: 20),
             if (_isLoading) const Center(child: CircularProgressIndicator()),
             if (_errorMessage != null)
-              Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
-            if (_suggestedTags.isNotEmpty) ...[
-              const Text(
-                '提案されたタグ',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _suggestedTags
-                    .map(
-                      (tag) => Chip(
-                        label: Text(tag),
-                        backgroundColor: const Color(0xFFEDE7F6),
-                      ),
-                    )
-                    .toList(),
-              ),
+            if (_suggestion != null) ...[
+              if (_suggestion!.tags.isNotEmpty) ...[
+                const Text(
+                  '提案されたタグ',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _suggestion!.tags
+                      .map(
+                        (tag) => Chip(
+                          label: Text(tag),
+                          backgroundColor: const Color(0xFFEDE7F6),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_suggestion!.category.isNotEmpty) ...[
+                const Text(
+                  'メインカテゴリ',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3D5AFE).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF3D5AFE).withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Text(
+                    _suggestion!.category,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF3D5AFE),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              if (_suggestion!.reason.isNotEmpty) ...[
+                const Text(
+                  'なぜこのタグ?',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _suggestion!.reason,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      height: 1.7,
+                      color: Color(0xFFB0B0B0),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
