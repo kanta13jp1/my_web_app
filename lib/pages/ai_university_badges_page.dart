@@ -5,8 +5,7 @@ class AiUniversityBadgesPage extends StatefulWidget {
   const AiUniversityBadgesPage({super.key});
 
   @override
-  State<AiUniversityBadgesPage> createState() =>
-      _AiUniversityBadgesPageState();
+  State<AiUniversityBadgesPage> createState() => _AiUniversityBadgesPageState();
 }
 
 class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
@@ -66,11 +65,15 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -90,7 +93,8 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
                             title: Text(
                               badge['badge_name'] as String? ?? '',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(
                               badge['condition'] as String? ?? '',

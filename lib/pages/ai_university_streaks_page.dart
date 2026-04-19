@@ -69,11 +69,15 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -87,19 +91,16 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceAround,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 _StatItem(
                                   label: '現在のストリーク',
-                                  value:
-                                      '${_streak!['current_streak'] ?? 0}日',
+                                  value: '${_streak!['current_streak'] ?? 0}日',
                                   icon: '🔥',
                                 ),
                                 _StatItem(
                                   label: '最長ストリーク',
-                                  value:
-                                      '${_streak!['longest_streak'] ?? 0}日',
+                                  value: '${_streak!['longest_streak'] ?? 0}日',
                                   icon: '🏆',
                                 ),
                               ],
@@ -112,20 +113,26 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
                         const Text(
                           'ストリークランキング',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         ..._leaderboard.asMap().entries.map((e) {
-                          final item =
-                              e.value as Map<String, dynamic>;
+                          final item = e.value as Map<String, dynamic>;
                           return ListTile(
-                            leading: Text('${e.key + 1}位',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                            leading: Text(
+                              '${e.key + 1}位',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             title: Text(
-                                item['user_id'] as String? ?? '-'),
+                              item['user_id'] as String? ?? '-',
+                            ),
                             trailing: Text(
-                                '${item['current_streak'] ?? 0}日 🔥'),
+                              '${item['current_streak'] ?? 0}日 🔥',
+                            ),
                           );
                         }),
                       ],
@@ -141,8 +148,11 @@ class _StatItem extends StatelessWidget {
   final String value;
   final String icon;
 
-  const _StatItem(
-      {required this.label, required this.value, required this.icon});
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -150,9 +160,13 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(icon, style: const TextStyle(fontSize: 32)),
         const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );

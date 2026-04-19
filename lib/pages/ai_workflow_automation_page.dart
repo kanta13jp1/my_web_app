@@ -9,8 +9,7 @@ class AiWorkflowAutomationPage extends StatefulWidget {
       _AiWorkflowAutomationPageState();
 }
 
-class _AiWorkflowAutomationPageState
-    extends State<AiWorkflowAutomationPage> {
+class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
   bool _loading = false;
   List<dynamic> _workflows = [];
   String? _error;
@@ -67,11 +66,15 @@ class _AiWorkflowAutomationPageState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('エラー: $_error',
-                          style: const TextStyle(color: Colors.red)),
+                      Text(
+                        'エラー: $_error',
+                        style: const TextStyle(color: Colors.red),
+                      ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                          onPressed: _fetch, child: const Text('再試行')),
+                        onPressed: _fetch,
+                        child: const Text('再試行'),
+                      ),
                     ],
                   ),
                 )
@@ -81,22 +84,19 @@ class _AiWorkflowAutomationPageState
                       padding: const EdgeInsets.all(16),
                       itemCount: _workflows.length,
                       itemBuilder: (context, i) {
-                        final wf =
-                            _workflows[i] as Map<String, dynamic>;
-                        final isActive =
-                            wf['is_active'] as bool? ?? false;
+                        final wf = _workflows[i] as Map<String, dynamic>;
+                        final isActive = wf['is_active'] as bool? ?? false;
                         return Card(
                           child: ListTile(
                             leading: Icon(
                               Icons.auto_awesome,
-                              color: isActive
-                                  ? Colors.green
-                                  : Colors.grey,
+                              color: isActive ? Colors.green : Colors.grey,
                             ),
                             title: Text(
                               wf['name'] as String? ?? '',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             subtitle: Text(
                               wf['description'] as String? ?? '',
@@ -106,9 +106,7 @@ class _AiWorkflowAutomationPageState
                                 isActive ? '有効' : '無効',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isActive
-                                      ? Colors.green
-                                      : Colors.grey,
+                                  color: isActive ? Colors.green : Colors.grey,
                                 ),
                               ),
                             ),
