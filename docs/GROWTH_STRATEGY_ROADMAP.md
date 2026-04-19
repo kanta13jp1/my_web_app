@@ -11328,3 +11328,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - bubble padding `horizontal: 14 → 12`、`vertical: 10 → 8` (4px grid)
 - **flutter analyze**: 0エラー ✅
 - **次回候補**: agent_hub_page / activity_feed_page / wrap-up
+
+### PS版#154 T-1第154弾 (2026-04-19)
+- **T-1第154弾**: dart:ui_web 条件分岐import テスト対応パターン → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/making-dartuiweb-compile-in-flutter-tests-the-conditional-import-pattern-1p97
+- **本日T-1累計**: 12本
+- **Qiita バックログ**: 多数 → UTC 15:00以降 dispatch予定
