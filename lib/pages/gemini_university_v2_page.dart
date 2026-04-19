@@ -801,6 +801,24 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF8B4513),
     officialUrl: 'https://oxen.ai/',
   ),
+  'predibase': _ProviderMeta(
+    name: 'Predibase',
+    emoji: '🔧',
+    color: const Color(0xFF4F46E5),
+    officialUrl: 'https://predibase.com/',
+  ),
+  'argilla': _ProviderMeta(
+    name: 'Argilla',
+    emoji: '📝',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://argilla.io/',
+  ),
+  'dify': _ProviderMeta(
+    name: 'Dify',
+    emoji: '🔮',
+    color: const Color(0xFF2563EB),
+    officialUrl: 'https://dify.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1707,6 +1725,36 @@ final Map<String, _Quiz> _quizzes = {
       '大容量の ML データ (画像/CSV/Parquet) を効率的にバージョン管理できない',
       'クラウドへのデプロイが複雑',
       'チームコラボレーション機能がない',
+    ],
+    correct: 1,
+  ),
+  'predibase': _Quiz(
+    question: 'Predibase の「LoRAX」エンジンが実現する革新とは？',
+    options: [
+      '1 GPU で複数の LLM ベースモデルを同時起動する',
+      '1 GPU で 1000+ の LoRA アダプターを同時サーブし、リクエストごとに切り替える',
+      'LoRA 学習を自動で100回実行して最良の結果を選ぶ',
+      'GPU なしで LLM をCPUだけで学習できる',
+    ],
+    correct: 1,
+  ),
+  'argilla': _Quiz(
+    question: 'Argilla が RLHF データ収集で担う役割は？',
+    options: [
+      'LLM のファインチューニングを自動実行する',
+      '人間が AI 出力を評価・比較してフィードバックデータを収集・管理する',
+      'ベクターデータベースに埋め込みを保存する',
+      'プロンプトを自動最適化する',
+    ],
+    correct: 1,
+  ),
+  'dify': _Quiz(
+    question: 'Dify が LangChain と比べて優れている点は？',
+    options: [
+      'より多くの LLM モデルに対応している',
+      'ビジュアル GUI でノーコード・ローコードで LLM ワークフローを構築できる',
+      'Python コードで細かい制御ができる',
+      '無料プランのトークン上限が最も高い',
     ],
     correct: 1,
   ),
@@ -3971,6 +4019,87 @@ oxen diff train.csv  # 行レベルの変更差分を確認
 - OSS CLI: 完全無料
 - Oxen Hub 無料: 10GB
 - Pro: \$15/月 (100GB)
+''',
+  'predibase': '''
+# Predibase
+
+**LoRA ファインチューニング特化**プラットフォーム。LoRAX で 1 GPU に 1000+ カスタムモデルを同時サーブ。
+
+## 特徴
+- LoRAX: 1 GPU でマルチ LoRA アダプターを動的切り替え
+- Ludwig 統合: 設定ファイルベースで ML パイプライン構築
+- OpenAI 互換 API でカスタムモデルを公開
+- Serverless LoRA: 使用時のみ課金
+
+## API
+```python
+from predibase import Predibase
+
+pb = Predibase(api_token="TOKEN")
+adapter = pb.adapters.create(
+    config={"base_model": "meta-llama/Llama-3.1-8B-Instruct", "fine_tuning_type": "lora"},
+    dataset=dataset, name="ai-univ-expert"
+)
+adapter.wait_for_completion()
+```
+
+## 料金
+- Developer: 無料
+- Pro: \$499/月 (LoRAX 本番)
+''',
+  'argilla': '''
+# Argilla
+
+**LLM アノテーション・フィードバック収集** OSS。RLHF/SFT データ構築に特化。
+
+## 特徴
+- FeedbackDataset: LLM 出力の A/B 比較・評価フォーム
+- Hugging Face 統合: HF Hub への直接プッシュ
+- チームアノテーション: Inter-annotator Agreement 計測
+- Docker 1行でセルフホスト
+
+## API
+```python
+import argilla as rg
+rg.init(api_url="http://localhost:6900", api_key="admin.apikey")
+
+dataset = rg.FeedbackDataset(fields=[rg.TextField(name="question"),
+    rg.TextField(name="answer")],
+    questions=[rg.RatingQuestion(name="accuracy", values=[1,2,3,4,5])])
+dataset.push_to_argilla(name="claude-eval", workspace="default")
+```
+
+## 料金
+- OSS セルフホスト: 完全無料
+- Cloud 無料枠あり
+''',
+  'dify': '''
+# Dify
+
+**ノーコード LLM ワークフロービルダー** OSS。GitHub スター 80,000+。非エンジニアも AI アプリを構築可能。
+
+## 特徴
+- ビジュアル GUI でドラッグ&ドロップ RAG 構築
+- Knowledge Base: PDF/Web/CSV アップロードで即 RAG
+- 全主要 LLM 対応 (Claude/GPT/Gemini/Llama)
+- Docker Compose で 5 分セルフホスト
+
+## API
+```python
+from dify_client import ChatClient
+
+client = ChatClient(api_key="YOUR_KEY")
+response = client.create_chat_message(
+    query="AI大学のベクターDBを比較してください",
+    user="user123", conversation_id="", response_mode="blocking"
+)
+print(response["answer"])
+```
+
+## 料金
+- OSS セルフホスト: 完全無料
+- Cloud 無料: 200 メッセージ/月
+- Professional: \$59/月
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
