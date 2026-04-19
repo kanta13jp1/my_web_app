@@ -124,6 +124,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.red.shade700,
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -156,7 +157,10 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     children: [
                       const Text(
                         '進捗: ',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          height: 1.5,
+                        ),
                       ),
                       Expanded(
                         child: Slider(
@@ -170,7 +174,10 @@ class _WipLimitPageState extends State<WipLimitPage> {
                       ),
                       Text(
                         '$progressPercent%',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          height: 1.5,
+                        ),
                       ),
                     ],
                   ),
@@ -241,13 +248,17 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
+                  height: 1.5,
                 ),
               ),
               if (newProgress >= 100) ...[
                 const SizedBox(height: 8),
                 const Text(
                   '🎉 完了！次を始められます',
-                  style: TextStyle(color: Colors.green),
+                  style: TextStyle(
+                    color: Colors.green,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ],
@@ -334,7 +345,10 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     children: [
                       const Text(
                         '🍽️',
-                        style: TextStyle(fontSize: 36),
+                        style: TextStyle(
+                          fontSize: 36,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -353,6 +367,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                         style: const TextStyle(
                           color: Color(0xFFBCAAA4),
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -367,6 +382,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -394,6 +410,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                                   .colorScheme
                                   .onSurfaceVariant,
                               fontSize: 13,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -408,6 +425,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -450,7 +468,13 @@ class _WipLimitPageState extends State<WipLimitPage> {
             children: [
               Row(
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 24)),
+                  Text(
+                    emoji,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      height: 1.5,
+                    ),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -463,6 +487,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                             fontSize: 14,
                             decoration:
                                 !isActive ? TextDecoration.lineThrough : null,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -471,6 +496,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                             fontSize: 11,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -484,6 +510,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                       color: progress >= 100
                           ? Colors.green
                           : const Color(0xFFF57C00),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -495,6 +522,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -518,6 +546,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.green.shade700,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -528,6 +557,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   style: TextStyle(
                     fontSize: 11,
                     color: Color(0xFFFB8C00),
+                    height: 1.5,
                   ),
                 ),
               ],

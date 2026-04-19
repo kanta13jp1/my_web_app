@@ -898,6 +898,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           errorText!,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -1442,7 +1443,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             const SizedBox(height: 12),
             const Text(
               'バージョン履歴',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const Divider(),
             Expanded(
@@ -1472,7 +1477,10 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ),
                           subtitle: Text(
                             dateStr,
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.5,
+                            ),
                           ),
                           trailing: TextButton(
                             child: const Text('復元'),
@@ -1621,6 +1629,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: color,
+                height: 1.5,
               ),
             ),
           ),
@@ -1646,22 +1655,38 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 : '';
             return Text(
               'Saved$suffix',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF0D9488)),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF0D9488),
+                height: 1.5,
+              ),
             );
           case SaveState.saving:
             return const Text(
               'Saving...',
-              style: TextStyle(fontSize: 12, color: Color(0xFF6366F1)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6366F1),
+                height: 1.5,
+              ),
             );
           case SaveState.modified:
             return const Text(
               'Unsaved changes',
-              style: TextStyle(fontSize: 12, color: Color(0xFFFF6B35)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFFF6B35),
+                height: 1.5,
+              ),
             );
           case SaveState.error:
             return const Text(
               'Save error',
-              style: TextStyle(fontSize: 12, color: Color(0xFFB91C1C)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFFB91C1C),
+                height: 1.5,
+              ),
             );
         }
       },
@@ -2014,6 +2039,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 style: TextStyle(
                   fontSize: titleFontSize,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
               const Divider(),
@@ -2240,6 +2266,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           color: Colors.white,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -2474,7 +2501,11 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                 const SizedBox(width: 8),
                 const Text(
                   'コメント',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const Spacer(),
                 Text(
@@ -2482,6 +2513,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                   style: TextStyle(
                     fontSize: 13,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -2499,6 +2531,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                           style: TextStyle(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                       )
@@ -2535,7 +2568,10 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                               ),
                               title: Text(
                                 c['content'] as String? ?? '',
-                                style: const TextStyle(fontSize: 14),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
                               ),
                               subtitle: Text(
                                 _formatDate(c['created_at']?.toString()),
@@ -2544,6 +2580,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                   color: Theme.of(context)
                                       .colorScheme
                                       .onSurfaceVariant,
+                                  height: 1.5,
                                 ),
                               ),
                               trailing: IconButton(
@@ -2573,6 +2610,7 @@ class _NoteCommentsSheetState extends State<_NoteCommentsSheet> {
                                             '削除',
                                             style: TextStyle(
                                               color: Color(0xFFB91C1C),
+                                              height: 1.5,
                                             ),
                                           ),
                                         ),

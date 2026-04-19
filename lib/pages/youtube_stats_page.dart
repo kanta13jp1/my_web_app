@@ -382,7 +382,11 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 children: [
                   Text(
                     'TSV インポート手順',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                   SizedBox(height: 6),
                   Text(
@@ -412,7 +416,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -426,7 +433,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -441,7 +451,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                         EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -461,7 +474,11 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
               fillColor:
                   isDark ? const Color(0xFF111827) : const Color(0xFFF9FAFB),
             ),
-            style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+            style: const TextStyle(
+              fontSize: 11,
+              fontFamily: 'monospace',
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 12),
 
@@ -507,6 +524,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                   fontSize: 12,
                   color: _importSuccess ? Colors.green : Colors.red,
                   fontWeight: FontWeight.w600,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -662,6 +680,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       color: isDark
                           ? const Color(0xFF9CA3AF)
                           : const Color(0xFF4B5563),
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -676,6 +695,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           color: isDark
                               ? const Color(0xFF9CA3AF)
                               : const Color(0xFF4B5563),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -691,7 +711,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           child: ChoiceChip(
                             label: Text(
                               labels[mode]!,
-                              style: const TextStyle(fontSize: 11),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                height: 1.5,
+                              ),
                             ),
                             selected: active,
                             onSelected: (_) => setState(() => _sortMode = mode),
@@ -740,6 +763,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                           color: _typeColor(type),
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -747,7 +771,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                   ),
                   title: Text(
                     title,
-                    style: const TextStyle(fontSize: 12),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -756,7 +783,10 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                     children: [
                       Text(
                         '視聴 ${_fmtK(views)}',
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
                       ),
                       if (delta > 0)
                         Text(
@@ -765,15 +795,22 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                             fontSize: 11,
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       Text(
                         '♥${_fmtK(likes)}',
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         '💬${_fmtK(comments)}',
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
                       ),
                       Text(
                         'EG ${engRate.toStringAsFixed(1)}%',
@@ -784,6 +821,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                               : isDark
                                   ? const Color(0xFF9CA3AF)
                                   : const Color(0xFF4B5563),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -824,9 +862,16 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
-            Text(label, style: const TextStyle(fontSize: 9)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 9,
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       ),

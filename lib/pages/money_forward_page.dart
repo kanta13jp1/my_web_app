@@ -232,7 +232,10 @@ class _DisconnectedView extends StatelessWidget {
               ),
               child: Text(
                 errorMessage!,
-                style: TextStyle(color: Colors.red.shade700),
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -248,7 +251,11 @@ class _DisconnectedView extends StatelessWidget {
         const Center(
           child: Text(
             'MoneyForward と連携する',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -256,7 +263,11 @@ class _DisconnectedView extends StatelessWidget {
           child: Text(
             '銀行・証券・クレジットカードの残高・取引を\n自動取り込みして資産を一元管理',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black54, fontSize: 14),
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -268,7 +279,10 @@ class _DisconnectedView extends StatelessWidget {
             backgroundColor: const Color(0xFF00B900),
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 48),
-            textStyle: const TextStyle(fontSize: 16),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
         ),
         const SizedBox(height: 32),
@@ -292,6 +306,7 @@ class _DisconnectedView extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF16A34A),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -347,7 +362,10 @@ class _AccountsTab extends StatelessWidget {
               ),
               child: Text(
                 errorMessage!,
-                style: TextStyle(color: Colors.red.shade700),
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -359,7 +377,11 @@ class _AccountsTab extends StatelessWidget {
               children: [
                 const Text(
                   '総資産',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -368,6 +390,7 @@ class _AccountsTab extends StatelessWidget {
                     color: Colors.white,
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 if (lastSyncAt != null) ...[
@@ -377,6 +400,7 @@ class _AccountsTab extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white60,
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -407,7 +431,11 @@ class _AccountsTab extends StatelessWidget {
           const SizedBox(height: 16),
           const Text(
             '口座・資産内訳',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           ...accounts.map(
@@ -425,13 +453,17 @@ class _AccountsTab extends StatelessWidget {
                 title: Text(acc['name']?.toString() ?? '口座'),
                 subtitle: Text(
                   acc['institution']?.toString() ?? '',
-                  style: const TextStyle(fontSize: 12),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
                 trailing: Text(
                   formatAmount(acc['balance']),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -444,7 +476,10 @@ class _AccountsTab extends StatelessWidget {
               child: Text(
                 '口座情報がありません\n上の「今すぐ更新」を押してデータを取得してください',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black45),
+                style: TextStyle(
+                  color: Colors.black45,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -469,7 +504,10 @@ class _TransactionsTab extends StatelessWidget {
         child: Text(
           '取引履歴がありません\n口座タブから「今すぐ更新」を押してください',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.black45),
+          style: TextStyle(
+            color: Colors.black45,
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -495,13 +533,17 @@ class _TransactionsTab extends StatelessWidget {
             title: Text(tx['description']?.toString() ?? '取引'),
             subtitle: Text(
               tx['date']?.toString() ?? '',
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.5,
+              ),
             ),
             trailing: Text(
               formatAmount(amount),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: isExpense ? Colors.red : Colors.green,
+                height: 1.5,
               ),
             ),
           ),
@@ -522,9 +564,21 @@ class _BulletItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ', style: TextStyle(color: Color(0xFF16A34A))),
+          const Text(
+            '• ',
+            style: TextStyle(
+              color: Color(0xFF16A34A),
+              height: 1.5,
+            ),
+          ),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 13)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
           ),
         ],
       ),

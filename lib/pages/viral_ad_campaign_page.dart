@@ -159,6 +159,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
+            height: 1.5,
           ),
         ),
       ],
@@ -216,7 +217,10 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                       (e) => Chip(
                         label: Text(
                           '${e.key}: ${e.value}',
-                          style: const TextStyle(fontSize: 11),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            height: 1.5,
+                          ),
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         padding: EdgeInsets.zero,
@@ -252,9 +256,16 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: highlight ? const Color(0xFFFF6B35) : null,
+              height: 1.5,
             ),
           ),
-          Text(label, style: const TextStyle(fontSize: 11)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );
@@ -291,8 +302,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                   children: [
                     const Text(
                       '広告テンプレート',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -338,7 +352,10 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                     children: [
                       const Text(
                         '広告プレビュー (SVG)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Container(
@@ -360,6 +377,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -381,12 +399,18 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                     children: [
                       const Text(
                         'ツイートテキスト',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _tweetText!,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -396,6 +420,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                           color: _tweetText!.length > 280
                               ? Theme.of(context).colorScheme.error
                               : Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -414,8 +439,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                   children: [
                     const Text(
                       'キャンペーン実行',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
@@ -431,7 +459,10 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(
+                            color: Colors.red,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     if (_successMessage != null)
@@ -439,7 +470,10 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           _successMessage!,
-                          style: const TextStyle(color: Colors.green),
+                          style: const TextStyle(
+                            color: Colors.green,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     SizedBox(
@@ -477,7 +511,11 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
             if (_recentRuns.isNotEmpty) ...[
               const Text(
                 '直近のキャンペーン実行',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 8),
               ..._recentRuns.take(5).map((run) {
@@ -532,6 +570,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: statusColor,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -545,6 +584,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                             fontSize: 12,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                         if (hasMetrics) ...[

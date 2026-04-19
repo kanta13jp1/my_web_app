@@ -289,7 +289,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     padding: const EdgeInsets.all(20.0),
                     child: Text(
                       'エラー: $_error',
-                      style: const TextStyle(color: Colors.red),
+                      style: const TextStyle(
+                        color: Colors.red,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 )
@@ -365,6 +368,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -373,6 +377,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                             fontSize: 12,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -391,11 +396,15 @@ class _AiStatusPageState extends State<AiStatusPage> {
                               : (score >= 500
                                   ? const Color(0xFFFF6B35)
                                   : const Color(0xFF9CA3AF)),
+                          height: 1.5,
                         ),
                       ),
                       const Text(
                         'スコア',
-                        style: TextStyle(fontSize: 10),
+                        style: TextStyle(
+                          fontSize: 10,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       if (_preferredModel == modelName)
@@ -416,6 +425,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                           ),
                         )
@@ -441,6 +451,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                       color: Colors.red,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -485,6 +496,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: navy.withValues(alpha: 0.92),
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -492,6 +504,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                       style: TextStyle(
                         fontSize: 12,
                         color: navy.withValues(alpha: 0.65),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -633,6 +646,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: navy.withValues(alpha: 0.92),
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -640,6 +654,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   _preferredModel ?? '',
                   style: TextStyle(
                     color: navy.withValues(alpha: 0.72),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -695,6 +710,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 color: totalScore >= 80
                     ? Colors.green
                     : (totalScore >= 50 ? const Color(0xFFFF6B35) : Colors.red),
+                height: 1.5,
               ),
             ),
           ],
@@ -729,6 +745,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ),
@@ -741,7 +758,11 @@ class _AiStatusPageState extends State<AiStatusPage> {
               tilePadding: EdgeInsets.zero,
               title: const Text(
                 'レベル詳細',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                ),
               ),
               children: levels.map<Widget>((level) {
                 final levelData = level as Map<String, dynamic>;
@@ -794,6 +815,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -803,6 +825,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: passed ? Colors.green : Colors.red,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -821,6 +844,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -832,6 +856,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
               fontSize: 11,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontStyle: FontStyle.italic,
+              height: 1.5,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -877,8 +902,12 @@ class _AiStatusPageState extends State<AiStatusPage> {
       ),
       child: Text(
         '$label: $value',
-        style:
-            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.bold,
+          height: 1.5,
+        ),
       ),
     );
   }

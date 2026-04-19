@@ -114,7 +114,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
         backgroundColor: _card,
         title: const Text(
           'AI クォータ監視',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -170,6 +174,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   color: _alertRed,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -177,7 +182,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
           const SizedBox(height: 12),
           const Text(
             'Claude MAX レート制限到達。ファイル種別に応じて代替AIを使用してください:',
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           _buildFallbackTable(),
@@ -205,7 +214,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               child: Text(
                 cell,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  height: 1.5,
+                ),
               ),
             );
           }).toList(),
@@ -265,6 +278,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -293,6 +307,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                           color: statusColor,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -304,7 +319,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
               const SizedBox(height: 12),
               const Text(
                 'データなし',
-                style: TextStyle(color: Colors.white38, fontSize: 13),
+                style: TextStyle(
+                  color: Colors.white38,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ] else ...[
               const SizedBox(height: 12),
@@ -317,6 +336,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                         color: isAlert ? _alertRed : Colors.white,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     if (limit > 0) ...[
@@ -325,6 +345,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                         style: const TextStyle(
                           color: Colors.white54,
                           fontSize: 14,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -333,8 +354,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                   if (tokens != null)
                     Text(
                       '${_formatTokens(tokens)} tokens',
-                      style:
-                          const TextStyle(color: Colors.white54, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                 ],
               ),
@@ -354,14 +378,22 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                 const SizedBox(height: 4),
                 Text(
                   '${(progress * 100).toStringAsFixed(0)}% 使用',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
                 ),
               ],
               if (checkedAt != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   '最終確認: $checkedAt',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ],
@@ -379,7 +411,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
         leading: const Icon(Icons.history, color: Colors.white54),
         title: const Text(
           '使用履歴 (30日間)',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         iconColor: Colors.white54,
         collapsedIconColor: Colors.white38,
@@ -397,7 +433,10 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'データなし',
-                style: TextStyle(color: Colors.white38),
+                style: TextStyle(
+                  color: Colors.white38,
+                  height: 1.5,
+                ),
               ),
             )
           else
@@ -435,6 +474,7 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
                       color: _orange,
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
+                      height: 1.5,
                     ),
                   ),
                 );
@@ -475,7 +515,11 @@ class _QuotaDashboardPageState extends State<QuotaDashboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white70, fontSize: 11),
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 11,
+          height: 1.5,
+        ),
       ),
     );
   }

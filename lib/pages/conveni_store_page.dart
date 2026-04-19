@@ -118,6 +118,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF10B981),
+                  height: 1.5,
                 ),
               ),
             ],
@@ -258,7 +259,13 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🏪', style: TextStyle(fontSize: 72)),
+          const Text(
+            '🏪',
+            style: TextStyle(
+              fontSize: 72,
+              height: 1.5,
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             'コンビニを開業しよう',
@@ -266,6 +273,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               fontSize: 22,
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -275,6 +283,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -329,7 +338,13 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 children: [
                   Row(
                     children: [
-                      const Text('🏪', style: TextStyle(fontSize: 28)),
+                      const Text(
+                        '🏪',
+                        style: TextStyle(
+                          fontSize: 28,
+                          height: 1.5,
+                        ),
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -341,6 +356,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
+                                height: 1.5,
                               ),
                             ),
                             Text(
@@ -348,6 +364,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.white70,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -362,6 +379,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
+                              height: 1.5,
                             ),
                           ),
                           Text(
@@ -369,6 +387,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                             style: const TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -460,6 +479,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -485,7 +505,11 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Colors.white70),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.white70,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -494,6 +518,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: valueColor,
+                height: 1.5,
               ),
             ),
           ],
@@ -528,6 +553,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: color,
+                height: 1.5,
               ),
             ),
             Text(
@@ -535,6 +561,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               style: TextStyle(
                 fontSize: 10,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 4),
@@ -583,6 +610,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const Spacer(),
@@ -591,6 +619,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(width: 12),
@@ -599,6 +628,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(width: 12),
@@ -610,6 +640,7 @@ class _ConveniStorePageState extends State<ConveniStorePage> {
                 color: isProfit
                     ? const Color(0xFF10B981)
                     : const Color(0xFFEF4444),
+                height: 1.5,
               ),
             ),
           ],

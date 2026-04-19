@@ -75,7 +75,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         backgroundColor: _card,
         title: const Text(
           'ブログ管理',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -160,11 +164,16 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                 color: color,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(color: Colors.white38, fontSize: 10),
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 10,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -205,6 +214,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             color: selected ? Colors.white : Colors.white54,
             fontWeight: FontWeight.bold,
             fontSize: 13,
+            height: 1.5,
           ),
         ),
       ),
@@ -222,7 +232,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
               child: Text(
                 'blog-engagement.yml を実行すると\nデータが表示されます',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white38),
+                style: TextStyle(
+                  color: Colors.white38,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -282,6 +295,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       color: platformColor,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -293,6 +307,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -313,7 +328,13 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   TextButton.icon(
                     onPressed: () => _openUrl(url),
                     icon: const Icon(Icons.open_in_new, size: 14),
-                    label: const Text('開く', style: TextStyle(fontSize: 12)),
+                    label: const Text(
+                      '開く',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                    ),
                     style: TextButton.styleFrom(
                       foregroundColor: _orange,
                       padding: const EdgeInsets.symmetric(
@@ -338,7 +359,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
         const SizedBox(width: 4),
         Text(
           value,
-          style: TextStyle(color: color, fontSize: 12),
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -360,7 +385,10 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             child: Center(
               child: Text(
                 'コメントなし',
-                style: TextStyle(color: Colors.white38),
+                style: TextStyle(
+                  color: Colors.white38,
+                  height: 1.5,
+                ),
               ),
             ),
           ),
@@ -413,12 +441,17 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                     color: Colors.white70,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   platform.toUpperCase(),
-                  style: const TextStyle(color: Colors.white38, fontSize: 10),
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 10,
+                    height: 1.5,
+                  ),
                 ),
                 const Spacer(),
                 Container(
@@ -434,6 +467,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       color: replied ? _green : _red,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -442,7 +476,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
             const SizedBox(height: 8),
             Text(
               body,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                height: 1.5,
+              ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
@@ -460,7 +498,11 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                   children: [
                     const Text(
                       '自分の返信:',
-                      style: TextStyle(color: Colors.white38, fontSize: 10),
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 10,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -468,6 +510,7 @@ class _BlogManagementPageState extends State<BlogManagementPage>
                       style: const TextStyle(
                         color: Colors.white54,
                         fontSize: 11,
+                        height: 1.5,
                       ),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
