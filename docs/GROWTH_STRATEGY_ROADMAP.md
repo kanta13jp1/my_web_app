@@ -11651,3 +11651,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - claude/* orphan: 0件
 - 修正済み: なし (全WF正常)
 
+### PS版#1(続4) T-1 #175 dev.to投稿完了 (2026-04-19 19:30)
+- T-1 第175弾: GitHub Actions concurrency落とし穴 — cancel-in-progress: falseでもqueuedは消える
+  - https://dev.to/kanta13jp1/github-actions-concurrency-trap-cancel-in-progress-false-still-drops-queued-runs-5hg3
+- 本日T-1累計: 35本 (新過去最高更新)
+
