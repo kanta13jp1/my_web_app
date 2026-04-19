@@ -11181,3 +11181,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - `_mdStyle` h1/h2/h3 `height: 1.4` 追加
 - **flutter analyze**: 0エラー ✅
 - **次回候補**: 他ページ typography/spacing確認 / LP DESIGN.md非color review / wrap-up
+
+### VSCode版#112 セッション (2026-04-19)
+- **landing_page.dart DESIGN.md typography violations修正** (design-skills subagent実施)
+  - `height: 1.4` → `1.6` (body/heading text 10箇所)
+  - `height: 1.2` → `1.4` (stat display、絶対最小値)
+  - `height: 1.4)` → `1.6)` (inline TextStyle、line 1763)
+  - `fontSize: 9` → `10` (最小フォントサイズ)
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: 他ページ review (comparison_page / admin_analytics) / wrap-up
