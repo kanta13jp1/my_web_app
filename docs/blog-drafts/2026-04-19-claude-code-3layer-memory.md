@@ -1,7 +1,7 @@
 ---
 title: "Claude Codeのセッション間記憶を3層で設計する — memory/ + NotebookLM + COMPRESSED_PROMPT"
 tags: ClaudeCode,AI,個人開発,buildinpublic,architecture
-published: false
+published: true
 ---
 
 # Claude Codeのセッション間記憶を3層で設計する

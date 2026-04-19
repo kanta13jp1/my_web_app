@@ -1,7 +1,7 @@
 ---
 title: "Building Persistent Memory for Claude Code Across Sessions — 3-Layer Architecture"
 tags: ClaudeCode,AI,buildinpublic,architecture,webdev
-published: false
+published: true
 ---
 
 # Building Persistent Memory for Claude Code Across Sessions
