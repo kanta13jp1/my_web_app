@@ -11417,3 +11417,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第164弾**: Groq・DeepInfra・Nebius 3プロバイダー統合 ai-hub routing → dev.to 投稿成功
   - https://dev.to/kanta13jp1/integrating-groq-deepinfra-and-nebius-in-one-edge-function-3-provider-ai-routing-4dce
 - **本日T-1累計**: 22本 (過去最高更新)
+
+### PS版#165 T-1第165弾 (2026-04-19) [instance-ps worktree初運用]
+- **T-1第165弾**: git worktree 5インスタンス並行開発 stash競合解消 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/5-claude-code-instances-in-parallel-with-git-worktree-eliminating-stash-conflicts-e9a
+- **instance-ps worktree初運用**: .claude/worktrees/instance-ps (claude/ps-wip branch)
+- **Rule17**: 全WF正常 / orphan 0本
+- **本日T-1累計**: 23本 (過去最高更新)
