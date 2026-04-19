@@ -59,12 +59,31 @@ class _NoteListPageState extends State<NoteListPage> {
   List<_LocalDraftEntry> _draftEntries = [];
   Set<String> _publishedNoteIds = <String>{};
 
+  // Win版#108: メモ検索 (title + content 部分一致・case insensitive)
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
     _supabase = widget.supabaseClient ?? Supabase.instance.client;
     _publicMemoService = PublicMemoService(_supabase);
     _fetchNotes();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// 検索クエリで note を絞り込み (title + content 部分一致・case insensitive)
+  bool _matchesSearch(Map<String, dynamic> note) {
+    if (_searchQuery.isEmpty) return true;
+    final q = _searchQuery.toLowerCase();
+    final title = (note['title'] as String? ?? '').toLowerCase();
+    final content = (note['content'] as String? ?? '').toLowerCase();
+    return title.contains(q) || content.contains(q);
   }
 
   Future<void> _fetchNotes() async {
@@ -1021,8 +1040,12 @@ class _NoteListPageState extends State<NoteListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final visibleNotes =
+    // Win版#108: お気に入り → 検索 の順でフィルタ適用
+    final favoritesFiltered =
         _showFavoritesOnly ? _notes.where(_isFavorite).toList() : _notes;
+    final visibleNotes = _searchQuery.isEmpty
+        ? favoritesFiltered
+        : favoritesFiltered.where(_matchesSearch).toList();
     final reminderEntries = _reminderEntries(visibleNotes);
     final reminderIds =
         reminderEntries.map(_noteId).where((id) => id.isNotEmpty).toSet();
@@ -1078,117 +1101,200 @@ class _NoteListPageState extends State<NoteListPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !hasAnyEntries
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.note_alt_outlined,
-                        size: 64,
-                        color: Color(0xFFB0B0B0),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _showFavoritesOnly ? 'お気に入りのメモはまだありません' : 'まだメモがありません',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Color(0xFFB0B0B0),
-                        ),
-                      ),
-                      if (_showFavoritesOnly) ...[
-                        const SizedBox(height: 12),
-                        TextButton.icon(
-                          onPressed: _toggleFavoritesOnly,
-                          icon: const Icon(Icons.list_alt),
-                          label: const Text('すべてのメモを見る'),
-                        ),
-                      ],
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('新しいメモを作成'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6366F1),
-                          foregroundColor: Colors.white,
-                        ),
-                        onPressed: () => _navigateToEditor(context),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: () =>
-                            Navigator.of(context).pushNamed('/import'),
-                        icon: const Icon(Icons.file_upload_outlined),
-                        label: const Text('Notion / Evernote を取り込む'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    if (_draftEntries.isNotEmpty) ...[
-                      _buildSectionHeader(
-                        '下書き',
-                        'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
-                      ),
-                      ..._draftEntries.map(
-                        (draft) => _buildDraftCard(context, draft),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (reminderEntries.isNotEmpty) ...[
-                      _buildSectionHeader(
-                        'リマインダー',
-                        'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
-                      ),
-                      ...reminderEntries.map(
-                        (note) => _buildNoteCard(
-                          context,
-                          note,
-                          highlightReminder: true,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    if (widget.prioritizeShareCandidates &&
-                        shareCandidateEntries.isNotEmpty) ...[
-                      _buildSectionHeader(
-                        '共有向け候補',
-                        'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
-                      ),
-                      ...shareCandidateEntries.map((entry) {
-                        final note = entry['note'] as Map<String, dynamic>;
-                        final score = entry['score'] as int;
-                        final reasons = List<String>.from(
-                          entry['reasons'] as List,
-                        );
-                        return _buildNoteCard(
-                          context,
-                          note,
-                          highlightShareCandidate: true,
-                          shareScore: score,
-                          shareReasons: reasons,
-                        );
-                      }),
-                      const SizedBox(height: 8),
-                    ],
-                    if (remainingNotes.isNotEmpty)
-                      _buildSectionHeader(
-                        widget.prioritizeShareCandidates ? 'すべてのメモ' : 'メモ一覧',
-                        _showFavoritesOnly
-                            ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
-                            : widget.prioritizeShareCandidates
-                                ? '共有候補の下に、残りのメモを時系列で表示します。'
-                                : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
-                      ),
-                    ...remainingNotes.map(
-                      (note) => _buildNoteCard(context, note),
-                    ),
-                  ],
+      body: Column(
+        children: [
+          // Win版#108: メモ検索バー
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: TextField(
+              key: const Key('note_list_page_search_field'),
+              controller: _searchController,
+              onChanged: (value) => setState(() => _searchQuery = value.trim()),
+              style: const TextStyle(color: Color(0xFFE5E7EB), fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'タイトル・本文で検索...',
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Color(0xFF94A3B8),
+                  size: 20,
                 ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(
+                          Icons.clear,
+                          color: Color(0xFF94A3B8),
+                          size: 18,
+                        ),
+                        tooltip: '検索クリア',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: const Color(0xFF1E1E1E),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF333333)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF333333)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF6366F1)),
+                ),
+              ),
+            ),
+          ),
+          if (_searchQuery.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.filter_list,
+                    color: Color(0xFF6366F1),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${visibleNotes.length} 件 ヒット',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : !hasAnyEntries
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.note_alt_outlined,
+                              size: 64,
+                              color: Color(0xFFB0B0B0),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _showFavoritesOnly
+                                  ? 'お気に入りのメモはまだありません'
+                                  : 'まだメモがありません',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: Color(0xFFB0B0B0),
+                              ),
+                            ),
+                            if (_showFavoritesOnly) ...[
+                              const SizedBox(height: 12),
+                              TextButton.icon(
+                                onPressed: _toggleFavoritesOnly,
+                                icon: const Icon(Icons.list_alt),
+                                label: const Text('すべてのメモを見る'),
+                              ),
+                            ],
+                            const SizedBox(height: 24),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.add),
+                              label: const Text('新しいメモを作成'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6366F1),
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () => _navigateToEditor(context),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () =>
+                                  Navigator.of(context).pushNamed('/import'),
+                              icon: const Icon(Icons.file_upload_outlined),
+                              label: const Text('Notion / Evernote を取り込む'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          if (_draftEntries.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              '下書き',
+                              'X の下書きのように、書きかけのメモを一覧からすぐ再開できます。',
+                            ),
+                            ..._draftEntries.map(
+                              (draft) => _buildDraftCard(context, draft),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (reminderEntries.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              'リマインダー',
+                              'Evernote のように、期限付きノートを先頭でまとめて確認できます。',
+                            ),
+                            ...reminderEntries.map(
+                              (note) => _buildNoteCard(
+                                context,
+                                note,
+                                highlightReminder: true,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          if (widget.prioritizeShareCandidates &&
+                              shareCandidateEntries.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              '共有向け候補',
+                              'ピン留め・共有語・導線語・説明量をスコア化して上位3件を固定表示します。',
+                            ),
+                            ...shareCandidateEntries.map((entry) {
+                              final note =
+                                  entry['note'] as Map<String, dynamic>;
+                              final score = entry['score'] as int;
+                              final reasons = List<String>.from(
+                                entry['reasons'] as List,
+                              );
+                              return _buildNoteCard(
+                                context,
+                                note,
+                                highlightShareCandidate: true,
+                                shareScore: score,
+                                shareReasons: reasons,
+                              );
+                            }),
+                            const SizedBox(height: 8),
+                          ],
+                          if (remainingNotes.isNotEmpty)
+                            _buildSectionHeader(
+                              widget.prioritizeShareCandidates
+                                  ? 'すべてのメモ'
+                                  : 'メモ一覧',
+                              _showFavoritesOnly
+                                  ? 'Evernote のスター付きノートのように、お気に入りだけをまとめて見返せます。'
+                                  : widget.prioritizeShareCandidates
+                                      ? '共有候補の下に、残りのメモを時系列で表示します。'
+                                      : 'ピン留めとお気に入りを優先し、その後は新しい順に表示します。',
+                            ),
+                          ...remainingNotes.map(
+                            (note) => _buildNoteCard(context, note),
+                          ),
+                        ],
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         key: const Key('note_list_page_fab'),
         onPressed: () => _navigateToEditor(context),
