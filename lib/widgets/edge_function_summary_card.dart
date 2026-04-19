@@ -537,6 +537,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/customer-feedback',
       'フィードバックページ > 顧客フィードバック収集・分析・対応状況確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'chat-messaging',
+      'チャットメッセージング',
+      true,
+      '/team-chat',
+      'チームチャットページ > メッセージ送受信・チャンネル管理',
+    ),
+    _FnDef(
+      'digital-wallet',
+      'デジタルウォレット (資産管理)',
+      true,
+      '/digital-wallet',
+      'デジタルウォレットページ > 残高確認・送金・取引履歴',
+    ),
+    _FnDef(
+      'time-tracker',
+      '時間トラッカー (作業時間記録)',
+      true,
+      '/time-tracker',
+      '時間トラッカーページ > タスク別作業時間記録・集計',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
