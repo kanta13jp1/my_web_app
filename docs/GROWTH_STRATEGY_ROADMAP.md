@@ -12153,3 +12153,20 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 主要実装: AI大学コンテンツ拡充 (ML Infra / Vector DB / CV カテゴリを強化)
 - 該当原則: 5 (商品=学習コンテンツ価値増大) + 2 (ミッション=AI技術理解の民主化)
 - 整合性スコア: 8/9 ✅
+
+### PowerShell版#2 セッション (2026-04-20 04:15 JST) — T-1 dispatch 休止判断
+
+- **状況調査**: 全 JA/EN draft 261本 `published: true` = 未投稿 draft なし
+- **Qiita rate limit 調査**: 直近 3 runs (15:44 / 17:29 / 19:11 UTC) 全て Qiita 429 継続
+  - UTC 15:00 (JST 00:00 Apr 20) 跨ぎ後も rolling 24h window のため解放されず
+  - 2026-04-19 は 37 本一括 dev.to dispatch + 同時 Qiita 試行 → window 飽和
+- **結論**: qiita-retry は **最低 12h 待機**必要。本セッションは dispatch action なし
+- **記録**: `memory/feedback_correction_20260420_qiita_rolling_limit.md` で skill 前提 (15:00 UTC reset) の誤り明示
+  - qiita-retry skill 今後は「直近 6-12h Qiita 成功履歴」を先行チェックすること
+
+### Philosophy Alignment (PS版#2 2026-04-20)
+
+- 主要実装: なし (Qiita rolling limit 発見 → 誤前提 memory 化)
+- 該当原則: 8 (KPI=昨日の自分 → 制約認識が今後の効率化) + 6 (時間=無駄 retry 防止)
+- 整合性スコア: 7/9 ✅ (実装変更ゼロだが learning asset 化は ✅)
+- 理念的貢献: 将来 PS#2 セッションが同じ 429 wall にぶつかって時間浪費するのを防ぐ
