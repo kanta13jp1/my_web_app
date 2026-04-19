@@ -3,6 +3,10 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-04-19 (PS版#5 — on-call バグ修正)
+
+- `project_20260419_ps5.md` — CI修復(esm.sh→npm) + AI大学URL修正 + ホーム履歴recordFeatureTap統合
+
 ## 2026-04-19 (VSCode版 — wrapup hook tightening)
 
 - `feedback_success_20260419_wrapup_hook.md` — PostToolUse 正規表現を厳格化して heredoc/echo 誤マッチを排除。`if: "Bash(git *)"` でさらに scope。ライブ検証成功。
