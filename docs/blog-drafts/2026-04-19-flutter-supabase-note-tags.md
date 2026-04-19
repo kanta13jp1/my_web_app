@@ -1,7 +1,7 @@
 ---
 title: "FlutterのメモアプリにNotionライクなタグ機能を追加する — Supabase配列カラム活用"
 tags: Flutter,Supabase,個人開発,buildinpublic,Notion
-published: false
+published: true
 ---
 
 # FlutterのメモアプリにNotionライクなタグ機能を追加する

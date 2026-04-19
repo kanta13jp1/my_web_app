@@ -1,7 +1,7 @@
 ---
 title: "Adding Notion-Style Tags to a Flutter Note App with Supabase text[] Arrays"
 tags: Flutter,Supabase,buildinpublic,webdev,Notion
-published: false
+published: true
 ---
 
 # Adding Notion-Style Tags to a Flutter Note App with Supabase
