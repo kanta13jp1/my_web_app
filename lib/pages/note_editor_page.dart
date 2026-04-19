@@ -1893,80 +1893,83 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ],
               ),
               if (isExpanded) ...[
-              const SizedBox(height: 8),
-              TextField(
-                key: const Key('note_editor_slash_command_field'),
-                controller: _slashCommandController,
-                enabled: !_isRunningSlashCommand,
-                onSubmitted: (_) => _runSlashCommand(),
-                decoration: InputDecoration(
-                  hintText: 'Try /summarize or /favorite',
-                  prefixIcon: const Icon(Icons.code_rounded),
-                  suffixIcon: _isRunningSlashCommand
-                      ? const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                const SizedBox(height: 8),
+                TextField(
+                  key: const Key('note_editor_slash_command_field'),
+                  controller: _slashCommandController,
+                  enabled: !_isRunningSlashCommand,
+                  onSubmitted: (_) => _runSlashCommand(),
+                  decoration: InputDecoration(
+                    hintText: 'Try /summarize or /favorite',
+                    prefixIcon: const Icon(Icons.code_rounded),
+                    suffixIcon: _isRunningSlashCommand
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            key: const Key(
+                              'note_editor_slash_command_run_button',
+                            ),
+                            onPressed: _runSlashCommand,
+                            icon: const Icon(Icons.play_arrow_rounded),
+                            tooltip: 'Run command',
                           ),
-                        )
-                      : IconButton(
-                          key:
-                              const Key('note_editor_slash_command_run_button'),
-                          onPressed: _runSlashCommand,
-                          icon: const Icon(Icons.play_arrow_rounded),
-                          tooltip: 'Run command',
-                        ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Press Enter or use the play button to run a command.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (_selectedAiModel != null && _selectedAiModel!.isNotEmpty) ...[
-                _buildPreferredModelChip(),
                 const SizedBox(height: 8),
-              ],
-              Text(
-                'Claude-style writing mode',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+                Text(
+                  'Press Enter or use the play button to run a command.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: NoteEditorAiStyle.values
-                    .map(_buildAiStyleChip)
-                    .toList(growable: false),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _selectedAiStyle.helperText,
-                key: const Key('note_editor_ai_style_helper'),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                const SizedBox(height: 8),
+                if (_selectedAiModel != null &&
+                    _selectedAiModel!.isNotEmpty) ...[
+                  _buildPreferredModelChip(),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  'Claude-style writing mode',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              _buildPromptWorkbenchSection(context),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _slashCommandSuggestions
-                    .map(_buildSlashCommandChip)
-                    .toList(growable: false),
-              ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: NoteEditorAiStyle.values
+                      .map(_buildAiStyleChip)
+                      .toList(growable: false),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _selectedAiStyle.helperText,
+                  key: const Key('note_editor_ai_style_helper'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildPromptWorkbenchSection(context),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _slashCommandSuggestions
+                      .map(_buildSlashCommandChip)
+                      .toList(growable: false),
+                ),
               ],
             ],
           ),
@@ -2037,9 +2040,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                           ? Icons.edit_note_outlined
                           : Icons.visibility_outlined,
                     ),
-                    label: Text(_showMarkdownPreview
-                        ? (isNarrow ? '編集' : '編集に戻る')
-                        : (isNarrow ? 'プレビュー' : 'プレビュー')),
+                    label: Text(
+                      _showMarkdownPreview
+                          ? (isNarrow ? '編集' : '編集に戻る')
+                          : 'プレビュー',
+                    ),
                   ),
                 ],
               ),
