@@ -12136,8 +12136,6 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 理念的貢献: 自動投稿の暴走リスク (Qiita 429 / 自己返信ループ Win#98) を workflow レベルで事前遮断 = 無人運転の資産化
 - 懸念: なし (dry_run で全 gate スキップ可 — 開発時影響なし)
 
-<<<<<<< Updated upstream
-
 ### PS版#3 Session 8 (2026-04-20 04:15 JST)
 - **AI大学 3社追加** (LlamaIndex / Qdrant / Roboflow) → **122社**
   - LlamaIndex: RAGデータフレームワーク (LangChain補完・データ取込特化・LlamaParse)
@@ -12171,7 +12169,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 該当原則: 8 (KPI=昨日の自分 → 制約認識が今後の効率化) + 6 (時間=無駄 retry 防止)
 - 整合性スコア: 7/9 ✅ (実装変更ゼロだが learning asset 化は ✅)
 - 理念的貢献: 将来 PS#2 セッションが同じ 429 wall にぶつかって時間浪費するのを防ぐ
-=======
+
 ### Windowsアプリ版#131 セッション (2026-04-20 04:00 JST)
 
 - **AI大学 registry 100→119 同期** — `lib/models/ai_provider_registry.dart` に 19 プロバイダー追加
@@ -12193,4 +12191,3 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 理念的貢献: 過去セッションの seed 追加が UI に反映されない技術的負債を解消 (見えない資産→見える資産)
 - 懸念: 同種の registry vs DB vs UI 同期チェックは継続必要 (毎セッション diff 推奨)
 
->>>>>>> Stashed changes
