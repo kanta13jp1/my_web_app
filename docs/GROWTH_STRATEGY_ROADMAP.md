@@ -12024,3 +12024,19 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 - **懸念**: なし (rule 注入で全インスタンス強制 → 陳腐化リスク根絶)
 
+### PS版#3 Session 6 (2026-04-20) — AI大学 116社達成 (PlayHT + Descript + W&B)
+
+- **主要作業**: 多様カテゴリ 3プロバイダー追加（音声TTS / 動画編集AI / MLOps）
+  - PlayHT: Turbo v2 75ms超低遅延TTS、音声クローン、月12,500文字無料
+  - Descript: テキスト編集→動画切り、Overdub音声クローン、Studio Sound AI、$40/月〜
+  - Weights & Biases: ML実験管理・LLMOps業界標準、W&B Weave LLMトレーシング、200万エンジニア利用
+  - migration 3本 + UI (_providerMeta/_quizzes/_fallback) 追加
+  - COMPRESSED_PROMPT_V3.md 113社→116社 更新
+
+- **戦略的示唆**:
+  - W&B Weave → 自分株式会社のLLM EFにトレーシング統合でRule23 AI-DEV原則3を強化可能
+  - Descript → AI大学コンテンツ制作ワークフローに活用候補（録音→転写→記事化）
+
+- **該当原則**: 5 (商品=ユーザー価値) / 2 (ミッション駆動) / 6 (資本=時間)
+- **整合性スコア**: 8/9 ✅
+- **理念的貢献**: TTS/動画/MLOpsのカテゴリ多様性強化でAI大学の教育範囲拡大
