@@ -556,6 +556,131 @@ serve(async (req) => {
         return json({ success: true, allowed, current, limit, remaining: Math.max(0, limit - current) });
       }
 
+      // ── Price Tracker (Win版#131 / NotebookLM d6dd44af) ───────────────────────
+      // 既存 hub_data ではなく専用テーブル tracked_products + price_logs を使用
+      case "price.add": {
+        const url = String(body.product_url ?? "").trim();
+        if (!url) return json({ error: "product_url is required" }, 400);
+        const storeDomain = (() => {
+          try { return new URL(url).hostname.replace(/^www\./, ""); }
+          catch { return ""; }
+        })();
+        const { data, error } = await admin.from("tracked_products").insert({
+          user_id: userId,
+          product_url: url,
+          product_name: String(body.product_name ?? "").trim(),
+          store_domain: storeDomain,
+          image_url: body.image_url ?? null,
+          target_price: body.target_price ?? null,
+          current_price: body.current_price ?? null,
+          highest_price: body.current_price ?? null,
+          lowest_price: body.current_price ?? null,
+          notify_on_drop: body.notify_on_drop !== false,
+          note: body.note ?? "",
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        if (body.current_price != null) {
+          await admin.from("price_logs").insert({
+            product_id: data.id, user_id: userId,
+            price: body.current_price, source: "manual",
+          });
+        }
+        return json({ success: true, product: data });
+      }
+      case "price.list": {
+        const onlyActive = body.only_active !== false;
+        let query = admin.from("tracked_products")
+          .select("*")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false });
+        if (onlyActive) query = query.eq("is_active", true).eq("is_purchased", false);
+        const { data, error } = await query;
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, products: data ?? [] });
+      }
+      case "price.log": {
+        const productId = String(body.product_id ?? "");
+        const price = Number(body.price);
+        if (!productId || !Number.isFinite(price)) {
+          return json({ error: "product_id and price are required" }, 400);
+        }
+        const { data, error } = await admin.from("price_logs").insert({
+          product_id: productId, user_id: userId,
+          price, in_stock: body.in_stock !== false,
+          source: String(body.source ?? "manual"),
+        }).select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, log: data });
+      }
+      case "price.history": {
+        const productId = String(body.product_id ?? "");
+        if (!productId) return json({ error: "product_id is required" }, 400);
+        const limit = Math.min(Number(body.limit ?? 200), 1000);
+        const { data, error } = await admin.from("price_logs")
+          .select("price, in_stock, source, fetched_at")
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+          .order("fetched_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, logs: (data ?? []).reverse() });
+      }
+      case "price.update_target": {
+        const productId = String(body.product_id ?? "");
+        if (!productId) return json({ error: "product_id is required" }, 400);
+        const { data, error } = await admin.from("tracked_products")
+          .update({
+            target_price: body.target_price ?? null,
+            notify_on_drop: body.notify_on_drop !== false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", productId).eq("user_id", userId)
+          .select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, product: data });
+      }
+      case "price.mark_purchased": {
+        const productId = String(body.product_id ?? "");
+        const purchasedPrice = body.purchased_price != null ? Number(body.purchased_price) : null;
+        if (!productId) return json({ error: "product_id is required" }, 400);
+        const { data, error } = await admin.from("tracked_products")
+          .update({
+            is_purchased: true,
+            purchased_at: new Date().toISOString(),
+            purchased_price: purchasedPrice,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", productId).eq("user_id", userId)
+          .select().single();
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, product: data });
+      }
+      case "price.delete": {
+        const productId = String(body.product_id ?? "");
+        if (!productId) return json({ error: "product_id is required" }, 400);
+        const { error } = await admin.from("tracked_products")
+          .delete().eq("id", productId).eq("user_id", userId);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+      case "price.alerts": {
+        // target_price 達成中のアクティブ商品を返す (フロント表示用)
+        const { data, error } = await admin.from("tracked_products")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_active", true)
+          .eq("is_purchased", false)
+          .eq("notify_on_drop", true)
+          .not("target_price", "is", null)
+          .not("current_price", "is", null);
+        if (error) return json({ error: error.message }, 400);
+        const alerts = (data ?? []).filter((p) =>
+          typeof p.current_price === "number" &&
+          typeof p.target_price === "number" &&
+          p.current_price <= p.target_price);
+        return json({ success: true, alerts });
+      }
+
       default:
         return json({ error: `Unknown action: ${action}` }, 400);
     }
