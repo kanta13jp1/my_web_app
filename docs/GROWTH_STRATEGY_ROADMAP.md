@@ -11309,3 +11309,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第153弾**: 200ページSaaSを1人で作る判断基準 / 9原則 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/9-principles-for-building-a-200-page-saas-solo-the-jibun-kaisha-framework-1i9h
 - **本日T-1累計**: 11本 (過去最高記録更新)
+
+### Rule 17 WF health check (2026-04-19 16:35)
+- 全 WF success率: 25/30 (deploy-prod 3失敗が主因)
+- 失敗 WF: Deploy to Production 3/8 — dart:ui_web VM非互換 (philosophy+ai_dev_principles)
+  - 原因: philosophy_page.dart / ai_dev_principles_page.dart が dart:ui_web を直接importしており Dart VM テストランナーで compile 失敗
+  - 修正: lib/utils/platform_view.dart 条件分岐export (dart:ui_web → stub/web 自動切替) → 0エラー → push済み
+- orphan branches: blog-publish 0, cs-check 0, claude/* 4 → 全4本削除 (merged/closed)
+- Workflow Failure Handler: 4/7 success (3件 skipped扱い — 異常なし)
+- 修正済み: dart:ui_web conditional import fix (4c81d198) + claude/* orphan 4本削除
