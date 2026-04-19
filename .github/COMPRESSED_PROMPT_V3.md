@@ -20,6 +20,7 @@ Flutter Web + Supabase で **21競合を統合するAIライフマネジメン�
 | **Windowsアプリ版** | `docs/` + `supabase/migrations/` + notebooklm CLI専任 | `claude-opus-4-7` (設計) / `claude-sonnet-4-6` (通常) | 通常 + CAVEMAN / Routines活用 | `PYTHONUTF8=1` 必須 / xlsxロック注意 |
 | **PowerShell版** | `.github/workflows/` + `.mcp.json` + `docs/INSTANCE_CONFIG.md` | 定型: `haiku-4-5` / 設計: `claude-opus-4-7` | `/fast` (定型) / `/effort high` (設計) | GHA `${{}}` は env:ブロック経由 |
 | ~~**WEB版**~~ | **廃止 (2026-04-17)** — GitHub MCP 不安定・境界違反 → 3インスタンス制に統一 | — | — | — |
+| **Claude Schedule** | 自動タスク専用 (daily-report/cs-check/blog-draft等) | **git push 不可** (IP allowlist + 歴史的diverge) | 全ファイル更新は `mcp__plugin_github_github__create_or_update_file` 経由 | — |
 
 ### Claude 最新機能 活用ガイド (v2.1.111 対応・2026-04-17 更新)
 

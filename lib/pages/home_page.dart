@@ -1628,7 +1628,7 @@ abstinence_slip_details: $slipDetailsText
     return Container(
       key: Key('home_next_action_${command.type.name}'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1641,7 +1641,7 @@ abstinence_slip_details: $slipDetailsText
             ),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: command.color.withValues(alpha: 0.65)),
         boxShadow: [
           BoxShadow(
@@ -1785,7 +1785,7 @@ abstinence_slip_details: $slipDetailsText
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: borderColor, width: isHighlighted ? 1.6 : 1),
         boxShadow: [
           BoxShadow(
@@ -1827,7 +1827,7 @@ abstinence_slip_details: $slipDetailsText
                       summary.summaryLine,
                       style: TextStyle(
                         fontSize: 12,
-                        height: 1.4,
+                        height: 1.6,
                         color: (isDark ? Colors.white : const Color(0xDE000000))
                             .withValues(alpha: 0.78),
                       ),
@@ -2050,7 +2050,7 @@ abstinence_slip_details: $slipDetailsText
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2063,7 +2063,7 @@ abstinence_slip_details: $slipDetailsText
             ),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.32)),
       ),
       child: Row(
@@ -2149,7 +2149,7 @@ abstinence_slip_details: $slipDetailsText
     return Container(
       key: const Key('home_completion_goal_card'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2165,7 +2165,7 @@ abstinence_slip_details: $slipDetailsText
             ),
           ],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accent.withValues(alpha: 0.26)),
       ),
       child: Column(
@@ -2285,7 +2285,7 @@ abstinence_slip_details: $slipDetailsText
     return Container(
       key: const Key('home_abstinence_guard_panel'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2294,7 +2294,7 @@ abstinence_slip_details: $slipDetailsText
               ? const [Color(0xFF1F2937), Color(0xFF1E1E1E)]
               : const [Color(0xFFFFFBFB), Color(0xFFFFF3F2)],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0x47E53935)),
       ),
       child: Column(
@@ -2530,7 +2530,7 @@ abstinence_slip_details: $slipDetailsText
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -2539,7 +2539,7 @@ abstinence_slip_details: $slipDetailsText
               ? const [Color(0xFF1E1E1E), Color(0xFF172033)]
               : const [Color(0xFFFFFFFF), Color(0xFFF6FAFF)],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFFB0B0B0).withValues(alpha: isDark ? 0.3 : 0.18),
         ),
@@ -2949,7 +2949,7 @@ abstinence_slip_details: $slipDetailsText
     return Container(
       key: const Key('home_calendar_task_preview'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0x0D3D5AFE),
         borderRadius: BorderRadius.circular(16),
@@ -3141,7 +3141,7 @@ abstinence_slip_details: $slipDetailsText
     return Container(
       key: const Key('home_calendar_task_preview'),
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0x0D3D5AFE),
         borderRadius: BorderRadius.circular(16),
@@ -3428,7 +3428,7 @@ abstinence_slip_details: $slipDetailsText
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: textColor,
-          height: 1.4,
+          height: 1.6,
         ),
       ),
     );
@@ -4721,7 +4721,7 @@ abstinence_slip_details: $slipDetailsText
         textStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          height: 1.4,
+          height: 1.6,
         ),
       ),
     );
@@ -5283,7 +5283,7 @@ abstinence_slip_details: $slipDetailsText
       color: Colors.transparent,
       child: InkWell(
         key: key,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: 232),
@@ -5299,7 +5299,7 @@ abstinence_slip_details: $slipDetailsText
                 ),
               ],
             ),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: accentColor.withValues(alpha: 0.28)),
             boxShadow: [
               BoxShadow(
@@ -5526,7 +5526,7 @@ abstinence_slip_details: $slipDetailsText
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F1F3),
             borderRadius: BorderRadius.circular(14),
@@ -6156,7 +6156,7 @@ abstinence_slip_details: $slipDetailsText
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withValues(alpha: 0.16)

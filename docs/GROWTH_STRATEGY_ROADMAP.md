@@ -11137,3 +11137,22 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 残: Colors.white/black/transparent (neutral) / Colors.red/green (semantic) — intentional
 - **flutter analyze**: 0エラー ✅
 - **次回候補**: AI大学学習リマインダーバッチ設定 / home_page.dart最終確認 / wrap-up
+
+### VSCode版#110 (2026-04-19)
+- **home_page.dart DESIGN.md非color違反修正** (design-skills subagent実施)
+  - `height: 1.4` → `1.6` (body line-height 3箇所)
+  - `EdgeInsets.all(14)` → `16` (card padding spec 16px, 9箇所)
+  - `BorderRadius.circular(18)` → `16` (large radius spec 16px, 8箇所)
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: AI大学学習リマインダーバッチ設定 (cross-instance-pr for PS版) / wrap-up
+
+### PS版#141 セッション (2026-04-19 13:00 JST)
+- **Rule 17 WF health**: 全WF正常 / orphan 0本 / remote refs pruned
+- **CI修復**: duplicate import + deprecated value→initialValue + trailing commas (habit_tracker/agent pages)
+- **dart format**: ab_testing_manager_page + agent pages format fix
+- **cross-instance-pr対応** (2件完了):
+  - AI大学リマインダーバッチ: 既存WF確認済み (ai-university-reminder.yml) → dry run ✅
+  - WEB版git divergence: COMPRESSED_PROMPT_V3.md に Claude Schedule の git push 不可制約追記
+- **T-1 第141弾**: GitHub Actions orphan branch管理 JA+EN → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/github-actions-orphan-branch-accumulation-designing-blog-publishyml-for-protected-branches-167e
+- **Qiita バックログ**: #135-#141 (7本) → UTC 15:00 (JST 00:00) 以降 dispatch 予定
