@@ -215,11 +215,13 @@ class _HorseracingRaceDetailPageState extends State<HorseracingRaceDetailPage> {
                       child: CircularProgressIndicator(strokeWidth: 1.5),
                     )
                   : const Icon(Icons.refresh, size: 14),
-              label: const Text('ensemble再実行',
-                  style: TextStyle(
-                    fontSize: 11,
-                    height: 1.5,
-                  )),
+              label: const Text(
+                'ensemble再実行',
+                style: TextStyle(
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF6366F1),
                 side: const BorderSide(color: Color(0xFF6366F1), width: 0.7),
