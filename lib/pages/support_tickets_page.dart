@@ -79,85 +79,86 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? Center(
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red, height: 1.5),
-              ),
-            )
-          : _tickets.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    size: 64,
-                    color: Color(0xFF4DB6AC),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    '未返信チケットはありません',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF9CA3AF),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
+              ? Center(
                   child: Text(
-                    '未返信チケット: ${_tickets.length}件 / FAQ: ${_faq.length}件',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF009688),
-                      height: 1.5,
-                    ),
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red, height: 1.5),
                   ),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: _tickets.length,
-                    itemBuilder: (context, index) {
-                      final ticket = _tickets[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        child: ListTile(
-                          leading: const Icon(
-                            Icons.support_agent,
-                            color: Color(0xFF009688),
+                )
+              : _tickets.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 64,
+                            color: Color(0xFF4DB6AC),
                           ),
-                          title: Text(
-                            ticket['title']?.toString() ?? '無題',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+                          SizedBox(height: 16),
+                          Text(
+                            '未返信チケットはありません',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF9CA3AF),
                               height: 1.5,
                             ),
                           ),
-                          subtitle: Text(
-                            ticket['body']?.toString() ?? '',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: Chip(
-                            label: Text(ticket['status']?.toString() ?? 'open'),
-                            backgroundColor: const Color(0xFFE0F2F1),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            '未返信チケット: ${_tickets.length}件 / FAQ: ${_faq.length}件',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF009688),
+                              height: 1.5,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: _tickets.length,
+                            itemBuilder: (context, index) {
+                              final ticket = _tickets[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.support_agent,
+                                    color: Color(0xFF009688),
+                                  ),
+                                  title: Text(
+                                    ticket['title']?.toString() ?? '無題',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    ticket['body']?.toString() ?? '',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: Chip(
+                                    label: Text(
+                                        ticket['status']?.toString() ?? 'open'),
+                                    backgroundColor: const Color(0xFFE0F2F1),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
     );
   }
 }

@@ -128,15 +128,10 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
   Future<void> _toggleOrganized(Map<String, dynamic> folder) async {
     final current = folder['is_organized'] == true;
     try {
-      await _supabase
-          .from('bookmark_folders')
-          .update({
-            'is_organized': !current,
-            'last_organized_at': current
-                ? null
-                : DateTime.now().toIso8601String(),
-          })
-          .eq('id', folder['id']);
+      await _supabase.from('bookmark_folders').update({
+        'is_organized': !current,
+        'last_organized_at': current ? null : DateTime.now().toIso8601String(),
+      }).eq('id', folder['id']);
       await _load();
     } catch (e) {
       debugPrint('Toggle error: $e');
@@ -333,11 +328,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
           ),
         ),
         subtitle: Text(
-          '${platform == 'x'
-              ? 'X (Twitter)'
-              : platform == 'chrome'
-              ? 'Chrome'
-              : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
+          '${platform == 'x' ? 'X (Twitter)' : platform == 'chrome' ? 'Chrome' : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
           style: const TextStyle(fontSize: 11, height: 1.5),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

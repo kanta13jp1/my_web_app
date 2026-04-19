@@ -86,93 +86,97 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(onPressed: _fetch, child: const Text('再試行')),
-                ],
-              ),
-            )
-          : _templates.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.account_tree_outlined,
-                    size: 48,
-                    color: Color(0xFF9CA3AF),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'テンプレートはありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
-                  ),
-                ],
-              ),
-            )
-          : ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: _templates.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final item = _templates[i] as Map<String, dynamic>;
-                final category = item['category']?.toString();
-                final steps = item['steps'];
-                final stepCount = steps is List ? steps.length : 0;
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _categoryColor(category).withAlpha(30),
-                      child: Icon(
-                        Icons.account_tree,
-                        color: _categoryColor(category),
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    title: Text(
-                      item['name']?.toString() ??
-                          item['id']?.toString() ??
-                          'テンプレート',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        height: 1.5,
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                          onPressed: _fetch, child: const Text('再試行')),
+                    ],
+                  ),
+                )
+              : _templates.isEmpty
+                  ? const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.account_tree_outlined,
+                            size: 48,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'テンプレートはありません',
+                            style: TextStyle(
+                                color: Color(0xFF9CA3AF), height: 1.5),
+                          ),
+                        ],
                       ),
-                    ),
-                    subtitle: Text(
-                      '$stepCount ステップ${category != null ? ' · $category' : ''}',
-                    ),
-                    trailing: category != null
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _categoryColor(category).withAlpha(30),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: 11,
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: _templates.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        final item = _templates[i] as Map<String, dynamic>;
+                        final category = item['category']?.toString();
+                        final steps = item['steps'];
+                        final stepCount = steps is List ? steps.length : 0;
+                        return Card(
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor:
+                                  _categoryColor(category).withAlpha(30),
+                              child: Icon(
+                                Icons.account_tree,
                                 color: _categoryColor(category),
-                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            title: Text(
+                              item['name']?.toString() ??
+                                  item['id']?.toString() ??
+                                  'テンプレート',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                                 height: 1.5,
                               ),
                             ),
-                          )
-                        : null,
-                  ),
-                );
-              },
-            ),
+                            subtitle: Text(
+                              '$stepCount ステップ${category != null ? ' · $category' : ''}',
+                            ),
+                            trailing: category != null
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _categoryColor(category)
+                                          .withAlpha(30),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      category,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: _categoryColor(category),
+                                        fontWeight: FontWeight.bold,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
     );
   }
 }

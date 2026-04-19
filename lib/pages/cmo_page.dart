@@ -288,8 +288,8 @@ $hashtags
     final hint = lower.contains('404') || lower.contains('not found')
         ? 'AI関数の設定を確認してください。'
         : lower.contains('api key')
-        ? 'APIキー設定を確認してください。'
-        : '再実行するか、モデル設定を確認してください。';
+            ? 'APIキー設定を確認してください。'
+            : '再実行するか、モデル設定を確認してください。';
 
     if (!mounted) return;
     ScaffoldMessenger.of(

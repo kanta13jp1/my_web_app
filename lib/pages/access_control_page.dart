@@ -106,11 +106,11 @@ class _AccessControlPageState extends State<AccessControlPage>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-          ? _buildError()
-          : TabBarView(
-              controller: _tabController,
-              children: [_buildRolesTab(), _buildLogsTab()],
-            ),
+              ? _buildError()
+              : TabBarView(
+                  controller: _tabController,
+                  children: [_buildRolesTab(), _buildLogsTab()],
+                ),
     );
   }
 
