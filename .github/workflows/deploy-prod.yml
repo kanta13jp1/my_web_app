@@ -16,7 +16,14 @@ on:
 
 concurrency:
   group: deploy-prod
-  cancel-in-progress: true
+  # Win版#109: cancel-in-progress を true → false に変更 (deploy保証 100%化)。
+  # 5 インスタンス (Win/PS/VSCode/WEB/📱スマホ) 並行 push で
+  # cancel-in-progress: true だと cancel 連鎖が発生し全コミットが
+  # 反映されない問題が頻発していた (Win#101-#107 で確認)。
+  # false にすると同 group で順次実行 (1本ずつ・最大 11分 × 並行数 待機)
+  # するが、全 commit が必ず deploy される。
+  # group が同じため同時並行はゼロ・GitHub Actions リソース消費は変わらない。
+  cancel-in-progress: false
 
 permissions:
   contents: write

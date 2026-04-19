@@ -9,7 +9,9 @@ on:
 
 concurrency:
   group: deploy-staging
-  cancel-in-progress: true
+  # Win版#109: 5 インスタンス並行 push の cancel 連鎖回避のため false に。
+  # 同 group で順次実行・全 commit が必ず deploy される。
+  cancel-in-progress: false
 
 # 🚨 修正: ワークフロー全体に必要な権限をトップレベルで設定
 permissions:
