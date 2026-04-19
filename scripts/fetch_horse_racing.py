@@ -856,6 +856,25 @@ def trigger_ai_predictions(target_date: str):
         print(f"[WARN] quota 到達プロバイダー: {', '.join(exhausted)}", file=sys.stderr)
 
 
+# ─── 定期クリーンアップ ───────────────────────────────────────────────────────
+def cleanup_stale_races() -> None:
+    """過去日付のまま status='scheduled' で残っているレースを 'cancelled' に更新する。
+    前日以前のレースは結果取得の機会を逃しているため cancelled にマーク。"""
+    yesterday = (datetime.date.today() - datetime.timedelta(days=1)).isoformat()
+    stale = supabase_rest("GET", "horse_races", params={
+        "status": "eq.scheduled",
+        "race_date": f"lt.{yesterday}",
+        "select": "id",
+    }) or []
+    if not stale:
+        return
+    ids = [r["id"] for r in stale]
+    # Supabase REST: id=in.(uuid1,uuid2,...) で一括 PATCH
+    ids_csv = ",".join(ids)
+    supabase_rest("PATCH", f"horse_races?id=in.({ids_csv})", {"status": "cancelled"})
+    print(f"[CLEANUP] {len(ids)} 件の古い scheduled レースを cancelled に更新")
+
+
 # ─── CLI エントリーポイント ────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="競馬情報自動取得スクリプト (JRA + NAR)")
@@ -887,6 +906,7 @@ def main():
     elif args.mode == "history":
         fetch_horse_histories(target_date)
     elif args.mode == "all":
+        cleanup_stale_races()
         fetch_entries(target_date)
         fetch_horse_histories(target_date)
         trigger_ai_predictions(target_date)
