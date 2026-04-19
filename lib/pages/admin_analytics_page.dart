@@ -1726,7 +1726,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             : '流れ込みはありますが登録が出ていません。登録完了直前での離脱が発生しています。';
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1735,7 +1735,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ? const [Color(0xFFE8F5E9), Color(0xFFF6FFF7)]
               : const [Color(0xFFFFEBEE), Color(0xFFFFF8F8)],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: accentColor.withValues(alpha: 0.35)),
         boxShadow: [
           BoxShadow(
@@ -1816,7 +1816,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               valueColor: AlwaysStoppedAnimation<Color>(accentColor),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -1856,14 +1856,14 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                 ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             achieved ? statusText : '$statusText あと$remaining人の登録が必要です。',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: Theme.of(context).colorScheme.onSurface,
-              height: 1.4,
+              height: 1.7,
             ),
           ),
           if (actionTitle != null &&
@@ -1917,10 +1917,10 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Theme.of(context).colorScheme.onSurface,
-                            height: 1.4,
+                            height: 1.7,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
                             backgroundColor: diagnosisColor,
@@ -2018,7 +2018,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2026,7 +2026,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               title,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               'LP流入後の途中離脱を切り分けるためのファネルです。どこで止まっているかを先に確認します。',
               style: TextStyle(
@@ -2191,7 +2191,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     color: _getCvrColor(cvr),
-                    height: 1.0,
+                    height: 1.4,
                   ),
                 ),
                 Padding(
@@ -2284,7 +2284,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2292,7 +2292,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               '登録管理の追加指標',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               'LP View以外に、体験前離脱・継続未達・直近流量をまとめて確認します。',
               style: TextStyle(
@@ -2353,7 +2353,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.4,
+                  height: 1.7,
                 ),
               ),
             ),
@@ -2369,7 +2369,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         elevation: 1,
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           child: Text(
             'agent_tool_execution_logs のデータがありません。マイグレーション適用後に表示されます。',
             style: TextStyle(
@@ -2393,7 +2393,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2539,7 +2539,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                       ],
                     ),
                     if (!allowed) ...[
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         reasonText,
                         style: TextStyle(
@@ -3002,7 +3002,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                   color: Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               ...d.channels.map(
                 (ch) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
@@ -3040,7 +3040,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
             ],
             if (d.brief.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 d.brief,
                 style: const TextStyle(
@@ -3889,7 +3889,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: bioCtrl,
                         decoration: const InputDecoration(
@@ -3901,7 +3901,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         maxLines: 2,
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: locationCtrl,
                         decoration: const InputDecoration(
@@ -3915,7 +3915,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: twitterCtrl,
                         decoration: const InputDecoration(
@@ -3926,7 +3926,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: githubCtrl,
                         decoration: const InputDecoration(
@@ -3937,7 +3937,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       TextField(
                         controller: websiteCtrl,
                         decoration: const InputDecoration(
@@ -3948,7 +3948,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
                         ),
                         style: const TextStyle(fontSize: 13),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           const Icon(
@@ -5217,7 +5217,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               '期間: ${_growthSummary!['label'] ?? 'すべて'}',
               style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             _growthStatRow(
               '新規ユーザー',
               '${_growthSummary!['newUsers'] ?? 0}人',
@@ -5495,7 +5495,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
               ),
             ],
             if (status == 'new') ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
