@@ -204,7 +204,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         child: Text(
           '部署がまだありません\n仮想組織を初期化してください',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
         ),
       );
     }
@@ -222,10 +222,13 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(icon, style: const TextStyle(fontSize: 20)),
+              child:
+                  Text(icon, style: const TextStyle(fontSize: 20, height: 1.5)),
             ),
-            title:
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
             subtitle: Text(desc),
             trailing: Chip(
               label: Text('$agentCount 人'),
@@ -242,7 +245,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       return const Center(
         child: Text(
           'エージェントがいません',
-          style: TextStyle(color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
         ),
       );
     }
@@ -274,6 +277,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF9CA3AF),
+                      height: 1.5,
                     ),
                   ),
               ],
@@ -296,7 +300,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
             const SizedBox(height: 12),
             const Text(
               'タスクがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -337,8 +341,11 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
                 if (createdAt.length >= 10)
                   Text(
                     createdAt.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
               ],
             ),
@@ -381,7 +388,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
     return Chip(
       label: Text(
         labels[status] ?? status,
-        style: const TextStyle(fontSize: 11),
+        style: const TextStyle(fontSize: 11, height: 1.5),
       ),
       backgroundColor: _statusColor(status).withValues(alpha: 0.15),
       side: BorderSide(color: _statusColor(status).withValues(alpha: 0.4)),

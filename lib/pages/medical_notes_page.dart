@@ -143,6 +143,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -176,6 +177,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                           color: isDark
                               ? const Color(0xFF6B7280)
                               : const Color(0xFF9CA3AF),
+                          height: 1.5,
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -184,7 +186,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         ),
                         isDense: true,
                       ),
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 13, height: 1.5),
                     ),
                     const SizedBox(height: 10),
                     TextField(
@@ -196,6 +198,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                           color: isDark
                               ? const Color(0xFF6B7280)
                               : const Color(0xFF9CA3AF),
+                          height: 1.5,
                         ),
                         border: const OutlineInputBorder(),
                         contentPadding: const EdgeInsets.symmetric(
@@ -204,7 +207,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                         ),
                       ),
                       maxLines: 4,
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 13, height: 1.5),
                     ),
                     const SizedBox(height: 12),
                     SizedBox(
@@ -233,7 +236,11 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
             const SizedBox(height: 20),
             const Text(
               '記録一覧',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             if (_isLoading)
@@ -244,7 +251,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                   padding: EdgeInsets.all(24),
                   child: Text(
                     '医療・健康ノートはまだありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                   ),
                 ),
               )
@@ -285,6 +292,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                               fontSize: 10,
                               color: color,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -293,7 +301,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(fontSize: 13),
+                              style: const TextStyle(fontSize: 13, height: 1.5),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -303,7 +311,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                     subtitle: note['content']?.toString().isNotEmpty == true
                         ? Text(
                             note['content']?.toString() ?? '',
-                            style: const TextStyle(fontSize: 11),
+                            style: const TextStyle(fontSize: 11, height: 1.5),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           )
@@ -313,6 +321,7 @@ class _MedicalNotesPageState extends State<MedicalNotesPage> {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF9CA3AF),
+                        height: 1.5,
                       ),
                     ),
                   ),

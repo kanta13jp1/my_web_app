@@ -203,7 +203,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
               children: [
                 const Text(
                   '📜',
-                  style: TextStyle(fontSize: 40),
+                  style: TextStyle(fontSize: 40, height: 1.5),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -213,6 +213,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                     fontSize: 24,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 4,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -222,6 +223,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                     color:
                         Theme.of(context).colorScheme.surfaceContainerHighest,
                     fontSize: 12,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -262,7 +264,11 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
               ),
               child: Text(
                 _error!,
-                style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.red.shade700,
+                  height: 1.5,
+                ),
               ),
             ),
 
@@ -297,6 +303,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -327,6 +334,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -364,6 +372,7 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
+            height: 1.5,
           ),
         ),
         subtitle: Text(
@@ -371,9 +380,10 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
           style: TextStyle(
             fontSize: 11,
             color: Theme.of(context).colorScheme.outlineVariant,
+            height: 1.5,
           ),
         ),
-        leading: const Text('📜', style: TextStyle(fontSize: 20)),
+        leading: const Text('📜', style: TextStyle(fontSize: 20, height: 1.5)),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

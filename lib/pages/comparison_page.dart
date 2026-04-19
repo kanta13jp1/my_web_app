@@ -995,7 +995,10 @@ class _ComparisonShellState extends State<_ComparisonShell> {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
             children: [
-              Text(_info.emoji, style: const TextStyle(fontSize: 48)),
+              Text(
+                _info.emoji,
+                style: const TextStyle(fontSize: 48, height: 1.5),
+              ),
               const SizedBox(height: 16),
               Text(
                 '${_info.name} の代わりに\n自分株式会社を使う',
@@ -1070,6 +1073,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1081,7 +1085,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     children: [
                       const Text(
                         '😤',
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 18, height: 1.5),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1116,7 +1120,11 @@ class _ComparisonShellState extends State<_ComparisonShell> {
             children: [
               const Text(
                 '機能比較',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 16),
               Table(
@@ -1136,14 +1144,20 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                         padding: EdgeInsets.all(8),
                         child: Text(
                           '機能',
-                          style: TextStyle(fontWeight: FontWeight.w700),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(8),
                         child: Text(
                           _info.name,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            height: 1.5,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -1154,6 +1168,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF4F46E5),
+                            height: 1.5,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -1179,7 +1194,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                           ),
                           child: Text(
                             f.feature,
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 14, height: 1.5),
                           ),
                         ),
                         Padding(
@@ -1187,7 +1202,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                           child: Center(
                             child: Text(
                               f.competitorHas ? '✅' : '❌',
-                              style: const TextStyle(fontSize: 18),
+                              style: const TextStyle(fontSize: 18, height: 1.5),
                             ),
                           ),
                         ),
@@ -1196,7 +1211,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                           child: Center(
                             child: Text(
                               f.weHave ? '✅' : '❌',
-                              style: const TextStyle(fontSize: 18),
+                              style: const TextStyle(fontSize: 18, height: 1.5),
                             ),
                           ),
                         ),
@@ -1229,6 +1244,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFFE5E7EB),
+                  height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1248,7 +1264,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 icon: const Icon(Icons.rocket_launch, size: 18),
                 label: const Text(
                   '無料で自分株式会社を始める',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(fontWeight: FontWeight.w700, height: 1.5),
                 ),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFE5E7EB),

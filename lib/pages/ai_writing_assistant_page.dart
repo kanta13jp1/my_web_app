@@ -150,7 +150,11 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
               const SizedBox(height: 8),
               Text(
                 _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
             ],
 
@@ -183,6 +187,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
             style: TextStyle(
               fontWeight: FontWeight.w800,
               color: isDark ? Colors.white : Colors.black87,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 10),
@@ -228,6 +233,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                           fontWeight: FontWeight.w600,
                           color: selected ? e.value.$3 : null,
                           fontSize: 13,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -256,7 +262,11 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
         children: [
           const Text(
             'トーンを選択',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -288,7 +298,11 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
         children: [
           const Text(
             '翻訳先言語: ',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const SizedBox(width: 8),
           DropdownButton<String>(
@@ -326,6 +340,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
                 color: isDark ? Colors.white70 : Colors.black54,
+                height: 1.5,
               ),
             ),
           ),
@@ -374,6 +389,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
                     fontWeight: FontWeight.w800,
                     fontSize: 13,
                     color: actionInfo?.$3,
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),

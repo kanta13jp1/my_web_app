@@ -150,7 +150,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -187,7 +187,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
             Text(
               'ワークフローがありません\nテンプレートから作成してください',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -217,7 +217,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                 Text('トリガー: ${wf['trigger_type'] ?? '-'}'),
                 Text(
                   'ステータス: $status',
-                  style: TextStyle(color: _statusColor(status)),
+                  style: TextStyle(color: _statusColor(status), height: 1.5),
                 ),
               ],
             ),
@@ -239,7 +239,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
       return const Center(
         child: Text(
           'テンプレートがありません',
-          style: TextStyle(color: Color(0xFF9CA3AF)),
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
         ),
       );
     }
@@ -277,7 +277,10 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Widget _buildStatsTab() {
     if (_stats == null) {
       return const Center(
-        child: Text('統計データがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          '統計データがありません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     final items = [
@@ -309,6 +312,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF6366F1),
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -317,6 +321,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF9CA3AF),
+                        height: 1.5,
                       ),
                       textAlign: TextAlign.center,
                     ),

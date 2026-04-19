@@ -120,7 +120,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           children: [
             Icon(Icons.description, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('契約書がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '契約書がありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -146,7 +149,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             subtitle: Text(party.isNotEmpty ? party : status),
             trailing: expiry.isNotEmpty
@@ -160,6 +163,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                           fontSize: 11,
                           color: urgent ? Colors.red : const Color(0xFF9CA3AF),
                           fontWeight: urgent ? FontWeight.bold : null,
+                          height: 1.5,
                         ),
                       ),
                       if (daysLeft != null)
@@ -169,6 +173,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                             fontSize: 10,
                             color:
                                 urgent ? Colors.red : const Color(0xFF9CA3AF),
+                            height: 1.5,
                           ),
                         ),
                     ],
@@ -183,7 +188,10 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
   Widget _buildChecklistTab() {
     if (_checklist.isEmpty) {
       return const Center(
-        child: Text('チェック項目がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          'チェック項目がありません',
+          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+        ),
       );
     }
     final completed = _checklist.where((c) => c['done'] == true).length;
@@ -200,7 +208,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             '$completed / ${_checklist.length} 完了',
-            style: const TextStyle(color: Color(0xFF9CA3AF)),
+            style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
           ),
         ),
         Expanded(
@@ -220,6 +228,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                   style: TextStyle(
                     decoration: done ? TextDecoration.lineThrough : null,
                     color: done ? const Color(0xFF9CA3AF) : null,
+                    height: 1.5,
                   ),
                 ),
                 secondary: priority == 'high'
