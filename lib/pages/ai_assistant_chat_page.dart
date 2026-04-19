@@ -278,8 +278,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                   Expanded(
                     child: Text(
                       _interimText.isEmpty ? '音声を認識中...' : _interimText,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        height: 1.6,
+                      ),
                     ),
                   ),
                 ],
@@ -319,14 +322,22 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           const SizedBox(height: 16),
           const Text(
             'AI アシスタントと話しましょう',
-            style: TextStyle(color: Colors.white38, fontSize: 16),
+            style: TextStyle(
+              color: Colors.white38,
+              fontSize: 16,
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             _speechSupported
                 ? 'テキスト入力またはマイクボタンで話しかけてください'
                 : 'テキストを入力して送信してください',
-            style: const TextStyle(color: Colors.white24, fontSize: 13),
+            style: const TextStyle(
+              color: Colors.white24,
+              fontSize: 13,
+              height: 1.6,
+            ),
           ),
         ],
       ),
@@ -351,7 +362,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isUser ? _userBubble : _aiBubble,
                 borderRadius: BorderRadius.only(
@@ -396,7 +407,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: const BoxDecoration(
               color: _aiBubble,
               borderRadius: BorderRadius.only(
@@ -444,7 +455,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 8,
                   ),
                   filled: true,
                   fillColor: const Color(0xFF2A2A2A), // surface3
