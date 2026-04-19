@@ -992,7 +992,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                   fontFamily: 'NotoSansJP',
                   fontSize: 32,
                   fontWeight: FontWeight.w700,
-                  height: 1.25,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1064,7 +1064,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               const SizedBox(height: 16),
               ..._info.painPoints.map(
                 (p) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1072,11 +1072,11 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                         '😤',
                         style: TextStyle(fontSize: 18),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           p,
-                          style: const TextStyle(fontSize: 15, height: 1.6),
+                          style: const TextStyle(fontSize: 14, height: 1.6),
                         ),
                       ),
                     ],
@@ -1119,14 +1119,14 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                     ),
                     children: [
                       const Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(8),
                         child: Text(
                           '機能',
                           style: TextStyle(fontWeight: FontWeight.w700),
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(8),
                         child: Text(
                           _info.name,
                           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -1134,7 +1134,7 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                         ),
                       ),
                       const Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(8),
                         child: Text(
                           '自分株式会社',
                           style: TextStyle(
@@ -1221,7 +1221,8 @@ class _ComparisonShellState extends State<_ComparisonShell> {
               const SizedBox(height: 10),
               const Text(
                 'クレジットカード不要。30秒で登録完了。',
-                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 15),
+                style: TextStyle(
+                    color: Color(0xFF9CA3AF), fontSize: 14, height: 1.6),
               ),
               const SizedBox(height: 24),
               FilledButton.icon(
