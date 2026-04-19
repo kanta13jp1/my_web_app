@@ -1,7 +1,7 @@
 ---
 title: "Keeping Supabase Edge Functions Under 50 — The Hub Integration Architecture"
 tags: Supabase,Flutter,buildinpublic,architecture,webdev
-published: false
+published: true
 ---
 
 # Keeping Supabase Edge Functions Under 50

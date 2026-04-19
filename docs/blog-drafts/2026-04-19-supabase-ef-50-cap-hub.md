@@ -1,7 +1,7 @@
 ---
 title: "Supabase Edge Functionを50本以下に維持する — hub統合アーキテクチャの設計"
 tags: Supabase,Flutter,個人開発,buildinpublic,architecture
-published: false
+published: true
 ---
 
 # Supabase Edge Functionを50本以下に維持する
