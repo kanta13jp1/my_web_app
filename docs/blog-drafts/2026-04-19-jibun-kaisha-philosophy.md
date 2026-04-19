@@ -1,7 +1,7 @@
 ---
 title: "200ページのSaaSを1人で作る判断基準 — 自分株式会社の9原則"
 tags: Flutter,個人開発,AI,buildinpublic,philosophy
-published: false
+published: true
 ---
 
 # 200ページのSaaSを1人で作る判断基準 — 自分株式会社の9原則
