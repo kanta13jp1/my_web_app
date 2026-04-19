@@ -58,7 +58,11 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
           children: [
             Text(
               channel['label']?.toString() ?? channel['id']?.toString() ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
@@ -97,9 +101,10 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: color,
+            height: 1.5,
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 11)),
+        Text(label, style: const TextStyle(fontSize: 11, height: 1.5)),
       ],
     );
   }
@@ -129,7 +134,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red, height: 1.5),
                   ),
                 )
               : SingleChildScrollView(
@@ -143,6 +148,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -160,6 +166,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Color(0xFF009688),
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -168,7 +175,8 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                       if (channels.isEmpty)
                         const Text(
                           'チャネルデータがありません',
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                          style:
+                              TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                         )
                       else ...[
                         const Text(
@@ -176,6 +184,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),

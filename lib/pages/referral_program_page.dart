@@ -75,7 +75,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
@@ -102,6 +102,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  height: 1.5,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -112,13 +113,16 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF3D5AFE),
                                   letterSpacing: 2,
+                                  height: 1.5,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '紹介数: ${_myCode!['totalReferrals'] ?? 0}人',
-                                style:
-                                    const TextStyle(color: Color(0xFF9CA3AF)),
+                                style: const TextStyle(
+                                  color: Color(0xFF9CA3AF),
+                                  height: 1.5,
+                                ),
                               ),
                             ],
                           ),
@@ -128,8 +132,11 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                     ],
                     const Text(
                       '紹介履歴',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        height: 1.5,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     if (_referrals.isEmpty)
@@ -138,7 +145,10 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                           padding: EdgeInsets.all(32),
                           child: Text(
                             '紹介履歴はありません',
-                            style: TextStyle(color: Color(0xFF9CA3AF)),
+                            style: TextStyle(
+                              color: Color(0xFF9CA3AF),
+                              height: 1.5,
+                            ),
                           ),
                         ),
                       )
@@ -169,6 +179,7 @@ class _ReferralProgramPageState extends State<ReferralProgramPage> {
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Color(0xFF9CA3AF),
+                                height: 1.5,
                               ),
                             ),
                           ),

@@ -312,6 +312,7 @@ class _ThoughtInterruptDiagnosisPageState
                     style: const TextStyle(
                       fontSize: 13,
                       color: Colors.black45,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -361,7 +362,7 @@ class _ThoughtInterruptDiagnosisPageState
                           _currentStep < _questions.length - 1
                               ? '次へ →'
                               : '診断結果を見る',
-                          style: const TextStyle(fontSize: 16),
+                          style: const TextStyle(fontSize: 16, height: 1.5),
                         ),
                 ),
               ),
@@ -391,6 +392,7 @@ class _ThoughtInterruptDiagnosisPageState
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Color(0xFF3D5AFE),
+              height: 1.5,
             ),
           ),
         ),
@@ -412,7 +414,8 @@ class _ThoughtInterruptDiagnosisPageState
                       SizedBox(width: 6),
                       Text(
                         'あなたの主な思考妨害',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        style:
+                            TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                       ),
                     ],
                   ),
@@ -435,6 +438,7 @@ class _ThoughtInterruptDiagnosisPageState
                           style: const TextStyle(
                             color: Color(0xFFEF6C00),
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       );
@@ -475,6 +479,7 @@ class _ThoughtInterruptDiagnosisPageState
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF303F9F),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -588,6 +593,7 @@ class _OptionCard extends StatelessWidget {
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected ? option.color : Colors.black87,
+                  height: 1.5,
                 ),
               ),
             ),

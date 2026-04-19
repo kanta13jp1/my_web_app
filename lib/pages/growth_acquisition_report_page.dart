@@ -66,7 +66,8 @@ class _GrowthAcquisitionReportPageState
               flex: 2,
               child: Text(
                 tp['label']?.toString() ?? tp['id']?.toString() ?? '',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
             ),
             Expanded(
@@ -77,9 +78,13 @@ class _GrowthAcquisitionReportPageState
                     style: const TextStyle(
                       fontSize: 18,
                       color: Color(0xFF3D5AFE),
+                      height: 1.5,
                     ),
                   ),
-                  const Text('タッチ', style: TextStyle(fontSize: 10)),
+                  const Text(
+                    'タッチ',
+                    style: TextStyle(fontSize: 10, height: 1.5),
+                  ),
                 ],
               ),
             ),
@@ -88,9 +93,13 @@ class _GrowthAcquisitionReportPageState
                 children: [
                   Text(
                     '$signups',
-                    style: const TextStyle(fontSize: 18, color: Colors.green),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.green,
+                      height: 1.5,
+                    ),
                   ),
-                  const Text('登録', style: TextStyle(fontSize: 10)),
+                  const Text('登録', style: TextStyle(fontSize: 10, height: 1.5)),
                 ],
               ),
             ),
@@ -102,9 +111,13 @@ class _GrowthAcquisitionReportPageState
                     style: const TextStyle(
                       fontSize: 18,
                       color: Color(0xFFFF6B35),
+                      height: 1.5,
                     ),
                   ),
-                  const Text('CVR', style: TextStyle(fontSize: 10)),
+                  const Text(
+                    'CVR',
+                    style: TextStyle(fontSize: 10, height: 1.5),
+                  ),
                 ],
               ),
             ),
@@ -139,7 +152,7 @@ class _GrowthAcquisitionReportPageState
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red, height: 1.5),
                   ),
                 )
               : SingleChildScrollView(
@@ -152,13 +165,15 @@ class _GrowthAcquisitionReportPageState
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
                       if (touchpoints.isEmpty)
                         const Text(
                           'データがありません',
-                          style: TextStyle(color: Color(0xFFB0B0B0)),
+                          style:
+                              TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
                         )
                       else
                         ...touchpoints.map(_buildTouchpointRow),

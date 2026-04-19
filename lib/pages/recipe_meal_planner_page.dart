@@ -141,7 +141,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
           children: [
             Icon(Icons.restaurant_menu, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('レシピがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              'レシピがありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -161,10 +164,15 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(emoji, style: const TextStyle(fontSize: 20)),
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 20, height: 1.5),
+              ),
             ),
-            title:
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
             subtitle: Text('$category${time > 0 ? " · $time分" : ""}'),
             trailing: calories > 0
                 ? Chip(
@@ -194,7 +202,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             const SizedBox(height: 12),
             const Text(
               '週間プランがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -236,7 +244,8 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
               child: Text(
                 day,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
               ),
             ),
             title: Text('朝: $breakfast'),
@@ -256,7 +265,10 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
           children: [
             Icon(Icons.shopping_cart, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('買い物リストが空です', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '買い物リストが空です',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -278,6 +290,7 @@ class _RecipeMealPlannerPageState extends State<RecipeMealPlannerPage>
             style: TextStyle(
               decoration: bought ? TextDecoration.lineThrough : null,
               color: bought ? const Color(0xFF9CA3AF) : null,
+              height: 1.5,
             ),
           ),
           subtitle: Text('$category${qty.isNotEmpty ? " · $qty" : ""}'),

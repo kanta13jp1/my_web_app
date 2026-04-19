@@ -137,7 +137,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
             const SizedBox(height: 12),
             Text(
               showProgress ? '学習中のコースがありません' : 'コースがありません',
-              style: const TextStyle(color: Color(0xFF9CA3AF)),
+              style: const TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -166,11 +166,15 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                 leading: CircleAvatar(
                   backgroundColor:
                       Theme.of(context).colorScheme.primaryContainer,
-                  child: Text(emoji, style: const TextStyle(fontSize: 20)),
+                  child: Text(
+                    emoji,
+                    style: const TextStyle(fontSize: 20, height: 1.5),
+                  ),
                 ),
                 title: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style:
+                      const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
                 ),
                 subtitle: Text(
                   '${instructor.isNotEmpty ? "$instructor · " : ""}${duration > 0 ? "$duration時間" : ""}',
@@ -179,7 +183,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                     ? Chip(
                         label: Text(
                           level,
-                          style: const TextStyle(fontSize: 10),
+                          style: const TextStyle(fontSize: 10, height: 1.5),
                         ),
                         padding: EdgeInsets.zero,
                       )
@@ -201,6 +205,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                         style: const TextStyle(
                           fontSize: 11,
                           color: Color(0xFF9CA3AF),
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -219,7 +224,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
                         ),
                         Text(
                           ' $rating',
-                          style: const TextStyle(fontSize: 12),
+                          style: const TextStyle(fontSize: 12, height: 1.5),
                         ),
                       ],
                       const Spacer(),
@@ -264,11 +269,18 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
           children: [
             Icon(Icons.workspace_premium, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('証明書がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '証明書がありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
             SizedBox(height: 8),
             Text(
               'コースを修了すると証明書が発行されます',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -292,7 +304,7 @@ class _ElearningCourseManagerPageState extends State<ElearningCourseManagerPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             subtitle: Text(
               '${date.length >= 10 ? date.substring(0, 10) : date}'
