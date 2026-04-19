@@ -773,6 +773,170 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: '(未実装 — research preview のみ・production API 未公開)',
     note: r'100M token context (Llama比1000x効率)・コードAI特化・Google Cloud G4/G5提携',
   ),
+
+  // ===== AI 動画 / アバター =====
+  AiProviderEntry(
+    id: 'synthesia',
+    displayName: 'Synthesia',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
+    entryPoint: '(未実装 — エンタープライズ AI 動画 API)',
+    note: '230+ アバター × 140言語のエンタープライズ AI 動画プラットフォーム',
+  ),
+  AiProviderEntry(
+    id: 'did',
+    displayName: 'D-ID',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — リアルタイムアバター動画 API)',
+    note: 'リアルタイム AI アバター動画生成プラットフォーム',
+  ),
+  AiProviderEntry(
+    id: 'tavus',
+    displayName: 'Tavus',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — 会話型ビデオ AI API)',
+    note: 'パーソナライズ AI 動画生成 & 会話型ビデオ AI',
+  ),
+  AiProviderEntry(
+    id: 'descript',
+    displayName: 'Descript',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — テキスト編集型 AV エディタ API)',
+    note: 'テキスト編集で動画・音声を操る AI クリエイティブツール',
+  ),
+
+  // ===== 音声 AI =====
+  AiProviderEntry(
+    id: 'deepgram',
+    displayName: 'Deepgram',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — STT/TTS/Voice Agent API)',
+    note: '音声 AI 特化プロバイダー (Nova-2 STT 最速級・MediaRecorder→base64 統合可)',
+  ),
+  AiProviderEntry(
+    id: 'cartesia',
+    displayName: 'Cartesia AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Sonic 超低遅延 TTS)',
+    note: '状態空間モデル (SSM) で実現する超低遅延リアルタイム TTS',
+  ),
+  AiProviderEntry(
+    id: 'play_ht',
+    displayName: 'PlayHT',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Voice cloning + TTS API)',
+    note: '音声クローニング × 超低遅延 TTS の老舗プラットフォーム',
+  ),
+
+  // ===== 中国系 LLM =====
+  AiProviderEntry(
+    id: 'baichuan',
+    displayName: 'Baichuan AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — 医療 AI 特化)',
+    note: '百川智能・医療 AI 特化の中国 LLM (Baichuan2-Med)',
+  ),
+  AiProviderEntry(
+    id: 'stepfun',
+    displayName: 'StepFun',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Step-2 MoE API)',
+    note: '阶跃星辰・MoE 196B/11B activated・256K context・中国フロンティア',
+  ),
+
+  // ===== インド AI =====
+  AiProviderEntry(
+    id: 'krutrim',
+    displayName: 'Krutrim AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Krutrim Cloud API)',
+    note: 'インド発・22言語対応の AI ユニコーン (Ola 創業者 Bhavish Aggarwal)',
+  ),
+
+  // ===== 推論基盤 / モデルデプロイ =====
+  AiProviderEntry(
+    id: 'baseten',
+    displayName: 'Baseten',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — 本番モデルデプロイ基盤)',
+    note: '本番向け AI モデルデプロイメント基盤 (Truss + GPU autoscale)',
+  ),
+  AiProviderEntry(
+    id: 'lepton',
+    displayName: 'Lepton AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — NVIDIA DGX Cloud Lepton)',
+    note: 'NVIDIA 傘下の超高速推論プラットフォーム (DGX Cloud 統合)',
+  ),
+  AiProviderEntry(
+    id: 'modal',
+    displayName: 'Modal Labs',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Python decorator serverless GPU)',
+    note: 'Python デコレータ 1 行でクラウド GPU をサーバーレス実行',
+  ),
+  AiProviderEntry(
+    id: 'radixark',
+    displayName: 'RadixArk (SGLang)',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — SGLang ベース高効率推論)',
+    note: 'SGLang ベース・RadixAttention 最大 5x スループット改善',
+  ),
+
+  // ===== ベクター / 検索基盤 =====
+  AiProviderEntry(
+    id: 'pinecone',
+    displayName: 'Pinecone',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — RAG 用ベクター DB)',
+    note: 'RAG・セマンティック検索に特化したクラウドネイティブベクター DB',
+  ),
+  AiProviderEntry(
+    id: 'jina',
+    displayName: 'Jina AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — Embeddings v3 / Reader API)',
+    note: r'検索基盤 (jina-embeddings-v3 多言語 / $0.02/1M tokens)',
+  ),
+
+  // ===== LLM Ops / フレームワーク =====
+  AiProviderEntry(
+    id: 'langchain',
+    displayName: 'LangChain',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — LLM アプリ構築フレームワーク・provider ではない)',
+    note: 'LLM アプリ構築の事実上の標準フレームワーク (LangSmith / LangGraph)',
+  ),
+  AiProviderEntry(
+    id: 'modular',
+    displayName: 'Modular MAX',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Mojo / MAX Engine)',
+    note: 'Mojo 言語 + MAX Engine による高効率推論 (Llama 3 / Mistral 対応)',
+  ),
+  AiProviderEntry(
+    id: 'wandb',
+    displayName: 'Weights & Biases',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — ML 実験管理・LLMOps 業界標準)',
+    note: 'ML 実験管理・モデル監視・LLMOps の業界標準 (W&B Weave LLM 評価)',
+  ),
 ];
 
 /// ステータス別件数を集計
