@@ -39,6 +39,7 @@ type GuitarRecordingRow = {
   export_format: string;
   duration_display: string | null;
   ai_feedback: string | null;
+  ai_feedback_source: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -533,40 +534,34 @@ async function saveRecording(auth: AuthContext, body: Json) {
     export_format: exportFormat,
     duration_display: formatDuration(parseInteger(body.durationSeconds, 0)),
     ai_feedback: null,
+    ai_feedback_source: null,
   };
 
-  const aiFeedback = GEMINI_API_KEY
-    ? await generateRecordingFeedback({
-      title,
-      duration_seconds: row.duration_seconds ?? 0,
-      preset: row.preset ?? "acoustic_fingerpicking",
-      tuning: row.tuning ?? "standard",
-      bpm: row.bpm ?? 120,
-      tags: row.tags ?? [],
-      is_public: row.is_public ?? false,
-      export_format: row.export_format ?? exportFormat,
-    }).catch(() => buildFallbackRecordingFeedback({
-      title,
-      duration_seconds: row.duration_seconds ?? 0,
-      preset: row.preset ?? "acoustic_fingerpicking",
-      tuning: row.tuning ?? "standard",
-      bpm: row.bpm ?? 120,
-      tags: row.tags ?? [],
-      is_public: row.is_public ?? false,
-      export_format: row.export_format ?? exportFormat,
-    }))
-    : buildFallbackRecordingFeedback({
-      title,
-      duration_seconds: row.duration_seconds ?? 0,
-      preset: row.preset ?? "acoustic_fingerpicking",
-      tuning: row.tuning ?? "standard",
-      bpm: row.bpm ?? 120,
-      tags: row.tags ?? [],
-      is_public: row.is_public ?? false,
-      export_format: row.export_format ?? exportFormat,
-    });
+  const recordingMeta = {
+    title,
+    duration_seconds: row.duration_seconds ?? 0,
+    preset: row.preset ?? "acoustic_fingerpicking",
+    tuning: row.tuning ?? "standard",
+    bpm: row.bpm ?? 120,
+    tags: row.tags ?? [],
+    is_public: row.is_public ?? false,
+    export_format: row.export_format ?? exportFormat,
+  };
 
-  row.ai_feedback = aiFeedback;
+  const feedbackResult = GEMINI_API_KEY
+    ? await generateRecordingFeedback(
+      recordingMeta,
+      auth.adminClient,
+      filePath,
+      fileMimeType,
+    ).catch((e) => {
+      console.error("[guitar-studio] generateRecordingFeedback failed:", e);
+      return { text: buildFallbackRecordingFeedback(recordingMeta), source: "fallback" };
+    })
+    : { text: buildFallbackRecordingFeedback(recordingMeta), source: "fallback" };
+
+  row.ai_feedback = feedbackResult.text;
+  row.ai_feedback_source = feedbackResult.source;
 
   const { data, error } = await auth.adminClient
     .from("guitar_recordings")
@@ -991,6 +986,15 @@ function buildFallbackRecordingFeedback(
   return [lead, tempo, tagLine, shareLine].join(" ");
 }
 
+function mapAudioMime(mimeType: string, exportFormat: string): string {
+  const raw = (mimeType || exportFormat).toLowerCase();
+  if (raw.includes("m4a") || raw.includes("mp4") || raw.includes("aac")) return "audio/mp4";
+  if (raw.includes("mp3") || raw.includes("mpeg")) return "audio/mpeg";
+  if (raw.includes("ogg")) return "audio/ogg";
+  if (raw.includes("flac")) return "audio/flac";
+  return "audio/wav";
+}
+
 async function generateRecordingFeedback(
   recording: {
     title: string;
@@ -1002,15 +1006,49 @@ async function generateRecordingFeedback(
     is_public: boolean;
     export_format: string;
   },
-) {
-  const prompt = `
-あなたはギター練習コーチです。以下の録音メタデータをもとに、
-日本語で 2-4 文の短いフィードバックを書いてください。
-励ましつつ、次に意識するとよい改善ポイントを 1 つ含めてください。
-Markdown や箇条書きは使わず、プレーンテキストだけを返してください。
+  adminClient: SupabaseClient,
+  filePath: string,
+  fileMimeType: string,
+): Promise<{ text: string; source: string }> {
+  const metaPrompt = `録音情報: ${JSON.stringify({
+    タイトル: recording.title,
+    長さ: `${recording.duration_seconds}秒`,
+    プリセット: recording.preset,
+    チューニング: recording.tuning,
+    BPM: recording.bpm,
+    タグ: recording.tags,
+  })}`;
 
-${JSON.stringify(recording, null, 2)}
-`;
+  // Try to download audio for real analysis (Gemini inline_data, max ~15MB)
+  const INLINE_SIZE_LIMIT = 15 * 1024 * 1024;
+  let audioPart: { inline_data: { mime_type: string; data: string } } | null = null;
+
+  try {
+    const { data: blob, error: dlErr } = await adminClient.storage
+      .from(RECORDING_BUCKET)
+      .download(filePath);
+    if (!dlErr && blob) {
+      const bytes = await blob.arrayBuffer();
+      if (bytes.byteLength < INLINE_SIZE_LIMIT) {
+        const b64 = btoa(String.fromCharCode(...new Uint8Array(bytes)));
+        audioPart = {
+          inline_data: {
+            mime_type: mapAudioMime(fileMimeType, recording.export_format),
+            data: b64,
+          },
+        };
+      }
+    }
+  } catch (e) {
+    console.error("[guitar-studio] audio download failed:", e);
+  }
+
+  const textPrompt = audioPart
+    ? `あなたはギター練習コーチです。添付の録音音声を聴いて、タイミング・音色・ピッキングノイズ・ピッチ安定性・ダイナミクス・ミストーンの有無を踏まえ、日本語で 2-4 文の短いフィードバックを書いてください。励ましつつ、次に意識するとよい改善ポイントを 1 つ含めてください。Markdown や箇条書きは使わず、プレーンテキストだけを返してください。\n${metaPrompt}`
+    : `あなたはギター練習コーチです。以下の録音メタデータをもとに、日本語で 2-4 文の短いフィードバックを書いてください。励ましつつ、次に意識するとよい改善ポイントを 1 つ含めてください。Markdown や箇条書きは使わず、プレーンテキストだけを返してください。\n${metaPrompt}`;
+
+  const parts: unknown[] = [{ text: textPrompt }];
+  if (audioPart) parts.push(audioPart);
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
@@ -1018,17 +1056,14 @@ ${JSON.stringify(recording, null, 2)}
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.5,
-          maxOutputTokens: 220,
-        },
+        contents: [{ parts }],
+        generationConfig: { temperature: 0.6, maxOutputTokens: 250 },
       }),
     },
   );
 
   if (!response.ok) {
-    throw new Error("Gemini recording feedback request failed");
+    throw new Error(`Gemini recording feedback request failed: ${response.status}`);
   }
 
   const payload = await response.json();
@@ -1037,7 +1072,7 @@ ${JSON.stringify(recording, null, 2)}
     throw new Error("Gemini recording feedback was empty");
   }
 
-  return raw.replace(/\s+/g, " ").trim();
+  return { text: raw.replace(/\s+/g, " ").trim(), source: audioPart ? "gemini_audio" : "gemini_meta" };
 }
 
 async function generateGeminiCoaching(
