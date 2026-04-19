@@ -11787,3 +11787,18 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 整合性スコア: 7/9 ✅
 - 理念的貢献: T-1バイラル投稿で「自分株式会社」認知拡大 → ユーザー獲得導線に直結
 - 懸念: Qiita未投稿(37本)が翌日に繰り越し → UTC 15:00 qiita-retry必須
+
+### PS版#3 Session 1 (2026-04-19)
+
+- **主要作業**: AI大学 100→102 社達成 (Jina AI + StepFun 追加)
+  - Jina AI: 検索基盤特化 (embeddings v3 / reranker v3 / reader API) — $0.02/1M tokens
+  - StepFun: 上海発 MoE (196B/11B活性化) × 256K context × OpenAI 互換 — $0.10/$0.30/1M tokens
+  - migration 2本 + UI (_providerMeta / _quizzes / _fallback) + COMPRESSED_PROMPT 更新
+
+- **該当原則 (集計)**:
+  - 5 (商品=ユーザー価値) — AI 機能カタログ拡充、学習価値 UP
+  - 8 (KPI=昨日の自分) — 100→102 社 (昨日の自分超え)
+  - 2 (ミッション駆動) — 「AI を学ぶ場所」ミッションに直結
+
+- **整合性スコア**: 8/9 ✅ 実装可
+- **理念的貢献**: 検索基盤 (RAG) と MoE アーキテクチャの実用的学習コンテンツで AI 大学の差別化強化
