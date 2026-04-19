@@ -119,10 +119,11 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
             TextField(
               controller: _textCtrl,
               maxLines: 5,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white, height: 1.5),
               decoration: InputDecoration(
                 hintText: '要約したいテキストを入力...',
-                hintStyle: const TextStyle(color: Color(0xFF707070)),
+                hintStyle:
+                    const TextStyle(color: Color(0xFF707070), height: 1.5),
                 filled: true,
                 fillColor: const Color(0xFF2A2A2A),
                 border: OutlineInputBorder(
@@ -173,7 +174,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage!,
-                style: const TextStyle(color: Color(0xFFE53935)),
+                style: const TextStyle(color: Color(0xFFE53935), height: 1.5),
               ),
             ],
             if (_summary != null) ...[
@@ -208,7 +209,7 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                     const SizedBox(height: 4),
                     Text(
                       _summary!,
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white, height: 1.5),
                     ),
                   ],
                 ),
@@ -230,7 +231,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                       ? const Center(
                           child: Text(
                             '要約履歴がありません',
-                            style: TextStyle(color: Color(0xFF707070)),
+                            style: TextStyle(
+                              color: Color(0xFF707070),
+                              height: 1.5,
+                            ),
                           ),
                         )
                       : ListView.builder(
@@ -262,7 +266,10 @@ class _AiSummarizerPageState extends State<AiSummarizerPage> {
                                   item['summary']?.toString() ?? '-',
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: Colors.white),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    height: 1.5,
+                                  ),
                                 ),
                                 subtitle: Text(
                                   item['created_at']?.toString() ?? '',

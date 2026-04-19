@@ -98,7 +98,11 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
           children: [
             const Text(
               'これらのコードを安全な場所に保存してください。\n各コードは1回のみ使用できます。',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF9CA3AF),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
@@ -116,6 +120,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                         style: const TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 14,
+                          height: 1.5,
                         ),
                       ),
                     )
@@ -215,6 +220,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                             style: TextStyle(
                               color: enabled ? Colors.green : Colors.red,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -234,6 +240,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF9CA3AF),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -251,7 +258,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
           if (_trustedDevices.isEmpty)
             const Text(
               '信頼済みデバイスがありません',
-              style: TextStyle(color: Color(0xFF9CA3AF)),
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
             )
           else
             ..._trustedDevices.map((d) {

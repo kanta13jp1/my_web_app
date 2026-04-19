@@ -121,12 +121,16 @@ class _DanshariPageState extends State<DanshariPage> {
           const SizedBox(height: 16),
           const Text(
             '本日の断捨離完了！',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'CSO: 「素晴らしい意思決定でした、CEO。」',
-            style: TextStyle(color: Color(0xFF9CA3AF)),
+            style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
@@ -153,6 +157,7 @@ class _DanshariPageState extends State<DanshariPage> {
             style: const TextStyle(
               color: Color(0xFF9CA3AF),
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 16),
@@ -181,6 +186,7 @@ class _DanshariPageState extends State<DanshariPage> {
                           style: const TextStyle(
                             color: Color(0xFF9CA3AF),
                             fontSize: 12,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -191,6 +197,7 @@ class _DanshariPageState extends State<DanshariPage> {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const Divider(height: 32),
@@ -216,7 +223,11 @@ class _DanshariPageState extends State<DanshariPage> {
           const Text(
             'この案件（メモ）はまだ必要ですか？',
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           Row(

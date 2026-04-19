@@ -143,7 +143,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
           children: [
             Icon(Icons.videocam_off, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('録画がありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              '録画がありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -165,7 +168,7 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
             ),
             title: Text(
               title,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold, height: 1.5),
             ),
             subtitle: Text(
               [
@@ -180,8 +183,11 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                 if (date.length >= 10)
                   Text(
                     date.substring(0, 10),
-                    style:
-                        const TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 IconButton(
                   icon: const Icon(Icons.download, size: 20),
@@ -205,7 +211,10 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
           children: [
             Icon(Icons.screenshot, size: 64, color: Color(0xFF9CA3AF)),
             SizedBox(height: 12),
-            Text('スクリーンショットがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+            Text(
+              'スクリーンショットがありません',
+              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+            ),
           ],
         ),
       );
@@ -241,7 +250,11 @@ class _ScreenRecorderPageState extends State<ScreenRecorderPage>
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
                     title,
-                    style: const TextStyle(fontSize: 10, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

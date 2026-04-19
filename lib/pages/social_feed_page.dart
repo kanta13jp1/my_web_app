@@ -95,7 +95,8 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                     ? Center(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+                          style:
+                              const TextStyle(color: Colors.red, height: 1.5),
                         ),
                       )
                     : _posts.isEmpty
@@ -133,6 +134,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               style: const TextStyle(
                                                 color: Color(0xFF009688),
                                                 fontWeight: FontWeight.bold,
+                                                height: 1.5,
                                               ),
                                             ),
                                           ),
@@ -142,6 +144,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                 '匿名',
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w600,
+                                              height: 1.5,
                                             ),
                                           ),
                                           const Spacer(),
@@ -153,6 +156,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                               style: const TextStyle(
                                                 fontSize: 11,
                                                 color: Color(0xFF9CA3AF),
+                                                height: 1.5,
                                               ),
                                             ),
                                         ],
@@ -178,6 +182,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: Color(0xFF9CA3AF),
+                                                  height: 1.5,
                                                 ),
                                               ),
                                               const SizedBox(width: 12),
@@ -194,6 +199,7 @@ class _SocialFeedPageState extends State<SocialFeedPage> {
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: Color(0xFF9CA3AF),
+                                                  height: 1.5,
                                                 ),
                                               ),
                                             ],

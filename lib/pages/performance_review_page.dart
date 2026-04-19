@@ -138,7 +138,11 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 DropdownButtonFormField<String>(
@@ -181,7 +185,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                 const SizedBox(height: 14),
                 Text(
                   '自己評価: ${_selfScore.toInt()} / 5',
-                  style: const TextStyle(fontSize: 13),
+                  style: const TextStyle(fontSize: 13, height: 1.5),
                 ),
                 Slider(
                   value: _selfScore,
@@ -229,6 +233,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                                 style: TextStyle(
                                   color: _scoreColor(score),
                                   fontWeight: FontWeight.bold,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -237,13 +242,14 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
+                                height: 1.5,
                               ),
                             ),
                             subtitle: Text(
                               r['goals'] as String? ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
+                              style: const TextStyle(fontSize: 12, height: 1.5),
                             ),
                             children: [
                               Padding(
@@ -257,11 +263,15 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 12,
+                                        height: 1.5,
                                       ),
                                     ),
                                     Text(
                                       r['goals'] as String? ?? '',
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        height: 1.5,
+                                      ),
                                     ),
                                     const SizedBox(height: 8),
                                     const Text(
@@ -269,11 +279,15 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 12,
+                                        height: 1.5,
                                       ),
                                     ),
                                     Text(
                                       r['self_feedback'] as String? ?? '',
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   ],
                                 ),

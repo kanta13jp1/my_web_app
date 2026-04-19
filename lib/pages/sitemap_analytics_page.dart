@@ -176,6 +176,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: color,
+            height: 1.5,
           ),
         ),
       ),
@@ -185,7 +186,10 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
   Widget _buildPagesTab() {
     if (_pages.isEmpty) {
       return const Center(
-        child: Text('ページデータがありません', style: TextStyle(color: Color(0xFFB0B0B0))),
+        child: Text(
+          'ページデータがありません',
+          style: TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+        ),
       );
     }
     return ListView.builder(
@@ -217,7 +221,10 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
                     Expanded(
                       child: Text(
                         path,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          height: 1.5,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -226,6 +233,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF3D5AFE),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -238,8 +246,11 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
                 const SizedBox(height: 4),
                 Text(
                   '直帰率: ${bounce.toStringAsFixed(1)}%',
-                  style:
-                      const TextStyle(fontSize: 11, color: Color(0xFFB0B0B0)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFFB0B0B0),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),

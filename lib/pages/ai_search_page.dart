@@ -177,6 +177,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                           color: _searchMode == 'ai'
                               ? const Color(0xFF6366F1)
                               : const Color(0xFF9E9E9E),
+                          height: 1.5,
                         ),
                       ),
                       if (_results.isNotEmpty) ...[
@@ -187,6 +188,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                             fontSize: 11,
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -230,7 +232,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.red[400]),
+                style: TextStyle(color: Colors.red[400], height: 1.5),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -260,6 +262,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 14,
+                height: 1.5,
               ),
             ),
           ],
@@ -305,6 +308,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -342,6 +346,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF6366F1),
+                        height: 1.5,
                       ),
                     ),
                   );

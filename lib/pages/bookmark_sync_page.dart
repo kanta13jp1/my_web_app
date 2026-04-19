@@ -221,8 +221,13 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                       children: _newTags
                           .map(
                             (t) => Chip(
-                              label:
-                                  Text(t, style: const TextStyle(fontSize: 12)),
+                              label: Text(
+                                t,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
                               onDeleted: () =>
                                   setDialogState(() => _newTags.remove(t)),
                               deleteIconColor: const Color(0xFF9CA3AF),
@@ -288,7 +293,10 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: color)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color, height: 1.5),
+          ),
         ],
       ),
     );
@@ -389,6 +397,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontWeight: isRead ? FontWeight.normal : FontWeight.bold,
+            height: 1.5,
           ),
         ),
         subtitle: Column(
@@ -398,14 +407,18 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
               url,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF3D5AFE)),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF3D5AFE),
+                height: 1.5,
+              ),
             ),
             if (description.isNotEmpty)
               Text(
                 description,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 12, height: 1.5),
               ),
             if (tags.isNotEmpty) ...[
               const SizedBox(height: 4),
@@ -427,6 +440,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                           style: const TextStyle(
                             fontSize: 10,
                             color: Color(0xFF009688),
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -440,6 +454,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                 style: TextStyle(
                   fontSize: 11,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
           ],
@@ -465,7 +480,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                 children: [
                   Icon(Icons.delete_outline, size: 16, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('削除', style: TextStyle(color: Colors.red)),
+                  Text('削除', style: TextStyle(color: Colors.red, height: 1.5)),
                 ],
               ),
             ),
@@ -512,7 +527,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(color: Colors.red, height: 1.5),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -549,6 +564,7 @@ class _BookmarkSyncPageState extends State<BookmarkSyncPage> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .onSurfaceVariant,
+                                      height: 1.5,
                                     ),
                                   ),
                                   const SizedBox(height: 16),

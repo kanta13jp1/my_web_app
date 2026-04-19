@@ -95,6 +95,7 @@ class _RewardsPageState extends State<RewardsPage> {
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -104,6 +105,7 @@ class _RewardsPageState extends State<RewardsPage> {
                             fontSize: 24,
                             color: Colors.white,
                             fontWeight: FontWeight.w500,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -113,7 +115,11 @@ class _RewardsPageState extends State<RewardsPage> {
 
                   const Text(
                     '獲得した称号',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -125,7 +131,8 @@ class _RewardsPageState extends State<RewardsPage> {
                         child: Text(
                           'まだポイントがありません。\nメモを書いたり断捨離してポイントを貯めましょう！',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Color(0xFF9CA3AF)),
+                          style:
+                              TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
                         ),
                       ),
                     )
@@ -197,6 +204,7 @@ class _RewardsPageState extends State<RewardsPage> {
                 ? Theme.of(context).colorScheme.onSurface
                 : const Color(0xFF9CA3AF),
             fontWeight: isUnlocked ? FontWeight.bold : FontWeight.normal,
+            height: 1.5,
           ),
           textAlign: TextAlign.center,
         ),
