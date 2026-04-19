@@ -11137,3 +11137,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 残: Colors.white/black/transparent (neutral) / Colors.red/green (semantic) — intentional
 - **flutter analyze**: 0エラー ✅
 - **次回候補**: AI大学学習リマインダーバッチ設定 / home_page.dart最終確認 / wrap-up
+
+### VSCode版#110 (2026-04-19)
+- **home_page.dart DESIGN.md非color違反修正** (design-skills subagent実施)
+  - `height: 1.4` → `1.6` (body line-height 3箇所)
+  - `EdgeInsets.all(14)` → `16` (card padding spec 16px, 9箇所)
+  - `BorderRadius.circular(18)` → `16` (large radius spec 16px, 8箇所)
+- **flutter analyze**: 0エラー ✅
+- **次回候補**: AI大学学習リマインダーバッチ設定 (cross-instance-pr for PS版) / wrap-up
