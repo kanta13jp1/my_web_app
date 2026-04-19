@@ -266,7 +266,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         backgroundColor: const Color(0xFF121212),
         title: const Text(
           '開発ロードマップ & WBS',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -474,7 +478,10 @@ class _OverallProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('🚀', style: TextStyle(fontSize: 24)),
+              const Text(
+                '🚀',
+                style: TextStyle(fontSize: 24, height: 1.5),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -486,6 +493,7 @@ class _OverallProgressCard extends StatelessWidget {
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -493,6 +501,7 @@ class _OverallProgressCard extends StatelessWidget {
                       style: const TextStyle(
                         color: Color(0xFF707070),
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -514,6 +523,7 @@ class _OverallProgressCard extends StatelessWidget {
                     color: Color(0xFFFF6B35),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -533,7 +543,11 @@ class _OverallProgressCard extends StatelessWidget {
           const SizedBox(height: 8),
           const Text(
             'Flutter Web + Supabase + 3インスタンス並行開発',
-            style: TextStyle(color: Color(0xFF707070), fontSize: 11),
+            style: TextStyle(
+              color: Color(0xFF707070),
+              fontSize: 11,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -588,6 +602,7 @@ class _MilestoneCard extends StatelessWidget {
                     color: milestone.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -608,12 +623,17 @@ class _MilestoneCard extends StatelessWidget {
                       : const Color(0xFFB0B0B0),
               fontSize: 12,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             '目標: ${milestone.goalUsers}ユーザー',
-            style: const TextStyle(color: Color(0xFF707070), fontSize: 11),
+            style: const TextStyle(
+              color: Color(0xFF707070),
+              fontSize: 11,
+              height: 1.5,
+            ),
           ),
           const Spacer(),
           ClipRRect(
@@ -628,7 +648,11 @@ class _MilestoneCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '$completedCount / $totalCount タスク完了',
-            style: const TextStyle(color: Color(0xFF707070), fontSize: 10),
+            style: const TextStyle(
+              color: Color(0xFF707070),
+              fontSize: 10,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -689,7 +713,10 @@ class _FilterRow extends StatelessWidget {
             const Color(0xFF4B0082),
           ),
           const SizedBox(width: 12),
-          const Text('│', style: TextStyle(color: Color(0xFF333333))),
+          const Text(
+            '│',
+            style: TextStyle(color: Color(0xFF333333), height: 1.5),
+          ),
           const SizedBox(width: 12),
           _chip(
             '全版',
@@ -740,6 +767,7 @@ class _FilterRow extends StatelessWidget {
             color: selected ? color : const Color(0xFF707070),
             fontSize: 12,
             fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            height: 1.5,
           ),
         ),
       ),
@@ -778,7 +806,10 @@ class _CategorySection extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(categoryIcon, style: const TextStyle(fontSize: 18)),
+              Text(
+                categoryIcon,
+                style: const TextStyle(fontSize: 18, height: 1.5),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -787,6 +818,7 @@ class _CategorySection extends StatelessWidget {
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -811,6 +843,7 @@ class _CategorySection extends StatelessWidget {
                   color: Color(0xFFFF6B35),
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -855,6 +888,7 @@ class _TaskRow extends StatelessWidget {
                     decoration: task.status == 'completed'
                         ? TextDecoration.lineThrough
                         : null,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -871,6 +905,7 @@ class _TaskRow extends StatelessWidget {
                     color: task.instanceColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -887,6 +922,7 @@ class _TaskRow extends StatelessWidget {
                     color: task.statusColor,
                     fontSize: 9,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -911,7 +947,11 @@ class _TaskRow extends StatelessWidget {
                 const SizedBox(width: 6),
                 Text(
                   '${task.progress}%',
-                  style: TextStyle(color: task.statusColor, fontSize: 10),
+                  style: TextStyle(
+                    color: task.statusColor,
+                    fontSize: 10,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -931,6 +971,7 @@ class _TaskRow extends StatelessWidget {
                   style: const TextStyle(
                     color: Color(0xFF505050),
                     fontSize: 10,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -986,18 +1027,28 @@ class _MyProjectsTab extends StatelessWidget {
                 children: [
                   const Text(
                     '新規プロジェクト',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
                     decoration: _inputDec('プロジェクト名'),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: descCtrl,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
                     decoration: _inputDec('説明 (任意)'),
                   ),
                   const SizedBox(height: 8),
@@ -1013,7 +1064,10 @@ class _MyProjectsTab extends StatelessWidget {
                           child: DropdownButton<String>(
                             value: status,
                             dropdownColor: const Color(0xFF1E1E1E),
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              height: 1.5,
+                            ),
                             underline: const SizedBox.shrink(),
                             isExpanded: true,
                             items: statuses
@@ -1062,7 +1116,10 @@ class _MyProjectsTab extends StatelessWidget {
                     ? const Center(
                         child: Text(
                           'プロジェクトはまだありません',
-                          style: TextStyle(color: Colors.white38),
+                          style: TextStyle(
+                            color: Colors.white38,
+                            height: 1.5,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -1085,13 +1142,17 @@ class _MyProjectsTab extends StatelessWidget {
                               ),
                               title: Text(
                                 p['name'] as String? ?? '',
-                                style: const TextStyle(color: Colors.white),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  height: 1.5,
+                                ),
                               ),
                               subtitle: Text(
                                 p['description'] as String? ?? '',
                                 style: const TextStyle(
                                   color: Colors.white54,
                                   fontSize: 12,
+                                  height: 1.5,
                                 ),
                               ),
                               trailing: PopupMenuButton<String>(
@@ -1107,7 +1168,11 @@ class _MyProjectsTab extends StatelessWidget {
                                   ),
                                   child: Text(
                                     s,
-                                    style: TextStyle(color: c, fontSize: 12),
+                                    style: TextStyle(
+                                      color: c,
+                                      fontSize: 12,
+                                      height: 1.5,
+                                    ),
                                   ),
                                 ),
                                 itemBuilder: (_) => statuses
@@ -1118,6 +1183,7 @@ class _MyProjectsTab extends StatelessWidget {
                                           st,
                                           style: const TextStyle(
                                             color: Colors.white,
+                                            height: 1.5,
                                           ),
                                         ),
                                       ),
@@ -1138,7 +1204,10 @@ class _MyProjectsTab extends StatelessWidget {
 
   InputDecoration _inputDec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38),
+        hintStyle: const TextStyle(
+          color: Colors.white38,
+          height: 1.5,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF333333)),
@@ -1361,12 +1430,17 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               color: Colors.white,
               fontSize: 15,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
           ),
           const SizedBox(width: 12),
           Text(
             '$taskCount タスク',
-            style: const TextStyle(color: Color(0xFF808090), fontSize: 12),
+            style: const TextStyle(
+              color: Color(0xFF808090),
+              fontSize: 12,
+              height: 1.5,
+            ),
           ),
           const Spacer(),
           Container(
@@ -1377,7 +1451,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           const SizedBox(width: 6),
           const Text(
             '今日',
-            style: TextStyle(color: Color(0xFFB0B0C0), fontSize: 11),
+            style: TextStyle(
+              color: Color(0xFFB0B0C0),
+              fontSize: 11,
+              height: 1.5,
+            ),
           ),
           const SizedBox(width: 16),
           _legendSwatch(const Color(0xFF4CAF50), '完了'),
@@ -1405,7 +1483,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFFB0B0C0), fontSize: 11),
+          style: const TextStyle(
+            color: Color(0xFFB0B0C0),
+            fontSize: 11,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -1426,6 +1508,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 color: Color(0xFFB0B0C0),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1437,6 +1520,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 color: Color(0xFFB0B0C0),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
             ),
           ),
@@ -1448,6 +1532,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 color: Color(0xFFB0B0C0),
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1476,6 +1561,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               style: const TextStyle(
                 color: Color(0xFF808090),
                 fontSize: 11,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1492,7 +1578,10 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           ),
           const SizedBox(width: 6),
           // カテゴリ絵文字
-          Text(task.categoryIcon, style: const TextStyle(fontSize: 12)),
+          Text(
+            task.categoryIcon,
+            style: const TextStyle(fontSize: 12, height: 1.5),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -1500,6 +1589,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
+                height: 1.5,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -1527,6 +1617,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
           color: task.instanceColor,
           fontSize: 10,
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
@@ -1605,6 +1696,7 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                             color: Colors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -1748,6 +1840,7 @@ class _MonthHeaderPainter extends CustomPainter {
             color: Color(0xFFE0E0EA),
             fontSize: 11,
             fontWeight: FontWeight.w600,
+            height: 1.5,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -1770,6 +1863,7 @@ class _MonthHeaderPainter extends CustomPainter {
     const weekLabelStyle = TextStyle(
       color: Color(0xFF909098),
       fontSize: 9,
+      height: 1.5,
     );
     DateTime day = start;
     double x = 0;
@@ -1825,6 +1919,7 @@ class _SectionHeader extends StatelessWidget {
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 15,
+              height: 1.5,
             ),
           ),
         ],
@@ -1846,7 +1941,11 @@ class _EmptyCard extends StatelessWidget {
         ),
         child: Text(
           message,
-          style: const TextStyle(color: Color(0xFF707070), fontSize: 13),
+          style: const TextStyle(
+            color: Color(0xFF707070),
+            fontSize: 13,
+            height: 1.5,
+          ),
           textAlign: TextAlign.center,
         ),
       );

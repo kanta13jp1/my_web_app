@@ -974,6 +974,7 @@ $input
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
+                height: 1.5,
               ),
             ),
           ),
@@ -1028,6 +1029,7 @@ $input
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF15803D),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1070,7 +1072,10 @@ $input
             icon: const Icon(Icons.play_circle_outline, size: 18),
             label: const Text(
               '登録なしで1件試す',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFFF6B35),
@@ -1134,6 +1139,7 @@ $input
                   color: Color(0xFF1DA1F2),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -1216,6 +1222,7 @@ $input
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -1318,6 +1325,7 @@ $input
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF15803D),
                     letterSpacing: 0.5,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -1449,6 +1457,7 @@ $input
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: guide.color,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -1474,6 +1483,7 @@ $input
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
                                     color: guide.color,
+                                    height: 1.5,
                                   ),
                                 ),
                               ),
@@ -1482,8 +1492,10 @@ $input
                             Expanded(
                               child: Text(
                                 e.value,
-                                style:
-                                    const TextStyle(fontSize: 13, height: 1.5),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
                               ),
                             ),
                           ],
@@ -1615,6 +1627,7 @@ $input
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                       Text(
@@ -1665,6 +1678,7 @@ $input
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: c.color,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -1705,6 +1719,7 @@ $input
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1713,6 +1728,7 @@ $input
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -1728,6 +1744,7 @@ $input
               textStyle: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
             child: const Text('詳しく見る'),
@@ -1765,6 +1782,7 @@ $input
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF065F46),
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -1803,6 +1821,7 @@ $input
                       style: const TextStyle(
                         fontSize: 10,
                         color: Color(0xFF6B7280),
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -2628,6 +2647,7 @@ $input
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 6),
@@ -2668,6 +2688,7 @@ $input
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -2734,6 +2755,7 @@ $input
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -2755,7 +2777,10 @@ $input
             icon: const Icon(Icons.arrow_forward, size: 16),
             label: const Text(
               '登録なしでインポートを試す',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -2803,6 +2828,7 @@ $input
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF92400E),
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -2842,6 +2868,7 @@ $input
                         fontWeight: FontWeight.w700,
                         color:
                             row.isOurs ? Colors.white : const Color(0xFF1E293B),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -2856,6 +2883,7 @@ $input
                         color: row.isOurs
                             ? const Color(0xFFFFC107)
                             : const Color(0xFF64748B),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -2869,6 +2897,7 @@ $input
                         color: row.isOurs
                             ? const Color(0xB3FFFFFF)
                             : const Color(0xFF94A3B8),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -2927,6 +2956,7 @@ $input
               fontSize: 17,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 4),
@@ -2966,6 +2996,7 @@ $input
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF1E293B),
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -3035,7 +3066,10 @@ $input
               const SizedBox(height: 6),
               const Text(
                 'まず1回だけ使って、価値があるかを確認してください。保存したくなった時だけ登録すれば十分です。',
-                style: TextStyle(color: Color(0xFF64748B)),
+                style: TextStyle(
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -3118,6 +3152,7 @@ $input
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF3D5AFE),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -3126,13 +3161,17 @@ $input
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       if (_trialReason != null) ...[
                         const SizedBox(height: 6),
                         Text(
                           _trialReason!,
-                          style: const TextStyle(color: Color(0xFF64748B)),
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            height: 1.5,
+                          ),
                         ),
                       ],
                       const SizedBox(height: 10),
@@ -3142,6 +3181,7 @@ $input
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF607D8B),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -3219,7 +3259,10 @@ $input
             const SizedBox(height: 4),
             const Text(
               '気になることがあればお気軽にどうぞ。',
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 12),
             for (final faq in faqs) ...[
@@ -3277,7 +3320,10 @@ $input
                 _isSignUp
                     ? 'メールアドレスだけで30秒登録。AIが今日のタスクを整理し、資産管理・習慣化まで一元化。カード不要。'
                     : '既存ユーザーも Magic Link が最短です。パスワード入力なしで、そのまま再開できます。',
-                style: const TextStyle(color: Color(0xFF64748B)),
+                style: const TextStyle(
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 12),
               const Wrap(
@@ -3307,6 +3353,7 @@ $input
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF64748B),
+                  height: 1.5,
                 ),
               ),
               const SizedBox(height: 10),
@@ -3364,6 +3411,7 @@ $input
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -3372,6 +3420,7 @@ $input
                         style: TextStyle(
                           fontSize: 12,
                           color: Color(0xFF64748B),
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -3441,7 +3490,10 @@ $input
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       'パスワードで続ける',
-                      style: TextStyle(color: Color(0xFF94A3B8)),
+                      style: TextStyle(
+                        color: Color(0xFF94A3B8),
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   Expanded(child: Divider()),
@@ -3502,6 +3554,7 @@ $input
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
+                            height: 1.5,
                           ),
                         ),
                 ),
@@ -3547,7 +3600,10 @@ $input
         icon: const Icon(Icons.rocket_launch, size: 18),
         label: const Text(
           '無料で始める',
-          style: TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
       ),
       body: SafeArea(
@@ -3650,6 +3706,7 @@ class _BenefitChip extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: Color(0xFF4338CA),
+              height: 1.5,
             ),
           ),
         ],
@@ -3697,6 +3754,7 @@ class _FaqItemState extends State<_FaqItem> {
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -3746,6 +3804,7 @@ class _LandingMainBadge extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
+          height: 1.5,
         ),
       ),
     );

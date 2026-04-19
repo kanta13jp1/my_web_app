@@ -749,7 +749,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       _errorText!,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 )
@@ -810,6 +813,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -820,6 +824,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -833,6 +838,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -848,6 +854,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -863,6 +870,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -891,7 +899,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           children: [
             const Text(
               'CEO -> 12部署20人 タスク委任',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -899,12 +911,17 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
             const Text(
               'Chatwork-style task templates',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -912,6 +929,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 10),
@@ -946,6 +964,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -1038,7 +1057,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           children: [
             const Text(
               'Board Channels',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -1046,6 +1069,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -1073,6 +1097,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -1101,6 +1126,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -1136,7 +1162,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             const SizedBox(height: 16),
             const Text(
               'Channel Timeline',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 10),
             if (_selectedBoardMessages.isEmpty)
@@ -1182,6 +1212,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
+                          height: 1.5,
                         ),
                       ),
                       Text(
@@ -1189,6 +1220,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -1209,6 +1241,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: cardColor,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -1243,7 +1276,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                       ),
                       child: Text(
                         trait,
-                        style: TextStyle(fontSize: 11, color: cardColor),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: cardColor,
+                          height: 1.5,
+                        ),
                       ),
                     ),
                   )
@@ -1256,6 +1293,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 10),
@@ -1334,6 +1372,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                     style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -1347,6 +1386,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -1354,7 +1394,9 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               const SizedBox(height: 8),
               Text(
                 task.description,
-                style: const TextStyle(height: 1.5),
+                style: const TextStyle(
+                  height: 1.5,
+                ),
               ),
             ],
             const SizedBox(height: 10),
@@ -1418,7 +1460,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
         leading: const Icon(Icons.alt_route, color: Color(0xFF009688)),
         title: Text(
           '${from?.displayName ?? relationship.fromAgentId} -> ${to?.displayName ?? relationship.toAgentId}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
         subtitle: Text(
           '${relationship.relationshipType} / ${relationship.communicationProtocol}',
@@ -1453,7 +1498,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 Expanded(
                   child: Text(
                     from?.displayName ?? message.fromAgentId,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 Text(
@@ -1461,6 +1509,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -1535,7 +1584,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 Expanded(
                   child: Text(
                     '${from?.displayName ?? message.fromAgentId} -> ${to?.displayName ?? message.toAgentId}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 _buildStatusBadge(message.status),
@@ -1555,6 +1607,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -1583,7 +1636,10 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           owner == null
               ? memory.memoryLayer
               : '${owner.displayName} / ${memory.memoryLayer}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 6),
@@ -1628,6 +1684,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -1654,6 +1711,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               color: color,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 2),
@@ -1662,6 +1720,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],
@@ -1691,6 +1750,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
+              height: 1.5,
             ),
           ),
         ],
@@ -1713,7 +1773,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 SizedBox(width: 8),
                 Text(
                   '秘書に話しかける',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -1723,6 +1787,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -1759,6 +1824,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF3D5AFE),
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -1802,7 +1868,11 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
                 SizedBox(width: 8),
                 Text(
                   'プロジェクトゴール展開',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -1812,6 +1882,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -1883,6 +1954,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
           fontSize: 11,
           color: color,
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
@@ -1898,6 +1970,7 @@ class _AgentOrgPageState extends State<AgentOrgPage> {
             text,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ),

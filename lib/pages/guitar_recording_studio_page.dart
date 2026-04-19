@@ -1570,6 +1570,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ],
@@ -1602,7 +1603,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         foregroundColor: Colors.white,
         title: const Text(
           '🎸 ギター練習レポート',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         centerTitle: true,
       ),
@@ -1623,7 +1627,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       const SizedBox(height: 12),
                       Text(
                         _sharedRecordingError ?? '公開録音を読み込めませんでした',
-                        style: const TextStyle(color: Colors.white54),
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -1658,6 +1665,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Colors.white,
               fontSize: 32,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -1728,6 +1736,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -1752,7 +1761,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           const SizedBox(height: 24),
           const Text(
             'あなたの演奏もAIに分析してもらいませんか？',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -1826,6 +1838,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: isSelected ? const Color(0xFFE94560) : Colors.white60,
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              height: 1.5,
             ),
           ),
         ),
@@ -1883,7 +1896,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         color: Colors.red.shade900.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(msg, style: const TextStyle(color: Colors.white70)),
+      child: Text(
+        msg,
+        style: const TextStyle(color: Colors.white70, height: 1.5),
+      ),
     );
   }
 
@@ -1898,7 +1914,11 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       children: [
         const Text(
           'ジャンル / プリセット',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            height: 1.5,
+          ),
         ),
         const SizedBox(height: 8),
         Wrap(
@@ -1912,6 +1932,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: isSelected ? Colors.white : Colors.white70,
+                  height: 1.5,
                 ),
               ),
               selected: isSelected,
@@ -1930,13 +1951,19 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           children: [
             const Text(
               'チューニング: ',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: Colors.white70,
+                height: 1.5,
+              ),
             ),
             const SizedBox(width: 8),
             DropdownButton<String>(
               value: _selectedTuning,
               dropdownColor: const Color(0xFF16213E),
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(
+                color: Colors.white,
+                height: 1.5,
+              ),
               underline: const SizedBox(),
               items: _tuningNames
                   .map(
@@ -1985,6 +2012,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               fontWeight: FontWeight.bold,
               color: _isRecording ? const Color(0xFFE94560) : Colors.white38,
               fontFeatures: const [FontFeature.tabularFigures()],
+              height: 1.5,
             ),
           ),
           if (_isRecording) ...[
@@ -2034,6 +2062,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     style: const TextStyle(
                       color: Color(0xFF4CAF50),
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -2269,6 +2298,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   style: TextStyle(
                     color: Color(0xFF4CAF50),
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -2340,6 +2370,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Color(0xFF1DA1F2),
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -2359,6 +2390,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         style: TextStyle(
                           color: Color(0xFF1DA1F2),
                           fontSize: 12,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -2452,6 +2484,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -2487,15 +2520,22 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 16,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _titleController,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
             decoration: const InputDecoration(
               hintText: 'タイトルを入力...',
-              hintStyle: TextStyle(color: Colors.white38),
+              hintStyle: TextStyle(
+                color: Colors.white38,
+                height: 1.5,
+              ),
               filled: true,
               fillColor: Color(0xFF0F3460),
               border: OutlineInputBorder(
@@ -2512,10 +2552,16 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
           const SizedBox(height: 12),
           TextField(
             controller: _tagsController,
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
             decoration: const InputDecoration(
               hintText: 'タグ (カンマ区切り: rock, practice, solo)',
-              hintStyle: TextStyle(color: Colors.white24),
+              hintStyle: TextStyle(
+                color: Colors.white24,
+                height: 1.5,
+              ),
               filled: true,
               fillColor: Color(0xFF0F3460),
               border: OutlineInputBorder(
@@ -2552,6 +2598,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 style: TextStyle(
                   color: _isPublic ? const Color(0xFFE94560) : Colors.white38,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -2618,6 +2665,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color:
                   _isMetronomeActive ? const Color(0xFFE94560) : Colors.white54,
               fontSize: 13,
+              height: 1.5,
             ),
           ),
           const Spacer(),
@@ -2664,6 +2712,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                         isSelected ? const Color(0xFFE94560) : Colors.white70,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
+                    height: 1.5,
                   ),
                 ),
                 selected: isSelected,
@@ -2683,7 +2732,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               ? const Center(
                   child: Text(
                     'コードを選択',
-                    style: TextStyle(color: Colors.white38),
+                    style: TextStyle(
+                      color: Colors.white38,
+                      height: 1.5,
+                    ),
                   ),
                 )
               : _buildChordDetail(),
@@ -2713,6 +2765,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
@@ -2793,6 +2846,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: isActive ? Colors.white : Colors.white38,
                           fontWeight: FontWeight.bold,
                           fontSize: isActive ? 18 : 16,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -2808,6 +2862,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Colors.white,
               fontSize: 48,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 16),
@@ -2845,7 +2900,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             children: [
               const Text(
                 '拍子: ',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(
+                  color: Colors.white70,
+                  height: 1.5,
+                ),
               ),
               ...[2, 3, 4, 6].map(
                 (b) => Padding(
@@ -2865,6 +2923,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     labelStyle: TextStyle(
                       color:
                           _beatsPerMeasure == b ? Colors.white : Colors.white60,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -3031,6 +3090,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -3041,6 +3101,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                               style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 12,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -3070,6 +3131,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                               style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 12,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -3091,7 +3153,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                             value: 'delete',
                             child: Text(
                               '削除',
-                              style: TextStyle(color: Colors.redAccent),
+                              style: TextStyle(
+                                color: Colors.redAccent,
+                                height: 1.5,
+                              ),
                             ),
                           ),
                         ],
@@ -3119,6 +3184,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                                 style: const TextStyle(
                                   color: Colors.white38,
                                   fontSize: 11,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -3232,6 +3298,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                             style: const TextStyle(
                               color: Colors.white24,
                               fontSize: 11,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -3249,6 +3316,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           style: const TextStyle(
                             color: Colors.white54,
                             fontSize: 10,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -3293,7 +3361,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
             const SizedBox(height: 12),
             Text(
               _statsError ?? '統計を読み込めませんでした',
-              style: const TextStyle(color: Colors.white38),
+              style: const TextStyle(
+                color: Colors.white38,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             OutlinedButton.icon(
@@ -3357,6 +3428,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       color: Colors.white,
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                   Text(
@@ -3364,6 +3436,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     style: TextStyle(
                       color: streak > 0 ? Colors.white70 : Colors.white38,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                   if (streak == 0)
@@ -3453,6 +3526,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
@@ -3499,6 +3573,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -3607,6 +3682,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3623,7 +3699,10 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     if (insights.isEmpty) {
       return const Text(
         'データが不足しています。録音を増やしましょう！',
-        style: TextStyle(color: Colors.white54),
+        style: TextStyle(
+          color: Colors.white54,
+          height: 1.5,
+        ),
       );
     }
     return Column(
@@ -3693,6 +3772,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -3756,6 +3836,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Colors.white,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -3767,6 +3848,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -3892,6 +3974,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               color: Color(0xFF7C3AED),
               fontWeight: FontWeight.bold,
               fontSize: 16,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 2),
@@ -3947,7 +4030,11 @@ class _ChordDiagramPainter extends CustomPainter {
       ..color = Colors.white24
       ..strokeWidth = 1;
     final dotPaint = Paint()..color = const Color(0xFFE94560);
-    const textStyle = TextStyle(color: Colors.white60, fontSize: 11);
+    const textStyle = TextStyle(
+      color: Colors.white60,
+      fontSize: 11,
+      height: 1.5,
+    );
 
     // 縦線
     for (int c = 0; c < cols; c++) {

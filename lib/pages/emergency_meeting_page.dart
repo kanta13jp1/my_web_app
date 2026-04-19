@@ -1500,6 +1500,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                             Expanded(
@@ -1507,6 +1508,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                 tempSelectedModel,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  height: 1.5,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -1519,6 +1521,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           style: TextStyle(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
+                            height: 1.5,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -1532,6 +1535,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           style: TextStyle(
                             fontSize: 12,
                             color: Theme.of(context).colorScheme.onSurface,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -2743,6 +2747,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -2751,7 +2756,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                         'なんとなくやりたいことへの逃避を先に塞ぎ、'
                         'なんとなくやりたくない必須行動へ戻すための48時間プランを提示します。',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF9CA3AF)),
+                        style: TextStyle(
+                          color: Color(0xFF9CA3AF),
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       Align(
@@ -2761,6 +2769,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2788,6 +2797,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                   ? chipColor
                                   : Theme.of(context).colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
+                              height: 1.5,
                             ),
                             onSelected: (selected) {
                               if (!selected) return;
@@ -2830,6 +2840,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onSurfaceVariant,
+                                height: 1.5,
                               ),
                             ),
                             Flexible(
@@ -2839,6 +2850,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                                   fontWeight: FontWeight.bold,
                                   color:
                                       Theme.of(context).colorScheme.onSurface,
+                                  height: 1.5,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -2856,6 +2868,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             style: const TextStyle(
                               color: Colors.red,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -2873,6 +2886,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              height: 1.5,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
@@ -2901,12 +2915,16 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
                     const Text(
                       '継続と禁欲の打ち手を組み立てています...',
-                      style: TextStyle(color: Color(0xFF9CA3AF)),
+                      style: TextStyle(
+                        color: Color(0xFF9CA3AF),
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -2929,6 +2947,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2985,6 +3004,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -2992,6 +3012,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -3001,7 +3022,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             const SizedBox(height: 12),
             Text(
               msg.content,
-              style: const TextStyle(fontSize: 15, height: 1.5),
+              style: const TextStyle(
+                fontSize: 15,
+                height: 1.5,
+              ),
             ),
           ],
         ),
@@ -3040,6 +3064,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                     fontSize: 18,
                     color: Colors.white,
                     letterSpacing: 1.2,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3115,6 +3140,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               color: Colors.white70,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -3167,6 +3193,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 style: TextStyle(
                   color: Colors.lightGreenAccent,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3225,6 +3252,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3248,7 +3276,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 8),
           Text(
             '現在の衝動遮断ロック: $activeLockCount/3件',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 10),
           Row(
@@ -3337,6 +3368,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   style: TextStyle(
                     color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -3345,6 +3377,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 style: const TextStyle(
                   color: Colors.white70,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3360,19 +3393,28 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 4),
           Text(
             '15分ブロック予約: $_continuationTimeBlockReservedCount回 / 48h進捗ログ: $_continuationProgressLogCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '30分深掘り実施: $_deepWorkSessionCount回 / 週次優先レビュー: $_weeklyPriorityReviewCount回 / '
             'クイック着手: $_continuationQuickStartCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             '最重要宣言: $_continuationPriorityDeclaredCount回 / 25分着手: $_continuationFocusSprint25Count回 / '
             '共有宣言: $_accountabilityShareCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Container(
@@ -3393,6 +3435,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   style: TextStyle(
                     color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.bold,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -3620,6 +3663,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 style: TextStyle(
                   color: Color(0xFFFF6B35),
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3627,7 +3671,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 8),
           Text(
             '違反: $_abstinenceViolationCount回 / 連続無違反: $_abstinenceNoViolationDays日',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
@@ -3639,7 +3686,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           Text(
             '禁欲ルール実行率: $abstinenceRatePercent% '
             '($abstinenceCompleted/$abstinenceTotal)',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           LinearProgressIndicator(
@@ -3650,7 +3700,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 8),
           Text(
             'ロック有効率: ${(lockCoverage * 100).round()}% ($activeLockCount/3)',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           LinearProgressIndicator(
@@ -3662,7 +3715,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           Text(
             '抑止準備度: $deterrenceReadinessPercent% / 回復通知予約: $_abstinenceRecoveryReminderScheduledCount回 / '
             '緩和ブロック: $_deterrenceDisableAttemptBlockedCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -3710,7 +3766,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             const SizedBox(height: 6),
             const Text(
               '抑止力が弱めです。ロックを2つ以上ONにして再発を防止してください。',
-              style: TextStyle(color: Color(0xFFFF6B35)),
+              style: TextStyle(
+                color: Color(0xFFFF6B35),
+                height: 1.5,
+              ),
             ),
           ],
           const SizedBox(height: 8),
@@ -3745,11 +3804,17 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             onChanged: _attemptToggleDailyReminder,
             title: const Text(
               '毎日21:00に禁欲チェック通知',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(
+                color: Colors.white,
+                height: 1.5,
+              ),
             ),
             subtitle: const Text(
               '通知で衝動行動を先回り抑止',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: Colors.white70,
+                height: 1.5,
+              ),
             ),
             activeThumbColor: const Color(0xFFFF6B35),
             activeTrackColor: const Color(0xFFFF6B35).withValues(alpha: 0.4),
@@ -3757,23 +3822,35 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           const SizedBox(height: 6),
           Text(
             '進捗共有記録: $_accountabilityShareCount回 / 即時リカバリー: $_abstinenceRecoveryActionCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             '10分内リカバリー成功: $_abstinenceRecoveredWithin10mCount回 / 10分超過: $_abstinenceRecoveryWindowMissedCount回 '
             '(成功率 $recoveryWithinRatePercent%)',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             '厳格モード抑止発生: $_deterrenceStrictModeBlockCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             '通知先回り: $_abstinenceRecoveryReminderScheduledCount回 / ロック・通知の緩和ブロック: $_deterrenceDisableAttemptBlockedCount回',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 6),
           Row(
@@ -3876,6 +3953,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 style: TextStyle(
                   color: Color(0xFFFFC107),
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -3887,65 +3965,101 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
             '10分内回復 ${metrics.abstinenceRecoveredWithin10mCount} / 10分超過 ${metrics.abstinenceRecoveryWindowMissedCount} / '
             '回復通知 ${metrics.abstinenceRecoveryReminderScheduledCount} / 緩和ブロック ${metrics.deterrenceDisableAttemptBlockedCount} / '
             '厳格抑止 ${metrics.deterrenceStrictModeBlockCount} / ロック網羅率 ${metrics.deterrenceLockCoveragePercent}%',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '継続完了率: ${metrics.continuationCompletionRatePercent}% '
             '(${metrics.continuationCompletedCount}/${metrics.continuationTotalCount})',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '禁欲違反回数: ${metrics.abstinenceViolationCount} / 連続無違反日数: ${metrics.abstinenceNoViolationDays}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '禁欲ルール実行率: ${metrics.abstinenceRuleCompletionRatePercent}% '
             '(${metrics.abstinenceRuleCompletedCount}/${metrics.abstinenceRuleTotalCount})',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '深掘り実施回数: ${metrics.deepWorkSessionCount} / 優先レビュー回数: ${metrics.weeklyPriorityReviewCount}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             'クイック着手回数: ${metrics.continuationQuickStartCount} / 25分着手回数: ${metrics.continuationFocusSprint25Count}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '進捗共有回数: ${metrics.accountabilityShareCount}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '即時リカバリー回数: ${metrics.abstinenceRecoveryActionCount} / 回復通知予約: ${metrics.abstinenceRecoveryReminderScheduledCount}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '禁欲チェック通知: ${metrics.reminderEnabled ? '有効' : '無効'}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '有効ロック: ${metrics.deterrenceLockEnabledCount}件'
             ' (${metrics.activeDeterrenceLocks.isEmpty ? 'なし' : metrics.activeDeterrenceLocks.join(', ')})',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '緩和ブロック回数: ${metrics.deterrenceDisableAttemptBlockedCount}',
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(
+              color: Colors.white,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '最終指標保存: ${metrics.lastReviewAt?.toIso8601String() ?? '未保存'}',
-            style: const TextStyle(color: Colors.white70),
+            style: const TextStyle(
+              color: Colors.white70,
+              height: 1.5,
+            ),
           ),
         ],
       ),
@@ -3974,6 +4088,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
         style: TextStyle(
           color: ready ? Colors.greenAccent : const Color(0xFFFF6B35),
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
