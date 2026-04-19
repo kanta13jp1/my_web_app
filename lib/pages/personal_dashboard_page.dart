@@ -194,6 +194,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w800,
+              height: 1.4,
               color: Color(0xFF1E293B),
             ),
           ),
@@ -341,7 +342,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
     String? subtitle,
   ) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -388,6 +389,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
               subtitle,
               style: const TextStyle(
                 fontSize: 10,
+                height: 1.5,
                 color: Color(0xFF94A3B8),
               ),
             ),
@@ -528,7 +530,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                     Text(
                       dateLabel,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 10,
+                        height: 1.5,
                         color: Color(0xFF94A3B8),
                       ),
                     ),
@@ -613,7 +616,8 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                     Text(
                       dateLabel,
                       style: const TextStyle(
-                        fontSize: 9,
+                        fontSize: 10,
+                        height: 1.5,
                         color: Color(0xFF94A3B8),
                       ),
                     ),
@@ -797,6 +801,7 @@ class _PersonalDashboardPageState extends State<PersonalDashboardPage>
                 'ストリーク',
                 style: TextStyle(
                   fontSize: 10,
+                  height: 1.5,
                   color: Color(0xFF94A3B8),
                 ),
               ),
