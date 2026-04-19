@@ -259,8 +259,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                 children: [
                   Text(
                     '「${_searchCtrl.text}」の検索結果: ${_memos.length}件',
-                    style:
-                        const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      height: 1.6,
+                    ),
                   ),
                   const Spacer(),
                   TextButton(onPressed: _fetchMemos, child: const Text('クリア')),
@@ -300,7 +303,10 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                                 const SizedBox(height: 16),
                                 const Text(
                                   '音声メモがありません',
-                                  style: TextStyle(color: Color(0xFF9CA3AF)),
+                                  style: TextStyle(
+                                    color: Color(0xFF9CA3AF),
+                                    height: 1.6,
+                                  ),
                                 ),
                                 const SizedBox(height: 16),
                                 ElevatedButton.icon(
@@ -346,8 +352,13 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
             backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.12),
             child: const Icon(Icons.mic, color: Color(0xFF7C3AED), size: 20),
           ),
-          title:
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
+          ),
           subtitle: Row(
             children: [
               if (durationSec > 0) ...[
@@ -359,8 +370,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                 const SizedBox(width: 2),
                 Text(
                   '${durationSec ~/ 60}:${(durationSec % 60).toString().padLeft(2, '0')}',
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.6,
+                    color: Color(0xFF9CA3AF),
+                  ),
                 ),
                 const SizedBox(width: 8),
               ],
@@ -369,8 +383,11 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                   createdAt.length > 10
                       ? createdAt.substring(0, 10)
                       : createdAt,
-                  style:
-                      const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.6,
+                    color: Color(0xFF9CA3AF),
+                  ),
                 ),
             ],
           ),
@@ -386,6 +403,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -396,8 +414,13 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         color: const Color(0xFF7C3AED).withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child:
-                          Text(summary, style: const TextStyle(fontSize: 13)),
+                      child: Text(
+                        summary,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.7,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -407,6 +430,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -422,7 +446,7 @@ class _VoiceMemoTranscriberPageState extends State<VoiceMemoTranscriberPage> {
                         transcript.length > 300
                             ? '${transcript.substring(0, 300)}...'
                             : transcript,
-                        style: const TextStyle(fontSize: 13),
+                        style: const TextStyle(fontSize: 13, height: 1.7),
                       ),
                     ),
                     const SizedBox(height: 8),

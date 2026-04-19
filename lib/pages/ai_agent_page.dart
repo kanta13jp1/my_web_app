@@ -185,13 +185,17 @@ class _AiAgentPageState extends State<AiAgentPage> {
           const SizedBox(height: 16),
           const Text(
             'AIエージェントがまだいません',
-            style: TextStyle(fontSize: 16, color: Color(0xFF4B5563)),
+            style:
+                TextStyle(fontSize: 16, height: 1.7, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 8),
           const Text(
             'タスク自動化フローを作成して\n繰り返し作業をAIに任せましょう',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF6B7280)),
+            style: TextStyle(
+              color: Color(0xFF6B7280),
+              height: 1.7,
+            ),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -221,7 +225,10 @@ class _AiAgentPageState extends State<AiAgentPage> {
             ),
             title: Text(
               flow['name'] as String? ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.4,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
