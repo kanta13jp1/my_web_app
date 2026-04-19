@@ -138,6 +138,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                height: 1.5,
               ),
             ),
           ],
@@ -160,6 +161,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                     style: TextStyle(
                       color:
                           _sortBy == s ? const Color(0xFFFF6B35) : Colors.white,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -188,6 +190,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               'ギャラリーの読み込みに失敗しました',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -218,6 +221,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 16,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -225,6 +229,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               'ギタースタジオで録音して公開しましょう！',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 16),
@@ -273,7 +278,11 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
         children: [
           Text(
             '公開録音 $_total件',
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.5,
+            ),
           ),
           const Spacer(),
           Container(
@@ -287,6 +296,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
               style: const TextStyle(
                 color: Color(0xFFFF6B35),
                 fontSize: 12,
+                height: 1.5,
               ),
             ),
           ),
@@ -355,6 +365,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
+                          height: 1.5,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -365,6 +376,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
                             fontSize: 11,
+                            height: 1.5,
                           ),
                         ),
                     ],
@@ -422,6 +434,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                             color:
                                 isLiked ? Colors.red : const Color(0xFFBDBDBD),
                             fontSize: 13,
+                            height: 1.5,
                           ),
                         ),
                       ],
@@ -443,6 +456,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -465,7 +479,10 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                       horizontal: 12,
                       vertical: 6,
                     ),
-                    textStyle: const TextStyle(fontSize: 13),
+                    textStyle: const TextStyle(
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -521,6 +538,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
             style: TextStyle(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
               fontSize: 11,
+              height: 1.5,
             ),
           ),
         ],
@@ -540,6 +558,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
         style: const TextStyle(
           color: Color(0xFFFF6B35),
           fontSize: 11,
+          height: 1.5,
         ),
       ),
     );

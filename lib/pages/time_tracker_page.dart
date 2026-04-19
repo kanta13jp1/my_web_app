@@ -243,7 +243,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
@@ -299,12 +302,16 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF0EA5E9),
+                      height: 1.5,
                     ),
                   ),
                   Text(
                     _viewLabel(_view),
-                    style:
-                        const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -325,7 +332,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                 SizedBox(width: 8),
                 Text(
                   '残業時間が上限に近づいています',
-                  style: TextStyle(color: Color(0xFFFF6B35)),
+                  style: TextStyle(
+                    color: Color(0xFFFF6B35),
+                    height: 1.5,
+                  ),
                 ),
               ],
             ),
@@ -335,7 +345,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
               ? const Center(
                   child: Text(
                     '記録がありません',
-                    style: TextStyle(color: Color(0xFF9CA3AF)),
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      height: 1.5,
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -378,7 +391,10 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                               : type == 'clock_out'
                                   ? '退勤'
                                   : project,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            height: 1.5,
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,10 +404,17 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                                 '${hours.toStringAsFixed(1)}h',
                                 style: const TextStyle(
                                   color: Color(0xFF0EA5E9),
+                                  height: 1.5,
                                 ),
                               ),
                             if (memo.isNotEmpty)
-                              Text(memo, style: const TextStyle(fontSize: 12)),
+                              Text(
+                                memo,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  height: 1.5,
+                                ),
+                              ),
                           ],
                         ),
                         trailing: recordedAt.isNotEmpty
@@ -402,6 +425,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Color(0xFF9CA3AF),
+                                  height: 1.5,
                                 ),
                               )
                             : null,
@@ -417,8 +441,13 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   Widget _buildProjectsTab() {
     if (_projects.isEmpty) {
       return const Center(
-        child:
-            Text('プロジェクトデータがありません', style: TextStyle(color: Color(0xFF9CA3AF))),
+        child: Text(
+          'プロジェクトデータがありません',
+          style: TextStyle(
+            color: Color(0xFF9CA3AF),
+            height: 1.5,
+          ),
+        ),
       );
     }
     final maxHours = _projects.fold<double>(0, (m, p) {
@@ -451,12 +480,19 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                   Expanded(
                     child: Text(
                       name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                   Text(
                     '${hours.toStringAsFixed(1)}h',
-                    style: TextStyle(color: color, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ),
@@ -486,12 +522,19 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
           const SizedBox(height: 24),
           const Text(
             '出退勤打刻',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           const Text(
             'ジョブカン競合の勤怠管理機能',
-            style: TextStyle(color: Color(0xFF9CA3AF)),
+            style: TextStyle(
+              color: Color(0xFF9CA3AF),
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 40),
           Row(

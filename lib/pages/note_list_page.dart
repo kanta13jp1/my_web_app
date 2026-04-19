@@ -696,6 +696,7 @@ class _NoteListPageState extends State<NoteListPage> {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: Color(0xFF6366F1),
+          height: 1.5,
         ),
       ),
     );
@@ -736,6 +737,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -744,6 +746,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         style: TextStyle(
                           fontSize: 11,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -764,6 +767,7 @@ class _NoteListPageState extends State<NoteListPage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 12),
@@ -775,6 +779,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     style: TextStyle(
                       fontSize: 10,
                       color: Theme.of(context).colorScheme.outlineVariant,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -854,7 +859,10 @@ class _NoteListPageState extends State<NoteListPage> {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -875,6 +883,7 @@ class _NoteListPageState extends State<NoteListPage> {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF6366F1),
+                        height: 1.5,
                       ),
                     ),
                   ),
@@ -927,6 +936,7 @@ class _NoteListPageState extends State<NoteListPage> {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: _reminderColor(reminderDate),
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -943,6 +953,7 @@ class _NoteListPageState extends State<NoteListPage> {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 12,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -952,6 +963,7 @@ class _NoteListPageState extends State<NoteListPage> {
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 10,
+                height: 1.5,
               ),
             ),
           ],
@@ -1112,10 +1124,17 @@ class _NoteListPageState extends State<NoteListPage> {
               key: const Key('note_list_page_search_field'),
               controller: _searchController,
               onChanged: (value) => setState(() => _searchQuery = value.trim()),
-              style: const TextStyle(color: Color(0xFFE5E7EB), fontSize: 14),
+              style: const TextStyle(
+                color: Color(0xFFE5E7EB),
+                fontSize: 14,
+                height: 1.5,
+              ),
               decoration: InputDecoration(
                 hintText: 'タイトル・本文で検索...',
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                hintStyle: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  height: 1.5,
+                ),
                 prefixIcon: const Icon(
                   Icons.search,
                   color: Color(0xFF94A3B8),
@@ -1172,6 +1191,7 @@ class _NoteListPageState extends State<NoteListPage> {
                     style: const TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 12,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1198,6 +1218,7 @@ class _NoteListPageState extends State<NoteListPage> {
                               style: const TextStyle(
                                 fontSize: 18,
                                 color: Color(0xFFB0B0B0),
+                                height: 1.5,
                               ),
                             ),
                             if (_showFavoritesOnly) ...[

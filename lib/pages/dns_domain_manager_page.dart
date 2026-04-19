@@ -468,7 +468,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
             const SizedBox(height: 16),
             Text(
               'ドメインが登録されていません',
-              style: TextStyle(color: colorScheme.outline),
+              style: TextStyle(
+                color: colorScheme.outline,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             FilledButton.icon(
@@ -502,7 +505,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
             ),
             title: Text(
               domain['domain']?.toString() ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,7 +546,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
             const SizedBox(height: 16),
             Text(
               'ドメインタブでドメインを選択してください',
-              style: TextStyle(color: colorScheme.outline),
+              style: TextStyle(
+                color: colorScheme.outline,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
@@ -570,6 +579,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -578,6 +588,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                 style: TextStyle(
                   fontSize: 12,
                   color: colorScheme.outline,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -599,7 +610,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                           const SizedBox(height: 16),
                           Text(
                             'DNSレコードがありません',
-                            style: TextStyle(color: colorScheme.outline),
+                            style: TextStyle(
+                              color: colorScheme.outline,
+                              height: 1.5,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           FilledButton.icon(
@@ -626,8 +640,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                                 _buildRecordTypeChip(recordType, colorScheme),
                             title: Text(
                               record['name']?.toString() ?? '',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w500),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                height: 1.5,
+                              ),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,6 +652,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                                   record['value']?.toString() ?? '',
                                   style: TextStyle(
                                     color: colorScheme.onSurfaceVariant,
+                                    height: 1.5,
                                   ),
                                 ),
                                 Text(
@@ -643,6 +660,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: colorScheme.outline,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -686,7 +704,13 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
               color: colorScheme.outlineVariant,
             ),
             const SizedBox(height: 16),
-            Text('SSL情報がありません', style: TextStyle(color: colorScheme.outline)),
+            Text(
+              'SSL情報がありません',
+              style: TextStyle(
+                color: colorScheme.outline,
+                height: 1.5,
+              ),
+            ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _fetchSslStatus,
@@ -713,7 +737,10 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
             leading: _buildSslIcon(sslState, colorScheme),
             title: Text(
               ssl['domain']?.toString() ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,7 +751,11 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
                   const SizedBox(height: 4),
                   Text(
                     '有効期限: ${_formatDate(expiresAt)}',
-                    style: TextStyle(fontSize: 12, color: colorScheme.outline),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.outline,
+                      height: 1.5,
+                    ),
                   ),
                 ],
               ],
@@ -764,8 +795,12 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       ),
       child: Text(
         label,
-        style:
-            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+        ),
       ),
     );
   }
@@ -797,6 +832,7 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -852,8 +888,12 @@ class _DnsDomainManagerPageState extends State<DnsDomainManagerPage>
       ),
       child: Text(
         label,
-        style:
-            TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+        ),
       ),
     );
   }

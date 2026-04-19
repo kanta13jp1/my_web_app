@@ -158,6 +158,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -299,7 +300,13 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddDialog,
         backgroundColor: const Color(0xFF6366F1),
-        label: const Text('記録', style: TextStyle(color: Colors.white)),
+        label: const Text(
+          '記録',
+          style: TextStyle(
+            color: Colors.white,
+            height: 1.5,
+          ),
+        ),
         icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
       ),
       body: _loading
@@ -338,6 +345,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 Text(
@@ -346,6 +354,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF6366F1),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -356,6 +365,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
             style: TextStyle(
               fontSize: 13,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],
@@ -396,6 +406,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -406,6 +417,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -415,6 +427,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF6366F1),
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -427,6 +440,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
                 if (purchasedAt != null) ...[
@@ -439,6 +453,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -471,6 +486,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                         color: isDark
                             ? const Color(0xFFE0E0E0)
                             : const Color(0xFF757575),
+                        height: 1.5,
                       ),
                     ),
                   );
@@ -484,6 +500,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -510,6 +527,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: isDark ? Colors.white : const Color(0xFF1E293B),
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 8),
@@ -519,6 +537,7 @@ class _PurchaseLogPageState extends State<PurchaseLogPage> {
             style: TextStyle(
               fontSize: 14,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.5,
             ),
           ),
         ],

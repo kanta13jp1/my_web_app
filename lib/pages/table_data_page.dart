@@ -625,13 +625,18 @@ class _TableDataPageState extends State<TableDataPage> {
             const SizedBox(height: 16),
             const Text(
               'データベースがありません',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               'Notionのような表形式でデータを管理できます',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
@@ -664,16 +669,26 @@ class _TableDataPageState extends State<TableDataPage> {
               ),
             ),
             child: ListTile(
-              leading: Text(t.icon, style: const TextStyle(fontSize: 28)),
+              leading: Text(
+                t.icon,
+                style: const TextStyle(
+                  fontSize: 28,
+                  height: 1.5,
+                ),
+              ),
               title: Text(
                 t.title,
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
               subtitle: Text(
                 '${t.columns.length} カラム',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
               trailing: PopupMenuButton<String>(
@@ -685,7 +700,13 @@ class _TableDataPageState extends State<TableDataPage> {
                   const PopupMenuItem(value: 'rename', child: Text('名前を変更')),
                   const PopupMenuItem(
                     value: 'delete',
-                    child: Text('削除', style: TextStyle(color: Colors.red)),
+                    child: Text(
+                      '削除',
+                      style: TextStyle(
+                        color: Colors.red,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -745,6 +766,7 @@ class _TableDataPageState extends State<TableDataPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
               const Spacer(),
@@ -753,6 +775,7 @@ class _TableDataPageState extends State<TableDataPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -802,6 +825,7 @@ class _TableDataPageState extends State<TableDataPage> {
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
+                                height: 1.5,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -838,6 +862,7 @@ class _TableDataPageState extends State<TableDataPage> {
                                 color: Theme.of(context)
                                     .colorScheme
                                     .outlineVariant,
+                                height: 1.5,
                               ),
                             ),
                           ),
@@ -892,6 +917,7 @@ class _TableDataPageState extends State<TableDataPage> {
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -918,6 +944,7 @@ class _TableDataPageState extends State<TableDataPage> {
                 ? Theme.of(context).colorScheme.outlineVariant
                 : null,
             fontSize: 13,
+            height: 1.5,
           ),
         );
       case 'number':
@@ -929,6 +956,7 @@ class _TableDataPageState extends State<TableDataPage> {
                 : null,
             fontSize: 13,
             fontFeatures: const [FontFeature.tabularFigures()],
+            height: 1.5,
           ),
         );
       default:
@@ -941,6 +969,7 @@ class _TableDataPageState extends State<TableDataPage> {
                   ? Theme.of(context).colorScheme.outlineVariant
                   : null,
               fontSize: 13,
+              height: 1.5,
             ),
             overflow: TextOverflow.ellipsis,
           ),

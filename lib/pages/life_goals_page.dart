@@ -114,7 +114,11 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
           ),
           title: Text(
             '${_levelLabels[_levels.indexOf(level)]} を追加',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              height: 1.5,
+            ),
           ),
           content: SizedBox(
             width: 480,
@@ -180,7 +184,13 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Text('優先度: ', style: TextStyle(fontSize: 13)),
+                      const Text(
+                        '優先度: ',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
                       ...List.generate(
                         5,
                         (i) => GestureDetector(
@@ -203,7 +213,10 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                       targetDate != null
                           ? '期限: ${DateFormat('yyyy/MM/dd').format(targetDate!)}'
                           : '期限を設定（任意）',
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
                     ),
                     onPressed: () async {
                       final d = await showDatePicker(
@@ -379,7 +392,10 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
           children: [
             Text(
               _levelLabels[idx],
-              style: const TextStyle(fontSize: 40),
+              style: const TextStyle(
+                fontSize: 40,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -388,6 +404,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white : const Color(0xFF1E293B),
+                height: 1.5,
               ),
             ),
             const SizedBox(height: 8),
@@ -522,6 +539,7 @@ class _GoalCard extends StatelessWidget {
                                   : const Color(0xFF1E293B)),
                           decoration:
                               isCompleted ? TextDecoration.lineThrough : null,
+                          height: 1.5,
                         ),
                       ),
                       Row(
@@ -533,6 +551,7 @@ class _GoalCard extends StatelessWidget {
                               color: isDark
                                   ? const Color(0xFF9CA3AF)
                                   : const Color(0xFF4B5563),
+                              height: 1.5,
                             ),
                           ),
                           if (targetDate != null) ...[
@@ -552,6 +571,7 @@ class _GoalCard extends StatelessWidget {
                                 color: isDark
                                     ? const Color(0xFF9CA3AF)
                                     : const Color(0xFF4B5563),
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -576,6 +596,7 @@ class _GoalCard extends StatelessWidget {
                                   fontSize: 10,
                                   color: levelColor,
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -607,7 +628,13 @@ class _GoalCard extends StatelessWidget {
                       ),
                     const PopupMenuItem(
                       value: 'delete',
-                      child: Text('削除', style: TextStyle(color: Colors.red)),
+                      child: Text(
+                        '削除',
+                        style: TextStyle(
+                          color: Colors.red,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
                   ],
                   onSelected: (v) {
@@ -652,6 +679,7 @@ class _GoalCard extends StatelessWidget {
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: isCompleted ? Colors.green : levelColor,
+                              height: 1.5,
                             ),
                           ),
                           if (isCompleted)
@@ -669,6 +697,7 @@ class _GoalCard extends StatelessWidget {
                                     fontSize: 11,
                                     color: Colors.green,
                                     fontWeight: FontWeight.w600,
+                                    height: 1.5,
                                   ),
                                 ),
                               ],
@@ -736,6 +765,7 @@ class _GoalCard extends StatelessWidget {
                       color: isDark
                           ? const Color(0xFF9CA3AF)
                           : const Color(0xFF4B5563),
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -752,7 +782,11 @@ class _GoalCard extends StatelessWidget {
                   icon: Icon(Icons.add, size: 14, color: levelColor),
                   label: Text(
                     '子目標を追加',
-                    style: TextStyle(fontSize: 12, color: levelColor),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: levelColor,
+                      height: 1.5,
+                    ),
                   ),
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(

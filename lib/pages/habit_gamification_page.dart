@@ -261,6 +261,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                     fontSize: 14,
+                    height: 1.5,
                   ),
                 ),
               ),
@@ -275,6 +276,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -288,8 +290,11 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     const SizedBox(height: 2),
                     Text(
                       '$currentXp / $nextLevelXp XP',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -326,7 +331,11 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 13),
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -344,7 +353,11 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               'デイリーチャレンジ: $completedCount / ${_challenges.length} 完了',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                height: 1.5,
+              ),
             ),
           ),
           ..._challenges.map((c) {
@@ -363,6 +376,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                   style: TextStyle(
                     decoration: completed ? TextDecoration.lineThrough : null,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
                 subtitle: Text(c['description'] as String? ?? ''),
@@ -370,7 +384,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     ? Chip(
                         label: Text('+${xp}XP'),
                         backgroundColor: Colors.green.shade100,
-                        labelStyle: const TextStyle(color: Colors.green),
+                        labelStyle: const TextStyle(
+                          color: Colors.green,
+                          height: 1.5,
+                        ),
                       )
                     : FilledButton.tonal(
                         onPressed: () =>
@@ -395,13 +412,20 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
         children: [
           Text(
             '獲得済み: ${earnedBadges.length} / ${_badges.length}',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           if (earnedBadges.isNotEmpty) ...[
             const Text(
               '🏆 獲得済みバッジ',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -415,7 +439,10 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           ],
           const Text(
             '🔒 未獲得バッジ',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -466,6 +493,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                 color:
                     earned ? const Color(0xFFFF6F00) : const Color(0xFF9CA3AF),
                 fontWeight: earned ? FontWeight.bold : FontWeight.normal,
+                height: 1.5,
               ),
             ),
           ],
@@ -505,18 +533,25 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                     fontWeight: FontWeight.bold,
                     color: rankColor,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
               ),
               title: Text(
                 'Lv$level ユーザー',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
               ),
               subtitle: Text('🔥 $streak日連続'),
               trailing: Text(
                 '${xp}XP',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  height: 1.5,
+                ),
               ),
             ),
           );

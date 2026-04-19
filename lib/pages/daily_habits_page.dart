@@ -418,6 +418,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                             fontSize: 12,
                             color: Color(0xFFF57C00),
                             fontWeight: FontWeight.w600,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -444,7 +445,11 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             const Text(
               '毎日やることを登録して\n習慣化しましょう',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Color(0xFFB0B0B0)),
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFFB0B0B0),
+                height: 1.5,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -469,7 +474,11 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
               padding: EdgeInsets.all(16),
               child: Text(
                 'おすすめの毎日習慣',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
               ),
             ),
             Flexible(
@@ -477,7 +486,13 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 shrinkWrap: true,
                 children: _presets.map((p) {
                   return ListTile(
-                    leading: Text(p.$2, style: const TextStyle(fontSize: 24)),
+                    leading: Text(
+                      p.$2,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        height: 1.5,
+                      ),
+                    ),
                     title: Text(p.$1),
                     subtitle: Text('リマインド ${p.$4}'),
                     trailing: const Icon(Icons.add_circle_outline),
@@ -531,6 +546,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
+                        height: 1.5,
                       ),
                     ),
                     Text(
@@ -538,6 +554,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -549,6 +566,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -574,7 +592,13 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('🏆', style: TextStyle(fontSize: 16)),
+                  const Text(
+                    '🏆',
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '前日全達成ストリーク: $_allClearStreak日連続！',
@@ -582,6 +606,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -656,6 +681,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         decoration:
                             isCompleted ? TextDecoration.lineThrough : null,
                         color: isCompleted ? const Color(0xFFB0B0B0) : null,
+                        height: 1.5,
                       ),
                     ),
                     if (desc != null && desc.isNotEmpty)
@@ -664,6 +690,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                         style: TextStyle(
                           fontSize: 11,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          height: 1.5,
                         ),
                       ),
                   ],
@@ -685,6 +712,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFFFF6B35),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -695,6 +723,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                   style: TextStyle(
                     fontSize: 10,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -705,7 +734,13 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 itemBuilder: (_) => [
                   const PopupMenuItem(
                     value: 'delete',
-                    child: Text('削除', style: TextStyle(color: Colors.red)),
+                    child: Text(
+                      '削除',
+                      style: TextStyle(
+                        color: Colors.red,
+                        height: 1.5,
+                      ),
+                    ),
                   ),
                 ],
               ),

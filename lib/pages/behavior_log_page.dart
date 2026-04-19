@@ -103,7 +103,10 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 const SizedBox(height: 16),
                 const Text(
                   '後悔レベル',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
@@ -141,6 +144,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                     style: TextStyle(
                       fontSize: 12,
                       color: _regretColor(regretLevel),
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -273,6 +277,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -281,6 +286,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                         style: TextStyle(
                           color: Color(0xFF9FA8DA),
                           fontSize: 12,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -323,6 +329,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                                   .colorScheme
                                   .onSurfaceVariant,
                               fontSize: 13,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -345,11 +352,16 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
             color: color ?? Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w900,
+            height: 1.5,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(color: Color(0xFF9FA8DA), fontSize: 11),
+          style: const TextStyle(
+            color: Color(0xFF9FA8DA),
+            fontSize: 11,
+            height: 1.5,
+          ),
         ),
       ],
     );
@@ -401,6 +413,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                     color: kind == 'action'
                         ? const Color(0xFF3D5AFE)
                         : const Color(0xFF3D5AFE),
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -421,6 +434,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                       fontSize: 10,
                       color: _regretColor(regret),
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -430,12 +444,19 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context).colorScheme.outlineVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Text(content, style: const TextStyle(fontSize: 14)),
+            Text(
+              content,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
             if (ctx != null && ctx.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
@@ -443,6 +464,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  height: 1.5,
                 ),
               ),
             ],
@@ -462,12 +484,16 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       analysis,
-                      style: const TextStyle(fontSize: 12, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
                     ),
                   ],
                 ),
@@ -480,7 +506,10 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                 label: const Text('AIに考察してもらう'),
                 style: TextButton.styleFrom(
                   foregroundColor: const Color(0xFF3D5AFE),
-                  textStyle: const TextStyle(fontSize: 12),
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],
