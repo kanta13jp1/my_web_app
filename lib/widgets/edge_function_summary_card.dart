@@ -471,6 +471,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/reading-list',
       '読書リストページ > 読書中・未読・完読リスト管理',
     ),
+    // 追加 (cs-check 自動連携 2026-04-19)
+    _FnDef(
+      'analyze-reality',
+      '現実分析 (目標vs現状ギャップ分析)',
+      true,
+      '/analyze-reality',
+      '現実分析ページ > 目標入力・現状分析・改善提案',
+    ),
+    _FnDef(
+      'appointment-scheduler',
+      'アポイントメントスケジューラー',
+      true,
+      '/appointment-scheduler',
+      'スケジューラーページ > 予約枠管理・アポ設定',
+    ),
+    _FnDef(
+      'ar-navigation',
+      'ARナビゲーション',
+      true,
+      '/ar-navigation',
+      'ARナビページ > 目的地設定・AR経路表示',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
