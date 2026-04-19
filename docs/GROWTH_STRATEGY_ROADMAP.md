@@ -11334,3 +11334,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - https://dev.to/kanta13jp1/making-dartuiweb-compile-in-flutter-tests-the-conditional-import-pattern-1p97
 - **本日T-1累計**: 12本
 - **Qiita バックログ**: 多数 → UTC 15:00以降 dispatch予定
+
+### PS版#155 T-1第155弾 (2026-04-19)
+- **T-1第155弾**: Claude Code 5インスタンス並行Flutter開発 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/running-5-claude-code-instances-in-parallel-on-one-flutter-app-nmc
+- **本日T-1累計**: 13本 (過去最高更新)
