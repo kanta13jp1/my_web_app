@@ -134,6 +134,7 @@ class _DepartmentsTab extends StatelessWidget {
                 style: const TextStyle(
                   color: Color(0xFF6366F1),
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -175,7 +176,10 @@ class _PerformanceTab extends StatelessWidget {
               backgroundColor: const Color(0xFFF97316).withAlpha(30),
               child: Text(
                 '${i + 1}',
-                style: const TextStyle(color: Color(0xFFF97316)),
+                style: const TextStyle(
+                  color: Color(0xFFF97316),
+                  height: 1.5,
+                ),
               ),
             ),
             title: Text(
@@ -187,6 +191,7 @@ class _PerformanceTab extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
+                height: 1.7,
               ),
             ),
           ),
@@ -218,7 +223,10 @@ class _RoutingTab extends StatelessWidget {
               children: [
                 const Text(
                   '未割り当てタスク',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -226,6 +234,7 @@ class _RoutingTab extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 24,
                     color: Color(0xFFF97316),
+                    height: 1.4,
                   ),
                 ),
               ],

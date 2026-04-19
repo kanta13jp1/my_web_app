@@ -236,6 +236,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                             'まだアクティビティがありません',
                             style: TextStyle(
                               fontSize: 16,
+                              height: 1.7,
                               color: Theme.of(context)
                                   .colorScheme
                                   .onSurfaceVariant,
@@ -281,7 +282,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
           height: 40, // アイコンコンテナの高さを固定
           decoration: BoxDecoration(
             color: (style['color'] as Color).withValues(alpha: 0.15), // 透明度を調整
-            borderRadius: BorderRadius.circular(10), // 角を丸く
+            borderRadius: BorderRadius.circular(8), // 角を丸く
           ),
           child: Icon(
             style['icon'] as IconData,
@@ -303,6 +304,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                 text: TextSpan(
                   style: DefaultTextStyle.of(context).style.copyWith(
                         fontSize: 15.0, // テキストサイズを標準に
+                        height: 1.7,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                   children: [
@@ -318,6 +320,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
                 timeAgo,
                 style: TextStyle(
                   fontSize: 12,
+                  height: 1.6,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
