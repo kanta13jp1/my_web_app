@@ -1334,18 +1334,59 @@ Generate a mind map for the following topic: **"{topic}"**
     String? title,
     List<String>? existingCategories,
   }) async {
+    // Win版#105: ai-hub:provider.chat (Groq llama-3.3-70b) にリダイレクト。
+    // 旧 ai-suggest-tags EF は SVG quote generator (関数名不一致) のため使用不可。
+    // Groq = 超高速 (LPU) + 無料枠 = タグ提案ユースケースに最適。
     return await _retryWithBackoff(
       () async {
+        final categoriesHint =
+            (existingCategories != null && existingCategories.isNotEmpty)
+                ? '\n既存カテゴリ (再利用優先): ${existingCategories.join(", ")}'
+                : '';
+        final titleLine =
+            (title != null && title.isNotEmpty) ? 'タイトル: $title\n' : '';
+        final prompt = '''
+以下のノート本文を分析し、最適なタグ・カテゴリ・理由を JSON で返答してください。
+
+$titleLine本文:
+$content
+$categoriesHint
+
+レスポンス形式 (JSON のみ・他の文章は不要):
+{
+  "tags": ["タグ1", "タグ2", "タグ3"],
+  "category": "メインカテゴリ",
+  "reason": "なぜこれらを選んだかの一文"
+}
+
+ルール:
+- tags は 3-5 個・短い名詞句 (例: "Flutter", "学習メモ")
+- category は 1 つ・既存カテゴリがあれば優先再利用
+- 出力は JSON 1 オブジェクトのみ・前後の説明文は禁止
+''';
+
         final responseData = await _invokeFunction(
-          'ai-suggest-tags',
+          'ai-hub',
           {
-            'content': content,
-            'title': title,
-            'existingCategories': existingCategories,
+            'action': 'provider.chat',
+            'provider': 'groq',
+            'message': prompt,
           },
         );
 
-        final suggestions = responseData['suggestions'] as Map<String, dynamic>;
+        if (responseData['success'] != true) {
+          throw Exception(
+            'Groq tag suggestion failed: ${responseData['message'] ?? responseData['detail'] ?? 'unknown'}',
+          );
+        }
+
+        final text = (responseData['text'] as String? ?? '').trim();
+        // Strip markdown code fences if Groq added them
+        final jsonStr = text
+            .replaceFirst(RegExp(r'^```(?:json)?\s*'), '')
+            .replaceFirst(RegExp(r'\s*```\s*$'), '')
+            .trim();
+        final suggestions = jsonDecode(jsonStr) as Map<String, dynamic>;
 
         return TagSuggestion(
           tags: List<String>.from(suggestions['tags'] as List<dynamic>? ?? []),

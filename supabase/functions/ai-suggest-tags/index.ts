@@ -1,3 +1,8 @@
+// ⚠️ 命名注意: この EF は **AI タグ提案ではなく SVG 名言画像生成器** です。
+// AI タグ提案機能は lib/services/ai_service.dart の suggestTags() が
+// ai-hub:provider.chat (Groq llama-3.3-70b) を呼び出す形に移行済 (Win版#105)。
+// 本 EF は別目的 (OGP 共有画像 / 名言取得) のため残置。将来的に
+// ai-quote-svg にリネーム検討。
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { quotes, getQuoteById } from "../_shared/quotes.ts";
 
