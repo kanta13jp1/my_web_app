@@ -11351,3 +11351,9 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - ai_agent: +height 1.7/1.4 to 3 TextStyles
   - voice_memo_transcriber: +height 1.6/1.4/1.7/1.5 to 9 TextStyles, fixed require_trailing_commas
   - flutter analyze 0 errors, dart format applied
+
+## VSCode版#120 (2026-04-19)
+- DESIGN.md non-color fixes: budget_financial_planner + financial_report
+  - budget: +height 1.7, spacing 2→4/6→8, radius 4→8, chip padding 6/2→8/4
+  - financial_report: +height 1.4/1.7/1.5 to 5 TextStyles
+  - flutter analyze 0 errors, dart format applied
