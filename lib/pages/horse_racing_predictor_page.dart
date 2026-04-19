@@ -457,11 +457,11 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   margin: const EdgeInsets.only(right: 8),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
-                    vertical: 2,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B35),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${raceNumber}R',
@@ -582,7 +582,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -721,7 +721,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             const Color(0xFF3D5AFE).withValues(alpha: 0.04),
           ],
         ),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border:
             Border.all(color: const Color(0xFFFF6B35).withValues(alpha: 0.25)),
       ),
@@ -731,7 +731,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           Row(
             children: [
               const Icon(Icons.psychology, color: Color(0xFFFF6B35), size: 16),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               const Text(
                 'AI 3連単予想',
                 style: TextStyle(
@@ -742,7 +742,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B35).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -774,7 +774,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ],
           ),
           if (reasoning != null && reasoning.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               reasoning,
               style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
@@ -880,7 +880,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           color: cardBg,
           margin: const EdgeInsets.only(bottom: 8),
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: const Color(0xFFFF6B35).withValues(alpha: 0.12),
@@ -990,7 +990,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   const Color(0xFF3D5AFE),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _statCard(
                   '的中回数',
@@ -1001,7 +1001,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
@@ -1014,7 +1014,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   const Color(0xFFFFC107),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _statCard(
                   '累計払戻',
@@ -1084,7 +1084,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
@@ -1096,14 +1096,14 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
           Row(
             children: [
               Icon(icon, color: color, size: 16),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Text(
                 title,
                 style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(

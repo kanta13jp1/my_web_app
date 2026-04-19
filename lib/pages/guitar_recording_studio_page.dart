@@ -1775,16 +1775,16 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
 
   Widget _buildShareBadge(IconData icon, String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: Colors.white70),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(text, style: const TextStyle(color: Colors.white, fontSize: 12)),
         ],
       ),
@@ -2258,7 +2258,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
@@ -2418,7 +2418,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: const Color(0xFF16213E),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.white12),
                 ),
                 child: Column(
@@ -2431,7 +2431,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                           color: Color(0xFF7C3AED),
                           size: 16,
                         ),
-                        SizedBox(width: 6),
+                        SizedBox(width: 8),
                         Text(
                           'AI feedback',
                           style: TextStyle(
@@ -2446,7 +2446,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       _latestRecordingAiFeedback!,
                       style: const TextStyle(
                         color: Colors.white70,
-                        height: 1.45,
+                        height: 1.6,
                       ),
                     ),
                   ],
@@ -2514,7 +2514,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Row(
             children: [
               const Text(
@@ -2567,7 +2567,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
 
   Widget _inlineMetronomeToggle() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFF16213E),
         borderRadius: BorderRadius.circular(12),
@@ -3089,20 +3089,20 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     ),
                   ],
                   if (aiFeedback != null) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: const Color(0xFF0F3460),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white10),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Padding(
-                            padding: EdgeInsets.only(top: 1),
+                            padding: EdgeInsets.only(top: 0),
                             child: Icon(
                               Icons.auto_awesome,
                               size: 14,
@@ -3116,7 +3116,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
-                                height: 1.4,
+                                height: 1.6,
                               ),
                             ),
                           ),
@@ -3592,7 +3592,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
-                        height: 1.4,
+                        height: 1.6,
                       ),
                     ),
                   ),
@@ -3647,7 +3647,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 13,
-                        height: 1.4,
+                        height: 1.6,
                       ),
                     ),
                   ),
@@ -3715,13 +3715,13 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   desc,
                   style: const TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
-                    height: 1.4,
+                    height: 1.6,
                   ),
                 ),
               ],
