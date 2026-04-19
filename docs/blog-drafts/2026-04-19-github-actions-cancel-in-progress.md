@@ -1,7 +1,7 @@
 ---
 title: "cancel-in-progress:trueでデプロイが消えた — GitHub Actions concurrency の落とし穴"
 tags: GitHubActions,CI/CD,Flutter,個人開発,buildinpublic
-published: false
+published: true
 ---
 
 # cancel-in-progress:trueでデプロイが消えた

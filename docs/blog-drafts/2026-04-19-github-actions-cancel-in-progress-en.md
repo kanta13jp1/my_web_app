@@ -1,7 +1,7 @@
 ---
 title: "cancel-in-progress:true Silently Dropped Our Deploys — GitHub Actions Concurrency Gotcha"
 tags: GitHubActions,CI/CD,Flutter,buildinpublic,devops
-published: false
+published: true
 ---
 
 # cancel-in-progress:true Silently Dropped Our Deploys
