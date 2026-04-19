@@ -166,24 +166,25 @@ final _competitorInfo = <String, _CompetitorInfo>{
   'moneyforward': const _CompetitorInfo(
     name: 'MoneyForward',
     emoji: '💰',
-    tagline: '家計管理もタスク管理も1つのアプリで。完全無料。',
-    searchKeyword: 'MoneyForward代替',
+    tagline:
+        'MoneyForward AI Cowork (2026-07 GA) は法人バックオフィス特化。自分株式会社は個人・フリーランスの財務部署AI。',
+    searchKeyword: 'MoneyForward代替 MoneyForwardAICowork代替',
     accentColor: Color(0xFF0D47A1),
     painPoints: [
-      'MoneyForwardの無料プランは連携口座数が4件まで',
-      'プレミアムは月額500円〜',
-      '資産管理しかできず、メモやタスクは別アプリが必要',
+      'MoneyForward AI Cowork は法人 5,000席以上・バックオフィス向け — 個人・フリーランスは対象外',
+      '無料プランは連携口座数 4 件まで・プレミアム月額 500 円〜',
+      '資産管理のみでタスク・ノート・AI大学・習慣管理は別アプリが必要',
     ],
     features: [
       _FeatureComparison(feature: '収支・家計管理', competitorHas: true, weHave: true),
       _FeatureComparison(feature: '資産残高把握', competitorHas: true, weHave: true),
       _FeatureComparison(
-        feature: 'タスク・ノート連携',
+        feature: '個人・フリーランス向け財務AI (先月比・改善提案)',
         competitorHas: false,
         weHave: true,
       ),
       _FeatureComparison(
-        feature: 'AI 資産アドバイス',
+        feature: 'タスク・ノート・習慣と財務の部署横断連携',
         competitorHas: false,
         weHave: true,
       ),
