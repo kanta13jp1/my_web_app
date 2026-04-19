@@ -11374,3 +11374,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第157弾**: Flutter Supabase タグ機能 text[]配列+GIN+AI提案 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/adding-notion-style-tags-to-a-flutter-note-app-with-supabase-text-arrays-jg9
 - **本日T-1累計**: 15本 (過去最高更新)
+
+### PS版#158 T-1第158弾 (2026-04-19)
+- **T-1第158弾**: Flutter FSRS間隔反復アルゴリズム実装 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/implementing-fsrs-spaced-repetition-in-flutter-the-algorithm-behind-ai-university-1j84
+- **本日T-1累計**: 16本 (過去最高更新)
