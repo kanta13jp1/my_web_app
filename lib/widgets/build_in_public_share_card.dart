@@ -129,11 +129,13 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
                   shape: BoxShape.circle,
                 ),
                 child: const Center(
-                  child: Text('𝕏',
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 1.5,
-                      )),
+                  child: Text(
+                    '𝕏',
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -189,11 +191,13 @@ class _BuildInPublicShareCardState extends State<BuildInPublicShareCard> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: _shareToX,
-              icon: const Text('𝕏',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.5,
-                  )),
+              icon: const Text(
+                '𝕏',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
               label: const Text('X (Twitter) でシェア'),
               style: OutlinedButton.styleFrom(
                 foregroundColor:

@@ -123,11 +123,13 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(emoji,
-            style: const TextStyle(
-              fontSize: 18,
-              height: 1.5,
-            )),
+        Text(
+          emoji,
+          style: const TextStyle(
+            fontSize: 18,
+            height: 1.5,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(
           value,
