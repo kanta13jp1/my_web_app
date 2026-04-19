@@ -493,7 +493,7 @@ def fetch_prev_race_info(horse_id_ext: str, source: str, race_date: str) -> dict
 
 def fetch_horse_histories(target_date: str) -> None:
     """当日出走馬の前走情報を馬個別ページから取得してDBを更新する。
-    horse_id_ext が設定済みかつ prev_finish が未取得のエントリのみ対象。"""
+    prev_history_fetched が false のエントリのみ対象 (404 済みはスキップ)。"""
     print(f"[INFO] {target_date} の出走馬 前走情報を取得中...")
     races = supabase_rest("GET", "horse_races", params={
         "race_date": f"eq.{target_date}",
@@ -504,13 +504,14 @@ def fetch_horse_histories(target_date: str) -> None:
         return
 
     total_updated = 0
+    total_skipped = 0
     for race in races:
         race_id = race["id"]
         source = race.get("source", "jra")
         entries = supabase_rest("GET", "horse_entries", params={
             "race_id": f"eq.{race_id}",
             "horse_id_ext": "not.is.null",
-            "prev_finish": "is.null",
+            "prev_history_fetched": "eq.false",
             "select": "id,horse_id_ext,horse_name",
         })
         if not entries:
@@ -521,10 +522,15 @@ def fetch_horse_histories(target_date: str) -> None:
                 continue
             prev_info = fetch_prev_race_info(horse_id_ext, source, target_date)
             time.sleep(1)
+            # 成功・失敗問わず fetched フラグを立てて次回スキップ
             if not prev_info:
-                print(f"    [SKIP] {entry.get('horse_name', '?')}: 前走情報取得失敗")
+                supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
+                              {"prev_history_fetched": True})
+                total_skipped += 1
+                print(f"    [SKIP] {entry.get('horse_name', '?')}: 前走情報取得失敗 (フラグ設定)")
                 continue
-            supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}", prev_info)
+            supabase_rest("PATCH", f"horse_entries?id=eq.{entry['id']}",
+                          {**prev_info, "prev_history_fetched": True})
             print(
                 f"    [OK] {entry.get('horse_name', '?')}: "
                 f"前走{prev_info.get('prev_finish')}着 "
@@ -533,7 +539,7 @@ def fetch_horse_histories(target_date: str) -> None:
             )
             total_updated += 1
 
-    print(f"[DONE] {total_updated}頭の前走情報を更新")
+    print(f"[DONE] {total_updated}頭更新, {total_skipped}頭スキップ (404済み)")
 
 
 # ─── 文字化けレコード削除 ────────────────────────────────────────────────────
