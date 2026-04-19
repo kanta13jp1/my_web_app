@@ -241,6 +241,9 @@ import 'package:my_web_app/pages/ai_university_streaks_page.dart';
 import 'package:my_web_app/pages/ai_workflow_automation_page.dart';
 import 'package:my_web_app/pages/ab_testing_manager_page.dart';
 import 'package:my_web_app/pages/habit_tracker_page.dart';
+import 'package:my_web_app/pages/agent_department_manager_page.dart';
+import 'package:my_web_app/pages/agent_performance_monitor_page.dart';
+import 'package:my_web_app/pages/app_analytics_dashboard_page.dart';
 import 'package:my_web_app/dev/claude_design/importer_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1347,6 +1350,18 @@ class MyApp extends StatelessWidget {
           case '/social-media-scheduler':
             return MaterialPageRoute(
               builder: (_) => const SocialMediaSchedulerPage(),
+            );
+          case '/agent-department-manager':
+            return MaterialPageRoute(
+              builder: (_) => const AgentDepartmentManagerPage(),
+            );
+          case '/agent-performance-monitor':
+            return MaterialPageRoute(
+              builder: (_) => const AgentPerformanceMonitorPage(),
+            );
+          case '/app-analytics-dashboard':
+            return MaterialPageRoute(
+              builder: (_) => const AppAnalyticsDashboardPage(),
             );
           case '/dev/claude-design-importer':
             return MaterialPageRoute(
