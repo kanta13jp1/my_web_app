@@ -155,3 +155,54 @@ Deno.test("fetchNotionBlockTree handles pagination and depth warnings", async ()
   ]);
   assertStrictEquals(urlCalls.length, 3);
 });
+
+Deno.test("fetchNotionBlockTree strips unused Notion metadata to save memory", async () => {
+  const fetchImpl: typeof fetch = () =>
+    Promise.resolve(Response.json({
+      results: [
+        {
+          id: "b1",
+          type: "paragraph",
+          object: "block",
+          created_time: "2026-01-01T00:00:00.000Z",
+          last_edited_time: "2026-01-02T00:00:00.000Z",
+          created_by: { object: "user", id: "u1" },
+          last_edited_by: { object: "user", id: "u2" },
+          parent: { type: "page_id", page_id: "p1" },
+          archived: false,
+          has_children: false,
+          paragraph: {
+            color: "default",
+            rich_text: [
+              {
+                plain_text: "hi",
+                type: "text",
+                annotations: {
+                  bold: true,
+                  italic: false,
+                  color: "red",
+                },
+                href: "https://example.com",
+                text: { content: "hi", link: { url: "https://example.com" } },
+              },
+            ],
+          },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+    }));
+
+  const result = await fetchNotionBlockTree("root", {
+    headers: { Authorization: "Bearer token" },
+    fetchImpl,
+  });
+
+  assertStrictEquals(result.blocks.length, 1);
+  const block = result.blocks[0];
+  assertEquals(Object.keys(block).sort(), ["id", "paragraph", "type"]);
+  const paragraph = block.paragraph as { rich_text: { plain_text: string }[] };
+  assertEquals(paragraph.rich_text, [{ plain_text: "hi" }]);
+  assertStrictEquals((block as Record<string, unknown>).created_time, undefined);
+  assertStrictEquals((block as Record<string, unknown>).parent, undefined);
+});
