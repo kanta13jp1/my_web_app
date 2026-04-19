@@ -675,6 +675,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0EA5E9),
     officialUrl: 'https://github.com/sgl-project/sglang',
   ),
+  'baseten': _ProviderMeta(
+    name: 'Baseten',
+    emoji: '🏗️',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://www.baseten.co/',
+  ),
+  'baichuan': _ProviderMeta(
+    name: 'Baichuan AI (百川智能)',
+    emoji: '🏥',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://www.baichuan-ai.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1373,6 +1385,26 @@ final Map<String, _Quiz> _quizzes = {
       'GroupedQueryAttention',
     ],
     correct: 2,
+  ),
+  'baseten': _Quiz(
+    question: 'Baseten の GPU 時間課金で最も安いインスタンスの開始価格は？',
+    options: [
+      '\$0.10/hr',
+      '\$0.63/hr',
+      '\$1.60/hr',
+      '\$3.20/hr',
+    ],
+    correct: 1,
+  ),
+  'baichuan': _Quiz(
+    question: 'Baichuan-M3 が達成した医療 AI ベンチマークのランキングは？',
+    options: [
+      'HealthBench Hard #1',
+      'MedQA #2',
+      'USMLE Top 3',
+      'MMLU Medical #1',
+    ],
+    correct: 0,
   ),
 };
 
@@ -3112,6 +3144,48 @@ AI/ML 特化 **GPU クラウド** 老舗 (2012〜)。元々は研究者向けに
 max serve --model llama3-70b
 # OpenAI 互換エンドポイントで即利用
 ```
+''',
+  'baseten': '''
+# Baseten
+
+エンタープライズ向け **AI モデルデプロイメント基盤**。カスタムモデル・OSS モデルを本番 GPU インフラで安定稼働させる MLOps プラットフォーム。
+
+## 特徴
+- **Serverless API**: トークン課金、変動負荷に最適
+- **Dedicated GPU**: T4 \$0.63〜B200 \$9.98/hr、分単位課金
+- **99.99% SLA**: エンタープライズ SLA 保証
+- **Gen AI 最適化**: LLM / Diffusion / 音声 各推論スタック
+- **Google Cloud パートナー**: 225% コストパフォーマンス改善実績
+
+## 対応モデル
+Llama 3.3 70B / Mistral / Qwen / Whisper / SDXL / FLUX.1
+
+## カスタムモデルデプロイ
+```bash
+pip install truss
+truss init my-model && truss push
+```
+''',
+  'baichuan': '''
+# Baichuan AI (百川智能)
+
+元 Sogou CEO 創業の中国 AI スタートアップ。汎用 LLM から**医療 AI に特化**し、Baichuan-M3 (235B) で **HealthBench Hard #1** を達成。
+
+## Baichuan-M3（医療特化・最新）
+- 235B パラメータ (Qwen3 アーキテクチャ)
+- 医療ドメイン特化 RL で訓練
+- HealthBench Hard #1（2026年）
+- Apache 2.0 / HuggingFace 公開
+
+## アクセス方法
+- **Dr7.ai API**: Baichuan-M3 医療エンドポイント
+- **HuggingFace**: 自己ホスト（W4 量子化対応）
+- **公式 API**: Baichuan4 汎用モデル
+
+## 活用
+- 医療 QA / 症状説明 / 薬剤情報
+- 中国語医療コンテンツ生成
+- 臨床文書の下書き
 ''',
   'radixark': '''
 # RadixArk (SGLang)
