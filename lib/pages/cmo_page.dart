@@ -515,10 +515,14 @@ $hashtags
             Text(
               _descriptionText(channelKey),
               textAlign: TextAlign.center,
+<<<<<<< Updated upstream
               style: const TextStyle(
                 color: Color(0xFFB0B0B0),
                 height: 1.5,
               ),
+=======
+              style: const TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+>>>>>>> Stashed changes
             ),
             const SizedBox(height: 24),
             if (_isLoading)

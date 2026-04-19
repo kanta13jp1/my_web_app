@@ -83,10 +83,14 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
+<<<<<<< Updated upstream
                     style: const TextStyle(
                       color: Colors.red,
                       height: 1.5,
                     ),
+=======
+                    style: const TextStyle(color: Colors.red, height: 1.5),
+>>>>>>> Stashed changes
                   ),
                 )
               : _tickets.isEmpty

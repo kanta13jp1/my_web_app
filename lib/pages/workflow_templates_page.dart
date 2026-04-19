@@ -92,10 +92,14 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                     children: [
                       Text(
                         _errorMessage!,
+<<<<<<< Updated upstream
                         style: const TextStyle(
                           color: Colors.red,
                           height: 1.5,
                         ),
+=======
+                        style: const TextStyle(color: Colors.red, height: 1.5),
+>>>>>>> Stashed changes
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),

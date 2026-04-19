@@ -81,10 +81,14 @@ class _AgentPerformanceMonitorPageState
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
+<<<<<<< Updated upstream
                         style: const TextStyle(
                           color: Colors.red,
                           height: 1.5,
                         ),
+=======
+                        style: const TextStyle(color: Colors.red, height: 1.5),
+>>>>>>> Stashed changes
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
@@ -107,18 +111,26 @@ class _AgentPerformanceMonitorPageState
                           SizedBox(height: 16),
                           Text(
                             'メトリクスデータなし',
+<<<<<<< Updated upstream
                             style: TextStyle(
                               fontSize: 18,
                               height: 1.5,
                             ),
+=======
+                            style: TextStyle(fontSize: 18, height: 1.5),
+>>>>>>> Stashed changes
                           ),
                           SizedBox(height: 8),
                           Text(
                             'AIエージェントのパフォーマンスを監視します',
+<<<<<<< Updated upstream
                             style: TextStyle(
                               color: Colors.grey,
                               height: 1.5,
                             ),
+=======
+                            style: TextStyle(color: Colors.grey, height: 1.5),
+>>>>>>> Stashed changes
                           ),
                         ],
                       ),

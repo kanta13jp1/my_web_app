@@ -337,10 +337,14 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
         ),
         subtitle: Text(
           '${platform == 'x' ? 'X (Twitter)' : platform == 'chrome' ? 'Chrome' : 'その他'}${url != null && url.isNotEmpty ? ' • $url' : ''}',
+<<<<<<< Updated upstream
           style: const TextStyle(
             fontSize: 11,
             height: 1.5,
           ),
+=======
+          style: const TextStyle(fontSize: 11, height: 1.5),
+>>>>>>> Stashed changes
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
