@@ -2198,15 +2198,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   // 4. 今月の支出と収入の記録（フロー）
   // ==========================================
-  /// DB の過去 wealth_struggles から payment_source を取得してデフォルト選択肢にマージ
+  /// DB の過去 subscriptions から payment_source を取得してデフォルト選択肢にマージ
+  /// (Win版#115: wealth_struggles に payment_source 列は存在しない。
+  ///  支払先の蓄積は subscriptions.payment_source 側のみ)
   Future<void> _loadSourceOptionsFromDb() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
     try {
       final data = await _supabase
-          .from('wealth_struggles')
+          .from('subscriptions')
           .select('payment_source')
           .eq('user_id', userId)
+          .not('payment_source', 'is', null)
           .limit(200);
       final sources = <String>{};
       for (final row in data) {
