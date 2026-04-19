@@ -11643,3 +11643,11 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - #514 #515 (feature) → VSCode版 or Win版スコープ
 - #520 (EF UI導線チェック) → 自動生成・stale 可能性高い
 
+### Rule 17 WF health check (PS版#1 · 2026-04-19 19:10)
+- 全 WF failure: 0件
+- deploy-prod cancel 7件: blog-publish 連続 push による queue cancel — cancel-in-progress: false で running 保護済み。最終 commit は必ず deploy。仕様通り
+- orphan blog-publish branches: 9本 → 全削除 (JA drafts published:true merge 後削除)
+- JA drafts #171-#174 published:true → main に merge 済み
+- claude/* orphan: 0件
+- 修正済み: なし (全WF正常)
+
