@@ -11539,3 +11539,15 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - cross-instance-prs pending: 2件 (両方 Win版向け → PS#1スコープ外)
 - setup-instance-worktree.sh 新規作成 + instance-ps1/ps2 worktree作成
 - 修正済み: なし (全WF正常)
+
+### PS版#1(続3) T-1 #171/#173/#174 dev.to投稿完了 (2026-04-19 19:08)
+- T-1 第171弾: FlutterノートアプリにAIタグ提案機能 — Groq無料枠でリアルタイムタグ生成
+  - https://dev.to/kanta13jp1/adding-ai-tag-suggestions-to-flutter-notes-free-groq-api-for-real-time-tagging-1705
+- T-1 第172弾: Supabaseバッチ処理の26分→0秒最適化 — prev_history_fetchedフラグパターン
+  - https://dev.to/kanta13jp1/cutting-a-26-minute-supabase-batch-job-to-near-zero-the-prevfetched-flag-pattern-1647
+- T-1 第173弾: Flutter WebでMS Project風ガントチャートを実装 — CustomPaintで左右同期スクロール
+  - https://dev.to/kanta13jp1/building-an-ms-project-style-gantt-chart-in-flutter-web-custompaint-with-synchronized-scrolling-5e0n
+- T-1 第174弾: Supabase Edge Functionのエラーハンドリング完全パターン — 4段階フォールバック設計
+  - https://dev.to/kanta13jp1/complete-error-handling-patterns-for-supabase-edge-functions-4-stage-fallback-design-1100
+- 本日T-1累計: 34本 (新過去最高)
+- Qiita #171 → 429 rate limit (翌日 JST 00:00 以降リトライ)
