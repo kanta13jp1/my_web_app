@@ -125,7 +125,13 @@ class _DevelopmentAchievementsCardState
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text('開発実績の追加', style: TextStyle(fontSize: 16)),
+              title: const Text(
+                '開発実績の追加',
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+              ),
               content: TextField(
                 controller: titleController,
                 decoration: const InputDecoration(
@@ -198,6 +204,7 @@ class _DevelopmentAchievementsCardState
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -216,12 +223,19 @@ class _DevelopmentAchievementsCardState
                   color: Color(0xFF64748B),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(
+                height: 6,
+              ),
               Text(
                 task.description,
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(
+                height: 12,
+              ),
             ],
             Row(
               children: [
@@ -241,7 +255,9 @@ class _DevelopmentAchievementsCardState
               ],
             ),
             if (task.description.isEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(
+                height: 8,
+              ),
               const Text(
                 '詳細説明はまだ登録されていません。',
                 style: TextStyle(
@@ -338,6 +354,7 @@ class _DevelopmentAchievementsCardState
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: textColor,
+                      height: 1.5,
                     ),
                     dropdownColor: cardColor,
                     items: _periods.map((String value) {
@@ -359,13 +376,21 @@ class _DevelopmentAchievementsCardState
           ),
           // 件数バッジ
           if (!_isLoading && _currentTasks.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(
+              height: 4,
+            ),
             Text(
               '${_currentTasks.length}件  ※タップで詳細表示',
-              style: TextStyle(fontSize: 11, color: subTextColor),
+              style: TextStyle(
+                fontSize: 11,
+                color: subTextColor,
+                height: 1.5,
+              ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(
+            height: 12,
+          ),
           // コンテンツ
           if (_isLoading)
             const Padding(
@@ -379,7 +404,11 @@ class _DevelopmentAchievementsCardState
           else if (_currentTasks.isEmpty)
             Text(
               'この期間の実績はまだありません',
-              style: TextStyle(fontSize: 12, color: subTextColor),
+              style: TextStyle(
+                fontSize: 12,
+                color: subTextColor,
+                height: 1.5,
+              ),
             )
           else
             Column(
@@ -431,7 +460,9 @@ class _DevelopmentAchievementsCardState
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(
+                                height: 2,
+                              ),
                               Row(
                                 children: [
                                   Text(
@@ -439,6 +470,7 @@ class _DevelopmentAchievementsCardState
                                     style: TextStyle(
                                       fontSize: 11,
                                       color: subTextColor,
+                                      height: 1.5,
                                     ),
                                   ),
                                   const SizedBox(width: 4),

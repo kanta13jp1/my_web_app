@@ -76,6 +76,7 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -89,7 +90,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                   ),
                 ),
 
-                const Divider(height: 1),
+                const Divider(
+                  height: 1,
+                ),
 
                 // スクロール可能なコンテンツ
                 Expanded(
@@ -104,10 +107,13 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(
+                          height: 12,
+                        ),
 
                         SizedBox(
                           height: 120,
@@ -144,7 +150,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       _getTemplatePreview(cardTemplate),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(
+                                        height: 8,
+                                      ),
                                       Text(
                                         cardTemplate.label,
                                         style: TextStyle(
@@ -167,7 +175,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           ),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(
+                          height: 24,
+                        ),
 
                         // アスペクト比選択
                         const Text(
@@ -175,9 +185,12 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(
+                          height: 8,
+                        ),
                         Wrap(
                           spacing: 8,
                           children: template.AspectRatio.values.map((ratio) {
@@ -196,7 +209,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           }).toList(),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(
+                          height: 16,
+                        ),
 
                         // コンテンツモード選択
                         const Text(
@@ -204,9 +219,12 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(
+                          height: 4,
+                        ),
                         Text(
                           '${_selectedContentMode.label} - 1ページ最大${_selectedContentMode.maxCharsPerPage}文字',
                           style: const TextStyle(
@@ -214,7 +232,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                             color: Color(0xFFB0B0B0),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(
+                          height: 8,
+                        ),
                         Wrap(
                           spacing: 8,
                           children: template.ContentMode.values.map((mode) {
@@ -233,7 +253,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           }).toList(),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(
+                          height: 16,
+                        ),
 
                         // フォントサイズ選択
                         const Text(
@@ -241,9 +263,12 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(
+                          height: 8,
+                        ),
                         Wrap(
                           spacing: 8,
                           children:
@@ -263,7 +288,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           }).toList(),
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(
+                          height: 24,
+                        ),
 
                         // オプション
                         const Text(
@@ -271,10 +298,13 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(
+                          height: 8,
+                        ),
 
                         CheckboxListTile(
                           title: const Text('統計情報を表示'),
@@ -306,7 +336,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                           contentPadding: EdgeInsets.zero,
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(
+                          height: 16,
+                        ),
 
                         // プレビューボタン
                         Center(
@@ -314,7 +346,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                               ? const Column(
                                   children: [
                                     CircularProgressIndicator(),
-                                    SizedBox(height: 8),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
                                     Text('プレビューを準備中...'),
                                   ],
                                 )
@@ -340,7 +374,9 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
                   ),
                 ),
 
-                const Divider(height: 1),
+                const Divider(
+                  height: 1,
+                ),
 
                 // ボタンエリア
                 Container(
@@ -595,15 +631,25 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
           children: [
             Text(
               'このメモは $imageCount 枚の画像になります。',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
             const Text('以下をお勧めします：'),
-            const SizedBox(height: 8),
+            const SizedBox(
+              height: 8,
+            ),
             _buildSuggestion('📝 コンテンツモードを「要約モード」に変更'),
             _buildSuggestion('✂️ 「スマート分割」で適度な枚数に調整'),
             _buildSuggestion('🔗 リンク共有機能を使用'),
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
             const Text(
               '※ 大量の画像生成は時間がかかり、デバイスのメモリを消費します',
               style: TextStyle(fontSize: 12, color: Color(0xFFB0B0B0)),
@@ -638,7 +684,13 @@ class _ShareNoteCardDialogState extends State<ShareNoteCardDialog> {
           const Icon(Icons.arrow_right, size: 20, color: Color(0xFFB0B0B0)),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 14)),
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
           ),
         ],
       ),

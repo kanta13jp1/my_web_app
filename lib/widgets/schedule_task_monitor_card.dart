@@ -199,6 +199,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -344,6 +345,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      height: 1.5,
                     ),
                   ),
                   Text(
@@ -370,6 +372,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                   fontSize: 9,
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
+                  height: 1.5,
                 ),
               ),
             ),
@@ -395,6 +398,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
           fontSize: 10,
           fontWeight: FontWeight.bold,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -455,6 +459,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
+                              height: 1.5,
                             ),
                           ),
                           if (task.consecutiveErrors >= 3) ...[
@@ -497,6 +502,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: statusColor,
+                          height: 1.5,
                         ),
                       ),
                     ),
@@ -547,6 +553,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: Colors.red,
+                              height: 1.5,
                             ),
                           ),
                         ],
@@ -554,7 +561,7 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                       const SizedBox(height: 4),
                       Text(
                         task.errorMessage!,
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 11, height: 1.5),
                       ),
                       if (task.summary != null) const SizedBox(height: 8),
                     ],
@@ -564,12 +571,13 @@ class _ScheduleTaskMonitorCardState extends State<ScheduleTaskMonitorCard> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         task.summary!,
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 11, height: 1.5),
                       ),
                     ],
                   ],

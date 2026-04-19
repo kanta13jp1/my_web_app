@@ -37,7 +37,7 @@ class AgentWorkspacePanel extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Text(
             '$officeLabel の永続エージェントを読み込めませんでした。',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
           ),
         ),
       );
@@ -58,6 +58,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -105,6 +106,7 @@ class AgentWorkspacePanel extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -179,6 +181,7 @@ class _TaskCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
+              height: 1.5,
             ),
           ),
           if (task.description.isNotEmpty) ...[
@@ -264,6 +267,7 @@ class _MetaChip extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: color,
+              height: 1.5,
             ),
           ),
         ],

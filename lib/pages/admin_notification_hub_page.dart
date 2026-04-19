@@ -86,7 +86,11 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
               Chip(
                 label: Text('$unread 未読'),
                 backgroundColor: Colors.red.withAlpha(30),
-                labelStyle: const TextStyle(color: Colors.red, fontSize: 11),
+                labelStyle: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 11,
+                  height: 1.5,
+                ),
                 padding: EdgeInsets.zero,
               ),
             ],
@@ -115,7 +119,8 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                     ? Center(
                         child: Text(
                           _error!,
-                          style: const TextStyle(color: Colors.red),
+                          style:
+                              const TextStyle(color: Colors.red, height: 1.5),
                         ),
                       )
                     : _notifications.isEmpty
@@ -144,6 +149,7 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                                       fontWeight: isRead
                                           ? FontWeight.normal
                                           : FontWeight.bold,
+                                      height: 1.5,
                                     ),
                                   ),
                                   subtitle: Text(n['message'] as String? ?? ''),

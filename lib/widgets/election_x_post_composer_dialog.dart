@@ -153,6 +153,7 @@ class _ElectionXPostComposerDialogState
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
                 color: _xBlue,
+                height: 1.5,
               ),
             ),
           ),
@@ -265,7 +266,8 @@ class _ElectionXPostComposerDialogState
                   backgroundColor: _xBlue,
                   child: Text(
                     '${index + 1}',
-                    style: const TextStyle(color: Colors.white, fontSize: 11),
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 11, height: 1.5),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -274,6 +276,7 @@ class _ElectionXPostComposerDialogState
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                    height: 1.5,
                   ),
                 ),
                 const Spacer(),
@@ -313,7 +316,7 @@ class _ElectionXPostComposerDialogState
               child: TextField(
                 controller: controller,
                 maxLines: null,
-                style: const TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 13, height: 1.5),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.all(10),

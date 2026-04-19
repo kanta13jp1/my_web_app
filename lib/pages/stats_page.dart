@@ -51,7 +51,11 @@ class _StatsPageState extends State<StatsPage> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          height: 1.5,
+        ),
       ),
     );
   }

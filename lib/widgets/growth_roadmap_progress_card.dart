@@ -149,6 +149,7 @@ class _GrowthRoadmapProgressCardState extends State<GrowthRoadmapProgressCard> {
                     fontSize: 12,
                     color: subTextColor,
                     fontWeight: FontWeight.w600,
+                    height: 1.5,
                   ),
                 ),
             ],
@@ -229,13 +230,15 @@ class _PlanProgressRow extends StatelessWidget {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: textColor,
+                  height: 1.5,
                 ),
               ),
               const SizedBox(width: 8),
               if (plan.deadline != null)
                 Text(
                   '目標期日 ${plan.deadline}',
-                  style: TextStyle(fontSize: 11, color: subTextColor),
+                  style:
+                      TextStyle(fontSize: 11, color: subTextColor, height: 1.5),
                 ),
             ],
           ),
@@ -250,6 +253,7 @@ class _PlanProgressRow extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: userBarColor,
+                  height: 1.5,
                 ),
               ),
               Expanded(
@@ -280,6 +284,7 @@ class _PlanProgressRow extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: featBarColor,
+                    height: 1.5,
                   ),
                 ),
                 Expanded(
@@ -2657,7 +2662,7 @@ class _CompetitorFeatureComparisonCardState
                     (c) => Tab(
                       child: Text(
                         c,
-                        style: const TextStyle(fontSize: 12),
+                        style: const TextStyle(fontSize: 12, height: 1.5),
                       ),
                     ),
                   )
@@ -2679,7 +2684,13 @@ class _CompetitorFeatureComparisonCardState
                   return Padding(
                     padding: const EdgeInsets.only(right: 6),
                     child: FilterChip(
-                      label: Text(cat, style: const TextStyle(fontSize: 11)),
+                      label: Text(
+                        cat,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.5,
+                        ),
+                      ),
                       selected: selected,
                       onSelected: (_) => setState(() => _filterCategory = cat),
                       selectedColor:
@@ -2736,6 +2747,7 @@ class _CompetitorFeatureComparisonCardState
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
               color: subColor,
+              height: 1.5,
             ),
           ),
         ),
@@ -2787,6 +2799,7 @@ class _SummaryChip extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           color: color,
+          height: 1.5,
         ),
       ),
     );
@@ -2822,7 +2835,7 @@ class _OverallProgressBar extends StatelessWidget {
           children: [
             Text(
               '$competitorName 機能カバー率',
-              style: TextStyle(fontSize: 12, color: subColor),
+              style: TextStyle(fontSize: 12, color: subColor, height: 1.5),
             ),
             const Spacer(),
             Text(
@@ -2912,6 +2925,7 @@ class _FeatureRowTile extends StatelessWidget {
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: textColor,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2930,6 +2944,7 @@ class _FeatureRowTile extends StatelessWidget {
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: statusColor,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2946,6 +2961,7 @@ class _FeatureRowTile extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: subColor,
+                          height: 1.5,
                         ),
                       ),
                       Expanded(
@@ -2954,6 +2970,7 @@ class _FeatureRowTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 11,
                             color: subColor,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -2970,6 +2987,7 @@ class _FeatureRowTile extends StatelessWidget {
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: statusColor,
+                          height: 1.5,
                         ),
                       ),
                       Expanded(

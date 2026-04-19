@@ -209,6 +209,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
               color: color,
               fontSize: 11,
               fontWeight: FontWeight.w700,
+              height: 1.5,
             ),
           ),
         ],
@@ -230,6 +231,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
           color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
+          height: 1.5,
         ),
       ),
     );
@@ -281,6 +283,7 @@ class _AiUniversityHomeCardState extends State<AiUniversityHomeCard> {
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
+                    height: 1.5,
                   ),
                 ),
               ],

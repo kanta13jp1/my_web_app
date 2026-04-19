@@ -518,9 +518,12 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(
+                          height: 2,
+                        ),
                         Text(
                           '全 ${_functions.length} 件  |  UI 実装済: $_withUiCount 件  |  UI未実装: $_noUiCount 件  ($pct%)',
                           style: TextStyle(
@@ -547,7 +550,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                             color: Color(0xFF6366F1),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(
+                          height: 4,
+                        ),
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
@@ -580,7 +585,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
           ),
 
           if (_expanded) ...[
-            const Divider(height: 1),
+            const Divider(
+              height: 1,
+            ),
 
             // UI未実装の関数リスト
             if (noUiFns.isNotEmpty) ...[
@@ -630,6 +637,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -647,7 +655,9 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                   );
                 },
               ),
-              const Divider(height: 16),
+              const Divider(
+                height: 16,
+              ),
             ],
 
             // UI実装済み一覧 (最初の10件)
@@ -667,6 +677,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.green,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -701,7 +712,10 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF6366F1),
                     side: const BorderSide(color: Color(0xFF6366F1)),
-                    textStyle: const TextStyle(fontSize: 12),
+                    textStyle: const TextStyle(
+                      fontSize: 12,
+                      height: 1.5,
+                    ),
                   ),
                   onPressed: () =>
                       Navigator.pushNamed(context, '/edge-functions'),
@@ -726,7 +740,11 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
             width: 160,
             child: Text(
               fn.name,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
             ),
           ),
           Expanded(

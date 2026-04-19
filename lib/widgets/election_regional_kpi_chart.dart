@@ -123,7 +123,11 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   children: [
                     pw.Text(
                       '統一地方選700 必達管理レポート',
-                      style: pw.TextStyle(font: ttfBold, fontSize: 18),
+                      style: pw.TextStyle(
+                        font: ttfBold,
+                        fontSize: 18,
+                        height: 1.5,
+                      ),
                     ),
                     pw.Text(
                       '出力日時: $dateStr\n作成者: $authorName\nページ: ${context.pageNumber} / ${context.pagesCount}',
@@ -131,13 +135,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         font: ttfRegular,
                         fontSize: 10,
                         color: PdfColors.grey700,
+                        height: 1.5,
                       ),
                       textAlign: pw.TextAlign.right,
                     ),
                   ],
                 ),
                 pw.Divider(color: PdfColors.grey300),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(
+                  height: 10,
+                ),
                 pw.Expanded(
                   child: pw.Column(
                     children: [
@@ -158,19 +165,26 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     ],
                   ),
                 ),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(
+                  height: 10,
+                ),
                 pw.Divider(color: PdfColors.grey300),
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
-                    pw.Image(logoImage, width: 24, height: 24),
+                    pw.Image(
+                      logoImage,
+                      width: 24,
+                      height: 24,
+                    ),
                     pw.Text(
                       '自分株式会社 - 経営コックピット',
                       style: pw.TextStyle(
                         font: ttfRegular,
                         fontSize: 8,
                         color: PdfColors.grey500,
+                        height: 1.5,
                       ),
                     ),
                   ],
@@ -260,7 +274,11 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
               children: [
                 const Text(
                   '都道府県連別 目標配分 (現職維持 + 新人擁立)',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.print),
@@ -269,7 +287,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(
+              height: 16,
+            ),
             RepaintBoundary(
               key: _barChartKey,
               child: Container(
@@ -309,7 +329,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                             ],
                           ),
                           if (totalTarget < 700) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(
+                              height: 12,
+                            ),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 8,
@@ -335,6 +357,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       color: Colors.red.shade700,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
@@ -344,7 +367,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(
+                      height: 32,
+                    ),
                     SizedBox(
                       height: 300,
                       child: BarChart(
@@ -372,6 +397,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                   const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
+                                    height: 1.5,
                                   ),
                                   children: [
                                     TextSpan(
@@ -390,6 +416,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                         color: newTargetColor,
                                         fontSize: 12,
                                         fontWeight: FontWeight.normal,
+                                        height: 1.5,
                                       ),
                                     ),
                                     TextSpan(
@@ -399,6 +426,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                         color: Colors.white70,
                                         fontSize: 12,
                                         fontWeight: FontWeight.normal,
+                                        height: 1.5,
                                       ),
                                     ),
                                     TextSpan(
@@ -408,6 +436,7 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
+                                        height: 1.5,
                                       ),
                                     ),
                                   ],
@@ -434,7 +463,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                       meta: meta,
                                       child: Text(
                                         displayRegion,
-                                        style: const TextStyle(fontSize: 10),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          height: 1.5,
+                                        ),
                                         textAlign: TextAlign.center,
                                       ),
                                     );
@@ -455,7 +487,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                                     meta: meta,
                                     child: Text(
                                       value.toInt().toString(),
-                                      style: const TextStyle(fontSize: 12),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        height: 1.5,
+                                      ),
                                     ),
                                   );
                                 },
@@ -515,7 +550,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(
+                      height: 16,
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -526,7 +563,9 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         _buildLegend(Colors.green.shade400, '新人擁立目標 (達成)'),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(
+                      height: 32,
+                    ),
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -534,10 +573,13 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          height: 1.5,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(
+                      height: 16,
+                    ),
                     _buildMonthlyTable(sortedMonths, monthlyStats),
                   ],
                 ),
@@ -567,7 +609,13 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
       children: [
         Container(width: 12, height: 12, color: color),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 12)),
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.5,
+          ),
+        ),
       ],
     );
   }
@@ -583,13 +631,16 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(
+          height: 4,
+        ),
         Text(
           value,
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: color,
+            height: 1.5,
           ),
         ),
       ],
@@ -631,7 +682,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   ),
                   title: Text(
                     p.prefecture,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                   subtitle: Text(
                     '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',
@@ -753,7 +807,10 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                 DataCell(
                   Text(
                     month,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataCell(Text(total.toString())),
@@ -763,14 +820,17 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
+                      height: 1.5,
                     ),
                   ),
                 ),
                 DataCell(
                   Text(
                     unconfirmed.toString(),
-                    style:
-                        TextStyle(color: unconfirmed > 0 ? Colors.red : null),
+                    style: TextStyle(
+                      color: unconfirmed > 0 ? Colors.red : null,
+                      height: 1.5,
+                    ),
                   ),
                 ),
                 DataCell(Text('$progress%')),

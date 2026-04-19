@@ -92,6 +92,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -131,9 +132,17 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
             ],
             const SizedBox(height: 8),
             if (_error != null)
-              Text(_error!, style: const TextStyle(color: Colors.red))
+              Text(
+                _error!,
+                style: const TextStyle(
+                  color: Colors.red,
+                  height: 1.5,
+                ),
+              )
             else if (_loading && _competitors.isEmpty)
-              const SizedBox(height: 40)
+              const SizedBox(
+                height: 40,
+              )
             else if (_competitors.isEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +166,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
                         : const Icon(Icons.play_arrow, size: 16),
                     label: Text(
                       _checking ? 'チェック中...' : '今すぐチェック',
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(fontSize: 12, height: 1.5),
                     ),
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF3D5AFE),
@@ -200,7 +209,7 @@ class _CompetitorMonitoringCardState extends State<CompetitorMonitoringCard> {
             flex: 3,
             child: Text(
               name,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontSize: 13, height: 1.5),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -256,7 +265,7 @@ class _SummaryChip extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: color),
+            style: TextStyle(fontSize: 11, color: color, height: 1.5),
           ),
           const SizedBox(width: 4),
           Text(
@@ -265,6 +274,7 @@ class _SummaryChip extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: color,
+              height: 1.5,
             ),
           ),
         ],

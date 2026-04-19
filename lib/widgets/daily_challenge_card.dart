@@ -106,6 +106,7 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -362,6 +363,7 @@ class _ChallengeRow extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
+                        height: 1.5,
                       ),
                     ),
                   ),

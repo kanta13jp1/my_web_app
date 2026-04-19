@@ -206,6 +206,7 @@ class _YoutubeChannelAnalyticsCardState
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         Text(
@@ -283,7 +284,7 @@ class _YoutubeChannelAnalyticsCardState
           Expanded(
             child: Text(
               'データ取得エラー: $_error',
-              style: const TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 12, height: 1.5),
             ),
           ),
         ],
@@ -308,7 +309,7 @@ class _YoutubeChannelAnalyticsCardState
           const SizedBox(height: 8),
           const Text(
             'データがありません',
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
           ),
           const SizedBox(height: 4),
           Text(
@@ -535,6 +536,7 @@ class _YoutubeChannelAnalyticsCardState
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
                     color: typeColor,
+                    height: 1.5,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -548,7 +550,7 @@ class _YoutubeChannelAnalyticsCardState
                 children: [
                   Text(
                     video.title,
-                    style: const TextStyle(fontSize: 11),
+                    style: const TextStyle(fontSize: 11, height: 1.5),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -573,6 +575,7 @@ class _YoutubeChannelAnalyticsCardState
                         fontSize: 9,
                         color: Colors.green,
                         fontWeight: FontWeight.w600,
+                        height: 1.5,
                       ),
                     ),
                 ],
@@ -599,6 +602,7 @@ class _YoutubeChannelAnalyticsCardState
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
+                              height: 1.5,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -607,6 +611,7 @@ class _YoutubeChannelAnalyticsCardState
                             style: const TextStyle(
                               fontSize: 9,
                               color: Colors.red,
+                              height: 1.5,
                             ),
                             textAlign: TextAlign.right,
                           ),
@@ -637,11 +642,12 @@ class _YoutubeChannelAnalyticsCardState
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: color,
+                height: 1.5,
               ),
             ),
             Text(
               label,
-              style: const TextStyle(fontSize: 9),
+              style: const TextStyle(fontSize: 9, height: 1.5),
             ),
           ],
         ),

@@ -113,6 +113,7 @@ class MarkdownPreview extends StatelessWidget {
         ),
         tableBody: const TextStyle(
           fontSize: 14,
+          height: 1.5,
         ),
         tableColumnWidth: const FlexColumnWidth(),
         // リンクスタイル
@@ -121,7 +122,7 @@ class MarkdownPreview extends StatelessWidget {
           decoration: TextDecoration.underline,
         ),
         // チェックボックス
-        checkbox: const TextStyle(fontSize: 16),
+        checkbox: const TextStyle(fontSize: 16, height: 1.5),
       ),
       onTapLink: (text, href, title) {
         if (href != null) {
@@ -190,6 +191,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'monospace',
+                        height: 1.5,
                       ),
                     ),
                     const Spacer(),
@@ -253,6 +255,7 @@ class CodeElementBuilder extends MarkdownElementBuilder {
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'monospace',
+                      height: 1.5,
                     ),
                   ),
                 const Spacer(),

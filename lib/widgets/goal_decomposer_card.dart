@@ -232,6 +232,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
+                            height: 1.5,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -283,7 +284,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                         vertical: 10,
                       ),
                     ),
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
                     maxLines: 2,
                   ),
                   const SizedBox(height: 10),
@@ -296,7 +297,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF4F46E5),
                         side: const BorderSide(color: Color(0xFF4F46E5)),
-                        textStyle: const TextStyle(fontSize: 12),
+                        textStyle: const TextStyle(fontSize: 12, height: 1.5),
                       ),
                     ),
                   ),
@@ -309,6 +310,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
+                        height: 1.5,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -336,6 +338,7 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                                   fontSize: 12,
                                   color: Colors.green,
                                   fontWeight: FontWeight.w600,
+                                  height: 1.5,
                                 ),
                               ),
                             ),
@@ -362,7 +365,8 @@ class _GoalDecomposerCardState extends State<GoalDecomposerCard> {
                           onPressed: _loading ? null : _assignTasks,
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF4F46E5),
-                            textStyle: const TextStyle(fontSize: 12),
+                            textStyle:
+                                const TextStyle(fontSize: 12, height: 1.5),
                           ),
                         ),
                       ),
@@ -408,11 +412,12 @@ class _DeptTaskRow extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: item.dept.color,
+                    height: 1.5,
                   ),
                 ),
                 Text(
                   item.task,
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 11, height: 1.5),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
