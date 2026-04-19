@@ -12250,3 +12250,27 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - Argilla: LLMアノテーションOSS・RLHF/SFTデータ収集・HF統合
   - Dify: ノーコードLLMワークフロービルダーOSS・GitHub ★80,000+
 - **flutter analyze**: 0エラー
+
+
+### Windowsアプリ版#131 セッション 2 (2026-04-20 04:50 JST) — 価格トラッカー機能
+
+- **NotebookLM `d6dd44af` ("Building a Zero-Cost Amazon Price Tracker") の知見を統合**
+- **新規実装**:
+  - migration `20260420020000_create_price_tracker.sql` — `tracked_products` + `price_logs` テーブル + auto-update trigger
+  - lifestyle-hub に `price.*` 8 actions 追加 (新規 EF 不要・50本制限維持)
+  - `lib/pages/price_tracker_page.dart` (462 行) — URL 貼付フォーム + 商品カード ("🎯 買い時" バッジ) + 価格スポット記録
+  - main.dart に `/price-tracker` route 追加
+- **既存資産との関係明確化**: shopping_items / purchase_sessions / wasteful_spending と補完関係 (重複なし)
+- **commits**: `0b7228ad` (機能本体) + `0b07d5fb` (routing + EF actions)
+- **flutter analyze**: 0 エラー (dart fix --apply で trailing_commas 15 + prefer_const 1 を自動修正)
+- **deno lint**: 0 エラー
+- **未実装 (Phase 2)**: 自動スクレイピング EF / AI 購入アドバイザー / fl_chart 価格推移 / notification-center 連携
+
+### Philosophy Alignment (Win#131 part 2)
+
+- 主要実装: 価格トラッカー機能 (商品 URL + 目標価格 + 価格推移)
+- 該当原則: **全 9 原則該当** (CEO感/ミッション/mentor/6部署/価値/時間/資産/KPI/ウェルビーイング)
+- 整合性スコア: **9/9 ✅**
+- AI-DEV: 5/7 ✅ (Auth/Deny/Trace/Circuit ✅ / Memory+QG = Phase 2)
+- 理念的貢献: 21 競合中 Amazon・MoneyForward の機能を「自分株式会社の哲学」(計画的購入・自己進捗) で再定義
+- 懸念: スクレイピング Phase 2 で Amazon 規約 / User-Agent / robots.txt 配慮必要
