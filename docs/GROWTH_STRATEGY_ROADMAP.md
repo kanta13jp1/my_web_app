@@ -11674,6 +11674,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - T-1 第175弾: GitHub Actions concurrency落とし穴 — cancel-in-progress: falseでもqueuedは消える
   - https://dev.to/kanta13jp1/github-actions-concurrency-trap-cancel-in-progress-false-still-drops-queued-runs-5hg3
 - 本日T-1累計: 35本 (新過去最高更新)
+### Windowsアプリ版#120 セッション (2026-04-19 19:30 JST)
+- **EF cleanup 第1弾**: 84 dead EF directories 削除 (本番から削除済み + Flutter 参照なし)
+  - 削除前: 262 dirs / deploy 18 + delete-pending 124 + dead 121
+  - 削除後: 178 dirs (-84)
+  - 安全判定: deploy-prod.yml の delete リスト ∩ Flutter `functions.invoke` 参照ゼロ
+  - 残 risky 40 EF: Flutter からまだ呼ばれている (delete pending だが要 Flutter 修正 → PS#5 担当)
+- 削除例: agent-hub, ai-search, ai-secretary, ai-suggest-tags (Win#117 で AIService 経由に変更済), ai-summarizer, blog-auto-publisher, blog-post-manager, etc
+- repo size 削減 + 新人 onboarding 時の混乱低減 (Rule 7 EF cap 50 維持の補強)
 
 ### PS版#1(続5) T-1 #176 dev.to投稿完了 (2026-04-19 19:45)
 - T-1 第176弾: Claude Codeを10インスタンス並列実行 — git worktreeで作業分離する設計
