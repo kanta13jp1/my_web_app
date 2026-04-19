@@ -687,6 +687,18 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF059669),
     officialUrl: 'https://www.baichuan-ai.com/',
   ),
+  'lepton': _ProviderMeta(
+    name: 'Lepton AI (NVIDIA)',
+    emoji: '⚡',
+    color: const Color(0xFF76B900),
+    officialUrl: 'https://www.lepton.ai/',
+  ),
+  'krutrim': _ProviderMeta(
+    name: 'Krutrim AI',
+    emoji: '🇮🇳',
+    color: const Color(0xFFFF9933),
+    officialUrl: 'https://cloud.olakrutrim.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1405,6 +1417,26 @@ final Map<String, _Quiz> _quizzes = {
       'MMLU Medical #1',
     ],
     correct: 0,
+  ),
+  'lepton': _Quiz(
+    question: 'NVIDIA が 2025 年に買収した Lepton AI の独自推論エンジン名は？',
+    options: [
+      'Thunder',
+      'Tuna',
+      'Flash',
+      'Turbo',
+    ],
+    correct: 1,
+  ),
+  'krutrim': _Quiz(
+    question: 'Krutrim AI がサポートするインド言語の生成対応言語数は？',
+    options: [
+      '5 言語',
+      '10 言語',
+      '15 言語',
+      '22+ 言語',
+    ],
+    correct: 1,
   ),
 };
 
@@ -3165,6 +3197,56 @@ Llama 3.3 70B / Mistral / Qwen / Whisper / SDXL / FLUX.1
 pip install truss
 truss init my-model && truss push
 ```
+''',
+  'lepton': '''
+# Lepton AI (NVIDIA DGX Cloud Lepton)
+
+元 Alibaba VP・PyTorch/Caffe 開発者 Yangqing Jia 創業。2025年4月 **NVIDIA が買収**し、現在は NVIDIA DGX Cloud Lepton として提供。
+
+## Tuna 推論エンジン
+- **600+ tokens/sec** — 業界最速水準
+- 20B tokens/day 処理実績
+- 1M+ images/day
+
+## 対応モデル
+Llama 3.3 / Mistral / Qwen / DeepSeek / FLUX.1 / SDXL
+
+## Python SDK
+```python
+from leptonai.photon import Photon
+# 数行で AI サービスをデプロイ
+```
+
+## OpenAI 互換
+```python
+client = OpenAI(
+    api_key="YOUR_KEY",
+    base_url="https://llama3-3-70b.lepton.run/api/v1/"
+)
+```
+''',
+  'krutrim': '''
+# Krutrim AI
+
+Ola 創業者設立のインド発 AI スタートアップ。2024年1月**インド初 AI ユニコーン**（\$1B 評価額）達成。22+ インド言語 × 2 兆トークン訓練。
+
+## 特徴
+- **22+ インド言語理解** / 10 言語生成
+- 25,000+ 開発者、2,500 億 API コール実績
+- 翻訳 / 音声 / 動画ローカライズ API
+- インド AI チップ計画（Bodhi / Sarv / Ojas）
+
+## API
+```python
+client = OpenAI(
+    api_key="YOUR_KEY",
+    base_url="https://cloud.olakrutrim.com/v1"
+)
+# ヒンディー語・タミル語などで直接呼び出し
+```
+
+## 活用
+- インド市場アプリ / 農業 AI / 教育 / 多言語 CS ボット
 ''',
   'baichuan': '''
 # Baichuan AI (百川智能)
