@@ -12191,3 +12191,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 理念的貢献: 過去セッションの seed 追加が UI に反映されない技術的負債を解消 (見えない資産→見える資産)
 - 懸念: 同種の registry vs DB vs UI 同期チェックは継続必要 (毎セッション diff 推奨)
 
+### PS版#3 Session 9 (2026-04-20 04:30 JST)
+- **AI大学 3社追加** (Lightning AI / W&B Weave / Oxen AI) → **125社**
+  - Lightning AI: PyTorch Lightningチーム製クラウドGPU開発環境 (分散学習特化)
+  - W&B Weave: LLMオブザーバビリティ (@weave.op トレース・Evaluations)
+  - Oxen AI: ML データの Git (CSV行レベルdiff・部分クローン・Oxen Hub)
+- **実装内容**:
+  - `supabase/migrations/20260419490000_seed_lightning_ai_university.sql`
+  - `supabase/migrations/20260419500000_seed_weave_ai_university.sql`
+  - `supabase/migrations/20260419510000_seed_oxen_ai_university.sql`
+  - `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _quizzes + _fallback 更新)
+- **flutter analyze**: 0エラー
