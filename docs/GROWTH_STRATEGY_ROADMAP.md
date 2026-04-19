@@ -11399,3 +11399,8 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **T-1第162弾**: Supabase Migration ベストプラクティス タイムスタンプ命名・衝突回避 → dev.to 投稿成功
   - https://dev.to/kanta13jp1/supabase-migration-best-practices-timestamp-naming-conflict-prevention-seed-separation-5em3
 - **本日T-1累計**: 20本 (過去最高更新🎉)
+
+### PS版#163 T-1第163弾 (2026-04-19)
+- **T-1第163弾**: Flutter Web PWA化 manifest・Service Worker・インストール促進 → dev.to 投稿成功
+  - https://dev.to/kanta13jp1/making-your-flutter-web-app-a-pwa-manifestjson-service-worker-install-prompt-4m26
+- **本日T-1累計**: 21本 (過去最高更新)
