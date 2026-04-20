@@ -105,7 +105,8 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     final percentage = reportData.startBalance != 0
         ? (diff / reportData.startBalance) * 100
         : 0.0;
-    final diffColor = diff >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
+    final diffColor =
+        diff >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

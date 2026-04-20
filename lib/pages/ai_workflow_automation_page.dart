@@ -93,7 +93,9 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                           child: ListTile(
                             leading: Icon(
                               Icons.auto_awesome,
-                              color: isActive ? const Color(0xFF4CAF50) : Colors.grey,
+                              color: isActive
+                                  ? const Color(0xFF4CAF50)
+                                  : Colors.grey,
                             ),
                             title: Text(
                               wf['name'] as String? ?? '',
