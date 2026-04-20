@@ -819,6 +819,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF2563EB),
     officialUrl: 'https://dify.ai/',
   ),
+  'decart': _ProviderMeta(
+    name: 'Decart',
+    emoji: '🎮',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://decart.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4174,6 +4180,29 @@ client = OpenAI(
 - コーディング・数学・推論でフロンティア水準
 - OpenAI からの移行コストがほぼゼロ
 - マルチモーダル（テキスト・画像・動画・音楽）
+''',
+  'decart': '''
+# Decart — リアルタイム生成動画 AI (\$3.1B 評価額)
+
+イスラエル発スタートアップ。世界初のリアルタイム動画生成モデル
+**Oasis** (AI Minecraft) と **MirageLSD** (ライブ動画スタイル変換) を提供。
+2025-08 Series B で \$100M 調達 (累計 \$153M+ / 評価額 \$3.1B)。
+
+## 主力モデル
+- **Oasis** (2024-11): playable な AI 生成 Minecraft 風ゲーム。3 日で 100 万ユーザー
+- **MirageLSD** (2025-夏): <40ms レイテンシでライブ動画を別スタイルに変換
+
+## 既存動画 AI との違い
+| 観点 | Decart | Runway/Luma 等 |
+|------|--------|----------------|
+| 生成方式 | 連続リアルタイム | 5〜10 秒バッチ |
+| レイテンシ | <40ms | 10 秒〜数分 |
+| 入力 | ライブ動画 | テキスト・画像 |
+
+## 試す
+- Mirage デモ: https://mirage.decart.ai/
+- Oasis デモ: https://oasis.decart.ai/welcome
+- Mirage API は 2026 年内公開予定 (waitlist 受付中)
 ''',
 };
 
