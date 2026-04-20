@@ -13871,3 +13871,28 @@ Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 T
 
 - S10 の「本A dispatch 後に本B」pattern を Notion side にも適用 → **複数シリーズ同時 pre-write で時間資本が複利化**
 - 条件変動リスク低い題材 (公式発表済 paywall) は直前 draft より pre-write が合理
+
+## PS版#5 Session 24 (2026-04-20 - reading-list → tools-hub:reading.*)
+
+**Commit**: `92d83020` (ps-main 379a194a)
+
+**背景**: PS#6 S18 handoff (24 EF) の CRITICAL 5 件のうち、hub action 既存揃いで invoke 2 箇所のみの reading-list を最小リスク優先で着手 (S23 calendar-events に続く 2 件目)。
+
+**対応**:
+- `supabase/functions/tools-hub/index.ts` `reading.add` case に `author: body.author ?? ""` 1 行追加 (Flutter 既送信 author の hub 側受領)
+- `lib/pages/reading_list_page.dart`:
+  - invoke `'reading-list'` → `'tools-hub'`、action `list` → `reading.list` / `add` → `reading.add`
+  - response shape `data['books']` → `data['items']` (hub_data row format)
+  - `item['title' / 'author' / 'status']` → `item['metadata']['title' / 'author' / 'status']` 抽出
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md`: Section B 1/13 → 2/13、合計 2/23 → **3/23 (13.0%)**
+
+**検証**: `dart format` clean / `flutter analyze lib/pages/reading_list_page.dart` No issues (22.4s) / `deno lint tools-hub` clean
+
+**残 CRITICAL 4 件** (home_tool_catalog 登録): time-tracker (hub 拡張要・後回し) / goal-tracker / habit-tracker / music-collaboration
+
+**[NO-SCOPE-CREEP] 自己判定**: hub `reading.add` への author 1 行追加は、Flutter 既送信値を hub 移行時に保持する **migration 直結** 修正であり scope creep に該当しない (UX 後退回避)。
+
+**Philosophy Alignment (9 原則)**:
+- 原則 5 (商品=ユーザー価値): home → 読書リスト 404 → 生きた hub 経路に復旧
+- 原則 6 (資本=時間): 既存 hub への 1 行拡張で migration 完結 → EF cleanup 加速
+- 原則 7 (資産=負債): 二重 EF (reading-list + tools-hub) を hub 単一に寄せ負債 1 件消化
