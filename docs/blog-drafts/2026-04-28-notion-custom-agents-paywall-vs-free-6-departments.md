@@ -29,6 +29,20 @@ AI ツールを使うたびに「あと何 credit 残ってる?」と気にす�
 これは Notion を否定する話ではない。Notion Custom Agents は企業データの RAG 統合で他の追随を許さない強みを持つ。
 ただ個人利用で毎日ライフログを回すユースケースでは、**予測可能な無料** の方が時間保全になる。
 
+## さらに厄介な「無言 pause」という二重の罠
+
+Notion 公式 help によれば、live Custom Agent が credit 不足になった場合、**次の monthly service date で pause** する仕様になっている。つまり:
+
+- 気付かずに credit 切れ → 翌月 1 日に AI 自動化が **無言で停止** (通知なしの可能性大)
+- ユーザー視点: 「あれ、agent が動いてない?」と気付いたときには既にデータ欠落
+- 対比: 自分株式会社は **課金の概念が存在しない** ので「credit 残高ウォッチ」自体が不要・pause も起きない
+
+Source: <https://www.notion.com/help/custom-agent-pricing>
+
+ちなみに 2026 Q1 は Evernote も Personal/Professional を retire して Starter $8.25 / Advanced $14.17 / Teams $24.99 の 4 plan に再編した。
+**「ノート / AI 業界の 2026 春 = 個人向け無料枠の一斉縮小」** という構造変化の真っ只中。
+この流れで「予測可能な無料」を確保しておくのは個人にとって合理的。
+
 ## 自分株式会社の 6 部署統合モデル
 
 自分株式会社は「1 人株式会社」をそのまま Flutter Web + Supabase に写像した個人ツール。

@@ -29,6 +29,20 @@ When the balance drops near a billing threshold, you start hesitating: "Should I
 This isn't a rebuttal of Notion. Custom Agents has unmatched strengths for enterprise-data RAG integration.
 But for a personal user logging daily life, **predictable free** preserves time capital better than predictable price-per-token.
 
+## The Silent-Pause Trap Makes It Worse
+
+According to Notion's official help, when a live Custom Agent runs out of credits, it **pauses at the next monthly service date**. In practice:
+
+- You don't notice the credit exhaustion → next month, your AI automation **stops silently** (notification may not arrive)
+- From the user side: "Wait, my agent isn't running?" — by the time you notice, data is already missing
+- Contrast: Jibun Inc. has **no billing concept at all**, so "credit-balance watch" doesn't exist and silent pauses can't happen
+
+Source: <https://www.notion.com/help/custom-agent-pricing>
+
+For context, Evernote is doing the same thing in 2026 Q1 — retiring Personal/Professional and reshaping into Starter $8.25 / Advanced $14.17 / Teams $24.99 (plus a 50-note Free tier).
+**"Spring 2026 in the notes/AI industry = a coordinated shrinkage of individual free tiers."**
+Securing a "predictable free" option now is a rational hedge for individual users caught in that shift.
+
 ## The 6-Department Integration Model
 
 Jibun Inc. is a personal tool that maps a "1-person company" onto Flutter Web + Supabase.

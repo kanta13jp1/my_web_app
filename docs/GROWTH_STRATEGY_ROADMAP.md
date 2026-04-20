@@ -13273,3 +13273,35 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 - [NO-SCOPE-CREEP]: stash pop で無関係変更 7 件混入 → git checkout で Kyutai スコープに限定
 
 >>>>>>> Stashed changes
+
+---
+
+## 2026-04-20 18:10 JST — PS版#2 Session 8 (本A draft enrich: PS#4 S21 追加訴求材料反映)
+
+### アクション
+
+- S5 で作成した 本A draft (JA + EN) に PS#4 S21 が後から追加した **追加訴求材料 2 点** を反映:
+  - **材料 1**: Notion Custom Agent "無言 pause" (credit 不足 → 次 monthly service date で停止)
+  - **材料 2**: Evernote 2026 Q1 4 plan 再編 (業界全体の個人無料枠縮小トレンド)
+- JA / EN ペア両方に新セクション「無言 pause という二重の罠 / The Silent-Pause Trap Makes It Worse」追加
+- `published: false` 維持 (4/28 dispatch 待機)
+
+### Why
+
+- S5 完了時 (17:25 JST) には S21 (夜 late) の addendum 未起案
+- 8 日猶予あるうちに enrich = 直前修正のリスク回避
+- 訴求強度 UP: 「credit balance watch = 時間浪費」→ 「無言 pause = データ欠落」の二段構え
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): 具体的な失敗モード提示で訴求強度 up
+- 原則 6 (資本=時間): 直前修正ではなく余裕を持って組み込む
+- 原則 8 (KPI=昨日の自分): S21 発見 → 即反映で鮮度維持
+- 整合性: **8/9**
+
+### 次回 PS#2 候補 (変更なし)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (Gate 1 自動 PASS)
+2. **2026-04-28**: 本A dispatch (t1-blog-dispatch / dev.to 単独)
+3. **2026-04-29 頃**: 本B (D-2) draft 作成
+4. **2026-05-01 頃**: 本C (D-0) draft 作成
