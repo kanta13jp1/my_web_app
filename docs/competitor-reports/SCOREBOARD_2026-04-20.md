@@ -120,6 +120,7 @@
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
 | **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
 | **Anthropic Labs Claude Design** | AI デザイン SaaS | 2026-04-17 GA / prompt→prototype 2 回 / Canva CEO 署名の native 統合 / Pro $20+ | 🟠 ツール採用検討 | VSCode版 が `/claude-design-handoff` と併用判断 (Rule 21) |
+| **OpenAI Codex Desktop** (S22 追加) | AI 個人タスク自動化 | **2026-04-17 大型 update**: Computer Use (macOS sandbox VM・foreground 非干渉) + Multiple agents parallel + Memory preview + **90+ plugins (Atlassian/CircleCI/GitLab/MCP)** + In-app browser / 3M weekly devs / Claude Code Desktop と機能パリティ+α | 🟠 **routing 判断待ち** | 個人 Mac の手先自動化 vs 人生 6 部署経営 — 領域不重複だが ai-hub routing に影響 |
 
 **扱い**: Cursor / Cognition / Lovable は **LP 比較表に追加しない**。理由:
 - いずれも「仕事 knowledge-work の内側」を争う競合で、自分株式会社の軸 1 (対象=個人 CEO) / 軸 2 (範囲=人生 6 部署) と重ならない
@@ -128,6 +129,11 @@
 *更新: PS版#4 S15 watchlist backlog 3 社 (Cursor / Cognition / Lovable) + Claude Design 詳細 | 2026-04-20 深夜*
 *更新: PS版#4 S16 notion 🟠→🔴 (Custom Agents 10x コスト減) / x 🟢→🟠 (Grok 4.3 4-agent team) / Cursor ARR 訂正 + Replit $9B 追加 | 2026-04-20 深夜 late*
 *更新: PS版#4 S17 Notion 課金開始日 (2026-05-04) / Claude Cowork **Computer Use Pro/Max 解禁** + Enterprise pricing 改定 ($20/seat+usage) / Slack TDX **Headless 360 + Experience Layer + Agent Script OSS + AgentExchange** / Cursor 再訂正 ($9.9B→$50B 9 ヶ月で 5 倍・$2B ARR) | 2026-04-20*
+*更新: PS版#4 S18 **AgentExchange 逆輸入 PR 起票** (Jibun Inc Slack agent・Philosophy 6/9 + AI-DEV 5/7 両クリア → Win版 handoff) | 2026-04-20 late*
+*更新: PS版#4 S19 Notion 5/4 課金 **D-14 SNS 3 本 PR 起票** (4/28 本A / 5/2 本B / 5/4 本C → PS#2 handoff + VSCode LP補記) | 2026-04-20 late*
+*更新: PS版#4 S20 5 並列 delta — S18 AgentExchange **HOLD 判定** (Salesforce Partner 必須 HIT) → **MCP 直接公開 代替 PR 起票** / Notion credit 不足 "pause" 挙動発見 / Gemini 4 (ARC-AGI2 84.6% / 2M / sub-300ms) | 2026-04-20 夕*
+*更新: PS版#4 S21 🔴 **OpenAI Codex Desktop 4/17 Computer Use + 90 plugin + MCP** = Claude Code と機能パリティ+α → 個人タスク自動化 Claude 一強崩壊 / Evernote 4 plan 再編 (Personal/Professional retire) / MoneyForward **AI Cowork** 7/launch (法人 BO 住み分け追認) | 2026-04-20 夜*
+*更新: PS版#4 S22 SCOREBOARD に S18-S21 delta 集約 + OpenAI Codex 行を Watchlist Backlog に追加 + 差別化軸 7 目「AI 手段の分散 vs 特化」を追加検討 | 2026-04-20 夜 late*
 
 ---
 
@@ -149,3 +155,46 @@
 - **Agent Script OSS**: 言語仕様/grammar/parser/compiler 全公開 (github.com/salesforce/agentscript)
 - **AgentExchange marketplace**: Salesforce 10K + Slack 2.6K + Agentforce 1K = 14K+ 統合検索
 - 自分株式会社への対応: **Slack agent エコシステムに「逆輸入」検討** — `enterprise-hub` から Slack へ 6 部署サマリーを push する agent を Agent Script で書いて AgentExchange 公開 → 個人 CEO が法人 Slack で自分株式会社情報を扱える流入経路
+
+---
+
+## S21 戦略インパクト (2 大 delta)
+
+### 1. OpenAI Codex Desktop 4/17 大型 update — 個人タスク自動化 Claude 一強崩壊 (🔴)
+
+- **Computer Use (macOS)**: sandbox VM 内で mouse/keyboard 制御・foreground 非干渉
+- **Multiple agents parallel**: 同一 Mac で複数 agent 同時実行
+- **Memory preview**: 過去対話 + personal preferences + corrections 記憶
+- **90+ plugins**: Atlassian Rovo / CircleCI / GitLab Issues / Microsoft / MCP servers 統合
+- **In-app browser**: 3M weekly devs 向け PR review / multi-terminal / SSH devbox
+- → Claude Code Desktop (Cowork) と **機能パリティ+α** 達成
+- → 個人タスク自動化市場で Claude 一強構造が崩壊
+
+**自分株式会社への影響**:
+- **直接 (Low)**: LP 比較表に「3 者棲み分け」行追加 (OpenAI Codex = 手先自動化 / Claude = Knowledge-work / 自分株式会社 = 人生 6 部署経営)
+- **間接 (Medium-High)**: ai-hub の **モデル routing 戦略** 再検討が必要
+  - Computer Use / 長期 memory 必須タスクを Codex へ routing する action 追加候補
+  - cost-hub に Codex tier 追加検討 (per-session cost が Claude Sonnet より低い場合)
+- 起票: `docs/cross-instance-prs/20260420_openai_codex_desktop_threat.md` (Win版 + VSCode版)
+
+### 2. Notion Custom Agent "無言 pause" 挙動 (S20 発見・SNS 弾強化材料)
+
+- live Custom Agent が credit 不足 → **次の monthly service date で pause** (通知なし可能性大)
+- ユーザー視点: 「あれ、agent が動いてない?」と気付いたときに既にデータ欠落
+- 対比: 自分株式会社 = **課金概念が存在しない → credit 残高ウォッチ自体が不要**
+- S19 本A (4/28 D-6) に訴求材料として追補済 (`20260504_notion_paywall_d14.md` 追加訴求材料セクション)
+
+---
+
+## S22 差別化軸 7 目 — AI 手段の分散 vs 特化 (検討中)
+
+S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる」から「用途別 AI の組み合わせ」へ移行中:
+
+- Claude Code = プロジェクト文脈 + 長期ミッション駆動
+- OpenAI Codex = Computer Use + plugin ecosystem
+- Cursor = IDE 内補完 + コーディング
+- 自分株式会社 = **AI 手段を選ばず 6 部署軸で統合するハブ** (ai-hub routing)
+
+→ 軸 7 案: **「AI 手段の分散」= 単一 vendor 依存しない = CEO 的リスク管理 (原則 1・7 整合)**
+→ Win版 routing 判断結果が出たら LP 軸 7 を正式採用する
+

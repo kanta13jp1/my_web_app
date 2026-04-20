@@ -13036,3 +13036,20 @@ provider key 衝突検知を Step 0 の 10 番目として追加すべし。
 2. **2026-04-28**: 本A dispatch (t1-blog-dispatch / dev.to 単独)
 3. **2026-04-29 頃**: 本B (D-2) draft 作成
 4. **2026-05-01 頃**: 本C (D-0) draft 作成
+---
+
+## 2026-04-20 PS版#4 S22 — SCOREBOARD 集約 + OpenAI Codex Watchlist 追加 + 差別化軸 7 目検討
+
+**Why**: S17 以降 5 session (S18/S19/S20/S21/S22) の更新が SCOREBOARD に未反映。他インスタンスが handoff 先で古い認識のまま動くリスク回避。
+
+**Actions**:
+- `docs/competitor-reports/SCOREBOARD_2026-04-20.md` を 151→200 行に拡張:
+  - 更新行 5 本追加 (S18 AgentExchange PR / S19 Notion D-14 / S20 HOLD+MCP 代替 / S21 OpenAI Codex 🔴 / S22 集約)
+  - Watchlist Backlog に **OpenAI Codex Desktop 🟠** 行追加 (Computer Use + 90 plugin + MCP)
+  - **S21 戦略インパクト 2 大 delta** セクション新規 (OpenAI Codex + Notion credit 不足 pause)
+  - **S22 差別化軸 7 目「AI 手段の分散 vs 特化」** 検討セクション新規
+- `memory/project_20260420_ps4_s22.md` 新規
+
+**Philosophy**: 3/9 ✅ (原則 1 CEO 感 / 原則 6 資本=時間 / 原則 8 KPI=昨日の自分)
+
+**次回候補**: Win版 Codex routing 判断 follow-up / MCP 直接 vs AgentExchange 判断 follow-up / PS#2 本A dispatch (4/28 接近) / SNS 弾 3 者棲み分け素材化 / MoneyForward 7/launch 監視
