@@ -256,7 +256,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('プロフィールを保存しました'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
         Navigator.of(context).pop(true);

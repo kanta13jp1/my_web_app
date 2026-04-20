@@ -109,7 +109,7 @@ class _ReferralPageState extends State<ReferralPage> {
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 12),
                       Text(_error!),

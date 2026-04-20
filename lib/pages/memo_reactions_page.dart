@@ -124,7 +124,7 @@ class _MemoReactionsPageState extends State<MemoReactionsPage> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),
