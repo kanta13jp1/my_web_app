@@ -15,7 +15,7 @@ class NoteAnalysisDialog extends StatelessWidget {
     return AlertDialog(
       title: const Row(
         children: [
-          Icon(Icons.analytics, color: const Color(0xFF3D5AFE)),
+          Icon(Icons.analytics, color: Color(0xFF3D5AFE)),
           SizedBox(width: 8),
           Text('AI分析レポート'),
         ],
@@ -53,7 +53,7 @@ class NoteAnalysisDialog extends StatelessWidget {
                       label: Text(tag),
                       backgroundColor: const Color(0xFFE8EAF6),
                       labelStyle: const TextStyle(
-                        color: const Color(0xFF3D5AFE),
+                        color: Color(0xFF3D5AFE),
                         height: 1.5,
                       ),
                     ),
@@ -69,7 +69,7 @@ class NoteAnalysisDialog extends StatelessWidget {
               const Text(
                 '検出されたアクションはありません',
                 style: TextStyle(
-                  color: const Color(0xFFB0B0B0),
+                  color: Color(0xFFB0B0B0),
                   height: 1.5,
                 ),
               )
@@ -83,7 +83,7 @@ class NoteAnalysisDialog extends StatelessWidget {
                       const Icon(
                         Icons.check_box_outline_blank,
                         size: 20,
-                        color: const Color(0xFF3D5AFE),
+                        color: Color(0xFF3D5AFE),
                       ),
                       const SizedBox(width: 8),
                       Expanded(child: Text(item)),
@@ -111,7 +111,7 @@ class NoteAnalysisDialog extends StatelessWidget {
         style: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
-          color: const Color(0xFFB0B0B0),
+          color: Color(0xFFB0B0B0),
           height: 1.5,
         ),
       ),

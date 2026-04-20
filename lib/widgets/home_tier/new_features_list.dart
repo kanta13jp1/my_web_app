@@ -54,7 +54,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
         child: Text(
           '直近14日間に追加された機能はありません',
           style: TextStyle(
-            color: const Color(0xFF94A3B8),
+            color: Color(0xFF94A3B8),
             fontSize: 13,
             height: 1.5,
           ),
@@ -71,7 +71,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
           leading: const Icon(
             Icons.new_releases_outlined,
             size: 18,
-            color: const Color(0xFFFF6B35),
+            color: Color(0xFFFF6B35),
           ),
           title: Text(
             label,
@@ -87,7 +87,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
                   desc,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: const Color(0xFF94A3B8),
+                    color: Color(0xFF94A3B8),
                     height: 1.5,
                   ),
                 )
@@ -95,7 +95,7 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
           trailing: const Icon(
             Icons.chevron_right,
             size: 16,
-            color: const Color(0xFF64748B),
+            color: Color(0xFF64748B),
           ),
           onTap: () => Navigator.pushNamed(context, route),
         );

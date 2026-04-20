@@ -65,7 +65,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       return const _DailyGuardStatus(
         label: '逸脱あり',
         detail: 'その日は抑止ラインを突破しています。',
-        color: const Color(0xFFFF6B35),
+        color: Color(0xFFFF6B35),
         icon: Icons.warning_amber_rounded,
       );
     }
@@ -73,14 +73,14 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
       return const _DailyGuardStatus(
         label: '未設定',
         detail: 'その日の禁止対象が固定されていません。',
-        color: const Color(0xFF607D8B),
+        color: Color(0xFF607D8B),
         icon: Icons.radio_button_unchecked,
       );
     }
     return const _DailyGuardStatus(
       label: '無傷',
       detail: '禁止対象を保ったまま終えています。',
-      color: const Color(0xFF4CAF50),
+      color: Color(0xFF4CAF50),
       icon: Icons.verified,
     );
   }
@@ -200,7 +200,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                   Text(
                     category.principle,
                     style: const TextStyle(
-                      color: const Color(0xFF455A64),
+                      color: Color(0xFF455A64),
                       fontWeight: FontWeight.w600,
                       height: 1.5,
                     ),
@@ -343,7 +343,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
         ? const _DailyGuardStatus(
             label: '読込中',
             detail: '',
-            color: const Color(0xFF607D8B),
+            color: Color(0xFF607D8B),
             icon: Icons.more_horiz,
           )
         : _resolveDailyStatus(snapshot);
@@ -698,7 +698,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
                 child: Text(
                   '${summary.count}回',
                   style: const TextStyle(
-                    color: const Color(0xFF3D5AFE),
+                    color: Color(0xFF3D5AFE),
                     fontWeight: FontWeight.w700,
                     height: 1.5,
                   ),
@@ -712,7 +712,7 @@ class _AbstinenceGuardPageState extends State<AbstinenceGuardPage> {
           Text(
             category.principle,
             style: const TextStyle(
-              color: const Color(0xFF455A64),
+              color: Color(0xFF455A64),
               fontWeight: FontWeight.w600,
               height: 1.5,
             ),

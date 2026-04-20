@@ -69,14 +69,14 @@ class _AgentDepartmentManagerPageState
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: const Color(0xFFE53935),
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: const Color(0xFFE53935),
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -96,7 +96,7 @@ class _AgentDepartmentManagerPageState
                           Icon(
                             Icons.corporate_fare,
                             size: 64,
-                            color: const Color(0xFF6366F1),
+                            color: Color(0xFF6366F1),
                           ),
                           SizedBox(height: 16),
                           Text(
@@ -126,7 +126,7 @@ class _AgentDepartmentManagerPageState
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             leading: const CircleAvatar(
-                              backgroundColor: const Color(0xFF6366F1),
+                              backgroundColor: Color(0xFF6366F1),
                               child: Icon(
                                 Icons.corporate_fare,
                                 color: Colors.white,
@@ -148,7 +148,7 @@ class _AgentDepartmentManagerPageState
                             trailing: Text(
                               '${dept['agent_count'] ?? 0}エージェント',
                               style: const TextStyle(
-                                color: const Color(0xFF6366F1),
+                                color: Color(0xFF6366F1),
                                 fontWeight: FontWeight.w500,
                                 height: 1.5,
                               ),

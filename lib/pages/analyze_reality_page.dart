@@ -68,7 +68,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
               key,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFFF6B35),
+                color: Color(0xFFFF6B35),
                 height: 1.5,
               ),
             ),
@@ -97,7 +97,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
               '現状や課題を入力すると AI が分析します',
               style: TextStyle(
                 fontSize: 14,
-                color: const Color(0xFFB0B0B0),
+                color: Color(0xFFB0B0B0),
                 height: 1.5,
               ),
             ),
@@ -132,7 +132,7 @@ class _AnalyzeRealityPageState extends State<AnalyzeRealityPage> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: const Color(0xFFE53935),
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),

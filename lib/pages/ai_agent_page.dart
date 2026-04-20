@@ -180,20 +180,20 @@ class _AiAgentPageState extends State<AiAgentPage> {
           const Icon(
             Icons.smart_toy_outlined,
             size: 64,
-            color: const Color(0xFF9CA3AF),
+            color: Color(0xFF9CA3AF),
           ),
           const SizedBox(height: 16),
           const Text(
             'AIエージェントがまだいません',
             style:
-                TextStyle(fontSize: 16, height: 1.7, color: const Color(0xFF4B5563)),
+                TextStyle(fontSize: 16, height: 1.7, color: Color(0xFF4B5563)),
           ),
           const SizedBox(height: 8),
           const Text(
             'タスク自動化フローを作成して\n繰り返し作業をAIに任せましょう',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: const Color(0xFF6B7280),
+              color: Color(0xFF6B7280),
               height: 1.7,
             ),
           ),
@@ -256,7 +256,7 @@ class _AiAgentPageState extends State<AiAgentPage> {
                 IconButton(
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: const Color(0xFFE53935),
+                    color: Color(0xFFE53935),
                   ),
                   onPressed: () => _deleteFlow(flow['id'] as String),
                 ),

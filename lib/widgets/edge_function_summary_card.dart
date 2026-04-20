@@ -747,7 +747,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                     child: const Icon(
                       Icons.api,
                       size: 18,
-                      color: const Color(0xFF6366F1),
+                      color: Color(0xFF6366F1),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -790,7 +790,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF6366F1),
+                            color: Color(0xFF6366F1),
                             height: 1.5,
                           ),
                         ),
@@ -806,7 +806,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                                 ? const Color(0xFF424242)
                                 : const Color(0xFFEEEEEE),
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                              const Color(0xFF6366F1),
+                              Color(0xFF6366F1),
                             ),
                           ),
                         ),
@@ -842,7 +842,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                     const Icon(
                       Icons.warning_amber_rounded,
                       size: 14,
-                      color: const Color(0xFFFF6B35),
+                      color: Color(0xFFFF6B35),
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -850,7 +850,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFFF6B35),
+                        color: Color(0xFFFF6B35),
                         height: 1.5,
                       ),
                     ),
@@ -873,7 +873,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                         const Icon(
                           Icons.circle,
                           size: 6,
-                          color: const Color(0xFFFF6B35),
+                          color: Color(0xFFFF6B35),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -958,7 +958,7 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
                   label: const Text('Edge Functions 詳細・テストページ'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF6366F1),
-                    side: const BorderSide(color: const Color(0xFF6366F1)),
+                    side: const BorderSide(color: Color(0xFF6366F1)),
                     textStyle: const TextStyle(
                       fontSize: 12,
                       height: 1.5,

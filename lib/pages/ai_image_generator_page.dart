@@ -124,7 +124,7 @@ class _AiImageGeneratorPageState extends State<AiImageGeneratorPage> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: const Color(0xFFE53935),
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,

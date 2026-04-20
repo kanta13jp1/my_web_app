@@ -140,7 +140,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
                   child: Text(
                     _error!,
                     style: const TextStyle(
-                      color: const Color(0xFFE53935),
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -163,7 +163,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.present_to_all, color: const Color(0xFF3D5AFE)),
+                Icon(Icons.present_to_all, color: Color(0xFF3D5AFE)),
                 SizedBox(width: 8),
                 Text(
                   'スライドを自動生成',
@@ -252,7 +252,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
           children: [
             const Row(
               children: [
-                Icon(Icons.slideshow, color: const Color(0xFF3D5AFE)),
+                Icon(Icons.slideshow, color: Color(0xFF3D5AFE)),
                 SizedBox(width: 8),
                 Text(
                   '生成されたスライド構成',
@@ -291,7 +291,7 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
             child: ListTile(
               leading: const Icon(
                 Icons.present_to_all,
-                color: const Color(0xFF3D5AFE),
+                color: Color(0xFF3D5AFE),
               ),
               title: Text(h['topic'] as String? ?? ''),
               trailing: Text('${h['slide_count'] ?? '-'}枚'),

@@ -84,7 +84,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: const Color(0xFFE53935),
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -164,7 +164,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           child: Text(
                             'エクスポート履歴はありません',
                             style: TextStyle(
-                              color: const Color(0xFF9CA3AF),
+                              color: Color(0xFF9CA3AF),
                               height: 1.5,
                             ),
                           ),
@@ -177,10 +177,10 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: const CircleAvatar(
-                              backgroundColor: const Color(0x1A009688),
+                              backgroundColor: Color(0x1A009688),
                               child: Icon(
                                 Icons.download,
-                                color: const Color(0xFF009688),
+                                color: Color(0xFF009688),
                               ),
                             ),
                             title: Text(
@@ -196,7 +196,7 @@ class _AnalyticsExportPageState extends State<AnalyticsExportPage> {
                                   '',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                                 height: 1.5,
                               ),
                             ),

@@ -230,14 +230,14 @@ class _AiSearchPageState extends State<AiSearchPage> {
               const Icon(
                 Icons.error_outline,
                 size: 48,
-                color: const Color(0xFFE57373),
+                color: Color(0xFFE57373),
               ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color: const Color(0xFFEF5350),
+                  color: Color(0xFFEF5350),
                   height: 1.5,
                 ),
               ),
@@ -352,7 +352,7 @@ class _AiSearchPageState extends State<AiSearchPage> {
                       tag,
                       style: const TextStyle(
                         fontSize: 11,
-                        color: const Color(0xFF6366F1),
+                        color: Color(0xFF6366F1),
                         height: 1.5,
                       ),
                     ),

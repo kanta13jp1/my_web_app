@@ -130,7 +130,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
   Widget _buildHealth() {
     if (_loadingHealth) {
       return const Center(
-        child: CircularProgressIndicator(color: const Color(0xFFF97316)),
+        child: CircularProgressIndicator(color: Color(0xFFF97316)),
       );
     }
     if (_providers.isEmpty) {
@@ -202,7 +202,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                   child: const Text(
                     '⚠ flaky (1h)',
                     style: TextStyle(
-                      color: const Color(0xFFEF4444),
+                      color: Color(0xFFEF4444),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       height: 1.5,
@@ -266,7 +266,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
           Text(
             label,
             style: const TextStyle(
-              color: const Color(0xFF94A3B8),
+              color: Color(0xFF94A3B8),
               fontSize: 10,
               height: 1.5,
             ),
@@ -289,7 +289,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
   Widget _buildSessions() {
     if (_loadingSessions) {
       return const Center(
-        child: CircularProgressIndicator(color: const Color(0xFFF97316)),
+        child: CircularProgressIndicator(color: Color(0xFFF97316)),
       );
     }
     if (_sessions.isEmpty) {
@@ -340,7 +340,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                         ? '${sessionId.substring(0, 28)}...'
                         : sessionId,
                     style: const TextStyle(
-                      color: const Color(0xFF6366F1),
+                      color: Color(0xFF6366F1),
                       fontSize: 11,
                       fontFamily: 'monospace',
                       height: 1.5,
@@ -351,7 +351,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                   Text(
                     '$errorSteps err',
                     style: const TextStyle(
-                      color: const Color(0xFFEF4444),
+                      color: Color(0xFFEF4444),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       height: 1.5,
@@ -363,7 +363,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
             Text(
               providers,
               style: const TextStyle(
-                color: const Color(0xFFCBD5E1),
+                color: Color(0xFFCBD5E1),
                 fontSize: 12,
                 height: 1.5,
               ),
@@ -376,7 +376,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                 Text(
                   '$stepCount ステップ',
                   style: const TextStyle(
-                    color: const Color(0xFF94A3B8),
+                    color: Color(0xFF94A3B8),
                     fontSize: 11,
                     height: 1.5,
                   ),
@@ -385,7 +385,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                 Text(
                   '${totalLatency}ms',
                   style: const TextStyle(
-                    color: const Color(0xFFF97316),
+                    color: Color(0xFFF97316),
                     fontSize: 11,
                     height: 1.5,
                   ),
@@ -394,7 +394,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
                 Text(
                   '\$${cost.toStringAsFixed(5)}',
                   style: const TextStyle(
-                    color: const Color(0xFFA855F7),
+                    color: Color(0xFFA855F7),
                     fontSize: 11,
                     height: 1.5,
                   ),
@@ -426,12 +426,12 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.insights, color: const Color(0xFF6366F1), size: 56),
+            const Icon(Icons.insights, color: Color(0xFF6366F1), size: 56),
             const SizedBox(height: 16),
             Text(
               title,
               style: const TextStyle(
-                color: const Color(0xFFCBD5E1),
+                color: Color(0xFFCBD5E1),
                 fontSize: 14,
                 height: 1.7,
               ),
@@ -441,7 +441,7 @@ class _AiObservabilityPageState extends State<AiObservabilityPage>
             Text(
               hint,
               style: const TextStyle(
-                color: const Color(0xFF94A3B8),
+                color: Color(0xFF94A3B8),
                 fontSize: 12,
                 height: 1.7,
               ),
@@ -511,7 +511,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: const Color(0xFFF97316)),
+        child: CircularProgressIndicator(color: Color(0xFFF97316)),
       );
     }
     if (_matrix.isEmpty) {
@@ -521,7 +521,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
           child: Text(
             'ヒートマップに表示できるデータがありません。\nAI 機能を呼び出すと過去 7 日分が集計されます。',
             style: TextStyle(
-              color: const Color(0xFFCBD5E1),
+              color: Color(0xFFCBD5E1),
               fontSize: 13,
               height: 1.7,
             ),
@@ -540,7 +540,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
             const Text(
               '過去 7 日 × 24 時間帯',
               style: TextStyle(
-                color: const Color(0xFFCBD5E1),
+                color: Color(0xFFCBD5E1),
                 fontSize: 13,
                 height: 1.7,
               ),
@@ -561,7 +561,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
                           child: Text(
                             h.toString().padLeft(2, '0'),
                             style: const TextStyle(
-                              color: const Color(0xFF94A3B8),
+                              color: Color(0xFF94A3B8),
                               fontSize: 9,
                               height: 1.5,
                             ),
@@ -581,7 +581,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
                 const Text(
                   '密度: ',
                   style: TextStyle(
-                    color: const Color(0xFF94A3B8),
+                    color: Color(0xFF94A3B8),
                     fontSize: 11,
                     height: 1.5,
                   ),
@@ -597,7 +597,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
                 Text(
                   '0 → $_maxValue req',
                   style: const TextStyle(
-                    color: const Color(0xFF94A3B8),
+                    color: Color(0xFF94A3B8),
                     fontSize: 11,
                     height: 1.5,
                   ),
@@ -620,7 +620,7 @@ class _HeatmapTabState extends State<_HeatmapTab> {
             child: Text(
               provider,
               style: const TextStyle(
-                color: const Color(0xFFCBD5E1),
+                color: Color(0xFFCBD5E1),
                 fontSize: 11,
                 height: 1.5,
               ),
@@ -742,7 +742,7 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
             Text(
               widget.sessionId,
               style: const TextStyle(
-                color: const Color(0xFF6366F1),
+                color: Color(0xFF6366F1),
                 fontSize: 11,
                 fontFamily: 'monospace',
                 height: 1.5,
@@ -753,7 +753,7 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(
-                        color: const Color(0xFFF97316),
+                        color: Color(0xFFF97316),
                       ),
                     )
                   : _steps.isEmpty
@@ -761,7 +761,7 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
                           child: Text(
                             'ステップなし',
                             style: TextStyle(
-                              color: const Color(0xFF94A3B8),
+                              color: Color(0xFF94A3B8),
                               height: 1.5,
                             ),
                           ),
@@ -831,7 +831,7 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
               Text(
                 '${latency}ms',
                 style: const TextStyle(
-                  color: const Color(0xFFF97316),
+                  color: Color(0xFFF97316),
                   fontSize: 11,
                   height: 1.5,
                 ),
@@ -843,7 +843,7 @@ class _SessionStepsSheetState extends State<_SessionStepsSheet> {
             Text(
               err,
               style: const TextStyle(
-                color: const Color(0xFFEF4444),
+                color: Color(0xFFEF4444),
                 fontSize: 11,
                 height: 1.5,
               ),

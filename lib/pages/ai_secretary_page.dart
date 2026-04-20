@@ -377,7 +377,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                       const Icon(
                         Icons.priority_high,
                         size: 16,
-                        color: const Color(0xFFFF6B35),
+                        color: Color(0xFFFF6B35),
                       ),
                       const SizedBox(width: 4),
                       Text('推奨優先度: $priority'),
@@ -437,7 +437,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('タスクが登録されました'),
-            backgroundColor: const Color(0xFF4CAF50),
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
       }
@@ -486,7 +486,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
-                    color: const Color(0xFF9CA3AF),
+                    color: Color(0xFF9CA3AF),
                     height: 1.5,
                   ),
                 ),
@@ -545,13 +545,13 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                             Icon(
                               Icons.assistant,
                               size: 80,
-                              color: const Color(0xFFB0BEC5),
+                              color: Color(0xFFB0BEC5),
                             ),
                             SizedBox(height: 16),
                             Text(
                               '「期間」を選択して、MAGIに戦略立案を指示してください。',
                               style: TextStyle(
-                                color: const Color(0xFF9CA3AF),
+                                color: Color(0xFF9CA3AF),
                                 height: 1.5,
                               ),
                             ),
@@ -585,7 +585,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                           'MAGI Strategist: $_usedModel',
                                           style: const TextStyle(
                                             fontSize: 10,
-                                            color: const Color(0xFFFF6F00),
+                                            color: Color(0xFFFF6F00),
                                             fontWeight: FontWeight.bold,
                                             height: 1.5,
                                           ),
@@ -599,7 +599,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                             '(${_attemptLogs.length} MAGI attempts failed)',
                                             style: const TextStyle(
                                               fontSize: 10,
-                                              color: const Color(0xFFE57373),
+                                              color: Color(0xFFE57373),
                                               height: 1.5,
                                             ),
                                           ),
@@ -641,7 +641,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                       style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF9CA3AF),
+                                        color: Color(0xFF9CA3AF),
                                         height: 1.5,
                                       ),
                                     ),
@@ -651,7 +651,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                         style: const TextStyle(
                                           fontSize: 10,
                                           fontFamily: 'monospace',
-                                          color: const Color(0xFF9CA3AF),
+                                          color: Color(0xFF9CA3AF),
                                           height: 1.5,
                                         ),
                                       ),

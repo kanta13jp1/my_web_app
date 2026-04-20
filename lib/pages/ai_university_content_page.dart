@@ -92,7 +92,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                         return ListTile(
                           leading: const Icon(
                             Icons.school,
-                            color: const Color(0xFF6366F1),
+                            color: Color(0xFF6366F1),
                           ),
                           title: Text(
                             '${item['provider'] ?? ''} — ${item['category'] ?? ''}',
@@ -111,7 +111,7 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
                                 '',
                             style: const TextStyle(
                               fontSize: 11,
-                              color: const Color(0xFFB0B0B0),
+                              color: Color(0xFFB0B0B0),
                               height: 1.5,
                             ),
                           ),

@@ -4525,7 +4525,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [const Color(0xFF1A1A1A), const Color(0xFF1E1E1E)],
+          colors: [Color(0xFF1A1A1A), Color(0xFF1E1E1E)],
         ),
       ),
       child: Column(
@@ -4549,7 +4549,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Text(
                     'AI 大学',
                     style: TextStyle(
-                      color: const Color(0xFFE5E7EB),
+                      color: Color(0xFFE5E7EB),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       height: 1.5,
@@ -4574,7 +4574,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           Text(
             '$count 社のAIを\n学習しました！',
             style: const TextStyle(
-              color: const Color(0xFFE5E7EB),
+              color: Color(0xFFE5E7EB),
               fontSize: 26,
               fontWeight: FontWeight.bold,
               height: 1.7,
@@ -4634,7 +4634,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 Text(
                   'クイズ正解: $count / $total 問',
                   style: const TextStyle(
-                    color: const Color(0xFFFFC107),
+                    color: Color(0xFFFFC107),
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     height: 1.5,
@@ -4647,7 +4647,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           const Text(
             'my-web-app-b67f4.web.app',
             style: TextStyle(
-              color: const Color(0xFFB0B0B0),
+              color: Color(0xFFB0B0B0),
               fontSize: 11,
               height: 1.5,
             ),
@@ -4880,7 +4880,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 children: [
                   const Icon(
                     Icons.warning_amber,
-                    color: const Color(0xFFFFC107),
+                    color: Color(0xFFFFC107),
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -4982,7 +4982,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 Text(
                   m.name,
                   style: const TextStyle(
-                    color: const Color(0xFFE5E7EB),
+                    color: Color(0xFFE5E7EB),
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
@@ -5001,7 +5001,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const Text(
                     'フォールバック表示',
                     style: TextStyle(
-                      color: const Color(0xFFB0B0B0),
+                      color: Color(0xFFB0B0B0),
                       fontSize: 11,
                       height: 1.5,
                     ),
@@ -5011,7 +5011,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           ),
           if (m.officialUrl.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.open_in_new, color: const Color(0xFFE5E7EB)),
+              icon: const Icon(Icons.open_in_new, color: Color(0xFFE5E7EB)),
               tooltip: '公式サイト',
               onPressed: () => _launchUrl(m.officialUrl),
             ),
@@ -5022,47 +5022,47 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
   // MarkdownBody 共通スタイル (ダーク専用)
   static final MarkdownStyleSheet _mdStyle = MarkdownStyleSheet(
-    p: const TextStyle(color: const Color(0xFFE5E7EB), height: 1.7),
+    p: const TextStyle(color: Color(0xFFE5E7EB), height: 1.7),
     h1: const TextStyle(
-      color: const Color(0xFFE5E7EB),
+      color: Color(0xFFE5E7EB),
       fontSize: 20,
       fontWeight: FontWeight.bold,
       height: 1.4,
     ),
     h2: const TextStyle(
-      color: const Color(0xFFB0B0B0),
+      color: Color(0xFFB0B0B0),
       fontSize: 17,
       fontWeight: FontWeight.bold,
       height: 1.4,
     ),
     h3: const TextStyle(
-      color: const Color(0xFF707070),
+      color: Color(0xFF707070),
       fontSize: 15,
       fontWeight: FontWeight.w600,
       height: 1.4,
     ),
     strong: const TextStyle(
-      color: const Color(0xFFE5E7EB),
+      color: Color(0xFFE5E7EB),
       fontWeight: FontWeight.bold,
       height: 1.5,
     ),
     em: const TextStyle(
-      color: const Color(0xFFB0B0B0),
+      color: Color(0xFFB0B0B0),
       fontStyle: FontStyle.italic,
       height: 1.5,
     ),
     listBullet: const TextStyle(
-      color: const Color(0xFFB0B0B0),
+      color: Color(0xFFB0B0B0),
       height: 1.5,
     ),
     code: const TextStyle(
-      color: const Color(0xFF81C784),
+      color: Color(0xFF81C784),
       fontFamily: 'monospace',
       fontSize: 13,
       height: 1.5,
     ),
     blockquote: const TextStyle(
-      color: const Color(0xFFB0B0B0),
+      color: Color(0xFFB0B0B0),
       height: 1.5,
     ),
   );
@@ -5087,7 +5087,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           title,
           style: const TextStyle(
             fontWeight: FontWeight.w600,
-            color: const Color(0xFFE5E7EB),
+            color: Color(0xFFE5E7EB),
             height: 1.5,
           ),
         ),
@@ -5095,7 +5095,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
           _categoryLabel(category),
           style: const TextStyle(
             fontSize: 12,
-            color: const Color(0xFFB0B0B0),
+            color: Color(0xFFB0B0B0),
             height: 1.5,
           ),
         ),
@@ -5179,14 +5179,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   children: [
                     const Icon(
                       Icons.refresh,
-                      color: const Color(0xFFFF6B35),
+                      color: Color(0xFFFF6B35),
                       size: 15,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       '今日の復習 ${dueCards.length}件',
                       style: const TextStyle(
-                        color: const Color(0xFFFF6B35),
+                        color: Color(0xFFFF6B35),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         height: 1.5,
@@ -5213,13 +5213,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   const SizedBox(width: 8),
                   const Icon(
                     Icons.check_circle,
-                    color: const Color(0xFF4CAF50),
+                    color: Color(0xFF4CAF50),
                     size: 18,
                   ),
                   const Text(
                     ' +50pt',
                     style: TextStyle(
-                      color: const Color(0xFF4CAF50),
+                      color: Color(0xFF4CAF50),
                       fontSize: 12,
                       height: 1.5,
                     ),
@@ -5319,7 +5319,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 child: Text(
                   '次回: ${AiFsrsService.nextDueLabel(_fsrsNextDue[providerId]!)}',
                   style: const TextStyle(
-                    color: const Color(0xFF3D5AFE),
+                    color: Color(0xFF3D5AFE),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     height: 1.5,
@@ -5365,14 +5365,14 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                       children: [
                         Icon(
                           Icons.lightbulb_outline,
-                          color: const Color(0xFFFF6B35),
+                          color: Color(0xFFFF6B35),
                           size: 16,
                         ),
                         SizedBox(width: 4),
                         Text(
                           '解説',
                           style: TextStyle(
-                            color: const Color(0xFFFF6B35),
+                            color: Color(0xFFFF6B35),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             height: 1.5,

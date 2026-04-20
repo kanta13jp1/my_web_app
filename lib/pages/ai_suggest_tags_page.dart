@@ -79,7 +79,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
               'テキストを入力してタグ・カテゴリを自動提案 (Groq llama-3.3-70b・無料・超高速)',
               style: TextStyle(
                 fontSize: 12,
-                color: const Color(0xFFB0B0B0),
+                color: Color(0xFFB0B0B0),
                 height: 1.5,
               ),
             ),
@@ -128,7 +128,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                 child: Text(
                   _errorMessage!,
                   style: const TextStyle(
-                    color: const Color(0xFFE53935),
+                    color: Color(0xFFE53935),
                     height: 1.5,
                   ),
                 ),
@@ -184,7 +184,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                     _suggestion!.category,
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3D5AFE),
+                      color: Color(0xFF3D5AFE),
                       height: 1.5,
                     ),
                   ),
@@ -212,7 +212,7 @@ class _AiSuggestTagsPageState extends State<AiSuggestTagsPage> {
                     style: const TextStyle(
                       fontSize: 13,
                       height: 1.7,
-                      color: const Color(0xFFB0B0B0),
+                      color: Color(0xFFB0B0B0),
                     ),
                   ),
                 ),

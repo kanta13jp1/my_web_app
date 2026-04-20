@@ -28,7 +28,9 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
       final data = res.data;
       if (data is Map<String, dynamic>) {
         final streak = data['streak'];
-        setState(() => _streak = streak is Map<String, dynamic> ? streak : null);
+        setState(
+          () => _streak = streak is Map<String, dynamic> ? streak : null,
+        );
       }
       final lb = await Supabase.instance.client.functions.invoke(
         'ai-hub',

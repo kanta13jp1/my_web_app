@@ -63,7 +63,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
         child: Text(
           'まだ履歴がありません',
           style: TextStyle(
-            color: const Color(0xFF94A3B8),
+            color: Color(0xFF94A3B8),
             fontSize: 13,
             height: 1.5,
           ),
@@ -84,7 +84,7 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
               style: const TextStyle(fontSize: 12, height: 1.5),
             ),
             backgroundColor: const Color(0xFF1A1A1A),
-            side: const BorderSide(color: const Color(0xFF2A2A2A)),
+            side: const BorderSide(color: Color(0xFF2A2A2A)),
             onPressed: () => Navigator.pushNamed(
               context,
               item['feature_route'] as String,

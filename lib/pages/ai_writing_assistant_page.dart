@@ -24,15 +24,15 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
   String _selectedLang = '英語';
 
   static const _actions = {
-    'improve': ('文章改善', Icons.auto_fix_high, const Color(0xFF6366F1)),
-    'summarize': ('要約', Icons.compress, const Color(0xFF10B981)),
-    'continue': ('続きを書く', Icons.arrow_forward, const Color(0xFF3B82F6)),
-    'translate': ('翻訳', Icons.translate, const Color(0xFFF59E0B)),
-    'tone': ('トーン変換', Icons.tune, const Color(0xFFEC4899)),
-    'titles': ('タイトル提案', Icons.title, const Color(0xFF8B5CF6)),
-    'minutes': ('議事録生成', Icons.assignment, const Color(0xFF0EA5E9)),
-    'thread': ('Xスレッド', Icons.dynamic_feed, const Color(0xFF1DA1F2)),
-    'blog': ('ブログ記事', Icons.article, const Color(0xFFF97316)),
+    'improve': ('文章改善', Icons.auto_fix_high, Color(0xFF6366F1)),
+    'summarize': ('要約', Icons.compress, Color(0xFF10B981)),
+    'continue': ('続きを書く', Icons.arrow_forward, Color(0xFF3B82F6)),
+    'translate': ('翻訳', Icons.translate, Color(0xFFF59E0B)),
+    'tone': ('トーン変換', Icons.tune, Color(0xFFEC4899)),
+    'titles': ('タイトル提案', Icons.title, Color(0xFF8B5CF6)),
+    'minutes': ('議事録生成', Icons.assignment, Color(0xFF0EA5E9)),
+    'thread': ('Xスレッド', Icons.dynamic_feed, Color(0xFF1DA1F2)),
+    'blog': ('ブログ記事', Icons.article, Color(0xFFF97316)),
   };
 
   static const _tones = ['formal', 'casual', 'sns', 'academic', 'sales'];
@@ -151,7 +151,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
               Text(
                 _error!,
                 style: const TextStyle(
-                  color: const Color(0xFFE53935),
+                  color: Color(0xFFE53935),
                   fontSize: 13,
                   height: 1.5,
                 ),

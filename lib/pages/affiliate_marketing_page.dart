@@ -102,7 +102,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
           label,
           style: const TextStyle(
             fontSize: 12,
-            color: const Color(0xFFB0B0B0),
+            color: Color(0xFFB0B0B0),
             height: 1.5,
           ),
         ),
@@ -139,7 +139,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: const Color(0xFFE53935),
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -174,7 +174,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                         child: ListTile(
                           leading: const Icon(
                             Icons.campaign,
-                            color: const Color(0xFF3D5AFE),
+                            color: Color(0xFF3D5AFE),
                           ),
                           title: Text(name),
                           subtitle: Text('クリック: $clicks  |  報酬: ¥$earnings'),
