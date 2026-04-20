@@ -106,7 +106,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
           String msg = '+${xp}XP 獲得！';
           if (newBadges.isNotEmpty) msg += ' バッジ解除: ${newBadges.join(', ')}';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.green),
+            SnackBar(content: Text(msg), backgroundColor: const Color(0xFF4CAF50)),
           );
           _fetchAll();
         }
@@ -124,7 +124,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -193,7 +194,7 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
@@ -310,7 +311,8 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                 '$streak日連続',
                 const Color(0xFFFF6B35),
               ),
-              _statChip(Icons.check_circle, '$totalTasks タスク', Colors.green),
+              _statChip(
+                  Icons.check_circle, '$totalTasks タスク', const Color(0xFF4CAF50),),
               _statChip(
                 Icons.stars,
                 '${_badges.where((b) => b['earned'] == true).length}バッジ',
@@ -365,11 +367,12 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
             final xp = c['xp'] as int? ?? 0;
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
-              color: completed ? Colors.green.shade50 : null,
+              color: completed ? const Color(0xFFE8F5E9) : null,
               child: ListTile(
                 leading: Icon(
                   completed ? Icons.check_circle : Icons.radio_button_unchecked,
-                  color: completed ? Colors.green : const Color(0xFF9CA3AF),
+                  color:
+                      completed ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
                 ),
                 title: Text(
                   c['title'] as String? ?? '',
@@ -383,9 +386,9 @@ class _HabitGamificationPageState extends State<HabitGamificationPage>
                 trailing: completed
                     ? Chip(
                         label: Text('+${xp}XP'),
-                        backgroundColor: Colors.green.shade100,
+                        backgroundColor: const Color(0xFFC8E6C9),
                         labelStyle: const TextStyle(
-                          color: Colors.green,
+                          color: Color(0xFF4CAF50),
                           height: 1.5,
                         ),
                       )

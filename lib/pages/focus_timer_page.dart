@@ -232,7 +232,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
   }
 
   Color get _timerColor =>
-      _isBreak ? Colors.green.shade600 : const Color(0xFFFF6B35);
+      _isBreak ? const Color(0xFF43A047) : const Color(0xFFFF6B35);
 
   // ---- build ----
 
@@ -284,7 +284,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
               _ModeChip(
                 label: 'BREAK',
                 active: _isBreak,
-                color: Colors.green.shade600,
+                color: const Color(0xFF43A047),
                 onTap: () {
                   if (_isRunning) return;
                   setState(() {
@@ -415,11 +415,11 @@ class _FocusTimerPageState extends State<FocusTimerPage>
           if (_isRunning)
             TextButton.icon(
               onPressed: _stop,
-              icon: const Icon(Icons.stop, color: Colors.red),
+              icon: const Icon(Icons.stop, color: Color(0xFFE53935)),
               label: const Text(
                 'セッションを中止',
                 style: TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),
@@ -455,7 +455,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
             children: [
               _StatCard(
                 icon: Icons.check_circle,
-                color: Colors.green,
+                color: const Color(0xFF4CAF50),
                 label: '完了セッション',
                 value: '$completedSessions',
                 sub: '/ $totalSessions セッション',
@@ -553,7 +553,7 @@ class _FocusTimerPageState extends State<FocusTimerPage>
                             ? Icons.play_circle
                             : Icons.cancel,
                     color: status == 'completed'
-                        ? Colors.green
+                        ? const Color(0xFF4CAF50)
                         : status == 'active'
                             ? const Color(0xFF3D5AFE)
                             : const Color(0xFF9CA3AF),
@@ -580,9 +580,9 @@ class _FocusTimerPageState extends State<FocusTimerPage>
   }
 
   Color _scoreColor(int score) {
-    if (score >= 70) return Colors.green;
+    if (score >= 70) return const Color(0xFF4CAF50);
     if (score >= 40) return const Color(0xFFFFA000);
-    return Colors.red;
+    return const Color(0xFFE53935);
   }
 
   String _scoreLabel(int score) {

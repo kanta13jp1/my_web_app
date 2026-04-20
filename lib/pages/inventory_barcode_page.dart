@@ -104,7 +104,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -145,11 +145,11 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
         final low = qty <= min;
         return Card(
           margin: const EdgeInsets.only(bottom: 6),
-          color: low ? Colors.red.shade50 : null,
+          color: low ? const Color(0xFFFFEBEE) : null,
           child: ListTile(
             leading: Icon(
               Icons.qr_code,
-              color: low ? Colors.red : const Color(0xFF9CA3AF),
+              color: low ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: sku.isNotEmpty ? Text('SKU: $sku') : null,
@@ -161,7 +161,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
                   '$qty 個',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: low ? Colors.red : null,
+                    color: low ? const Color(0xFFE53935) : null,
                     fontSize: 16,
                     height: 1.5,
                   ),
@@ -171,7 +171,7 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
                     '在庫不足',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -210,14 +210,14 @@ class _InventoryBarcodePageState extends State<InventoryBarcodePage>
           child: ListTile(
             leading: Icon(
               isIn ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isIn ? Colors.green : Colors.red,
+              color: isIn ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
             ),
             title: Text(itemName),
             subtitle: date.length >= 10 ? Text(date.substring(0, 10)) : null,
             trailing: Text(
               '${isIn ? "+" : "-"}$qty',
               style: TextStyle(
-                color: isIn ? Colors.green : Colors.red,
+                color: isIn ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
                 height: 1.5,

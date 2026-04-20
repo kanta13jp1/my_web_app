@@ -509,20 +509,20 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _importSuccess
-                    ? Colors.green.withAlpha(20)
-                    : Colors.red.withAlpha(20),
+                    ? const Color(0xFF4CAF50).withAlpha(20)
+                    : const Color(0xFFE53935).withAlpha(20),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: _importSuccess
-                      ? Colors.green.withAlpha(60)
-                      : Colors.red.withAlpha(60),
+                      ? const Color(0xFF4CAF50).withAlpha(60)
+                      : const Color(0xFFE53935).withAlpha(60),
                 ),
               ),
               child: Text(
                 _importResult!,
                 style: TextStyle(
                   fontSize: 12,
-                  color: _importSuccess ? Colors.green : Colors.red,
+                  color: _importSuccess ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                   fontWeight: FontWeight.w600,
                   height: 1.5,
                 ),
@@ -655,7 +655,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       _summaryTile(
                         '総視聴',
                         _fmtK(totalViews),
-                        Colors.red,
+                        const Color(0xFFE53935),
                       ),
                       const SizedBox(width: 8),
                       _summaryTile(
@@ -667,7 +667,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                       _summaryTile(
                         '成長',
                         totalGrowth > 0 ? '+${_fmtK(totalGrowth)}' : '-',
-                        Colors.green,
+                        const Color(0xFF4CAF50),
                       ),
                     ],
                   ),
@@ -793,7 +793,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
                           '+${_fmtK(delta)}',
                           style: const TextStyle(
                             fontSize: 11,
-                            color: Colors.green,
+                            color: Color(0xFF4CAF50),
                             fontWeight: FontWeight.bold,
                             height: 1.5,
                           ),
@@ -887,7 +887,7 @@ class _YoutubeStatsPageState extends State<YoutubeStatsPage>
   Color _typeColor(String type) {
     switch (type) {
       case 'ショート':
-        return Colors.red;
+        return const Color(0xFFE53935);
       case 'ライブ':
         return const Color(0xFF3D5AFE);
       default:

@@ -540,7 +540,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('保存済み音声の URL を取得できませんでした'),
-          backgroundColor: Colors.red,
+          backgroundColor: Color(0xFFE53935),
         ),
       );
       return;
@@ -625,7 +625,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('共有に失敗しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     } finally {
@@ -704,7 +704,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('共有に失敗しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     } finally {
@@ -964,7 +964,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('X 投稿できませんでした: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -1016,7 +1016,9 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('削除に失敗しました: $e'),
+              backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -1893,7 +1895,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.shade900.withValues(alpha: 0.5),
+        color: const Color(0xFFB71C1C).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -3157,7 +3159,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
                             child: Text(
                               '削除',
                               style: TextStyle(
-                                color: Colors.redAccent,
+                                color: Color(0xFFE53935),
                                 height: 1.5,
                               ),
                             ),
@@ -3935,7 +3937,7 @@ class _GuitarRecordingStudioPageState extends State<GuitarRecordingStudioPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('タスクの追加に失敗しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     } finally {
@@ -4081,7 +4083,7 @@ class _ChordDiagramPainter extends CustomPainter {
           text: const TextSpan(
             text: 'x',
             style: TextStyle(
-              color: Colors.red,
+              color: Color(0xFFE53935),
               fontSize: 13,
               height: 1.6,
             ),

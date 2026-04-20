@@ -271,7 +271,8 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -307,7 +308,7 @@ class _LifeGoalsPageState extends State<LifeGoalsPage>
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -518,7 +519,7 @@ class _GoalCard extends StatelessWidget {
                   width: 4,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: isCompleted ? Colors.green : levelColor,
+                    color: isCompleted ? const Color(0xFF4CAF50) : levelColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -533,7 +534,7 @@ class _GoalCard extends StatelessWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: isCompleted
-                              ? Colors.green
+                              ? const Color(0xFF4CAF50)
                               : (isDark
                                   ? Colors.white
                                   : const Color(0xFF1E293B)),
@@ -631,7 +632,7 @@ class _GoalCard extends StatelessWidget {
                       child: Text(
                         '削除',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -678,7 +679,8 @@ class _GoalCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: isCompleted ? Colors.green : levelColor,
+                              color:
+                                  isCompleted ? const Color(0xFF4CAF50) : levelColor,
                               height: 1.5,
                             ),
                           ),
@@ -688,14 +690,14 @@ class _GoalCard extends StatelessWidget {
                                 Icon(
                                   Icons.check_circle,
                                   size: 14,
-                                  color: Colors.green,
+                                  color: Color(0xFF4CAF50),
                                 ),
                                 SizedBox(width: 3),
                                 Text(
                                   '完了',
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.green,
+                                    color: Color(0xFF4CAF50),
                                     fontWeight: FontWeight.w600,
                                     height: 1.5,
                                   ),
@@ -709,10 +711,11 @@ class _GoalCard extends StatelessWidget {
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             activeTrackColor:
-                                isCompleted ? Colors.green : levelColor,
+                                isCompleted ? const Color(0xFF4CAF50) : levelColor,
                             inactiveTrackColor:
                                 levelColor.withValues(alpha: 0.2),
-                            thumbColor: isCompleted ? Colors.green : levelColor,
+                            thumbColor:
+                                isCompleted ? const Color(0xFF4CAF50) : levelColor,
                             overlayColor: levelColor.withValues(alpha: 0.1),
                             trackHeight: 4,
                             thumbShape: const RoundSliderThumbShape(
@@ -735,7 +738,7 @@ class _GoalCard extends StatelessWidget {
                             minHeight: 6,
                             backgroundColor: levelColor.withValues(alpha: 0.15),
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              isCompleted ? Colors.green : levelColor,
+                              isCompleted ? const Color(0xFF4CAF50) : levelColor,
                             ),
                           ),
                         ),
