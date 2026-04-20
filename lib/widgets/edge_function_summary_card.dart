@@ -625,6 +625,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/meeting-manager',
       'ミーティング管理ページ > 会議スケジュール・議事録・参加者管理',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'feature-flags',
+      'フィーチャーフラグ管理',
+      true,
+      '/feature-flags',
+      'フィーチャーフラグページ > フラグ作成・ロールアウト率・A/Bテスト連携',
+    ),
+    _FnDef(
+      'personal-dashboard',
+      'パーソナルダッシュボード (KPI・週次推移・習慣)',
+      true,
+      '/personal-dashboard',
+      'パーソナルダッシュボードページ > KPI確認・週次アクティビティ・習慣統計',
+    ),
+    _FnDef(
+      'smart-inbox-triage',
+      'スマート受信トレイ (マルチチャネル統合)',
+      true,
+      '/smart-inbox',
+      'スマート受信トレイページ > メール/Slack/LINE統合受信箱・AI優先度分類',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
