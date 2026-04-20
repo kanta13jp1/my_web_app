@@ -581,6 +581,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/email-template-builder',
       'メールテンプレートページ > テンプレート作成・プレビュー・送信',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'donation-crowdfunding',
+      'ドネーション・クラウドファンディング管理',
+      true,
+      '/donation',
+      'ドネーションページ > 寄付プロジェクト一覧・支援状況確認',
+    ),
+    _FnDef(
+      'emergency-contacts',
+      '緊急連絡先管理',
+      true,
+      '/emergency-contacts',
+      '緊急連絡先ページ > 連絡先登録・グループ設定',
+    ),
+    _FnDef(
+      'event-ticketing',
+      'イベントチケット管理',
+      true,
+      '/event-ticketing',
+      'イベントチケットページ > イベント作成・チケット発行・参加者管理',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
