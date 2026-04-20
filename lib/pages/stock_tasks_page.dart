@@ -457,7 +457,7 @@ class _StockTasksPageState extends State<StockTasksPage> {
       key: ValueKey(id),
       direction: DismissDirection.endToStart,
       background: Container(
-        color: Colors.red,
+        color: const Color(0xFFE53935),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         child: const Icon(Icons.delete, color: Colors.white),

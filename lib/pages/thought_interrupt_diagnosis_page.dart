@@ -38,7 +38,7 @@ class _ThoughtInterruptDiagnosisPageState
           Icons.videogame_asset,
           const Color(0xFF7C3AED),
         ),
-        _DiagOption('video', '動画を見る', Icons.play_circle, Colors.red),
+        _DiagOption('video', '動画を見る', Icons.play_circle, const Color(0xFFE53935)),
         _DiagOption('manga', '漫画を読む', Icons.menu_book, const Color(0xFF0891B2)),
         _DiagOption(
           'smartphone',

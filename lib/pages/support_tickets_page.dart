@@ -82,7 +82,8 @@ class _SupportTicketsPageState extends State<SupportTicketsPage> {
               ? Center(
                   child: Text(
                     _errorMessage!,
-                    style: const TextStyle(color: Colors.red, height: 1.5),
+                    style:
+                        const TextStyle(color: Color(0xFFE53935), height: 1.5),
                   ),
                 )
               : _tickets.isEmpty
