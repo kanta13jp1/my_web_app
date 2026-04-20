@@ -12821,7 +12821,6 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   4. 🟢 5/19-20 Google I/O 監視 (既存 placeholder は最新)
   5. 🟢 Cursor $50B 確定監視 (確定 → SNS 弾化)
 - Philosophy alignment: 原則 1 (CEO 的速度 — S18 を即 HOLD に変更) / 原則 2 (ミッション駆動 — 配布速度優先) / 原則 6 (資本=時間 — Partner 登録回避) / 原則 7 (BS — 短期負債 vs 即資産化)
-<<<<<<< HEAD
 
 ## PS版#1 Session 15 (2026-04-20 17:30 JST) — migration timestamp 衝突修復 + S14 副作用発覚
 
@@ -12873,6 +12872,7 @@ Pleias AI migration timestamp collision を検出し PS#3 に handoff。
 2. 🟡 PS#1 ci.yml fix の長期安定性モニタ (24h+ cancel 率計測)
 3. 🟢 horse_racing batch cron 長期健全性 (median 118s / 10 連続 success)
 
+<<<<<<< HEAD
 ---
 
 ## PS版#4 Session 21 (2026-04-20 夜) — 3 並列未スキャン競合 delta + OpenAI Codex Desktop 🔴 起票 + S19 追補
@@ -12899,3 +12899,43 @@ Pleias AI migration timestamp collision を検出し PS#3 に handoff。
   4. 🟢 SNS 弾「Claude vs Codex vs 自分株式会社」素材化
   5. 🟢 MoneyForward 7/AI Cowork launch pre-info 監視
 - Philosophy alignment: 原則 1 (CEO リスク管理) / 原則 2 (ミッション維持) / 原則 5 (ユーザー理解削減) / 原則 6 (時間資本最適化) / 原則 7 (単一 vendor 負債 → 分散資産)
+## Session PS#6-S15 (2026-04-20 18:00 JST) — live-dead 39 EF 整理 (5 件先行消化)
+
+### サマリ
+
+S12 backlog の「live-dead 39 EF 整理」を着手。PS#5 S16-S20 で hub
+移行が確定済の 5 EF を source + DEAD_LIST 両方削除。
+
+### 対応
+
+detection: `DEAD_LIST (176) ∩ supabase/functions/ (123)` = 39 件の live-dead。
+
+先行削除 5 件 (全て hub 移行済・Flutter invoke 0 件・deploy 行 0 件):
+
+| EF | 移行先 | PS#5 commit |
+| --- | --- | --- |
+| admin-notification-hub | admin-hub:admin.notifications.* | S19 039a8239 |
+| data-export-manager | admin-hub:data.export | S16 fa9004af |
+| gemini-election-analysis | ai-hub:election.analyze | S17 01d18fe8 |
+| landing-ab-test | growth-hub:landing.list_variants | S18 a37ad4fc |
+| growth-acquisition | growth-hub:acquisition.* | S20 bf95ed3c |
+
+commit d5b1e3f2: source dir 5 件削除 + DEAD_LIST 176 → 171。
+
+### 結果
+
+- live-dead 39 → 34 残
+- 毎 deploy の不要 `supabase functions delete` call 5 件減少
+- S12 fix (list ∩ dead intersection) と相乗で 429 回避を更に堅牢化
+
+### Philosophy alignment
+
+- 原則 7 (資産=EF cap-50 遵守・冗長負債削減)
+- 原則 6 (資本=時間・不要 delete 5 件/deploy 省略)
+- 原則 4 (部署バランス): PS#6 本分 (cleanup) が PS#5 成果 (migration) を下流まで消化
+
+### 次回 PS#6 候補
+
+1. 🟡 残 live-dead 34 件は PS#5 の今後の hub 移行に追従
+2. 🟡 live-dead 検出を CI step で自動化 (weekly issue 起票)
+3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
