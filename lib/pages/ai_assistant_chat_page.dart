@@ -30,11 +30,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
-  static const _bg = Color(0xFF0A0A0A);
-  static const _card = Color(0xFF1A1A2E);
-  static const _orange = Color(0xFFFF6B35);
-  static const _userBubble = Color(0xFFFF6B35);
-  static const _aiBubble = Color(0xFF1E1E1E); // surface2
+  static const _bg = const Color(0xFF0A0A0A);
+  static const _card = const Color(0xFF1A1A2E);
+  static const _orange = const Color(0xFFFF6B35);
+  static const _userBubble = const Color(0xFFFF6B35);
+  static const _aiBubble = const Color(0xFF1E1E1E); // surface2
 
   @override
   void initState() {
@@ -249,7 +249,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               ScaleTransition(
                 scale: _pulseAnim,
                 child:
-                    const Icon(Icons.mic, color: Color(0xFFE53935), size: 16),
+                    const Icon(Icons.mic, color: const Color(0xFFE53935), size: 16),
               ),
             ],
           ],
@@ -272,7 +272,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.mic, color: Color(0xFFE53935), size: 16),
+                  const Icon(Icons.mic, color: const Color(0xFFE53935), size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -350,7 +350,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           if (!isUser) ...[
             const CircleAvatar(
               radius: 16,
-              backgroundColor: Color(0xFF1F2041),
+              backgroundColor: const Color(0xFF1F2041),
               child: Icon(Icons.smart_toy, size: 18, color: _orange),
             ),
             const SizedBox(width: 8),
@@ -381,7 +381,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
             const SizedBox(width: 8),
             const CircleAvatar(
               radius: 16,
-              backgroundColor: Color(0xFF2A2A2A), // surface3
+              backgroundColor: const Color(0xFF2A2A2A), // surface3
               child: Icon(Icons.person, size: 18, color: _orange),
             ),
           ],
@@ -397,7 +397,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
         children: [
           const CircleAvatar(
             radius: 16,
-            backgroundColor: Color(0xFF1F2041),
+            backgroundColor: const Color(0xFF1F2041),
             child: Icon(Icons.smart_toy, size: 18, color: _orange),
           ),
           const SizedBox(width: 8),

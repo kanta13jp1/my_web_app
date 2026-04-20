@@ -119,7 +119,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+          const Icon(Icons.error_outline, size: 48, color: const Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -138,12 +138,12 @@ class _AccessControlPageState extends State<AccessControlPage>
             Icon(
               Icons.admin_panel_settings,
               size: 64,
-              color: Color(0xFF9CA3AF),
+              color: const Color(0xFF9CA3AF),
             ),
             SizedBox(height: 12),
             Text(
               'ロールが定義されていません',
-              style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+              style: TextStyle(color: const Color(0xFF9CA3AF), height: 1.5),
             ),
           ],
         ),
@@ -205,7 +205,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       return const Center(
         child: Text(
           'アクセスログがありません',
-          style: TextStyle(color: Color(0xFF9CA3AF), height: 1.5),
+          style: TextStyle(color: const Color(0xFF9CA3AF), height: 1.5),
         ),
       );
     }
@@ -235,7 +235,7 @@ class _AccessControlPageState extends State<AccessControlPage>
                     timestamp.substring(0, 10),
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF9CA3AF),
+                      color: const Color(0xFF9CA3AF),
                       height: 1.5,
                     ),
                   )

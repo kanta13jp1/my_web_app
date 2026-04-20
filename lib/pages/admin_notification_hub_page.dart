@@ -17,10 +17,10 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
   String _filterSeverity = 'all';
 
   static const _severityColors = {
-    'critical': Color(0xFFDC2626),
-    'warning': Color(0xFFF59E0B),
-    'info': Color(0xFF3B82F6),
-    'success': Color(0xFF10B981),
+    'critical': const Color(0xFFDC2626),
+    'warning': const Color(0xFFF59E0B),
+    'info': const Color(0xFF3B82F6),
+    'success': const Color(0xFF10B981),
   };
 
   @override
@@ -87,7 +87,7 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                 label: Text('$unread 未読'),
                 backgroundColor: const Color(0xFFE53935).withAlpha(30),
                 labelStyle: const TextStyle(
-                  color: Color(0xFFE53935),
+                  color: const Color(0xFFE53935),
                   fontSize: 11,
                   height: 1.5,
                 ),
@@ -120,7 +120,7 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
                         child: Text(
                           _error!,
                           style: const TextStyle(
-                            color: Color(0xFFE53935),
+                            color: const Color(0xFFE53935),
                             height: 1.5,
                           ),
                         ),

@@ -111,7 +111,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Color(0xFFE53935),
+                          color: const Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

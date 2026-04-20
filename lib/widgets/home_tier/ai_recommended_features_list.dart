@@ -65,7 +65,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
             Text(
               'AIがあなたにおすすめの機能を分析中...',
               style: TextStyle(
-                color: Color(0xFF94A3B8),
+                color: const Color(0xFF94A3B8),
                 fontSize: 12,
                 height: 1.5,
               ),
@@ -80,7 +80,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
         child: Text(
           'おすすめ機能を取得できませんでした。後でお試しください。',
           style: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: const Color(0xFF94A3B8),
             fontSize: 13,
             height: 1.5,
           ),
@@ -98,7 +98,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
           leading: const Icon(
             Icons.auto_awesome,
             size: 18,
-            color: Color(0xFF6366F1),
+            color: const Color(0xFF6366F1),
           ),
           title: Text(
             label,
@@ -114,7 +114,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
                   reason,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: Color(0xFF94A3B8),
+                    color: const Color(0xFF94A3B8),
                     height: 1.5,
                   ),
                 )
@@ -122,7 +122,7 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
           trailing: const Icon(
             Icons.chevron_right,
             size: 16,
-            color: Color(0xFF64748B),
+            color: const Color(0xFF64748B),
           ),
           onTap: route.isNotEmpty
               ? () => Navigator.pushNamed(context, route)

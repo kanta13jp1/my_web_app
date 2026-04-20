@@ -72,14 +72,14 @@ class _AgentPerformanceMonitorPageState
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Color(0xFFE53935),
+                        color: const Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFFE53935),
+                          color: const Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -99,7 +99,7 @@ class _AgentPerformanceMonitorPageState
                           Icon(
                             Icons.monitor_heart,
                             size: 64,
-                            color: Color(0xFF6366F1),
+                            color: const Color(0xFF6366F1),
                           ),
                           SizedBox(height: 16),
                           Text(
