@@ -4116,6 +4116,12 @@ abstinence_slip_details: $slipDetailsText
         foregroundColor: Colors.white,
         centerTitle: true,
         actions: [
+          // Win版#131 part 11: WBS ガントチャート導線
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: 'WBS ガントチャート',
+            onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+          ),
           Stack(
             alignment: Alignment.center,
             children: [

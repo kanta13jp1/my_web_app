@@ -3586,6 +3586,14 @@ $input
           '自分株式会社へようこそ',
           key: Key('landing_page_title'),
         ),
+        actions: [
+          // Win版#131 part 11: WBS ガントチャート (公開・開発進捗の透明性)
+          IconButton(
+            icon: const Icon(Icons.timeline),
+            tooltip: '開発ロードマップ (WBS ガント)',
+            onPressed: () => Navigator.pushNamed(context, '/project-gantt'),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
