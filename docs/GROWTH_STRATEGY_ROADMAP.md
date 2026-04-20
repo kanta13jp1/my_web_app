@@ -13637,3 +13637,49 @@ run 24658340058 (0e94bfd trigger):
 4. **2026-04-28**: Notion 5/4 本A dispatch
 5. **2026-04-29 頃**: Notion 本B (D-2) draft 作成
 6. **2026-05-01 頃**: Notion 本C (D-0) draft 作成
+## 2026-04-20 PS版#1 Session 18 — deploy-prod 連鎖 Check formatting 再発 + Win版 part 15 (continue-on-error) handoff 確認
+
+### 背景
+
+S17 で GH_PAT 未設定による `Push Release Tag` 失敗を handoff 起票 → Win版 #131 part 15 が即対応 (`continue-on-error: true`・commit 8651d55a)。
+
+### 発見: VSCode DESIGN token 置換の format skip 反復
+
+part 15 fix 自体の run 24659020124 が再度 Check formatting fail → 新 3 files:
+- `lib/pages/ai_workflow_automation_page.dart`
+- `lib/pages/discord_notification_page.dart`
+- `lib/pages/financial_report_page.dart`
+
+S17 の 3 files と別セット。**VSCode 側が `replace_all` 後に `dart format` を実行していない** パターンが 2 連続発生。
+
+### 修正 (commit c371b7c4)
+
+```bash
+dart format <3 files>
+flutter analyze <3 files>  # No issues
+git push
+```
+
+新 run 24659813733 + 24659873670 queue 入り。
+
+### Rule 17 WF health (S18 末)
+
+| WF | failure | 備考 |
+|---|---|---|
+| Deploy to Production | 8/10 historical | c371b7c4 で CI 緑化見込 |
+| WBS Staleness Audit | 1/2 historical | S16 fix 安定 |
+| 他全て | 0 | green |
+
+orphan branches: 全 pattern 閾値以下 (cleanup 不要)。
+
+### Philosophy alignment
+
+- 原則 7 (資産=CI 修復速度 / 負債=連鎖停止)
+- 原則 8 (KPI=昨日の自分・S17 の同パターン即対応)
+- 整合性: 8/9
+
+### 次回 PS#1 候補
+
+1. 🔴 dart format pre-commit hook 化提案 (inject-rules に replace_all 後 format 必須化)
+2. 🟡 migration HH 分担ルール追加 (S15+S16 教訓正式化)
+3. 🟢 S14 副作用測定継続 (1 週間後判断)
