@@ -14131,3 +14131,16 @@ orphan branches: 閾値以下 (cleanup 不要)。
 1. 🔴 migration 事前 lint CI 追加検討 (psql --dry-run / sqlfluff) — 今回のような quoting bug を pre-merge で検出
 2. 🟡 migration description を `$md$` 化する inject-rules 追加 (ASCII apostrophe 含む場合)
 3. 🟢 S14 副作用 1 週間測定 (継続)
+
+
+## 2026-04-20 PS版#6 S24 — 24 EF handoff 進捗監視 (3/23 完了)
+
+**Why**: PS#5 S24 (92d83020) で reading-list stale invoke 修正完了 → 3/23 (13.0%) に進捗。tracker header bump のみ (data は PS#5 自身が更新済)。
+
+**Actions**:
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` tracker header を S22 → S24 反映
+- horse_racing 24/24 success 継続 (09:41 / 10:38 UTC)
+
+**Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
+
+**次回候補**: PS#5 S25+ で CRITICAL 残 4 件 (time-tracker/goal-tracker/habit-tracker/music-collaboration) 消化待機 / 50% 到達まで軽監視継続

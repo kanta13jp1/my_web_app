@@ -87,7 +87,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#6 S22 時点・S23 calendar-events 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#6 S24 時点・PS#5 S24 reading-list 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
