@@ -26,9 +26,9 @@
 | 2 | **evernote** | ノート | 無料プラン 50件制限判明 (前回1000件誤記) | 🟠 | Supabase 同期 + Notion import | LP 移行比較更新 → VSCode (done?) |
 | 3 | **moneyforward** | 家計 | AI Cowork (Claude SDK) Early Access / 2030年 ARR ¥15B | 🔴 | 個人向け住み分け | 20260419_moneyforward_counter.md / `finance.personal_summary` 急ぎ → Win |
 | 4 | **slack** | チャット/仕事 | **Agentforce 30+ AI 機能 / Claude + MCP** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
-| 5 | **chatwork** | チャット (JP) | 目立った AI 発表なし (S10) | ⚪ | 個人向け vs 組織向け | 次回 S12 深掘り候補 |
+| 5 | **chatwork** | チャット (JP) | kubell: BPaaS × AI agents 戦略 / GraphQL+Go 刷新 (S12) | 🟠 | 個人向け vs 中小企業向け | 定常 watchlist (住み分け明確) |
 | 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.1 Fast (ai-hub 登録済) | 🟢 | SNS は価値消費・自分株は価値増大 | 定期 model update のみ |
-| 7 | **animaworks** | アバター AI | 新規動向なし (S10 調査) | ⚪ | — | 定常 watchlist |
+| 7 | **animaworks** | アバター AI | 2026-04 新発表なし / Meta Avatars + MetaMe NPC-AI が主戦場 (S12) | 🟢 | フル 3D = philosophy 違反 | 定常 watchlist (深追い不要) |
 | 8 | **claude-code** | 開発ツール | Opus 4.7 リリース (hours-long project) | 🟢 | Flutter Web 個人向けは別軸 | ai-hub synthesis 候補 (Win検討中) |
 | 9 | **codex (OpenAI)** | 開発ツール | GPT-5 2026Q2 予測 | 🟢 | コーディングツール vs 人生フレームワーク | 定常 watchlist |
 | 10 | **netkeiba** | 競馬 | **UMAI予想ビルダー** (ユーザー独自モデル) | 🔴 | PS版#6 horse_racing 戦略再考必要 | S9 で戦略 pivot 示唆 → PS版#6 |
@@ -38,14 +38,15 @@
 | 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M 1M context) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
 | 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
 | 16 | **microsoft** | OS/AI | Azure Foundry 3 マルチモーダル AI (S8) | 🟠 | Flutter Web 軽量 vs 重量企業向け | 定常 watchlist |
-| 17 | **discord** | SNS/コミュニティ | 最新動向未調査 | ⚪ | 個人 CEO vs コミュニティ | 次回 S12 深掘り候補 |
+| 17 | **discord** | SNS/コミュニティ | Clyde AI = xAI Grok 駆動 (2025 刷新) / 150M MAU (S12) | 🟠 | 個人 AI vs コミュニティ AI | 定常 watchlist |
 | 18 | **line** | メッセージ (JP) | **LINE AI ¥750/月 無制限 / 人事AI 10ツール** | 🟠 | ダッシュボード vs 対話のみ | 20260420_line_ai_pricing.md (S9 発行予定) |
 | 19 | **facebook (Meta)** | SNS/AI | Llama 4 2026末予測 | 🟢 | SNS 時間消費 vs 価値増大 | 定常 watchlist |
-| 20 | **liven** | 栄養/健康 | 最新動向未調査 | ⚪ | 健康部署統合 | 次回 S12 深掘り候補 |
+| 20 | **liven** | 栄養/健康 | 実体不明 / 競合=あすけん 1000万会員・カロミル 600万+ (S12) | 🟢 | 専用アプリ NG / 6部署 1 action 化 | lifestyle-hub nutrition action → Win |
 | 21 | **github** | コード管理 | Copilot 進化 (codex 経由ai-hub 統合済) | 🟢 | 開発ツール vs 人生ツール | 定常 watchlist |
 
-**空白 (⚪) 残数**: 7社 — chatwork / animaworks / openclaw / claude-cowork / jobcan / discord / liven
-→ 次回 (S12) は空白埋めに集中
+**空白 (⚪) 残数**: 3社 — openclaw / claude-cowork / jobcan
+→ S12 (2026-04-20 深夜) で chatwork/animaworks/discord/liven 4 社を再分類済
+→ 次回 (S13) は残 3 社の実体調査に集中 (openclaw/claude-cowork は ブランド同定から)
 
 ---
 
@@ -96,4 +97,5 @@
 
 ---
 
-*生成: PS版#4 S11 スコアボード | 2026-04-20 深夜 — 次回 S12 で空白埋め*
+*生成: PS版#4 S11 スコアボード | 2026-04-20 深夜*
+*更新: PS版#4 S12 空白 4 社埋め (chatwork 🟠 / animaworks 🟢 / discord 🟠 / liven 🟢) | 2026-04-20 深夜*
