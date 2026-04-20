@@ -12454,3 +12454,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - Part 7 = on-call バグ修正 (Win版が PS版#1 担当領域に踏み込んで緊急対応)
   - Part 8 = 過去 PS#3 セッションの投資 (12 seed) を即時 UI 反映
 - 懸念: PS版#6 batch script 自体に `dart fix → format → analyze` の 3 step 組込が必要 (再発防止)
+
+### PS版#1 Session 13 (2026-04-20 15:39 JST) — deploy-prod 3連続失敗トリアージ
+
+- 観測: deploy-prod runs 24650362196 / 24649407170 / 24649400023 全て failure (Analyze code step)
+- 原因特定: `gh api .../jobs/<id>/logs` で job log 取得 → `lib/pages/*.dart` 167 件 `unnecessary_const` error
+- 既修復確認: 同問題は **Win版#131 part 7** (commit 470ed44f, 06:31 UTC) で `dart fix --apply` 一括修正済
+- 失敗 run はいずれも fix commit より前 (05:05 / 05:40 UTC) — fix 後の run 24651949296 で **CI Checks 成功 (Lint/Format/Test/Security)** → Deploy 進行中
+- PS#1 アクション: 観測のみ・追加修正不要 (並行 Win 修復が早かった)
+- 教訓: deploy-prod 失敗時は (a) commit log 時刻と run createdAt を必ず比較 (b) job log 取得は `gh api repos/.../actions/jobs/<id>/logs` (run-level の `--log-failed` は空が多い)
+- Philosophy alignment: 原則 6 (資本=時間 — 並行修復済を即検知して二重作業回避)
