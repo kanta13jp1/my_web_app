@@ -137,7 +137,10 @@ class WbsTask {
         'ps' => 'PS版',
         'web' => 'WEB版',
         'mobile' => '📱スマホ版',
-        _ => '全インスタンス',
+        // Win版#131 part 13
+        'schedule' => '⏰ Schedule',
+        'gha' => '🔧 GHA',
+        _ => '⚠ 全 (要分割)',
       };
 
   Color get instanceColor => switch (instance) {
@@ -153,7 +156,10 @@ class WbsTask {
         'ps' => const Color(0xFF4B0082),
         'web' => const Color(0xFF22C55E),
         'mobile' => const Color(0xFFF97316),
-        _ => const Color(0xFF3D5AFE),
+        // Win版#131 part 13
+        'schedule' => const Color(0xFFEAB308),
+        'gha' => const Color(0xFF6B7280),
+        _ => const Color(0xFFEF4444), // 'all' = 警告色 (要 explode)
       };
 }
 
@@ -178,6 +184,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
 
   // WBS data
   List<WbsMilestone> _milestones = [];
+  // Win版#131 part 13: マイルストーン risk
+  List<Map<String, dynamic>> _milestoneRisks = [];
   List<WbsTask> _tasks = [];
   bool _loadingWbs = true;
 
@@ -238,6 +246,17 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
               .map((e) => WbsTask.fromMap(e as Map<String, dynamic>))
               .toList();
         });
+      }
+      // Win版#131 part 13: マイルストーン risk view (failures は silent)
+      try {
+        final rData = await _supabase.from('wbs_milestone_risk_view').select();
+        if (mounted) {
+          setState(() {
+            _milestoneRisks = (rData as List).cast<Map<String, dynamic>>();
+          });
+        }
+      } catch (_) {
+        // view 未作成時は無視
       }
     } catch (_) {
       // テーブル未作成時はフォールバック表示
@@ -357,6 +376,7 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
                 setState(() => _hideCompleted = v ?? false),
             filterInstance: _filterInstance,
             onFilterInstance: (v) => setState(() => _filterInstance = v),
+            milestoneRisks: _milestoneRisks,
           ),
           _MyProjectsTab(
             projects: _projects,
@@ -1345,6 +1365,8 @@ class _GanttTimelineTab extends StatefulWidget {
   final ValueChanged<bool?> onToggleHideCompleted;
   final String? filterInstance;
   final ValueChanged<String?> onFilterInstance;
+  // Win版#131 part 13: マイルストーン risk
+  final List<Map<String, dynamic>> milestoneRisks;
 
   const _GanttTimelineTab({
     required this.milestones,
@@ -1354,6 +1376,7 @@ class _GanttTimelineTab extends StatefulWidget {
     required this.onToggleHideCompleted,
     required this.filterInstance,
     required this.onFilterInstance,
+    required this.milestoneRisks,
   });
 
   @override
@@ -1464,6 +1487,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       child: Column(
         children: [
           _buildHeader(tasks.length),
+          // Win版#131 part 13: マイルストーン risk warning banner
+          if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1550,6 +1575,89 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // Win版#131 part 13: マイルストーン risk 集計
+  List<Map<String, dynamic>> get _riskWarnings => widget.milestoneRisks
+      .where(
+        (r) =>
+            r['risk_status'] == 'over_capacity' ||
+            r['risk_status'] == 'critical_overdue' ||
+            r['risk_status'] == 'tight',
+      )
+      .toList();
+
+  Widget _buildRiskBanner() {
+    return Container(
+      color: const Color(0xFF1A0A0A),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber, color: Color(0xFFEF4444), size: 18),
+          const SizedBox(width: 8),
+          const Text(
+            'マイルストーン警告',
+            style: TextStyle(
+              color: Color(0xFFEF4444),
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _riskWarnings.map(_riskChip).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _riskChip(Map<String, dynamic> r) {
+    final code = r['code'] as String? ?? '?';
+    final status = r['risk_status'] as String? ?? '';
+    final daysLeft = (r['days_left'] as num?)?.toInt() ?? 0;
+    final remaining = (r['remaining_hours'] as num?)?.toDouble() ?? 0.0;
+    final available = (r['available_hours'] as num?)?.toDouble() ?? 0.0;
+    final overdue = (r['overdue_tasks'] as num?)?.toInt() ?? 0;
+    final color = switch (status) {
+      'critical_overdue' => const Color(0xFFEF4444),
+      'over_capacity' => const Color(0xFFF97316),
+      'tight' => const Color(0xFFEAB308),
+      _ => const Color(0xFF6B7280),
+    };
+    final label = switch (status) {
+      'critical_overdue' => '🚨 期限超過 ($overdue 件)',
+      'over_capacity' =>
+        '⚠ 工数超過 ${remaining.toInt()}h > 利用可能 ${available.toInt()}h',
+      'tight' => '⏳ 残 $daysLeft 日 (タイト)',
+      _ => 'OK',
+    };
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
+        ),
+        child: Text(
+          '$code: $label',
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+        ),
       ),
     );
   }
