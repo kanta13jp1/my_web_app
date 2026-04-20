@@ -531,7 +531,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     });
     try {
       final resp = await Supabase.instance.client.functions.invoke(
-        'gemini-election-analysis',
+        'ai-hub',
+        body: {'action': 'election.analyze'},
       );
       final data = resp.data;
       String result;
