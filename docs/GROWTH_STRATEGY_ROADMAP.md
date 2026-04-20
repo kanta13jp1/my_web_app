@@ -12384,3 +12384,29 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **cross-instance-pr 新規不要** — 全件 monitoring-only
 - **次回候補**: `ai-assistant` EF `DEFAULT_SYNTHESIS_MODEL` の Haiku 4.5 追従確認 → Win版委譲検討
 - Philosophy alignment: 原則 1 (CEO 感 — Grok 4.3 との構図明確化) / 原則 2 (ミッション駆動 — 監視対象の選別)
+
+## PS版#3 Session 12 (2026-04-20 13:00 JST) — AI大学 130 社化 (Goodfire 追加)
+- **commit**: `9869a547` — AI大学 130社目 Goodfire (interpretability $1.25B / Anthropic 出資)
+- **migration**: `supabase/migrations/20260420050000_seed_goodfire_ai_university.sql` (3行: overview/models/api)
+- **$md$ tag 初手採用** (PS#1 S10 教訓継承) — `E'...'` で連鎖修復回避
+- **UI**: `_providerMeta['goodfire']` (🔬 #EA580C) + `_fallback` markdown
+- **COMPRESSED_PROMPT_V3.md**: provider list 末尾 `goodfire` 追記
+- **flutter analyze**: 0 errors
+- **戦略意義**: 既存 129 社は生成・推論カテゴリ → Goodfire は **interpretability 独自軸** で差別化
+  - Series A に Anthropic 出資 → 自分株式会社の Claude-first 設計と整合
+  - Sparse Autoencoder OSS (Llama 3.1 8B SAE) → 教育コンテンツ深化余地
+  - 2026-02 Alzheimer's biomarker 発見 = 自然科学への基盤モデル逆解析の最初の例
+- Philosophy alignment: 原則 5 (商品=ユーザー価値 — モデル内部理解で AI リテラシー向上) / 原則 1 (CEO感 — モデル内部編集) / 原則 7 (interpretability 知識 = 陳腐化しにくい資産)
+
+## PS版#3 Session 13 (2026-04-20 14:00 JST) — AI大学 131 社化 (Nous Research 追加)
+- **migration**: `supabase/migrations/20260420060000_seed_nous_research_ai_university.sql` ($md$ tag / overview+models+api 3 行)
+- **UI**: `_providerMeta['nous_research']` (🌐 #0EA5E9) + `_fallback` markdown (Hermes 4 / Psyche 分散学習)
+- **COMPRESSED_PROMPT_V3.md**: provider list 末尾 `nous_research` 追記
+- **ai-university-update.yml**: Nous Research 検索クエリ追加 (Hermes 4 / Psyche Network / $65M Paradigm)
+- **戦略意義**: 131 社目で **分散学習 (blockchain coordinated)** 独自軸を追加
+  - Psyche Network → 中央集権 GPU クラスタ (OpenAI/Anthropic) 独占を打破するインフラ
+  - Hermes 4.3 = **Psyche で初の生産モデル** (2025-08 ByteDance Seed 36B base)
+  - Paradigm Series A $65M (2025) → 商業部門が OSS 開発を支える二層構造
+  - uncensored stance (steering user-side) → Claude/GPT の RLHF 固定と対照的
+- Philosophy alignment: 原則 1 (CEO感 — アライメント user-side steering) / 原則 5 (商品=ユーザー価値 — 無検閲 OSS 重み) / 原則 7 (資産=分散学習 protocol 知識 = 陳腐化しにくい) / 原則 9 (ウェルビーイング — OSS 基盤の民主化)
+- **次回 PS#3 候補**: 132 社目 (Prime Intellect / Pleias AI) + 既存 130 社 news カテゴリ最新化

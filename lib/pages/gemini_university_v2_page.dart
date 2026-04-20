@@ -831,6 +831,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFEA580C),
     officialUrl: 'https://www.goodfire.ai/',
   ),
+  'nous_research': _ProviderMeta(
+    name: 'Nous Research',
+    emoji: '🌐',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://nousresearch.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4237,6 +4243,36 @@ client = OpenAI(
 - HuggingFace OSS: https://huggingface.co/goodfire
 - Blog: https://www.goodfire.ai/blog
 - Ember API は 2026-02 から partner-only (個別審査)
+''',
+  'nous_research': '''
+# Nous Research — 分散学習 Psyche × オープン Hermes (\$65M Paradigm)
+
+サンフランシスコ拠点のオープン AI 研究組織。
+**Hermes** ファミリー (Llama 系 fine-tune) を OSS で公開。
+2025 年に Paradigm リードで \$65M 調達。
+
+## 主力モデル
+- **Hermes 4 405B**: Llama 3.1 405B base / reasoning 強化 / OpenRouter \$0.80-2.00/M
+- **Hermes 4.3 Seed 36B**: 🌐 **Psyche 分散学習で訓練された最初の生産モデル**
+- **Hermes 3 Llama 3.1 70B/8B**: OSS 重み HuggingFace 公開
+
+## 既存 130 社との差別化
+| 観点 | Nous | 既存大手 |
+|------|------|----------|
+| 学習方式 | 🌐 Psyche 分散 (blockchain) | 中央集権 GPU クラスタ |
+| アライメント | ユーザー側で steering | RLHF 固定 |
+| 検閲 | 最小限 (uncensored) | 強い content filter |
+
+## Psyche Network
+- インターネット越しに GPU を協調させる学習プロトコル
+- 巨大企業独占の基盤モデル訓練を打破するインフラ
+- GPU 提供者は報酬獲得可
+
+## 試す
+- OpenRouter: https://openrouter.ai/nousresearch
+- HuggingFace OSS: https://huggingface.co/NousResearch
+- Discord (30,000+ 名): https://discord.gg/jqVphNsB4H
+- Hermes 4 Tech Report: https://arxiv.org/pdf/2508.18255
 ''',
 };
 
