@@ -14414,3 +14414,26 @@ orphan branches: 閾値以下 (cleanup 不要)。
 | S22 | Haize Labs | 7.5/9 | red-teaming |
 | S23 | Physical Intelligence | **9/9 ⭐⭐** | 🦾 robotics VLA |
 | **S24** | **Isomorphic Labs** | **8/9** | 🧬 biology/drug discovery |
+### PS版#4 Session 28 (2026-04-20) — 数字 2 社交差 audit round 4 (Nova 2 Lite + Gemini FL 並列)
+
+- **対象**: amazon / google 行の軽量 LLM pricing 数字 (output $/M 未把握状態)
+- **手法**: 1 セッション 2 モデル並列 WebSearch audit (時間資本原則 6 整合)
+- **検証**: Nova 2 Lite $0.30 input / **$2.50 output** (AWS + 6 独立 = 7 sources) / Gemini 3.1 Flash-Lite $0.25 input / **$1.50 output** (Google 3 公式 + 6 独立 = 9 sources) = 計 **16 sources**
+- **新発見**: input 16% 差 / **output 40% 差 (Gemini FL 安)** → 自分株式会社の write-heavy 用途 (AI 大学 + blog) では Gemini FL 圧倒的優位
+- **成果物**:
+  - `docs/competitor-reports/SCOREBOARD_2026-04-20.md` S28 block (cross-comparison + ai-hub routing 提案 + audit 累計 4 round 完了)
+  - `docs/cross-instance-prs/20260420_ai_hub_routing_nova_vs_gemini_fl.md` 起票 (Win版宛: input-bound→Nova / output-bound→Gemini FL 分割提案)
+- **commit**: `6cdb8dee`
+- **audit 累計**: S25 (Cursor・5 src) → S26 (Notion・2 src) → S27 (Cowork・6 src) → **S28 (軽量 LLM・16 src) = 4 round / 38 sources**
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): output 価格差を routing 判断材料化 ✅
+- 原則 2 (ミッション駆動): S25-S27 習慣を round 4 継続 ✅
+- 原則 5 (商品=ユーザー価値): Gemini FL 2.5x 速度 = UX 改善材料 ✅
+- 原則 6 (資本=時間): 1 session 2 モデル並列検証 = 効率 2 倍 ✅
+- 原則 7 (BS 原則): 単一 vendor (Anthropic+AWS) → Google 多角化 = リスク資産化 ✅
+- 原則 8 (KPI=昨日の自分): S25 (1 社) → S28 (4 社 / 38 src) 累積成長 ✅
+
+整合性 **6/9** ✅ (並列効率化 + 多角化リスク管理 両立)
+
+**次回候補**: (1) Win版 ai-hub routing PR follow-up (2) audit round 5 = LINE AI ¥750 or Replit $9B のどちらか (3) PS#2 本A/B/C dispatch 確認 (4/23+/5/2/5/4)
