@@ -14170,3 +14170,49 @@ orphan branches: 閾値以下 (cleanup 不要)。
 - 原則 5 (商品=ユーザー価値): home → 音楽コラボ 404 → hub 経路に復旧
 - 原則 6 (資本=時間): 1 箇所 invoke のみで migration 完結 → 最小時間投資
 - 原則 7 (資産=負債): 二重 EF (music-collaboration + app-hub) を hub 単一に寄せ負債 1 件消化
+
+---
+
+## 2026-04-20 20:18 JST — PS版#2 Session 14 (dev.to 4-tag cap 発見 · 3 Notion EN drafts タグ順整理)
+
+### アクション
+
+- **`supabase/functions/schedule-hub/index.ts:303` 実装確認**: `rawTags.slice(0, 4)` で dev.to は **最初 4 個まで silent truncation** (警告 log なし)
+- **全 5 EN drafts のタグ棚卸し**: 5 本とも 5 tags carry 中 = 4 本目以降 1 tag が silent drop される状態
+- **Notion 3 drafts (4/28 D-6 / 5/2 D-2 / 5/4 D-0) の EN タグ並び替え**: `Notion,AI,buildinpublic,webdev,SaaS` → `Notion,AI,SaaS,buildinpublic,webdev` で **SaaS を 4 番目以内に保持** (webdev を drop させる)
+- **3 者棲み分け 本A (4/24) + BS 本B (4/26) EN**: `AI,Claude,OpenAI,buildinpublic,webdev` のまま放置 (元々 SaaS 系でなく Claude/OpenAI 特化訴求 → webdev drop 自然・問題なし)
+
+### Why SaaS を優先保持
+
+- **ターゲット読者の discovery 確率**: Notion 課金記事の読者は SaaS 界隈 = `SaaS` タグ follower が最も反応する
+- **`webdev` は dev.to 最大の汎用タグ**: follower 多いが specific 度低 → Notion 記事の文脈では visibility 向上寄与が SaaS より弱い
+- **`buildinpublic` は個人 CEO framing の core**: 9 原則との整合で外せない
+
+### Why schedule-hub truncation を silent のままにする
+
+- 警告 log 追加は **Philosophy 原則 6 (資本=時間)** に反する (EF change → deploy-prod 走行 = 時間資本大)
+- frontmatter 側で先頭 4 個に価値タグを寄せる運用で十分 (手書き段階の注意で済む)
+- **CLAUDE.md / skill への運用 rule 追加** は次回 S15 以降で検討 (今回は draft 側の hot-fix 優先)
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): SaaS 界隈の discovery 改善 = 3 drafts × 潜在読者数の価値 up ✅
+- 原則 6 (資本=時間): draft tag 順 swap 3 件 = 30 秒 / EF deploy 走行回避 ✅
+- 原則 7 (資産負債 BS): dev.to tag 枠 = scarce 資産として認識・最適化 ✅
+- 原則 8 (KPI=昨日の自分): 昨日までの 5-tag carry 運用より discovery 確率 up ✅
+- 整合性: **4/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (S13 から不変)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch (タグ 4/5 で webdev drop · OK)
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (BS 2 段ロケット完成 · タグ 4/5 で webdev drop · OK)
+4. **2026-04-28**: Notion 本A dispatch (D-6 · タグ 4/5 で SaaS 保持済)
+5. **2026-05-02**: Notion 本B dispatch (D-2 · タグ 4/5 で SaaS 保持済)
+6. **2026-05-04**: Notion 本C dispatch (D-0 · タグ 4/5 で SaaS 保持済)
+7. **2026-05-04 当日**: X 短文起草 (S27 checklist 残 1 件)
+
+### 学び
+
+- **dev.to 4-tag silent truncation**: frontmatter に 5 tags 書いても警告ゼロで先頭 4 個のみ送信される = 「5 タグ書き = 1 タグを silent に捨てる」と同値 → タグ並びは価値順 sort 必須
+- **手動先頭 sort が適切な tier**: platform-specific truncation は「小さい最適化」なので hook 化より frontmatter 段で人間判断する方が早い (cf. schedule-hub EF change コスト)

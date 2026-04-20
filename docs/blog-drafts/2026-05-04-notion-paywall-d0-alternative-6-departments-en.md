@@ -1,6 +1,6 @@
 ---
 title: "Notion Custom Agents Paywall Starts Today — A Free Alternative That Runs All 6 Life Departments"
-tags: Notion,AI,buildinpublic,webdev,SaaS
+tags: Notion,AI,SaaS,buildinpublic,webdev
 published: false
 ---
 

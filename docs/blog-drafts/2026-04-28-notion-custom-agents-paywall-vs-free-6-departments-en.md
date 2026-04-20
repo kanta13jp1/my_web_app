@@ -1,6 +1,6 @@
 ---
 title: "Notion Custom Agents Goes $10/1000 Credit on 5/4 — A Free Way to Run All 6 Departments"
-tags: Notion,AI,buildinpublic,webdev,SaaS
+tags: Notion,AI,SaaS,buildinpublic,webdev
 published: false
 ---
 
