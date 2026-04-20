@@ -14629,6 +14629,34 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 整合性 **6/9** ✅ (PS#5 作業に対する補助サイクル確立)
 
 **Horse racing**: Auto Update 最近 5 runs 全 success (37m/1h/2h/3h/4h ago) — S6→S21 streak 継続
+
+### PS版#6 Session 22 (2026-04-20) — 🚨 CRITICAL: wbs.* actions unreachable (2 週間潜伏 bug 修復)
+
+- **commit**: 232b2783 (fix) + 8c3f5955 (3 handoff PREREQ 補記)
+- **Root cause**: `supabase/functions/tools-hub/index.ts:335` で `if (action.startsWith("horseracing."))` 条件 switch 内に wbs.* 9 case labels が誤ネスト → `action.startsWith("wbs.")` が false のため switch 到達不可 → `{"error":"Unauthorized"}` silent fail
+- **影響範囲** (2 週間):
+  - 全インスタンスの wrap-up `wbs.update_progress` 呼出が silent 401
+  - `wbs-staleness-audit.yml` daily cron (06:00 JST) は全 instance 0-task 返却で staleness 検知不能
+  - ユーザー報告「WBSまったく更新されません」の根本原因
+- **Fix**: line 335 条件を `|| action.startsWith("wbs.")` で拡張 + line 918 default error 文言更新 (`"Unknown horseracing/wbs action"`)
+- **[WORKDIR-ISOLATION] self-correction**: 初回 edit 先を primary repo (`C:\Users\kanta\GitHub\my_web_app`) に誤投下 → `cp` で ps6 worktree に移送 + primary 側 `git checkout --` で原状復帰 (reflex で rule 思い出し 5 分 lag)
+- **handoff PREREQ 補記** (3 本):
+  - `20260420_wbs_enforcement_option_a_win.md` (Win版 SessionStart hook auto-curl)
+  - `20260420_wbs_enforcement_option_b_ps1.md` (PS#1 wrap-up skill enforce)
+  - `20260420_wbs_gantt_ui_filter_vscode.md` (VSCode Gantt UI 補正)
+  - 着手前に deploy 反映 + `curl wbs.priority_for_instance` で success 返却確認必須
+- **deploy timeline**: commit 232b2783 cancelled (concurrency) → 後続 deploy (b5b37aaa pending) で反映見込み
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): 2 週間潜伏 bug を user 1 言で発見 → 即 root cause 特定 ✅
+- 原則 3 (優しい mentor): filter bug (S18) と nested switch bug (S22) を memory/feedback に残し再発防止 ✅
+- 原則 5 (商品=ユーザー価値): 全 instance WBS 更新経路復旧 → 「WBSまったく更新されません」解消 ✅
+- 原則 6 (資本=時間): line 1 文字修正で 9 action 復活 = 最小工数 max impact ✅
+- 原則 7 (BS 原則): silent failure = 見えない負債 → auth dispatch 順序 invariant 明文化 ✅
+- 原則 9 ([WORKDIR-ISOLATION]): 違反後即自己検知 + 復旧で rule reflex 鍛錬 ✅
+
+整合性 **6/9** ✅ (CRITICAL bug fix + handoff unblock)
+
 **次回候補**:
 1. **HIGH**: PS#5 が time-tracker / goal-tracker migrate → 同 cleanup 適用 (CRITICAL 残 2 件)
 2. **MED**: DEAD_LIST ∩ supabase/functions/ 残 11 件の migration 進捗監視
