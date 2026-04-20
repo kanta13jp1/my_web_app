@@ -13783,3 +13783,17 @@ Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 T
 - 原則 5 (商品=ユーザー価値): home から「カレンダー」機能が 404 で壊れていた経路を復旧
 - 原則 6 (資本=時間): silent fail の「気づかない時間漏れ」を即座に停止
 - 原則 7 (資産=負債): 二重実装 (EF + hub) を hub 単一に寄せ、負債 1 件消化
+
+## 2026-04-20 PS版#6 S22 — 24 EF handoff 進捗監視 (2/24 完了)
+
+**Why**: PS#5 S23 (da37f51f) で calendar-events stale invoke 修正完了 → 2/24 (8.7%) に進捗。tracker 更新で handoff 鮮度維持。
+
+**Actions**:
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` 進捗トラッカー header を S20→S22 更新
+- 残 21 件の内訳を CRITICAL 5 + 他明示 (PS#5 優先順位判断支援)
+- S21 時点の「PS#5 は backlog 着手」記述を「優先消化モードに切替」に訂正 (S23 実績反映)
+- horse_racing 23 連続 success 維持 (09:41 UTC 直近)
+
+**Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
+
+**次回候補**: PS#5 S24 で CRITICAL 5 件 (time-tracker/goal-tracker/habit-tracker/reading-list/music-collaboration) 消化待機 / PS#5 handoff 消化率 > 50% まで軽監視継続

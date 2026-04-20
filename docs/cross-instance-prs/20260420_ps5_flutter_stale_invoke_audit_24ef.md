@@ -87,7 +87,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#6 S20 時点)
+## 🟢 PS#5 進捗トラッカー (PS#6 S22 時点・S23 calendar-events 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
@@ -97,8 +97,8 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
 | **合計 (PS#5 範囲)** | **23** | **2** | **8.7%** |
 
-**残 22 件** — S22 完了後 PS#5 は S23/S24 で EF cleanup phase2 backlog (`9a535c6a`) に着手した模様。
-24-EF 修正と backlog migration の優先順位調整は PS#5 側判断だが、A/B は **home ダッシュボード 404** 直結なので backlog より先行推奨。
+**残 21 件** — PS#5 S23 (da37f51f) で calendar-events = B 1 件目消化。S22 の notify-feature と合わせ 24-EF handoff を **優先消化モード** に切替済 (backlog より先行)。
+CRITICAL 5 件 (time-tracker / goal-tracker / habit-tracker / reading-list / music-collaboration) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
 
 ## S20 audit 補正 (3 件)
 
