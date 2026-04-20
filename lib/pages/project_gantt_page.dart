@@ -1393,8 +1393,40 @@ class _GanttTimelineTab extends StatefulWidget {
 
 class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
-  // Win版#131 part 20: 進捗率/残作業/依存関係列追加で 700 → 1100 に拡張
-  static const _leftPanelWidth = 1100.0;
+  // Win版#131 part 22: 列表示制御 (左パネル幅は表示列の合計から動的算出)
+  // 列幅 lookup table
+  static const Map<String, double> _colWidths = {
+    '#': 32,
+    'task': 200,
+    'startDate': 80,
+    'endDate': 80,
+    'instance': 70,
+    'progress': 50,
+    'remaining': 200,
+    'depends': 150,
+    'recovery': 180,
+    'flags': 36, // Win#131 part 22: 遅延 ⚠ flag column
+  };
+
+  // 列表示状態 (state)
+  final Map<String, bool> _colVisible = {
+    '#': true,
+    'task': true,
+    'startDate': true,
+    'endDate': true,
+    'instance': true,
+    'progress': true,
+    'remaining': true,
+    'depends': false, // default 非表示で右タイムライン拡張
+    'recovery': true,
+    'flags': true,
+  };
+
+  double get _leftPanelWidth =>
+      _colVisible.entries
+          .where((e) => e.value)
+          .fold<double>(0, (sum, e) => sum + (_colWidths[e.key] ?? 0)) +
+      16; // padding
   static const _rowHeight = 32.0;
   static const _headerHeight = 56.0;
   static const _dayWidth = 6.0;
@@ -1496,6 +1528,8 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       child: Column(
         children: [
           _buildHeader(tasks.length),
+          // Win版#131 part 22: 列表示制御 + Gantt instance filter
+          _buildColumnToggleBar(),
           // Win版#131 part 13: マイルストーン risk warning banner
           if (_riskWarnings.isNotEmpty) _buildRiskBanner(),
           Expanded(
@@ -1777,6 +1811,115 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
         SnackBar(content: Text('自動修復エラー: $e')),
       );
     }
+  }
+
+  // Win版#131 part 22: 列表示制御 + Gantt instance filter chips
+  Widget _buildColumnToggleBar() {
+    final labels = {
+      '#': '#',
+      'task': 'タスク',
+      'startDate': '開始',
+      'endDate': '完了',
+      'instance': '担当',
+      'progress': '進捗',
+      'remaining': '残作業',
+      'depends': '依存',
+      'recovery': 'リカバリー',
+      'flags': '⚠',
+    };
+    return Container(
+      color: const Color(0xFF0F0F18),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            const Text(
+              '列表示:',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 10,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(width: 6),
+            ...labels.entries.map((e) {
+              final on = _colVisible[e.key] ?? true;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FilterChip(
+                  label: Text(
+                    e.value,
+                    style: TextStyle(
+                      color: on ? Colors.white : const Color(0xFF707080),
+                      fontSize: 10,
+                      height: 1.3,
+                    ),
+                  ),
+                  selected: on,
+                  onSelected: (v) => setState(() => _colVisible[e.key] = v),
+                  selectedColor: const Color(0xFF3D5AFE).withValues(alpha: 0.4),
+                  backgroundColor: const Color(0xFF1A1A24),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              );
+            }),
+            const SizedBox(width: 12),
+            const Text(
+              '担当:',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 10,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(width: 6),
+            ...[
+              ('全', null, const Color(0xFFFF6B35)),
+              ('VS', 'vscode', const Color(0xFF007ACC)),
+              ('Win', 'win', const Color(0xFF00BCF2)),
+              ('PS#1', 'ps1', const Color(0xFF4B0082)),
+              ('PS#2', 'ps2', const Color(0xFF6A0DAD)),
+              ('PS#3', 'ps3', const Color(0xFF8B5CF6)),
+              ('PS#4', 'ps4', const Color(0xFFA855F7)),
+              ('PS#5', 'ps5', const Color(0xFFC084FC)),
+              ('PS#6', 'ps6', const Color(0xFFDAB6FC)),
+              ('WEB', 'web', const Color(0xFF22C55E)),
+              ('📱', 'mobile', const Color(0xFFF97316)),
+              ('⏰', 'schedule', const Color(0xFFEAB308)),
+              ('🔧', 'gha', const Color(0xFF6B7280)),
+              ('⚠ ALL', 'all', const Color(0xFFEF4444)),
+            ].map((t) {
+              final on = widget.filterInstance == t.$2;
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FilterChip(
+                  label: Text(
+                    t.$1,
+                    style: TextStyle(
+                      color: on ? Colors.black : t.$3,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                  selected: on,
+                  onSelected: (_) => widget.onFilterInstance(on ? null : t.$2),
+                  selectedColor: t.$3,
+                  backgroundColor: t.$3.withValues(alpha: 0.08),
+                  side: BorderSide(color: t.$3.withValues(alpha: 0.4)),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildHeader(int taskCount) {
