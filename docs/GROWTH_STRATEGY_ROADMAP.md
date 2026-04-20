@@ -14310,6 +14310,7 @@ orphan branches: 閾値以下 (cleanup 不要)。
 - 原則 7 (資産=負債): 二重 EF (habit-tracker + tools-hub) を hub 単一に寄せ負債 1 件消化
 
 整合性 7/9 ✅
+
 ---
 
 ## 2026-04-20 20:45 JST — PS版#2 Session 15 (t1-blog-dispatch skill に Step 2.1 dev.to 4-tag pre-check 追加)
@@ -14352,3 +14353,64 @@ orphan branches: 閾値以下 (cleanup 不要)。
 - **制約発見 → 知識 resident 化のコスト階層**: skill edit (C) < workflow edit (B) < EF deploy (A) → 最小コスト層から先に消化する原則
 - **EF code 実読で疑問解決**: 「Qiita も 4-cap か?」の疑問を `grep slice` 1 発で解決 (line 270 vs 303) = 推測せず実読の原則
 - **skill は dispatch の自動チェックポイント**: skill file に埋め込めば毎回 dispatch で自動実行 = runtime 警告より cheap で再発防止強
+
+### PS版#3 Session 24 (2026-04-20) — AI大学 142 社化: Isomorphic Labs 追加 🧬
+
+- **前回候補**: Cognition AI (Devin) → **既登録判明** (line 432 / 1279 / 2867) で pivot
+- **選定**: biology / drug discovery 軸が完全空白 (141 社で 0 社) → Isomorphic Labs を第 12 カテゴリ候補として採用
+- **対象**: Demis Hassabis (Nobel 2024) + John Jumper 率いる Alphabet の drug discovery 子会社 (DeepMind spinout)
+- **主力モデル**:
+  - **AlphaFold 3** (2024-05, Nature): protein + DNA/RNA/リガンド複合体構造予測 / weights + code 学術限定 (2024-11 公開)
+  - **IsoDDE** (2026-02-10): unified drug design engine / AF3 比 2 倍の protein-ligand 精度 / proprietary
+- **提携**: Eli Lilly \$1.75B + Novartis \$1.2B = **\$3B 超** / 追加 \$600M 外部 funding
+- **Step 0 評価**: 8/9 (API=AlphaFold Server 学術限定 0.5 減 / OSS=AF3 学術限定・IsoDDE closed 0.5 減)
+
+| 観点 | 判定 |
+|------|------|
+| 公式 | ✅ isomorphiclabs.com + alphafoldserver.com |
+| 最新モデル | ✅ AlphaFold 3 + IsoDDE |
+| ベンチマーク | ✅ AF3 比 2x protein-ligand 精度 (社内) + CASP 相当 |
+| API/SDK | ⚠️ AlphaFold Server (学術無料) のみ / IsoDDE 非公開 |
+| 独自技術 | ✅ diffusion-style AF3 + 4-in-1 IsoDDE engine |
+| OSS | ⚠️ AF2 Apache 2.0 / AF3 学術限定 / IsoDDE closed |
+| CLI/SDK | ✅ Python + ColabFold wrapper |
+| 資金 | ✅ Alphabet + \$600M + \$3B 提携 |
+| 話題性 | ✅ Nobel 2024 + Alphabet spinout |
+
+- **変更ファイル** (4):
+  1. `supabase/migrations/20260420220000_seed_isomorphic_labs_ai_university.sql` (new / 3 rows / $md$ tag)
+  2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback)
+  3. `.github/workflows/ai-university-update.yml` (seed-only コメント列)
+  4. `docs/GROWTH_STRATEGY_ROADMAP.md` (本セッション記録)
+
+**戦略的次の一手**:
+- AI大学 **第 12 カテゴリ「biology/drug discovery」新設** 候補 (第 11「embodied AI」と対で foundation model 2 本柱)
+- Physical Intelligence (S23 物理世界) ↔ Isomorphic Labs (S24 分子世界) の「foundation model 2 本柱」 comparison 頁
+
+**教訓**:
+- **候補チェック順序**: WebSearch 前に必ず `grep -i <provider_name>` で既登録判明を先に確認 (Cognition AI は PS#4 S15 watchlist だが実は既登録済み / grep 4 秒で判明)
+- **biology 軸 Step 0 制約**: 商用 biology AI は creator + publications で credibility 高く取れるが、API/OSS 面で voice/robotics 系に劣る (AlphaFold 3 weights が学術限定の典型)
+
+**Philosophy alignment**:
+- 原則 1 (CEO): 分子世界の foundation model = 物理世界判断 (S23 robotics) と同等の raw 材料
+- 原則 2 (ミッション駆動): Hassabis 哲学「protein の世界の GPT」= 6 部署統合 AI と構造同形
+- 原則 5 (商品=ユーザー価値): AlphaFold Server で自分の興味 protein を可視化 → 個人健康理解 raw 材料
+- 原則 8 (KPI=昨日の自分): Nature 誌論文の日本語要約化 = 「昨日の自分」との知識 delta 可視化
+
+整合性 6/9 ✅
+
+### 連続 11 session 実績 (S14-S24)
+
+| S | Provider | Step 0 | 軸 |
+|---|----------|--------|-----|
+| S14 | Prime Intellect | 8.5/9 | 分散 RL |
+| S15 | Exa.ai | 8.5/9 | 検索 API |
+| S16 | Pleias AI | 8/9 | EU-compliant LLM |
+| S17 | Imbue | 8.5/9 | 推論特化 |
+| S18 | Thinking Machines | 8/9 | fine-tune API |
+| S19 | Kyutai | **9/9 ⭐** | voice OSS |
+| S20 | Contextual AI | 8/9 | RAG 2.0 |
+| S21 | Snorkel AI | 8.5/9 | weak supervision |
+| S22 | Haize Labs | 7.5/9 | red-teaming |
+| S23 | Physical Intelligence | **9/9 ⭐⭐** | 🦾 robotics VLA |
+| **S24** | **Isomorphic Labs** | **8/9** | 🧬 biology/drug discovery |

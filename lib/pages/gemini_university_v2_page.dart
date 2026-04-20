@@ -897,6 +897,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7C3AED),
     officialUrl: 'https://physicalintelligence.company/',
   ),
+  'isomorphic_labs': _ProviderMeta(
+    name: 'Isomorphic Labs',
+    emoji: '🧬',
+    color: const Color(0xFF10B981),
+    officialUrl: 'https://www.isomorphiclabs.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4727,6 +4733,45 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - π-0.5 blog: https://www.physicalintelligence.company/blog/pi05
 - 論文 (π-0): arXiv 2410.24164
 - 料金: OSS 無料 (Apache 2.0 / code + weights 全公開)
+''',
+  'isomorphic_labs': '''
+# Isomorphic Labs — AlphaFold 3 + IsoDDE で新薬を設計する Alphabet ラボ
+
+2021 年創業 (DeepMind spinout)。CEO **Demis Hassabis** + チーフサイエンティスト
+**John Jumper** が 2024 年 **ノーベル化学賞** 受賞 (AlphaFold の貢献)。
+「AI で drug discovery を根本から再発明する」ミッションの biology AI foundation model ラボ。
+
+## 既存 141 社との差別化
+| 観点 | Isomorphic Labs | Recursion | Xaira |
+|------|-----------------|-----------|-------|
+| レイヤー | 🧬 **structure-first foundation model** | cell image phenomics | LLM-for-biology |
+| 親 | Alphabet 子会社 | NASDAQ 上場 | private |
+| 主力 | AlphaFold 3 / IsoDDE | Phenomap + MolRec | Xaira Protein Design |
+| 顧客 | Eli Lilly + Novartis (\$3B 提携) | Roche / Genentech | 自社創薬 |
+
+## 主要モデル (2 世代)
+- **AlphaFold 3** (2024-05, Nature): protein + DNA/RNA/リガンド/イオンの複合体構造を予測。weights + code は 2024-11 に **学術限定** で公開
+- **IsoDDE** (2026-02-10): unified drug design engine / AF3 比 2 倍の protein-ligand 精度 / **proprietary** (API/weights/論文なし)
+
+## 提携
+- **Eli Lilly** (2024-01): **\$45M 先行 + \$1.75B マイルストーン** / 低分子新薬
+- **Novartis** (2024-01 + 2025-02 拡張): **\$37.5M + \$1.2B** / 3+3 target
+- 2026-01 時点で事業価値合計 **\$3B 超**、preclinical candidate 段階に移行
+
+## 資金
+- Alphabet 直接出資 + 外部 **\$600M+** funding ラウンド
+- 数百人規模 (London HQ)
+
+## 試す
+- AlphaFold Server: https://alphafoldserver.com/ (Google アカウントで無料・学術用途)
+- 公式: https://www.isomorphiclabs.com/
+- 論文 (AlphaFold 3): Nature 2024 / DOI 10.1038/s41586-024-07487-w
+- Google blog: https://blog.google/technology/ai/google-deepmind-isomorphic-alphafold-3-ai-model/
+
+## 自分株式会社での活用
+- AI大学: biology 軸空白 → 第 12 カテゴリ (biology/drug discovery) 候補
+- user-manual: AlphaFold 3 論文の日本語要約化 → 個人健康理解の raw 材料
+- Physical Intelligence (S23) との対比: 「物理世界 robot」 vs 「分子世界 protein」の foundation model 2 本柱
 ''',
 };
 
