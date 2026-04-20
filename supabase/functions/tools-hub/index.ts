@@ -716,25 +716,46 @@ serve(async (req) => {
           });
         }
         case "wbs.update_progress": {
-          // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked', note?: string }
+          // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
+          //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用), note?: string }
+          // Win版#131 part 10: 遅延時 recovery_plan 必須化
           const id = String(body.id ?? "");
           if (!id) return json({ error: "id required" }, 400);
           const update: Record<string, unknown> = {};
           if (body.progress !== undefined) {
             const p = Math.max(0, Math.min(100, Number(body.progress)));
             update.progress = p;
-            // 100% で auto status=completed
             if (p === 100 && !body.status) update.status = "completed";
           }
           if (body.status) update.status = String(body.status);
+          if (body.recovery_plan !== undefined) {
+            update.recovery_plan = String(body.recovery_plan);
+            update.recovery_planned_at = new Date().toISOString();
+          }
+          if (body.end_date !== undefined) {
+            update.end_date = String(body.end_date);
+            const { data: cur } = await admin.from("wbs_tasks")
+              .select("rescheduled_count").eq("id", id).single();
+            update.rescheduled_count =
+              ((cur?.rescheduled_count as number) ?? 0) + 1;
+          }
           if (Object.keys(update).length === 0) {
-            return json({ error: "progress or status required" }, 400);
+            return json({ error: "progress, status, recovery_plan, or end_date required" }, 400);
           }
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
-            .select("id, title, status, progress").single();
+            .select("id, title, status, progress, recovery_plan, end_date, rescheduled_count")
+            .single();
           if (error) throw new Error(error.message);
           return json({ success: true, task: data });
+        }
+        case "wbs.delayed_tasks": {
+          // Win版#131 part 10: 遅延中タスク一覧 (recovery_status: on_track / has_recovery_plan / delay_no_plan)
+          const { data, error } = await admin.from("wbs_delayed_tasks_view")
+            .select("*")
+            .order("delay_days", { ascending: false });
+          if (error) throw new Error(error.message);
+          return json({ success: true, tasks: data ?? [] });
         }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }

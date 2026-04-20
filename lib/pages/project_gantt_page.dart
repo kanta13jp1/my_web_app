@@ -52,6 +52,9 @@ class WbsTask {
   final DateTime? endDate;
   final String? milestoneCode;
   final String priority;
+  // Win版#131 part 10: 遅延リカバリー対応
+  final String recoveryPlan;
+  final int rescheduledCount;
 
   const WbsTask({
     required this.id,
@@ -67,6 +70,8 @@ class WbsTask {
     this.endDate,
     this.milestoneCode,
     required this.priority,
+    this.recoveryPlan = '',
+    this.rescheduledCount = 0,
   });
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
@@ -87,7 +92,23 @@ class WbsTask {
             : null,
         milestoneCode: m['milestone_code'] as String?,
         priority: m['priority'] as String? ?? 'medium',
+        recoveryPlan: (m['recovery_plan'] as String?) ?? '',
+        rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
       );
+
+  /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
+  int get delayDays {
+    if (status == 'completed' || endDate == null) return 0;
+    final now = DateTime.now();
+    final end = endDate!;
+    final today = DateTime(now.year, now.month, now.day);
+    final endDay = DateTime(end.year, end.month, end.day);
+    final diff = today.difference(endDay).inDays;
+    return diff > 0 ? diff : 0;
+  }
+
+  /// 遅延中かつ recovery_plan 未記入 = 警告対象
+  bool get isDelayedNoPlan => delayDays > 0 && recoveryPlan.trim().isEmpty;
 
   Color get statusColor => switch (status) {
         'completed' => const Color(0xFF4CAF50),
@@ -105,15 +126,33 @@ class WbsTask {
 
   String get instanceLabel => switch (instance) {
         'vscode' => 'VSCode版',
-        'windows' => 'Windows版',
-        'ps' => 'PowerShell版',
+        'win' => 'Win版',
+        'windows' => 'Win版',
+        'ps1' => 'PS版#1',
+        'ps2' => 'PS版#2',
+        'ps3' => 'PS版#3',
+        'ps4' => 'PS版#4',
+        'ps5' => 'PS版#5',
+        'ps6' => 'PS版#6',
+        'ps' => 'PS版',
+        'web' => 'WEB版',
+        'mobile' => '📱スマホ版',
         _ => '全インスタンス',
       };
 
   Color get instanceColor => switch (instance) {
         'vscode' => const Color(0xFF007ACC),
+        'win' => const Color(0xFF00BCF2),
         'windows' => const Color(0xFF00BCF2),
+        'ps1' => const Color(0xFF4B0082),
+        'ps2' => const Color(0xFF6A0DAD),
+        'ps3' => const Color(0xFF8B5CF6),
+        'ps4' => const Color(0xFFA855F7),
+        'ps5' => const Color(0xFFC084FC),
+        'ps6' => const Color(0xFFDAB6FC),
         'ps' => const Color(0xFF4B0082),
+        'web' => const Color(0xFF22C55E),
+        'mobile' => const Color(0xFFF97316),
         _ => const Color(0xFF3D5AFE),
       };
 }
@@ -701,19 +740,75 @@ class _FilterRow extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           _chip(
-            'Windows',
-            'windows',
+            'Win',
+            'win',
             filterInstance,
             onFilterInstance,
             const Color(0xFF00BCF2),
           ),
           const SizedBox(width: 6),
           _chip(
-            'PowerShell',
-            'ps',
+            'PS#1',
+            'ps1',
             filterInstance,
             onFilterInstance,
             const Color(0xFF4B0082),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'PS#2',
+            'ps2',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF6A0DAD),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'PS#3',
+            'ps3',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF8B5CF6),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'PS#4',
+            'ps4',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFA855F7),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'PS#5',
+            'ps5',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFC084FC),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'PS#6',
+            'ps6',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFDAB6FC),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            'WEB',
+            'web',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF22C55E),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            '📱',
+            'mobile',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFF97316),
           ),
           const SizedBox(width: 12),
           const Text(
@@ -1402,6 +1497,21 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                                     itemBuilder: (_, i) =>
                                         _buildTimelineRow(i, tasks[i]),
                                   ),
+                                  // Win版#131 part 10: イナズマ線 (lightning line)
+                                  // 今日時点での進捗実態を zigzag で可視化
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: CustomPaint(
+                                        painter: _LightningLinePainter(
+                                          tasks: tasks,
+                                          dayWidth: _dayWidth,
+                                          rowHeight: _rowHeight,
+                                          timelineStart: _timelineStart,
+                                          today: DateTime.now(),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                   // マイルストーンの縦線 + 菱形
                                   ...widget.milestones.map(_buildMilestoneMark),
                                 ],
@@ -1553,64 +1663,129 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
 
   Widget _buildLeftRow(int index, WbsTask task) {
     final isEven = index % 2 == 0;
-    return Container(
-      decoration: BoxDecoration(
-        color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
-        border: const Border(
-          bottom: BorderSide(color: _gridLine, width: 0.5),
+    final isDelayedNoPlan = task.isDelayedNoPlan;
+    final isDelayed = task.delayDays > 0;
+    return Tooltip(
+      message: isDelayedNoPlan
+          ? '⚠ ${task.delayDays}日遅延・リカバリー案未記入 (要対処)'
+          : isDelayed
+              ? '${task.delayDays}日遅延 — リカバリー案: ${task.recoveryPlan}'
+              : task.recoveryPlan.isNotEmpty
+                  ? 'リカバリー案: ${task.recoveryPlan}'
+                  : task.title,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isEven ? const Color(0xFF14141C) : const Color(0xFF1A1A24),
+          border: Border(
+            bottom: const BorderSide(color: _gridLine, width: 0.5),
+            left: isDelayedNoPlan
+                ? const BorderSide(color: Color(0xFFEF4444), width: 3)
+                : isDelayed
+                    ? const BorderSide(color: Color(0xFFF97316), width: 3)
+                    : BorderSide.none,
+          ),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 32,
-            child: Text(
-              '${index + 1}',
-              style: const TextStyle(
-                color: Color(0xFF808090),
-                fontSize: 11,
-                height: 1.5,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 32,
+              child: Text(
+                '${index + 1}',
+                style: const TextStyle(
+                  color: Color(0xFF808090),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
-          // チェックボックス (完了状態)
-          Icon(
-            task.status == 'completed'
-                ? Icons.check_box
-                : Icons.check_box_outline_blank,
-            size: 14,
-            color: task.status == 'completed'
-                ? const Color(0xFF4CAF50)
-                : const Color(0xFF606070),
-          ),
-          const SizedBox(width: 6),
-          // カテゴリ絵文字
-          Text(
-            task.categoryIcon,
-            style: const TextStyle(
-              fontSize: 12,
-              height: 1.5,
+            // チェックボックス (完了状態)
+            Icon(
+              task.status == 'completed'
+                  ? Icons.check_box
+                  : Icons.check_box_outline_blank,
+              size: 14,
+              color: task.status == 'completed'
+                  ? const Color(0xFF4CAF50)
+                  : const Color(0xFF606070),
             ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              task.title,
+            const SizedBox(width: 6),
+            // カテゴリ絵文字
+            Text(
+              task.categoryIcon,
               style: const TextStyle(
-                color: Colors.white,
                 fontSize: 12,
                 height: 1.5,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          SizedBox(
-            width: 70,
-            child: _instanceBadge(task),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Expanded(
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      task.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        height: 1.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (isDelayedNoPlan) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '⚠${task.delayDays}d',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ] else if (isDelayed) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF97316),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${task.delayDays}d',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(
+              width: 70,
+              child: _instanceBadge(task),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1961,4 +2136,133 @@ class _EmptyCard extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
       );
+}
+
+/// Win版#131 part 10: イナズマ線 (Lightning Line / 進捗実態線)
+///
+/// PM 古典の zigzag 進捗線を Gantt に重ねる。
+/// 各タスク行で:
+///   - 期待進捗 (今日 - start) / (end - start)
+///   - 実進捗 task.progress / 100
+///   - actual >= expected → 今日 X より右 (進んでいる)
+///   - actual <  expected → 今日 X より左 (遅れている)
+/// 全タスク行をポリラインで縦に結ぶ。色:
+///   - 全体 順調 → Green
+///   - 1 タスクでも遅延 → Orange
+///   - 遅延 + recovery_plan 未記入 → Red
+class _LightningLinePainter extends CustomPainter {
+  final List<WbsTask> tasks;
+  final double dayWidth;
+  final double rowHeight;
+  final DateTime timelineStart;
+  final DateTime today;
+
+  _LightningLinePainter({
+    required this.tasks,
+    required this.dayWidth,
+    required this.rowHeight,
+    required this.timelineStart,
+    required this.today,
+  });
+
+  double _dateToX(DateTime date) {
+    final s = DateTime(
+      timelineStart.year,
+      timelineStart.month,
+      timelineStart.day,
+    );
+    final dt = DateTime(date.year, date.month, date.day);
+    return dt.difference(s).inDays * dayWidth;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (tasks.isEmpty) return;
+    final todayX = _dateToX(today);
+    if (todayX < 0 || todayX > size.width) return;
+
+    final points = <Offset>[];
+    bool anyDelay = false;
+    bool anyDelayNoPlan = false;
+
+    for (var i = 0; i < tasks.length; i++) {
+      final t = tasks[i];
+      final y = i * rowHeight + rowHeight / 2;
+      double x = todayX;
+
+      if (t.startDate != null && t.endDate != null && t.status != 'completed') {
+        final startX = _dateToX(t.startDate!);
+        final endX = _dateToX(t.endDate!);
+        final barWidth = endX - startX;
+        if (barWidth > 0) {
+          // 期待進捗
+          final totalDays = t.endDate!.difference(t.startDate!).inDays;
+          final passedDays =
+              today.difference(t.startDate!).inDays.clamp(0, totalDays);
+          final expected = totalDays > 0 ? passedDays / totalDays : 0.0;
+          final actual = t.progress / 100.0;
+
+          // 実進捗位置 = bar 内での actual position
+          final actualX = startX + barWidth * actual;
+          x = actualX;
+
+          // 遅延判定
+          if (actual < expected - 0.05) {
+            anyDelay = true;
+            if (t.recoveryPlan.trim().isEmpty) {
+              anyDelayNoPlan = true;
+            }
+          }
+        }
+      } else if (t.status == 'completed' || t.endDate == null) {
+        // 完了済 or 期限なし → 今日 X 維持
+        x = todayX;
+      }
+
+      // overdue 強制左折れ
+      if (t.delayDays > 0) {
+        anyDelay = true;
+        if (t.recoveryPlan.trim().isEmpty) {
+          anyDelayNoPlan = true;
+        }
+      }
+
+      points.add(Offset(x.clamp(0.0, size.width), y));
+    }
+
+    // 線色決定
+    Color lineColor;
+    if (anyDelayNoPlan) {
+      lineColor = const Color(0xFFEF4444); // Red — 遅延 + 未記入
+    } else if (anyDelay) {
+      lineColor = const Color(0xFFF97316); // Orange — 遅延あり (recovery 記入済)
+    } else {
+      lineColor = const Color(0xFF22C55E); // Green — 順調
+    }
+
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path()..moveTo(points.first.dx, 0);
+    for (final p in points) {
+      path.lineTo(p.dx, p.dy);
+    }
+    path.lineTo(points.last.dx, size.height);
+    canvas.drawPath(path, paint);
+
+    // 各 anchor に小さな○
+    final dotPaint = Paint()..color = lineColor;
+    for (final p in points) {
+      canvas.drawCircle(p, 2.5, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _LightningLinePainter oldDelegate) =>
+      oldDelegate.tasks != tasks ||
+      oldDelegate.today != today ||
+      oldDelegate.dayWidth != dayWidth;
 }
