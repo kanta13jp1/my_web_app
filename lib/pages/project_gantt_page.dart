@@ -1237,16 +1237,6 @@ class _TaskRow extends StatelessWidget {
       ),
     );
   }
-
-  String _formatSchedule(DateTime? start, DateTime? end) {
-    String fmt(DateTime d) =>
-        '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
-    if (start != null && end != null) {
-      return '${fmt(start)} → ${fmt(end)}';
-    }
-    if (end != null) return '期限: ${fmt(end)}';
-    return '開始: ${fmt(start!)}';
-  }
 }
 
 // ── マイプロジェクト タブ ─────────────────────────────────────────────────────

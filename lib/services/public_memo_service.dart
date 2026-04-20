@@ -141,16 +141,19 @@ class PublicMemoService {
 
       final response = await _supabase
           .from('public_memos')
-          .upsert({
-            'note_id': noteId,
-            'user_id': userId,
-            'title': title,
-            'content': content,
-            'category': category,
-            'metadata': metadata,
-            'is_public': true,
-            'published_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'note_id,user_id',)
+          .upsert(
+            {
+              'note_id': noteId,
+              'user_id': userId,
+              'title': title,
+              'content': content,
+              'category': category,
+              'metadata': metadata,
+              'is_public': true,
+              'published_at': DateTime.now().toIso8601String(),
+            },
+            onConflict: 'note_id,user_id',
+          )
           .select()
           .single();
 
