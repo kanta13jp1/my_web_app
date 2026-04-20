@@ -115,7 +115,7 @@
 
 | 競合 | カテゴリ | 2026-04 動向 | 判定 | 住み分け根拠 |
 |------|---------|-------------|------|-------------|
-| **Cursor** (Anysphere) | AI コーディング IDE | **$50B 調達協議中 (mid-04・S17 再訂正) / $2B ARR 達成 (Jan2025 $100M→16 ヶ月で 20倍) / 2026 末 $6B run rate 予測 / a16z+Thrive co-lead+NVIDIA strategic** ※前期 $9.9B (Jun2025) → $29.3B (Nov2025) → $50B 噂 (Apr2026) と 9 ヶ月で 5 倍 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
+| **Cursor** (Anysphere) | AI コーディング IDE | **$50B 調達協議中 (mid-04・S25 2 社検証済) / $2B ARR 達成 (Jan2025 $100M→13 ヶ月で 20倍・Feb2026 到達) / 2026 末 $6B run rate 予測 / a16z+Thrive co-lead+NVIDIA strategic+Battery Ventures (新規・S25 追加)** ※前期 $9.9B (Jun2025) → $29.3B (Nov2025) → $50B 噂 (Apr2026) と **10 ヶ月で 5 倍** | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
 | **Cognition** (Windsurf+Devin) | AI 開発エージェント | Windsurf + Devin 統合 / $10.2B 評価 / LogRocket SWE-Bench #1 | 🟢 watchlist | 自律 SWE エージェント vs 個人 CEO 6 部署 |
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
 | **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
@@ -135,6 +135,7 @@
 *更新: PS版#4 S21 🔴 **OpenAI Codex Desktop 4/17 Computer Use + 90 plugin + MCP** = Claude Code と機能パリティ+α → 個人タスク自動化 Claude 一強崩壊 / Evernote 4 plan 再編 (Personal/Professional retire) / MoneyForward **AI Cowork** 7/launch (法人 BO 住み分け追認) | 2026-04-20 夜*
 *更新: PS版#4 S22 SCOREBOARD に S18-S21 delta 集約 + OpenAI Codex 行を Watchlist Backlog に追加 + 差別化軸 7 目「AI 手段の分散 vs 特化」を追加検討 | 2026-04-20 夜 late*
 *訂正: PS版#4 S24 **Codex 90 plugin → 20+ plugins (self-serve 未対応) に訂正** + Claude Code = 423 plugins / 2,849 skills / 177 agents (+ Desktop Extensions .mcpb / Plugins for Cowork ページ・claude.com/plugins) で **plugin ecosystem は Claude が約 20 倍優位**。S21「Claude 一強崩壊」narrative を「Computer Use はパリティ、ただし plugin ecosystem は Claude 優位」に修正 | 2026-04-20 夜 last*
+*検証: PS版#4 S25 Cursor 2 社交差検証済 — ARR Jan2025 $100M→Feb2026 $2B は **13 ヶ月** (not 16) / $9.9B→$50B は **10 ヶ月** (not 9) / 新投資家 Battery Ventures 追加 / $50B は依然「in talks」未確定 / S24 教訓 (2 社交差検証) 即適用 | 2026-04-20 夜 last 2*
 
 ---
 

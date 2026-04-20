@@ -13500,3 +13500,19 @@ CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
 **Philosophy**: 3 (mentor=handoff 明確化) / 4 (越境責任正しい分離=PS#5/Win・VSCode) / 6 (時間節約=PS#5 の TBD 調査を先回り) ✅
 
 **次回候補**: PS#5 修正完了後の B 11 件 source 削除 / horse_racing cron 長期監視 / Win/VSCode の agent-*-manager migrate を追跡 / DEAD_LIST stale 136 件の Supabase 側実在確認 (CLI access 必要)
+## 2026-04-20 PS版#4 S25 — S24 教訓の即自己適用 / Cursor 数字 2 社交差検証 audit
+
+**Why**: S24 で誕生した `feedback_success_20260420_two_source_triangulation.md` を「作って終わり」にせず、同日中に自己適用して習慣化。drift 履歴が最大の Cursor 関連数字 (過去 $60B→$9.9B→$50B と 3 度訂正) を 4 社交差で再検証。
+
+**Actions**:
+- WebSearch 1 発で TechCrunch + TheNextWeb + Yahoo Finance + Seeking Alpha + Tech Startups の 5 社交差
+- SCOREBOARD Cursor 行訂正: 「16 ヶ月」→「**13 ヶ月**」(Jan2025 $100M→Feb2026 $2B ARR) / 「9 ヶ月で 5 倍」→「**10 ヶ月で 5 倍**」($9.9B Jun2025→$50B Apr2026) / 新投資家 **Battery Ventures** 追加 / 「S25 2 社検証済」marker 追加
+- `memory/project_20260420_ps4_s25.md` 新規
+
+**大筋一致** (検証後も不変): $50B 調達協議中 / $2B ARR (Feb2026) / $6B run rate 予測 (2026 末) / a16z+Thrive co-lead+NVIDIA strategic
+
+**Philosophy**: 5/9 ✅ (原則 1 CEO 的品質管理 / 原則 2 S24 教訓の即習慣化 / 原則 6 1 検索で 5 社交差 = 時間効率 / 原則 7 数字精度=信頼資産 / 原則 8 昨日の自分を超えた)
+
+**未検証 round 2 対象**: Notion Custom Agents $10/1000 credit / Cowork $200→$20/seat+usage / LINE AI ¥750 / Nova 2 Lite $0.30/M / Gemini 3.1 Flash-Lite $0.25/M / Replit $9B (6 ヶ月 3 倍)
+
+**次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 軸 7 行 landed 確認 / 数字 2 社交差 audit round 2 (Notion credit 優先) / Win版 S21 PR routing follow-up / MoneyForward 7/launch 監視
