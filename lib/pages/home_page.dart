@@ -2796,30 +2796,31 @@ abstinence_slip_details: $slipDetailsText
                 onPressed: _showNextCalendarMonth,
                 icon: const Icon(Icons.chevron_right),
               ),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                alignment: WrapAlignment.end,
-                children: [
-                  _buildCalendarSummaryPill(
-                    label: '逸脱日数',
-                    value: '$slipDaysCount日',
-                    color: const Color(0xFFFF6B35),
-                    filter: _CalendarHighlightFilter.slip,
-                  ),
-                  _buildCalendarSummaryPill(
-                    label: '無傷日数',
-                    value: '$cleanDaysCount日',
-                    color: const Color(0xFF4CAF50),
-                    filter: _CalendarHighlightFilter.clean,
-                  ),
-                  _buildCalendarSummaryPill(
-                    label: '未設定日数',
-                    value: '$unsetDaysCount日',
-                    color: const Color(0xFFB0B0B0),
-                    filter: _CalendarHighlightFilter.unset,
-                  ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: WrapAlignment.start,
+            children: [
+              _buildCalendarSummaryPill(
+                label: '逸脱日数',
+                value: '$slipDaysCount日',
+                color: const Color(0xFFFF6B35),
+                filter: _CalendarHighlightFilter.slip,
+              ),
+              _buildCalendarSummaryPill(
+                label: '無傷日数',
+                value: '$cleanDaysCount日',
+                color: const Color(0xFF4CAF50),
+                filter: _CalendarHighlightFilter.clean,
+              ),
+              _buildCalendarSummaryPill(
+                label: '未設定日数',
+                value: '$unsetDaysCount日',
+                color: const Color(0xFFB0B0B0),
+                filter: _CalendarHighlightFilter.unset,
               ),
             ],
           ),
