@@ -14280,3 +14280,16 @@ orphan branches: 閾値以下 (cleanup 不要)。
 | **S23** | **Physical Intelligence** | **9/9 ⭐⭐** |
 
 **次回 PS#3 候補 (142 社目)**: Skild AI (CMU roboticists Pathak/Gupta / \$300M / Softbank) / Figure AI (humanoid \$675M) / 1X Technologies (Neo humanoid / OpenAI-backed) / **または S22 backlog 回帰** (Essential AI / Gradium / Vectara / Lakera AI)
+
+
+## 2026-04-20 PS版#6 S25 — 24 EF handoff 進捗監視 (4/23, 17.4%)
+
+**Why**: PS#5 S25 (07dda2a8) で music-collaboration 消化 → 4/23。handoff 継続的に +1/session pace (予想残 18h)。
+
+**Actions**:
+- tracker header S24→S25 bump (data は PS#5 が更新済)
+- horse_racing GHA cron drift 観察: 直近 8 run 間隔 47-116 min (GHA scheduler backoff 既知・hourly 指定でも厳密でない) / 24/24 success 維持
+
+**Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
+
+**次回候補**: PS#5 CRITICAL 残 3 件 (time-tracker/goal-tracker/habit-tracker) 消化待機 / 50% 到達まで軽監視
