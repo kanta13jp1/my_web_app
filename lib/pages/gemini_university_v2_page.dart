@@ -849,6 +849,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0891B2),
     officialUrl: 'https://exa.ai/',
   ),
+  'pleias': _ProviderMeta(
+    name: 'Pleias',
+    emoji: '📚',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://pleias.fr/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4349,6 +4355,49 @@ GPU マーケットプレイス・分散 RL 基盤 (prime-rl)・INTELLECT 系列
 - Docs: https://docs.exa.ai/
 - Python SDK: https://github.com/exa-labs/exa-py
 - TypeScript SDK: https://github.com/exa-labs/exa-js
+''',
+  'pleias': '''
+# Pleias — 完全オープン SLM + 出典引用ネイティブ (Common Corpus 2T / Apache 2.0)
+
+2024 年創業、パリ拠点の **「倫理的に訓練された完全オープン SLM」** スタートアップ。
+**public domain + permissively licensed データのみ** で pretrain した 2 兆トークン
+**Common Corpus** を公開。EU AI Act 対応カテゴリで一強。
+
+## 既存 133 社との差別化
+| 観点 | Pleias | Mistral | Llama 3 | Gemma |
+|------|--------|---------|---------|-------|
+| データ合法性 | ✅ 100% permissive | ⚠️ 不透明 | ⚠️ 不透明 | ⚠️ 不透明 |
+| ライセンス | Apache 2.0 | Apache (一部) | Llama CL | Gemma TOS |
+| RAG 特化 | ✅ Pleias-RAG シリーズ | 汎用 | 汎用 | 汎用 |
+| 出典引用 | ✅ ネイティブ | ❌ | ❌ | ❌ |
+
+## モデルラインナップ
+- **Pleias 1.0 (base)**: 350M / 1.2B / 3B params / EU 8 言語
+- **Pleias-RAG (RAG 特化)**: 350M / 1B / GGUF (CPU 最適化)
+- HotPotQA/2wiki で 4B 以下 SLM 最高スコア (Qwen-2.5-7B に勝つシーンあり)
+
+## 特殊能力 (RAG 派生)
+- Query reformulation / routing / source reranking
+- Literal quote citations (`[source:N]` 自動付与)
+- 引用信頼度スコア出力 (ハルシネーション対策)
+
+## 料金 (2026-04 時点)
+- HuggingFace Inference: \$0.0002/1K tok → 実質無料
+- HF Endpoints: \$0.06/hour (CPU) / \$0.60/hour (GPU T4)
+- llama.cpp GGUF: 自前 VPS \$5/月 で常時稼働可
+
+## 自分株式会社での活用
+- AI 大学: 学習コンテンツに出典引用自動付与
+- CS 対応: FAQ 回答に literal quote 添付で信頼性向上
+- daily-judgment: 過去履歴を sources として「昨日の自分」対話
+- EU コンプラ必須機能: Pleias-RAG-1B を main モデルに採用
+
+## 試す
+- Web: https://pleias.fr/
+- HuggingFace: https://huggingface.co/PleIAs
+- GitHub: https://github.com/Pleias/Pleias-Rag
+- 論文: https://arxiv.org/html/2504.18225v1
+- Common Corpus: https://huggingface.co/datasets/PleIAs/common_corpus
 ''',
 };
 

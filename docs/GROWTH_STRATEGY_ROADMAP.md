@@ -12508,6 +12508,28 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Philosophy alignment: 原則 6 (資本=時間 — sub-200ms で操作時間削減) / 原則 5 (商品=ユーザー価値 — clean markdown で LLM 後段品質向上) / 原則 1 (CEO 感 — agent が自律的に情報取得) / 原則 7 (資産 — 検索インフラは陳腐化しにくい)
 - **次回 PS#3 候補**: 134 社目 (Pleias AI 日本語 SLM / Essential AI / Imbue 推論 agent) + AI大学 news カテゴリ最新化バッチ + ai-hub に `exa_search` action 追加 (Win版に cross-instance-pr 依頼候補)
 
+## PS版#3 Session 16 (2026-04-20 18:00 JST) — AI大学 134 社化 (Pleias AI 追加)
+- **migration**: `supabase/migrations/20260420090000_seed_pleias_ai_university.sql` ($md$ tag / overview+models+api 3 行)
+- **UI**: `_providerMeta['pleias']` (📚 #7C3AED) + `_fallback` markdown (Common Corpus 2T / Apache 2.0 / citation ネイティブ)
+- **ai-university-update.yml**: Pleias を seed-only コメント列に追加
+- **Step 0 評価 8/9**:
+  1. ✅ 公式サイト (pleias.fr)
+  2. ✅ 最新モデル (Pleias-RAG-350M/1B / 2025 末リリース + GGUF)
+  3. ✅ ベンチマーク (HotPotQA/2wiki で 4B 以下 SLM 最高スコア / Qwen-2.5-7B 撃破)
+  4. ✅ API (HuggingFace Inference / HF Endpoints / llama.cpp GGUF)
+  5. ✅ 独自技術 (Common Corpus 2T tokens 完全オープン + literal quote citations ネイティブ)
+  6. ✅ OSS (Apache 2.0 / HuggingFace 全公開 / GitHub Pleias/Pleias-Rag)
+  7. ✅ SDK (transformers / llama.cpp / TRL fine-tune recipe 公式)
+  8. ⚠️ 資金調達情報 (公開少・French startup でベンチャー規模非公表)
+  9. ✅ 話題性 (VentureBeat / arxiv 2504.18225 / Techdirt 2026-03 Common Corpus 国際化)
+- **戦略意義**: 134 社目で **「EU AI Act 対応 / 完全オープンデータ」独自軸** を追加
+  - 既存 133 社で「完全公開訓練データ」を謳うのは Allen AI (OLMo) のみ → 多言語×RAG×Citation は Pleias 独占
+  - 自分株式会社の legal/compliance 要求機能 (CS ログ / daily-judgment の audit trail) で main model 候補
+  - HuggingFace Inference $0.0002/1K tok → **実質無料** で自前ホスト不要
+  - ハルシネーション対策: literal quote + confidence score で Sentinel 後段を省略可
+- Philosophy alignment: 原則 6 (資本=時間 — 小型 SLM で CPU 運用可 / コスト最小) / 原則 5 (商品=ユーザー価値 — 引用付き回答で信頼性向上) / 原則 7 (資産 — 完全オープン重み = 陳腐化リスクゼロ) / 原則 9 (ゴール=ウェルビーイング — EU AI Act 準拠で長期リスク回避)
+- **次回 PS#3 候補**: 135 社目 (Essential AI Thrive Capital / Imbue 推論 agent / Adept 後継) + AI大学 news カテゴリ最新化バッチ + ai-hub に `pleias_rag` action 追加 (CS-EF の FAQ 引用強化に Win版 cross-instance-pr 依頼候補)
+
 ## PS版#2 Session (2026-04-20 15:42 JST) — T-1 dispatch 確認 / Qiita retry 待機
 - **今朝の自動 dispatch (02:03 UTC)**: `2026-04-20-en.md` (Price Tracker) → dev.to 成功
   - URL: `https://dev.to/kanta13jp1/i-built-a-zero-cost-price-tracker-in-flutter-web-supabase-no-extra-edge-functions-needed-542m`
