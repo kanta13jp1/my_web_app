@@ -107,7 +107,7 @@ jobs:
           # RSS廃止/URL無効 (静的seedコンテンツを維持):
           # anthropic, meta, x, deepseek, mistral, perplexity, groq, cohere, ibm, sakana, baidu, stability, core, cerebras, prover
           # black_forest_labs, liquid_ai, recraft, krea, tencent, bytedance, inception_labs, world_labs, runware, sambanova
-          # decart, goodfire, prime_intellect, exa, pleias, imbue (seed only — RSS なし)
+          # decart, goodfire, prime_intellect, exa, pleias, imbue, thinking_machines (seed only — RSS なし)
           # 新規追加時は upsert_provider 行を追加する
 
           echo "success_count=${SUCCESS_COUNT}" >> $GITHUB_OUTPUT

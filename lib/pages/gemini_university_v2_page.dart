@@ -861,6 +861,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF6D28D9),
     officialUrl: 'https://imbue.com/',
   ),
+  'thinking_machines': _ProviderMeta(
+    name: 'Thinking Machines',
+    emoji: '🎯',
+    color: const Color(0xFFF59E0B),
+    officialUrl: 'https://thinkingmachines.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4442,6 +4448,54 @@ pretrain 段階から **推論特化 70B モデル** + OSS ツール群で研究
 - CARBS GitHub: https://github.com/imbue-ai/carbs
 - HuggingFace: https://huggingface.co/imbue-ai
 - 70B 訓練記事: https://imbue.com/research/70b-intro/
+''',
+  'thinking_machines': '''
+# Thinking Machines Lab — Mira Murati の \$12B AI ラボ (Tinker / John Schulman / \$2B seed)
+
+2024 年 SF 創業、CEO **Mira Murati** (元 OpenAI CTO)、
+Chief Scientist **John Schulman** (PPO/RLHF 発明、OpenAI 共同創業)。
+史上最大の seed \$2B (2025-07)、valuation **\$12B** → **\$50B** 議論 (2025-11)。
+
+## 既存 135 社との差別化
+| 観点 | Thinking Machines | OpenAI | Anthropic |
+|------|-------------------|--------|-----------|
+| 製品軸 | 🎯 研究者向け fine-tune platform (Tinker) | 消費者 ChatGPT | 企業 Claude |
+| OSS 姿勢 | 「significant open source」公言 | 限定 | 限定 |
+| Infra | Nvidia Vera Rubin 1GW 確保 | Azure | GCP + AWS |
+| 創業チーム | Murati + Schulman + OpenAI 出身 30+ | — | Amodei 兄妹 |
+
+## 主力製品
+- **Tinker** (2025-10 launch): LoRA fine-tune API (Llama/Mistral/Qwen/Gemma)
+- 自社基盤モデル: 2026 年公開予定、OSS 成分あり
+- 研究 blog: 論文級の公開実験 (HPO / RL / interpretability)
+
+## 資金調達
+- Seed: **\$2B** (2025-07, a16z 主導)、史上最大規模
+- Series A 議論: **\$50B** valuation (2025-11, Nvidia / a16z)
+- Nvidia: Vera Rubin GPU 1GW 分を長期契約
+
+## 自分株式会社での活用
+- daily-judgment: Tinker で jp カスタマーサポート LoRA を Qwen-7B に fine-tune
+- AI大学: Tinker が launch 次第、provider.chat 経由で自社 LoRA を routing
+- competitor-monitoring: Murati 新製品発表は最優先監視対象 (ex-OpenAI 流出情報)
+
+## 試す
+- Web: https://thinkingmachines.ai/
+- Tinker waitlist: https://thinkingmachines.ai/tinker
+- Blog: https://thinkingmachines.ai/blog
+- Python SDK: `pip install tinker` (waitlist 通過後)
+
+```python
+from tinker import Tinker
+tm = Tinker(api_key=os.getenv("TINKER_API_KEY"))
+job = tm.finetune.create(
+    base_model="Qwen/Qwen2.5-7B-Instruct",
+    dataset="my-jp-cs-dataset",
+    method="lora",
+    hyperparameters={"lora_r": 16, "num_epochs": 3},
+    job_name="jp-cs-v1",
+)
+```
 ''',
 };
 

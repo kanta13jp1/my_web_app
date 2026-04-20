@@ -12939,3 +12939,73 @@ commit d5b1e3f2: source dir 5 件削除 + DEAD_LIST 176 → 171。
 1. 🟡 残 live-dead 34 件は PS#5 の今後の hub 移行に追従
 2. 🟡 live-dead 検出を CI step で自動化 (weekly issue 起票)
 3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
+
+## Session PS#3-S18 (2026-04-20 19:45 JST) — AI大学 136 社化 (Thinking Machines Lab)
+
+### サマリ
+
+PS#3 S17 (Imbue 135 社目) に続き、**Thinking Machines Lab** を 136 社目に追加。
+Mira Murati (ex OpenAI CTO) + John Schulman (PPO/RLHF 発明) 創業の
+史上最大 seed (\$2B) AI ラボ。2025-10 launch の **Tinker** fine-tune platform で
+研究者向けに Llama/Mistral/Qwen/Gemma の LoRA fine-tune API を提供。
+
+### Liquid AI 重複検知 (教訓)
+
+当初 136 社目候補を Liquid AI に決定し migration 1 本作成したが、
+`grep 'liquid_ai'` で既登録 (line 420 / `20260416204310_seed_liquid_ai_ai_university.sql`) 判明。
+SQL ファイルを即 `rm` → Thinking Machines Lab に pivot。
+
+**教訓**: 新規プロバイダー決定後、seed 作成前に
+`grep -n "'<provider_key>'" lib/pages/gemini_university_v2_page.dart` を必ず実行。
+provider key 衝突検知を Step 0 の 10 番目として追加すべし。
+
+### Step 0 評価: 8/9
+
+| 観点 | 判定 | 根拠 |
+|------|------|------|
+| 公式サイト | ✅ | thinkingmachines.ai |
+| 最新モデル | 🟡 | 自社モデル 2026 年予定 (Tinker は base model 呼び出し API) |
+| ベンチマーク | ✅ | Tinker 論文 blog で HPO/RL 研究公開 |
+| API/SDK | ✅ | `pip install tinker` (waitlist 経由) |
+| 独自技術 | ✅ | LoRA fine-tune on-demand / ex-OpenAI 30+ 名 |
+| OSS | 🟡 | 「significant open source」公言あるが未公開 → -1 |
+| CLI/SDK | ✅ | Python SDK 公開 |
+| 資金 | ✅ | \$2B seed (史上最大) / \$12B → \$50B valuation |
+| 話題性 | ✅ | Murati + Schulman + Nvidia Vera Rubin 1GW 契約 |
+
+### 変更ファイル (4)
+
+1. `supabase/migrations/20260420110000_seed_thinking_machines_ai_university.sql` (new, 3 rows: overview/models/api, \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列に thinking_machines 追加)
+4. `docs/GROWTH_STRATEGY_ROADMAP.md` (本 Session 18 記録 / Liquid AI 重複検知教訓)
+
+### Philosophy alignment (9 原則)
+
+- 原則 1 (CEO 感): Tinker で自社 LoRA を即 routing → 外注 (Anthropic/OpenAI) 依存を縮小
+- 原則 6 (資本=時間): pre-trained モデル + LoRA で GPU 時間 90% 削減試算
+- 原則 7 (資産): 自社 LoRA weights = 陳腐化ゼロ資産 (Tinker job 完了で .safetensors 保有可)
+- 原則 8 (KPI=昨日の自分): 毎週の fine-tune job で「昨日より良い jp-cs モデル」を継続改善
+
+### 戦略的次の一手
+
+- **Tinker waitlist 登録** (Mira Murati 新製品は全 AI ラボ最優先監視対象)
+- **ai-hub.tinker_finetune action 設計** (launch 後、PR 起票) → Win版 cross-instance-pr 候補
+- **Thinking Machines 自社モデル 2026 公開監視** → OSS 成分次第で Phase 追加
+
+### 次回 PS#3 候補 (137 社目)
+
+- Essential AI (監視継続 — Vaswani が製品公開した瞬間に追加)
+- Adept 後継 (Amazon 買収残党 / ACT-1 系譜)
+- Reka AI (multimodal focus)
+- Kyutai (French Moshi voice AI)
+- Contextual AI (RAG 特化 / Matt Zaharia)
+- Snorkel AI (data-centric AI)
+- Haize Labs (AI red-teaming)
+
+### 教訓
+
+- 連続 5 プロバイダー追加 (S14→S15→S16→S17→S18) で seed-only + \$md\$ tag パターン完全定着
+- provider key 衝突検知を Step 0 に組込すべき (Liquid AI 重複 SQL 救済コスト 1 min)
+- 資金規模 \$2B seed は異例 — valuation に惑わされず Tinker の API 公開状況を真の評価軸に採用
+
