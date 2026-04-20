@@ -56,12 +56,17 @@ jobs:
 
     permissions:
       contents: write
+      # Win版#131 part 9: tag push が workflow file 変更を含む commit を指す場合の
+      # GitHub App `workflows` permission 拒否を回避
+      actions: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          # Win版#131 part 9: GH_PAT で push 認証 (workflow file 変更を含む tag push)
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
