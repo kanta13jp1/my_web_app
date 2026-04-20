@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// LP A/Bテストページ
-/// landing-ab-test Edge Function と連携してCTA/コピー最適化を管理
+/// growth-hub:landing.list_variants と連携してCTA/コピー最適化を管理
 class LandingAbTestPage extends StatefulWidget {
   const LandingAbTestPage({super.key});
 
@@ -29,8 +29,8 @@ class _LandingAbTestPageState extends State<LandingAbTestPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'landing-ab-test',
-        body: {'action': 'list'},
+        'growth-hub',
+        body: {'action': 'landing.list_variants'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['variants'] is List) {

@@ -397,6 +397,55 @@ serve(async (req: Request) => {
         return json({ success: true, tests: items });
       }
 
+      // ─── Landing Page A/B Test (global, app_analytics 集計) ─────────────────
+      case "landing.list_variants": {
+        const CTA_VARIANTS = [
+          { id: "cta_free", text: "無料で始める", color: "#4CAF50", style: "solid" },
+          { id: "cta_try", text: "今すぐ試す", color: "#2196F3", style: "solid" },
+          { id: "cta_join", text: "参加する（¥0）", color: "#FF5722", style: "solid" },
+          { id: "cta_start", text: "5秒で登録 →", color: "#9C27B0", style: "outline" },
+          { id: "cta_save", text: "月¥5,000節約する", color: "#FF9800", style: "gradient" },
+          { id: "cta_ai", text: "AIに仕事を任せる", color: "#00BCD4", style: "gradient" },
+        ];
+        const HEADLINE_VARIANTS = [
+          { id: "h_21apps", text: "21のアプリを1つに。しかも無料。" },
+          { id: "h_ai", text: "AIが12部署を自動運営する次世代アプリ" },
+          { id: "h_save", text: "月¥5,000以上のサブスクをゼロに" },
+          { id: "h_future", text: "あなたがやるのは「ゴール設定」だけ" },
+          { id: "h_all", text: "メモ・タスク・家計簿・SNS・AI — 全部入り" },
+        ];
+        const { data: assignments } = await admin
+          .from("app_analytics")
+          .select("metadata")
+          .eq("source", "ab_test_assignment");
+        const { data: conversions } = await admin
+          .from("app_analytics")
+          .select("metadata")
+          .eq("source", "ab_test_conversion");
+        const ctaStats: Record<string, { views: number; conversions: number }> = {};
+        for (const a of assignments ?? []) {
+          const cId = (a.metadata as Record<string, unknown>).cta_variant as string;
+          if (!cId) continue;
+          if (!ctaStats[cId]) ctaStats[cId] = { views: 0, conversions: 0 };
+          ctaStats[cId].views++;
+        }
+        for (const c of conversions ?? []) {
+          const cId = (c.metadata as Record<string, unknown>).cta_variant as string;
+          if (cId && ctaStats[cId]) ctaStats[cId].conversions++;
+        }
+        const variants = [
+          ...CTA_VARIANTS.map((v) => {
+            const s = ctaStats[v.id] ?? { views: 0, conversions: 0 };
+            const cvr = s.views > 0
+              ? Math.round((s.conversions / s.views) * 10000) / 100
+              : 0;
+            return { ...v, kind: "cta", views: s.views, conversions: s.conversions, conversion_rate: cvr };
+          }),
+          ...HEADLINE_VARIANTS.map((v) => ({ ...v, kind: "headline", views: 0, conversions: 0, conversion_rate: 0 })),
+        ];
+        return json({ success: true, variants });
+      }
+
       // ─── Quote ────────────────────────────────────────────────────────────────
       case "quote.create": {
         const item = await addItem(admin, "share_quote", userId!, {
