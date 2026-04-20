@@ -372,8 +372,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             loading: _loadingWbs,
             filterInstance: _filterInstance,
             filterMilestone: _filterMilestone,
+            hideCompleted: _hideCompleted,
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
+            onToggleHideCompleted: (v) =>
+                setState(() => _hideCompleted = v ?? false),
           ),
           _GanttTimelineTab(
             milestones: _milestones,
@@ -413,8 +416,10 @@ class _WbsTab extends StatelessWidget {
   final bool loading;
   final String? filterInstance;
   final String? filterMilestone;
+  final bool hideCompleted;
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
+  final ValueChanged<bool?> onToggleHideCompleted;
 
   const _WbsTab({
     required this.milestones,
@@ -422,8 +427,10 @@ class _WbsTab extends StatelessWidget {
     required this.loading,
     required this.filterInstance,
     required this.filterMilestone,
+    required this.hideCompleted,
     required this.onFilterInstance,
     required this.onFilterMilestone,
+    required this.onToggleHideCompleted,
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
@@ -431,6 +438,9 @@ class _WbsTab extends StatelessWidget {
           return false;
         }
         if (filterMilestone != null && t.milestoneCode != filterMilestone) {
+          return false;
+        }
+        if (hideCompleted && t.status == 'completed') {
           return false;
         }
         return true;
@@ -507,6 +517,37 @@ class _WbsTab extends StatelessWidget {
           milestones: milestones,
           onFilterInstance: onFilterInstance,
           onFilterMilestone: onFilterMilestone,
+        ),
+        const SizedBox(height: 8),
+        // Win版#131 part 12 / PS#2 S17 VSCode handoff: WBS タブにも未完了 filter
+        Row(
+          children: [
+            Checkbox(
+              value: hideCompleted,
+              onChanged: onToggleHideCompleted,
+              side: const BorderSide(color: Color(0xFF707070)),
+              activeColor: const Color(0xFFFF6B35),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            const Text(
+              '未完了のみ',
+              style: TextStyle(
+                color: Color(0xFF9CA3AF),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              '表示: ${_filtered.length} / ${tasks.length} 件',
+              style: const TextStyle(
+                color: Color(0xFF707070),
+                fontSize: 11,
+                height: 1.5,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
 
@@ -1095,7 +1136,7 @@ class _TaskRow extends StatelessWidget {
               ],
             ),
           ],
-          if (task.endDate != null) ...[
+          if (task.startDate != null || task.endDate != null) ...[
             const SizedBox(height: 4),
             Row(
               children: [
@@ -1106,13 +1147,36 @@ class _TaskRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
-                  style: const TextStyle(
-                    color: Color(0xFF505050),
+                  [
+                    if (task.startDate != null)
+                      '開始予定: ${task.startDate!.year}/${task.startDate!.month.toString().padLeft(2, '0')}/${task.startDate!.day.toString().padLeft(2, '0')}',
+                    if (task.endDate != null)
+                      '完了予定: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
+                  ].join('  '),
+                  style: TextStyle(
+                    color: task.delayDays > 0
+                        ? const Color(0xFFEF4444)
+                        : const Color(0xFF505050),
                     fontSize: 10,
+                    fontWeight:
+                        task.delayDays > 0 ? FontWeight.w700 : FontWeight.w400,
                     height: 1.5,
                   ),
                 ),
+                if (task.delayDays > 0) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '(${task.delayDays}日遅延${task.recoveryPlan.trim().isEmpty ? " · 案未記入" : ""})',
+                    style: TextStyle(
+                      color: task.recoveryPlan.trim().isEmpty
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFFF97316),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ],
             ),
           ],

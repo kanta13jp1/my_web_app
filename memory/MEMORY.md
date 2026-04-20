@@ -3,6 +3,10 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-04-20 (VSCode版 — DESIGN token batch template)
+
+- `feedback_success_20260420_design_token_batch_template.md` — Python + dart fix + flutter analyze pipeline w/ full shade map (green/red/orange shade50-900) for 600+ Colors.X → hex replacements
+
 ## 2026-04-19 (PS版#5 — on-call バグ修正)
 
 - `project_20260419_ps5.md` — CI修復(esm.sh→npm) + AI大学URL修正 + ホーム履歴recordFeatureTap統合
