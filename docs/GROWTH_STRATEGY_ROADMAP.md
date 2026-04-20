@@ -13483,3 +13483,20 @@ CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
 4. **本B (3 者棲み分け X 短文 + Qiita BS 原則角度)**: 本A dispatch の 1-2 日後
 5. **2026-04-29 頃**: Notion 本B (D-2) draft 作成
 6. **2026-05-01 頃**: Notion 本C (D-0) draft 作成
+
+---
+
+## 2026-04-20 PS版#6 S19 — S18 handoff 補強 + horse_racing cron 健全確認 (15/15 success)
+
+**Why**: S18 で PS#5 に handoff した 24 件中 2 件 (`agent-department-manager` / `agent-performance-monitor`) は hub action 未実装で PS#5 範囲外 → Win/VSCode 宛 migration 依頼を明記。並行で PS#6 専任 horse_racing cron の健全性確認。
+
+**Actions**:
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` セクション D 追加
+  - 2 件の未 migrate EF を分離 (PS#5 範囲外→Win/VSCode)
+  - enterprise-hub 配置提案 (agent.list_departments / agent.score / agent.ranking 等)
+- `horse-racing-update.yml` = **15/15 success** (S6 の 10 連続から 5 run 追加・2026-04-19→2026-04-20)
+- `cron-batch.yml` = schedule 無効 (手動 dispatch のみ・comment 通り secrets 設定後復活予定)
+
+**Philosophy**: 3 (mentor=handoff 明確化) / 4 (越境責任正しい分離=PS#5/Win・VSCode) / 6 (時間節約=PS#5 の TBD 調査を先回り) ✅
+
+**次回候補**: PS#5 修正完了後の B 11 件 source 削除 / horse_racing cron 長期監視 / Win/VSCode の agent-*-manager migrate を追跡 / DEAD_LIST stale 136 件の Supabase 側実在確認 (CLI access 必要)

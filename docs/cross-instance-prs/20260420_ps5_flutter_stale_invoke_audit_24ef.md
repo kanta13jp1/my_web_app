@@ -69,8 +69,8 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | EF | Flutter page | target hub action |
 | --- | --- | --- |
 | ab-testing-manager | lib/pages/ab_testing_manager_page.dart:42,68 | enterprise-hub:ab.create |
-| agent-department-manager | lib/pages/agent_department_manager_page.dart:32 | TBD (enterprise-hub?) |
-| agent-performance-monitor | lib/pages/agent_performance_monitor_page.dart:32 | TBD (enterprise-hub?) |
+| agent-department-manager | lib/pages/agent_department_manager_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
+| agent-performance-monitor | lib/pages/agent_performance_monitor_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | calendar-events | lib/pages/calendar_events_page.dart:58,107,129 | app-hub:calendar.create / calendar.list |
 | chat-messaging | lib/pages/team_chat_page.dart:46,74,98 | app-hub:chat.send / chat.list |
 | competitor-feature-sync | lib/pages/competitor_feature_sync_page.dart:32,61 | enterprise-hub:competitor.sync |
@@ -85,6 +85,21 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 ### C. S16 既 handoff 済 (再掲・1 件)
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature
+
+### D. 🆕 未 migrate EF 2 件 (PS#5 範囲外 → Win/VSCode 宛 migration 依頼)
+
+`agent-department-manager` / `agent-performance-monitor` は:
+- deploy-prod.yml `Hub対応表` コメント (line 350+) にも記載なし
+- 対応する hub action が **どの hub にも存在しない** (PS#6 S19 grep 確認)
+- Flutter 側はまだ旧 EF 名で invoke (agent_department_manager_page.dart / agent_performance_monitor_page.dart)
+
+→ まず **hub action を追加する migration が必要** (Win/VSCode 担当)。その後に PS#5 が Flutter invoke を差し替え。
+
+提案配置 (enterprise-hub):
+- `enterprise-hub:agent.list_departments` / `agent.upsert_department` / `agent.move_agent` ← agent-department-manager
+- `enterprise-hub:agent.score` / `agent.ranking` / `agent.alerts` / `agent.record_perf` ← agent-performance-monitor
+
+(12 部署定義 `DEFAULT_DEPARTMENTS` は新 migration + table で seed 推奨)
 
 ## 修正テンプレ (A/B 全 24 件共通)
 
