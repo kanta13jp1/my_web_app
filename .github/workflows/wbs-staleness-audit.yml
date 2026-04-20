@@ -71,6 +71,7 @@ jobs:
         if: steps.audit.outputs.overdue_list != ''
         env:
           OVERDUE: ${{ steps.audit.outputs.overdue_list }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           DATE=$(date -u +%Y%m%d)
           mkdir -p docs/cross-instance-prs
@@ -119,5 +120,3 @@ jobs:
             --label "wbs-audit,automated" \
             --base main \
             --head "$BRANCH" || true
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
