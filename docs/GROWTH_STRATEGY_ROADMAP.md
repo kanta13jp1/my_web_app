@@ -14064,3 +14064,70 @@ Migration timestamp: **190000** 使用 (180000 WBS reassign ai_hub の直後)
 
 - **handoff の会計分類命名法**: S12 で「月次消費型負債」(credit metered / Notion 型) / S13 で「月次強制負債」(commit / Anthropic 型) と 2 分類を発明 → 今後の vendor 分析 (Gemini / Cursor / Cognition 等) に再利用可
 - **2 段ロケット framing**: Qiita BS 本B に「metered → commit」と負債パターンを 2 段構成で並べると「1 社に賭けるな」主張の micro 根拠が 2 重に積み上がる
+## PS#1 S19 — Win版#131 part 19 migration SQL syntax fix (2026-04-20 19:40-19:50 JST)
+
+### Rule 17 WF health 発見
+
+Deploy to Production 11 runs: 1 success / 3 failure / 7 cancelled (cascade + 恒常失敗で健康度悪化)。
+
+最新 failure 24660954492 (b7c1468) 調査:
+
+```
+ERROR: syntax error at or near "ALL" (SQLSTATE 42601)
+At statement: 2
+Applying migration 20260420180000_wbs_reassign_ai_hub_tasks.sql...
+```
+
+### 原因
+
+Win版#131 part 19 (9e777fba) の migration description 内で unescaped シングルクォート `'ALL'` 使用:
+
+```sql
+VALUES (
+  'WBS 残 ALL タスク追加 reassign (ai-hub/...)',
+  '本番 UI で 'ALL' 残存していた ai-hub...',  -- ← parser が 'ALL' を閉じクォート扱い
+  ...
+)
+```
+
+### 修正 (commit bbafd69c)
+
+PS#1 S10 pattern (`$md$...$md$` dollar-quoting) 適用:
+
+```sql
+VALUES (
+  $md$WBS 残 ALL タスク追加 reassign (ai-hub/...)$md$,
+  $md$本番 UI で 'ALL' 残存していた ai-hub...$md$,
+  '2026-04-20'
+)
+```
+
+### 検証
+
+run 24662014783 (bbafd69c) → **success** (Deploy to Production Environment 緑化)。
+
+### Rule 17 WF health 再集計
+
+| WF | state |
+|---|---|
+| Deploy to Production | bbafd69c で復旧 — 次 run 以降 green 見込 |
+| Horse Racing Auto Update | 1 in_progress / 1 success |
+| 他全 WF | green |
+
+orphan branches: 閾値以下 (cleanup 不要)。
+
+### Philosophy Alignment
+
+- 原則 7 (資産=過去 feedback memory 即参照で復旧短縮 / 負債=deploy 連鎖停止回避)
+- 原則 8 (KPI=昨日の自分・S10 の同パターン 30 分で判定完了)
+- 整合性: 8/9
+
+### S19 commit
+
+- `bbafd69c` fix: WBS reassign migration 'ALL' quote エスケープ ($md$ 化)
+
+### 次回 PS#1 候補
+
+1. 🔴 migration 事前 lint CI 追加検討 (psql --dry-run / sqlfluff) — 今回のような quoting bug を pre-merge で検出
+2. 🟡 migration description を `$md$` 化する inject-rules 追加 (ASCII apostrophe 含む場合)
+3. 🟢 S14 副作用 1 週間測定 (継続)
