@@ -269,13 +269,13 @@ PS#4 rebase 後、本 PR と並行して以下が既起票されていた。役�
 
 完了時は各々 `docs/cross-instance-prs/done/` に移動し、本 PR の先頭 status ステッカーを更新してください。
 
-## 未決定事項 (user 決裁 要)
+## 決裁済み事項 (user confirmed 2026-04-20 夜 by PS#4 S30)
 
-1. T4 の方針 (A) (B) — 「ユーザー数タスクを 10 倍に explode するか?」 (Win版推奨は (A))
-2. T2 の「遅延でリカバリー案 empty = エラー?」 severity — 強制 error or warning?
-3. T1 の「イナズマ線 = classic progress line」解釈合ってますか? (縦 S-curve で合ってる前提で設計)
+1. ✅ **T4 = (A) shared keep + UI warning** — `instance='all'` 3 件 (ユーザー数 50/500/5000) は共同責任として残置。Gantt UI 側で `instance='all'` 行に共同責任 badge + 警告表示を追加 (T9 内で実装)。複製はしない。
+2. ✅ **T2 = (A) error block** — 遅延タスクで `recovery_plan` が empty の場合は強制 error。`wbs.update_progress` で delayed 判定時に `recovery_plan` 未入力なら save 失敗 + UI banner「遅延タスクには必ずリカバリー案を入力してください」。defense-in-depth: EF 側 + UI validation 両方実装。
+3. ✅ **T1 = (B) S-curve progress overlay** — 既存の今日縦線 (今日線) に加え、**累計進捗率 S-curve overlay** を Gantt 上部に重ね描き。planned (start/end ベース期待進捗) と actual (completed tasks の progress 加重平均) の 2 本線で乖離可視化。
 
-← これらは各担当が着手前に user 確認推奨。
+← 上記 3 判断により担当着手 block 解除。残 3 未決定なし。
 
 ---
 
