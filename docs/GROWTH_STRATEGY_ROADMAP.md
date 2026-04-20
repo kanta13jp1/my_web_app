@@ -14675,3 +14675,61 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 
 - **fix 直後の health check 習慣**: S21 修正後 20 分以内に rule17-wf-health 再実行 → cancellation regression / GH006 追加影響 を即検出できる体制
 - **cascade cancel の historical vs current 判別**: `gh api /runs/<id>/jobs` の total_count=0 が見えたら「過去の parse error run」 or 「cascade cancel」なので、現在 live の run まで遡って判定する
+
+---
+
+## PS版#3 Session#25 (2026-04-20 22:20 JST) — AI大学 143 社化: Sierra 追加
+
+### 実装サマリ
+- **Provider 追加**: Sierra (sierra.ai) — 第 143 社目
+  - Founders: Bret Taylor (OpenAI 取締役会長・元 Salesforce 共同 CEO) + Clay Bavor (元 Google Labs VP)
+  - Launch: 2024-02 GA (stealth 2023)
+  - Vertical: **agentic customer experience (CX) SaaS** (既存 142 社空白軸を充足)
+- **Seed file**: `supabase/migrations/20260420230000_seed_sierra_ai_ai_university.sql` (199 行)
+- **Sections**: overview / models / api 3 段構成 (既存 PS#3 template 踏襲)
+- **Commit**: b5b37aaa (fdafd7db..b5b37aaa push to main success)
+
+### 数字 (Sacra 推計 2026-01 時点)
+- ARR **$150M** (2026-01) ← $130M ← $100M (2025-11) ← $26M (2024-12)
+- 7 四半期で $0→$100M ARR (SaaS 史上最速クラス)
+- 2024-10 Series B $175M @ $4.5B valuation (Sequoia)
+- 2025-09 Series C $350M @ $10B valuation (Greenoaks)
+- 累計 $635M / 3 round / 5 投資家
+- 11 ヶ月で valuation 2.2 倍
+- Fortune 50 の **40%** に浸透
+
+### 差別化軸 (既存 142 社対比)
+- 「エンタープライズ CX 専業 agent」軸は空白 → Sierra が首位
+- Harvey (法務) / Manus (汎用) と合わせて **vertical agentic SaaS 3 強** を形成
+- outcome-based pricing 世界初定着 = 成功 resolution 単価課金
+- voice channel が text 超えて primary (2025-10)
+
+### Step 0 Score: 8/9
+- OSS/weights 非公開 → -0.5
+- API 顧客契約限定 → -0.5
+- それ以外 9 軸全通過
+
+### Philosophy alignment (Rule 22)
+- 原則 5 (商品=ユーザー価値): Sierra の「成功単位課金」思想を growth-hub で mirror ✅
+- 原則 6 (資本=時間): WebSearch 2 回 + 1 seed = 30 分で 199 行追加 ✅
+- 原則 7 (資産負債 BS): closed SaaS なので自社費用 0 / 思想 asset として取り込み ✅
+- 原則 8 (KPI=昨日の自分): resolution rate / CSAT / cost-per-resolve 3 指標 dashboard 思想輸入 ✅
+- 原則 9 (IPO/ウェルビーイング): 個人 SaaS には直接使えないが CS 効率化思想は長期 ✅
+- 整合性: **5/9** (Rule 22 → 即実装可)
+
+### 学び (次回適用可)
+- **WebSearch 2 回 pattern 安定**: 1 回目 = funding/founder/ARR 大枠 / 2 回目 = 顧客・pricing 詳細
+  → seed 3 section (overview/models/api) を埋める最適 workflow
+- **個人 SaaS 非対応 closed B2B SaaS も AI大学価値あり**: 思想 (outcome-based pricing) と
+  dashboard 設計 (3 指標) を growth-hub / daily-judgment に水平移植できる
+- **vertical agentic SaaS 3 強フレーム発明**: Harvey (法務) / Sierra (CX) / Manus (汎用) で
+  「業界特化型 agent SaaS」の AI大学 categorization 提案 → 第 13 カテゴリ候補
+
+### 次回候補 (S26 以降)
+1. **Figure AI** — 🤖 humanoid robot ($39B valuation / Helix VLA)
+2. **Etched** — 🔥 Sohu Transformer-only ASIC ($120M / Peter Thiel)
+3. **Reflection AI** — 👨‍💻 autonomous coding (Misha Laskin DeepMind / $130M)
+4. **Glean** — 🔍 enterprise search (Arvind Jain / $4.6B valuation)
+5. **Lovable** — 🛠️ AI app builder (Anton Osika / $17M ARR in 3 months)
+
+144 社目推奨: **Figure AI** (embodied AI の hardware + vertical 軸 → PI S23 との 2 象限補完)
