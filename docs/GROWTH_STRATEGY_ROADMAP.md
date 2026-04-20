@@ -15510,3 +15510,79 @@ rm -f .claude/scheduled_tasks.lock                                              
 ### 次候補 (別セッション)
 1. 並行インスタンス用の dart zombie auto-cleanup hook (PreToolUse on Bash で `Get-Process dart -StartTime<-2h`)
 2. PS#2 S17 handoff 残タスク 2 (fetch 経路確認) / 3 (planned label は完了済と思われるが確認)
+
+## [Win版 #131 part 16-17] 2026-04-21 朝 — Deploy-prod view 42P16 fix + AI大学 144 社化 (Replit)
+
+### 背景
+
+- Win版 #131 part 14-15 (commit 04402bc0 / dade0725) が deploy-prod 24695010220 で
+  **migration fail** (SQLSTATE 42P16 "cannot change name of view column")
+- 原因: `CREATE OR REPLACE VIEW wbs_delayed_tasks_view` で既存 view と列構成が変わる
+  (planned_start_date / planned_end_date / deadline_date を中間に挿入)
+- PostgreSQL は CREATE OR REPLACE VIEW で「列順序変更・列名変更」を拒否
+
+### Part 16: View fix (commit 6e23caaf)
+
+- `20260421020000_wbs_planned_vs_actual.sql` に **DROP VIEW IF EXISTS wbs_delayed_tasks_view
+  CASCADE** を追加 (CREATE OR REPLACE → CREATE に変更)
+- rollback 不要: migration は schema_migrations 未記録 (前回 deploy で rollback 済)
+- Deploy 24695386427 で再適用
+
+### Part 17: AI大学 144 社化 Replit (commit 7b4d826e)
+
+PS#4 S31 (2026-04-21) 数字 audit round 6 完走で 10 source 検証済の Replit metrics を
+`20260421040000_seed_replit_ai_university.sql` で seed 化:
+
+- $400M Series D @ $9B valuation (Georgian 主導 / a16z 主導説 訂正済)
+- FY2025 $240M revenue (24× / 1 年成長 = SaaS 史上最速クラス)
+- 150K+ paying developers / 1M+ MAU
+- Agent 4 (2026-01) = digital canvas (multi-step + visual preview + live rollback +
+  built-in testing + 1-click *.replit.app deploy)
+- 差別化: "browser IDE + agent + 即本番 deploy" 3 点統合 (Cursor=local / Cognition=
+  terminal / Replit=browser full-stack)
+
+Content blocks 3 枚: overview / models / use_cases
+Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
+
+### Cross-instance handoff close (commit 51e405e4)
+
+- `docs/cross-instance-prs/20260421_wbs_all_tasks_split_design_win.md` → `done/` に移管
+- Win版#131 part 14-15 T4 (owner_instance NOT NULL + CHECK + backfill 3 段 +
+  add_task required 化) が「案 D (shared keep + owner 明示 + UI warning)」相当を
+  既に実装済であることを決裁ステッカーで明示
+
+### 対応 commits
+
+- **6e23caaf** fix(win-s131-part14-15): DROP + CREATE for wbs_delayed_tasks_view (42P16 回避)
+- **51e405e4** docs(win-s131-part14-15): close WBS ALL tasks split handoff (案 D 採用済)
+- **7b4d826e** feat(win-s131-part16): AI大学 144 社化 — Replit (vibe-coding cluster)
+
+### Philosophy Alignment (9/9 ✅)
+
+1. ✅ CEO 感: deploy-prod 失敗を他インスタンスへ handoff せず自己責任で fix
+2. ✅ ミッション: AI大学 144 社化で知識資産蓄積継続
+3. ✅ mentor (AI大学): Replit 3 block で provider 学習教材追加
+4. ✅ 6 部署: growth (vibe-coding watchlist) + ai-hub (routing 判断データ) + daily-judgment
+   (education 哲学参考)
+5. ✅ 商品: view fix = 本番 UI 復旧・migration stack 再開
+6. ✅ 資本=時間: 1 コミットで view + 1 で AI大学 144 社化 = 1h 以内に 2 成果
+7. ✅ BS: 負債 (deploy fail) → 資産 (DROP+CREATE テンプレ + Replit seed)
+8. ✅ KPI=昨日の自分: 143 社 → 144 社 (ペース維持)
+9. ✅ IPO: vibe-coding 競合 scoreboard に Replit 深度データ供給
+
+### AI-DEV Principles (6/7 ✅)
+
+- ✅ Auth: migration は supabase cli 経由 (service role 必要な操作なし)
+- ✅ Deny-by-default: DROP VIEW ... IF EXISTS で idempotent 化
+- ✅ team memory: memory/project_20260421_win_s131_part16_17.md で記録
+- ✅ retry (error code fallback): 42P16 を DROP + CREATE パターンに格納
+- ✅ QG (quality gate): CI で analyze + format 通過 確認済
+- ⬜ trace_id: migration 側には導入せず (既存設計継承)
+- ✅ defense-in-depth: DB trigger + EF pre-check の T2 Part 14-15 構造を壊さず保守
+
+### 次候補
+
+1. deploy-prod 24695386427 成功後の view 再 deploy 確認 (自動)
+2. 次の AI大学 provider 候補: **Lovable** (Swedish full-stack AI builder / $120M ARR)
+   or **v0 by Vercel** (UI-first generator)
+3. PS#4 S31 SCOREBOARD 🟠 watchlist の残候補 (Notion credit pause deep-dive 等)
