@@ -15117,3 +15117,36 @@ Files: SCOREBOARD (Replit 行 + S31 block + 残 round 0) / memory/project_202604
 整合性 **6/9** ✅
 
 **Horse racing**: Auto Update 3/3 success 継続 (S6→S24 streak)
+## [PS版#1 S24] 2026-04-21 朝 — Rule 17 WF health check + deploy-prod 3 連続失敗修復 + issue-to-wbs shell injection 修復
+
+**3 連続 Deploy 失敗原因**: lint (`require_trailing_commas` / lib/services/public_memo_service.dart:153) — d1edf86e (fix: upsertMemo onConflict追加) で trailing comma 未付与 → 以降 3 deploy (ad96661b / 0e277e1d / ab95320f) 全失敗 → lint 通らず `Deploy to Production` job skipped。
+
+**修復** (c654571c→8b14ca4d):
+- `onConflict: 'note_id,user_id')` → `onConflict: 'note_id,user_id',)` (1 char `,` 追加)
+- Deploy #24693207463 (sha=8b14ca4d) 再実行トリガー
+
+**もう 1 件: Issue → WBS Auto-Sync 失敗** (run #24688530422):
+- エラー: `line 3: public-memo-share: command not found` (exit 127)
+- 根本原因: `${{ github.event.issue.title }}` 等を **直接 bash script 内に interpolation** → issue title が `$(...)` / `` `...` `` / `${...}` 含むと **shell injection** 発動 → GitHub Actions セキュリティ脆弱性でもある
+- 修復 (d712b34b→77f5baa2): 全 step を `env:` 経由で値を passthrough + JSON 生成を `python3 <<'PY' ... PY` に移行 → bash interpolation 完全排除
+
+**concurrency observation (前 session S23 積み残し)**:
+- PS#6 S22 deploy 232b278 cancel の件 = **GitHub Actions 標準挙動** (`cancel-in-progress: false` でも 1 concurrency group 内で「**最新の queued run 1 本のみ残る**」仕様)
+- 本 session でも 77f5baa2 (私の commit) が 4f7c728b (6 秒後 PS#6 push) で cancel 確認
+- 重要: **最終 deploy は HEAD を build するため commit 内容は失われない** (別 run で deploy される)
+- 真の対策は `concurrency.group: deploy-prod-${{ github.sha }}` (per-sha 分離) だが queue 時間 × commit 数で build 時間増大 → cost/benefit 要検討 → 一旦 document 化で止める
+
+**Rule 17 健全性**:
+- orphan branches: blog-publish=0 / ai-university-update=0 / cs-check=0 / claude/*=3 (通常の作業枝)
+- concurrency 全 WF audit: 20+ file 全て 適切 (`cancel-in-progress: false` 主力 / claude-agent-review のみ true for PR)
+- 全 schedule WF success 継続: horse_racing / wbs-staleness-audit / Infra Health Check / CS Check / EF UI Audit
+
+**Philosophy Alignment (PS#1 S24)**:
+- 主要作業: 3-deploy 連続失敗解消 + issue-to-wbs shell injection 修復
+- 該当原則: 5 (商品=ユーザー価値 / 本番 deploy 回復) / 8 (KPI=昨日の自分 / 前 session 積み残し concurrency 仕様 clarify)
+- 整合性スコア: 6/9 ✅ (CEO感 / ミッション駆動 / 6部署バランス / 商品=ユーザー価値 / 資本=時間 / KPI)
+- 懸念: なし
+
+Files: lib/services/public_memo_service.dart / .github/workflows/issue-to-wbs.yml / 本 entry
+
+---
