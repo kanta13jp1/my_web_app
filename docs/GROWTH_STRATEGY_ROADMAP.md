@@ -12710,3 +12710,25 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   3. 🟢 Notion 動向監視 (無料延長 / 個人課金拡大 検知)
   4. 🟢 5/19-20 Google I/O 監視
 - Philosophy alignment: 原則 5 (商品=価値 — 予測可能な無料) / 原則 6 (資本=時間 — credit 残高ウォッチ撲滅) / 原則 8 (KPI=昨日の自分 — 課金不安で中断しない) / 原則 2 (ミッション駆動 — D-14 early 起票)
+
+---
+
+## PS版#2 Session 4 (2026-04-20 17:05 JST) — qiita-retry skill Gate ロジック更新 (S3 学習反映)
+
+- **コミット**: (本セッション末で push)
+- **目的**: S3 probe で確定した「Qiita 72h+ 長期 cooldown」を skill の実行前チェックに反映
+- **更新前** (Gate 1 = UTC 15:00 / 2 段階):
+  - Gate 1: UTC 15:00 未満で即停止 (JST 00:00 固定リセット前提 — **誤前提**)
+  - Gate 2: 直近 6h 429 チェック → 12h 待機
+- **更新後** (Gate 1 = 72h / 3 段階):
+  - Gate 1: **直前 72h の Qiita 429 = 0 件** (真の cooldown 長)
+  - Gate 2: 直近 6h 429 チェック + success ≥ 2 で burst 警戒
+  - Gate 3 (新規): **Burst 間隔 1 本/1h+** (直近 1h Qiita success があれば停止)
+  - 429 対処: **72h 待機** (旧 12h)
+  - 日次 dispatch: **1-2 本/日** (旧 4 本/日)
+  - Qiita support 連絡手順追加 (支援フォームリンク)
+- **変更ファイル**: `.claude/skills/qiita-retry/SKILL.md`
+- **運用インパクト**:
+  - 40 本 backlog 完遂 = 最短 20-40 日 (1-2 本/日 ペース)
+  - 無駄な probe dispatch でのトークン浪費を Gate 1 で事前阻止
+- Philosophy alignment: 原則 6 (資本=時間 — 429 無駄試行を skill 段階で阻止) / 原則 7 (資産=skill の信頼性向上・負債=誤前提を解消) / 原則 8 (KPI=昨日の自分 — S3 学習を即 skill に回収)
