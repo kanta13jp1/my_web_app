@@ -13152,3 +13152,22 @@ SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 1. 🔴 inject-rules.txt に migration HH分担ルール追加 (PS=00-10/Win=15-20/VSCode=25-30)
 2. 🟡 S14 副作用 = deploy-prod pending-replacement cancel 対策判断 (SHA-scoped group / auto-rerun / allow)
 3. 🟢 GHA yml parse lint GitHub Pre-commit hook 化 (`gh workflow run --dry-run` 相当が無いため sim)
+---
+
+## 2026-04-20 PS版#4 S23 — 3 者棲み分け SNS 素材 PS#2 handoff (差別化軸 7 目言語化)
+
+**Why**: S21 OpenAI Codex Desktop delta で個人 AI 市場が「どの AI を選ぶか迷う」状態に入った瞬間の鮮度窓 (推定 2 週間) を逃さず、「AI を選ぶではなく AI を束ねる」新ポジショニングを SNS で言語化。
+
+**Actions**:
+- `docs/cross-instance-prs/20260420_three_way_positioning_sns.md` (NEW・143 行)
+  - PS#2 宛: dev.to 本A (JA+EN) + X 短文 + Qiita 別角度「BS 原則」
+  - VSCode 宛: landing_page.dart 差別化軸 7 行「AI 手段の分散」
+  - 3 層構造: Claude=長期記憶 / Codex=手先 / 自分株式会社=指揮所
+  - Qiita 72h cooldown 解除 (2026-04-23+) 後 dispatch
+- `memory/project_20260420_ps4_s23.md` 新規
+
+**Philosophy**: 6/9 ✅ (PR 自体) / 4/9 ✅ (session action)
+
+**棄却条件**: Anthropic が Claude Desktop plugin ecosystem 拡大発表で Codex 差別化消滅 → 本A は「2 者棲み分け」に書き換え
+
+**次回候補**: PS#2 本A dispatch 確認 / VSCode LP 軸 7 行 landed 確認 / Win版 Codex routing 判断 follow-up / MoneyForward 7/launch 監視
