@@ -772,6 +772,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/legal-compliance',
       'コンプライアンスページ > 規制要件確認・リスク管理・監査ログ',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'github-pr-manager',
+      'GitHub PR管理 (プルリクエスト一覧・レビュー)',
+      true,
+      '/github-pr',
+      'GitHub PRページ > PR一覧・レビュー・マージ管理',
+    ),
+    _FnDef(
+      'parking-reservation',
+      '駐車場予約管理',
+      true,
+      '/parking-reservation',
+      '駐車場予約ページ > 予約確認・空き状況・キャンセル管理',
+    ),
+    _FnDef(
+      'pet-care-manager',
+      'ペットケア管理',
+      true,
+      '/pet-care',
+      'ペットケアページ > ペット情報登録・ケアスケジュール・ワクチン記録',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
