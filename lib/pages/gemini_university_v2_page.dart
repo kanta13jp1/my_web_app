@@ -5307,14 +5307,25 @@ class _AiUniversityPageState extends State<AiUniversityPage>
 
     if (_loading || tc == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('AI 大学')),
+        appBar: AppBar(
+          title: const Text(
+            'AI 大学',
+            style: TextStyle(color: Color(0xFFE5E7EB)),
+          ),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI 大学'),
+        title: const Text(
+          'AI 大学',
+          style: TextStyle(
+            color: Color(0xFFE5E7EB),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         backgroundColor: const Color(0xFF1A1A1A),
         foregroundColor: const Color(0xFFE5E7EB),
         actions: [
@@ -5458,11 +5469,26 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            m.color.withValues(alpha: 0.20),
-            m.color.withValues(alpha: 0.10),
+            const Color(0xFF171B27),
+            Color.alphaBlend(
+              m.color.withValues(alpha: 0.14),
+              const Color(0xFF1E2434),
+            ),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: m.color.withValues(alpha: 0.28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: m.color.withValues(alpha: 0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -5481,7 +5507,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                 Text(
                   m.name,
                   style: const TextStyle(
-                    color: Color(0xFFE5E7EB),
+                    color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
@@ -5491,7 +5517,7 @@ class _AiUniversityPageState extends State<AiUniversityPage>
                   Text(
                     updatedAt,
                     style: TextStyle(
-                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.7),
+                      color: const Color(0xFFE5E7EB).withValues(alpha: 0.82),
                       fontSize: 12,
                       height: 1.5,
                     ),

@@ -677,6 +677,185 @@ $input
   }
 
   Widget _buildHeroSection() {
+    final heroPanel = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFF4ED),
+            Color(0xFFF6F7FF),
+            Color(0xFFF9FAFB),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: const Color(0xFFFF6B35).withValues(alpha: 0.12),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6B35).withValues(alpha: 0.08),
+            blurRadius: 28,
+            offset: const Offset(0, 16),
+          ),
+          BoxShadow(
+            color: const Color(0xFF3949AB).withValues(alpha: 0.06),
+            blurRadius: 36,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // アプリ名バッジ
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF3949AB), Color(0xFF6366F1)],
+                ),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                '自分株式会社 — AI統合プラットフォーム',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // メインヘッドライン
+          const Text(
+            'Notion・Slack・LINE・GitHub\n21サービスを1つに。完全無料。',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+              letterSpacing: 0.48,
+              color: Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            '21のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xFF475569),
+              height: 1.7,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // 実績バッジ
+          if (_achievementCount > 0)
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 14,
+                      color: Color(0xFF22C55E),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '✓ 実装済み $_achievementCount件の機能',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF15803D),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // プライマリ CTA
+          SizedBox(
+            height: 56,
+            child: FilledButton.icon(
+              key: const Key('landing_register_button'),
+              onPressed: _scrollToAuthSection,
+              icon: const Icon(Icons.rocket_launch, size: 18),
+              label: const Text(
+                '無料で始める（30秒）',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFF6B35),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+                shadowColor: const Color(0xFFFF6B35),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          // セカンダリ CTA
+          SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              key: const Key('landing_trial_scroll_button'),
+              onPressed: _scrollToTrialSection,
+              icon: const Icon(Icons.play_circle_outline, size: 18),
+              label: const Text(
+                '登録なしで1件試す',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFFF6B35),
+                side: const BorderSide(color: Color(0xFFFF6B35)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // 信頼バッジ行
+          const Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _BenefitChip(icon: Icons.lock_open, label: '無料・制限なし'),
+              _BenefitChip(icon: Icons.upload_file, label: 'Notionから移行可'),
+              _BenefitChip(icon: Icons.smart_toy, label: 'AI自動整理'),
+              _BenefitChip(icon: Icons.public, label: 'メモ公開共有'),
+            ],
+          ),
+        ],
+      ),
+    );
+
     return Column(
       key: const Key('landing_hero_section'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -958,147 +1137,7 @@ $input
           ),
         ),
         const SizedBox(height: 24),
-        // アプリ名バッジ
-        Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF3949AB), Color(0xFF6366F1)],
-              ),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Text(
-              '自分株式会社 — AI統合プラットフォーム',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        // メインヘッドライン
-        const Text(
-          'Notion・Slack・LINE・GitHub\n21サービスを1つに。完全無料。',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            height: 1.6,
-            letterSpacing: 0.96,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          '21のSaaSの機能を1アプリに統合。AIが今日の最優先タスクを整理し、資産管理・習慣化・チームコラボまで一元管理。登録30秒・クレジットカード不要。',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            color: Color(0xFFB0B0B0),
-            height: 1.7,
-          ),
-        ),
-        const SizedBox(height: 14),
-        // 実績バッジ
-        if (_achievementCount > 0)
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0FDF4),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFF86EFAC)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 14,
-                    color: Color(0xFF22C55E),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '✓ 実装済み $_achievementCount件の機能',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF15803D),
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        // プライマリ CTA
-        SizedBox(
-          height: 56,
-          child: FilledButton.icon(
-            key: const Key('landing_register_button'),
-            onPressed: _scrollToAuthSection,
-            icon: const Icon(Icons.rocket_launch, size: 18),
-            label: const Text(
-              '無料で始める（30秒）',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                height: 1.4,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B35),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-              shadowColor: const Color(0xFFFF6B35),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // セカンダリ CTA
-        SizedBox(
-          height: 48,
-          child: OutlinedButton.icon(
-            key: const Key('landing_trial_scroll_button'),
-            onPressed: _scrollToTrialSection,
-            icon: const Icon(Icons.play_circle_outline, size: 18),
-            label: const Text(
-              '登録なしで1件試す',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                height: 1.5,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFFF6B35),
-              side: const BorderSide(color: Color(0xFFFF6B35)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // 信頼バッジ行
-        const Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            _BenefitChip(icon: Icons.lock_open, label: '無料・制限なし'),
-            _BenefitChip(icon: Icons.upload_file, label: 'Notionから移行可'),
-            _BenefitChip(icon: Icons.smart_toy, label: 'AI自動整理'),
-            _BenefitChip(icon: Icons.public, label: 'メモ公開共有'),
-          ],
-        ),
+        heroPanel,
       ],
     );
   }
@@ -3579,6 +3618,9 @@ $input
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final showFloatingRegisterCta = screenWidth >= 900;
+
     return Scaffold(
       key: const Key('landing_page_scaffold'),
       appBar: AppBar(
@@ -3595,25 +3637,27 @@ $input
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Scrollable.ensureVisible(
-            _authSectionKey.currentContext ?? context,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOut,
-          );
-        },
-        backgroundColor: const Color(0xFF3949AB),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.rocket_launch, size: 18),
-        label: const Text(
-          '無料で始める',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
-        ),
-      ),
+      floatingActionButton: showFloatingRegisterCta
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Scrollable.ensureVisible(
+                  _authSectionKey.currentContext ?? context,
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                );
+              },
+              backgroundColor: const Color(0xFF3949AB),
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.rocket_launch, size: 18),
+              label: const Text(
+                '無料で始める',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

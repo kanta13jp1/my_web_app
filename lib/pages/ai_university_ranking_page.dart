@@ -19,6 +19,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
   bool _loading = true;
   String? _error;
   List<_LeaderboardEntry> _entries = [];
+  bool _hasPendingPublicRows = false;
   Map<String, List<_BadgeEntry>> _badgesByUser = const {};
   int _localAnsweredCount = 0;
   _MyLearningSnapshot? _mySnapshot;
@@ -47,13 +48,17 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
           .limit(10)
           .timeout(const Duration(seconds: 10));
 
-      final entries = (rows as List)
+      final mappedEntries = (rows as List)
           .cast<Map<String, dynamic>>()
           .map(_LeaderboardEntry.fromMap)
+          .toList(growable: false);
+      final entries = mappedEntries
           .where(
             (entry) => entry.totalCorrect > 0 || entry.providersStudied > 0,
           )
           .toList();
+      final hasPendingPublicRows =
+          mappedEntries.isNotEmpty && entries.isEmpty;
 
       final leaderboardUserIds = entries
           .map((entry) => entry.userId)
@@ -69,6 +74,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       if (!mounted) return;
       setState(() {
         _entries = entries;
+        _hasPendingPublicRows = hasPendingPublicRows;
         _badgesByUser = badgesByUser;
         _localAnsweredCount = localAnsweredCount;
         _mySnapshot = mySnapshot;
@@ -78,6 +84,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
       if (!mounted) return;
       setState(() {
         _loading = false;
+        _hasPendingPublicRows = false;
         _badgesByUser = const {};
         _localAnsweredCount = localAnsweredCount;
         _mySnapshot = null;
@@ -207,6 +214,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
               ? _ErrorView(error: _error!, onRetry: _load)
               : _RankingBody(
                   entries: _entries,
+                  hasPendingPublicRows: _hasPendingPublicRows,
                   badgesByUser: _badgesByUser,
                   localAnsweredCount: _localAnsweredCount,
                   mySnapshot: _mySnapshot,
@@ -297,6 +305,7 @@ class _ErrorView extends StatelessWidget {
 class _RankingBody extends StatelessWidget {
   const _RankingBody({
     required this.entries,
+    required this.hasPendingPublicRows,
     required this.badgesByUser,
     required this.localAnsweredCount,
     required this.mySnapshot,
@@ -305,6 +314,7 @@ class _RankingBody extends StatelessWidget {
   });
 
   final List<_LeaderboardEntry> entries;
+  final bool hasPendingPublicRows;
   final Map<String, List<_BadgeEntry>> badgesByUser;
   final int localAnsweredCount;
   final _MyLearningSnapshot? mySnapshot;
@@ -324,6 +334,9 @@ class _RankingBody extends StatelessWidget {
           requiresLogin: myUserId == null,
           onOpenUniversity: onOpenUniversity,
         );
+      }
+      if (hasPendingPublicRows) {
+        return _PendingRankingView(onOpenUniversity: onOpenUniversity);
       }
       return _EmptyRankingView(onOpenUniversity: onOpenUniversity);
     }
@@ -561,6 +574,95 @@ class _LocalProgressView extends StatelessWidget {
                   onPressed: onOpenUniversity,
                   icon: const Icon(Icons.arrow_forward_rounded),
                   label: const Text('AI大学を開く'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _RankingPalette.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PendingRankingView extends StatelessWidget {
+  const _PendingRankingView({required this.onOpenUniversity});
+
+  final VoidCallback onOpenUniversity;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Container(
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: _RankingPalette.heroGradient,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _RankingPalette.orange.withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: _RankingPalette.indigo.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _RankingPalette.indigo.withValues(alpha: 0.28),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.hourglass_top_rounded,
+                    color: _RankingPalette.indigoLight,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '公開ランキングを準備中です',
+                  style: _RankingTextStyles.heading2,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '公開プロフィールの参加者は確認できていますが、まだスコア反映前でした。最初の正解が入ると、ここから順位が動き始めます。',
+                  style: _RankingTextStyles.body,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                const _InfoPill(
+                  icon: Icons.visibility_rounded,
+                  label: '参加者は確認済み',
+                  color: _RankingPalette.indigoLight,
+                ),
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: onOpenUniversity,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('AI大学で学ぶ'),
                   style: FilledButton.styleFrom(
                     backgroundColor: _RankingPalette.orange,
                     foregroundColor: Colors.white,

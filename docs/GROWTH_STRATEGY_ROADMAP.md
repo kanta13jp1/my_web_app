@@ -15586,3 +15586,46 @@ Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
 2. 次の AI大学 provider 候補: **Lovable** (Swedish full-stack AI builder / $120M ARR)
    or **v0 by Vercel** (UI-first generator)
 3. PS#4 S31 SCOREBOARD 🟠 watchlist の残候補 (Notion credit pause deep-dive 等)
+
+## [VSCode] 2026-04-21 朝2 — Rule 16 prod 表示チェック反映 + AI大学ランキング空状態改善 + NotebookLM 復旧確認
+
+### 実施内容
+
+- Rule 16 として本番 URL を Web / mobile 相当で再確認し、主に次の 3 点を拾った
+  - LP ヒーローコピーが白背景上で低コントラスト
+  - AI大学プロバイダーヘッダーと AppBar タイトルがモバイルで見えづらい
+  - AI大学ランキングが「まだランキングは始まっていません」と出るが、実際には `ai_university_leaderboard` に 0 点行が存在
+- `lib/pages/landing_page.dart`
+  - ヒーロー中央ブロックを暖色 + indigo の薄いパネルに再構成
+  - 見出し / 本文をダークトーンに変更して可読性を回復
+  - モバイル幅では右下の固定 `無料で始める` FAB を非表示化して重なりを軽減
+- `lib/pages/gemini_university_v2_page.dart`
+  - AppBar タイトル色を明示
+  - プロバイダーヘッダーを常に暗めのサーフェス + アクセント枠に変更し、淡色ブランドでもタイトルが沈まないように修正
+- `lib/pages/ai_university_ranking_page.dart`
+  - leaderboard の生行はあるが `total_correct == 0 && providers_studied == 0` だけのケースを検知
+  - その場合は「ランキング未開始」ではなく「公開ランキングを準備中です」を表示する pending state を追加
+
+### NotebookLM
+
+- `notebooklm list` / `status` 自体は通る状態まで復帰
+- `notebooklm source list` が Windows `cp932` と絵文字ソース名の衝突で `UnicodeEncodeError` を起こしていた
+- 次の UTF-8 強制で正常化を確認
+  - `$env:PYTHONIOENCODING='utf-8'`
+  - `$env:PYTHONUTF8='1'`
+  - `chcp 65001 > $null`
+- 共有ノートブックは alias よりも ID 直指定が安定
+  - `notebooklm use ea6cff25-574d-4b8b-ad72-ab47cf1ed01f`
+  - `notebooklm ask "..."` で `jibun-master-brain` の主要 116 source 読み込み確認まで完了
+
+### 検証メモ
+
+- 本番確認 artefact: `.codex-artifacts/prod-check-20260421-path/`
+- `git diff --check` は通過
+- `dart format` はこの環境で再度 timeout。`memory/MEMORY.md` にある dart zombie / analyze hang 系の継続症状と一致
+
+### 次候補
+
+1. 変更をローカル起動で再キャプチャし、LP ヒーローと AI大学ヘッダーの最終見た目を確認
+2. `core-hub` / `growth-hub` の 401 を本番未ログイン時の想定どおりか切り分け
+3. NotebookLM 用の UTF-8 ラッパーコマンドを session-start hook か PowerShell 関数に固定化
