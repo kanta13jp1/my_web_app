@@ -14,7 +14,9 @@ on:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # PR 以外 (push / workflow_call) では cancel 無効化
+  # → deploy-prod.yml (cancel-in-progress: false) から呼ばれた CI が cascade cancel される事故を防ぐ
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint-and-test:

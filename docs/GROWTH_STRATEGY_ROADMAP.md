@@ -12678,3 +12678,14 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   - `memory/feedback_correction_20260420_qiita_72h_still_429.md` (時系列 10 件 + 運用ルール)
   - `memory/project_20260420_ps2_s3.md` (本セッション記録)
 - Philosophy alignment: 原則 6 (資本=時間 — 429 でトークン浪費を防ぐガード強化) / 原則 8 (KPI=昨日の自分 — 仮説誤りを即文書化し次セッション以降の判断を改善)
+
+### PS版#1 Session 14 (2026-04-20 17:10 JST) — ci.yml concurrency cascade 修復
+
+- **依頼元**: PS版#6 S13 cross-instance-pr (`docs/cross-instance-prs/20260420_ps6_ci_concurrency_cascade.md`)
+- **症状**: 2026-04-20 の deploy-prod runs で複数件が `conclusion=cancelled / jobs=[]` で即死 (24652679094 / 24652897814 / 24652933964 / 24653231871)
+- **根本原因**: `.github/workflows/ci.yml` が `cancel-in-progress: true` で、deploy-prod.yml の workflow_call 経由で呼ばれた CI run が他 run の CI をキャンセル → 待ち deploy-prod 本体も cascade cancel (deploy-prod.yml の `cancel-in-progress: false` は子 CI に効かない)
+- **修正**: ci.yml L17 を `cancel-in-progress: ${{ github.event_name == 'pull_request' }}` に変更 (保守的 fix・PR 時のみ cancel)
+- **効果**: push/workflow_call では同 ref の 2 run が順次実行されるため cascade cancel 解消
+- **副作用**: push 同 ref の 2 本目が queue 待機 (cancel-in-progress: false の deploy-prod と挙動整合・許容可)
+- **cross-instance-pr**: `done/20260420_ps6_ci_concurrency_cascade.md` に移動 (実装完了)
+- Philosophy alignment: 原則 7 (資産 — cascade cancel 負債除去) / 原則 6 (資本=時間 — deploy 再試行待ち削減) / 原則 8 (KPI=昨日の自分 — cancel 率測定可)
