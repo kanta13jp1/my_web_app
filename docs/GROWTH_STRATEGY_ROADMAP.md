@@ -12163,8 +12163,7 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 
 ### Rule 17 WF health check (2026-04-20, PS版#1)
 
-- **deploy-prod: 7 連続 failure** 原因特定 — `lib/pages/access_control_page.dart:151` の `===` は Dart syntax error ではなく **`git stash pop` 未解決 conflict marker** (`<<<<<<< Updated upstream` / `=======` / `>>>>>>> Stashed changes`)
-- **Grep で 8 ファイル検出**: `access_control_page.dart` (4 blocks) / `workflow_templates_page.dart` / `user_manual_page.dart` / `support_tickets_page.dart` / `cmo_page.dart` / `bookmark_folders_page.dart` / `ai_assistant_chat_page.dart` (2 blocks) / `agent_performance_monitor_page.dart` (3 blocks) = 計 **15 blocks**
+- **deploy-prod: 7 連続 failure** 原因特定 — `lib/pages/access_control_page.dart:151` の `===` は Dart syntax error ではなく **`git stash pop` 未解決 conflict marker** (`- **Grep で 8 ファイル検出**: `access_control_page.dart` (4 blocks) / `workflow_templates_page.dart` / `user_manual_page.dart` / `support_tickets_page.dart` / `cmo_page.dart` / `bookmark_folders_page.dart` / `ai_assistant_chat_page.dart` (2 blocks) / `agent_performance_monitor_page.dart` (3 blocks) = 計 **15 blocks**
 - **解決方針**: 両側セマンティック同一 (単なる改行差) → `Stashed changes` 側 (single-line) を採用 → `dart format` で最終正規化
 - **Python regex batch resolver**: `re.DOTALL` で conflict block 捕獲 → `group(2)` (Stashed 側) で置換 → 1 コマンドで 7 ファイル一括処理
 - **flutter analyze**: 8 ファイル対象 → `No issues found (192s)` ✅
@@ -12822,6 +12821,7 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   4. 🟢 5/19-20 Google I/O 監視 (既存 placeholder は最新)
   5. 🟢 Cursor $50B 確定監視 (確定 → SNS 弾化)
 - Philosophy alignment: 原則 1 (CEO 的速度 — S18 を即 HOLD に変更) / 原則 2 (ミッション駆動 — 配布速度優先) / 原則 6 (資本=時間 — Partner 登録回避) / 原則 7 (BS — 短期負債 vs 即資産化)
+<<<<<<< HEAD
 
 ## PS版#1 Session 15 (2026-04-20 17:30 JST) — migration timestamp 衝突修復 + S14 副作用発覚
 
@@ -12837,3 +12837,38 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
 - **Rule 17 WF health**: 全 WF 中 failure は Deploy to Production のみ (2 件・いずれも上記 migration 衝突起源)
 - **新規 memory**: `project_20260420_ps1_s15.md` + `feedback_success_20260420_migration_timestamp_collision.md`
 - Philosophy alignment: 原則 6 (資本=時間 — deploy 再試行時間削減) / 原則 7 (資産 — migration 衝突の即時解消・技術負債除去) / 整合性: 7/9
+## Session PS#6-S14 (2026-04-20 17:30 JST) — S13 post-wakeup verification + Pleias collision handoff
+
+### サマリ
+
+PS版#6 S13 で提出した 2 handoff の follow-up + deploy-prod 継続モニタ中に
+Pleias AI migration timestamp collision を検出し PS#3 に handoff。
+
+### 検出と対応
+
+1. **PS#1 ci.yml fix 着地確認** (commit `c199798d`):
+   - 自分の提案 (`20260420_ps6_ci_concurrency_cascade.md`) に基づき PS#1 が
+     conservative 版 (`cancel-in-progress: pull_request 時のみ`) で修正
+   - 着地後 3 run cancelled (transition window 犠牲) 後、次 run `cde56d24` は jobs=2 走行
+     → fix は期待通り作動
+   - handoff を `done/` へ移動
+
+2. **deploy-prod `cde56d24` failure 原因特定**:
+   - Run Supabase migrations step で 23505 PK violation
+   - `20260420090000_seed_pleias_ai_university.sql` (PS#3 S16) vs
+     `20260420090000_extend_wbs_10_instances.sql` (Win#131 part 10) の衝突
+   - PS#3 所管のため cross-instance-pr 化 (`20260420_ps3_pleias_migration_collision.md`)
+   - 修正案: Pleias 側を `20260420110000` にリネーム (1 file rename commit)
+
+### Philosophy alignment
+
+- 原則 7 (資産=CI 安定): 自分 handoff 起点の fix 着地確認で負債減を定量確認
+- 原則 6 (資本=時間): collision 原因特定 → PS#3 の修正時間 5 分以下
+- 原則 4 (部署バランス): PS#6 の本分 (horse_racing / cleanup) を越えない範囲で
+  他 instance 支援のみ実施
+
+### 次回 PS#6 候補
+
+1. 🟡 live-dead 39 EF 整理 (S12 持ち越し backlog)
+2. 🟡 PS#1 ci.yml fix の長期安定性モニタ (24h+ cancel 率計測)
+3. 🟢 horse_racing batch cron 長期健全性 (median 118s / 10 連続 success)
