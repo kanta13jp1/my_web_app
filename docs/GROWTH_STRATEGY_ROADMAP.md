@@ -15150,3 +15150,39 @@ Files: SCOREBOARD (Replit 行 + S31 block + 残 round 0) / memory/project_202604
 Files: lib/services/public_memo_service.dart / .github/workflows/issue-to-wbs.yml / 本 entry
 
 ---
+
+
+---
+
+### PS版#2 Session 19 (2026-04-21 07:30 JST) — X 短文 6 本事前草稿 (5/4 D-0)
+
+- **commit**: e957bf3b
+- **対象**: `docs/cross-instance-prs/20260420_three_way_positioning_sns.md` S27 checklist 未消化 1 件
+  「X 短文 (D-0 タイミング)」を事前草稿化 — 事前 pre-write で 5/4 当日起動コスト削減
+- **成果物**: `docs/x-drafts/20260504_d0_notion_anthropic_paywall.md` 新規
+  - JA 候補 A (Notion credit 切り口) / B (Anthropic 強制コミット枠) / C (2 段 vendor paywall 統合)
+  - EN 候補 A/B/C 同構成
+  - 5/4 当日チェックリスト 6 項目 + 4-tag cap 準拠ハッシュタグ表
+- **判断根拠**: T-1 dispatch window 外 (earliest 4/23) → idle day でも checklist 前倒しは [NO-SCOPE-CREEP] 範囲内
+- **2 段ロケット framing** (S12-S13 確立済):
+  - 会計分類: 月次消費型負債 (Notion credits) + 月次強制負債 (Anthropic commits)
+  - 自分株式会社 = 両ゼロ (完全無料 + コミット枠ゼロ)
+- **文字数**: JA 160-180 / EN 190-260 → X 280 制限内 · URL 添付余裕あり
+- **5/4 当日タスク**: 数字鮮度再確認 → 1〜2 本選定 → `post-x-update` EF or 手動 post
+- **累計 PS#2 stock draft**: blog JA+EN 5 pair + X 短文 6 本 = 16 成果物準備完了
+
+**Philosophy alignment**:
+- 原則 2 (ミッション駆動): vendor paywall 2 段 = 「使えば使うほどコスト 0」訴求の核 ✅
+- 原則 5 (商品=価値): 競合数字の鮮度担保で信用獲得 ✅
+- 原則 6 (資本=時間): 事前草稿で 5/4 当日作業を 15 分 → 3 分に短縮見込み ✅
+- 原則 7 (BS 原則): 数字根拠 (Redress Compliance 試算 + 公式 6 ソース) で framing 耐久 ✅
+
+整合性 **4/9** ✅ (D-0 X 短文単発タスクにつき部分クリア)
+
+**次回 PS#2 候補 (更新)**:
+1. **2026-04-23T07:53Z+**: qiita-retry 1 本目 probe
+2. **2026-04-23〜24**: 3-way 本A JA+EN dev.to dispatch
+3. **2026-04-26**: BS framework 本B dispatch
+4. **2026-04-28**: Notion paywall 本A dispatch (D-6)
+5. **2026-05-02**: Notion paywall 本B dispatch (D-2)
+6. **2026-05-04**: Notion paywall 本C dispatch (D-0) + X 短文 6 本から 1〜2 本選定 post
