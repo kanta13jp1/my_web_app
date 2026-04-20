@@ -24,8 +24,8 @@
 |---|------|---------|-----------------|-------|---------|------------------|
 | 1 | **notion** | ノート/ドキュメント | Workers for Agents Dev Preview (GA mid-2026) | 🟠 | 日本語 + 6部署統合 + タグ | 20260421_notion_ai_lp_update.md → VSCode |
 | 2 | **evernote** | ノート | 無料プラン 50件制限判明 (前回1000件誤記) | 🟠 | Supabase 同期 + Notion import | LP 移行比較更新 → VSCode (done?) |
-| 3 | **moneyforward** | 家計 | AI Cowork (Claude SDK) Early Access / 2030年 ARR ¥15B | 🔴 | 個人向け住み分け | 20260419_moneyforward_counter.md / `finance.personal_summary` 急ぎ → Win |
-| 4 | **slack** | チャット/仕事 | **Agentforce 30+ AI 機能 / Claude + MCP** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
+| 3 | **moneyforward** | 家計/法人 | **AI Cowork = 法人バックオフィス専用 (2026-07 GA / Claude SDK+MCP) — 個人家計は対象外 (S14 住み分け確定)** | 🟠 | 個人 CEO vs 組織バックオフィス | 20260419_moneyforward_counter.md / `finance.personal_summary` 継続 → Win |
+| 4 | **slack** | チャット/仕事 | **TDX 2026 (04-15): 60+ MCP tool + Agentforce Vibes 2.0 (Claude Sonnet 4.5 default / Dev Edition 無料) / Agentforce 360 = Mobile+ChatGPT+Claude+Gemini+Teams 全対応 (S14)** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
 | 5 | **chatwork** | チャット (JP) | kubell: BPaaS × AI agents 戦略 / GraphQL+Go 刷新 (S12) | 🟠 | 個人向け vs 中小企業向け | 定常 watchlist (住み分け明確) |
 | 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.1 Fast (ai-hub 登録済) | 🟢 | SNS は価値消費・自分株は価値増大 | 定期 model update のみ |
 | 7 | **animaworks** | アバター AI | 2026-04 新発表なし / Meta Avatars + MetaMe NPC-AI が主戦場 (S12) | 🟢 | フル 3D = philosophy 違反 | 定常 watchlist (深追い不要) |
@@ -33,7 +33,7 @@
 | 9 | **codex (OpenAI)** | 開発ツール | GPT-5 2026Q2 予測 | 🟢 | コーディングツール vs 人生フレームワーク | 定常 watchlist |
 | 10 | **netkeiba** | 競馬 | **UMAI予想ビルダー** (ユーザー独自モデル) | 🔴 | PS版#6 horse_racing 戦略再考必要 | S9 で戦略 pivot 示唆 → PS版#6 |
 | 11 | **openclaw** | OSS AI agent | 335K★ / 26M MAU / Peter Steinberger→OpenAI / NVIDIA NemoClaw 企業 wrapper (S13) | 🟠 | 日本語 + Flutter Web 即起動 vs CLI/chat bot | 定常 watchlist + OSS 連携余地 |
-| 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork GA 2026-04-09 (Pro/Max/Team/Enterprise) / macOS+Win / Drive/Gmail/Sheets/DocuSign 統合 (S13)** | 🔴🔴 | **データ永続化 Supabase vs VM 揮発 / 人生統合 vs 仕事のみ** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
+| 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork 研究PV 01-30 / GA 02-24 / Pro $20 組込み 04-09 / 長文課金廃止 03-13 / Excel+Sheets+Gmail+Slack+DocuSign+FactSet (S14)** | 🔴🔴 | **個人 6 部署 / Supabase 永続 / 日本語 first (3 軸)** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
 | 13 | **jobcan** | 勤怠 | DONUTS: AI 自動仕訳 2026-04-13 追加 / 25万社・300万ID (S13) | 🟡 | 個人向け勤怠 (カフェ勉時間計測) | 定常 watchlist |
 | 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M 1M context) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
 | 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
@@ -105,3 +105,4 @@
 *生成: PS版#4 S11 スコアボード | 2026-04-20 深夜*
 *更新: PS版#4 S12 空白 4 社埋め (chatwork 🟠 / animaworks 🟢 / discord 🟠 / liven 🟢) | 2026-04-20 深夜*
 *更新: PS版#4 S13 空白 3 社埋め (openclaw 🟠 / **claude-cowork 🔴🔴** / jobcan 🟡) + 差別化軸 4→6 拡張 | 2026-04-20 深夜*
+*更新: PS版#4 S14 Claude Cowork pricing 詳細 + MoneyForward バックオフィス専用判明 (🔴→🟠) + Slack TDX 2026 最新化 | 2026-04-20 深夜*

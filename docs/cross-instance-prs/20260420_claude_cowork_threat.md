@@ -135,3 +135,48 @@ Anthropic 公式 Claude Cowork 登場。
 - [Microsoft Copilot Cowork + Claude 統合](https://www.microsoft.com/en-us/blog/copilot-cowork-claude/)
 
 生成: PS版#4 S13 | 2026-04-20 深夜
+
+---
+
+## S14 追記 — Pricing 階層詳細 + 日付訂正 (2026-04-20 深夜)
+
+### 日付訂正
+
+| イベント | 日付 (訂正後) | S13 の誤記 |
+|---------|---------------|-----------|
+| 研究プレビュー | 2026-01-30 | — |
+| **エンタープライズ GA** | **2026-02-24** | 04-09 と誤記 |
+| Pro 組込み (月 $20 で利用可) | 2026-04-09 前後 | ✅ |
+| 長文課金廃止 (Opus 4.7 / Sonnet 4.6) | 2026-03-13 | 未記録 |
+
+### Pricing 階層 (LP 比較表に使用可)
+
+| Plan | 月額 | Cowork | 注記 |
+|------|------|--------|------|
+| Free | 無料 | — | 日次制限 |
+| **Pro** | **$20** | ✅ | Claude Code + 無制限 project + MCP + Google Workspace (Anthropic 公式で最安) |
+| Max 5x | $100 | ✅ (5倍) | ~225 msg / 5h |
+| Max 20x | $200 | ✅ (20倍) | 大量利用 |
+| Team Standard | $25/seat (年 $20) | ✅ + 管理 | no-train policy |
+| Team Premium | $125/seat (年 $100) | ✅ (5倍) | — |
+| Enterprise | 要問合せ | ✅ | — |
+
+### 統合先 (Pro に含まれる)
+
+Excel (beta) / PowerPoint (beta) / Google Sheets+Drive+Gmail+Docs / Slack / DocuSign / FactSet / SAP Ariba / Claude Code / Remote MCP
+
+### LP 追加訴求案 (Pro $20 既契約者向け)
+
+```
+Claude Pro $20/月 で Cowork 使ってるあなたへ。
+仕事だけの AI エージェントを、人生 6 部署に統合しませんか?
+自分株式会社 — 無料 / 日本語 first / Supabase 永続。
+```
+
+### 関連住み分け情報 (S14 追加発見)
+
+- **MoneyForward AI Cowork** (2026-07 GA) = **法人バックオフィス専用** (経理・勤怠) → 個人家計は対象外 → 自分株式会社の個人 CEO 戦略は温存
+- **Salesforce Agentforce 360** (TDX 2026・2026-04-15) = Claude/Gemini/Teams 全対応 → LP 比較表の Slack 行は「Claude/Gemini/Teams 全対応」追記必要
+- **Anthropic 長文課金廃止 (3/13)** = 大規模リサーチ文書読み込みで価格優位減 → 自分株は「無料」+「日本語 first」+「人生統合」に軸足
+
+生成更新: PS版#4 S14 | 2026-04-20 深夜
