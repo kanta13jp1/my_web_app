@@ -12560,3 +12560,49 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   2. horse_racing batch cron 健全性長期監視
   3. `.claude/worktrees/` stale worktree (blissful-nightingale-9170ec 等 random name) の `git worktree prune` 候補リスト作成
 - Philosophy alignment: 原則 6 (資本=時間 — deploy 時間短縮) / 原則 7 (資産=CI 安定) / 原則 4 (部署バランス — R&D と本社の信頼性担保)
+
+
+### Windowsアプリ版#131 セッション 部 9 (2026-04-20 16:00 JST) — deploy-prod tag push permission 修正
+
+#### 状況
+
+部 7 で 167 unnecessary_const errors 修正後の deploy が `Push Release Tag` step で再失敗。
+
+```
+! [remote rejected] v1.0.1180 -> v1.0.1180
+(refusing to allow a GitHub App to create or update workflow
+ .github/workflows/ai-university-update.yml without 'workflows' permission)
+```
+
+#### 根本原因
+
+タグ `v1.0.1180` が指す commit range に `.github/workflows/*.yml` 変更が含まれていた。
+GitHub App は `workflows` permission を持たないと workflow file 変更を含む push を拒否される。
+
+#### 修正
+
+`.github/workflows/deploy-prod.yml` deploy job に追加 (commit `f68f4715`):
+
+```yaml
+permissions:
+  contents: write
+  actions: write              # ← 新規追加
+
+steps:
+  - name: Checkout code
+    uses: actions/checkout@v6
+    with:
+      fetch-depth: 0
+      token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}   # ← 新規
+```
+
+GH_PAT は workflow scope を含めて設定済み (PS版#104 で確立)。
+GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まない通常 commit は通る)。
+
+### Philosophy Alignment (Win#131 part 9)
+
+- 主要実装: deploy-prod tag push permission 修正
+- 該当原則: 6 (時間=連続失敗を 1 yml 修正で復旧 = 開発時間節約) + 7 (資産=workflow yml の防御的 permission 設定で再発防止)
+- 整合性スコア: 7/9 ✅ (1 = ユーザー CEO 感は間接 / 5 (商品価値) 8 (KPI) 9 (welfare) は間接)
+- 理念的貢献: 複数 instance 並行 push 環境での GitHub App workflow protection を回避する仕組み確立
+- 懸念: GH_PAT が secrets に未設定の場合は GITHUB_TOKEN にフォールバック (動作するが workflow 変更を含む commit では同じ失敗)。secrets 設定が必須
