@@ -116,3 +116,15 @@ curl -X POST \
 
 **2026-06-01 必須** (Gemini 2.0 Flash-Lite 廃止日)。
 5月中に対応推奨 (余裕を持って動作確認期間を確保)。
+
+---
+
+## ✅ 完了 (2026-04-20 PS版#6)
+
+**実施内容**:
+- EF / workflow 内で `gemini-2.0-flash-lite` を grep → 該当 0 件 (既に `gemini-2.5-flash` に移行済み)
+- 唯一の参照箇所: `batch_analysis.py:37` の `MODEL_CASCADE` フォールバック → `gemini-3.1-flash-lite-preview` に置換
+- 主要 EF (analyze-reality / ai-writing-assistant / enterprise-hub / tools-hub) は既に `gemini-2.5-flash` 採用済み
+- ROADMAP 8700 行記録通り、過去セッション (Win版) で既に sunset 対象を排除済み
+
+**残タスク**: なし。本 cross-instance-pr クローズ。
