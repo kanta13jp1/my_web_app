@@ -15087,3 +15087,33 @@ S30 の WBS 大改修 master PR (3 判断 confirmed) → S31 は **audit round 6
 Files: SCOREBOARD (Replit 行 + S31 block + 残 round 0) / memory/project_20260421_ps4_s31.md / 本 entry
 
 ---
+
+### PS版#6 Session 24 (2026-04-21) — orphan EF source cleanup (goal-tracker + time-tracker)
+
+- **commit**: 4f7c728b
+- **対象**: PS#5 S27/S28 で hub migration 完了した 2 EF の standalone source
+  - `goal-tracker` → `tools-hub:goal.{list,add,update,delete}` (PS#5 S27 12996997)
+  - `time-tracker` → `app-hub:time.{list,projects,clock,log_hours,start,stop}` (PS#5 S28 3c71a0cd)
+- **手法**: Live-dead intersection = `DEAD_LIST ∩ supabase/functions/` で 11 件検出 → migrated 2 件を安全削除
+- **Safety 3-point check**:
+  1. **invoke 0**: `lib/pages/{goal,time}_tracker_page.dart` の invoke 全 8 件が hub 名使用
+  2. **deploy 0**: 両 EF 既 DEAD_LIST 登録済
+  3. **migration 証拠**: hub case action 実存確認 (tools-hub 1001-1017 + app-hub 296-382)
+- **特記**: 両者とも `home_tool_catalog` 登録済 CRITICAL 組 = S18 audit 最高優先度 2 件消化完了
+- **成果**: supabase/functions/ 374 行削減
+- **残 live-dead** (9 件・PS#5 migration 待ち):
+  - section B (7 件): ab-testing-manager / chat-messaging / competitor-feature-sync / invoice-generator / note-comments / poll-survey / pomodoro-timer
+  - section D (2 件・Win/VSCode 要 hub action 新設): agent-department-manager / agent-performance-monitor
+- **累計 S15-S24**: 29 EF 削除 / 2000+ 行削減
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): Safety 3-point で客観化 ✅
+- 原則 2 (ミッション駆動): 「死に EF を残さない」継続 ✅
+- 原則 5 (商品=価値): home_tool_catalog CRITICAL 組清算 ✅
+- 原則 6 (資本=時間): 1 commit で 2 EF + 374 行削減 ✅
+- 原則 7 (BS 原則): orphan source 償却継続 ✅
+- 原則 8 (KPI=昨日): PS#5 migration 進捗に追随 ✅
+
+整合性 **6/9** ✅
+
+**Horse racing**: Auto Update 3/3 success 継続 (S6→S24 streak)
