@@ -2,7 +2,7 @@
 date: 2026-04-19
 from: Windowsアプリ版#122
 to: PowerShell版#5 (on-call)
-status: partial-done (2026-04-20 PS#5 S15)
+status: partial-done (2026-04-20 PS#5 S15+S16)
 priority: medium
 ---
 
@@ -27,7 +27,15 @@ ai-hub に追加した action:
 - `university.leaderboard` (limit param) — `ai_university_leaderboard` view から取得
 - `university.content_all` (limit param) — provider filter なし版 (admin 用)
 
-### 残り 37 EFs (next session backlog)
+### S16 完了分 (2026-04-20)
+
+| # | 旧 EF | 新 action | Flutter file | commit |
+|---|---|---|---|---|
+| 4 | data-export-manager | `admin-hub:data.export` + `data.export_available` (新規追加) | `lib/pages/data_backup_page.dart` | fa9004af |
+
+備考: data_backup_page.dart は EF が未実装のテーブル (tasks/habits/finances/blog_posts) を request body に含めていた → EXPORT_TABLES 4 件 (profile/notes/feature_requests/notifications) に修正.
+
+### 残り 36 EFs (next session backlog)
 
 全て Flutter から呼ばれているが try/catch + ローカル fallback あり → UX は graceful degraded.
 緊急度: 低 (silent fail でユーザーは気付かない)
@@ -36,7 +44,6 @@ ai-hub に追加した action:
 
 | 残数 | EF | Flutter ref count | 推奨 hub |
 |---|---|---|---|
-| 1 | data-export-manager | 1 | admin-hub:data.export |
 | 1 | growth-import-commit | 1 | growth-hub:import.commit (実装は別物・要 EF コード移植) |
 | 2 | gemini-election-analysis | 2 | ai-hub:election.analyze |
 | 2 | generate-daily-challenges | 2 | growth-hub:daily.challenges |
