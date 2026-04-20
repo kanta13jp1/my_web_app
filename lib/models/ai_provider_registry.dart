@@ -178,10 +178,11 @@ const List<AiProviderEntry> kAiProviderRegistry = [
   AiProviderEntry(
     id: 'groq',
     displayName: 'Groq',
-    status: AiProviderStatus.apiKeyRequired,
+    status: AiProviderStatus.implemented,
     tier: AiProviderTier.budget,
     envKeyName: 'GROQ_API_KEY',
-    entryPoint: '(未実装 — OpenAI 互換・超高速)',
+    entryPoint: 'ai-hub (provider.chat) — OpenAI 互換・超高速',
+    note: 'Llama 3.x / Mixtral 系を低コスト・超高速で提供。ai-tag-suggester 経路にも接続',
   ),
   AiProviderEntry(
     id: 'cohere',
