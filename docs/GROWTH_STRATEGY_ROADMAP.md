@@ -12486,6 +12486,28 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Philosophy alignment: 原則 6 (資本=時間 — AI コスト低減で操作時間最小化) / 原則 5 (商品=ユーザー価値 — OSS 重みで自己ホスト可) / 原則 1 (CEO 感 — prime-rl で独自 RL ジョブを走らせる権限) / 原則 7 (資産 — 分散 RL 知識 = 陳腐化しにくい基盤)
 - **次回 PS#3 候補**: 133 社目 (Pleias AI / Essential AI / Imbue / Exa.ai) + AI大学 news カテゴリ最新化バッチ
 
+## PS版#3 Session 15 (2026-04-20 15:45 JST) — AI大学 133 社化 (Exa.ai 追加)
+- **migration**: `supabase/migrations/20260420080000_seed_exa_ai_university.sql` ($md$ tag / overview+models+api 3 行)
+- **UI**: `_providerMeta['exa']` (🔍 #0891B2) + `_fallback` markdown (neural/fast/research 3 モード)
+- **ai-university-update.yml**: Exa を seed-only コメント列に追加
+- **Step 0 評価 9/9**:
+  1. ✅ 公式サイト (exa.ai)
+  2. ✅ 最新機能 (2026-03 pricing simplified / content extraction 包含)
+  3. ✅ ベンチマーク (Cursor @web / Notion AI で本番採用)
+  4. ✅ API 公開 (Free 1K/月 / Pro $40/月 25K / Pro+ $100/月 100K)
+  5. ✅ 独自技術 (embeddings-first neural search / sub-200ms)
+  6. ✅ 実績 (Cursor / Notion AI / Replit)
+  7. ✅ SDK 公開 (Python exa-py / TypeScript exa-js / Deno 対応)
+  8. ✅ 資金調達 (Lightspeed リード Series A $17M / 2024-09)
+  9. ✅ 話題性 (2026-03 pricing 刷新報道複数)
+- **戦略意義**: 133 社目で **「AI エージェント向け検索インフラ」独自軸** を追加
+  - 既存 Perplexity (ユーザー向け回答生成) と補完関係 — Exa は agent 側
+  - 自分株式会社 ai-hub への統合候補として最有力 (`exa_search` action 新設)
+  - GPT-4o browsing 比 **57% コスト削減** 試算 (100users × 5queries/day = 15K/月 → Pro $40 で完結)
+  - competitor-monitoring / daily-judgment / blog-draft の WebSearch 置換候補
+- Philosophy alignment: 原則 6 (資本=時間 — sub-200ms で操作時間削減) / 原則 5 (商品=ユーザー価値 — clean markdown で LLM 後段品質向上) / 原則 1 (CEO 感 — agent が自律的に情報取得) / 原則 7 (資産 — 検索インフラは陳腐化しにくい)
+- **次回 PS#3 候補**: 134 社目 (Pleias AI 日本語 SLM / Essential AI / Imbue 推論 agent) + AI大学 news カテゴリ最新化バッチ + ai-hub に `exa_search` action 追加 (Win版に cross-instance-pr 依頼候補)
+
 ## PS版#2 Session (2026-04-20 15:42 JST) — T-1 dispatch 確認 / Qiita retry 待機
 - **今朝の自動 dispatch (02:03 UTC)**: `2026-04-20-en.md` (Price Tracker) → dev.to 成功
   - URL: `https://dev.to/kanta13jp1/i-built-a-zero-cost-price-tracker-in-flutter-web-supabase-no-extra-edge-functions-needed-542m`

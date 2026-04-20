@@ -843,6 +843,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF1E40AF),
     officialUrl: 'https://www.primeintellect.ai/',
   ),
+  'exa': _ProviderMeta(
+    name: 'Exa.ai',
+    emoji: '🔍',
+    color: const Color(0xFF0891B2),
+    officialUrl: 'https://exa.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4309,6 +4315,40 @@ GPU マーケットプレイス・分散 RL 基盤 (prime-rl)・INTELLECT 系列
 - prime-rl GitHub: https://github.com/PrimeIntellect-ai/prime-rl
 - Tech Report: https://arxiv.org/abs/2512.16144
 - GPU マーケット: https://www.primeintellect.ai/dashboard/
+''',
+  'exa': '''
+# Exa.ai — AI エージェント専用セマンティック検索 API (\$17M Lightspeed)
+
+2023 年創業 (旧 Metaphor Systems)、「LLM のために web を再設計する」がコア信条。
+**embeddings ベースの neural search** で query 意図を理解し、
+**クリーン markdown** を返す。Cursor の `@web` / Notion AI が採用。
+
+## 既存 132 社との差別化
+| 観点 | Exa.ai | Perplexity | Google |
+|------|--------|-----------|--------|
+| 設計思想 | 🔍 エージェント/LLM 向け | ユーザー向け回答 | 人間向け UI |
+| ランキング | Neural embeddings | Sonar + Retrieval | PageRank |
+| レイテンシ | ⚡ sub-200ms | 1-3 秒 | < 500ms |
+| コンテンツ抽出 | 🧹 Clean markdown | インライン | raw HTML |
+
+## 3 つの検索モード
+- **/search (fast)**: sub-200ms / 高頻度クエリ
+- **/search (neural)**: embeddings フル活用 / 意図解析
+- **/research**: 最大 60s deep research / 多段クエリ統合
+
+## 料金 (2026-04 時点)
+- Free: 1,000 searches/月 / Pro: \$40/月 25K / Pro+: \$100/月 100K
+
+## 自分株式会社での活用
+- AI アシスタントの web 検索 (GPT-4o browsing の 57% コスト削減)
+- competitor-monitoring の WebSearch 置換
+- blog-draft の技術情報収集
+
+## 試す
+- Web: https://exa.ai/
+- Docs: https://docs.exa.ai/
+- Python SDK: https://github.com/exa-labs/exa-py
+- TypeScript SDK: https://github.com/exa-labs/exa-js
 ''',
 };
 
