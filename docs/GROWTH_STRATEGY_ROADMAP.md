@@ -12364,3 +12364,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **既知の落とし穴 #5 追記**: memory cross-reference (`memory/feedback_success_20260420_parallel_devto_422.md`) 付きで 422 パターン文書化
 - commit `1fc7a06f` → rebase → push 成功 (origin/main `3197073b`)
 - Philosophy alignment: 原則 6 (資本=時間 — 重複投稿の復旧作業ゼロ化) / 原則 3 (優しい mentor — 他 instance への配慮)
+
+## PS版#1 Session 12 (2026-04-20 13:35 JST) — inject-rules.txt 鮮度更新 (CONSTRAINT-LOG)
+- 発見: `~/.claude/hooks/inject-rules.txt` 102 行 `[AI-DEV-23]` "blog-publish (2/7)" が陳腐化 (実態 5/7)
+- 修正: 5/7 + 残 (retry policy + team memory score) を明記
+- 周知: `docs/cross-instance-prs/20260420_inject_rules_blog_publish_score_update.md` 作成
+- 制約ログ: `docs/instance-constraints.md` に追記
+- 影響: 全インスタンス UserPromptSubmit hook が正しい現状を毎ターン注入
+- 残作業 (将来 PS#1): blog-publish 5/7→7/7 (retry policy + engagement score)
+- Philosophy alignment: 原則 6 (資本=時間 — rule 鮮度維持で誤判断ゼロ) + 原則 8 (KPI=昨日の自分 — 進捗可視化)

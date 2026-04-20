@@ -21,6 +21,7 @@
 | 2026-04-12 | VSCode版 | Write ツールは相対パスのみ有効 (絶対パス silent fail) | `lib/pages/foo.dart` 形式で指定 | VSCode#35 |
 | 2026-04-12 | 全インスタンス | Edit 後に linter が変更を巻き戻す場合あり | Edit → 即 `git add` (Python+即gitaddパターン) | VSCode#59 |
 | 2026-04-12 | PowerShell版 | GHA `${{ steps.X.outputs.Y }}` を bash 文字列に直接展開禁止 | `env:` ブロック経由で安全に渡す | PS#54 |
+| 2026-04-20 | PS版#1 | `~/.claude/hooks/inject-rules.txt` の `[AI-DEV-23]` "blog-publish (2/7)" 記述が陳腐化 | 5/7 に更新 (CB+QG+TRACE_ID+DLQ 追加済 commit 02bdea2d) — 残: retry policy + team memory score | PS#1 S12 |
 
 ---
 
