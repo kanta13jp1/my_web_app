@@ -184,7 +184,6 @@ jobs:
             onboarding-flow
             feature-request-manager
             app-analytics-dashboard
-            development-achievements
             system-status
             personal-dashboard
             notify-feature-request
@@ -207,7 +206,6 @@ jobs:
             send-waitlist-notification
             viral-ad-generator
             viral-growth-engine
-            daily-judgment
             ai-search
             ai-suggest-tags
             ai-secretary
@@ -218,9 +216,6 @@ jobs:
             generate-daily-challenges
             trigger-analysis
             analyze-reality
-            ai-university-content
-            ai-university-streaks
-            ai-university-badges
             get-admin-users
             submit-feedback
             get-support-tickets
