@@ -65,7 +65,11 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           '機能カードの📌をタップしてピン留めできます',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }
@@ -79,8 +83,11 @@ class _UserPinnedFeaturesListState extends State<UserPinnedFeaturesList> {
               (item['feature_route'] as String).split('/').last;
           final route = item['feature_route'] as String;
           return InputChip(
-            label:
-                Text(label, style: const TextStyle(fontSize: 12, height: 1.5)),
+            label: Text(label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.5,
+                )),
             backgroundColor: const Color(0xFF1E1E2E),
             side: const BorderSide(color: Color(0xFF6366F1), width: 0.8),
             deleteIcon:

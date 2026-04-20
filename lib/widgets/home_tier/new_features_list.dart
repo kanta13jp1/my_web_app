@@ -53,7 +53,11 @@ class _NewFeaturesListState extends State<NewFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           '直近14日間に追加された機能はありません',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }

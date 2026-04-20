@@ -50,10 +50,11 @@ class CategoryChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              category.icon,
-              style: const TextStyle(fontSize: 16, height: 1.5),
-            ),
+            Text(category.icon,
+                style: const TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                )),
             const SizedBox(width: 6),
             Text(
               category.name,

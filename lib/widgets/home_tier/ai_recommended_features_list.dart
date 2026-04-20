@@ -79,7 +79,11 @@ class _AiRecommendedFeaturesListState extends State<AiRecommendedFeaturesList> {
         padding: EdgeInsets.all(16),
         child: Text(
           'おすすめ機能を取得できませんでした。後でお試しください。',
-          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13, height: 1.5),
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            height: 1.5,
+          ),
         ),
       );
     }

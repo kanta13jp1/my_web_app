@@ -97,7 +97,10 @@ Future<void> showReminderDialog({
                       Expanded(
                         child: Text(
                           '現在の設定: ${_formatReminderDate(currentReminder)}',
-                          style: const TextStyle(fontSize: 12, height: 1.5),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            height: 1.5,
+                          ),
                         ),
                       ),
                     ],
@@ -186,7 +189,10 @@ Future<void> showCategoryDialog({
                   child: Center(
                     child: Text(
                       category.icon,
-                      style: const TextStyle(fontSize: 20, height: 1.5),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -218,14 +224,16 @@ void showMarkdownHelp(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '# 見出し1',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
-            ),
-            Text(
-              '## 見出し2',
-              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
-            ),
+            Text('# 見出し1',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                )),
+            Text('## 見出し2',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  height: 1.5,
+                )),
             SizedBox(height: 8),
             Text('**太字**'),
             Text('*斜体*'),

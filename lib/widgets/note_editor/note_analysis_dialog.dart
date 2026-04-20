@@ -68,7 +68,10 @@ class NoteAnalysisDialog extends StatelessWidget {
             if (actionItems.isEmpty)
               const Text(
                 '検出されたアクションはありません',
-                style: TextStyle(color: Color(0xFFB0B0B0), height: 1.5),
+                style: TextStyle(
+                  color: Color(0xFFB0B0B0),
+                  height: 1.5,
+                ),
               )
             else
               ...actionItems.map(
