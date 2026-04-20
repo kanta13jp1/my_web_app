@@ -45,17 +45,9 @@ jobs:
               -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
               -H "Content-Type: application/json" \
               -d "{\"action\":\"wbs.list_tasks\",\"instance\":\"${INSTANCE}\"}")
-            RECENT_COUNT=$(echo "$RESPONSE" | python3 -c "
-            import sys, json
-            from datetime import datetime, timezone, timedelta
-            d = json.load(sys.stdin)
-            tasks = d.get('tasks', [])
-            cutoff = datetime.now(timezone.utc) - timedelta(days=${STALE_DAYS})
-            recent = sum(1 for t in tasks
-                         if t.get('updated_at')
-                         and datetime.fromisoformat(t['updated_at'].replace('Z','+00:00')) > cutoff)
-            print(recent)
-            " 2>/dev/null || echo "0")
+            # PS#1 S21: 元 heredoc は 12-sp leading whitespace で Python IndentationError → 常に 0
+            # 1-line 化して YAML block scalar と Python 両方の indentation 問題を解消
+            RECENT_COUNT=$(echo "$RESPONSE" | python3 -c "import sys,json; from datetime import datetime,timezone,timedelta; d=json.load(sys.stdin); c=datetime.now(timezone.utc)-timedelta(days=${STALE_DAYS}); print(sum(1 for t in d.get('tasks',[]) if t.get('updated_at') and datetime.fromisoformat(t['updated_at'].replace('Z','+00:00'))>c))" || echo "0")
 
             if [ "$RECENT_COUNT" = "0" ]; then
               OVERDUE_LIST="$OVERDUE_LIST $INSTANCE"
@@ -75,7 +67,8 @@ jobs:
         run: |
           DATE=$(date -u +%Y%m%d)
           mkdir -p docs/cross-instance-prs
-          BRANCH="wbs-staleness/${DATE}"
+          # PS#1 S21: 同日 2 回目 run の branch collision 回避で run_id suffix 付加
+          BRANCH="wbs-staleness/${DATE}-${{ github.run_id }}"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

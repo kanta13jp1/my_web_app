@@ -323,8 +323,12 @@ jobs:
           echo "devto_url=$DEVTO_URL" >> $GITHUB_OUTPUT
 
       # ── Step 5: frontmatter を published: true に更新 ───────────────────
+      # PS#1 S21 (2026-04-20): BYPASS_RULES PAT 失効疑いで GH006 protected branch
+      # push reject → continue-on-error: true で warn-only 化 (published:true 更新は
+      # 次回 schedule で再試行 / 同一 draft 2 重投稿リスクは auto_select の orphan 検知で回避)
       - name: Step 5 - Mark draft as published
         if: (github.event_name != 'schedule' || steps.auto_select.outputs.has_draft == 'true') && github.event.inputs.dry_run != 'true'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.BYPASS_RULES || secrets.GITHUB_TOKEN }}
           BYPASS_TOKEN: ${{ secrets.BYPASS_RULES }}
