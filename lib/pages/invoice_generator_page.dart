@@ -168,7 +168,7 @@ class _InvoiceGeneratorPageState extends State<InvoiceGeneratorPage> {
               child: Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   fontSize: 12,
                   height: 1.5,
                 ),

@@ -63,7 +63,7 @@ class HomeInsightsPage extends StatelessWidget {
             title: '成長シグナル',
             subtitle: '発信、紹介、競合比較、開発実績を確認します。',
             icon: Icons.rocket_launch,
-            color: Colors.green,
+            color: Color(0xFF4CAF50),
           ),
           const SizedBox(height: 10),
           const GrowthTrendCard(),

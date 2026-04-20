@@ -985,7 +985,7 @@ docs/GROWTH_STRATEGY_ROADMAP.md
         children: [
           const Padding(
             padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.check_circle, color: Colors.green, size: 18),
+            child: Icon(Icons.check_circle, color: Color(0xFF4CAF50), size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(

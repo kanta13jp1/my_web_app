@@ -1214,7 +1214,7 @@ $input
           children: [
             Row(
               children: [
-                const Icon(Icons.recommend_outlined, color: Colors.green),
+                const Icon(Icons.recommend_outlined, color: Color(0xFF4CAF50)),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
