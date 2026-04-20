@@ -226,12 +226,28 @@ serve(async (req) => {
 
       // ── A/B Testing ──────────────────────────────────────────────────────────
       case "ab.create": {
+        const variants = Array.isArray(body.variants) && body.variants.length > 0
+          ? body.variants
+          : [body.variant_a, body.variant_b].filter((v) => v !== undefined && v !== null);
         const item = await addItem(admin, "ab_test", userId, {
-          name: body.name, variants: body.variants ?? [], metric: body.metric, status: "running",
+          name: body.name,
+          variants,
+          variant_a: body.variant_a ?? variants[0] ?? null,
+          variant_b: body.variant_b ?? variants[1] ?? null,
+          metric: body.metric ?? null,
+          status: "running",
         });
         return json({ success: true, test: item });
       }
-      case "ab.list": return json({ success: true, tests: await listItems(admin, "ab_test", userId) });
+      case "ab.list": {
+        const raw = await listItems(admin, "ab_test", userId);
+        const tests = (raw ?? []).map((r: Record<string, unknown>) => ({
+          id: r.id,
+          ...(r.metadata as Record<string, unknown>),
+          createdAt: r.created_at,
+        }));
+        return json({ success: true, tests });
+      }
       case "ab.record": {
         const item = await addItem(admin, "ab_event", userId, {
           test_id: body.test_id, variant: body.variant, converted: body.converted ?? false,

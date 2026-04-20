@@ -69,7 +69,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 | EF | Flutter page | target hub action |
 | --- | --- | --- |
-| ab-testing-manager | lib/pages/ab_testing_manager_page.dart:42,68 | enterprise-hub:ab.create |
+| ~~ab-testing-manager~~ | ~~lib/pages/ab_testing_manager_page.dart:42,68~~ | **✅ PS#5 S30 完了** → enterprise-hub:ab.list (metadata flatten) / ab.create (variant_a/b 後方互換 accept) |
 | agent-department-manager | lib/pages/agent_department_manager_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | agent-performance-monitor | lib/pages/agent_performance_monitor_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | ~~calendar-events~~ | ~~lib/pages/calendar_events_page.dart:58,107,129~~ | **✅ PS#5 S23 完了** → app-hub:calendar.list / calendar.create / calendar.delete |
@@ -87,17 +87,17 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S29 chat-messaging 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S30 ab-testing-manager 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 7 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker, chat-messaging) | 53.8% |
+| B. 未削除 stale | 13 | 8 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker, chat-messaging, ab-testing-manager) | 61.5% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **8** | **34.8%** |
+| **合計 (PS#5 範囲)** | **23** | **9** | **39.1%** |
 
-**残 15 件** — PS#5 S29 で chat-messaging 消化 (B 7 件目・過半数達成)。**CRITICAL 残 0 件**。B 残 6 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
+**残 14 件** — PS#5 S30 で ab-testing-manager 消化 (B 8 件目)。**CRITICAL 残 0 件**。B 残 5 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
 
 ## S20 audit 補正 (3 件)
 

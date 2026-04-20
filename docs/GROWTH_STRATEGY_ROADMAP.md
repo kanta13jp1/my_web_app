@@ -15342,3 +15342,51 @@ Files:
 commit: `04402bc0`
 
 ---
+
+## [PS版#5 S30] 2026-04-21 朝 — ab-testing-manager → enterprise-hub:ab.* migrate (ab.list metadata flatten + ab.create 後方互換 variants 吸収)
+
+PS#6 S18 Flutter stale invoke audit 24 EF handoff の **9 件目消化** = Section B 8/13 (61.5%)。
+
+### 対象
+
+- `lib/pages/ab_testing_manager_page.dart` (237 行 / 2 invoke sites)
+- 移行先: `enterprise-hub:ab.*` (既存 3 actions を改修)
+
+### hub 改修 (EF-CAP-50 遵守 / EF 数不変・hub action 数も不変)
+
+1. **`ab.list` metadata flatten**: 既存 raw listItems → `{id, ...metadata, createdAt}` map
+   - Flutter は `test['name']` / `test['variant_a']` / `test['status']` を top-level で参照するため
+2. **`ab.create` 後方互換**: `variants: []` 配列形式 + `variant_a/variant_b` 個別 string の **両形式 accept**
+   - Flutter は string 個別送信 → hub 側で `variants = [variant_a, variant_b].filter(defined)` に normalize
+   - metadata には両形式保存 (variants 配列 + variant_a/b 個別)
+
+### Flutter 2 sites 変更
+
+| Site | Before | After |
+|------|--------|-------|
+| L42 `_fetchTests` | `ab-testing-manager action=list` | `enterprise-hub action=ab.list` |
+| L68 `_createTest` | `ab-testing-manager action=create` | `enterprise-hub action=ab.create` |
+
+### 進捗
+
+- **9/23 (39.1%)** / Section B 8/13 (61.5%)
+- **CRITICAL 残 0 件** 継続
+- 残 14 件 = MEDIUM 優先度
+
+### Philosophy 6/9 ✅
+
+- 1 CEO 感 / 2 ミッション / 3 mentor / 4 6 部署 / 6 時間資本 / 7 BS
+
+### AI_DEV 4/7 ✅
+
+- 冪等性 / 観測可能性 / 失敗時縮退 / トレース
+
+### 次 (S31+)
+
+残 B 5 件 (home 経路なし MEDIUM):
+- competitor-feature-sync / invoice-generator / poll-survey (PS#5 範囲内 3 件)
+- agent-department-manager / agent-performance-monitor (PS#5 範囲外)
+
+Files: lib/pages/ab_testing_manager_page.dart / supabase/functions/enterprise-hub/index.ts / docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md / memory/project_20260421_ps5_s30.md
+
+---

@@ -39,8 +39,8 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'ab-testing-manager',
-        body: {'action': 'list'},
+        'enterprise-hub',
+        body: {'action': 'ab.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -65,9 +65,9 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'ab-testing-manager',
+        'enterprise-hub',
         body: {
-          'action': 'create',
+          'action': 'ab.create',
           'name': name,
           'variant_a': variantA,
           'variant_b': variantB,
