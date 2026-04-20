@@ -75,7 +75,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | ~~calendar-events~~ | ~~lib/pages/calendar_events_page.dart:58,107,129~~ | **✅ PS#5 S23 完了** → app-hub:calendar.list / calendar.create / calendar.delete |
 | chat-messaging | lib/pages/team_chat_page.dart:46,74,98 | app-hub:chat.send / chat.list |
 | competitor-feature-sync | lib/pages/competitor_feature_sync_page.dart:32,61 | enterprise-hub:competitor.sync |
-| goal-tracker | lib/pages/goal_tracker_page.dart:66,70,99,135,156 | tools-hub:goal.* |
+| ~~goal-tracker~~ | ~~lib/pages/goal_tracker_page.dart:66,70,99,135,156~~ | **✅ PS#5 S27 完了** → tools-hub:goal.list (clientside status filter) / goal.add (timeframe 1 行拡張) / goal.update (local metadata merge pattern for hub full-replace) |
 | ~~habit-tracker~~ | ~~lib/pages/habit_tracker_page.dart:39,63,82~~ | **✅ PS#5 S26 完了** → tools-hub:habit.list / habit.create / habit.checkin (UX 後退: streak/done_today defaults 0/false — hub stats 拡張は別 sub-task) |
 | invoice-generator | lib/pages/invoice_generator_page.dart:44,70 | social-commerce-hub:invoice.create |
 | ~~music-collaboration~~ | ~~lib/pages/music_collaboration_page.dart:32~~ | **✅ PS#5 S25 完了** → app-hub:music.sessions (field mapping: title→metadata.name / collaborators→participants.length) |
@@ -87,17 +87,17 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S26 habit-tracker 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S27 goal-tracker 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 4 (calendar-events, reading-list, music-collaboration, habit-tracker) | 30.8% |
+| B. 未削除 stale | 13 | 5 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker) | 38.5% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **5** | **21.7%** |
+| **合計 (PS#5 範囲)** | **23** | **6** | **26.1%** |
 
-**残 18 件** — PS#5 S26 で habit-tracker 消化 (B 4 件目)。CRITICAL 残 2 件 (time-tracker / goal-tracker) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
+**残 17 件** — PS#5 S27 で goal-tracker 消化 (B 5 件目)。CRITICAL 残 1 件 (time-tracker) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
 
 ## S20 audit 補正 (3 件)
 

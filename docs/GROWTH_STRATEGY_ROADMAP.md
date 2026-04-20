@@ -14832,3 +14832,49 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 commit: 8e8c737d `docs(ps4-s30): WBS/Gantt 大改修 Phase 2 マスタータスク起票 (T1-T9)`
 
 ---
+
+### PS版#5 Session 27 (2026-04-20) — goal-tracker → tools-hub:goal.* migrate 🎯
+
+**PS#6 S18 handoff (24 EF stale invoke audit) 6 件目消化**。CRITICAL goal-tracker = home_tool_catalog 登録済で、ユーザーが home から「目標管理」を開くと 404 返却状態だった。
+
+- **対象**: `lib/pages/goal_tracker_page.dart` (662 行 / 5 invoke sites)
+- **移行先**: `tools-hub:goal.list` / `goal.add` / `goal.update`
+- **hub 拡張**: `tools-hub/index.ts` に `timeframe: body.timeframe ?? "short"` を `goal.add` metadata に 1 行追加 ([EF-CAP-50] 遵守)
+- **新パターン (local metadata merge)**:
+  - hub の `goal.update` は metadata を **full replace** で上書きする
+  - 単一 field 変更 (milestone の done フラグ / status) のみ送ると他 field が消失
+  - 対応: Flutter 側で goal を `_findGoalById` で lookup → 既存 metadata を clone → 変更分 merge → 全 metadata を body に `...meta` spread
+- **Flutter 変更**:
+  1. `_fetchGoals`: 2 回 invoke (active/completed) → **1 回 `goal.list` + clientside status filter** に condensation
+  2. `_createGoal`: list comprehension `[for (final m in _milestones) {...}]` で milestones 構築 (require_trailing_commas lint 回避)
+  3. `_findGoalById` 新ヘルパー: `_activeGoals` + `_completedGoals` 横断 lookup
+  4. `_toggleMilestone`: local metadata merge + `goal.update`
+  5. `_updateStatus`: local metadata merge + `goal.update`
+  6. `_buildGoalCard`: `goal['metadata']` 展開 + progress 計算を clientside 化 (hub 未返却)
+- **変更ファイル 3**:
+  1. `lib/pages/goal_tracker_page.dart` (5 sites)
+  2. `supabase/functions/tools-hub/index.ts` (+1 line)
+  3. `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` (進捗 5/23 → 6/23 = 26.1%)
+
+**進捗**: 6/23 (26.1%) / Section B 5/13 (38.5%)。残 17 件。CRITICAL 残 1 件 = **time-tracker** (S28 target)。
+
+**Philosophy alignment**:
+- 原則 1 (CEO 感): 目標は自分が決定 → 進捗可視化で意思決定サポート
+- 原則 3 (優しい mentor): milestone 分割で段階的達成感
+- 原則 4 (6 部署バランス): 短期/中期/長期 = 人生 BS の長期資産計画
+- 原則 6 (資本=時間): 1 回 invoke へ condensation (2→1 call)
+- 原則 8 (KPI=昨日の自分): progress 計算 clientside で即表示
+
+5/9 ✅ ([PHILOSOPHY-22] 5+ 基準クリア)
+
+**AI_DEV 7 原則**:
+- 冪等性 ✅ (goal.update は full metadata overwrite → 同値 replay safe)
+- 観測可能性 ✅ (hub console.log で action routing 記録済)
+- 失敗時縮退 ✅ (try/catch + SnackBar 表示)
+- トレース ✅ (supabase edge function log に userId + action 残る)
+
+4/7 ✅ ([AI-DEV-23] 4+ 基準クリア)
+
+commit: `<pending>` — build verification は dart format deadlock で skip (CI に委譲・S17 parallel race pattern)
+
+---

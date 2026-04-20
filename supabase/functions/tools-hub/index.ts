@@ -967,6 +967,7 @@ serve(async (req) => {
       case "goal.add": {
         const item = await addItem(admin, "goal", userId, {
           title: body.title, description: body.description, deadline: body.deadline,
+          timeframe: body.timeframe ?? "short",
           status: "active", milestones: body.milestones ?? [],
         });
         return json({ success: true, goal: item });
