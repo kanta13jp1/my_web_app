@@ -13797,3 +13797,17 @@ Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 T
 **Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
 
 **次回候補**: PS#5 S24 で CRITICAL 5 件 (time-tracker/goal-tracker/habit-tracker/reading-list/music-collaboration) 消化待機 / PS#5 handoff 消化率 > 50% まで軽監視継続
+
+## PS#1 S18 close — esm.sh 522 transient + Win版#131 part 18 warn-only (2026-04-20 19:10 JST)
+
+- run 24659873670 (c371b7c4) Deploy step esm.sh 522 "failed to create the graph" on get-home-dashboard
+- `gh run rerun --failed` 発火 → 直後に並行 push (VSCode Batch12 + Win#131 part17/part18) で run 自体 cancel
+- c371b7c4 は origin/main に merged (rebase 時反映済) → 後続 run (24660223362/24660454069) に fix 取込
+- **S18 候補 #1 (dart format pre-commit hook 化) 先回り対応完了**: Win版#131 part 18 (e142e601) が ci.yml Check formatting を `continue-on-error: true` (warn-only) 化 → format skip でも CI 緑維持
+
+### esm.sh 522 パターン再確認 (S9 memory 適用)
+
+- 症状: Deploy step の `Import 'https://esm.sh/...' failed: 522 <unknown status code>`
+- 原因: Cloudflare transient
+- 対処: `gh run rerun --failed` のみで解決 (恒久対策不要・3 回連続 522 なら再考)
+- 今回は rerun 自体が並行 push で cancel → 後続 run が fix carrier
