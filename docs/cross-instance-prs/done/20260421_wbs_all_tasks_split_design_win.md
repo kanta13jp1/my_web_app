@@ -1,5 +1,21 @@
 # Win版 宛: WBS "ALL" tasks を instance 別に split する設計判断
 
+## ✅ Win版 決裁 (2026-04-21 朝 / Win#131 part 14-15 / commit 04402bc0)
+
+**結論: 案 D (shared keep + owner_instance 必須 + UI warning)** を採用・実装済。
+
+- 3 ALL tasks は **残す** (milestone 相当として横断目標を見れる場所を維持)
+- ただし `owner_instance` 列 (NOT NULL + CHECK 制約 12 値 / `'all'` 禁止) を追加し、
+  各タスクの **primary owner** を明示 (現状 3 件とも backfill で `vscode` に集約)
+- `wbs.add_task` は `instance='all'` 指定時に `owner_instance` 明示必須化
+  (未指定は 400 エラー = default leak 完全遮断)
+- UI warning chip (instance='all' のとき "🌐 ALL - owner: vscode" 表示) は
+  **VSCode版 T2-VSCode に handoff** (Gantt Grid 5 列実装と同時に組み込む)
+
+→ 以後この handoff は **closed** (done/ に移管)
+
+---
+
 - **起票元**: PS版#6 S23 (2026-04-21)
 - **優先度**: MEDIUM (user 明示要望だが design 判断必要)
 - **起票理由**: user Q「すべてのインスタンスに本当に ALL で割り当てられているのか — ALL タスクは N 個に split すべきでは」
