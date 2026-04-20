@@ -393,6 +393,10 @@ jobs:
 
       - name: Push Release Tag
         id: push_tag
+        # Win版#131 part 15: tag push が GitHub App workflow protection で reject される場合
+        # (commit range に .github/workflows/*.yml 変更含む + GH_PAT 未設定) は warning に
+        # して deploy 続行 (Firebase Hosting reflection が本体・tag は補助)
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -401,7 +405,10 @@ jobs:
             echo "Tag $TAG already exists remotely, skipping tag push."
           else
             git tag -a "$TAG" -m "Release $TAG"
-            git push origin "$TAG"
+            if ! git push origin "$TAG" 2>&1; then
+              echo "::warning::Tag push rejected (GH_PAT 未設定 or workflow scope 不足)。Firebase Hosting deploy は成功済の可能性高い。GH_PAT を Settings>Secrets に設定すれば次回から成功する"
+              exit 0
+            fi
           fi
 
       - name: Create GitHub Release
