@@ -825,6 +825,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7C3AED),
     officialUrl: 'https://decart.ai/',
   ),
+  'goodfire': _ProviderMeta(
+    name: 'Goodfire',
+    emoji: '🔬',
+    color: const Color(0xFFEA580C),
+    officialUrl: 'https://www.goodfire.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4203,6 +4209,34 @@ client = OpenAI(
 - Mirage デモ: https://mirage.decart.ai/
 - Oasis デモ: https://oasis.decart.ai/welcome
 - Mirage API は 2026 年内公開予定 (waitlist 受付中)
+''',
+  'goodfire': '''
+# Goodfire — AI Interpretability の最前線 (\$1.25B 評価額)
+
+サンフランシスコ拠点。AI モデル内部のニューロンを直接読み解き編集可能にする
+**Ember** プラットフォームを開発。Anthropic が Series A に出資した AI 安全性研究の最前線。
+2026-02 に Series B \$150M 調達 (累計 \$207M / 評価額 \$1.25B 🦄)。
+
+## 既存 129 社との差別化
+| 観点 | Goodfire | LLM/動画/音声 プロバイダー |
+|------|----------|---------------------------|
+| カテゴリ | Interpretability (解釈可能性) | 生成・推論 |
+| 対象 | 既存モデルの「内部」を解読 | 新モデルを「外部」呼出 |
+| 出力 | ニューロン活性化マップ・特徴量 | テキスト/画像/動画/音声 |
+
+## 主要技術
+- **Sparse Autoencoders (SAE)**: LLM 隠れ層の重ね合わせを単一概念に分離
+- **Feature Steering**: ファインチューニング不要で特徴を直接 ON/OFF
+- **OSS SAE 重み**: Llama 3.1 8B 全層が HuggingFace で無償公開
+
+## 最新成果 (2026-02)
+**Alzheimer's biomarker 発見** — 基盤モデル逆解析による自然科学領域での
+重大発見の最初の例 (Prima Mente との共同研究)。
+
+## 試す
+- HuggingFace OSS: https://huggingface.co/goodfire
+- Blog: https://www.goodfire.ai/blog
+- Ember API は 2026-02 から partner-only (個別審査)
 ''',
 };
 
