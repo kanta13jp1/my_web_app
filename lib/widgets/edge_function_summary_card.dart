@@ -713,6 +713,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/workflow-templates',
       'ワークフローテンプレートページ > テンプレート一覧・ギャラリー表示',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'gift-registry',
+      'ギフトレジストリ (ギフトリスト管理)',
+      true,
+      '/gift-registry',
+      'ギフトレジストリページ > ギフトリスト追加・共有・達成状況確認',
+    ),
+    _FnDef(
+      'mindmap-diagram',
+      'マインドマップ・ダイアグラム作成',
+      true,
+      '/mindmap',
+      'マインドマップページ > ノード追加・接続・図の編集',
+    ),
+    _FnDef(
+      'music-collaboration',
+      '音楽コラボレーション (セッション管理)',
+      true,
+      '/music-collaboration',
+      '音楽コラボページ > セッション一覧・参加・楽曲共有',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
