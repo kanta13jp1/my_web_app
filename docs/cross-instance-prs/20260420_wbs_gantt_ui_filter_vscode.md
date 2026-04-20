@@ -58,3 +58,23 @@
 ## SLA
 
 - この cross-instance-pr は `docs/` 1 ファイル追加のみ。VSCode 本実装は 48h 以内着手推奨 (INSTANCE-ROLES Rule)。
+
+
+---
+
+## 🚨 PREREQ FIX (PS#6 S22 2026-04-20 commit 232b2783)
+
+本 handoff 着手の前に **tools-hub の wbs.* dispatch bug が修復された** ことを確認:
+
+- **Bug**: `supabase/functions/tools-hub/index.ts` line 335 で wbs.* 全 9 actions が horseracing switch 内に誤ネスト → `startsWith("horseracing.")` false で unreachable → 401 Unauthorized silent fail (2 週間潜伏)
+- **Fix**: line 335 の条件を `|| action.startsWith("wbs.")` で拡張 (commit 232b2783 main)
+- **確認 curl**:
+  ```bash
+  curl -X POST https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub \
+    -H "Authorization: Bearer <ANON_KEY>" -H "Content-Type: application/json" \
+    -d "{\"action\":\"wbs.priority_for_instance\",\"instance\":\"ps6\"}"
+  ```
+  期待値: `{"success":true,"instance":"ps6","top_tasks":[...]}`
+
+deploy-prod 反映まで最大 11 min × 並行数。反映確認後に本 handoff 作業着手可。
+
