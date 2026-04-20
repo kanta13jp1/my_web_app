@@ -157,6 +157,12 @@
 - Pro $20/月 ユーザーは即時利用可能 (Team/Enterprise は除外)
 - 自分株式会社への影響: **「人生 6 部署統合」軸の優位は維持** (Cowork は依然 knowledge-work 専用) だが、 **「データ永続化」軸 (差別化軸 5)** が更に重要に — Computer Use は session 揮発のため
 - Anthropic Enterprise pricing 改定 ($200 flat → $20/seat + usage-based) で **Cowork 上位プランの月額予測が困難 → 「自分株式会社 = 完全無料・予測可能」の SNS 訴求弾**
+- **[S27] 2 社交差 audit 済** (`claude.com/pricing` 公式 + The Register + PYMNTS + Gizmodo + npifinancial + Kingy AI = 5 独立報道):
+  - **転換時期**: 2025-11 から renewal-based 段階移行 / 2026-02 で all-inclusive Enterprise seat 化 (chat + Code + Cowork)
+  - **新構造 3 点**: (1) 強制コミット枠 (Anthropic 推定の月次 token 量を pre-pay・実消費が下回っても請求) (2) 従来の 10-15% 大口割引廃止 (3) per-token 単価は不変 (= 値上げ要因は割引廃止)
+  - **インパクト**: heavy users で **2-3 倍コスト増** (Fredrik Filipsson / Redress Compliance 試算 + npifinancial 「TCO 上昇」分析) → SNS 弾強化材料
+  - **SNS 弾強化フレーズ** (PS#2 本C 4/23+ dispatch 用): 「Anthropic Enterprise = 強制コミット枠で実消費を下回っても請求。自分株式会社は完全無料・コミット枠ゼロ」
+  - **負債 framing** (Qiita BS 原則): 「コミット枠 = 月次強制負債、未消費分は資産化されず消える」
 
 ### 3. Slack TDX Headless 360 + Experience Layer (S14 詳報の追加詳細)
 - **Agentforce Experience Layer**: agent action と UI を分離 → 同一 agent が Slack/Mobile/ChatGPT/Claude/Gemini/Teams でネイティブ描画

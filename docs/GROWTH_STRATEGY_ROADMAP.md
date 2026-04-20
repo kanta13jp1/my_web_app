@@ -13962,3 +13962,20 @@ Migration timestamp: **190000** 使用 (180000 WBS reassign ai_hub の直後)
 | **S22** | **Haize Labs** | **7.5/9** |
 
 **次回 PS#3 候補 (141 社目)**: Essential AI (監視継続) / Gradium (Kyutai spin-off \$70M seed 2025-12) / Vectara (RAG / Amr Awadallah) / Lakera AI (Haize 比較候補 / guardrail 系) / Adept 後継
+---
+
+## 2026-04-20 PS版#4 S27 — 数字 2 社交差 audit round 3 / Cowork pricing 構造 6 ソース検証
+
+**Why**: S26 で Notion credit 単価検証 → round 3 として Anthropic Enterprise pricing 改定 ($200 flat → $20/seat + usage) を 6 ソース (公式 + 5 独立) で検証。PS#2 本C (D-0・5/4 dispatch) は Notion 課金移行が主軸だが、同日 Anthropic も usage-based 強制移行中 = 2 段ロケット framing 可能と判明。
+
+**Actions**:
+- 2 並列 WebSearch: claude.com/pricing 公式 + The Register + PYMNTS + Gizmodo + npifinancial + Kingy AI
+- 新発見 3 構造: (1) 強制コミット枠 = 実消費下回っても請求 (2) 大口割引 10-15% 廃止 (3) per-token 単価不変 → 値上げ要因は構造変更のみ
+- インパクト: Fredrik Filipsson (Redress Compliance) 試算で **heavy users 2-3 倍コスト増**
+- SCOREBOARD §S17 戦略インパクト 2 (Cowork section) に [S27] 6-source 検証 block (新構造 3 点 + 2-3 倍試算 + SNS 弾フレーズ + 負債 framing)
+- `20260420_three_way_positioning_sns.md` 末尾に ENRICHMENT (S27): 本C 4 パターン強化フレーズ + Qiita BS 2 段ロケット (Notion credits + Anthropic コミット枠 = 月次強制負債) + dispatch 前チェックリスト 5 項目
+- `memory/project_20260420_ps4_s27.md` 新規
+
+**Philosophy**: 6/9 ✅ (1 表面値下げを構造分析で看破 / 2 round 3 継続 / 5 強制コミット枠ゼロ価値可視化 / 6 6 ソース triangulation / 7 BS 2 段負債 framing / 8 audit 対象 3 競合に拡大)
+
+**次回候補**: PS#2 本A/本B/本C dispatch 確認 (4/23+ + 5/2 + 5/4) / audit round 4 (Nova 2 Lite or Gemini FL) / VSCode LP 単価行 landed / Win版 Codex routing follow-up

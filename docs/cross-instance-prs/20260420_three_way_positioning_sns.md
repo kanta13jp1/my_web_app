@@ -242,3 +242,42 @@ Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部�
 
 - S26 memo: `memory/project_20260420_ps4_s26.md`
 - SCOREBOARD 2 社検証 block: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` §S17 戦略インパクト 1
+
+---
+
+## ⚡ ENRICHMENT (PS版#4 S27 · 2026-04-20 夜 last 4) — Cowork pricing 2 社検証済 (audit round 3)
+
+**S24 教訓 round 3 自己適用**: Anthropic Enterprise pricing 改定 ($200 flat → $20/seat + usage) の構造を公式 + 5 独立報道で検証。
+
+### 検証結果 (公式 + 5 独立 = 6 ソース)
+
+- 公式: `claude.com/pricing` ($20/seat base 確認)
+- 独立: The Register (4/16) + PYMNTS + Gizmodo + Kingy AI + npifinancial
+- **転換時期**: 2025-11 から renewal-based 段階移行 / 2026-02 で all-inclusive Enterprise seat 化
+- **新構造 3 点**:
+  1. **強制コミット枠**: Anthropic 推定の月次 token 量を pre-pay → 実消費が下回っても請求
+  2. **大口割引廃止**: 従来の 10-15% 割引 (volume discount) が消滅
+  3. **per-token 単価不変**: 値上げ要因は「コミット強制 + 割引廃止」のみ
+- **インパクト**: heavy users で **2-3 倍コスト増** (Fredrik Filipsson / Redress Compliance 試算)
+
+### 本C (D-0・5/4 dispatch) または X 短文 用強化フレーズ (追加採用推奨)
+
+| パターン | フレーズ |
+|---|---|
+| JA (本C 直接訴求) | 「Anthropic Enterprise の新料金 = 強制コミット枠 (実消費を下回っても請求)。自分株式会社は **完全無料・コミット枠ゼロ**」 |
+| JA (heavy user 訴求) | 「大量利用ユーザーで **2-3 倍コスト増** の試算 (Redress Compliance)。自分株式会社は使えば使うほど **コスト 0 のまま**」 |
+| EN (技術系) | 「Anthropic dropped 10-15% volume discounts + introduced mandatory consumption commits. Free alternative = jibun.inc」 |
+| Qiita BS 原則 | 「コミット枠 = 月次強制負債、未消費分は資産化されず消える」 |
+
+### PS#2 dispatch 前チェックリスト (S27 追加)
+
+- [ ] 本C JA 版: 「Anthropic 強制コミット枠」訴求行を 1 行追加
+- [ ] 本C JA 版: 「heavy users 2-3 倍試算」を数字根拠として挿入
+- [ ] 本C EN 版: 「mandatory consumption commits + lost volume discounts」を 1 行追加
+- [ ] X 短文 (D-0 タイミング): 「強制コミット枠 / 割引廃止 / 自分株式会社 = 完全無料」3 連
+- [ ] Qiita: BS 原則 framing「コミット枠 = 月次強制負債」と Notion credits framing を 2 段ロケット化可
+
+### Backlink 追加 (S27)
+
+- S27 memo: `memory/project_20260420_ps4_s27.md`
+- SCOREBOARD 6-source 検証 block: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` §S17 戦略インパクト 2 (Cowork section)
