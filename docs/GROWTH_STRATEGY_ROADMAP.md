@@ -13100,3 +13100,55 @@ source dir `notify-feature-request/index.ts` は PS#5 の修正参照用に
 1. 🟡 PS#5 の generate-daily-challenges migration (S21) に追従 — source 削除
 2. 🟡 残 live-dead 29 件の次バッチ (core-hub/growth-hub 領域 10-15 件処理可)
 3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
+
+## 2026-04-20 PS版#1 Session 16 — wbs-staleness-audit 8/8 parse error 根治 + Pleias 再衝突 修復
+
+### 背景
+
+PS#1 S15 で Pleias 100000→110000 は rename 済のはずが、PS#3 S17 (Imbue) が同 100000 を再度取得 → 衝突再燃。
+並行して Rule 17 WF health check で `wbs-staleness-audit.yml` 8/8 全失敗 + workflow_dispatch 即 failure 発覚。
+
+### 発見 1: Pleias 100000 再衝突 (commit 308e8787)
+
+```bash
+git mv supabase/migrations/20260420100000_seed_pleias_ai_university.sql \
+       supabase/migrations/20260420110000_seed_pleias_ai_university.sql
+```
+
+### 発見 2: wbs-staleness-audit.yml parse error (commit 4e70f7cb)
+
+症状チェーン:
+- 全 run `conclusion=failure`, `jobs=0`, `logs=404`, `check_runs=0`
+- `gh api /repos/.../actions/workflows/<id>` の `name` が file path 表示
+- `gh workflow run wbs-staleness-audit.yml` → **HTTP 422 (Line: 122, Col: 9): 'env' is already defined**
+
+Root cause: "Create cross-instance-pr" step に `env:` ブロック 2 箇所 (run: 前 + 末尾)。YAML spec duplicate key 違反 → GitHub parser 拒否。
+
+修正: 末尾 `env:` を先頭にマージし、`OVERDUE + GH_TOKEN` を同一 block に統合。
+
+### 発見 3: secrets 名前 mismatch (commit b2742d4b)
+
+parse fix 後 runtime fail (exit code 3)。`gh secret list` で `SUPABASE_URL` 不在、`_PROD`/`_DEV`/`_STAGING` 運用を確認:
+
+```yaml
+SUPABASE_URL: ${{ secrets.SUPABASE_URL_PROD }}
+SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
+```
+
+### 検証
+
+- `gh workflow run wbs-staleness-audit.yml` → 422 消失、queued
+- run 24657743440 → `status=completed / conclusion=success / audit=success`
+
+### Philosophy alignment
+
+- 原則 7 (資産=broken WF 復活・技術負債除去)
+- 原則 6 (資本=時間・rabbit hole 解消)
+- 原則 8 (KPI=昨日の自分・S15 migration collision 学習の即再適用)
+- 整合性: 8/9
+
+### 次回 PS#1 候補
+
+1. 🔴 inject-rules.txt に migration HH分担ルール追加 (PS=00-10/Win=15-20/VSCode=25-30)
+2. 🟡 S14 副作用 = deploy-prod pending-replacement cancel 対策判断 (SHA-scoped group / auto-rerun / allow)
+3. 🟢 GHA yml parse lint GitHub Pre-commit hook 化 (`gh workflow run --dry-run` 相当が無いため sim)
