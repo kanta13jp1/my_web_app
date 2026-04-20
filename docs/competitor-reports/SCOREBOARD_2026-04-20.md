@@ -120,7 +120,7 @@
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
 | **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
 | **Anthropic Labs Claude Design** | AI デザイン SaaS | 2026-04-17 GA / prompt→prototype 2 回 / Canva CEO 署名の native 統合 / Pro $20+ | 🟠 ツール採用検討 | VSCode版 が `/claude-design-handoff` と併用判断 (Rule 21) |
-| **OpenAI Codex Desktop** (S22 追加) | AI 個人タスク自動化 | **2026-04-17 大型 update**: Computer Use (macOS sandbox VM・foreground 非干渉) + Multiple agents parallel + Memory preview + **90+ plugins (Atlassian/CircleCI/GitLab/MCP)** + In-app browser / 3M weekly devs / Claude Code Desktop と機能パリティ+α | 🟠 **routing 判断待ち** | 個人 Mac の手先自動化 vs 人生 6 部署経営 — 領域不重複だが ai-hub routing に影響 |
+| **OpenAI Codex Desktop** (S22 追加・S24 訂正) | AI 個人タスク自動化 | **2026-04-17 大型 update**: Computer Use (macOS sandbox VM・foreground 非干渉) + Multiple agents parallel + Memory preview + **20+ plugins (Box/Figma/Linear/Notion/Sentry/Slack/Gmail/HF・self-serve publish 未対応)** + In-app browser / 3M weekly devs / Computer Use は Claude とパリティ・**plugin ecosystem は Claude 優位 (423 vs 20+ = 約 20 倍)** | 🟠 **routing 判断待ち** | 個人 Mac の手先自動化 vs 人生 6 部署経営 — 領域不重複だが ai-hub routing に影響 |
 
 **扱い**: Cursor / Cognition / Lovable は **LP 比較表に追加しない**。理由:
 - いずれも「仕事 knowledge-work の内側」を争う競合で、自分株式会社の軸 1 (対象=個人 CEO) / 軸 2 (範囲=人生 6 部署) と重ならない
@@ -134,6 +134,7 @@
 *更新: PS版#4 S20 5 並列 delta — S18 AgentExchange **HOLD 判定** (Salesforce Partner 必須 HIT) → **MCP 直接公開 代替 PR 起票** / Notion credit 不足 "pause" 挙動発見 / Gemini 4 (ARC-AGI2 84.6% / 2M / sub-300ms) | 2026-04-20 夕*
 *更新: PS版#4 S21 🔴 **OpenAI Codex Desktop 4/17 Computer Use + 90 plugin + MCP** = Claude Code と機能パリティ+α → 個人タスク自動化 Claude 一強崩壊 / Evernote 4 plan 再編 (Personal/Professional retire) / MoneyForward **AI Cowork** 7/launch (法人 BO 住み分け追認) | 2026-04-20 夜*
 *更新: PS版#4 S22 SCOREBOARD に S18-S21 delta 集約 + OpenAI Codex 行を Watchlist Backlog に追加 + 差別化軸 7 目「AI 手段の分散 vs 特化」を追加検討 | 2026-04-20 夜 late*
+*訂正: PS版#4 S24 **Codex 90 plugin → 20+ plugins (self-serve 未対応) に訂正** + Claude Code = 423 plugins / 2,849 skills / 177 agents (+ Desktop Extensions .mcpb / Plugins for Cowork ページ・claude.com/plugins) で **plugin ecosystem は Claude が約 20 倍優位**。S21「Claude 一強崩壊」narrative を「Computer Use はパリティ、ただし plugin ecosystem は Claude 優位」に修正 | 2026-04-20 夜 last*
 
 ---
 
@@ -160,15 +161,16 @@
 
 ## S21 戦略インパクト (2 大 delta)
 
-### 1. OpenAI Codex Desktop 4/17 大型 update — 個人タスク自動化 Claude 一強崩壊 (🔴)
+### 1. OpenAI Codex Desktop 4/17 大型 update — Computer Use パリティ達成 (🟠・S24 訂正)
 
 - **Computer Use (macOS)**: sandbox VM 内で mouse/keyboard 制御・foreground 非干渉
 - **Multiple agents parallel**: 同一 Mac で複数 agent 同時実行
 - **Memory preview**: 過去対話 + personal preferences + corrections 記憶
-- **90+ plugins**: Atlassian Rovo / CircleCI / GitLab Issues / Microsoft / MCP servers 統合
+- **~~90+ plugins~~ 20+ plugins** (Box/Figma/Linear/Notion/Sentry/Slack/Gmail/HF 等・**self-serve publish は未対応**)
 - **In-app browser**: 3M weekly devs 向け PR review / multi-terminal / SSH devbox
-- → Claude Code Desktop (Cowork) と **機能パリティ+α** 達成
-- → 個人タスク自動化市場で Claude 一強構造が崩壊
+- → Claude Code Desktop (Cowork) と **Computer Use はパリティ** 達成
+- → **ただし plugin ecosystem は Claude が依然優位**: Claude Code 423 plugins / 2,849 skills / 177 agents (+ .mcpb Desktop Extensions / claude.com/plugins で Cowork 用 plugin も) vs Codex 20+ plugins
+- **S24 訂正**: 当初の「Claude 一強崩壊」は過剰評価 — 正確には「Computer Use カテゴリで Codex が catch-up、ただし plugin ecosystem は Claude 約 20 倍優位」
 
 **自分株式会社への影響**:
 - **直接 (Low)**: LP 比較表に「3 者棲み分け」行追加 (OpenAI Codex = 手先自動化 / Claude = Knowledge-work / 自分株式会社 = 人生 6 部署経営)
@@ -197,4 +199,6 @@ S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる
 
 → 軸 7 案: **「AI 手段の分散」= 単一 vendor 依存しない = CEO 的リスク管理 (原則 1・7 整合)**
 → Win版 routing 判断結果が出たら LP 軸 7 を正式採用する
+
+**S24 補足**: 機能パリティ論は Computer Use のみ。**plugin ecosystem は Claude が Codex の約 20 倍優位**なので「どの AI を選ぶか」の答えは「plugin ecosystem で Claude、Computer Use は両方、自分株式会社は 6 部署軸で統合」が正確。SNS 弾 (S23 PR) の framing も「Claude 一強崩壊」ではなく「Claude 優位維持でも 6 部署軸は別問題」に訂正。
 

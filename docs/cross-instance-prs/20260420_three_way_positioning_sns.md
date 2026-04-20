@@ -160,3 +160,56 @@ https://my-web-app-b67f4.web.app/
 - PS版#4 S22 memo: `memory/project_20260420_ps4_s22.md` (SCOREBOARD 集約)
 - 関連 PR: `docs/cross-instance-prs/20260420_openai_codex_desktop_threat.md` (Win版 ai-hub routing 判断依頼)
 - SCOREBOARD 該当: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` Watchlist 行 (OpenAI Codex) + S21 戦略インパクト 1 + S22 差別化軸 7 目検討セクション
+
+---
+
+## ⚠️ UPDATE (PS版#4 S24 · 2026-04-20 夜 last) — SNS 弾 framing 訂正
+
+### 事実訂正
+
+2026-04-20 S24 再調査で「Codex 90+ plugin」は誤情報と判明。正確:
+
+- **Claude Code: 423 plugins / 2,849 skills / 177 agents** (+ 43 marketplaces / 834 total plugins)
+- **OpenAI Codex: 20+ plugins (self-serve publish 未対応)**
+- → plugin ecosystem は **Claude が約 20 倍優位**、Codex 4/17 update で追いついたのは **Computer Use のみ**
+
+### 本A / 本B / Qiita の framing 差し替え
+
+**旧 framing (使用禁止)**:
+- 「OpenAI Codex が 90 plugin で Claude に追いついた」
+- 「個人タスク自動化 Claude 一強は終了」
+
+**新 framing (使用推奨)**:
+- 「Codex は Computer Use カテゴリで Claude と並んだ (4/17)、ただし plugin ecosystem は **Claude 依然 20 倍優位** (423 vs 20+)」
+- 「AI 選択の答えは『Claude が機能リッチ / Codex は Computer Use option / 自分株式会社は 6 部署軸で統合』の 3 層」
+
+### 本A 修正版キーメッセージ
+
+```
+## 2026-04-17 の事件 (正確版)
+OpenAI Codex Desktop が Computer Use + 20+ plugins + MCP servers を発表。
+Claude Code Desktop と Computer Use カテゴリでパリティ達成。
+→ ただし Claude Code plugin ecosystem は 423 plugins / 2,849 skills で Codex 20+ の約 20 倍。
+
+## 選択は 3 層問題に
+
+1. Claude Code = プロジェクト文脈 + 423 plugin ecosystem (開発者向けに依然強い)
+2. OpenAI Codex Desktop = Computer Use の開発期先行 + ChatGPT 3M DAU 流入
+3. 自分株式会社 = ai-hub で Claude+Codex+fallback を束ね、6 部署軸で個人 CEO の生活を統合
+
+## 結論
+「どの AI を選ぶか」ではなく「AI 同士を競わせて個人 CEO として束ねる」が合理解。
+Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部署統合のハブ。
+```
+
+### PS#2 dispatch 前チェックリスト (訂正後)
+
+- [ ] 「90 plugin」「Claude 一強崩壊」語彙は本A/本B/Qiita 全てで削除
+- [ ] 「423 vs 20」の比較数字を本A と Qiita に挿入 (X 280char は割愛可)
+- [ ] 棄却条件 2 (Anthropic が 90 plugin 相当追加) は **既に HIT (plugin 数で既に勝っている) → 弾の前提自体が変化** → 本A は書き換えではなく「正確な framing で投稿」
+- [ ] 本A dispatch 前に VSCode LP の軸 7 行も「Claude 優位維持・自分株式会社は別次元」のトーンに統一
+
+### Backlink 追加
+
+- S24 memo: `memory/project_20260420_ps4_s24.md`
+- S21 PR (訂正 block): `docs/cross-instance-prs/20260420_openai_codex_desktop_threat.md`

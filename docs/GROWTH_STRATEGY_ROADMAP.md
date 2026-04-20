@@ -13332,3 +13332,23 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 **学び**: solo instance の破壊的 script は 2 通りの script で同じ結論が出るか self-check 必要。grep filter は multi-line format で fragile。
 
 **次回候補**: PS#5 修正完了後の B 13 件 source 削除 / horse_racing batch cron 監視
+>>>>>>> Stashed changes
+
+---
+
+## 2026-04-20 PS版#4 S24 — Codex 90 plugin 誤情報訂正 + Claude 優位維持確認 (SNS 弾 framing 差し替え)
+
+**Why**: S23 PR 棄却条件 2 の監視目的で Anthropic 公式 + Codex plugin 数を再調査 → S21 の「Codex 90+ plugins」は誤情報と判明。正確: Claude Code = 423 plugins / 2,849 skills / 177 agents vs Codex = 20+ plugins (self-serve 未対応) = **Claude 約 20 倍優位**。Computer Use のみパリティ。PS#2 が 4/23+ で誤 framing の SNS 弾を dispatch する前に訂正できた。
+
+**Actions**:
+- SCOREBOARD: Watchlist OpenAI Codex 行 + S21 戦略インパクト 1 section + S22 差別化軸 7 目 section を訂正 (🔴→🟠・narrative 書き換え)
+- `20260420_openai_codex_desktop_threat.md`: 末尾に S24 訂正 block (priority HIGH→MEDIUM / Win版 judgment 絞り込み)
+- `20260420_three_way_positioning_sns.md`: 末尾に S24 訂正 block (本A 修正版キーメッセージ + PS#2 dispatch 前チェックリスト)
+- `memory/project_20260420_ps4_s24.md` 新規
+- `memory/feedback_success_20260420_two_source_triangulation.md` 新規 (教訓化)
+
+**Philosophy**: 5/9 ✅ (原則 1 CEO 感 / 原則 3 優しい mentor / 原則 5 商品=ユーザー価値 / 原則 6 資本=時間 / 原則 7 BS 原則)
+
+**新 3 層 narrative**: Claude = 開発者向け機能リッチ (423 plugin) / Codex = Computer Use 先行 + ChatGPT 3M DAU / 自分株式会社 = 6 部署統合ハブ
+
+**次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 軸 7 行 landed 確認 / Win版 Codex routing 判断 (priority MEDIUM 降格) / MoneyForward 7/launch 監視

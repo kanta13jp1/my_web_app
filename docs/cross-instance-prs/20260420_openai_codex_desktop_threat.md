@@ -97,3 +97,42 @@ Sources:
 - S21 memo: `memory/project_20260420_ps4_s21.md`
 - 類似脅威 PR: `docs/cross-instance-prs/20260420_claude_cowork_threat.md` (Anthropic 側)
 - AI大学教材: `supabase/migrations/*_seed_openai_*` (既存 OpenAI 教材行の更新候補)
+
+---
+
+## ⚠️ UPDATE (PS版#4 S24 · 2026-04-20 夜 last) — plugin 数訂正 + Claude 優位維持確認
+
+### 訂正事項
+
+本 PR 本文の「90+ plugins」は誤情報。2026-04-20 S24 再調査で判明した正確な数字:
+
+| 軸 | OpenAI Codex (4/17 launch) | Claude Code (2026-04 時点) |
+|---|---|---|
+| Plugin 数 | **20+** (Box/Figma/Linear/Notion/Sentry/Slack/Gmail/HF 等) | **423 plugins / 2,849 skills / 177 agents** (1 marketplace) + 43 marketplaces / 834 total |
+| Self-serve publish | **未対応** (coming soon) | **対応済** (repo-level + personal marketplace) |
+| Desktop Extensions | — | .mcpb 1-click install |
+| Cowork plugins | — | claude.com/plugins (専用ページ) |
+
+- 「90+」は TechCrunch 原文または後続報道の誤記/誤読の可能性
+- Computer Use はパリティ達成だが、**plugin ecosystem は Claude が約 20 倍優位**
+
+### Win版への判断依頼 (訂正後)
+
+1. **ai-hub routing 変更の判断基準**: plugin 差が 20 倍あるため、routing の trigger 条件は「Computer Use 必要時のみ Codex」に絞る (plugin 活用は Claude 優先) — この理解で正しいか
+2. **Claude 依存度**: 当初懸念していた「Claude 一強崩壊」は過剰評価。Claude 3 層依存を大幅に分散する必要はない (Codex は "Computer Use option" 程度)
+3. **plugin / MCP ecosystem**: Claude の 423 plugin を活用する wf 自動化 (Atlassian/GitLab/CircleCI) は **Claude 経由で十分可能** (Codex 経由不要)
+
+### Philosophy alignment (Rule 22) — 訂正後
+
+- 原則 7 (資産負債 BS): Claude 優位維持なら Codex 追加 routing は「分散のため保険」程度 → 負債リスク低 ✅
+- 原則 6 (資本=時間): routing 分岐削減 (Codex 条件を絞る) = 実装時間節約 ✅
+
+### 本 PR の status (S24 訂正後)
+
+- **priority**: HIGH → **MEDIUM** (Claude 一強崩壊が誤認だったため緊急度低下)
+- **action**: Win版は「Codex = Computer Use 必須時のみ routing」という絞り込みで検討可能 → 意思決定コスト低下
+
+### Backlink 追加
+
+- S24 memo: `memory/project_20260420_ps4_s24.md`
+- Sources: <https://github.com/jeremylongshore/claude-code-plugins-plus-skills> (Claude 423 plugin)、<https://thenewstack.io/openais-codex-gets-plugins/> (Codex 20+ plugin)、<https://claude.com/plugins> (Claude 公式 Plugins for Cowork)
