@@ -106,3 +106,22 @@
 *更新: PS版#4 S12 空白 4 社埋め (chatwork 🟠 / animaworks 🟢 / discord 🟠 / liven 🟢) | 2026-04-20 深夜*
 *更新: PS版#4 S13 空白 3 社埋め (openclaw 🟠 / **claude-cowork 🔴🔴** / jobcan 🟡) + 差別化軸 4→6 拡張 | 2026-04-20 深夜*
 *更新: PS版#4 S14 Claude Cowork pricing 詳細 + MoneyForward バックオフィス専用判明 (🔴→🟠) + Slack TDX 2026 最新化 | 2026-04-20 深夜*
+
+---
+
+## Watchlist Backlog (S15 追加・21社リスト外)
+
+21社リストには入らないが、将来の脅威度変化に備えて定常監視する競合。
+
+| 競合 | カテゴリ | 2026-04 動向 | 判定 | 住み分け根拠 |
+|------|---------|-------------|------|-------------|
+| **Cursor** (Anysphere) | AI コーディング IDE | $60B 評価 / $2B ARR / 2M ユーザー / Fortune 500 の半数 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
+| **Cognition** (Windsurf+Devin) | AI 開発エージェント | Windsurf + Devin 統合 / $10.2B 評価 / LogRocket SWE-Bench #1 | 🟢 watchlist | 自律 SWE エージェント vs 個人 CEO 6 部署 |
+| **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
+| **Anthropic Labs Claude Design** | AI デザイン SaaS | 2026-04-17 GA / prompt→prototype 2 回 / Canva CEO 署名の native 統合 / Pro $20+ | 🟠 ツール採用検討 | VSCode版 が `/claude-design-handoff` と併用判断 (Rule 21) |
+
+**扱い**: Cursor / Cognition / Lovable は **LP 比較表に追加しない**。理由:
+- いずれも「仕事 knowledge-work の内側」を争う競合で、自分株式会社の軸 1 (対象=個人 CEO) / 軸 2 (範囲=人生 6 部署) と重ならない
+- 21社リストに入れると比較表が knowledge-work 寄りに傾き、差別化メッセージが弱まる
+
+*更新: PS版#4 S15 watchlist backlog 3 社 (Cursor / Cognition / Lovable) + Claude Design 詳細 | 2026-04-20 深夜*
