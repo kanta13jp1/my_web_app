@@ -15390,3 +15390,47 @@ PS#6 S18 Flutter stale invoke audit 24 EF handoff の **9 件目消化** = Secti
 Files: lib/pages/ab_testing_manager_page.dart / supabase/functions/enterprise-hub/index.ts / docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md / memory/project_20260421_ps5_s30.md
 
 ---
+
+## PS版#3 Session#27 (2026-04-21 朝 / summary 継続セッションの末尾 bounded task)
+
+### AI大学 144 社化 — Figure AI (humanoid / embodied AI 軸)
+
+| 観点 | 内容 |
+|------|------|
+| 企業 | Figure AI (Brett Adcock / Sunnyvale / 2022 創業) |
+| 世代 | Figure 01 (2022) / Figure 02 (2024-08) / Figure 03 (2025-10-09) |
+| Foundation | **Helix VLA** (2025-02 自社化 / OpenAI partnership 終了) |
+| DoF | 35 (上半身 + 両手) / latency < 200ms |
+| Deploy | **BMW Spartanburg** 11 ヶ月稼働 (90,000+ parts / 30,000+ X3) |
+| 工場 | BotQ (2025-03 launch) / 12K→50K→100K robot/年 |
+| 資金 | 累計 **$1.9B** / 2025-09 Series C $1B+ @ **$39B valuation** |
+| 投資家 | NVIDIA / Microsoft / Bezos / Parkway / Intel Capital |
+| 政策 | 2025-10-09 White House debut + 100K robot + 3M actuator 4 年供給 |
+
+### 既存 143 社との差別化
+- **embodied AI 軸** = 第 14 カテゴリ候補
+- Physical Intelligence (S23 / π-0 OSS) と **closed vertical vs open horizontal** の対比成立
+- 「OpenAI partnership 終了 → 自社 VLA 化」 = ai-hub の multi-vendor routing 戦略を裏付ける強い case study
+
+### 自分株式会社への示唆
+1. AI vendor 単一 lock-in は負債化 → ai-hub multi-vendor routing を維持
+2. latency < 200ms target は ai-assistant voice モード KPI の参照点
+3. outcome-based 価値は atom 世界 (Figure) / bit 世界 (Sierra) 両方で有効
+
+### 学習 (本セッション固有)
+- **[COMPACTION-RESUME] 実証**: 8h+ session で summary 継続 → bounded 1 task に絞って完了 + 新セッション送りする運用を実地検証
+- Figure AI research は WebSearch 2 クエリで完結 (Physical Intelligence S23 の seed pattern を踏襲)
+- rebase 後の migration timestamp collision なし (20260421000000 vs 既存 02/03 万番台)
+
+### Philosophy Alignment (9/9)
+- 原則 3 (優しい mentor): Figure の OpenAI 切替教訓 → ai-hub routing 裏付けで自分株式会社の将来安全性 ↑ ✅
+- 原則 6 (資本=時間): WebSearch 既収集データ活用で research 重複ゼロ ✅
+- 原則 7 (BS): AI vendor = 負債化リスク認識 (Figure の $39B valuation 実現は multi-vendor 確立後) ✅
+- 他 6 原則は AI大学 通常 seed のため中立
+
+3/9 ✅ (bounded single-provider seed のため採点控えめ)
+
+Commit: 0104195a
+Files: supabase/migrations/20260421000000_seed_figure_ai_ai_university.sql
+
+---
