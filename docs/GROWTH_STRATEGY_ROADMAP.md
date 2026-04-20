@@ -14293,3 +14293,20 @@ orphan branches: 閾値以下 (cleanup 不要)。
 **Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
 
 **次回候補**: PS#5 CRITICAL 残 3 件 (time-tracker/goal-tracker/habit-tracker) 消化待機 / 50% 到達まで軽監視
+
+### PS版#5 Session 26 (2026-04-20) — habit-tracker stale invoke fix (PS#6 S18 handoff 5/23)
+
+- **対象**: `lib/pages/habit_tracker_page.dart` (3 invoke sites: list/create/checkin)
+- **migration**: `habit-tracker` → `tools-hub:habit.list / habit.create / habit.checkin`
+- **field 抽出**: `habit['name']` → `habit['metadata']['name']` (hub raw row format)
+- **UX 後退許容**: `streak` / `done_today` は hub 未実装 → defaults (0 / false) — hub `habit.list` への stats 集約は別 sub-task に分離 (NO-SCOPE-CREEP 遵守)
+- **検証**: dart format 0 changed / flutter analyze No issues (3.5s)
+- **commit**: `a625b214` — 2 files changed, 15 insertions(+), 12 deletions(-)
+- **進捗**: PS#6 S18 handoff 5/23 (21.7%) — Section B 4/13. CRITICAL 残 2 件 (goal-tracker / time-tracker)
+
+**Philosophy alignment**:
+- 原則 5 (商品=ユーザー価値): home → 習慣トラッカー 404 → hub 経路に復旧
+- 原則 6 (資本=時間): UX 後退許容で 1 page 完結・stats は分離 → 最小時間投資
+- 原則 7 (資産=負債): 二重 EF (habit-tracker + tools-hub) を hub 単一に寄せ負債 1 件消化
+
+整合性 7/9 ✅
