@@ -331,8 +331,9 @@ serve(async (req) => {
       return json({ success: true, original: text, translated: result.responseData?.translatedText ?? text, target });
     }
 
-    // ── Horse Racing 自動化パイプライン (auth不要 — GitHub Actions対応) ─────────
-    if (action.startsWith("horseracing.")) {
+    // ── Horse Racing + WBS 自動化パイプライン (auth不要 — GitHub Actions / 全インスタンス hook対応) ─────────
+    // PS#6 S22 (2026-04-20): wbs.* は SERVICE_ROLE_KEY で admin 操作 (全インスタンスの session hook / wrap-up 更新経路)
+    if (action.startsWith("horseracing.") || action.startsWith("wbs.")) {
       switch (action) {
         case "horseracing.today": {
           const targetDate = String(body.date ?? new Date().toISOString().split("T")[0]);
@@ -914,7 +915,7 @@ serve(async (req) => {
           }});
         }
         default:
-          return json({ error: `Unknown horseracing action: ${action}` }, 400);
+          return json({ error: `Unknown horseracing/wbs action: ${action}` }, 400);
       }
     }
 
