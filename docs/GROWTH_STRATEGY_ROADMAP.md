@@ -12651,3 +12651,30 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   2. live-dead 39 EF 整理 (S12 持ち越し)
   3. horse_racing batch cron 長期健全性監視
 - Philosophy alignment: 原則 7 (資産=CI 安定 — 修正が本番で効くことを確認・負債解消) / 原則 8 (KPI=昨日の自分 — 178→0 API call の定量減) / 原則 6 (資本=時間 — 10min→秒単位)
+
+---
+
+## PS版#2 Session 3 (2026-04-20 16:53 JST / 07:53 UTC) — Qiita retry probe → 72h 経過後も 429 継続
+
+- **コミット**: (本セッション末で push)
+- **目的**: 2026-04-19 JA slug drafts 40 本の Qiita 未投稿分を順次 dispatch (ユーザ指示「~10:22 UTC 解放予定」)
+- **Pre-check**:
+  - Gate 2 (直近 6h 429): 0 件 ✅
+  - Circuit breaker (2026-04-20 Qiita count): 0 ✅
+  - 最終 Qiita 成功: 2026-04-17T04:04:17Z (72h 前) → rolling 24h モデルでは十分 PASS
+- **Probe dispatch**: run 24654984525 @ 2026-04-20T07:53:31Z
+  - Target: `docs/blog-drafts/2026-04-19-5-instance-parallel-flutter-dev.md`
+  - Platforms: `qiita` 単独
+- **結果**: 🚨 **429 too_many_requests** (72h 経過でも解放されず)
+  - error: *"we limit the number of posts within a certain period"*
+- **新発見**: Qiita の「特定期間」は **rolling 24h ではなく > 72h の長期 cooldown**
+  - 過去の 2026-04-17 4本連続投稿 (04:03:58Z-04:04:17Z の 19 秒間 burst) が 72h 以上の penalty を発動した疑い
+  - 過去の memory (`feedback_correction_20260420_qiita_rolling_limit.md`) の rolling 24h 仮説は甘い
+- **対処**:
+  - 40 本 retry を **2026-04-23T07:53Z 以降** に延期 (新たな 72h margin 確保)
+  - `qiita-retry` skill の Gate 1 を **UTC 15:00 固定 → "直前 72h 内の Qiita 429 が 0"** に更新推奨 (別 PR)
+  - 再開時は `platforms="qiita"` 単独・1本ずつ・1h+ 間隔・1日 1-2 本上限
+- **新 memory**:
+  - `memory/feedback_correction_20260420_qiita_72h_still_429.md` (時系列 10 件 + 運用ルール)
+  - `memory/project_20260420_ps2_s3.md` (本セッション記録)
+- Philosophy alignment: 原則 6 (資本=時間 — 429 でトークン浪費を防ぐガード強化) / 原則 8 (KPI=昨日の自分 — 仮説誤りを即文書化し次セッション以降の判断を改善)
