@@ -55,6 +55,9 @@ class WbsTask {
   // Win版#131 part 10: 遅延リカバリー対応
   final String recoveryPlan;
   final int rescheduledCount;
+  // Win版#131 part 20: 残作業 + 依存関係
+  final String remainingWork;
+  final List<String> dependsOnTitles;
 
   const WbsTask({
     required this.id,
@@ -72,6 +75,8 @@ class WbsTask {
     required this.priority,
     this.recoveryPlan = '',
     this.rescheduledCount = 0,
+    this.remainingWork = '',
+    this.dependsOnTitles = const [],
   });
 
   factory WbsTask.fromMap(Map<String, dynamic> m) => WbsTask(
@@ -94,6 +99,9 @@ class WbsTask {
         priority: m['priority'] as String? ?? 'medium',
         recoveryPlan: (m['recovery_plan'] as String?) ?? '',
         rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
+        remainingWork: (m['remaining_work'] as String?) ?? '',
+        dependsOnTitles:
+            (m['depends_on_titles'] as List?)?.cast<String>() ?? const [],
       );
 
   /// 遅延日数 (今日 - end_date / 完了済 or 期限なし は 0)
@@ -1385,7 +1393,8 @@ class _GanttTimelineTab extends StatefulWidget {
 
 class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
-  static const _leftPanelWidth = 700.0;
+  // Win版#131 part 20: 進捗率/残作業/依存関係列追加で 700 → 1100 に拡張
+  static const _leftPanelWidth = 1100.0;
   static const _rowHeight = 32.0;
   static const _headerHeight = 56.0;
   static const _dayWidth = 6.0;
@@ -1662,6 +1671,114 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  // Win版#131 part 20: AI 概観 + 依存関係自動修復
+  Future<void> _showAiReport() async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        backgroundColor: Color(0xFF141414),
+        title: Text(
+          '🧠 AI 概観取得中...',
+          style: TextStyle(color: Colors.white, height: 1.5),
+        ),
+        content: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              color: Color(0xFFA855F7),
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+      ),
+    );
+    String? report;
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'tools-hub',
+        body: {'action': 'wbs.ai_status_report'},
+      );
+      final data = resp.data as Map<String, dynamic>?;
+      report = data?['report'] as String? ?? '取得失敗';
+    } catch (e) {
+      report = 'エラー: $e';
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF141414),
+        title: const Row(
+          children: [
+            Icon(Icons.psychology_alt, color: Color(0xFFA855F7)),
+            SizedBox(width: 8),
+            Text(
+              'AI 概観報告',
+              style: TextStyle(color: Colors.white, height: 1.5),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A0A0A),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFA855F7).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Text(
+              report ?? '',
+              style: const TextStyle(
+                color: Color(0xFFE2E8F0),
+                fontSize: 13,
+                height: 1.7,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child:
+                const Text('閉じる', style: TextStyle(color: Color(0xFFA855F7))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _autoRepairDependencies() async {
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'tools-hub',
+        body: {'action': 'wbs.auto_repair_dependencies'},
+      );
+      final data = resp.data as Map<String, dynamic>?;
+      final repairs = (data?['repairs'] as List?) ?? [];
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            repairs.isEmpty
+                ? '✅ 依存関係 整合済 (修復対象 0 件)'
+                : '🔧 ${repairs.length} タスクの start_date を自動修復しました',
+          ),
+          backgroundColor: const Color(0xFF22C55E),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('自動修復エラー: $e')),
+      );
+    }
+  }
+
   Widget _buildHeader(int taskCount) {
     return Container(
       color: _panelColor,
@@ -1715,6 +1832,41 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             ],
           ),
           const Spacer(),
+          // Win版#131 part 20: AI 概観 + 自動修復 button
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: _showAiReport,
+              icon: const Icon(Icons.psychology_alt, size: 14),
+              label: const Text(
+                'AI 概観',
+                style: TextStyle(fontSize: 11, height: 1.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFA855F7),
+                side: const BorderSide(color: Color(0xFFA855F7)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          SizedBox(
+            height: 28,
+            child: OutlinedButton.icon(
+              onPressed: _autoRepairDependencies,
+              icon: const Icon(Icons.auto_fix_high, size: 14),
+              label: const Text(
+                '依存自動修復',
+                style: TextStyle(fontSize: 11, height: 1.5),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF22C55E),
+                side: const BorderSide(color: Color(0xFF22C55E)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
           Container(
             width: 10,
             height: 10,
@@ -1834,6 +1986,43 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(
+              '進捗',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 200,
+            child: Text(
+              '残作業',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 150,
+            child: Text(
+              '依存',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
           ),
           SizedBox(
@@ -2004,6 +2193,57 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
             SizedBox(
               width: 70,
               child: _instanceBadge(task),
+            ),
+            SizedBox(
+              width: 50,
+              child: Text(
+                '${task.progress}%',
+                style: TextStyle(
+                  color: task.progress >= 100
+                      ? const Color(0xFF22C55E)
+                      : task.progress >= 50
+                          ? const Color(0xFFF97316)
+                          : const Color(0xFFCBD5E1),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(
+              width: 200,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, right: 4),
+                child: Text(
+                  task.remainingWork.isEmpty ? '—' : task.remainingWork,
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 10,
+                    height: 1.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 150,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4, right: 4),
+                child: Text(
+                  task.dependsOnTitles.isEmpty
+                      ? '—'
+                      : '↳ ${task.dependsOnTitles.join(", ")}',
+                  style: const TextStyle(
+                    color: Color(0xFFA855F7),
+                    fontSize: 10,
+                    height: 1.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
             SizedBox(
               width: 180,

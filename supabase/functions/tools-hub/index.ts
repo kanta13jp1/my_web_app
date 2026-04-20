@@ -757,6 +757,82 @@ serve(async (req) => {
           if (error) throw new Error(error.message);
           return json({ success: true, tasks: data ?? [] });
         }
+        case "wbs.project_overview": {
+          // Win版#131 part 20: プロジェクト全体概観 (AI 報告用)
+          const { data, error } = await admin.from("wbs_project_overview_view")
+            .select("*").single();
+          if (error) throw new Error(error.message);
+          return json({ success: true, overview: data });
+        }
+        case "wbs.auto_repair_dependencies": {
+          // Win版#131 part 20: 依存関係スケジュール自動修復
+          const { data, error } = await admin.rpc(
+            "wbs_auto_repair_dependencies",
+          );
+          if (error) throw new Error(error.message);
+          return json({ success: true, repairs: data ?? [] });
+        }
+        case "wbs.ai_status_report": {
+          // Win版#131 part 20: AI による WBS 概観レポート生成
+          // 1) overview view から health snapshot 取得
+          // 2) ai-hub:provider.chat (groq) に prompt 投げる
+          const { data: overview, error: oErr } = await admin
+            .from("wbs_project_overview_view").select("*").single();
+          if (oErr) throw new Error(oErr.message);
+          const { data: delayed } = await admin
+            .from("wbs_delayed_tasks_view")
+            .select("title, instance, delay_days, recovery_plan, recovery_status")
+            .order("delay_days", { ascending: false })
+            .limit(10);
+          const { data: risks } = await admin
+            .from("wbs_milestone_risk_view").select("*");
+          const prompt =
+            `自分株式会社 WBS プロジェクト健全性 snapshot:\n\n` +
+            `総タスク: ${overview?.total_tasks} (完了 ${overview?.done_tasks} / ` +
+            `進行中 ${overview?.in_progress_tasks} / 未着手 ${overview?.pending_tasks} / ` +
+            `ブロック ${overview?.blocked_tasks})\n` +
+            `遅延: ${overview?.overdue_tasks} (うちリカバリー案未記入 ${overview?.overdue_no_recovery})\n` +
+            `担当 instance 数: ${overview?.active_instances}\n` +
+            `進行中タスクの平均進捗: ${overview?.avg_in_progress_pct}%\n` +
+            `担当別: ${JSON.stringify(overview?.by_instance ?? {})}\n\n` +
+            `遅延 TOP10:\n${(delayed ?? []).map((t: Record<string, unknown>, i: number) =>
+              `${i + 1}. [${t.instance}] ${t.title} - ${t.delay_days}日遅延 - ${t.recovery_status}`).join("\n")}\n\n` +
+            `マイルストーン risk:\n${(risks ?? []).map((m: Record<string, unknown>) =>
+              `- ${m.code}: ${m.risk_status} (残${m.days_left}日 / 工数${m.remaining_hours}h / 利用可能${m.available_hours}h)`).join("\n")}\n\n` +
+            `この snapshot を 300 字以内で経営者向けに「健康状態 / 即対処 / 提案」の 3 セクションで報告してください。`;
+          try {
+            const aiResp = await fetch(
+              `${SUPABASE_URL}/functions/v1/ai-hub`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  action: "provider.chat",
+                  provider: "groq",
+                  message: prompt,
+                }),
+              },
+            );
+            const aiData = await aiResp.json() as Record<string, unknown>;
+            return json({
+              success: true,
+              report: aiData.success === true
+                ? String(aiData.text ?? "")
+                : "AI レポート取得失敗 (Groq 未設定の可能性)",
+              snapshot: { overview, delayed, risks },
+            });
+          } catch (e) {
+            return json({
+              success: false,
+              report: "AI レポート生成エラー",
+              error: String(e),
+              snapshot: { overview, delayed, risks },
+            }, 200);
+          }
+        }
         case "wbs.bulk_update": {
           // body: { updates: [{id, progress?, status?}, ...] }
           const updates = (body.updates as Array<Record<string, unknown>>) ?? [];
