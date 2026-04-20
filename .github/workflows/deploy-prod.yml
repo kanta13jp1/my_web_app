@@ -183,7 +183,6 @@ jobs:
             user-profile-manager
             onboarding-flow
             feature-request-manager
-            notify-feature-request
             user-feedback-collector
             growth-referral
             get-growth-roadmap-progress

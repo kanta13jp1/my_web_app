@@ -68,6 +68,7 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
         try {
           final session = supabase.auth.currentSession;
           final payload = <String, dynamic>{
+            'action': 'notify.feature_request',
             'appFeedbackId': id,
             'status': 'done',
             'markAsResolved': true,
@@ -76,12 +77,12 @@ class _FeedbackListPageState extends State<FeedbackListPage> {
 
           if (session == null) {
             await supabase.functions.invoke(
-              'notify-feature-request',
+              'core-hub',
               body: payload,
             );
           } else {
             await supabase.functions.invoke(
-              'notify-feature-request',
+              'core-hub',
               headers: <String, String>{
                 'Authorization': 'Bearer ${session.accessToken}',
               },

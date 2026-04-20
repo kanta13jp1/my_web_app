@@ -106,6 +106,7 @@ jobs:
             --arg release_url "$RELEASE_URL" \
             --arg resolution_summary "$RESOLUTION_SUMMARY" \
             '{
+              action: "notify.feature_request",
               id: ($id | if . == "" then null else . end),
               appFeedbackId: ($app_feedback_id | if . == "" then null else (tonumber) end),
               issueNumber: $issue_number,
@@ -123,7 +124,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD" \
-            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/notify-feature-request" \
+            "https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/core-hub" \
             --max-time 20 || echo "000")
 
           echo "code=$HTTP_CODE" >> "$GITHUB_OUTPUT"

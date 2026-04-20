@@ -94,9 +94,14 @@ serve(async (req: Request) => {
     }
 
     const action: string = body.action ?? "";
-    const userId = await getUserId(req);
-    if (!userId) {
-      return json({ error: "Unauthorized" }, 401);
+    const serviceRoleActions = new Set(["notify.feature_request"]);
+    const bearer = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    const isServiceRole = SERVICE_ROLE_KEY !== "" && bearer === SERVICE_ROLE_KEY;
+    let userId = "";
+    if (!(serviceRoleActions.has(action) && isServiceRole)) {
+      const authed = await getUserId(req);
+      if (!authed) return json({ error: "Unauthorized" }, 401);
+      userId = authed;
     }
 
     switch (action) {
@@ -344,6 +349,160 @@ serve(async (req: Request) => {
         return json({ success: true });
       }
 
+      // ---- Notify feature request (feedback resolution email) ----
+      case "notify.feature_request": {
+        const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
+        const fromEmail = Deno.env.get("FEEDBACK_FROM_EMAIL") ??
+          "自分株式会社 <noreply@resend.dev>";
+        if (resendKey === "") {
+          return json({ error: "Missing RESEND_API_KEY" }, 500);
+        }
+
+        const featureRequestId = String(body.id ?? "").trim();
+        const appFeedbackId = Number(body.appFeedbackId ?? 0) || null;
+        const requestedStatus = String(body.status ?? "").trim();
+        const markAsResolved = body.markAsResolved === true;
+        const resolutionSummary = String(body.resolutionSummary ?? "").trim();
+        const issueNumber = Number(body.issueNumber ?? 0) || null;
+        const issueTitle = String(body.issueTitle ?? "").trim();
+        let issueUrl = String(body.issueUrl ?? "").trim();
+        const releaseTitle = String(body.releaseTitle ?? "").trim();
+        const releaseUrl = String(body.releaseUrl ?? "").trim();
+
+        let featureRequest: Record<string, unknown> | null = null;
+        let appFeedback: Record<string, unknown> | null = null;
+
+        if (featureRequestId !== "") {
+          const { data, error } = await admin
+            .from("feature_requests")
+            .select("id, email, title, description, status, admin_reply")
+            .eq("id", featureRequestId)
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          featureRequest = data;
+        }
+        if (appFeedbackId !== null) {
+          const { data, error } = await admin
+            .from("app_feedback")
+            .select("id, category, content, user_email, status, github_issue_number, github_issue_url")
+            .eq("id", appFeedbackId)
+            .maybeSingle();
+          if (error) throw new Error(error.message);
+          appFeedback = data;
+          if (issueUrl === "") {
+            issueUrl = String(data?.github_issue_url ?? "");
+          }
+        }
+
+        if (!featureRequest && !appFeedback) {
+          return json({ error: "No matching feedback record found" }, 404);
+        }
+
+        const frStatus = (featureRequest?.status as string | null)?.trim() ?? "";
+        const fbStatus = (appFeedback?.status as string | null) ?? "";
+        const finalStatus = requestedStatus !== ""
+          ? requestedStatus
+          : markAsResolved
+          ? "done"
+          : frStatus !== ""
+          ? frStatus
+          : fbStatus === "implemented"
+          ? "done"
+          : fbStatus === "reviewed"
+          ? "in_progress"
+          : "open";
+
+        if (featureRequest) {
+          const upd: Record<string, unknown> = {
+            status: finalStatus,
+            admin_replied_at: new Date().toISOString(),
+          };
+          if (resolutionSummary !== "") {
+            upd.admin_reply = resolutionSummary;
+          } else if (
+            markAsResolved &&
+            String(featureRequest.admin_reply ?? "").trim() === ""
+          ) {
+            upd.admin_reply = _buildDefaultResolutionSummary(issueNumber, releaseTitle, releaseUrl);
+          }
+          const { error } = await admin
+            .from("feature_requests")
+            .update(upd)
+            .eq("id", featureRequest.id);
+          if (error) throw new Error(error.message);
+        }
+
+        if (appFeedback) {
+          const upd: Record<string, unknown> = {
+            status: finalStatus === "done" ? "implemented" : "reviewed",
+          };
+          if (issueNumber !== null) upd.github_issue_number = issueNumber;
+          if (issueUrl !== "") upd.github_issue_url = issueUrl;
+          const { error } = await admin
+            .from("app_feedback")
+            .update(upd)
+            .eq("id", appFeedback.id);
+          if (error) throw new Error(error.message);
+        }
+
+        const title = String(featureRequest?.title ?? "").trim() ||
+          _buildFallbackTitle(String(appFeedback?.content ?? ""));
+        const recipient = String(featureRequest?.email ?? "").trim() ||
+          String(appFeedback?.user_email ?? "").trim();
+        if (recipient === "") {
+          return json({ error: "No recipient email on feedback" }, 400);
+        }
+
+        const description = String(featureRequest?.description ?? appFeedback?.content ?? "");
+        const finalSummary = resolutionSummary !== ""
+          ? resolutionSummary
+          : _buildDefaultResolutionSummary(issueNumber, releaseTitle, releaseUrl);
+        const html = _buildNotificationEmailHtml({
+          title,
+          description,
+          status: finalStatus,
+          resolutionSummary: finalSummary,
+          issueNumber,
+          issueTitle,
+          issueUrl,
+          releaseTitle,
+          releaseUrl,
+        });
+        const subject = finalStatus === "done"
+          ? `【自分株式会社】「${title}」への対応が完了しました`
+          : finalStatus === "in_progress"
+          ? `【自分株式会社】「${title}」の対応を開始しました`
+          : `【自分株式会社】「${title}」の対応状況を更新しました`;
+
+        const resendRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [recipient],
+            subject,
+            html,
+          }),
+        });
+        if (!resendRes.ok) {
+          const errBody = await resendRes.text();
+          throw new Error(`Resend API error: ${errBody}`);
+        }
+
+        return json({
+          success: true,
+          emailSent: true,
+          sentTo: recipient,
+          status: finalStatus,
+          featureRequestId: (featureRequest?.id as string | null) ?? null,
+          appFeedbackId: (appFeedback?.id as number | null) ?? null,
+          issueNumber,
+        });
+      }
+
       // ---- Personal dashboard ----
       case "personal.dashboard": {
         const stats = await listItems(admin, "personal_stat", userId, 10);
@@ -401,3 +560,96 @@ serve(async (req: Request) => {
     return json({ error: message }, 500);
   }
 });
+
+// ---- Helpers for notify.feature_request ----
+function _escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function _buildFallbackTitle(content: string): string {
+  const firstLine = content.split(/\r?\n/)[0].trim();
+  if (firstLine === "") return "ご意見・ご要望";
+  return firstLine.length > 72 ? `${firstLine.substring(0, 72)}...` : firstLine;
+}
+
+function _buildDefaultResolutionSummary(
+  issueNumber: number | null,
+  releaseTitle: string,
+  releaseUrl: string,
+): string {
+  const parts: string[] = [];
+  if (issueNumber !== null) {
+    parts.push(`GitHub Issue #${issueNumber} の対応を反映しました。`);
+  } else {
+    parts.push("ご要望への対応内容を反映しました。");
+  }
+  if (releaseTitle.trim() !== "") parts.push(`反映内容: ${releaseTitle}`);
+  if (releaseUrl.trim() !== "") parts.push(`詳細: ${releaseUrl}`);
+  return parts.join("\n");
+}
+
+function _buildNotificationEmailHtml(input: {
+  title: string;
+  description: string;
+  status: string;
+  resolutionSummary: string;
+  issueNumber: number | null;
+  issueTitle: string;
+  issueUrl: string;
+  releaseTitle: string;
+  releaseUrl: string;
+}): string {
+  const APP_URL = "https://my-web-app-b67f4.web.app";
+  const statusLabel = input.status === "done"
+    ? "対応完了"
+    : input.status === "in_progress"
+    ? "対応中"
+    : "更新";
+  const issueBlock = (input.issueNumber !== null || input.issueUrl.trim() !== "")
+    ? `<div style="background:#eef2ff;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#4f46e5;font-weight:700;">GitHub Issue</div><div style="margin-top:6px;color:#111827;">${
+      input.issueNumber !== null ? `#${input.issueNumber}` : ""
+    } ${_escapeHtml(input.issueTitle)}</div>${
+      input.issueUrl.trim() !== ""
+        ? `<div style="margin-top:10px;"><a href="${input.issueUrl}" style="color:#4f46e5;text-decoration:none;font-weight:700;">Issue を見る</a></div>`
+        : ""
+    }</div>`
+    : "";
+  const releaseBlock = (input.releaseTitle.trim() !== "" || input.releaseUrl.trim() !== "")
+    ? `<div style="background:#ecfdf5;border-radius:12px;padding:16px;margin-top:20px;"><div style="font-size:12px;color:#047857;font-weight:700;">リリース情報</div><div style="margin-top:6px;color:#111827;">${
+      _escapeHtml(input.releaseTitle)
+    }</div>${
+      input.releaseUrl.trim() !== ""
+        ? `<div style="margin-top:10px;"><a href="${input.releaseUrl}" style="color:#047857;text-decoration:none;font-weight:700;">変更内容を見る</a></div>`
+        : ""
+    }</div>`
+    : "";
+  return `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"></head>
+<body style="font-family:sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#111827;">
+  <div style="background:linear-gradient(135deg,#111827,#4f46e5);padding:24px;border-radius:16px;margin-bottom:24px;">
+    <h1 style="margin:0;color:#ffffff;font-size:22px;">${statusLabel}のお知らせ</h1>
+    <p style="margin:10px 0 0;color:#c7d2fe;line-height:1.7;">ご意見・ご要望に関する最新状況をお知らせします。</p>
+  </div>
+  <h2 style="font-size:18px;margin:0 0 12px;">${_escapeHtml(input.title)}</h2>
+  <div style="background:#f8fafc;border-radius:12px;padding:16px;line-height:1.8;">
+    <div style="font-size:12px;color:#6b7280;">ご投稿内容</div>
+    <div style="margin-top:8px;color:#374151;">${_escapeHtml(input.description).replace(/\n/g, "<br>")}</div>
+  </div>
+  <div style="background:#fff7ed;border-radius:12px;padding:16px;margin-top:20px;">
+    <div style="font-size:12px;color:#c2410c;font-weight:700;">対応内容</div>
+    <div style="margin-top:8px;color:#374151;line-height:1.8;">${
+    _escapeHtml(input.resolutionSummary).replace(/\n/g, "<br>")
+  }</div>
+  </div>
+  ${issueBlock}
+  ${releaseBlock}
+  <div style="margin-top:28px;text-align:center;">
+    <a href="${APP_URL}" style="display:inline-block;background:#111827;color:#ffffff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:700;">自分株式会社を開く</a>
+  </div>
+</body></html>`;
+}
