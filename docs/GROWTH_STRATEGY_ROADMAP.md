@@ -13332,7 +13332,6 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 **学び**: solo instance の破壊的 script は 2 通りの script で同じ結論が出るか self-check 必要。grep filter は multi-line format で fragile。
 
 **次回候補**: PS#5 修正完了後の B 13 件 source 削除 / horse_racing batch cron 監視
->>>>>>> Stashed changes
 
 ---
 
@@ -13352,3 +13351,72 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 **新 3 層 narrative**: Claude = 開発者向け機能リッチ (423 plugin) / Codex = Computer Use 先行 + ChatGPT 3M DAU / 自分株式会社 = 6 部署統合ハブ
 
 **次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 軸 7 行 landed 確認 / Win版 Codex routing 判断 (priority MEDIUM 降格) / MoneyForward 7/launch 監視
+
+---
+
+## Session PS#3-S20 (2026-04-20 20:55 JST) — AI大学 138 社化 (Contextual AI)
+
+### サマリ
+
+PS#3 S19 (Kyutai 137 社目) に続き、**Contextual AI** を 138 社目に追加。
+**Step 0 = 8/9** — RAG 発明者 Douwe Kiela (Meta FAIR で 2020 年 RAG 原論文)
+CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
+
+### 主要プロダクト
+
+- **GLM** (Grounded Language Model): FACTS groundedness SOTA / hallucination 最小化
+- **RAG 2.0**: retrieval + generation end-to-end 同時訓練 (frozen 部品接続の次世代)
+- **CLMs**: 業種別 (aerospace/semiconductor/manufacturing/finance) 訓練済 LLM
+- **Agent Composer** (2026-01-27 launch): エンタープライズ RAG → 本番エージェント
+- Nvidia NIM 提携
+
+### Step 0 評価: 8/9
+
+| 観点 | 判定 | 根拠 |
+|------|------|------|
+| 公式サイト | ✅ | contextual.ai |
+| 最新モデル | ✅ | GLM + CLMs + Agent Composer (2026-01) |
+| ベンチマーク | ✅ | FACTS groundedness SOTA |
+| API/SDK | ✅ | `/generate` standalone + 無料 tier |
+| 独自技術 | ✅ | RAG 2.0 end-to-end (発明者自ら設計) |
+| OSS | 🟡 | weights 非公開 → **-1** |
+| CLI/SDK | ✅ | Python + JS SDK |
+| 資金 | ✅ | Seed \$20M + Series A \$80M |
+| 話題性 | ✅ | Kiela = RAG 発明者 / Nvidia 提携 |
+
+### 変更ファイル (3)
+
+1. `supabase/migrations/20260420130000_seed_contextual_ai_university.sql` (new, 3 rows, \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta['contextual_ai'] ⚓ + _fallback)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列に contextual_ai)
+
+### Philosophy alignment (9 原則)
+
+- 原則 1 (CEO 感): grounded 回答で「根拠なき AI 助言」排除 → 最終判断の信頼性確保
+- 原則 3 (優しい mentor): 引用付き回答で「なぜ判断したか」を user に可視化
+- 原則 5 (商品=ユーザー価値): hallucination 0 = 法務/医療など厳格領域で使える
+- 原則 6 (資本=時間): 無料 tier + \$50/月 self-serve で試作コスト極小
+- 原則 8 (KPI=昨日の自分): 過去 memory/ROADMAP を grounded source に差分照会
+
+### 戦略的次の一手
+
+- **ai-hub.rag.grounded_query action 設計** (Win版 cross-instance-pr 候補)
+  - CONTEXTUAL_API_KEY + knowledge_sources / grounding_mode='strict'
+  - AI-DEV-23 原則 3 (trace_id + 5 秒超検出) を action に組込
+- **docs/ 全体を GLM で grounded 化**: PHILOSOPHY/ROADMAP/memory を同時 inject
+- **Perplexity との差別化**: 消費者 search vs private docs grounded の軸
+
+### 次回 PS#3 候補 (139 社目)
+
+- Essential AI (監視継続)
+- Adept 後継
+- Snorkel AI (data-centric AI)
+- Haize Labs (AI red-teaming)
+- Gradium (Kyutai spin-off / \$70M seed 2025-12)
+- Vectara (RAG 競合 / Amr Awadallah)
+
+### 教訓
+
+- 連続 7 session (S14→S20) で AI大学 132→138 社 (6 追加)
+- **RAG 2.0 = 次世代 RAG**: frozen 部品接続 (従来) vs end-to-end 同時訓練 (Contextual) が差別化軸
+- Matt Zaharia (Databricks) は Contextual AI と無関係 — WebSearch で self-correct (Douwe Kiela / Amanpreet Singh が正しい founder)

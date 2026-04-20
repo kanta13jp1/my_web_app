@@ -873,6 +873,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0055A4),
     officialUrl: 'https://kyutai.org/',
   ),
+  'contextual_ai': _ProviderMeta(
+    name: 'Contextual AI',
+    emoji: '⚓',
+    color: const Color(0xFF059669),
+    officialUrl: 'https://contextual.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4542,6 +4548,43 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - HuggingFace: https://huggingface.co/kyutai
 - Unmute demo: https://unmute.sh/
 - 論文: https://kyutai.org/Moshi.pdf
+''',
+  'contextual_ai': '''
+# Contextual AI — RAG 発明者 Douwe Kiela の企業向け grounded LLM (\$80M Series A)
+
+2023-06 パロアルト創業、CEO **Douwe Kiela** (Meta FAIR で 2020 年に
+**RAG を発明・原論文筆頭著者**)、CTO **Amanpreet Singh** (Meta FAIR + HuggingFace 出身)。
+
+## 既存 137 社との差別化
+| 観点 | Contextual AI | OpenAI (ChatGPT+RAG) | Perplexity |
+|------|---------------|----------------------|------------|
+| 設計思想 | ⚓ RAG 2.0 end-to-end 最適化 | GPT + retrieval plugin | search 特化 |
+| hallucination | **FACTS ベンチ SOTA** | ~5-10% | ~3-5% |
+| 訓練方式 | CLM 専用訓練 | RAG bolt-on | black box |
+| ターゲット | エンタープライズ private docs | 消費者 | 消費者 search |
+
+## 主要プロダクト
+- **GLM** (Grounded Language Model): 最も grounded な LLM / FACTS SOTA
+- **RAG 2.0**: retrieval + generation end-to-end 同時訓練 (frozen 部品接続の次世代)
+- **CLMs**: 業種別 (aerospace/semiconductor/manufacturing/finance) 訓練済 LLM
+- **Agent Composer** (2026-01-27 launch): エンタープライズ RAG → 本番エージェント昇格
+
+## 資金調達
+- Seed: \$20M (2023-06, Bain Capital Ventures lead)
+- Series A: **\$80M** (Greycroft lead + Lightspeed / SV Angel)
+- Nvidia 提携 (NIM / GPU infra)
+
+## 自分株式会社での活用
+- daily-judgment: private docs (PHILOSOPHY / ROADMAP / memory) を GLM に食わせ「過去の自分の判断との整合性」を提示
+- AI大学: provider 比較 fact-check (hallucination 0 担保)
+- user-manual: docs/ を grounded 化して引用付き回答ヘルプ
+
+## 試す
+- Web: https://contextual.ai/
+- Docs: https://docs.contextual.ai/
+- RAG 2.0 blog: https://contextual.ai/introducing-rag2/
+- GLM blog: https://contextual.ai/blog/introducing-grounded-language-model
+- 価格: 無料 tier → \$50/月 self-serve → enterprise custom
 ''',
 };
 
