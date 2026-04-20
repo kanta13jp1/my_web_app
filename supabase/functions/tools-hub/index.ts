@@ -723,8 +723,11 @@ serve(async (req) => {
         }
         case "wbs.update_progress": {
           // body: { id, progress?: 0-100, status?: 'in_progress'|'completed'|'blocked',
-          //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用), note?: string }
+          //        recovery_plan?: string, end_date?: 'YYYY-MM-DD' (リスケ用),
+          //        planned_end_date?: 'YYYY-MM-DD', note?: string }
           // Win版#131 part 10: 遅延時 recovery_plan 必須化
+          // Win版#131 part 14 / T2-Win: defense-in-depth EF validation
+          //   DB trigger `wbs_enforce_recovery_plan_trg` も同仕様を block
           const id = String(body.id ?? "");
           if (!id) return json({ error: "id required" }, 400);
           const update: Record<string, unknown> = {};
@@ -745,14 +748,66 @@ serve(async (req) => {
             update.rescheduled_count =
               ((cur?.rescheduled_count as number) ?? 0) + 1;
           }
-          if (Object.keys(update).length === 0) {
-            return json({ error: "progress, status, recovery_plan, or end_date required" }, 400);
+          if (body.planned_end_date !== undefined) {
+            update.planned_end_date = String(body.planned_end_date);
           }
+          if (Object.keys(update).length === 0) {
+            return json({ error: "progress, status, recovery_plan, end_date, or planned_end_date required" }, 400);
+          }
+
+          // Win版#131 part 14 / T2-Win:
+          // 遅延判定 = COALESCE(planned_end_date, end_date) < CURRENT_DATE AND status != 'completed'
+          // 遅延中 + recovery_plan 空のまま保存しようとしたら EF level で 400 block
+          // (DB trigger も同仕様を CHECK 違反として投げるが UX として事前検出)
+          const willStatus = (update.status ?? null) as string | null;
+          if (willStatus !== "completed") {
+            const { data: cur } = await admin.from("wbs_tasks")
+              .select("planned_end_date, end_date, recovery_plan, status")
+              .eq("id", id).maybeSingle();
+            if (cur) {
+              const deadlineRaw =
+                (update.planned_end_date as string | undefined) ??
+                (cur.planned_end_date as string | null) ??
+                (update.end_date as string | undefined) ??
+                (cur.end_date as string | null);
+              const recoveryPlanFinal =
+                (update.recovery_plan as string | undefined) ??
+                (cur.recovery_plan as string | null) ??
+                "";
+              const mergedStatus = willStatus ?? (cur.status as string | null);
+              if (
+                mergedStatus !== "completed" &&
+                deadlineRaw &&
+                new Date(deadlineRaw) <
+                  new Date(new Date().toISOString().split("T")[0]) &&
+                recoveryPlanFinal.trim().length === 0
+              ) {
+                return json({
+                  error:
+                    "遅延タスクには recovery_plan 必須 (deadline=" +
+                    deadlineRaw + ")",
+                  hint:
+                    'recovery_plan 例: "Win版に並行で UI 着手", "scope 縮小: 5社→3社"',
+                  code: "RECOVERY_PLAN_REQUIRED",
+                }, 400);
+              }
+            }
+          }
+
           const { data, error } = await admin.from("wbs_tasks")
             .update(update).eq("id", id)
-            .select("id, title, status, progress, recovery_plan, end_date, rescheduled_count")
+            .select("id, title, status, progress, recovery_plan, end_date, planned_end_date, rescheduled_count")
             .single();
-          if (error) throw new Error(error.message);
+          if (error) {
+            // DB trigger (wbs_enforce_recovery_plan_trg) が投げた場合は 400 に格上げ
+            if (error.code === "23514" || /recovery_plan/.test(error.message)) {
+              return json({
+                error: error.message,
+                code: "RECOVERY_PLAN_REQUIRED",
+              }, 400);
+            }
+            throw new Error(error.message);
+          }
           return json({ success: true, task: data });
         }
         case "wbs.delayed_tasks": {
@@ -762,6 +817,31 @@ serve(async (req) => {
             .order("delay_days", { ascending: false });
           if (error) throw new Error(error.message);
           return json({ success: true, tasks: data ?? [] });
+        }
+        case "wbs.milestone_risk": {
+          // Win版#131 part 14 / T9-Win: マイルストーン risk 一覧
+          // (VSCode版 T9-VSCode で badge 表示に使用)
+          // view `wbs_milestone_risk_view` 既存 (part 13 `20260420140000`)
+          // defensive: view 未 deploy / 0 rows でも 200 返す
+          try {
+            const { data, error } = await admin
+              .from("wbs_milestone_risk_view")
+              .select("*");
+            if (error) {
+              return json({
+                success: false,
+                milestones: [],
+                error: error.message,
+              }, 200);
+            }
+            return json({ success: true, milestones: data ?? [] });
+          } catch (e) {
+            return json({
+              success: false,
+              milestones: [],
+              error: String(e),
+            }, 200);
+          }
         }
         case "wbs.project_overview": {
           // Win版#131 part 20: プロジェクト全体概観 (AI 報告用)
@@ -888,16 +968,19 @@ serve(async (req) => {
           return json({ success: true, updated: ok, total: results.length, results });
         }
         case "wbs.add_task": {
-          // body: { category, title, instance, description?, priority?, end_date?, milestone_code? }
+          // body: { category, title, instance, owner_instance?, description?,
+          //        priority?, end_date?, planned_end_date?, milestone_code? }
           // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
           // 'all' は全インスタンス責任の goal のみ明示指定可 (user 要望: 原則は owner 1 instance)
+          // Win版#131 part 15 / T4-Win: owner_instance NOT NULL + 'all' 禁止対応
           const category = String(body.category ?? "");
           const title = String(body.title ?? "");
           const instance = String(body.instance ?? "");
           const validInstances = [
             "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
-            "web", "mobile", "all",
+            "web", "mobile", "schedule", "gha", "all",
           ];
+          const validOwnerInstances = validInstances.filter((v) => v !== "all");
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
           }
@@ -906,18 +989,33 @@ serve(async (req) => {
               error: `instance required (one of: ${validInstances.join(", ")})`,
             }, 400);
           }
+          // owner_instance 決定:
+          //   - body.owner_instance 指定あり → それを使う (CHECK 制約で検証)
+          //   - 無し + instance != 'all' → instance をそのまま owner に
+          //   - 無し + instance == 'all' → 'all' タスクは primary owner 必須 → 400
+          const ownerInstance = body.owner_instance !== undefined
+            ? String(body.owner_instance)
+            : (instance !== "all" ? instance : "");
+          if (!ownerInstance || !validOwnerInstances.includes(ownerInstance)) {
+            return json({
+              error:
+                `owner_instance required (one of: ${validOwnerInstances.join(", ")}). instance='all' の共同責任タスクでも primary owner は必ず指定必須`,
+            }, 400);
+          }
           const { data, error } = await admin.from("wbs_tasks").insert({
             category,
             category_icon: String(body.category_icon ?? "📋"),
             title,
             description: body.description ?? null,
             instance,
+            owner_instance: ownerInstance,
             status: "pending",
             progress: 0,
             priority: String(body.priority ?? "medium"),
             end_date: body.end_date ?? null,
+            planned_end_date: body.planned_end_date ?? body.end_date ?? null,
             milestone_code: body.milestone_code ?? null,
-          }).select("id, title").single();
+          }).select("id, title, owner_instance").single();
           if (error) throw new Error(error.message);
           return json({ success: true, task: data });
         }
