@@ -76,7 +76,7 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                   ? data['message'].toString()
                   : '同期が完了しました',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF4CAF50),
           ),
         );
       }
@@ -146,14 +146,14 @@ class _GoogleCalendarSyncPageState extends State<GoogleCalendarSyncPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: const Color(0xFFFFEBEE),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(color: const Color(0xFFEF9A9A)),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(
-                      color: Colors.red.shade700,
+                    style: const TextStyle(
+                      color: Color(0xFFC62828),
                       height: 1.5,
                     ),
                   ),

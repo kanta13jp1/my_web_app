@@ -113,7 +113,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -157,12 +157,13 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: status == 'active'
-                  ? Colors.green.shade100
+                  ? const Color(0xFFC8E6C9)
                   : Theme.of(context).colorScheme.surfaceContainerHigh,
               child: Icon(
                 Icons.directions_car,
-                color:
-                    status == 'active' ? Colors.green : const Color(0xFF9CA3AF),
+                color: status == 'active'
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFF9CA3AF),
               ),
             ),
             title: Text(
@@ -192,7 +193,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                   style: TextStyle(
                     fontSize: 11,
                     color: status == 'active'
-                        ? Colors.green
+                        ? const Color(0xFF4CAF50)
                         : const Color(0xFF9CA3AF),
                     height: 1.5,
                   ),
@@ -296,7 +297,7 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.build,
-              color: overdue ? Colors.red : const Color(0xFFFF6B35),
+              color: overdue ? const Color(0xFFE53935) : const Color(0xFFFF6B35),
             ),
             title: Text('$vehicle — $type'),
             subtitle: cost > 0 ? Text('費用: ¥${cost.toStringAsFixed(0)}') : null,
@@ -318,7 +319,8 @@ class _VehicleFleetManagerPageState extends State<VehicleFleetManagerPage>
                     '次回: ${nextDue.substring(0, 10)}',
                     style: TextStyle(
                       fontSize: 11,
-                      color: overdue ? Colors.red : const Color(0xFF9CA3AF),
+                      color:
+                          overdue ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
                       fontWeight: overdue ? FontWeight.bold : null,
                       height: 1.5,
                     ),

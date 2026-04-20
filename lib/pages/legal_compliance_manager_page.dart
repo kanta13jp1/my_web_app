@@ -102,7 +102,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -144,11 +144,11 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
         final urgent = daysLeft != null && daysLeft <= 30;
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
-          color: urgent ? Colors.red.shade50 : null,
+          color: urgent ? const Color(0xFFFFEBEE) : null,
           child: ListTile(
             leading: Icon(
               Icons.description,
-              color: urgent ? Colors.red : const Color(0xFF3D5AFE),
+              color: urgent ? const Color(0xFFE53935) : const Color(0xFF3D5AFE),
             ),
             title: Text(
               title,
@@ -167,7 +167,9 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                         expiry.length >= 10 ? expiry.substring(0, 10) : expiry,
                         style: TextStyle(
                           fontSize: 11,
-                          color: urgent ? Colors.red : const Color(0xFF9CA3AF),
+                          color: urgent
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFF9CA3AF),
                           fontWeight: urgent ? FontWeight.bold : null,
                           height: 1.5,
                         ),
@@ -177,8 +179,9 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                           '残$daysLeft日',
                           style: TextStyle(
                             fontSize: 10,
-                            color:
-                                urgent ? Colors.red : const Color(0xFF9CA3AF),
+                            color: urgent
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFF9CA3AF),
                             height: 1.5,
                           ),
                         ),
@@ -246,7 +249,7 @@ class _LegalComplianceManagerPageState extends State<LegalComplianceManagerPage>
                 secondary: priority == 'high'
                     ? const Icon(
                         Icons.priority_high,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         size: 18,
                       )
                     : null,

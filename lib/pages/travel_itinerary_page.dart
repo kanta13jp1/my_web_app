@@ -412,7 +412,7 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -776,11 +776,12 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                         '¥${_formatNum(totalBudget)}',
                         const Color(0xFF3D5AFE),
                       ),
-                      _budgetStat('支出', '¥${_formatNum(spent)}', Colors.red),
+                      _budgetStat(
+                          '支出', '¥${_formatNum(spent)}', const Color(0xFFE53935),),
                       _budgetStat(
                         '残高',
                         '¥${_formatNum(remaining)}',
-                        remaining >= 0 ? Colors.green : Colors.red,
+                        remaining >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                       ),
                     ],
                   ),
@@ -791,10 +792,10 @@ class _TravelItineraryPageState extends State<TravelItineraryPage>
                         Theme.of(context).colorScheme.surfaceContainerHigh,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       ratio < 0.7
-                          ? Colors.green
+                          ? const Color(0xFF4CAF50)
                           : ratio < 0.9
                               ? const Color(0xFFFF6B35)
-                              : Colors.red,
+                              : const Color(0xFFE53935),
                     ),
                     minHeight: 8,
                     borderRadius: BorderRadius.circular(4),

@@ -174,7 +174,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -203,7 +203,8 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                   children: [
                     Icon(
                       Icons.security,
-                      color: enabled ? Colors.green : const Color(0xFF9CA3AF),
+                      color:
+                          enabled ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
                       size: 28,
                     ),
                     const SizedBox(width: 12),
@@ -218,7 +219,9 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                           Text(
                             enabled ? '有効 ($method)' : '無効',
                             style: TextStyle(
-                              color: enabled ? Colors.green : Colors.red,
+                              color: enabled
+                                  ? const Color(0xFF4CAF50)
+                                  : const Color(0xFFE53935),
                               fontWeight: FontWeight.bold,
                               height: 1.5,
                             ),
@@ -273,7 +276,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                 child: ListTile(
                   leading: Icon(
                     Icons.devices,
-                    color: current ? Colors.green : null,
+                    color: current ? const Color(0xFF4CAF50) : null,
                   ),
                   title: Text(name),
                   subtitle: trusted.isNotEmpty
@@ -286,7 +289,7 @@ class _TwoFactorAuthPageState extends State<TwoFactorAuthPage> {
                       : IconButton(
                           icon: const Icon(
                             Icons.remove_circle_outline,
-                            color: Colors.red,
+                            color: Color(0xFFE53935),
                           ),
                           onPressed: () async {
                             try {

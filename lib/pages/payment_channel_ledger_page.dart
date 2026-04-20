@@ -35,7 +35,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('監査済みにマークしました。'),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF4CAF50),
         ),
       );
       _refreshSources();
@@ -44,7 +44,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('監査処理中にエラーが発生しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     }
@@ -55,7 +55,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('決済ソース台帳'),
-        backgroundColor: Colors.green[800],
+        backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
       ),
       body: FutureBuilder<List<PaymentSource>>(
@@ -88,8 +88,9 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                 final isAuditedRecently = source.lastAuditedAt != null &&
                     DateTime.now().difference(source.lastAuditedAt!).inDays <
                         30;
-                final auditStatusColor =
-                    isAuditedRecently ? Colors.green : const Color(0xFFFF6B35);
+                final auditStatusColor = isAuditedRecently
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFFFF6B35);
 
                 return Card(
                   elevation: 2,
@@ -143,7 +144,7 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                                 '未監査',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  color: Color(0xFFE53935),
                                   height: 1.5,
                                 ),
                               ),
@@ -157,8 +158,8 @@ class _PaymentChannelLedgerPageState extends State<PaymentChannelLedgerPage> {
                             label: const Text('監査済みにする'),
                             onPressed: () => _auditSource(source.id),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.green[700],
-                              side: BorderSide(color: Colors.green[700]!),
+                              foregroundColor: const Color(0xFF388E3C),
+                              side: const BorderSide(color: Color(0xFF388E3C)),
                             ),
                           ),
                         ),

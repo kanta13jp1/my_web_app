@@ -203,7 +203,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -256,7 +256,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                   '$totalMinutes分',
                   '総運動時間',
                   Icons.timer,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
               ),
               const SizedBox(width: 12),
@@ -265,7 +265,7 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                   '${totalCalories}kcal',
                   '総消費カロリー',
                   Icons.bolt,
-                  Colors.red,
+                  const Color(0xFFE53935),
                 ),
               ),
             ],
@@ -519,9 +519,9 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                             ? Icons.trending_up
                             : Icons.trending_flat,
                     color: diff < 0
-                        ? Colors.green
+                        ? const Color(0xFF4CAF50)
                         : diff > 0
-                            ? Colors.red
+                            ? const Color(0xFFE53935)
                             : const Color(0xFF9CA3AF),
                   ),
                   title: Text(
@@ -539,7 +539,9 @@ class _FitnessHealthTrackerPageState extends State<FitnessHealthTrackerPage>
                       ? Text(
                           '${diff > 0 ? "+" : ""}${diff.toStringAsFixed(1)}kg',
                           style: TextStyle(
-                            color: diff < 0 ? Colors.green : Colors.red,
+                            color: diff < 0
+                                ? const Color(0xFF4CAF50)
+                                : const Color(0xFFE53935),
                             fontWeight: FontWeight.bold,
                             height: 1.5,
                           ),
