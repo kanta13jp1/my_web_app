@@ -12306,3 +12306,13 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 | 🟡 中 | `ai-assistant` EF モデルを `claude-opus-4-7` へ更新 (GitHub Copilot 統合に合わせ) | Windows版 |
 | 🟡 中 | `gh skill publish` で `.claude/skills/` をGitHubマーケット公開 | PS版 |
 | 🟢 低 | GitHub Copilot データ学習オプトアウト確認 (2026-04-24 締切) | 手動 |
+
+---
+
+## PS版#1 Session 9 (2026-04-20 11:00 JST) — Rule17 WF health
+
+- **deploy-prod #24643806404** (commit 30e7a9e3) 失敗 → 原因: `esm.sh/@supabase/supabase-js@2` が Cloudflare 522 で一時不通 (transient)
+- **対応**: `gh run rerun 24643806404 --failed` → ✅ success
+- **dependabot PR #567** (bump test 1.26.3 → 1.30.0): 既知の非互換 (Flutter 3.38.10 + test 1.30.0 = test_api version mismatch · 46件 CI fail / PS版#83 2026-04-17 記録)
+  - `@dependabot ignore this minor version` コメントで自動クローズ誘導
+- **WF 健全性**: 直近 50 runs 中 failure 2件 (両方対応済み) → 残り全て green
