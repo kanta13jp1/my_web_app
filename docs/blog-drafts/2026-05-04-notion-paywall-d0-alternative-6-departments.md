@@ -115,4 +115,17 @@ Notion Custom Agents を引き続き使う場合、**個人 credit 消費を最�
 - LP: <https://my-web-app-b67f4.web.app/>
 - 21 競合比較: <https://my-web-app-b67f4.web.app/comparison>
 
+## これは Notion だけの話ではない (vendor paywall パターン)
+
+6 ソース検証 (公式 + The Register + PYMNTS + Gizmodo + Kingy AI + npifinancial) で、**Anthropic Enterprise も 2025-11 から $20/seat + usage の新構造に移行済**。新構造 3 点:
+
+1. **強制コミット枠**: Anthropic 推定の月次 token 量を pre-pay → **実消費が下回っても請求**
+2. **大口割引廃止**: 従来の 10-15% volume discount が消滅
+3. **per-token 単価は不変**
+
+Redress Compliance の heavy user 試算では **2-3 倍コスト増**。
+Notion も Anthropic も同じ方向 = **vendor 側は metered + commit で課金安定化、ユーザー側は予測不能性を被る**。
+
+自分株式会社は **コミット枠ゼロ・credit ゼロ・完全無料**。vendor 側の「課金改訂ニュース」から構造的に切り離されている。
+
 本日 5/4 から credit 課金モード突入。「代替 か 併用 か」は個人 CEO 自身が決めればいい。**どちらを選んでも、自分株式会社という受け皿があれば時間資本は守れる**。

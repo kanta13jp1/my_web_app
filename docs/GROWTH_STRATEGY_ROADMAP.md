@@ -14021,3 +14021,46 @@ Migration timestamp: **190000** 使用 (180000 WBS reassign ai_hub の直後)
 
 - **Handoff 消化を先行 draft と同 session に詰め込む** pattern: S11 で pre-write した drafts に S12 で S26 数字を載せる = draft 新規作成・enrichment・handoff マーク 3 段が 1 session で閉じる
 - BS 本B sidebar で「credit metered = 月次消費型負債」という会計分類を新規定義 → 将来の vendor 分析に流用可 (memory candidate)
+
+---
+
+## 2026-04-20 20:00 JST — PS版#2 Session 13 (PS#4 S27 handoff 消化: Anthropic 強制コミット枠 framing を 2 段ロケット化)
+
+### アクション
+
+- PS#4 S27 handoff (`docs/cross-instance-prs/20260420_three_way_positioning_sns.md` 行 248-284 Cowork pricing 6 ソース検証) を **4 draft に適用**:
+  - **Notion D-0 本C (5/4 dispatch)** JA + EN: 結びの直前に「vendor paywall パターン」セクション新設 (Anthropic Enterprise $20/seat + mandatory commits + 大口割引廃止 + 2-3 倍試算)
+  - **3 者棲み分け Qiita 本B (4/26 BS 角度)** JA + EN: S12 で追加した「credit metered = 月次消費型負債」sidebar の直後に **第 2 段「強制コミット枠 = 月次強制負債」** を積層 = 2 段ロケット化完成
+
+- S27 checklist 5 件中 4 件 checked (X 短文のみ当日起草で hold)
+
+### Why S27+S12 を続けて消化
+
+- 4/20 時点で S26 + S27 の 2 handoff が重なり、両方を反映しないと dispatch 時の framing に抜けが生じる
+- S27 の Anthropic framing は **D-0 (5/4) dispatch で最も効く** (Notion 本日課金 + Anthropic 背景の 2 重プレッシャー訴求)
+- Qiita BS 本B は「1 社依存 → 負債」のマクロ主張に **metered (Notion) + 強制コミット (Anthropic) 2 種類の具体 micro 事例** が乗って説得力 up
+- 新規会計分類 2 件 (S12: 月次消費型負債 / S13: 月次強制負債) で **vendor paywall パターン taxonomy** が完成
+
+### Philosophy alignment
+
+- 原則 1 (CEO 感): 個人 CEO が metered + commit 両型の負債を理解して判断 ✅
+- 原則 5 (商品=ユーザー価値): "vendor paywall パターン" の構造認識 = ユーザーへの知的武装 ✅
+- 原則 6 (資本=時間): 2 handoff 1 session 消化で dispatch 日の時間資本保全 ✅
+- 原則 7 (資産負債 BS): 「月次強制負債」分類新設で会計フレーム拡張 ✅
+- 原則 8 (KPI=昨日の自分): 昨日の自分より数字交差検証 (2 社 → 6 ソース) 精度が増加 ✅
+- 整合性: **5/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (Qiita BS 角度 · S12+S13 2 段ロケット完成)
+4. **2026-04-28**: Notion 本A dispatch (D-6 · S12 数字強化済)
+5. **2026-05-02**: Notion 本B dispatch (D-2 · S12 数字強化済)
+6. **2026-05-04**: Notion 本C dispatch (D-0 · S12+S13 vendor paywall パターン強化済)
+7. **2026-05-04 当日**: X 短文起草 (S27 checklist 残 1 件) = dispatch タイミング直近で最適化
+
+### 学び
+
+- **handoff の会計分類命名法**: S12 で「月次消費型負債」(credit metered / Notion 型) / S13 で「月次強制負債」(commit / Anthropic 型) と 2 分類を発明 → 今後の vendor 分析 (Gemini / Cursor / Cognition 等) に再利用可
+- **2 段ロケット framing**: Qiita BS 本B に「metered → commit」と負債パターンを 2 段構成で並べると「1 社に賭けるな」主張の micro 根拠が 2 重に積み上がる

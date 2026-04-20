@@ -65,6 +65,20 @@ published: false
 定額 subscribe と違い、**credit metered pricing は BS 上「短期・非繰延・usage-pressure 型負債」** として分類するのが正確。
 対比で自分株式会社 (Supabase + Flutter Web) は **credit 概念ゼロ = この負債を原理的に負わない**。
 
+### 2 段目: 強制コミット枠 (Anthropic Enterprise 2025-11 改定)
+
+同じ時期に Anthropic Enterprise も $200 flat → $20/seat + usage へ移行した (公式 + The Register 等 6 ソース検証)。新構造の核心は **「強制コミット枠」**:
+
+- Anthropic 推定の月次 token 量を pre-pay → **実消費が下回っても満額請求**
+- 従来の大口割引 (10-15%) が廃止
+- Redress Compliance 試算で heavy users が **2-3 倍コスト増**
+
+BS 観点では、**コミット枠は「月次強制負債」** = credit metered より更にタチが悪い。credit なら「月末に使い切れば帳尻」だが、コミット枠は「使わなくても請求」= **未消費分の資産化ゼロ + 消費ペナルティなし**の完全片務。
+
+Notion (credit metered / 月次リセット) + Anthropic (コミット枠 / 月次強制) の **2 段ロケット** を見ると、vendor 側は metered + commit で課金安定化を進め、ユーザー側は予測不能性を被る構造が揃って出てきている。
+
+対策は単純: **AI 手段を 1 社に賭けない**。ai-hub で束ねて、どの vendor の paywall ニュースが来ても BS 上のインパクトを希釈する。
+
 ## 自分株式会社の実装パターン
 
 ### ai-hub で vendor を選ばない側に回る

@@ -114,4 +114,17 @@ Behind Jibun Inc.'s free operation:
 - Landing: <https://my-web-app-b67f4.web.app/>
 - 21-competitor comparison: <https://my-web-app-b67f4.web.app/comparison>
 
+## This Isn't Just Notion (The Vendor Paywall Pattern)
+
+Six-source triangulation (Anthropic's own pricing + The Register + PYMNTS + Gizmodo + Kingy AI + npifinancial) confirms **Anthropic Enterprise also migrated to $20/seat + usage starting 2025-11**, with a new structure:
+
+1. **Mandatory consumption commits** — pre-pay Anthropic-estimated monthly token volume; **if actual usage falls below, you're still billed**
+2. **Volume discounts (10–15%) removed**
+3. **Per-token unit price unchanged**
+
+Redress Compliance's heavy-user estimates land at **2–3× cost increase**.
+Notion and Anthropic are heading the same direction: **vendors stabilize their revenue via metered + commit billing; users absorb the unpredictability**.
+
+Jibun Inc. has **zero commits, zero credits, fully free**. Structurally insulated from "pricing update" news cycles.
+
 Credit billing starts today. "Replace" or "coexist" — you, the personal CEO, decide. **Either way, if Jibun Inc. is the receiver, your time capital survives.**

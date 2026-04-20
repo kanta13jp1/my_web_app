@@ -63,6 +63,20 @@ On 2026-05-04, Notion Custom Agents switches to **$10 / 1,000 credits** (triangu
 Unlike flat-rate subscription, **credit-metered pricing belongs on the BS as "short-term, non-deferrable, usage-pressure liability."**
 By contrast, Jibun Inc. (Supabase + Flutter Web) has **zero credit concept → structurally does not carry this liability**.
 
+### Stage 2: mandatory consumption commits (Anthropic Enterprise, 2025-11)
+
+Around the same time, Anthropic Enterprise moved from $200 flat to $20/seat + usage (verified across Anthropic's own pricing + The Register + 4 more = 6 sources). The structural core is the **mandatory consumption commit**:
+
+- Pre-pay Anthropic-estimated monthly token volume → **if actual usage falls below, you're still billed the full amount**
+- Prior 10–15% volume discounts are gone
+- Redress Compliance estimates heavy users land at **2–3× cost increase**
+
+On the BS, **commit pricing is a "monthly mandatory liability"** — arguably worse than credit-metered. With credits you can at least "burn them by month-end for parity"; with commits, the under-consumption is simply lost — **zero deferral + no penalty for using less** = fully one-sided.
+
+Looking at Notion (credit-metered / monthly reset) + Anthropic (commit-based / monthly mandatory) as a **two-stage rocket**, the pattern is clear: vendors stabilize their revenue via metered + commit pricing; users absorb the unpredictability.
+
+The counter is simple: **don't bet on one AI vendor**. Bundle via ai-hub so any single pricing update dilutes rather than detonates your BS.
+
 ## How Jibun Inc. Implements This
 
 ### ai-hub: Sit On the Side That Doesn't Pick
