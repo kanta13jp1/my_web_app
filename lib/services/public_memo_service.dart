@@ -28,7 +28,8 @@ class PublicMemoService {
   }
 
   static String buildPublicMemoUrl(int memoId) {
-    return '$_functionBaseUrl/public-memo-share?id=$memoId';
+    // public-memo-share EF は hub統合時に削除済みのためアプリURLに切替 (Issue #607)
+    return buildPublicMemoAppUrl(memoId);
   }
 
   static String buildPublicMemoOgpUrl(int memoId) {

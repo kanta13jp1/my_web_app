@@ -750,6 +750,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/travel-itinerary',
       '旅行プランナーページ > 旅程作成・管理',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'dns-domain-manager',
+      'DNS・ドメイン管理',
+      true,
+      '/dns-domain-manager',
+      'DNS・ドメイン管理ページ > ドメイン一覧・DNSレコード設定',
+    ),
+    _FnDef(
+      'inventory-barcode',
+      '在庫・バーコード管理',
+      true,
+      '/inventory-barcode',
+      '在庫管理ページ > バーコードスキャン・在庫登録・一覧表示',
+    ),
+    _FnDef(
+      'legal-compliance-manager',
+      'リーガルコンプライアンス管理',
+      true,
+      '/legal-compliance',
+      'コンプライアンスページ > 規制要件確認・リスク管理・監査ログ',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
