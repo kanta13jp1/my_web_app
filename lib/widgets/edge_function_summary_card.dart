@@ -735,6 +735,21 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/music-collaboration',
       '音楽コラボページ > セッション一覧・参加・楽曲共有',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'changelog-manager',
+      'チェンジログ管理 (一覧/詳細)',
+      true,
+      '/changelog',
+      'チェンジログページ > 変更履歴一覧',
+    ),
+    _FnDef(
+      'travel-itinerary-planner',
+      '旅行プランナー (旅程管理)',
+      true,
+      '/travel-itinerary',
+      '旅行プランナーページ > 旅程作成・管理',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
