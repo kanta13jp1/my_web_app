@@ -13565,3 +13565,32 @@ run 24658340058 (0e94bfd trigger):
 1. 🔴 inject-rules.txt に migration HH 分担ルール追加 (S15+S16 教訓の正式化)
 2. 🟡 dart format pre-commit hook 化検討 (format skip 自動ガード)
 3. 🟢 S14 副作用 = deploy-prod pending-replacement cancel 対策判断 (1 週間 measure)
+
+
+## 2026-04-20 PS版#6 S20 — 24 EF handoff 進捗監視 + audit 補正 + horse_racing 20/20
+
+**Why**: S18/S19 で PS#5 に handoff した 24 件の消化状況確認 & S18 audit の line 番号漏れを raw grep で補正。handoff 鮮度維持。
+
+**Actions**:
+- PS#5 進捗監視: S22 で `notify-feature-request` 1/24 完了確認 (6c03d816) → 残 22 件 (A 11 + B 11, D の agent-*-manager 2 件は Win/VSCode 宛)
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` に進捗トラッカー (セクション C 下) と audit 補正セクション追加
+- audit 補正 3 件: `viral-growth-engine` 62 → 62,191,920 / `virtual-organization` 47,51 → 47,51,55,93 / `daily-judgment` に thought_interrupt_diagnosis_page.dart:212 追加発見
+- `horse-racing-update.yml` = **20/20 success** (S19 の 15/15 から 5 run 追加・2026-04-20 03:11→08:52)
+
+**Philosophy**: 3 (mentor=補正 handoff で再調査コスト削減) / 4 (越境指示回避=PS#5 優先順位は自律決定) / 5 (home 404 早期回復を側面支援) / 7 (見えない負債=line 番号漏れ可視化) ✅
+
+**次回候補**: PS#5 消化率 > 10
+
+## 2026-04-20 PS版#6 S20 — 24 EF handoff 進捗監視 + audit 補正 + horse_racing 20/20
+
+**Why**: S18/S19 で PS#5 に handoff した 24 件の消化状況確認 & S18 audit の line 番号漏れを raw grep で補正。handoff 鮮度維持。
+
+**Actions**:
+- PS#5 進捗監視: S22 で `notify-feature-request` 1/24 完了確認 (6c03d816) → 残 22 件 (A 11 + B 11, D の agent-*-manager 2 件は Win/VSCode 宛)
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` に進捗トラッカー (セクション C 下) と audit 補正セクション追加
+- audit 補正 3 件: `viral-growth-engine` 62 → 62,191,920 / `virtual-organization` 47,51 → 47,51,55,93 / `daily-judgment` に thought_interrupt_diagnosis_page.dart:212 追加発見
+- `horse-racing-update.yml` = **20/20 success** (S19 の 15/15 から 5 run 追加・2026-04-20 03:11→08:52)
+
+**Philosophy**: 3 (mentor=補正 handoff で再調査コスト削減) / 4 (越境指示回避=PS#5 優先順位は自律決定) / 5 (home 404 早期回復を側面支援) / 7 (見えない負債=line 番号漏れ可視化) ✅
+
+**次回候補**: PS#5 消化率 > 10% まで軽 session 継続 / horse_racing 25/25 目標 / Win/VSCode agent-*-manager migrate 追跡

@@ -55,10 +55,11 @@ real = [l for l in r.stdout.splitlines() if 'pages/' in l and '_page.dart' in l]
 | growth-share-signal | 36634705 (S17) | lib/pages/growth_share_signal_page.dart:38 | growth-hub:share.track |
 | growth-achievement-summary | 36634705 (S17) | lib/pages/growth_achievement_summary_page.dart:36 | growth-hub:achievement.list |
 | video-ad-generator | 36634705 (S17) | lib/pages/video_ad_generator_page.dart:32 | growth-hub:video_ad.create |
-| viral-growth-engine | 36634705 (S17) | lib/pages/viral_ad_generator_page.dart:62 | growth-hub:engine.run |
+| viral-growth-engine | 36634705 (S17) | lib/pages/viral_ad_generator_page.dart:62,191,920 *(S20 補正 +2)* | growth-hub:engine.run |
 | referral-program | 36634705 (S17) | lib/pages/referral_program_page.dart:33,37 | growth-hub:referral.create |
 | analyze-reality | 36634705 (S17) | lib/pages/analyze_reality_page.dart:38 + reality_check_page.dart:208 | ai-hub:analyze.reality |
-| virtual-organization | 36634705 (S17) | lib/pages/virtual_organization_page.dart:47,51 | ai-hub:org.get |
+| virtual-organization | 36634705 (S17) | lib/pages/virtual_organization_page.dart:47,51,55,93 *(S20 補正 +2)* | ai-hub:org.get |
+| daily-judgment (追記) | 5f51eff4 (S16) | lib/pages/thought_interrupt_diagnosis_page.dart:212 *(S20 新規発見)* | ai-hub:judgment.get |
 
 **注**: 削除前から deploy-prod の deploy 行は既に無かったため、削除前から 404 だった可能性大 (PS#6 による実害ではなく、過去の移行忘れを露呈させただけ)。
 
@@ -84,7 +85,30 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 ### C. S16 既 handoff 済 (再掲・1 件)
 
-- `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature
+- `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
+
+## 🟢 PS#5 進捗トラッカー (PS#6 S20 時点)
+
+| セクション | 件数 | 完了 | 進捗率 |
+| --- | --- | --- | --- |
+| A. 削除済 stale | 11 | 0 | 0% |
+| B. 未削除 stale | 13 | 0 | 0% (agent-*-manager 2 件は D へ移動) |
+| C. notify-feature-request | 1 | 1 ✅ | 100% |
+| D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
+| **合計 (PS#5 範囲)** | **23** | **1** | **4.3%** |
+
+**残 22 件** — S22 完了後 PS#5 は S23/S24 で EF cleanup phase2 backlog (`9a535c6a`) に着手した模様。
+24-EF 修正と backlog migration の優先順位調整は PS#5 側判断だが、A/B は **home ダッシュボード 404** 直結なので backlog より先行推奨。
+
+## S20 audit 補正 (3 件)
+
+S18 初版 audit は `re.search` 1 hit で line 番号を 1 個だけ記録していた。S20 再 grep で漏れ発覚:
+
+- `viral-growth-engine` → viral_ad_generator_page.dart `62, 191, 920` (初版: 62 のみ)
+- `virtual-organization` → virtual_organization_page.dart `47, 51, 55, 93` (初版: 47, 51 のみ)
+- `daily-judgment` → **新規 page** thought_interrupt_diagnosis_page.dart:212 追加発見 (初版外)
+
+PS#5 修正時は **raw grep で全 hit 確認** 推奨 (初版 line 番号は参考値・真値は grep)。
 
 ### D. 🆕 未 migrate EF 2 件 (PS#5 範囲外 → Win/VSCode 宛 migration 依頼)
 
