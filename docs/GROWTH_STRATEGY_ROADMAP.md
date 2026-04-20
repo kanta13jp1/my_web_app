@@ -12872,7 +12872,6 @@ Pleias AI migration timestamp collision を検出し PS#3 に handoff。
 2. 🟡 PS#1 ci.yml fix の長期安定性モニタ (24h+ cancel 率計測)
 3. 🟢 horse_racing batch cron 長期健全性 (median 118s / 10 連続 success)
 
-<<<<<<< HEAD
 ---
 
 ## PS版#4 Session 21 (2026-04-20 夜) — 3 並列未スキャン競合 delta + OpenAI Codex Desktop 🔴 起票 + S19 追補
@@ -13009,3 +13008,31 @@ provider key 衝突検知を Step 0 の 10 番目として追加すべし。
 - provider key 衝突検知を Step 0 に組込すべき (Liquid AI 重複 SQL 救済コスト 1 min)
 - 資金規模 \$2B seed は異例 — valuation に惑わされず Tinker の API 公開状況を真の評価軸に採用
 
+---
+
+## 2026-04-20 17:55 JST — PS版#2 Session 6 ([CONSTRAINT-LOG] 遵守追記)
+
+### アクション
+
+- S3 発見の **Qiita 72h cooldown** 制約が `docs/instance-constraints.md` 未記録 → `[CONSTRAINT-LOG]` rule 遵守で追記
+- 併せて **dev.to 422 "Title already used in last 5min"** (並行 collision) も同台帳に追記
+
+### 追記内容 (制約発見ログ)
+
+| 日付 | インスタンス | 制約 | 代替 | 発見 |
+| --- | --- | --- | --- | --- |
+| 2026-04-20 | PS#2 | Qiita 429 = >72h long cooldown (rolling 24h ではない) | skill 3 段階 Gate 化 (71bc6810) | PS#2 S3 |
+| 2026-04-20 | PS#2 | dev.to 422 = 並行 instance 5min 以内同タイトル collision | skill Step 2.3 pre-check | PS#2 S1 |
+
+### Philosophy alignment
+
+- 原則 6 (資本=時間): 制約台帳に新規 2 行 → 他 instance が同じ罠にハマる時間ゼロ
+- 原則 8 (KPI=昨日の自分): 発見 → skill 反映 → 台帳記録 の 3 層で前進を可視化
+- 原則 2 (ミッション駆動): PS#2 の T-1 dispatch 責務の一部 (失敗パターン周知)
+
+### 次回 PS#2 候補 (更新なし・S5 提示済)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (Gate 1 自動 PASS)
+2. **2026-04-28**: 本A dispatch (t1-blog-dispatch / dev.to 単独)
+3. **2026-04-29 頃**: 本B (D-2) draft 作成
+4. **2026-05-01 頃**: 本C (D-0) draft 作成

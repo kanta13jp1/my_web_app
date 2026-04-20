@@ -22,6 +22,8 @@
 | 2026-04-12 | 全インスタンス | Edit 後に linter が変更を巻き戻す場合あり | Edit → 即 `git add` (Python+即gitaddパターン) | VSCode#59 |
 | 2026-04-12 | PowerShell版 | GHA `${{ steps.X.outputs.Y }}` を bash 文字列に直接展開禁止 | `env:` ブロック経由で安全に渡す | PS#54 |
 | 2026-04-20 | PS版#1 | `~/.claude/hooks/inject-rules.txt` の `[AI-DEV-23]` "blog-publish (2/7)" 記述が陳腐化 | 5/7 に更新 (CB+QG+TRACE_ID+DLQ 追加済 commit 02bdea2d) — 残: retry policy + team memory score | PS#1 S12 |
+| 2026-04-20 | PS版#2 | Qiita 429 = **rolling 24h window ではなく >72h の長期 cooldown**。`qiita-retry` skill の旧 Gate 前提 (JST 00:00 固定リセット / 6h 429 → 12h wait) は誤り。4 本連続投稿 (2026-04-17) 後 72h 経過でも 429 継続 | (a) Gate 1: 直近 **72h 429=0** 確認 (b) 429 検出時は **72h wait** (c) burst **1 本/1h+** (d) 日次 **1-2 本/日** に縮小 — skill 3 段階 Gate 化済 (commit 71bc6810) | PS#2 S3 |
+| 2026-04-20 | PS版#2 | dev.to 422 "Title already used in last 5min" = 並行 instance collision (53 秒差 dispatch で発生) | `blog-publish.yml` 直前に **5 分以内 run の draft_path 一致 check** (skill Step 2.3)。collision 時は先発 run の URL 採用 + orphan 両方削除 | PS#2 S1 (別 session) |
 
 ---
 
