@@ -175,7 +175,10 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -423,13 +426,13 @@ class _MemoryDrillPageState extends State<MemoryDrillPage> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.14),
+                              color: const Color(0xFF4CAF50).withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
                               '今日完了',
                               style: TextStyle(
-                                color: Colors.green,
+                                color: Color(0xFF4CAF50),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
                                 height: 1.5,

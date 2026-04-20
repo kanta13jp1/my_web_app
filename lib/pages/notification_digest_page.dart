@@ -88,14 +88,14 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                         const Icon(
                           Icons.error_outline,
                           size: 48,
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                         ),
                         const SizedBox(height: 12),
                         Text(
                           _errorMessage!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: Colors.red,
+                            color: Color(0xFFE53935),
                             height: 1.5,
                           ),
                         ),
@@ -182,7 +182,7 @@ class _NotificationDigestPageState extends State<NotificationDigestPage> {
                                   '重要通知',
                                   '${_digest!['important_count'] ?? 0}件',
                                   Icons.priority_high,
-                                  Colors.red,
+                                  const Color(0xFFE53935),
                                   isDark,
                                 ),
                               ],

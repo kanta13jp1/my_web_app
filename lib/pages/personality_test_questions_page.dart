@@ -44,7 +44,7 @@ class _PersonalityTestQuestionsPageState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('質問の読み込みに失敗しました: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -89,7 +89,7 @@ class _PersonalityTestQuestionsPageState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('回答の保存に失敗しました: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -125,7 +125,7 @@ class _PersonalityTestQuestionsPageState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('診断の完了に失敗しました: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }

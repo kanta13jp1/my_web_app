@@ -184,7 +184,7 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const Icon(Icons.error_outline, color: Color(0xFFE53935), size: 48),
             const SizedBox(height: 12),
             Text(
               'ギャラリーの読み込みに失敗しました',
@@ -424,15 +424,18 @@ class _PublicGuitarGalleryPageState extends State<PublicGuitarGalleryPage> {
                       children: [
                         Icon(
                           isLiked ? Icons.favorite : Icons.favorite_border,
-                          color: isLiked ? Colors.red : const Color(0xFFBDBDBD),
+                          color: isLiked
+                              ? const Color(0xFFE53935)
+                              : const Color(0xFFBDBDBD),
                           size: 18,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '$likes',
                           style: TextStyle(
-                            color:
-                                isLiked ? Colors.red : const Color(0xFFBDBDBD),
+                            color: isLiked
+                                ? const Color(0xFFE53935)
+                                : const Color(0xFFBDBDBD),
                             fontSize: 13,
                             height: 1.5,
                           ),

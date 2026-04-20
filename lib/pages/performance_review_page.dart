@@ -100,9 +100,9 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
   }
 
   Color _scoreColor(int score) {
-    if (score >= 4) return Colors.green;
+    if (score >= 4) return const Color(0xFF4CAF50);
     if (score >= 3) return const Color(0xFF6366F1);
-    return Colors.orange;
+    return const Color(0xFFFF6B35);
   }
 
   @override
@@ -139,7 +139,7 @@ class _PerformanceReviewPageState extends State<PerformanceReviewPage>
                     child: Text(
                       _errorMessage!,
                       style: const TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         fontSize: 12,
                         height: 1.5,
                       ),

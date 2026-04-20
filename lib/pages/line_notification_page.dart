@@ -236,21 +236,23 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
   }
 
   Widget _buildAlert(String message, {required bool isError}) {
-    final color = isError ? Colors.red : Colors.green;
+    final bg = isError ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9);
+    final border = isError ? const Color(0xFFEF9A9A) : const Color(0xFFA5D6A7);
+    final fg = isError ? const Color(0xFFC62828) : const Color(0xFF2E7D32);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.shade50,
+          color: bg,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.shade200),
+          border: Border.all(color: border),
         ),
         child: Row(
           children: [
             Icon(
               isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: color.shade700,
+              color: fg,
               size: 18,
             ),
             const SizedBox(width: 8),
@@ -258,7 +260,7 @@ class _LineNotificationPageState extends State<LineNotificationPage> {
               child: Text(
                 message,
                 style: TextStyle(
-                  color: color.shade700,
+                  color: fg,
                   fontSize: 13,
                   height: 1.5,
                 ),
@@ -407,7 +409,7 @@ class _HistoryTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           success ? Icons.check_circle : Icons.error_outline,
-          color: success ? Colors.green : Colors.red,
+          color: success ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
           size: 20,
         ),
         title: Text(
@@ -427,7 +429,7 @@ class _HistoryTile extends StatelessWidget {
         trailing: Text(
           success ? '成功' : '失敗',
           style: TextStyle(
-            color: success ? Colors.green : Colors.red,
+            color: success ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
             fontSize: 12,
             fontWeight: FontWeight.bold,
             height: 1.5,

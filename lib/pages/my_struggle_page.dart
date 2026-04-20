@@ -261,15 +261,15 @@ class _MyStrugglePageState extends State<MyStrugglePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: const Color(0xFFFFEBEE),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
               ),
               child: Text(
                 _error!,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.red.shade700,
+                  color: Color(0xFFC62828),
                   height: 1.5,
                 ),
               ),

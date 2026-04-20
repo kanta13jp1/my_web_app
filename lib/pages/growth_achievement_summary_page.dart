@@ -102,7 +102,7 @@ class _GrowthAchievementSummaryPageState
     return Scaffold(
       appBar: AppBar(
         title: const Text('成長実績サマリー'),
-        backgroundColor: Colors.green,
+        backgroundColor: const Color(0xFF4CAF50),
         foregroundColor: Colors.white,
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
@@ -115,7 +115,7 @@ class _GrowthAchievementSummaryPageState
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -160,7 +160,7 @@ class _GrowthAchievementSummaryPageState
                               '新規ユーザー',
                               d['newUsers'],
                               Icons.person_add,
-                              Colors.green,
+                              const Color(0xFF4CAF50),
                             ),
                             _buildStatCard(
                               '獲得シグナル',

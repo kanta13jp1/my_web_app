@@ -74,14 +74,14 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -128,7 +128,7 @@ class _ParkingReservationPageState extends State<ParkingReservationPage> {
                                 ),
                               ),
                               backgroundColor: status == 'active'
-                                  ? Colors.green.shade100
+                                  ? const Color(0xFFC8E6C9)
                                   : Theme.of(context)
                                       .colorScheme
                                       .surfaceContainerHigh,

@@ -55,11 +55,11 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
   Color _strengthColor(String? strength) {
     switch (strength) {
       case 'strong':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'medium':
         return const Color(0xFFFF6B35);
       default:
-        return Colors.red;
+        return const Color(0xFFE53935);
     }
   }
 
@@ -106,7 +106,7 @@ class _PasswordVaultPageState extends State<PasswordVaultPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
