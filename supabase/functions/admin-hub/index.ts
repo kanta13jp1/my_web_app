@@ -287,12 +287,105 @@ serve(async (req: Request) => {
 
       // ---- Admin notifications ----
       case "admin.notify": {
+        const SEVERITY: Record<string, { priority: number; label: string; color: string }> = {
+          critical: { priority: 1, label: "緊急", color: "#dc2626" },
+          warning: { priority: 2, label: "警告", color: "#f59e0b" },
+          info: { priority: 3, label: "情報", color: "#3b82f6" },
+          success: { priority: 4, label: "成功", color: "#10b981" },
+        };
+        const severity: string = body.severity ?? "info";
+        const sev = SEVERITY[severity] ?? SEVERITY.info;
         const item = await addItem(admin, "admin_notification", userId, {
           title: body.title,
-          message: body.message,
-          priority: body.priority ?? "normal",
+          message: body.message ?? "",
+          severity,
+          severityLabel: sev.label,
+          severityColor: sev.color,
+          priority: body.priority ?? sev.priority,
+          category: body.category ?? "system_update",
+          extra: body.metadata ?? {},
         });
         return json({ success: true, item });
+      }
+
+      case "admin.notifications.list": {
+        const severityFilter: string | undefined = body.severity;
+        const categoryFilter: string | undefined = body.category;
+        const limit: number = typeof body.limit === "number" ? body.limit : 50;
+        const items = await listItems(admin, "admin_notification", userId, limit);
+        const { data: reads } = await admin
+          .from("hub_data")
+          .select("metadata")
+          .eq("source", "admin_notification_read")
+          .filter("metadata->>user_id", "eq", userId)
+          .limit(500);
+        const readIds = new Set<string>(
+          (reads ?? [])
+            .map((r) => (r.metadata as Record<string, unknown>)?.notificationId as string | undefined)
+            .filter((x): x is string => typeof x === "string"),
+        );
+        const notifications = items
+          .map((n) => {
+            const m = (n.metadata ?? {}) as Record<string, unknown>;
+            return {
+              id: n.id,
+              title: m.title ?? "",
+              message: m.message ?? "",
+              severity: m.severity ?? "info",
+              severityLabel: m.severityLabel ?? "情報",
+              severityColor: m.severityColor ?? "#3b82f6",
+              priority: m.priority ?? 3,
+              category: m.category ?? "system_update",
+              is_read: readIds.has(n.id),
+              created_at: n.created_at,
+            };
+          })
+          .filter((n) => {
+            if (severityFilter && n.severity !== severityFilter) return false;
+            if (categoryFilter && n.category !== categoryFilter) return false;
+            return true;
+          });
+        const unreadCount = notifications.filter((n) => !n.is_read).length;
+        const criticalCount = notifications.filter((n) => n.severity === "critical").length;
+        return json({
+          success: true,
+          totalCount: notifications.length,
+          unreadCount,
+          criticalCount,
+          notifications,
+        });
+      }
+
+      case "admin.notifications.mark_read": {
+        const notificationId: string = body.id ?? body.notificationId ?? "";
+        if (!notificationId) return json({ error: "id required" }, 400);
+        await addItem(admin, "admin_notification_read", userId, {
+          notificationId,
+          readAt: new Date().toISOString(),
+        });
+        return json({ success: true, notificationId });
+      }
+
+      case "admin.notifications.summary": {
+        const { data: recent } = await admin
+          .from("hub_data")
+          .select("metadata, created_at")
+          .eq("source", "admin_notification")
+          .filter("metadata->>user_id", "eq", userId)
+          .gte("created_at", new Date(Date.now() - 24 * 3600000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(100);
+        const bySeverity: Record<string, number> = { critical: 0, warning: 0, info: 0, success: 0 };
+        for (const r of recent ?? []) {
+          const sev = ((r.metadata ?? {}) as Record<string, unknown>).severity as string;
+          if (sev in bySeverity) bySeverity[sev]++;
+        }
+        return json({
+          success: true,
+          last24h: (recent ?? []).length,
+          bySeverity,
+          needsAttention: bySeverity.critical + bySeverity.warning,
+        });
       }
 
       // ---- Issue auto-resolver ----

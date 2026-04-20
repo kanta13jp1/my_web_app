@@ -36,9 +36,9 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'admin-notification-hub',
-        queryParameters: {
-          'action': 'list',
+        'admin-hub',
+        body: {
+          'action': 'admin.notifications.list',
           if (_filterSeverity != 'all') 'severity': _filterSeverity,
         },
       );
@@ -59,8 +59,8 @@ class _AdminNotificationHubPageState extends State<AdminNotificationHubPage> {
   Future<void> _markAsRead(String notificationId) async {
     try {
       await _supabase.functions.invoke(
-        'admin-notification-hub',
-        body: {'action': 'mark_read', 'id': notificationId},
+        'admin-hub',
+        body: {'action': 'admin.notifications.mark_read', 'id': notificationId},
       );
       setState(() {
         _notifications = _notifications.map((n) {
