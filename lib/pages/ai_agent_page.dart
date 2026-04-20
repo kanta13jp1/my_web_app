@@ -254,7 +254,10 @@ class _AiAgentPageState extends State<AiAgentPage> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFE53935),
+                  ),
                   onPressed: () => _deleteFlow(flow['id'] as String),
                 ),
               ],

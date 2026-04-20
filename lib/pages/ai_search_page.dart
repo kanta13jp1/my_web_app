@@ -227,13 +227,17 @@ class _AiSearchPageState extends State<AiSearchPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Color(0xFFE57373),
+              ),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.red[400],
+                style: const TextStyle(
+                  color: Color(0xFFEF5350),
                   height: 1.5,
                 ),
               ),

@@ -181,7 +181,7 @@ class _ActivityFeedPageState extends State<ActivityFeedPage> {
   Map<String, dynamic> _getActivityStyle(String type) {
     switch (type) {
       case 'new_user':
-        return {'icon': Icons.person_add, 'color': Colors.green};
+        return {'icon': Icons.person_add, 'color': const Color(0xFF4CAF50)};
       case 'achievement':
         return {'icon': Icons.emoji_events, 'color': const Color(0xFFFFC107)};
       case 'milestone':
