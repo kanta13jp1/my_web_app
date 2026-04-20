@@ -13171,3 +13171,33 @@ SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 **棄却条件**: Anthropic が Claude Desktop plugin ecosystem 拡大発表で Codex 差別化消滅 → 本A は「2 者棲み分け」に書き換え
 
 **次回候補**: PS#2 本A dispatch 確認 / VSCode LP 軸 7 行 landed 確認 / Win版 Codex routing 判断 follow-up / MoneyForward 7/launch 監視
+
+
+---
+
+## 2026-04-20 PS版#6 S17 — live-dead EF 追加削除 13 件 + DEAD_LIST stale 1 件 (累計 24 件)
+
+**Why**: S15+S16 累計 10 件削減に続き、deploy-prod.yml Hub対応表 + hub index.ts の case action 2 重検証で確度の高い 13 件を 1 バッチ削除。
+
+**Actions**:
+- `.github/workflows/deploy-prod.yml` DEAD_LIST 14 entry 削除 (13 live-dead + 1 stale)
+- `supabase/functions/` 13 source dir 削除 (36634705):
+  - core-hub: personal-dashboard, app-analytics-dashboard
+  - growth-hub: growth-command-center, growth-share-signal, growth-achievement-summary, growth-import-preview, growth-import-commit, video-ad-generator, viral-growth-engine, referral-program, generate-daily-challenges
+  - ai-hub: analyze-reality, virtual-organization
+- stale: system-status (source 既削除済だが DEAD_LIST 残存)
+- `memory/project_20260420_ps6_s17.md` 新規
+
+**3 point verification**:
+1. `grep -rn "<ef>" lib/ --include=*.dart | grep invoke/functions` = 0
+2. `grep -c "supabase functions deploy <ef> " deploy-prod.yml` = 0
+3. 対応 hub の `case "<action>":` 存在確認 (例: personal-dashboard → core-hub:personal.dashboard)
+
+**累計 (S15+S16+S17)**: DEAD_LIST 176 → 152 (24 件削減・毎 deploy 24 件の不要 delete call 節約)
+
+**副次発見 (残課題)**:
+- `note-comments`, `pomodoro-timer` は Flutter 側 (lib/pages/*) がまだ旧 EF 名で invoke → notify-feature-request と同類 stale invoke bug。PS#5 handoff 候補 (今回は削除見送り)
+
+**Philosophy**: 6 (時間節約) / 7 (資産=負債削減) ✅
+
+**次回候補**: 残 live-dead 15 件程度 (ab-testing-manager / agent-department-manager / agent-performance-monitor / habit-tracker 系 + app-hub 未確認) / note-comments + pomodoro-timer Flutter 修正 handoff / horse_racing batch cron 健全性監視
