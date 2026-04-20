@@ -16,6 +16,10 @@ Sources:
 - <https://www.notion.com/releases/2026-04-14>
 
 Each AI run consumes a handful to a few dozen credits, so **1,000 credits is roughly 30–100 executions**.
+Two-source triangulation (Notion's own 45–90 runs/1,000 credits + independent estimates of 30–60) lands a conservative **$0.11–$0.33 per agent run**.
+That means "10 agent runs a day on Notion" = **$33–$99 / month**. Jibun Inc. = **$0 (fully free)**.
+And credits **reset monthly — unused ones evaporate**. It's not a fixed cost you can amortize; it's a recurring usage-pressure tax on your attention.
+
 The heavier your personal use was, the sooner you'll enter "credit-balance watch mode" once billing kicks in.
 
 ## Credit-Balance Watching = Time Capital Leak

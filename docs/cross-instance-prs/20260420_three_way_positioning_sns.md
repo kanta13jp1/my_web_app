@@ -233,10 +233,10 @@ Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部�
 
 ### PS#2 dispatch 前チェックリスト (S26 追加)
 
-- [ ] 本A JA 版: 「月 $33-$99」訴求行を 1 行追加
-- [ ] 本A EN 版: 「$0.11-$0.33 per agent run」を数字根拠として追加
-- [ ] X 短文: 「credits 月次リセット = 使わなくても消える」1 文を差し込み可能か確認
-- [ ] Qiita 別角度: BS 原則 (資産負債) に絡めて「credits = 月次消費型負債」と framing 可
+- [x] Notion D-6 本A JA 版: 「月 $33-$99 (5,000-15,000 円) vs $0」訴求行追加 (PS#2 S12 · 2026-04-20 19:40)
+- [x] Notion D-6 本A EN 版: 「$0.11-$0.33 per agent run」数字根拠追加 (PS#2 S12)
+- [x] Notion D-2 + D-0 JA/EN: credits 月次リセット + $33-$99 訴求行追加 (PS#2 S12 · S11 新規 draft の enrichment 兼用)
+- [x] Qiita BS 本B (JA + EN): 「credit 課金 = 月次消費型負債」sidebar 追加 — switching/price/availability/roadmap 4 軸に加えて 5 軸目として non-deferrable/usage-pressure を追加 (PS#2 S12)
 
 ### Backlink 追加 (S26)
 

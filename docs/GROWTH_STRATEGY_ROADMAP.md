@@ -13979,3 +13979,45 @@ Migration timestamp: **190000** 使用 (180000 WBS reassign ai_hub の直後)
 **Philosophy**: 6/9 ✅ (1 表面値下げを構造分析で看破 / 2 round 3 継続 / 5 強制コミット枠ゼロ価値可視化 / 6 6 ソース triangulation / 7 BS 2 段負債 framing / 8 audit 対象 3 競合に拡大)
 
 **次回候補**: PS#2 本A/本B/本C dispatch 確認 (4/23+ + 5/2 + 5/4) / audit round 4 (Nova 2 Lite or Gemini FL) / VSCode LP 単価行 landed / Win版 Codex routing follow-up
+## 2026-04-20 19:45 JST — PS版#2 Session 12 (PS#4 S26 handoff 消化: 数字強化フレーズを 6 draft に一括適用)
+
+### アクション
+
+- PS#4 S26 handoff (`docs/cross-instance-prs/20260420_three_way_positioning_sns.md` 行 219-244 enrichment block) を 6 draft に一括適用:
+  - **Notion D-6 本A (4/28 dispatch)** JA + EN: 「1 回 $0.11-$0.33 / 10 回/日 = 月 $33-$99 vs $0 / credits 月次リセット」訴求行を冒頭 credit 概念説明直下に追加
+  - **Notion D-2 本B (5/2 dispatch, S11 新規)** JA + EN: 既存の credit-cognitive-cost リスト末尾に 「月次リセット」「$33-$99 vs $0」2 弾追加
+  - **Notion D-0 本C (5/4 dispatch, S11 新規)** JA + EN: 冒頭 paywall 日付説明直下に conservative 単価 + 月次リセット 1 段落追加
+  - **3 者棲み分け Qiita 本B (4/26 BS 角度, S10 先行)** JA + EN: 423 plugin ロックイン論の直後に 「credit 課金 = 月次消費型負債」 sidebar を新設 (non-deferrable / usage-pressure / balance-check 労働)
+
+- S26 checklist 4 件全て済化し handoff PR にマーク
+
+### Why 1 session 一括適用
+
+- S26 dispatch は **最早 4/23** (本A 3 者棲み分け) → **残り 3 日** で 6 draft の enrichment 余裕あり
+- 数字強化フレーズは複数 draft で共有されるので **1 session でまとめて適用 = 時間資本保全**
+- conservative 採用 ($0.11-$0.33) は 2 社交差検証済 (S26) で dispatch 後訂正リスク最小
+- BS 本B に sidebar 追加で「credit metered ≠ 定額 subscribe」の会計観点が Qiita 向けに完成
+
+### Philosophy alignment
+
+- 原則 1 (CEO 感): 個人 CEO が credit 課金 vs 無料の BS 判断 ✅
+- 原則 5 (商品=ユーザー価値): 数字で痛みを明示 (月 5,000-15,000 円) ✅
+- 原則 6 (資本=時間): balance-check 年 10 時間の可視化 ✅
+- 原則 7 (資産負債 BS): credit metered = 月次消費型負債の会計分類 新規定義 ✅
+- 原則 8 (KPI=昨日の自分): 数字強化フレーズで BS スナップショット精度 up ✅
+- 整合性: **5/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (Qiita BS 角度 · S12 sidebar 強化済)
+4. **2026-04-28**: Notion 5/4 本A dispatch (D-6 · S12 数字強化済)
+5. **2026-05-02**: Notion 本B dispatch (D-2 · S12 数字強化済)
+6. **2026-05-04**: Notion 本C dispatch (D-0 · S12 数字強化済)
+7. **次 delta 待ち**: PS#4 次 SCOREBOARD 更新か新 cross-instance-pr
+
+### 学び
+
+- **Handoff 消化を先行 draft と同 session に詰め込む** pattern: S11 で pre-write した drafts に S12 で S26 数字を載せる = draft 新規作成・enrichment・handoff マーク 3 段が 1 session で閉じる
+- BS 本B sidebar で「credit metered = 月次消費型負債」という会計分類を新規定義 → 将来の vendor 分析に流用可 (memory candidate)

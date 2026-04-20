@@ -25,6 +25,8 @@ I'll state this flatly: **using AI while watching a credit balance is one of the
 - Judgment fatigue from "run again, or save?"
 - End-of-month loss-aversion stress: "only 100 credits left..."
 - Fear of **silent pauses** — next-month automations stopping quietly
+- **Credits reset monthly — unused ones evaporate.** It's not a fixed cost you amortize; it's a recurring usage-pressure tax. End-of-month "I must burn remaining credits" logic is its own perverse incentive
+- Triangulated pricing (Notion's own figures + independent analyses) = conservative **$0.11–$0.33 per agent run**. 10 runs/day = **$33–$99 / month**. Jibun Inc. = **$0**
 
 This isn't a Notion design flaw. It's the cognitive cost of the **usage-based × personal-use** combination itself.
 Which is why the smart move is: **work credits → Notion, personal AI management → a separate free hub.**

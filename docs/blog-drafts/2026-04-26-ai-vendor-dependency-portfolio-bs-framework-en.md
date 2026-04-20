@@ -52,6 +52,17 @@ Concrete mapping:
 
 "Claude is strong at 423 plugins" is a fact. It does **not** justify single-vendor dependency. If anything, 423 > 20 amplifies the other face: **higher exit cost = tighter lock-in that narrows future options**.
 
+### Sidebar: credit-metered pricing = monthly consumptive liability
+
+On 2026-05-04, Notion Custom Agents switches to **$10 / 1,000 credits** (triangulation lands a conservative **$0.11–$0.33 per agent run**). Credit-based metered pricing has an extra liability characteristic in accounting terms:
+
+- **Monthly reset**: unused credits evaporate → not a deferrable asset (the logic "I prepaid so this month is cheaper" does not apply)
+- **Usage pressure**: end-of-month "I need to burn remaining credits" is a perverse incentive where saving budget and using AI become zero-sum
+- **Personal CEO's time capital**: ~100 seconds/day spent checking credit balance × 365 = ~10 hours/year of "balance-check labor"
+
+Unlike flat-rate subscription, **credit-metered pricing belongs on the BS as "short-term, non-deferrable, usage-pressure liability."**
+By contrast, Jibun Inc. (Supabase + Flutter Web) has **zero credit concept → structurally does not carry this liability**.
+
 ## How Jibun Inc. Implements This
 
 ### ai-hub: Sit On the Side That Doesn't Pick

@@ -11,6 +11,9 @@ published: false
 **2026-05-04 00:00 UTC** (日本時間 09:00) から、Notion Custom Agents (Business/Enterprise add-on) が **$10 / 1000 credit** の従量課金に切り替わる。
 2026-05-03 までの無料試用は本日で終了。
 
+2 社交差検証 (公式 45-90 runs/1000 credits + 独立分析 30-60) で conservative 採用 = 1 回 **$0.11-$0.33 (約 17-50 円)**。
+1 日 10 回なら月 **$33-$99 (5,000-15,000 円)**。しかも credits は **月次リセット = 使わなくても消える**。
+
 Source:
 - <https://www.notion.com/help/custom-agent-pricing>
 - <https://www.notion.com/releases/2026-04-14>

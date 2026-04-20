@@ -10,6 +10,9 @@ published: false
 
 At **2026-05-04 00:00 UTC**, Notion Custom Agents (Business/Enterprise add-on) switches to **$10 / 1,000 credits** (usage-based). The free trial through 2026-05-03 ends today.
 
+Two-source triangulation (Notion's 45–90 runs/1,000 credits + independent estimates at 30–60) lands a conservative **$0.11–$0.33 per agent run**.
+10 runs/day = **$33–$99 / month**. And credits **reset monthly — unused ones evaporate**.
+
 Sources:
 - <https://www.notion.com/help/custom-agent-pricing>
 - <https://www.notion.com/releases/2026-04-14>

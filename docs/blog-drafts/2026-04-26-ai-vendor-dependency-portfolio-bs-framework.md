@@ -54,6 +54,17 @@ published: false
 
 「Claude が 423 plugin で強い」は事実だが、**単一 vendor 依存という負債を正当化する理由にならない**。むしろ plugin 数 423 > 20 だからこそ「離脱コストが高い」= 将来の選択肢を縛るロックインという裏面が強まる。
 
+### 補論: credit 課金 = 月次消費型負債
+
+5/4 から Notion Custom Agents が **$10/1000 credit** の従量課金に切り替わる (2 社交差検証で 1 回 $0.11-$0.33)。credit ベースの metered pricing には会計上もう 1 つの負債特性がある:
+
+- **月次リセット**: 使わなくても消える → 繰延資産にならない (「前払いしたから今月はお得」が成立しない)
+- **usage pressure**: 月末に「残り credits 消費のために無理に使う」倒錯が発生 → 予算節約と AI 活用がゼロサムに
+- **個人 CEO の時間資本**: credit 残高を気にする 1 日 100 秒 × 365 日 = 年 10 時間 の「残高チェック労働」
+
+定額 subscribe と違い、**credit metered pricing は BS 上「短期・非繰延・usage-pressure 型負債」** として分類するのが正確。
+対比で自分株式会社 (Supabase + Flutter Web) は **credit 概念ゼロ = この負債を原理的に負わない**。
+
 ## 自分株式会社の実装パターン
 
 ### ai-hub で vendor を選ばない側に回る
