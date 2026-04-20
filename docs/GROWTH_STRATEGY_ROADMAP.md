@@ -14951,4 +14951,46 @@ commit: `<pending>` — build verification は dart format deadlock で skip (CI
 
 整合性 **6/9** ✅ (S22 fix の systemic complement)
 
+### PS版#2 Session 18 (2026-04-21 07:00 JST) — idle day audit + stock 5 draft tag-cap pre-check
+
+**コンテキスト**: 今日 (2026-04-21) は T-1 dispatch window 外 (最早 4/23)。stock 5 draft 監査のみ実施。
+
+**アクション (dispatch なし)**:
+- Orphan `blog-publish/*` branches scan: **0 件** (既定期衛生 OK)
+- Unpublished EN drafts: **5 本** stock 確認
+  - `2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning-en.md`
+  - `2026-04-26-ai-vendor-dependency-portfolio-bs-framework-en.md`
+  - `2026-04-28-notion-custom-agents-paywall-vs-free-6-departments-en.md`
+  - `2026-05-02-notion-paywall-d2-parallel-6-departments-en.md`
+  - `2026-05-04-notion-paywall-d0-alternative-6-departments-en.md`
+- dev.to 4-tag cap pre-audit (skill `t1-blog-dispatch` Step 2.1):
+  - 全 5 drafts ともに 5 tags = 5 番目 `webdev` silent drop が発生するが **価値順 (specific > category > industry > movement > generic) で既最適化済** (S14 修正継承)
+  - Notion 系 3 drafts: `Notion,AI,SaaS,buildinpublic,webdev` → SaaS 保持・webdev drop = 許容
+  - Claude/Codex 2 drafts: `AI,Claude,OpenAI,buildinpublic,webdev` → webdev drop = 許容
+- Qiita probe earliest: **2026-04-23T07:53Z** (依然 2 日待機)
+
+**S17 handoff の結果確認**:
+| Option | 担当 | 状態 | 証拠 |
+|---|---|---|---|
+| A: SessionStart auto-curl | Win版 | WIP | `20260420_wbs_enforcement_option_a_win.md` handoff 済 |
+| B: wrap-up blocking | PS#1 | **完了** | `09f285f4` (PS#1 S23 独立実装 — 自handoff と並行) |
+| C: daily cron audit | PS#1 | **完了** | `wbs-staleness-audit.yml` 稼働中 |
+
+→ 自分の Option B handoff は PS#1 が独立実装と並行して landed。A 残 1 件のみ。
+
+**次回 PS#2 候補 (優先度順)**:
+1. **2026-04-23T07:53Z+**: qiita-retry 1 本目 probe (skill `qiita-retry`)
+2. **2026-04-23〜24**: 3-way 本A JA+EN dev.to dispatch (語彙整理完了済・即可)
+3. **2026-04-26**: BS framework 本B dispatch (2 段ロケット framing 完成済)
+4. **2026-04-28**: Notion paywall 本A dispatch (D-6)
+5. **2026-05-02**: Notion paywall 本B dispatch (D-2)
+6. **2026-05-04**: Notion paywall 本C dispatch (D-0) + X 短文起草
+
+### Philosophy 9 原則 (S18 適用)
+- 原則 6 (資本=時間): idle day の過度着手回避 = [NO-SCOPE-CREEP] 遵守 ✅
+- 原則 7 (BS): stock 5 本 pre-audit = dispatch 日の燃費負債予防 ✅
+- 原則 8 (KPI=昨日の自分): Orphan 0 維持 + handoff 結果 tracking ✅
+
+3/9 ✅ (idle day ゆえ低採点だが [NO-SCOPE-CREEP] 優先)
+
 ---
