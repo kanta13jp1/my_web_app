@@ -6170,13 +6170,13 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       height: 1.4,
     ),
     h2: const TextStyle(
-      color: Color(0xFFB0B0B0),
+      color: Color(0xFFE5E7EB),
       fontSize: 17,
       fontWeight: FontWeight.bold,
       height: 1.4,
     ),
     h3: const TextStyle(
-      color: Color(0xFF707070),
+      color: Color(0xFFD4D4D4),
       fontSize: 15,
       fontWeight: FontWeight.w600,
       height: 1.4,
