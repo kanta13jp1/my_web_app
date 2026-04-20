@@ -12689,3 +12689,24 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
 - **副作用**: push 同 ref の 2 本目が queue 待機 (cancel-in-progress: false の deploy-prod と挙動整合・許容可)
 - **cross-instance-pr**: `done/20260420_ps6_ci_concurrency_cascade.md` に移動 (実装完了)
 - Philosophy alignment: 原則 7 (資産 — cascade cancel 負債除去) / 原則 6 (資本=時間 — deploy 再試行待ち削減) / 原則 8 (KPI=昨日の自分 — cancel 率測定可)
+---
+
+## PS版#4 Session 19 (2026-04-20 夕方) — Notion Custom Agents 5/4 課金 D-14 弾起票 (S17 next候補 #1 early follow-up)
+
+- **コミット**: (本セッション末で push)
+- **目的**: S17 next候補 #1「5/4 Notion 課金 D-2 弾」を D-14 タイミングで early 起票 → PS#2 + VSCode に handoff し、Qiita rolling 制限を考慮した 3 本構成 (D-6 / D-2 / D-0) 化
+- **新規 PR**: `docs/cross-instance-prs/20260504_notion_paywall_d14.md`
+  - **PS#2 宛 SNS 3 本** (T-1 dispatch):
+    - 本A (D-6 = 2026-04-28): 「Notion Custom Agents 5/4 から $10/1000 credit 課金 — 無料で 6 部署を全部回す方法」
+    - 本B (D-2 = 2026-05-02): 「Notion 課金まであと 2 日 — 切替前に個人 AI 管理を無料 6 部署に分散」
+    - 本C (D-0 = 2026-05-04): 「Notion Custom Agents 本日課金開始 — 無料で人生 6 部署を回すオルタナティブ」
+  - **VSCode 宛 LP 補記**: landing_page.dart Notion 行に「※ Custom Agents は 2026-05-04 から $10/1000 credit」脚注 + 自分株式会社行「無料 6 部署統合 (課金不要で KPI=昨日の自分を継続観察)」強調 (既存 `20260421_notion_ai_lp_update.md` PR と統合可)
+- **対比軸 4 つ**: 価格 ($10/1000 credit vs 無料) / スコープ (仕事業務 vs 6 部署含む人事・健康) / 日本語 UX (英語+翻訳 vs ネイティブ) / データ永続化 (クラウド有料依存 vs Supabase 永続)
+- **棄却条件 3 点を PR 内に明記**: 無料期間延長 / 個人課金拡大 / Qiita 429
+- **Why D-14 early**: dispatch window 2 週間確保 → PS#2/VSCode の準備時間 + Qiita 72h 以上の間隔設計 + Notion 側の直前変更検知の猶予
+- **次回 PS#4 候補 (S20+)**:
+  1. 🟡 PS#2 本A dispatch フォロー (4/28 接近時)
+  2. 🟡 Win版 AgentExchange PR (S18) 判断 follow-up
+  3. 🟢 Notion 動向監視 (無料延長 / 個人課金拡大 検知)
+  4. 🟢 5/19-20 Google I/O 監視
+- Philosophy alignment: 原則 5 (商品=価値 — 予測可能な無料) / 原則 6 (資本=時間 — credit 残高ウォッチ撲滅) / 原則 8 (KPI=昨日の自分 — 課金不安で中断しない) / 原則 2 (ミッション駆動 — D-14 early 起票)
