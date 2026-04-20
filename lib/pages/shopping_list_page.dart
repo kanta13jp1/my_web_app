@@ -108,7 +108,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
   Color _priorityColor(String p) {
     switch (p) {
       case 'urgent':
-        return Colors.red;
+        return const Color(0xFFE53935);
       case 'high':
         return const Color(0xFFFF6B35);
       case 'low':
@@ -329,7 +329,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -376,14 +377,15 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             content: Text(
               isRecurring ? '✅ 購入済み ($recurDays日後にリマインド)' : '✅ 購入済み',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF4CAF50),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -400,7 +402,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -605,10 +608,10 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Colors.red.shade100,
+          color: const Color(0xFFFFCDD2),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete, color: Colors.red),
+        child: const Icon(Icons.delete, color: Color(0xFFE53935)),
       ),
       confirmDismiss: (_) async {
         _deleteItem(item);

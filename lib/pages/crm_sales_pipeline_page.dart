@@ -44,8 +44,8 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
     'qualified': Color(0xFF3D5AFE),
     'proposal': Color(0xFFFF6B35),
     'negotiation': Color(0xFF3D5AFE),
-    'closed_won': Colors.green,
-    'closed_lost': Colors.red,
+    'closed_won': Color(0xFF4CAF50),
+    'closed_lost': Color(0xFFE53935),
   };
 
   static const _sourceLabels = {
@@ -273,7 +273,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                       Text(
                         _error!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -607,7 +607,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '受注数',
                   '$won件',
                   Icons.check_circle,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
               ),
             ],
@@ -620,7 +620,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                   '勝率',
                   '$winRate%',
                   Icons.trending_up,
-                  winRate >= 50 ? Colors.green : const Color(0xFFFF6B35),
+                  winRate >= 50 ? const Color(0xFF4CAF50) : const Color(0xFFFF6B35),
                 ),
               ),
               const SizedBox(width: 12),
@@ -655,7 +655,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                     '受注',
                     wonValue,
                     wonValue + lostValue + openValue,
-                    Colors.green,
+                    const Color(0xFF4CAF50),
                   ),
                   const SizedBox(height: 8),
                   _valueBar(
@@ -669,7 +669,7 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
                     '失注',
                     lostValue,
                     wonValue + lostValue + openValue,
-                    Colors.red,
+                    const Color(0xFFE53935),
                   ),
                 ],
               ),
@@ -752,9 +752,9 @@ class _CrmSalesPipelinePageState extends State<CrmSalesPipelinePage>
   }
 
   Color _scoreColor(int score) {
-    if (score >= 75) return Colors.green;
+    if (score >= 75) return const Color(0xFF4CAF50);
     if (score >= 50) return const Color(0xFFFF6B35);
-    return Colors.red;
+    return const Color(0xFFE53935);
   }
 
   String _formatYen(int value) {

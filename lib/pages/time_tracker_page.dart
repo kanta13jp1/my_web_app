@@ -244,7 +244,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -366,9 +366,9 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: type == 'clock_in'
-                              ? Colors.green.shade100
+                              ? const Color(0xFFC8E6C9)
                               : type == 'clock_out'
-                                  ? Colors.red.shade100
+                                  ? const Color(0xFFFFCDD2)
                                   : const Color(0xFF0EA5E9)
                                       .withValues(alpha: 0.15),
                           child: Icon(
@@ -378,9 +378,9 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                                     ? Icons.logout
                                     : Icons.schedule,
                             color: type == 'clock_in'
-                                ? Colors.green
+                                ? const Color(0xFF4CAF50)
                                 : type == 'clock_out'
-                                    ? Colors.red
+                                    ? const Color(0xFFE53935)
                                     : const Color(0xFF0EA5E9),
                             size: 20,
                           ),
@@ -545,7 +545,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                   icon: const Icon(Icons.login),
                   label: const Text('出勤'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color(0xFF4CAF50),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -558,7 +558,7 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
                   icon: const Icon(Icons.logout),
                   label: const Text('退勤'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: const Color(0xFFE53935),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

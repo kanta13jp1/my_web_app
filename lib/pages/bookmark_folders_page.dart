@@ -119,7 +119,8 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -150,7 +151,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -168,7 +169,8 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -220,7 +222,7 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: progress >= 1.0
-                          ? [Colors.green.shade600, Colors.green.shade400]
+                          ? [const Color(0xFF43A047), const Color(0xFF66BB6A)]
                           : [const Color(0xFF1DA1F2), const Color(0xFF4285F4)],
                     ),
                     borderRadius: BorderRadius.circular(14),
@@ -309,14 +311,14 @@ class _BookmarkFoldersPageState extends State<BookmarkFoldersPage> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isOrganized
-              ? Colors.green.shade200
+              ? const Color(0xFFA5D6A7)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
       child: ListTile(
         leading: Icon(
           isOrganized ? Icons.check_circle : _platformIcon(platform),
-          color: isOrganized ? Colors.green : _platformColor(platform),
+          color: isOrganized ? const Color(0xFF4CAF50) : _platformColor(platform),
         ),
         title: Text(
           name,

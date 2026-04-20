@@ -229,10 +229,10 @@ class _SharePhilosopherQuoteDialogState
                             style: _showPreview
                                 ? OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                      color: Colors.green,
+                                      color: Color(0xFF4CAF50),
                                       width: 2,
                                     ),
-                                    foregroundColor: Colors.green,
+                                    foregroundColor: const Color(0xFF4CAF50),
                                   )
                                 : null,
                             onPressed: _handlePreview,
@@ -480,7 +480,7 @@ class _SharePhilosopherQuoteDialogState
         const SnackBar(
           content: Text('✓ プレビュー準備完了！「ダウンロード」ボタンをクリックしてください'),
           duration: Duration(seconds: 2),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF4CAF50),
         ),
       );
     }
@@ -533,7 +533,7 @@ class _SharePhilosopherQuoteDialogState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('エラー: $e\nもう一度「プレビューを表示」ボタンを押してから再度お試しください。'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -590,7 +590,7 @@ class _SharePhilosopherQuoteDialogState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('エラー: $e\nもう一度「プレビューを表示」ボタンを押してから再度お試しください。'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
           duration: const Duration(seconds: 4),
         ),
       );
@@ -649,7 +649,7 @@ class _SharePhilosopherQuoteDialogState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -677,7 +677,7 @@ class _SharePhilosopherQuoteDialogState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -708,7 +708,7 @@ class _SharePhilosopherQuoteDialogState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
             duration: const Duration(seconds: 3),
           ),
         );

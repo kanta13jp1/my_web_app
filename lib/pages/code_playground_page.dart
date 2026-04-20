@@ -172,7 +172,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('スニペット保存完了'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF4CAF50),
             ),
           );
         }
@@ -180,7 +180,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -316,7 +317,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
@@ -399,7 +400,8 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   if (isPublic)
                     const Tooltip(
                       message: '公開',
-                      child: Icon(Icons.public, size: 16, color: Colors.green),
+                      child: Icon(Icons.public,
+                          size: 16, color: Color(0xFF4CAF50),),
                     ),
                   const Icon(Icons.expand_more),
                 ],
@@ -414,7 +416,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                     style: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 12,
-                      color: Colors.green,
+                      color: Color(0xFF4CAF50),
                       height: 1.5,
                     ),
                   ),
@@ -464,11 +466,11 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
     final Map<String, Color> langColors = {
       'javascript': const Color(0xFFFFA000),
       'typescript': const Color(0xFF3D5AFE),
-      'python': Colors.green,
+      'python': const Color(0xFF4CAF50),
       'dart': const Color(0xFF3D5AFE),
       'rust': const Color(0xFFFF6B35),
       'go': const Color(0xFF00BCD4),
-      'java': Colors.red,
+      'java': const Color(0xFFE53935),
       'sql': const Color(0xFF3D5AFE),
       'html': const Color(0xFFFF6B35),
       'css': const Color(0xFF3D5AFE),
@@ -618,7 +620,7 @@ class _CodePlaygroundPageState extends State<CodePlaygroundPage>
                   '公開スニペット',
                   '$publicCount件',
                   Icons.public,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
               ),
             ],
