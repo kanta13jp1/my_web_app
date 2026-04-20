@@ -13053,3 +13053,50 @@ provider key 衝突検知を Step 0 の 10 番目として追加すべし。
 **Philosophy**: 3/9 ✅ (原則 1 CEO 感 / 原則 6 資本=時間 / 原則 8 KPI=昨日の自分)
 
 **次回候補**: Win版 Codex routing 判断 follow-up / MCP 直接 vs AgentExchange 判断 follow-up / PS#2 本A dispatch (4/28 接近) / SNS 弾 3 者棲み分け素材化 / MoneyForward 7/launch 監視
+
+## Session PS#6-S16 (2026-04-20 18:00 JST) — live-dead EF 追加 5 件 + notify-feature-request bug
+
+### サマリ
+
+S15 に続く第 2 バッチ。deploy-prod.yml:356-373 の Hub対応表コメント
+を source of truth として安全削除候補を特定。副次発見で Flutter 側の
+stale invoke bug を検出し PS#5 に handoff。
+
+### 対応
+
+削除 5 件 (commit 5f51eff4):
+
+| EF | 移行先 Hub |
+| --- | --- |
+| daily-judgment | ai-hub |
+| development-achievements | core-hub |
+| ai-university-content | ai-hub |
+| ai-university-streaks | ai-hub |
+| ai-university-badges | ai-hub |
+
+DEAD_LIST: 171 → 166 (S15+S16 累計 10 件削減 / live-dead 29 残)。
+
+### 🚨 副次発見: notify-feature-request Flutter stale invoke
+
+`lib/pages/admin/feedback_list_page.dart:79,84` が migrate 済 EF を
+まだ直接 invoke している。admin が feedback を「対応完了」に変えるたび
+404 で通知メール漏れしている可能性。
+
+PS#5 (on-call) 宛 cross-instance-pr:
+`docs/cross-instance-prs/20260420_ps5_notify_feature_request_stale_invoke.md`
+
+source dir `notify-feature-request/index.ts` は PS#5 の修正参照用に
+残置 (core-hub 側 action 名確定まで)。
+
+### Philosophy alignment
+
+- 原則 7 (資産=EF cap-50 遵守・冗長負債削減)
+- 原則 6 (資本=時間・不要 delete 10 件/deploy 省略)
+- 原則 5 (商品=ユーザー価値・通知 404 bug 発見 → 修正経路確保)
+- 原則 4 (部署バランス・Flutter 修正は PS#5 に委任)
+
+### 次回 PS#6 候補
+
+1. 🟡 PS#5 の generate-daily-challenges migration (S21) に追従 — source 削除
+2. 🟡 残 live-dead 29 件の次バッチ (core-hub/growth-hub 領域 10-15 件処理可)
+3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
