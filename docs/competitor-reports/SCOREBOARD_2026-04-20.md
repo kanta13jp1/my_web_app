@@ -32,9 +32,9 @@
 | 8 | **claude-code** | 開発ツール | Opus 4.7 リリース (hours-long project) | 🟢 | Flutter Web 個人向けは別軸 | ai-hub synthesis 候補 (Win検討中) |
 | 9 | **codex (OpenAI)** | 開発ツール | GPT-5 2026Q2 予測 | 🟢 | コーディングツール vs 人生フレームワーク | 定常 watchlist |
 | 10 | **netkeiba** | 競馬 | **UMAI予想ビルダー** (ユーザー独自モデル) | 🔴 | PS版#6 horse_racing 戦略再考必要 | S9 で戦略 pivot 示唆 → PS版#6 |
-| 11 | **openclaw** | ? (未解明) | — | ⚪ | — | 次回 S12 実体調査候補 |
-| 12 | **claude-cowork** | ? (社内呼称?) | — | ⚪ | — | 次回 S12 実体調査候補 |
-| 13 | **jobcan** | 勤怠 | 新規 AI 発表なし (S10) | ⚪ | 個人向け勤怠 (カフェ勉時間計測等) | 定常 watchlist |
+| 11 | **openclaw** | OSS AI agent | 335K★ / 26M MAU / Peter Steinberger→OpenAI / NVIDIA NemoClaw 企業 wrapper (S13) | 🟠 | 日本語 + Flutter Web 即起動 vs CLI/chat bot | 定常 watchlist + OSS 連携余地 |
+| 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork GA 2026-04-09 (Pro/Max/Team/Enterprise) / macOS+Win / Drive/Gmail/Sheets/DocuSign 統合 (S13)** | 🔴🔴 | **データ永続化 Supabase vs VM 揮発 / 人生統合 vs 仕事のみ** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
+| 13 | **jobcan** | 勤怠 | DONUTS: AI 自動仕訳 2026-04-13 追加 / 25万社・300万ID (S13) | 🟡 | 個人向け勤怠 (カフェ勉時間計測) | 定常 watchlist |
 | 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M 1M context) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
 | 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
 | 16 | **microsoft** | OS/AI | Azure Foundry 3 マルチモーダル AI (S8) | 🟠 | Flutter Web 軽量 vs 重量企業向け | 定常 watchlist |
@@ -44,13 +44,14 @@
 | 20 | **liven** | 栄養/健康 | 実体不明 / 競合=あすけん 1000万会員・カロミル 600万+ (S12) | 🟢 | 専用アプリ NG / 6部署 1 action 化 | lifestyle-hub nutrition action → Win |
 | 21 | **github** | コード管理 | Copilot 進化 (codex 経由ai-hub 統合済) | 🟢 | 開発ツール vs 人生ツール | 定常 watchlist |
 
-**空白 (⚪) 残数**: 3社 — openclaw / claude-cowork / jobcan
-→ S12 (2026-04-20 深夜) で chatwork/animaworks/discord/liven 4 社を再分類済
-→ 次回 (S13) は残 3 社の実体調査に集中 (openclaw/claude-cowork は ブランド同定から)
+**空白 (⚪) 残数**: **0社** — 21社すべて分類完了 🎉
+→ S12: chatwork/animaworks/discord/liven 4 社再分類
+→ S13 (2026-04-20 深夜): openclaw🟠 / **claude-cowork 🔴🔴 (Anthropic 公式 Cowork GA 直接戦略脅威)** / jobcan🟡
+→ 次回 (S14) は Google I/O 2026 (5/19-20) keynote 監視に集中
 
 ---
 
-## Pending cross-instance-pr 一覧 (9件)
+## Pending cross-instance-pr 一覧 (11件)
 
 | # | ファイル | 優先度 | 宛先 | 期限 | 背景セクション |
 |---|---------|-------|------|------|---------------|
@@ -63,8 +64,10 @@
 | 7 | `20260420_slack_agentforce_threat.md` | 🔴 | VSCode版 | 2026-05-01 | LP Slack 比較行 |
 | 8 | `20260420_google_io_2026_preparation.md` | 🟡 | Win+VSCode | 2026-05-18 | I/O 先回り |
 | 9 | `20260421_notion_ai_lp_update.md` | 🟡 | VSCode版 | 2026-05-31 | Notion AI |
+| 10 | `20260420_lifestyle_nutrition_action.md` | 🟢 | Win版 | 2026-06-30 | lifestyle-hub nutrition action (S12) |
+| 11 | **`20260420_claude_cowork_threat.md`** | **🔴🔴** | **VSCode+Win** | **2026-05-01** | **Anthropic 公式 Cowork GA 直接脅威 (S13)** |
 
-**🔴 期限 2026-06-01 以前必須**: #2 (MoneyForward) / #4 (Gemini 廃止) / #7 (Slack LP)
+**🔴 期限 2026-06-01 以前必須**: #2 (MoneyForward) / #4 (Gemini 廃止) / #7 (Slack LP) / **#11 (Claude Cowork・最優先)**
 
 ---
 
@@ -86,16 +89,19 @@
 
 ## 戦略的結論
 
-2026-04 時点で自分株式会社の競争優位は以下 4 軸に集約される (Slack Agentforce の Claude + MCP 採用で技術は commodity 化):
+2026-04 時点で自分株式会社の競争優位は以下 **6 軸** に拡張された (S13 で Claude Cowork = Anthropic 直接参入・同技術スタック検出 → 差別化軸 2 本追加):
 
 1. **対象**: 個人 CEO (組織・企業向け SaaS との住み分け)
-2. **範囲**: 人生 6 部署統合 (仕事だけの競合に対して)
+2. **範囲**: **人生 6 部署統合** (仕事だけの知識労働者 AI に対して ← Claude Cowork)
 3. **言語**: 日本語 first (英語中心競合に対して)
-4. **価格**: 無料 (seat課金型競合に対して)
+4. **価格**: 無料 (seat 課金 Claude Cowork Team $100/月 等に対して)
+5. **データ永続化** (S13 追加): **Supabase 永続** vs Claude Cowork VM セッション揮発 — 「昨日の自分」比較 (原則 8) はデータ永続が前提
+6. **人生統合** (S13 追加): 6 部署 (R&D / 財務 / マーケ営業 / 人事 / 本社 / 健康) vs 仕事のみ — Claude Cowork は knowledge-work 限定 (CEO 感・ミッション駆動と直結)
 
-→ LP コピーの統一メッセージをこの 4 軸に集約すべき (VSCode版 タスク)。
+→ LP コピーは **6 軸** に集約 (VSCode版タスク)。特に Claude Cowork Pro ユーザー (月 $20 で 2026-04-09 以降契約した層) が **「仕事だけ」→「人生全体」への転換需要** の最有力マーケット。
 
 ---
 
 *生成: PS版#4 S11 スコアボード | 2026-04-20 深夜*
 *更新: PS版#4 S12 空白 4 社埋め (chatwork 🟠 / animaworks 🟢 / discord 🟠 / liven 🟢) | 2026-04-20 深夜*
+*更新: PS版#4 S13 空白 3 社埋め (openclaw 🟠 / **claude-cowork 🔴🔴** / jobcan 🟡) + 差別化軸 4→6 拡張 | 2026-04-20 深夜*
