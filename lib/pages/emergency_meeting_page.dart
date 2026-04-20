@@ -1626,7 +1626,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case MeetingFocus.continuation:
         return const Color(0xFF3D5AFE);
       case MeetingFocus.abstinence:
-        return Colors.redAccent;
+        return const Color(0xFFE53935);
     }
   }
 
@@ -2739,7 +2739,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                       const Icon(
                         Icons.emergency_share,
                         size: 80,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 24),
                       const Text(
@@ -2866,7 +2866,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                           child: Text(
                             _errorMessage!,
                             style: const TextStyle(
-                              color: Colors.red,
+                              color: Color(0xFFE53935),
                               fontWeight: FontWeight.bold,
                               height: 1.5,
                             ),
@@ -2890,7 +2890,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.redAccent,
+                            backgroundColor: const Color(0xFFE53935),
                             foregroundColor: Colors.white,
                             elevation: 4,
                             disabledBackgroundColor: const Color(0xFF9CA3AF),
@@ -2908,7 +2908,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const CircularProgressIndicator(color: Colors.red),
+                    const CircularProgressIndicator(color: Color(0xFFE53935)),
                     const SizedBox(height: 24),
                     Text(
                       _loadingStatus,
@@ -3237,20 +3237,20 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
           colors: [Color(0x33FF5252), Color(0x229C27B0)],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.8)),
+        border: Border.all(color: const Color(0xFFE53935).withValues(alpha: 0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.gpp_bad, color: Colors.redAccent, size: 18),
+              Icon(Icons.gpp_bad, color: Color(0xFFE53935), size: 18),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'ドーパミン災害モード',
                   style: TextStyle(
-                    color: Colors.redAccent,
+                    color: Color(0xFFE53935),
                     fontWeight: FontWeight.bold,
                     height: 1.5,
                   ),
@@ -3290,7 +3290,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
                   icon: const Icon(Icons.lock),
                   label: const Text('衝動遮断を強制ON'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
+                    backgroundColor: const Color(0xFFE53935),
                     foregroundColor: Colors.white,
                   ),
                 ),
@@ -3746,10 +3746,10 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.16),
+                color: const Color(0xFFE53935).withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Colors.redAccent.withValues(alpha: 0.8),
+                  color: const Color(0xFFE53935).withValues(alpha: 0.8),
                 ),
               ),
               child: Text(
@@ -4165,7 +4165,7 @@ class _EmergencyMeetingPageState extends State<EmergencyMeetingPage> {
       case 'CSO':
         return const Color(0xFFEF6C00);
       case 'CFO':
-        return Colors.green[700]!;
+        return const Color(0xFF388E3C);
       case 'CKO':
         return const Color(0xFF3D5AFE);
       case 'CMO':

@@ -389,7 +389,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -504,7 +504,8 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                           onPressed: _showAddCardDialog,
                         ),
                       IconButton(
-                        icon: const Icon(Icons.play_arrow, color: Colors.green),
+                        icon: const Icon(Icons.play_arrow,
+                            color: Color(0xFF4CAF50),),
                         tooltip: 'レビュー開始',
                         onPressed: () async {
                           setState(() => _selectedDeck = deck);
@@ -597,7 +598,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
             const Icon(
               Icons.check_circle_outline,
               size: 64,
-              color: Colors.green,
+              color: Color(0xFF4CAF50),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -672,7 +673,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: _showAnswer
-                          ? [Colors.green.shade50, Colors.green.shade100]
+                          ? [const Color(0xFFE8F5E9), const Color(0xFFC8E6C9)]
                           : [const Color(0xFFFFF3E0), const Color(0xFFFFF3E0)],
                     ),
                   ),
@@ -721,7 +722,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                            color: Color(0xFF4CAF50),
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -761,16 +762,16 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                     padding: const EdgeInsets.only(right: 8),
                     child: OutlinedButton.icon(
                       onPressed: () => _reviewCard(false),
-                      icon: const Icon(Icons.close, color: Colors.red),
+                      icon: const Icon(Icons.close, color: Color(0xFFE53935)),
                       label: const Text(
                         'もう一度',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
+                        side: const BorderSide(color: Color(0xFFE53935)),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
@@ -784,7 +785,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                       icon: const Icon(Icons.check),
                       label: const Text('覚えた！'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: const Color(0xFF4CAF50),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -889,7 +890,7 @@ class _LanguageLearningPageState extends State<LanguageLearningPage>
                 '総レビュー',
                 '$totalReviews',
                 Icons.history,
-                Colors.green,
+                const Color(0xFF4CAF50),
               ),
               _buildStatCard(
                 '正解率',

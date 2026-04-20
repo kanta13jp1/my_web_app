@@ -112,11 +112,11 @@ class _HealthCoachPageState extends State<HealthCoachPage>
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.red.shade50,
+              color: const Color(0xFFFFEBEE),
               child: Text(
                 _errorMessage!,
-                style: TextStyle(
-                  color: Colors.red.shade700,
+                style: const TextStyle(
+                  color: Color(0xFFC62828),
                   fontSize: 13,
                   height: 1.5,
                 ),
@@ -152,7 +152,7 @@ class _SummaryTab extends StatelessWidget {
         '今日の歩数',
         data!['steps']?.toString() ?? '—',
         Icons.directions_walk,
-        Colors.green
+        const Color(0xFF4CAF50)
       ),
       (
         '消費カロリー',
@@ -241,7 +241,7 @@ class _SummaryTab extends StatelessWidget {
                       value:
                           (data!['goal_progress'] as num?)?.toDouble() ?? 0.0,
                       backgroundColor: const Color(0xFFEEEEEE),
-                      color: Colors.green,
+                      color: const Color(0xFF4CAF50),
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -318,25 +318,25 @@ class _AdviceTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Card(
-          color: Colors.green.shade50,
+          color: const Color(0xFFE8F5E9),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(
                       Icons.psychology,
-                      color: Colors.green.shade700,
+                      color: Color(0xFF388E3C),
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Text(
                       'AIヘルスアドバイス',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.green.shade700,
+                        color: Color(0xFF388E3C),
                         height: 1.5,
                       ),
                     ),
@@ -370,7 +370,7 @@ class _AdviceTab extends StatelessWidget {
         const SizedBox(height: 8),
         const _HealthTipCard(
           icon: Icons.eco,
-          color: Colors.green,
+          color: Color(0xFF4CAF50),
           title: '食事のヒント',
           body: '野菜・タンパク質・炭水化物のバランスを意識し、'
               '1日1.5〜2Lの水分補給を心がけましょう。',

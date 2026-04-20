@@ -385,13 +385,13 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -522,7 +522,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
               ],
             ),
             trailing: isSelected
-                ? const Icon(Icons.check_circle, color: Colors.green)
+                ? const Icon(Icons.check_circle, color: Color(0xFF4CAF50))
                 : const Icon(Icons.chevron_right),
             onTap: () {
               _tabController.animateTo(1);
@@ -655,12 +655,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      color: isPast ? Colors.red.shade50 : const Color(0xFFFFF8E1),
+      color: isPast ? const Color(0xFFFFEBEE) : const Color(0xFFFFF8E1),
       child: ListTile(
         dense: true,
         leading: Icon(
           Icons.flag,
-          color: isPast ? Colors.red : const Color(0xFFFFA000),
+          color: isPast ? const Color(0xFFE53935) : const Color(0xFFFFA000),
         ),
         title: Text(
           name,
@@ -675,12 +675,12 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
                   _formatDate(dueDate),
                   style: TextStyle(
                     fontSize: 12,
-                    color: isPast ? Colors.red : const Color(0xFFFF8F00),
+                    color: isPast ? const Color(0xFFE53935) : const Color(0xFFFF8F00),
                     height: 1.5,
                   ),
                 ),
                 backgroundColor:
-                    isPast ? Colors.red.shade100 : const Color(0xFFFFECB3),
+                    isPast ? const Color(0xFFFFCDD2) : const Color(0xFFFFECB3),
               )
             : null,
       ),
@@ -697,11 +697,11 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
     Color statusColor;
     switch (status) {
       case 'done':
-        statusColor = Colors.green;
+        statusColor = const Color(0xFF4CAF50);
       case 'in_progress':
         statusColor = const Color(0xFF3D5AFE);
       case 'blocked':
-        statusColor = Colors.red;
+        statusColor = const Color(0xFFE53935);
       default:
         statusColor = const Color(0xFF9CA3AF);
     }
@@ -916,7 +916,7 @@ class _GanttTimelinePageState extends State<GanttTimelinePage>
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: rank == 1
-                      ? Colors.red
+                      ? const Color(0xFFE53935)
                       : rank <= 3
                           ? const Color(0xFFFF6B35)
                           : const Color(0xFF607D8B),

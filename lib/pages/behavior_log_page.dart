@@ -183,7 +183,8 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -218,17 +219,18 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI分析エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('AI分析エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
   }
 
   Color _regretColor(int level) {
-    if (level == 0) return Colors.green;
+    if (level == 0) return const Color(0xFF4CAF50);
     if (level <= 2) return const Color(0xFFFF6B35);
-    if (level <= 4) return Colors.red.shade700;
-    return Colors.red.shade900;
+    if (level <= 4) return const Color(0xFFC62828);
+    return const Color(0xFFB71C1C);
   }
 
   @override
@@ -299,8 +301,8 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
                             '要反省',
                             '$highRegret件',
                             color: highRegret > 0
-                                ? Colors.red.shade300
-                                : Colors.green.shade300,
+                                ? const Color(0xFFE57373)
+                                : const Color(0xFF81C784),
                           ),
                         ],
                       ),
@@ -384,7 +386,7 @@ class _BehaviorLogPageState extends State<BehaviorLogPage> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: regret >= 3
-              ? Colors.red.shade200
+              ? const Color(0xFFEF9A9A)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),

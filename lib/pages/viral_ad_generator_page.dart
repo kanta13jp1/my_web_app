@@ -157,7 +157,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(tweetUrl != null ? '✅ X投稿成功! $tweetUrl' : '✅ 投稿完了'),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF4CAF50),
             duration: const Duration(seconds: 5),
           ),
         );
@@ -174,7 +174,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('投稿エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -246,7 +246,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('招待コード生成エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -375,7 +375,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
             Text(
               _errorMessage!,
               style: const TextStyle(
-                color: Colors.red,
+                color: Color(0xFFE53935),
                 height: 1.5,
               ),
             ),
@@ -485,7 +485,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: hasImage
-                        ? Colors.green.withAlpha(30)
+                        ? const Color(0xFF4CAF50).withAlpha(30)
                         : const Color(0xFFFF6B35).withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -493,7 +493,9 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
                     hasImage ? '🖼️ 画像付き' : '📝 テキストのみ',
                     style: TextStyle(
                       fontSize: 11,
-                      color: hasImage ? Colors.green : const Color(0xFFFF6B35),
+                      color: hasImage
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFFF6B35),
                       fontWeight: FontWeight.bold,
                       height: 1.5,
                     ),
@@ -852,12 +854,13 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: status == 'posted'
-                  ? Colors.green.withAlpha(30)
+                  ? const Color(0xFF4CAF50).withAlpha(30)
                   : const Color(0xFF6366F1).withAlpha(25),
               child: Icon(
                 status == 'posted' ? Icons.check : Icons.auto_awesome,
-                color:
-                    status == 'posted' ? Colors.green : const Color(0xFF6366F1),
+                color: status == 'posted'
+                    ? const Color(0xFF4CAF50)
+                    : const Color(0xFF6366F1),
                 size: 20,
               ),
             ),
@@ -928,7 +931,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
               data?['success'] == true ? '✅ 自動投稿完了!' : '⚠️ ${data?['error']}',
             ),
             backgroundColor: data?['success'] == true
-                ? Colors.green
+                ? const Color(0xFF4CAF50)
                 : const Color(0xFFFF6B35),
           ),
         );
@@ -937,7 +940,8 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     } finally {
@@ -963,7 +967,7 @@ class _ViralAdGeneratorPageState extends State<ViralAdGeneratorPage>
   Color _statusColor(String status) {
     switch (status) {
       case 'posted':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'ready_to_post':
         return const Color(0xFF3D5AFE);
       case 'script_only':
