@@ -12316,3 +12316,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **dependabot PR #567** (bump test 1.26.3 → 1.30.0): 既知の非互換 (Flutter 3.38.10 + test 1.30.0 = test_api version mismatch · 46件 CI fail / PS版#83 2026-04-17 記録)
   - `@dependabot ignore this minor version` コメントで自動クローズ誘導
 - **WF 健全性**: 直近 50 runs 中 failure 2件 (両方対応済み) → 残り全て green
+
+## セッション記録: PS版#2 T-1第177弾 dev.to 投稿 (2026-04-20 02:04 UTC)
+
+- **T-1第177弾**: Zero-Cost Price Tracker in Flutter Web + Supabase — No Extra Edge Functions → dev.to 投稿成功
+  - URL: https://dev.to/kanta13jp1/i-built-a-zero-cost-price-tracker-in-flutter-web-supabase-no-extra-edge-functions-needed-542m
+  - Run ID: 24645012594 (別 instance の先行 dispatch が 53 秒前に成功 / 本 instance 24645033114 は 422 duplicate)
+  - Orphan branch 2 件を統合後削除
+- **教訓**: 並行 dispatch 検出 — 本 instance の run は Step 4 で 422 "Title has already been used" を返したが workflow は success 扱い。先行 run のログを確認して実投稿 URL を確保する
+- **所要**: 約 4 分 (dispatch → rebase 含む)
