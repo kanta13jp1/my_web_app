@@ -13420,3 +13420,29 @@ CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
 - 連続 7 session (S14→S20) で AI大学 132→138 社 (6 追加)
 - **RAG 2.0 = 次世代 RAG**: frozen 部品接続 (従来) vs end-to-end 同時訓練 (Contextual) が差別化軸
 - Matt Zaharia (Databricks) は Contextual AI と無関係 — WebSearch で self-correct (Douwe Kiela / Amanpreet Singh が正しい founder)
+
+---
+
+## 2026-04-20 PS版#5 Session 22 — notify-feature-request → core-hub:notify.feature_request migrate
+
+**Why**: PS#6 S16 handoff (`docs/cross-instance-prs/20260420_ps5_notify_feature_request_stale_invoke.md`) の dead EF (prod 404) 対応。admin UI + GHA feedback-issue-resolved.yml の 2 caller が silent-fail で notify メール漏れしていた。
+
+**Actions** (commit 6c03d816):
+- `supabase/functions/core-hub/index.ts`: `notify.feature_request` case 追加 (+137 行) + 4 helpers + `serviceRoleActions` Set bypass (新パターン)
+- `supabase/functions/notify-feature-request/`: source 削除 (530 行 → 0)
+- `lib/pages/admin/feedback_list_page.dart`: invoke `notify-feature-request` → `core-hub` + action field
+- `.github/workflows/feedback-issue-resolved.yml`: curl URL + jq payload に action field 追加
+- `.github/workflows/deploy-prod.yml`: DEAD_LIST から削除
+- `memory/project_20260420_ps5_s22.md` + `memory/feedback_success_20260420_service_role_bypass.md` 新規
+
+**新 pattern**: `serviceRoleActions` Set bypass — hub action が GHA (SUPABASE_SERVICE_ROLE_KEY bearer) と admin UI (user session) 両方から呼ばれる際、`_shared/automation-auth.ts` import を回避し、bearer===SERVICE_ROLE_KEY 1 行で bypass。`userId = ""` default で TypeScript narrowing も解消。
+
+**検証**:
+- `deno lint supabase/functions/core-hub/index.ts` → clean
+- `flutter analyze lib/pages/admin/feedback_list_page.dart` → No issues (176.2s)
+
+**Philosophy**: 原則 5 (UX = notify 復活) / 原則 6 (資本=時間・404 漏れ撲滅) / 原則 7 (負債 530 行 → 137 行) ✅ 7/9
+
+**Backlog 進捗**: EF cleanup phase2 残 31 → 30 (S15-S22 累計 10 EFs migrated)
+
+**次回候補**: growth-import-preview/commit (Notion API body port) / viral-growth-engine (464 行 sub-task 化) / PS#6 S18 handoff 24 件 stale invoke audit
