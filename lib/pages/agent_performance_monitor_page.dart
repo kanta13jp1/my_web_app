@@ -48,9 +48,9 @@ class _AgentPerformanceMonitorPageState
 
   Color _scoreColor(dynamic score) {
     final s = (score is num) ? score.toDouble() : 0.0;
-    if (s >= 80) return Colors.green;
-    if (s >= 60) return Colors.orange;
-    return Colors.red;
+    if (s >= 80) return const Color(0xFF4CAF50);
+    if (s >= 60) return const Color(0xFFFF6B35);
+    return const Color(0xFFE53935);
   }
 
   @override
@@ -72,13 +72,16 @@ class _AgentPerformanceMonitorPageState
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Color(0xFFE53935),
+                          height: 1.5,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
