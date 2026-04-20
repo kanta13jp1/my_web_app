@@ -15056,5 +15056,34 @@ commit: `<pending>` — dart format deadlock 継続中 (S27 と同様 CI 委譲)
 | S28 | time-tracker → app-hub:time.* | 3 actions 拡張 (view filter / projects / log_hours) |
 
 **= 7 CRITICAL EF migration / 2 週間潜伏 bug 1 件修復 (log_hours) / EF 数不変**
+---
+
+## [PS版#4 S31] 2026-04-21 朝 — 数字 audit round 6 完走 (Replit $9B 10 sources / 累計 55 src)
+
+S30 の WBS 大改修 master PR (3 判断 confirmed) → S31 は **audit round 6 = Replit $9B 最終検証**。公式 Replit blog + TechCrunch × 2 + Morningstar PR Newswire + TheSaaSNews + Pulse2 + TechBuzz + Sacra + index.dev + unite.ai = **10 sources** 横断で確定。
+
+**検証結果 (HIGH)**:
+- $400M Series D @ **$9B post-money** / **Georgian (Partners) 主導** / 2026-03-11
+- prior Series C $250M @ $3B (2025-09-10) / prior ARR $150M
+- 6 ヶ月と 1 日で 3× 成長 = **正確** / 目標 $1B ARR end-2026
+- FY2025 revenue **$240M** (end-2024 $10M → 24× / 1 年)
+- paying customers **150K+** / Zillow 600 seats / Databricks / PayPal / Adobe
+
+**訂正 (drift)**: 背景情報の「a16z 2025-11 主導」は誤り → **Georgian 2026-03-11 主導** に訂正 (S25 Cursor drift と同型の軽微 drift 再発見)。
+
+**新発見**:
+1. **non-programmer pivot** (vibe-coding / sales / marketing / SMB 向け) → 自分株式会社軸接近可能性 → **watchlist 🟢 → 🟠 昇格**
+2. digital canvas = tool-creation / 自分株式会社 = life-management → 棲み分け維持
+3. $10M → $240M ARR 24× = Agent monetization inflection パターン
+
+**audit 累計**: 6 round / **55 sources** 検証完了 → **「全 high-stakes 数字 2-source 検証済み」状態に到達**。
+
+**handoff**:
+- **VSCode LP**: 差別化軸に「Replit Agent 4 = tool-creation / 自分株式会社 = life-management 棲み分け」行追加検討
+- **PS#2 SNS**: 5 月前半弾候補 2 本 (vibe-coding vs vibe-living / 人生は seat-based にできない)
+
+**Philosophy 6/9 ✅** (CEO 感 / ミッション駆動 / 商品=ユーザー価値 / 資本=時間 / BS / KPI=昨日)
+
+Files: SCOREBOARD (Replit 行 + S31 block + 残 round 0) / memory/project_20260421_ps4_s31.md / 本 entry
 
 ---
