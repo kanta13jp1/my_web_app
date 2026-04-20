@@ -14310,3 +14310,45 @@ orphan branches: 閾値以下 (cleanup 不要)。
 - 原則 7 (資産=負債): 二重 EF (habit-tracker + tools-hub) を hub 単一に寄せ負債 1 件消化
 
 整合性 7/9 ✅
+---
+
+## 2026-04-20 20:45 JST — PS版#2 Session 15 (t1-blog-dispatch skill に Step 2.1 dev.to 4-tag pre-check 追加)
+
+### アクション
+
+- **`schedule-hub/index.ts` 実装精査**: line 270 Qiita path = `slice(0, 5)` / line 303 dev.to path = `slice(0, 4)` → **dev.to のみ 4-cap / Qiita は 5-cap**
+- **S14 cross-instance-pr の Qiita 側未解決フラグを解決**: JA drafts (5 tags) は Qiita 送信で全 tags 保持される = 問題なし
+- **`.claude/skills/t1-blog-dispatch/SKILL.md` に Step 2.1 新設**: dispatch 前に JA+EN 両 draft のタグ数を echo し、5+ で specific タグが 5 番目配置なら並び替え要求
+- smoke test: 5/4 Notion pair で動作確認済 (JA: `Notion,AI,個人開発,buildinpublic,SaaS` 5 tags / EN: `Notion,AI,SaaS,buildinpublic,webdev` 5 tags)
+
+### Why skill Step 2.1 が最小コスト
+
+- (A) `schedule-hub/index.ts:303` に warn 追加 = EF deploy-prod 走行 (Philosophy 原則 6 違反)
+- (B) `blog-publish.yml` に warn 出力 = workflow 編集 + CI test
+- (C) **skill に bash check 埋込 = skill file 1 つの edit のみ** ← 採用
+
+→ (C) は `t1-blog-dispatch` skill を使う毎回 dispatch で自動実行される = 再発防止に十分
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): 将来の silent drop 事故 0 化 = 読者 discovery 減リスク排除 ✅
+- 原則 6 (資本=時間): EF deploy 回避 (skill edit 1 ファイルのみ) ✅
+- 原則 7 (資産負債 BS): 既発見の S14 制約を skill に resident 化 = 再学習コスト回避 ✅
+- 原則 8 (KPI=昨日の自分): 昨日までの S14 発見を skill に inline 化 = 知識の resident 化 ✅
+- 整合性: **4/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (72h+ cooldown 経過確認)
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch (Step 2.1 で事前 tag echo)
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (BS 2 段ロケット · Step 2.1 事前チェック)
+4. **2026-04-28**: Notion 本A dispatch (D-6 · Step 2.1 事前チェック)
+5. **2026-05-02**: Notion 本B dispatch (D-2 · Step 2.1 事前チェック)
+6. **2026-05-04**: Notion 本C dispatch (D-0 · Step 2.1 事前チェック)
+7. **2026-05-04 当日**: X 短文起草 (S27 残 1 件)
+
+### 学び
+
+- **制約発見 → 知識 resident 化のコスト階層**: skill edit (C) < workflow edit (B) < EF deploy (A) → 最小コスト層から先に消化する原則
+- **EF code 実読で疑問解決**: 「Qiita も 4-cap か?」の疑問を `grep slice` 1 発で解決 (line 270 vs 303) = 推測せず実読の原則
+- **skill は dispatch の自動チェックポイント**: skill file に埋め込めば毎回 dispatch で自動実行 = runtime 警告より cheap で再発防止強

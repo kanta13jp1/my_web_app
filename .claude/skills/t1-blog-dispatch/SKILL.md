@@ -41,6 +41,35 @@ ls docs/blog-drafts/<slug>.md docs/blog-drafts/<slug>-en.md
 head -5 docs/blog-drafts/<slug>.md  # frontmatter確認 (title/tags/published)
 ```
 
+### Step 2.1: dev.to 4-tag cap pre-check (必須 — PS#2 S14/S15 追加)
+
+`supabase/functions/schedule-hub/index.ts:303` の `rawTags.slice(0, 4)` により dev.to は
+**先頭 4 個のタグのみ送信 (警告 log ゼロ)**。frontmatter に 5 tags 書くと 5 番目が silent drop。
+
+```bash
+# JA + EN 両 draft のタグ数を確認
+for f in docs/blog-drafts/<slug>.md docs/blog-drafts/<slug>-en.md; do
+  TAGS=$(grep '^tags:' "$f" | head -1 | sed 's/^tags:[[:space:]]*//')
+  COUNT=$(echo "$TAGS" | tr ',' '\n' | wc -l | tr -d ' ')
+  echo "$f: $COUNT tags = $TAGS"
+  if [ "$COUNT" -gt 4 ]; then
+    DROPPED=$(echo "$TAGS" | awk -F',' '{for(i=5;i<=NF;i++) printf "%s ", $i}')
+    echo "  ⚠️ SILENT DROP: $DROPPED → 並び替え必要 (価値降順: 最具体 > カテゴリ > 業界 > 運動 > 汎用)"
+  fi
+done
+```
+
+**判定**:
+
+- 全 draft が **4 tags 以下** → 進行 OK
+- 5+ tags + 5 番目が汎用 (webdev / programming 等) → 許容し進行 OK
+- 5+ tags + 5 番目が specific (SaaS / 製品名等) → **並び替え必須**。
+  価値順則: 最具体 (製品名) > 技術カテゴリ > 業界 > 運動 (buildinpublic) > 汎用 (webdev)。
+  並び替えて commit → Step 2.3 へ。
+
+関連: `docs/cross-instance-prs/20260420_constraint_devto_4tag_cap.md` /
+`memory/feedback_correction_20260420_devto_4tag_cap.md`
+
 ### Step 2.3: 並行 dispatch 検出 (dev.to 422 "Title already used in last 5min" 防止 — 必須)
 
 2026-04-20 PS版#2 S1 で 53 秒差 dispatch → 422 duplicate collision 発生

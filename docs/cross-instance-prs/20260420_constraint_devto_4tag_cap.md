@@ -57,8 +57,16 @@ frontmatter `tags:` を **価値降順** で 4 個目までに詰める:
 - Memory: `memory/project_20260420_ps2_s14.md`
 - ROADMAP: Session 14 block (docs/GROWTH_STRATEGY_ROADMAP.md 末尾)
 
-## Qiita 側について (未解決)
+## Qiita 側について (解決 — PS#2 S15 2026-04-20 20:45)
 
-`schedule-hub/index.ts` の同 `cleanTags` 変数は Qiita dispatch にも使われている可能性あり (要実装確認)。
-Qiita は公式には `tags: 最大 5 個` だが、EF 側で 4 個に絞られているなら Qiita でも 1 個 drop 中の可能性。
-→ PS#2 次セッション: Qiita 実投稿 URL のタグ数と drafts frontmatter の差異を比較 (dispatch 成功後の事後検証)
+`schedule-hub/index.ts:270` で Qiita path は **`rawTags.slice(0, 5)`** を使用 = 5 tags 全て送信される。
+Qiita 側は dev.to と独立の slice 実装のため、**JA drafts の 5 tags は問題なし**。
+dev.to (line 303 = `slice(0, 4)`) のみ 4-cap truncation の影響を受ける。
+
+→ 結論: **EN drafts (dev.to 送信) のみ タグ 4 個以内 or 価値降順 sort 必要**。
+JA drafts (Qiita 送信) は 5 tags まで自由。
+
+## S15 追加実装 (2026-04-20 20:45)
+
+`.claude/skills/t1-blog-dispatch/SKILL.md` に **Step 2.1: dev.to 4-tag cap pre-check** 新設。
+dispatch 前に JA+EN 両 draft のタグ数を echo し、5+ で specific タグが 5 番目なら並び替え要求。
