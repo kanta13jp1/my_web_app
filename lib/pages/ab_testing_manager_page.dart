@@ -105,13 +105,13 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(bottom: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.withAlpha(30),
+                        color: const Color(0xFFE53935).withAlpha(30),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -207,7 +207,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor: status == 'running'
-                                  ? Colors.green
+                                  ? const Color(0xFF4CAF50)
                                   : Colors.grey,
                               child: const Icon(
                                 Icons.science,
@@ -222,7 +222,7 @@ class _AbTestingManagerPageState extends State<AbTestingManagerPage> {
                             trailing: Chip(
                               label: Text(status),
                               backgroundColor: status == 'running'
-                                  ? Colors.green.withAlpha(30)
+                                  ? const Color(0xFF4CAF50).withAlpha(30)
                                   : null,
                             ),
                           ),
