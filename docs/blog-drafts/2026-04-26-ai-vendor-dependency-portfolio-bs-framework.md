@@ -15,7 +15,7 @@ published: false
 ## 前提の事実 (2026-04-17 イベント)
 
 2026-04-17 に OpenAI Codex Desktop が Computer Use + 20+ plugins + MCP servers を追加した。
-当初「Codex 90+ plugin で Claude にパリティ+α」と報じられたが、複数 source を交差させると実際は:
+当初「Codex が plugin 数で Claude にパリティ+α」と報じられたが、複数 source を交差させると実際は:
 
 - **Claude Code: 423 plugins / 2,849 skills / 177 agents** (43 marketplaces / 834 total)
 - **OpenAI Codex: 20+ plugins (self-serve publish 未対応)**

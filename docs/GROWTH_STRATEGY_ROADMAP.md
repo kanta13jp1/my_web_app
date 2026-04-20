@@ -14521,3 +14521,50 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 4. 🟡 `jobs=null + log 404` 診断 step を rule17-wf-health skill に追加
 5. 🟢 S14 副作用測定継続
 6. 🟢 inject-rules.txt 鮮度更新
+---
+
+## 2026-04-20 21:00 JST — PS版#2 Session 16 (3-way handoff 残 checklist 消化 — 4 drafts 「90 plugin」語彙 generic 化)
+
+### アクション
+
+- **`docs/cross-instance-prs/20260420_three_way_positioning_sns.md` checklist audit**: 残 5 件中 3 件を 1 セッションで消化
+  - (1) 「90 plugin」「Claude 一強崩壊」語彙削除: 4 drafts で `90 plugin` の rebuttal 文脈残存 → 具体数字削除し generic 「初期報道 / early headlines」へ書き換え
+  - (2) 「423 vs 20」の比較数字挿入確認: 全 4 drafts に既挿入済 (S24 時点) → audit で line 番号記録
+  - (3) 棄却条件 2 HIT 確認: 既に plugin 数で Claude 優位維持の framing で一貫
+- **編集済 4 drafts**:
+  - `2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning.md` (本A JA) line 18
+  - `2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning-en.md` (本A EN) line 18
+  - `2026-04-26-ai-vendor-dependency-portfolio-bs-framework.md` (本B JA) line 18
+  - `2026-04-26-ai-vendor-dependency-portfolio-bs-framework-en.md` (本B EN) line 17
+- **blog-publish-cleanup scan**: orphan branches = 0 (`git branch -r | grep 'blog-publish/'` → 0 件) · 定期衛生 OK
+- **残 checklist**: X 短文 (5/4 dispatch 当日 draft) + VSCode LP 軸 7 (管轄外) = PS#2 側は dispatch 準備完了
+
+### Why 語彙 generic 化が正解
+
+- **誤情報拡散リスク**: 「90 plugin」を rebuttal 文脈で引用していても、読者が skimming で数字だけ記憶 → 誤情報伝播
+- **framing の安定性**: 「初期報道では X と流れた」の方が、具体数字に依存せず時間経過でも劣化しない
+- **423 vs 20 で十分**: 正しい数字は既に本文で強調 → 誤った数字 (90) を併記する必要なし
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): 読者への誤情報伝播リスク排除 ✅
+- 原則 6 (資本=時間): 4 drafts 1 行 edit × 4 = 30 秒 ✅
+- 原則 7 (資産負債 BS): dispatch 品質リスク (誤情報拡散) を 0 化 = 負債削減 ✅
+- 原則 8 (KPI=昨日の自分): 昨日までの rebuttal framing より語彙品質 up ✅
+- 整合性: **4/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (Qiita 72h+ cooldown 経過確認)
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch (S16 で語彙整理完了 · 即 dispatch 可)
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (BS 2 段ロケット · S16 で語彙整理完了)
+4. **2026-04-28**: Notion 本A dispatch (D-6 · 数字強化 · SaaS 保持済)
+5. **2026-05-02**: Notion 本B dispatch (D-2 · 同)
+6. **2026-05-04**: Notion 本C dispatch (D-0 · 同 + vendor paywall パターン)
+7. **2026-05-04 当日**: X 短文起草 (S27 残 1 件)
+
+### 学び
+
+- **checklist 消化の監査習慣**: 未着手項目を放置せず、dispatch 直近になる前に audit → 3 件中 2 件は実作業ゼロ (既完了の確認のみ) だった
+- **rebuttal 文脈でも誤情報数字は削除が安全**: 「誤りとして引用」でも skim される可能性があるので、正確な数字のみ本文に残す
+- **PS#2 管轄境界**: 「本A dispatch 前に VSCode LP 統一」は checklist 上 PS#2 依頼に含まれるが、実作業は VSCode instance スコープ → checklist 側で明示マーク

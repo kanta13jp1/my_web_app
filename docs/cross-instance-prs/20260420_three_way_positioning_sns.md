@@ -204,10 +204,10 @@ Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部�
 
 ### PS#2 dispatch 前チェックリスト (訂正後)
 
-- [ ] 「90 plugin」「Claude 一強崩壊」語彙は本A/本B/Qiita 全てで削除
-- [ ] 「423 vs 20」の比較数字を本A と Qiita に挿入 (X 280char は割愛可)
-- [ ] 棄却条件 2 (Anthropic が 90 plugin 相当追加) は **既に HIT (plugin 数で既に勝っている) → 弾の前提自体が変化** → 本A は書き換えではなく「正確な framing で投稿」
-- [ ] 本A dispatch 前に VSCode LP の軸 7 行も「Claude 優位維持・自分株式会社は別次元」のトーンに統一
+- [x] 「90 plugin」「Claude 一強崩壊」語彙は本A/本B/Qiita 全てで削除 (PS#2 S16 · 2026-04-20 21:00 — 4 drafts audit + generic rewrite: 本A JA/EN + 本B JA/EN)
+- [x] 「423 vs 20」の比較数字を本A と Qiita に挿入 (X 280char は割愛可) — 既に S24 で 4 drafts に全行挿入済 (PS#2 S16 audit で確認: 本A JA line 20-21 / EN line 20-21 / 本B JA line 20-21 / EN line 19-20)
+- [x] 棄却条件 2 HIT 確認 (plugin 数で Claude 優位維持) → 「正確な framing」で投稿方針確定 (PS#2 S16 audit で本A/本B 4 drafts framing 整合確認)
+- [ ] 本A dispatch 前に VSCode LP の軸 7 行も「Claude 優位維持・自分株式会社は別次元」のトーンに統一 (VSCode scope · PS#2 管轄外)
 
 ### Backlink 追加
 

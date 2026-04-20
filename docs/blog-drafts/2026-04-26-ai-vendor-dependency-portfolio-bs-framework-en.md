@@ -14,7 +14,7 @@ This post is the sequel: **"why bundling is the rational choice, told through ac
 
 ## Shared Fact Base (2026-04-17 Event)
 
-On 2026-04-17, OpenAI Codex Desktop shipped Computer Use + 20+ plugins + MCP servers. Headlines claimed "Codex catches up with Claude at 90+ plugins," but a cross-source check gives the real numbers:
+On 2026-04-17, OpenAI Codex Desktop shipped Computer Use + 20+ plugins + MCP servers. Initial headlines claimed Codex had reached plugin parity with Claude, but a cross-source check gives the real numbers:
 
 - **Claude Code: 423 plugins / 2,849 skills / 177 agents** (43 marketplaces / 834 total)
 - **OpenAI Codex: 20+ plugins (no self-serve publish yet)**

@@ -15,7 +15,7 @@ published: false
 - **Multiple agents parallel + Memory preview**
 - **ChatGPT 3M weekly devs 流入**
 
-ここで **ネットで「Codex 90 plugin で Claude に追いついた」と流れた情報は誤り**だった。正確に数えると:
+ここで **初期報道で「Codex が Claude plugin 数でパリティ」と流れた情報は誤り**だった。正確に数えると:
 
 - **Claude Code: 423 plugins / 2,849 skills / 177 agents** (43 marketplaces / 834 total)
 - **OpenAI Codex: 20+ plugins (self-serve publish 未対応)**

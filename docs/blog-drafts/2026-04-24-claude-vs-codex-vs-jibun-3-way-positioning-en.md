@@ -15,7 +15,7 @@ On **2026-04-17**, OpenAI Codex Desktop shipped a major update:
 - **Multiple parallel agents + Memory preview**
 - **ChatGPT 3M weekly-active devs feeding in**
 
-Here's the thing: **the headline "Codex catches up with Claude at 90+ plugins" was wrong.** The actual counts:
+Here's the thing: **the early headlines claiming "Codex reached plugin parity with Claude" were wrong.** The actual counts:
 
 - **Claude Code: 423 plugins / 2,849 skills / 177 agents** (43 marketplaces / 834 total plugins)
 - **OpenAI Codex: 20+ plugins (no self-serve publish yet)**
