@@ -888,18 +888,30 @@ serve(async (req) => {
           return json({ success: true, updated: ok, total: results.length, results });
         }
         case "wbs.add_task": {
-          // body: { category, title, description?, instance?, priority?, end_date?, milestone_code? }
+          // body: { category, title, instance, description?, priority?, end_date?, milestone_code? }
+          // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
+          // 'all' は全インスタンス責任の goal のみ明示指定可 (user 要望: 原則は owner 1 instance)
           const category = String(body.category ?? "");
           const title = String(body.title ?? "");
+          const instance = String(body.instance ?? "");
+          const validInstances = [
+            "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
+            "web", "mobile", "all",
+          ];
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
+          }
+          if (!instance || !validInstances.includes(instance)) {
+            return json({
+              error: `instance required (one of: ${validInstances.join(", ")})`,
+            }, 400);
           }
           const { data, error } = await admin.from("wbs_tasks").insert({
             category,
             category_icon: String(body.category_icon ?? "📋"),
             title,
             description: body.description ?? null,
-            instance: String(body.instance ?? "all"),
+            instance,
             status: "pending",
             progress: 0,
             priority: String(body.priority ?? "medium"),
