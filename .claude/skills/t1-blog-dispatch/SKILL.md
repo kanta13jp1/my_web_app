@@ -41,6 +41,39 @@ ls docs/blog-drafts/<slug>.md docs/blog-drafts/<slug>-en.md
 head -5 docs/blog-drafts/<slug>.md  # frontmatter確認 (title/tags/published)
 ```
 
+### Step 2.3: 並行 dispatch 検出 (dev.to 422 "Title already used in last 5min" 防止 — 必須)
+
+2026-04-20 PS版#2 S1 で 53 秒差 dispatch → 422 duplicate collision 発生
+(`memory/feedback_success_20260420_parallel_devto_422.md`)。Step 3 の前に直近 run
+を確認して並行 instance を検出する:
+
+```bash
+# 直近 5 分以内の blog-publish run を列挙
+SINCE=$(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null \
+     || date -u -v -5M +%Y-%m-%dT%H:%M:%SZ)
+RECENT_RUNS=$(gh run list --workflow=blog-publish.yml --limit 5 \
+  --json databaseId,status,createdAt \
+  --jq ".[] | select(.createdAt > \"$SINCE\") | .databaseId")
+
+if [ -n "$RECENT_RUNS" ]; then
+  for rid in $RECENT_RUNS; do
+    # 自 draft と同じ slug を dispatch 中か確認
+    DRAFT_IN_RUN=$(gh run view "$rid" --log 2>&1 \
+      | grep -oE 'DRAFT_PATH[=:_VAR:]*[[:space:]]+docs/blog-drafts/[a-z0-9_-]+\.md' \
+      | head -1 | grep -oE 'docs/blog-drafts/[a-z0-9_-]+\.md')
+    if [ "$DRAFT_IN_RUN" = "docs/blog-drafts/<slug>.md" ]; then
+      echo "⚠️ 並行 dispatch 検出: run $rid が同 draft を処理中 → skip (別 instance が処理中)"
+      exit 0
+    fi
+  done
+fi
+```
+
+**判定**:
+
+- 直近 5 分以内 run が **同 draft_path** を処理中/完了 → **skip**。別 instance の結果 URL を Step 5 で採用 (orphan branch 片方マージ + 両方削除)
+- 直近 5 分以内 run が **別 draft** → 進行可 (blog-publish.yml は run-level concurrency なし)
+
 ### Step 2.5: Qiita 同時投稿時の Rolling Window Pre-Check (platforms に qiita 含む場合のみ必須)
 
 `platforms="devto"` 固定なら **このステップはスキップ**。Qiita を含める場合のみ実行:
@@ -162,6 +195,10 @@ git pull --rebase origin main && git push origin HEAD:main
 2. **EN frontmatter**: Step 5 が旧版だと EN `published:false` 残る → 手動補完
 3. **Zenn published:true**: drafts に既に `published:true` あっても blog-publish は続行 (Zenn check は情報のみ)
 4. **Qiita 403 vs 429**: 403 = 無効トークン (要再発行) / 429 = rate limit **rolling 24h window** (JST 00:00 固定リセットではない — 最低 12h 待機)
+5. **dev.to 422 "Title already used in last 5min"**: 並行 instance が 5 分以内に同タイトル投稿 →
+   workflow は success 扱いだが実投稿は失敗。**Step 2.3 の pre-check で検出**。発生時は先発 run
+   (`gh run list --workflow=blog-publish.yml --limit 5`) の URL を採用し、両方の orphan branch を
+   diff 比較 (identical なら片方マージ + 両方削除)。詳細: `memory/feedback_success_20260420_parallel_devto_422.md`
 
 ## 自動化可能範囲
 
