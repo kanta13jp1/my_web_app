@@ -224,16 +224,14 @@ void showMarkdownHelp(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('# 見出し1',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                )),
-            Text('## 見出し2',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                )),
+            Text(
+              '# 見出し1',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
+            Text(
+              '## 見出し2',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.5),
+            ),
             SizedBox(height: 8),
             Text('**太字**'),
             Text('*斜体*'),
