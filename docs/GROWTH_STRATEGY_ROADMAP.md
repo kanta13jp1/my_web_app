@@ -14761,3 +14761,51 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 5. **Lovable** — 🛠️ AI app builder (Anton Osika / $17M ARR in 3 months)
 
 144 社目推奨: **Figure AI** (embodied AI の hardware + vertical 軸 → PI S23 との 2 象限補完)
+
+---
+
+## 2026-04-20 22:45 JST — PS版#1 S23 Option B wrap-up blocking 実装
+
+### 背景
+
+ユーザー要望「すべてのインスタンス、セッションが必ず毎回こちらを更新するような仕組みは動作していますでしょうか?」に対する enforcement 3 層の Layer 1 実装。PS#2 S17 handoff (`docs/cross-instance-prs/20260420_wbs_enforcement_option_b_ps1.md`) 消化。
+
+### 実装
+
+- **EF 拡張 (PREREQ)**: `supabase/functions/tools-hub/index.ts` `wbs.list_tasks` case に `updated_since` filter 追加 (ISO-8601 datetime · `q.gte("updated_at", updatedSince)`)
+- **wrap-up skill Step 5.5 blocking 化**: `.claude/commands/wrap-up.md`
+  1. 従来 text reminder のみ → 3 セクション構成 (更新 curl / 自己検証 blocking / skip オプション)
+  2. 自己検証: `wbs.list_tasks?instance=<自>&updated_since=<1h前>` で 0 件 → exit 1
+  3. skip-wbs-sync 明示オプション (純粋 docs 修正時のみ) + memory 記録必須
+
+### 3 層 defense-in-depth 完成
+
+- **Layer 1 (Option B · 本 PR)**: wrap-up skill 内で即 blocking
+- **Layer 2 (Option A · Win 担当)**: SessionStart hook 自動 curl → TOP 5 system-reminder 注入
+- **Layer 3 (Option C · 稼働中)**: `wbs-staleness-audit.yml` が 24h cron で overdue 検知 → cross-instance-pr 自動作成
+
+### User の他要望 (handoff 済・backend 完了)
+
+- 担当 PS#1-6/WEB/スマホ include → `wbs_tasks` instance CHECK 13 値 (Win#131 parts 10-21)
+- イナズマ線 today date → `project_gantt_page.dart:1557` + `LightningLine:2676` 実装済
+- 遅延リカバリー案 column → `recovery_plan` 列追加 + 遅延+未記入→Red warning line 118
+- 開始予定日/完了予定日 → 既存 `start_date`/`end_date` (UI label 変更は VSCode 待ち)
+- 未完了フィルター → VSCode handoff
+- Schedule/GHA tasks 反映 → seed 14 tasks (instance='schedule'/'gha')
+- リソース不足警告 → `wbs_milestone_risk_view` 実装済
+
+### Philosophy alignment
+
+- 原則 1 (CEO 感): blocking 判定で「やったかどうか」が客観化 ✅
+- 原則 2 (ミッション駆動): WBS 陳腐化という隠れ負債を原理的に防止 ✅
+- 原則 5 (商品=ユーザー価値): 可視化されたガント = ユーザー (= 自分) の判断材料精度 up ✅
+- 原則 6 (資本=時間): 次 session 冒頭の「今日何やるか」探索 0 秒 ✅
+- 原則 7 (BS): WBS 更新漏れ = 負債 → Layer 1-3 で blocking 化 ✅
+- 原則 8 (KPI=昨日の自分): 昨日の更新率を audit で可視化 ✅
+- 整合性: **6/9** (Rule 22 → 即実装可)
+
+### 次回候補 (PS#1)
+
+1. Option A deploy 確認 (Win 実装後・SessionStart hook 動作テスト)
+2. wbs-staleness-audit.yml の cancellation regression 監視 (S16 再発防止)
+3. blog-publish BYPASS_RULES PAT rotation 要請 (user action)

@@ -126,9 +126,11 @@ MEMORY.md にも候補リストを記録すること。
 
 ---
 
-## Step 5.5: WBS-SYNC 必須更新 (Win版#131 part 12 / Option B)
+## Step 5.5: WBS-SYNC 必須更新 (Win版#131 part 12 / Option B · PS#1 S22 blocking 化)
 
-**全インスタンス必須**: 本セッションで進めた WBS タスクを `tools-hub:wbs.update_progress` で更新する。
+**全インスタンス必須・blocking**: 本セッションで進めた WBS タスクを `tools-hub:wbs.update_progress` で更新する。
+
+### (1) タスク更新 curl
 
 ```bash
 INSTANCE=<vscode|win|ps1|ps2|ps3|ps4|ps5|ps6|web|mobile>
@@ -139,16 +141,51 @@ curl -s -X POST 'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub
   -d '{"action":"wbs.update_progress","id":"<task_id>","progress":100,"status":"completed"}'
 ```
 
-### 違反時
+### (2) 自インスタンスの更新有無を自己検証 (blocking)
 
-- 翌日 06:00 JST の `wbs-staleness-audit.yml` GHA cron で検出
-- `docs/cross-instance-prs/<YYYYMMDD>_wbs_<instance>_overdue.md` 自動作成
-- PS版#1 が Rule17 health check で拾い上げて警告
+`wrap-up` skill は以下 check を実行し、**直近 1h で自インスタンス該当タスクの更新が 0 件なら exit 1** する:
 
-### スキップ条件
+```bash
+INSTANCE=<自インスタンス名>
+SINCE=$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%SZ)
+UPDATED_COUNT=$(curl -s -X POST 'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub' \
+  -H "Authorization: Bearer ${SUPABASE_ANON_KEY_PROD:?missing}" \
+  -H 'Content-Type: application/json' \
+  -d "{\"action\":\"wbs.list_tasks\",\"instance\":\"$INSTANCE\",\"updated_since\":\"$SINCE\"}" \
+  | python3 -c "import sys,json; print(len(json.load(sys.stdin).get('tasks',[])))")
 
-- 本セッションで WBS タスクを 1 件も触っていない場合のみ (純粋 docs 修正のみ等)
-- それ以外は必ず実行
+if [ "$UPDATED_COUNT" = "0" ]; then
+  echo "❌ [WBS-SYNC] blocking — 本セッションで wbs.update_progress 未実行 (instance=$INSTANCE)"
+  echo "   wrap-up 続行前に以下いずれかを実施:"
+  echo "   (a) 進行中タスクに progress 数値更新 (wbs.update_progress)"
+  echo "   (b) 新規タスクを wbs.add_task で追加"
+  echo "   (c) skip-wbs-sync=true を明示 (純粋 docs 修正のみ等の合理的理由)"
+  exit 1
+fi
+echo "✅ [WBS-SYNC] passed — instance=$INSTANCE 更新 $UPDATED_COUNT 件 / 過去 1h"
+```
+
+### (3) skip-wbs-sync 明示オプション
+
+純粋 docs 修正 (1 行誤字訂正等) で触る WBS タスクがない場合は `wrap-up --skip-wbs-sync` で bypass。
+**合理的理由を memory に記録**:
+
+```bash
+# memory/project_YYYYMMDD_<instance>_s<N>.md に以下を追記:
+# "WBS-SYNC skip 理由: <docs typo fix / README 修正等>"
+```
+
+### 違反時 (3 層 defense-in-depth)
+
+- **Layer 1 (Option B · 本 step)**: skill 内で即 blocking (exit 1 で wrap-up 中断)
+- **Layer 2 (Option A · SessionStart)**: 次回 session 開始時 TOP 5 自動注入で未更新タスクを見せる
+- **Layer 3 (Option C · 24h cron)**: `wbs-staleness-audit.yml` が `docs/cross-instance-prs/<YYYYMMDD>_wbs_<instance>_overdue.md` 自動作成 → PS#1 Rule17 で拾う
+
+### PREREQ
+
+- PS#6 S22 (commit 232b2783) の wbs.* dispatch bug fix が deploy 済であること
+- `SUPABASE_ANON_KEY_PROD` 環境変数が設定済 (inject-rules hook + auto-capture で既定)
+- EF `wbs.list_tasks` が `updated_since` filter 対応 (PS#1 S22 commit で拡張済)
 
 ---
 

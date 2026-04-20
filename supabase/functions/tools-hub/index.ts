@@ -690,9 +690,13 @@ serve(async (req) => {
         // ─── WBS (Work Breakdown Structure) actions (Win版#128) ─────────
         case "wbs.list_tasks": {
           // インスタンス + status でフィルタしてタスク一覧取得
-          // body: { instance?: 'all'|'vscode'|'windows'|'ps', status?: 'pending'|'in_progress'|'completed'|'blocked', limit?: 50 }
+          // body: { instance?: 'all'|'vscode'|'windows'|'ps'|'ps1'..'ps6'|'web'|'mobile'|'schedule'|'gha',
+          //        status?: 'pending'|'in_progress'|'completed'|'blocked',
+          //        updated_since?: 'YYYY-MM-DDTHH:MM:SSZ' (ISO-8601),
+          //        limit?: 50 }
           const inst = body.instance as string | undefined;
           const status = body.status as string | undefined;
+          const updatedSince = body.updated_since as string | undefined;
           const limit = Math.min(Number(body.limit ?? 50), 200);
           let q = admin.from("wbs_tasks")
             .select("id, category, category_icon, title, description, instance, status, progress, start_date, end_date, milestone_code, priority, updated_at")
@@ -704,6 +708,7 @@ serve(async (req) => {
             q = q.or(`instance.eq.${inst},instance.eq.all`);
           }
           if (status) q = q.eq("status", status);
+          if (updatedSince) q = q.gte("updated_at", updatedSince);
           const { data, error } = await q;
           if (error) throw new Error(error.message);
           // milestone 情報も同時取得
