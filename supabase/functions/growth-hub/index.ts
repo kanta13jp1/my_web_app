@@ -274,6 +274,28 @@ serve(async (req: Request) => {
       }
 
       // ─── Command Center ─────────────────────────────────────────────────────
+      // ─── Daily Challenges ─────────────────────────────────────────────────
+      case "daily.challenges_generate": {
+        const dateStr = typeof body.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.date as string)
+          ? (body.date as string)
+          : (() => {
+              const d = new Date();
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            })();
+        const defaults = [
+          { challenge_type: "create_notes", challenge_title: "今日のメモ作成", challenge_description: "3つのメモを作成しよう", target_value: 3, reward_points: 50 },
+          { challenge_type: "earn_points", challenge_title: "ポイント獲得", challenge_description: "100ポイントを獲得しよう", target_value: 100, reward_points: 30 },
+          { challenge_type: "share_notes", challenge_title: "メモを共有", challenge_description: "1つのメモを共有しよう", target_value: 1, reward_points: 40 },
+        ];
+        const rows = defaults.map((d) => ({ ...d, challenge_date: dateStr, is_active: true }));
+        const { data: upserted, error: upErr } = await admin
+          .from("daily_challenges")
+          .upsert(rows, { onConflict: "challenge_date,challenge_type", ignoreDuplicates: true })
+          .select("id, challenge_type");
+        if (upErr) throw new Error(upErr.message);
+        return json({ success: true, dateKey: dateStr, insertedCount: upserted?.length ?? 0, totalDefaults: defaults.length });
+      }
+
       case "command.analyze": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) {

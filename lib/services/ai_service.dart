@@ -1658,8 +1658,9 @@ $categoriesHint
     await _retryWithBackoff(
       () async {
         await _invokeFunction(
-          'generate-daily-challenges',
+          'growth-hub',
           {
+            'action': 'daily.challenges_generate',
             'date': dateStr,
           },
         );

@@ -5,7 +5,7 @@ import '../models/daily_challenge.dart';
 import '../services/daily_challenge_service.dart';
 
 /// ホーム画面に表示するデイリーチャレンジカード。
-/// generate-daily-challenges Edge Function と連携し、
+/// growth-hub:daily.challenges_generate と連携し、
 /// 今日のチャレンジ一覧・進捗・報酬を表示する。
 class DailyChallengeCard extends StatefulWidget {
   const DailyChallengeCard({super.key});
@@ -62,8 +62,9 @@ class _DailyChallengeCardState extends State<DailyChallengeCard> {
     setState(() => _generating = true);
     try {
       await Supabase.instance.client.functions.invoke(
-        'generate-daily-challenges',
+        'growth-hub',
         body: {
+          'action': 'daily.challenges_generate',
           'date': DateTime.now().toIso8601String().substring(0, 10),
         },
       );
