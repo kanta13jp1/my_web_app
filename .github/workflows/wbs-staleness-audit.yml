@@ -120,8 +120,6 @@ jobs:
             --label "wbs-audit,automated" \
             --base main \
             --head "$BRANCH" || true
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
       # Win版#131 part 21: PS#5 不在 fallback - unassigned bug 4h+ 検出
       - name: Detect unassigned bugs (4h+)
