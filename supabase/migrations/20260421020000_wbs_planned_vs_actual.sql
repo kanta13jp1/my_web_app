@@ -39,7 +39,12 @@ WHERE planned_end_date IS NULL AND end_date IS NOT NULL;
 -- ============================================================
 -- 3. wbs_delayed_tasks_view 書換 (planned_end_date 優先)
 -- ============================================================
-CREATE OR REPLACE VIEW wbs_delayed_tasks_view AS
+-- 注: 既存 view と column 構成 (順序) が変わるため CREATE OR REPLACE 不可
+-- (PostgreSQL 42P16: cannot change name of view column)
+-- → DROP + CREATE で回避
+DROP VIEW IF EXISTS wbs_delayed_tasks_view CASCADE;
+
+CREATE VIEW wbs_delayed_tasks_view AS
 SELECT
   id,
   category,
