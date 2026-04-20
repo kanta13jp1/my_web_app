@@ -25,13 +25,15 @@ jobs:
     steps:
       - name: Determine action
         id: action
+        env:
+          ACTION: ${{ github.event.action }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          AUTHOR: ${{ github.event.issue.user.login }}
+          LABELS_JSON: ${{ toJson(github.event.issue.labels) }}
         run: |
-          ACTION="${{ github.event.action }}"
-          ISSUE_NUMBER="${{ github.event.issue.number }}"
-          ISSUE_TITLE="${{ github.event.issue.title }}"
-          ISSUE_URL="${{ github.event.issue.html_url }}"
-          LABELS=$(echo '${{ toJson(github.event.issue.labels) }}' | python3 -c "import json,sys; print(','.join(l['name'] for l in json.load(sys.stdin)))" 2>/dev/null || echo "")
-          AUTHOR="${{ github.event.issue.user.login }}"
+          LABELS=$(printf '%s' "$LABELS_JSON" | python3 -c "import json,sys; print(','.join(l['name'] for l in json.load(sys.stdin)))" 2>/dev/null || echo "")
 
           # Severity 判定: label=critical/high → high / label=bug → medium / その他 → low
           PRIORITY="low"
@@ -72,44 +74,54 @@ jobs:
 
       - name: Add task to WBS (on opened/reopened)
         if: steps.action.outputs.action == 'opened' || steps.action.outputs.action == 'reopened'
+        env:
+          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.action.outputs.issue_title }}
+          ISSUE_URL: ${{ steps.action.outputs.issue_url }}
+          AUTHOR: ${{ steps.action.outputs.author }}
+          LABELS: ${{ steps.action.outputs.labels }}
+          OWNER_INSTANCE: ${{ steps.action.outputs.owner_instance }}
+          START_DATE: ${{ steps.action.outputs.start_date }}
+          END_DATE: ${{ steps.action.outputs.end_date }}
+          PRIORITY: ${{ steps.action.outputs.priority }}
         run: |
-          TITLE="[Issue #${{ steps.action.outputs.issue_number }}] ${{ steps.action.outputs.issue_title }}"
-          DESC="GitHub Issue: ${{ steps.action.outputs.issue_url }} / 起票: ${{ steps.action.outputs.author }} / labels: ${{ steps.action.outputs.labels }}"
+          python3 <<'PY' > /tmp/wbs_payload.json
+          import json, os
+          payload = {
+              "action": "wbs.add_task",
+              "title": f"[Issue #{os.environ['ISSUE_NUMBER']}] {os.environ['ISSUE_TITLE']}",
+              "description": f"GitHub Issue: {os.environ['ISSUE_URL']} / 起票: {os.environ['AUTHOR']} / labels: {os.environ['LABELS']}",
+              "instance": os.environ["OWNER_INSTANCE"],
+              "owner_instance": os.environ["OWNER_INSTANCE"],
+              "category": "🐛 Bug Fix",
+              "category_icon": "🐛",
+              "category_order": 99,
+              "status": "pending",
+              "progress": 0,
+              "start_date": os.environ["START_DATE"],
+              "end_date": os.environ["END_DATE"],
+              "priority": os.environ["PRIORITY"],
+              "remaining_work": "1) WEB/📱 が screenshot で再現確認  2) PS#5 が即修正 (1行〜数行)  3) 重い場合は cross-instance-pr で win/vscode へ handoff",
+          }
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
           curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
-            -d "$(cat <<EOF
-          {
-            "action": "wbs.add_task",
-            "title": "$TITLE",
-            "description": "$DESC",
-            "instance": "${{ steps.action.outputs.owner_instance }}",
-            "owner_instance": "${{ steps.action.outputs.owner_instance }}",
-            "category": "🐛 Bug Fix",
-            "category_icon": "🐛",
-            "category_order": 99,
-            "status": "pending",
-            "progress": 0,
-            "start_date": "${{ steps.action.outputs.start_date }}",
-            "end_date": "${{ steps.action.outputs.end_date }}",
-            "priority": "${{ steps.action.outputs.priority }}",
-            "remaining_work": "1) WEB/📱 が screenshot で再現確認  2) PS#5 が即修正 (1行〜数行)  3) 重い場合は cross-instance-pr で win/vscode へ handoff"
-          }
-          EOF
-          )" || true
-          echo "✅ WBS task added for Issue #${{ steps.action.outputs.issue_number }}"
+            --data-binary @/tmp/wbs_payload.json || true
+          echo "✅ WBS task added for Issue #$ISSUE_NUMBER"
 
       - name: Mark task completed (on closed)
         if: steps.action.outputs.action == 'closed'
+        env:
+          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
         run: |
-          # WBS タスクを title prefix で検索 → completed 化
-          TITLE_PREFIX="[Issue #${{ steps.action.outputs.issue_number }}]"
-          # まず list_tasks で id を引く
+          TITLE_PREFIX="[Issue #$ISSUE_NUMBER]"
           TASK_ID=$(curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" \
             -d '{"action":"wbs.list_tasks","instance":"all"}' \
-            | python3 -c "import json,sys; data=json.load(sys.stdin); tasks=data.get('tasks',[]); print(next((t['id'] for t in tasks if t.get('title','').startswith('$TITLE_PREFIX')),''))")
+            | TITLE_PREFIX="$TITLE_PREFIX" python3 -c "import json,os,sys; data=json.load(sys.stdin); tasks=data.get('tasks',[]); print(next((t['id'] for t in tasks if t.get('title','').startswith(os.environ['TITLE_PREFIX'])),''))")
 
           if [ -n "$TASK_ID" ]; then
             curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
@@ -125,13 +137,17 @@ jobs:
         if: steps.action.outputs.action == 'opened'
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ steps.action.outputs.issue_number }}
+          OWNER_INSTANCE: ${{ steps.action.outputs.owner_instance }}
+          PRIORITY: ${{ steps.action.outputs.priority }}
+          END_DATE: ${{ steps.action.outputs.end_date }}
         run: |
-          gh issue comment ${{ steps.action.outputs.issue_number }} \
-            --repo "${{ github.repository }}" \
-            --body "🤖 WBS に自動追加しました (instance: ${{ steps.action.outputs.owner_instance }} / priority: ${{ steps.action.outputs.priority }} / 期限: ${{ steps.action.outputs.end_date }})
+          BODY="🤖 WBS に自動追加しました (instance: $OWNER_INSTANCE / priority: $PRIORITY / 期限: $END_DATE)
 
           - PS版#5 が **4 時間以内** にトリアージ (severity 判定 + assign)
           - 軽量修正 (severity ≤ normal): **24 時間以内** に PR
           - 重い修正: **24 時間以内** に \`cross-instance-pr\` で win / vscode に handoff
 
           進捗: https://my-web-app-b67f4.web.app/project-gantt"
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPO" --body "$BODY"
