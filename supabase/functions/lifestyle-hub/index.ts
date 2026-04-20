@@ -680,6 +680,74 @@ serve(async (req) => {
           p.current_price <= p.target_price);
         return json({ success: true, alerts });
       }
+      case "price.advise": {
+        // AI 購入アドバイザー (Win版#131 Phase 2 / NotebookLM 提案 #7)
+        // 価格履歴 + 目標価格 → ai-hub:provider.chat (Groq 無料枠) で「買い時」助言
+        // PHILOSOPHY 9 原則: 3 (mentor) + 8 (KPI=昨日の自分=最安比較) + 6 (時間=即決支援)
+        const productId = String(body.product_id ?? "");
+        if (!productId) return json({ error: "product_id is required" }, 400);
+        const { data: product, error: pErr } = await admin
+          .from("tracked_products")
+          .select("*")
+          .eq("id", productId)
+          .eq("user_id", userId)
+          .single();
+        if (pErr || !product) {
+          return json({ error: pErr?.message ?? "product not found" }, 404);
+        }
+        const { data: logs, error: lErr } = await admin
+          .from("price_logs")
+          .select("price, fetched_at")
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+          .order("fetched_at", { ascending: false })
+          .limit(30);
+        if (lErr) return json({ error: lErr.message }, 400);
+        const series = (logs ?? []).map((l) =>
+          `${l.fetched_at?.slice(0, 10)}: ¥${l.price}`).join(" / ");
+        const prompt =
+          `商品: ${product.product_name}\n` +
+          `現在価格: ¥${product.current_price ?? "?"}\n` +
+          `目標価格: ¥${product.target_price ?? "なし"}\n` +
+          `史上最安: ¥${product.lowest_price ?? "?"}\n` +
+          `史上最高: ¥${product.highest_price ?? "?"}\n` +
+          `直近30件: ${series || "履歴なし"}\n\n` +
+          `この商品を「今買うべき」か「待つべき」か、200字以内で判断理由付きで答えてください。` +
+          `「今買うべき」なら理由 (例: 史上最安・目標達成・在庫薄)。` +
+          `「待つべき」なら根拠 (例: セール直前・下落トレンド)。`;
+        try {
+          const aiResp = await fetch(
+            `${SUPABASE_URL}/functions/v1/ai-hub`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "provider.chat",
+                provider: "groq",
+                message: prompt,
+              }),
+            },
+          );
+          const aiData = await aiResp.json() as Record<string, unknown>;
+          if (aiData.success === true) {
+            return json({
+              success: true,
+              advice: String(aiData.text ?? ""),
+              model: String(aiData.model_used ?? "groq:llama-3.3-70b"),
+            });
+          }
+          return json({
+            success: false,
+            advice: "AI助言が現在利用できません (Groq APIキー未設定の可能性)",
+            detail: aiData,
+          }, 200);
+        } catch (e) {
+          return json({ success: false, advice: "AI助言取得エラー", error: String(e) }, 200);
+        }
+      }
 
       default:
         return json({ error: `Unknown action: ${action}` }, 400);

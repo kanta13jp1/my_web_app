@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -414,6 +415,40 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
+              SizedBox(
+                height: 30,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showHistory(p),
+                  icon: const Icon(Icons.show_chart, size: 14),
+                  label: const Text(
+                    '履歴',
+                    style: TextStyle(fontSize: 11, height: 1.5),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF6366F1),
+                    side: const BorderSide(color: Color(0xFF6366F1)),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                height: 30,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showAdvice(p),
+                  icon: const Icon(Icons.psychology_alt, size: 14),
+                  label: const Text(
+                    'AI助言',
+                    style: TextStyle(fontSize: 11, height: 1.5),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFA855F7),
+                    side: const BorderSide(color: Color(0xFFA855F7)),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
+                ),
+              ),
               const Spacer(),
               IconButton(
                 onPressed: () => _delete(p),
@@ -426,6 +461,30 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showHistory(Map<String, dynamic> p) async {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF141414),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _PriceHistorySheet(product: p),
+    );
+  }
+
+  Future<void> _showAdvice(Map<String, dynamic> p) async {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF141414),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _PriceAdviceSheet(product: p),
     );
   }
 
@@ -648,6 +707,354 @@ class _AddProductSheetState extends State<_AddProductSheet> {
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFFF97316)),
         ),
+      ),
+    );
+  }
+}
+
+/// 価格推移チャート (fl_chart LineChart)
+class _PriceHistorySheet extends StatefulWidget {
+  const _PriceHistorySheet({required this.product});
+  final Map<String, dynamic> product;
+
+  @override
+  State<_PriceHistorySheet> createState() => _PriceHistorySheetState();
+}
+
+class _PriceHistorySheetState extends State<_PriceHistorySheet> {
+  bool _loading = true;
+  List<Map<String, dynamic>> _logs = [];
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'lifestyle-hub',
+        body: {
+          'action': 'price.history',
+          'product_id': widget.product['id'],
+          'limit': 200,
+        },
+      );
+      final data = resp.data as Map<String, dynamic>?;
+      final logs = (data?['logs'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (mounted) setState(() => _logs = logs);
+    } catch (e) {
+      if (mounted) setState(() => _error = '履歴取得失敗: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height * 0.65;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: SizedBox(
+        height: h,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              alignment: Alignment.center,
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6B7280),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+            Text(
+              '${widget.product['product_name']} 価格推移',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: _loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF6366F1),
+                      ),
+                    )
+                  : _error != null
+                      ? Center(
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(
+                              color: Color(0xFFEF4444),
+                              height: 1.5,
+                            ),
+                          ),
+                        )
+                      : _logs.length < 2
+                          ? const Center(
+                              child: Text(
+                                '価格データを 2 件以上記録するとグラフが表示されます。',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  height: 1.7,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : _chart(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chart() {
+    final spots = <FlSpot>[];
+    for (var i = 0; i < _logs.length; i++) {
+      final price = (_logs[i]['price'] as num?)?.toDouble() ?? 0;
+      spots.add(FlSpot(i.toDouble(), price));
+    }
+    final prices = spots.map((s) => s.y).toList();
+    final minY = prices.reduce((a, b) => a < b ? a : b);
+    final maxY = prices.reduce((a, b) => a > b ? a : b);
+    final padY = (maxY - minY) * 0.1;
+    return LineChart(
+      LineChartData(
+        backgroundColor: Colors.transparent,
+        minY: minY - padY,
+        maxY: maxY + padY,
+        gridData: FlGridData(
+          drawVerticalLine: false,
+          horizontalInterval: ((maxY - minY) / 4).clamp(1, double.infinity),
+          getDrawingHorizontalLine: (_) =>
+              const FlLine(color: Color(0xFF1F1F1F), strokeWidth: 1),
+        ),
+        titlesData: FlTitlesData(
+          rightTitles: const AxisTitles(),
+          topTitles: const AxisTitles(),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (v, _) => Text(
+                '¥${v.toInt()}',
+                style: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 10,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              interval: (_logs.length / 5).ceilToDouble().clamp(1, 100),
+              getTitlesWidget: (v, _) {
+                final i = v.toInt();
+                if (i < 0 || i >= _logs.length) return const SizedBox();
+                final s = _logs[i]['fetched_at'] as String? ?? '';
+                final d = s.length >= 10 ? s.substring(5, 10) : s;
+                return Text(
+                  d,
+                  style: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 10,
+                    height: 1.5,
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: false,
+            color: const Color(0xFFF97316),
+            barWidth: 2,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              color: const Color(0xFFF97316).withValues(alpha: 0.1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// AI 購入アドバイザー (lifestyle-hub:price.advise → ai-hub:provider.chat groq)
+class _PriceAdviceSheet extends StatefulWidget {
+  const _PriceAdviceSheet({required this.product});
+  final Map<String, dynamic> product;
+
+  @override
+  State<_PriceAdviceSheet> createState() => _PriceAdviceSheetState();
+}
+
+class _PriceAdviceSheetState extends State<_PriceAdviceSheet> {
+  bool _loading = true;
+  String? _advice;
+  String? _model;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _ask();
+  }
+
+  Future<void> _ask() async {
+    setState(() {
+      _loading = true;
+      _advice = null;
+      _error = null;
+    });
+    try {
+      final resp = await Supabase.instance.client.functions.invoke(
+        'lifestyle-hub',
+        body: {'action': 'price.advise', 'product_id': widget.product['id']},
+      );
+      final data = resp.data as Map<String, dynamic>?;
+      if (mounted) {
+        setState(() {
+          _advice = data?['advice'] as String? ?? '助言取得失敗';
+          _model = data?['model'] as String?;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'AI助言エラー: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            alignment: Alignment.center,
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6B7280),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          const Row(
+            children: [
+              Icon(Icons.psychology_alt, color: Color(0xFFA855F7)),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'AI 購入アドバイザー',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.product['product_name'] as String? ?? '',
+            style: const TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 12,
+              height: 1.7,
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFA855F7)),
+              ),
+            )
+          else if (_error != null)
+            Text(
+              _error!,
+              style: const TextStyle(color: Color(0xFFEF4444), height: 1.5),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0A0A0A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: const Color(0xFFA855F7).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Text(
+                _advice ?? '',
+                style: const TextStyle(
+                  color: Color(0xFFE2E8F0),
+                  fontSize: 13,
+                  height: 1.7,
+                ),
+              ),
+            ),
+          if (_model != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'model: $_model',
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontSize: 10,
+                fontFamily: 'monospace',
+                height: 1.5,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _loading ? null : _ask,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text(
+                    '再質問',
+                    style: TextStyle(height: 1.5),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFA855F7),
+                    side: const BorderSide(color: Color(0xFFA855F7)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
