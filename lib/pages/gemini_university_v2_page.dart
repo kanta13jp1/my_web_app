@@ -885,6 +885,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0EA5E9),
     officialUrl: 'https://snorkel.ai/',
   ),
+  'haize_labs': _ProviderMeta(
+    name: 'Haize Labs',
+    emoji: '🛡️',
+    color: const Color(0xFFDC2626),
+    officialUrl: 'https://haizelabs.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4635,6 +4641,45 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - Docs: https://docs.snorkel.ai/
 - 原論文: https://arxiv.org/abs/1711.10160
 - 料金: OSS 無料 / Snorkel Flow enterprise custom
+''',
+  'haize_labs': '''
+# Haize Labs — "Moody's for AI" 自動 red-teaming + 安全性格付け (\$7.45M)
+
+2023 年創業、ハーバード同級生 3 人 (CEO **Leonard Tang** / Richard Liu / Steve Li)
+が「AI 版 Moody's」として LLM・エージェントの自動 red-teaming + safety rating を提供。
+
+## 既存 139 社との差別化
+| 観点 | Haize Labs | Lakera AI | Robust Intelligence |
+|------|-----------|-----------|---------------------|
+| アプローチ | 🛡️ 自動 algorithm 攻撃 | runtime guardrail | eval + 防御 |
+| ポジショニング | AI 格付け機関 | prompt shield | MLOps eval |
+| OSS | ✅ Sphynx 公開 | 🟡 一部 | 🟡 一部 |
+
+## 主要プロダクト (3 algorithm)
+- **ACG** (Accelerated Coordinate Gradient): jailbreak 攻撃成功率 **44%** (baseline の 4x)
+- **Cascade**: multi-turn 対話での段階的 jailbreak (人手 red-team 超越)
+- **Sphynx**: hallucination 検出モデルを破る adversarial データ生成 (OSS)
+
+## 顧客事例 (multi-million contract)
+- Anthropic: Claude pre-release red-team
+- Scale AI: 内製 red-team の自動化パートナー
+- AI21: Jamba 系モデルの safety evaluation
+
+## 資金調達
+- 累計: \$7.45M (seed)
+
+## 自分株式会社での活用
+- daily-judgment: AI 回答を Sphynx で hallucination 事前チェック → 原則 1 判断信頼性
+- AI大学: 140 provider の safety rating 比較ページ
+- ai-hub: Cascade-style multi-turn leakage テストを CI に組込
+
+## 試す
+- Web: https://haizelabs.com/
+- Blog: https://blog.haizelabs.com/
+- GitHub (Sphynx OSS): https://github.com/haizelabs
+- Cascade 技術詳解: https://blog.haizelabs.com/posts/cascade/
+- 論文 (ACG): https://arxiv.org/html/2411.01084v3
+- 料金: enterprise custom / OSS Sphynx 無料
 ''',
 };
 

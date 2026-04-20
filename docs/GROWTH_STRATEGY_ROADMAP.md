@@ -13896,3 +13896,69 @@ Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 T
 - 原則 5 (商品=ユーザー価値): home → 読書リスト 404 → 生きた hub 経路に復旧
 - 原則 6 (資本=時間): 既存 hub への 1 行拡張で migration 完結 → EF cleanup 加速
 - 原則 7 (資産=負債): 二重 EF (reading-list + tools-hub) を hub 単一に寄せ負債 1 件消化
+
+## 2026-04-20 PS版#3 S22 — AI大学 140 社化 (Haize Labs 追加)
+
+**Why**: PS#3 = AI大学専任。S21 Snorkel AI (139 社 / data quality) の補完として Haize Labs (safety quality) を選定。ハーバード trio (Leonard Tang / Richard Liu / Steve Li) 創業の "Moody's for AI"。Anthropic・Scale AI・AI21 顧客で enterprise trust 確立。
+
+**候補選定**: S21 末尾 backlog 5 候補 → Haize Labs 採用。
+- **採用理由**:
+  - (1) Anthropic 顧客 = 自社 AI 設計上の直接的関心事 (Claude red-team メカニズム)
+  - (2) Snorkel (data) ↔ Haize (safety) で「AI quality 二軸」を既存 138 社に不足していた領域として埋める
+  - (3) Sphynx OSS 公開 + ACG 論文 (arxiv) で透明性最高クラス
+  - (4) Cascade multi-turn jailbreak = エンタープライズ agent 時代の必須評価軸
+  - (5) ハーバード trio のストーリー性 + 「Moody's for AI」ポジショニングの鮮やかさ
+
+**Step 0 評価: 7.5/9**
+
+| 観点 | 判定 |
+|------|------|
+| 公式サイト | ✅ haizelabs.com |
+| 最新モデル | ✅ ACG + Cascade + Sphynx |
+| ベンチマーク | ✅ ACG 44% / Cascade > manual |
+| API/SDK | 🟡 enterprise 契約必須・public self-serve 未公開 → **-1** |
+| 独自技術 | ✅ ACG algorithm + Cascade tree search |
+| OSS | ✅ Sphynx + get-haized (Apache 2.0) |
+| CLI/SDK | 🟡 custom per-client → **-0.5** ではなく enterprise 前提で容認 |
+| 資金 | 🟡 \$7.45M (seed 段階) |
+| 話題性 | ✅ Anthropic/Scale AI/AI21 顧客 + Harvard trio + "Moody's for AI" |
+
+(減点 -1.5 = API public access 限定)
+
+**変更ファイル (4)**:
+1. `supabase/migrations/20260420190000_seed_haize_labs_ai_university.sql` (new, 3 rows, \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列)
+4. `docs/GROWTH_STRATEGY_ROADMAP.md` (Session PS#3-S22 記録)
+
+Migration timestamp: **190000** 使用 (180000 WBS reassign ai_hub の直後)
+
+**Philosophy Alignment (9 原則)**:
+- 原則 1 (CEO 感): AI 回答の hallucination/jailbreak risk を事前定量化 → 判断 robustness 確保
+- 原則 3 (優しい mentor): Sphynx で「なぜ hallucination か」を adversarial example で可視化
+- 原則 5 (商品=ユーザー価値): 顧客 AI の pre-deploy safety audit = 差別化価値
+- 原則 6 (資本=時間): 自動 red-team で人手 eval の 10x-100x 削減
+- 原則 7 (資産=データ): Sphynx OSS + get-haized が安全性訓練データ資産
+
+**戦略的次の一手**:
+- **ai-hub security.red_team_check action 設計** (Win版 cross-instance-pr 候補)
+  - candidate_prompt + target_action → Haize Suite 呼出し / safety_rating (A-F) 返却
+  - AI-DEV-23 原則 3 (trace_id + 5 秒超検出) + 原則 7 (Quality gate) 組込
+- **ai-hub security.hallucination_score action**: context + claim → Sphynx score
+- **CI 統合**: 自社 chat.send に対する Cascade-style multi-turn leakage テスト自動化
+
+**連続 9 session 実績 (S14-S22)**:
+
+| S | Provider | Step 0 |
+|---|----------|--------|
+| S14 | Prime Intellect | 8.5/9 |
+| S15 | Exa.ai | 8.5/9 |
+| S16 | Pleias AI | 8/9 |
+| S17 | Imbue | 8.5/9 |
+| S18 | Thinking Machines | 8/9 |
+| S19 | Kyutai | **9/9 ⭐** |
+| S20 | Contextual AI | 8/9 |
+| S21 | Snorkel AI | 8.5/9 |
+| **S22** | **Haize Labs** | **7.5/9** |
+
+**次回 PS#3 候補 (141 社目)**: Essential AI (監視継続) / Gradium (Kyutai spin-off \$70M seed 2025-12) / Vectara (RAG / Amr Awadallah) / Lakera AI (Haize 比較候補 / guardrail 系) / Adept 後継
