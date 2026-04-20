@@ -169,7 +169,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
           if (_errorMessage != null)
             MaterialBanner(
               content: Text(_errorMessage!),
-              backgroundColor: Colors.red.shade50,
+              backgroundColor: const Color(0xFFFFEBEE),
               actions: [
                 TextButton(
                   onPressed: () => setState(() => _errorMessage = null),
@@ -284,7 +284,7 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: const Color(0xFFE53935),
                                     foregroundColor: Colors.white,
                                   ),
                                   onPressed: () {
@@ -508,7 +508,7 @@ class _EventCard extends StatelessWidget {
           ],
         ),
         trailing: IconButton(
-          icon: const Icon(Icons.delete_outline, color: Colors.red),
+          icon: const Icon(Icons.delete_outline, color: Color(0xFFE53935)),
           tooltip: '削除',
           onPressed: onDelete,
         ),

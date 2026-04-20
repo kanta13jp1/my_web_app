@@ -69,7 +69,7 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                       Text(
                         'エラー: $_error',
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -93,7 +93,7 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                           child: ListTile(
                             leading: Icon(
                               Icons.auto_awesome,
-                              color: isActive ? Colors.green : Colors.grey,
+                              color: isActive ? const Color(0xFF4CAF50) : Colors.grey,
                             ),
                             title: Text(
                               wf['name'] as String? ?? '',
@@ -110,7 +110,9 @@ class _AiWorkflowAutomationPageState extends State<AiWorkflowAutomationPage> {
                                 isActive ? '有効' : '無効',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: isActive ? Colors.green : Colors.grey,
+                                  color: isActive
+                                      ? const Color(0xFF4CAF50)
+                                      : Colors.grey,
                                   height: 1.5,
                                 ),
                               ),

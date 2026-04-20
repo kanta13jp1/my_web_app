@@ -147,7 +147,7 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -192,7 +192,11 @@ class _VirtualPetPageState extends State<VirtualPetPage> {
                               _pet!['happiness'],
                               const Color(0xFFFF6B35),
                             ),
-                            _buildStatBar('体力', _pet!['energy'], Colors.green),
+                            _buildStatBar(
+                              '体力',
+                              _pet!['energy'],
+                              const Color(0xFF4CAF50),
+                            ),
                           ],
                         ),
                       ),

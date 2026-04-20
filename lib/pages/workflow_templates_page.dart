@@ -53,7 +53,7 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
   Color _categoryColor(String? category) {
     switch (category) {
       case 'finance':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'hr':
         return const Color(0xFF3D5AFE);
       case 'engineering':
@@ -92,7 +92,10 @@ class _WorkflowTemplatesPageState extends State<WorkflowTemplatesPage> {
                     children: [
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, height: 1.5),
+                        style: const TextStyle(
+                          color: Color(0xFFE53935),
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),

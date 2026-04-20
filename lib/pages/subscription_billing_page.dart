@@ -75,7 +75,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -155,7 +155,7 @@ class _SubscriptionBillingPageState extends State<SubscriptionBillingPage> {
                             trailing: Chip(
                               label: Text(status.toString()),
                               backgroundColor: status.toString() == 'paid'
-                                  ? Colors.green.shade100
+                                  ? const Color(0xFFC8E6C9)
                                   : const Color(0xFFFFE0B2),
                             ),
                           ),

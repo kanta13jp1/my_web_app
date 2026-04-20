@@ -101,7 +101,7 @@ class _CompetitorFeatureSyncPageState extends State<CompetitorFeatureSyncPage> {
                   child: Text(
                     _error!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -203,10 +203,10 @@ class _CompetitorProgressGrid extends StatelessWidget {
                       backgroundColor: const Color(0xFFB0B0B0).withAlpha(40),
                       valueColor: AlwaysStoppedAnimation<Color>(
                         pct >= 80
-                            ? Colors.green
+                            ? const Color(0xFF4CAF50)
                             : pct >= 50
                                 ? const Color(0xFFF97316)
-                                : Colors.red,
+                                : const Color(0xFFE53935),
                       ),
                     ),
                   ),

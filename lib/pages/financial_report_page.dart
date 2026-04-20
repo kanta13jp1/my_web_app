@@ -63,7 +63,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('決算レポート'),
-        backgroundColor: Colors.green[700],
+        backgroundColor: const Color(0xFF388E3C),
         foregroundColor: Colors.white,
         bottom: TabBar(
           controller: _tabController,
@@ -105,7 +105,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
     final percentage = reportData.startBalance != 0
         ? (diff / reportData.startBalance) * 100
         : 0.0;
-    final diffColor = diff >= 0 ? Colors.green : Colors.red;
+    final diffColor = diff >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -266,7 +266,7 @@ class _FinancialReportPageState extends State<FinancialReportPage>
                       barRods: [
                         BarChartRodData(
                           toY: e.value.total,
-                          color: Colors.green,
+                          color: const Color(0xFF4CAF50),
                           width: 16,
                         ),
                       ],

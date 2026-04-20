@@ -437,7 +437,7 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
           icon: Icons.task_alt,
           label: '完了',
           value: '$completedCount件',
-          color: Colors.green,
+          color: const Color(0xFF4CAF50),
         ),
       ],
     );
@@ -494,13 +494,13 @@ class _DigestQueuePageState extends State<DigestQueuePage> {
                 decoration: BoxDecoration(
                   color: active != null
                       ? accent.withValues(alpha: 0.12)
-                      : Colors.green.withValues(alpha: 0.12),
+                      : const Color(0xFF4CAF50).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   active != null ? '消化中' : '新規OK',
                   style: TextStyle(
-                    color: active != null ? accent : Colors.green,
+                    color: active != null ? accent : const Color(0xFF4CAF50),
                     fontWeight: FontWeight.w700,
                     height: 1.5,
                   ),

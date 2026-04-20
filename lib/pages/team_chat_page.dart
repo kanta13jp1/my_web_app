@@ -151,11 +151,11 @@ class _TeamChatPageState extends State<TeamChatPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: Colors.red.shade50,
+              color: const Color(0xFFFFEBEE),
               child: Text(
                 _errorMessage!,
-                style: TextStyle(
-                  color: Colors.red.shade700,
+                style: const TextStyle(
+                  color: Color(0xFFC62828),
                   fontSize: 13,
                   height: 1.5,
                 ),
