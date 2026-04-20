@@ -669,6 +669,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/recipe-meal-planner',
       'レシピ・食事プランナーページ > レシピ検索・週間食事プラン作成',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'focus-timer',
+      'フォーカスタイマー (深集中セッション管理)',
+      true,
+      '/focus-timer',
+      'フォーカスタイマーページ > 集中セッション開始・履歴確認',
+    ),
+    _FnDef(
+      'form-builder',
+      'フォームビルダー (カスタムフォーム作成)',
+      true,
+      '/form-builder',
+      'フォームビルダーページ > フォーム作成・公開・回答一覧',
+    ),
+    _FnDef(
+      'language-learning',
+      '語学学習 (多言語レッスン管理)',
+      true,
+      '/language-learning',
+      '語学学習ページ > レッスン選択・進捗確認・単語練習',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
