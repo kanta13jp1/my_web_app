@@ -12357,3 +12357,10 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **次回 PS#5 推奨**: delete list cleanup + 小規模 5 EFs migration
 - **cross-instance-pr**: `done/20260419_ef_cleanup_phase2_flutter.md` に部分完了報告 + 残作業引継ぎ
 - Philosophy alignment: 原則 6 (資本=時間 — admin pages 復活で debug 時間短縮) / 原則 8 (KPI=昨日の自分 — streak/badges/content 動作復元)
+
+## PS版#2 Session 2 (2026-04-20 13:55 JST) — t1-blog-dispatch skill に Step 2.3 並行 dispatch pre-check 追加
+- **背景**: PS#2 S1 (2026-04-20 02:04 UTC) で本 instance が 53 秒遅れで同 draft を dispatch → dev.to 422 "Title already used in last 5min" 衝突 (先発 run 24645012594 成功 / 後発 24645033114 は workflow success 扱いだが実投稿失敗)
+- **追加内容**: `.claude/skills/t1-blog-dispatch/SKILL.md` に Step 2.3 (Step 2 と Step 2.5 の間) — `gh run list --workflow=blog-publish.yml --limit 5` で直近 5 分以内の run を列挙し `DRAFT_PATH` を grep して並行 instance を検出、同 draft 処理中なら early exit
+- **既知の落とし穴 #5 追記**: memory cross-reference (`memory/feedback_success_20260420_parallel_devto_422.md`) 付きで 422 パターン文書化
+- commit `1fc7a06f` → rebase → push 成功 (origin/main `3197073b`)
+- Philosophy alignment: 原則 6 (資本=時間 — 重複投稿の復旧作業ゼロ化) / 原則 3 (優しい mentor — 他 instance への配慮)
