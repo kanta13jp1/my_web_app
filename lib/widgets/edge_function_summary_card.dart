@@ -647,6 +647,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/smart-inbox',
       'スマート受信トレイページ > メール/Slack/LINE統合受信箱・AI優先度分類',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'home-iot-manager',
+      'スマートホーム IoT デバイス管理',
+      true,
+      '/home-iot',
+      'スマートホーム IoT ページ > デバイス一覧・オン/オフ制御・温度湿度確認',
+    ),
+    _FnDef(
+      'qr-code-generator',
+      'QRコードジェネレーター',
+      true,
+      '/qr-code-generator',
+      'QRコード生成ページ > テキスト/URL入力でQRコード生成・ダウンロード',
+    ),
+    _FnDef(
+      'recipe-meal-planner',
+      'レシピ・食事プランナー',
+      true,
+      '/recipe-meal-planner',
+      'レシピ・食事プランナーページ > レシピ検索・週間食事プラン作成',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
