@@ -80,7 +80,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | invoice-generator | lib/pages/invoice_generator_page.dart:44,70 | social-commerce-hub:invoice.create |
 | music-collaboration | lib/pages/music_collaboration_page.dart:32 | app-hub:music.sessions |
 | poll-survey | lib/pages/poll_survey_page.dart:42,77,97 | tools-hub:poll.create / poll.vote |
-| reading-list | lib/pages/reading_list_page.dart:32,150 | tools-hub:reading.add / reading.list |
+| ~~reading-list~~ | ~~lib/pages/reading_list_page.dart:32,150~~ | **✅ PS#5 S24 完了** → tools-hub:reading.list / reading.add (hub action 1 行 author 拡張) |
 | time-tracker | lib/pages/time_tracker_page.dart:52,76,96,164 | app-hub:time.start / time.list |
 
 ### C. S16 既 handoff 済 (再掲・1 件)
@@ -92,13 +92,12 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 1 (calendar-events) | 7.7% |
+| B. 未削除 stale | 13 | 2 (calendar-events, reading-list) | 15.4% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **2** | **8.7%** |
+| **合計 (PS#5 範囲)** | **23** | **3** | **13.0%** |
 
-**残 21 件** — PS#5 S23 (da37f51f) で calendar-events = B 1 件目消化。S22 の notify-feature と合わせ 24-EF handoff を **優先消化モード** に切替済 (backlog より先行)。
-CRITICAL 5 件 (time-tracker / goal-tracker / habit-tracker / reading-list / music-collaboration) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
+**残 20 件** — PS#5 S24 で reading-list 消化 (B 2 件目)。CRITICAL 残 4 件 (time-tracker / goal-tracker / habit-tracker / music-collaboration) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
 
 ## S20 audit 補正 (3 件)
 

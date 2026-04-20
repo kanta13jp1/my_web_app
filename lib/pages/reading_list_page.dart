@@ -29,14 +29,12 @@ class _ReadingListPageState extends State<ReadingListPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'reading-list',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'reading.list'},
       );
       final data = response.data;
-      if (data is Map<String, dynamic> && data['books'] is List) {
-        setState(() => _books = data['books'] as List);
-      } else if (data is List) {
-        setState(() => _books = data);
+      if (data is Map<String, dynamic> && data['items'] is List) {
+        setState(() => _books = data['items'] as List);
       } else {
         setState(() => _books = []);
       }
@@ -84,13 +82,12 @@ class _ReadingListPageState extends State<ReadingListPage> {
                           itemCount: _books.length,
                           itemBuilder: (context, index) {
                             final item = _books[index];
-                            final title = item is Map
-                                ? (item['title'] ?? 'タイトルなし')
-                                : item.toString();
-                            final author =
-                                item is Map ? (item['author'] ?? '') : '';
-                            final status =
-                                item is Map ? (item['status'] ?? '') : '';
+                            final meta = item is Map && item['metadata'] is Map
+                                ? item['metadata'] as Map
+                                : (item is Map ? item : const {});
+                            final title = meta['title'] ?? 'タイトルなし';
+                            final author = meta['author'] ?? '';
+                            final status = meta['status'] ?? '';
                             return Card(
                               margin: const EdgeInsets.symmetric(vertical: 4),
                               child: ListTile(
@@ -147,9 +144,9 @@ class _ReadingListPageState extends State<ReadingListPage> {
               Navigator.pop(ctx);
               try {
                 await _supabase.functions.invoke(
-                  'reading-list',
+                  'tools-hub',
                   body: {
-                    'action': 'add',
+                    'action': 'reading.add',
                     'title': titleController.text.trim(),
                     'author': authorController.text.trim(),
                   },

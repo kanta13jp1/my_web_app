@@ -919,7 +919,7 @@ serve(async (req) => {
       case "reading.list": return json({ success: true, items: await listItems(admin, "reading", userId) });
       case "reading.add": {
         const item = await addItem(admin, "reading", userId, {
-          url: body.url, title: body.title, status: "unread",
+          url: body.url, title: body.title, author: body.author ?? "", status: "unread",
         });
         return json({ success: true, item });
       }
