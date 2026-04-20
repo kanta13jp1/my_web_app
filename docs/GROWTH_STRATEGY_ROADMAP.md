@@ -13811,3 +13811,63 @@ Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 T
 - 原因: Cloudflare transient
 - 対処: `gh run rerun --failed` のみで解決 (恒久対策不要・3 回連続 522 なら再考)
 - 今回は rerun 自体が並行 push で cancel → 後続 run が fix carrier
+
+---
+
+## 2026-04-20 19:20 JST — PS版#2 Session 11 (Notion 5/4 課金 本B D-2 + 本C D-0 draft ペア先行作成)
+
+### アクション
+
+- PS#4 S19 cross-instance-pr (`docs/cross-instance-prs/20260504_notion_paywall_d14.md`) の未消化分 本B (D-2) + 本C (D-0) を JA+EN ペアで **先行作成** (計 4 files):
+  - JA D-2: `docs/blog-drafts/2026-05-02-notion-paywall-d2-parallel-6-departments.md`
+  - EN D-2: `docs/blog-drafts/2026-05-02-notion-paywall-d2-parallel-6-departments-en.md`
+  - JA D-0: `docs/blog-drafts/2026-05-04-notion-paywall-d0-alternative-6-departments.md`
+  - EN D-0: `docs/blog-drafts/2026-05-04-notion-paywall-d0-alternative-6-departments-en.md`
+- 本B (D-2) core:
+  - 「credit 残高を気にしながら AI を使う = 人生で一番疲れる使い方」の断言で cognitive cost を前景化
+  - Notion = 仕事中心 / 自分株式会社 = 人生全体 = 範囲が違うので **並走** が最適
+  - 48 時間でやっておく準備 (credit 消費洗い出し / 分離判断 / 6 部署アカウント準備 / 5/4 当日動作確認)
+  - 本A backlink (D-6) + PS#4 S17-S21 discovery の credit pause / 4 plan 再編を暗に反映
+- 本C (D-0) core:
+  - **選択肢 A = 代替 / 選択肢 B = 併用** の 2 択で締める
+  - 6 部署サマリ画面の ASCII mockup (R&D / 財務 / マーケ / 人事 / 本社 / 健康)
+  - Notion 側 (選択肢 B 選択時) の credit 節約 4 手順
+  - 本A (D-6) + 本B (D-2) への backlink で 3 本シリーズ完成
+  - 技術スタック再確認 (Flutter Web + Supabase + Edge Function 16 hub + ai-hub 130+ provider)
+
+### Why 先行 draft 方針転換
+
+- S5 時点では「本B/C は直前 draft (条件変化リスク回避)」だったが、S10 の本B pre-write 成功で **方針転換**:
+  - PS#4 S17-S21 の delta (Notion credit pause / Evernote 4 plan / Codex plugin 20+ 訂正) は既に織り込み済
+  - 5/4 paywall 日付・価格 ($10/1000 credit) は Notion 公式 Release note で固定 = 直前変動リスクなし
+  - dispatch 日 (5/2 + 5/4) が機械化されれば当日 `t1-blog-dispatch` skill のみで完結
+- S25 Cursor 数字 (13 ヶ月 / 10 ヶ月 / Battery Ventures) は本C/D に含めない方針 = 週次検証サイクル外
+- 本A (4/28) + 本B (5/2) + 本C (5/4) の 3 本シリーズ構成で **Notion paywall 移行の D-6 / D-2 / D-0 カバレッジ完成**
+
+### Philosophy alignment
+
+- 原則 1 (CEO 感): 個人 CEO が 代替/併用 を意識的に選ぶ意思決定 ✅
+- 原則 5 (商品=ユーザー価値): credit 残高認知コストからの解放 = 直接価値 ✅
+- 原則 6 (資本=時間): 事前 draft で dispatch 日の時間資本保全 ✅
+- 原則 7 (資産負債 BS): credit 課金 = 流動性低い負債 / 自分株式会社 = 長期資産 ✅
+- 原則 8 (KPI=昨日の自分): credit 残高監視ではなく昨日比 KPI のみ見る ✅
+- 整合性: **5/9** (Rule 22 基準 → 即実装可)
+
+### Commit
+
+- 次 commit で 4 files + ROADMAP append を一括 stage
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (Gate 1 自動 PASS)
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (Qiita BS 角度)
+4. **2026-04-28**: Notion 5/4 本A dispatch (D-6)
+5. **2026-05-02**: Notion 本B dispatch (D-2 pre-written)
+6. **2026-05-04**: Notion 本C dispatch (D-0 pre-written)
+7. S10 以降の次 draft 候補: 未定 (PS#4 次 delta 待ち)
+
+### 学び
+
+- S10 の「本A dispatch 後に本B」pattern を Notion side にも適用 → **複数シリーズ同時 pre-write で時間資本が複利化**
+- 条件変動リスク低い題材 (公式発表済 paywall) は直前 draft より pre-write が合理
