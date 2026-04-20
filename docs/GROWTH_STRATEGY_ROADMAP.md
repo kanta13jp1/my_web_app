@@ -14924,3 +14924,31 @@ commit: `<pending>` — build verification は dart format deadlock で skip (CI
 5. **WBS/Gantt T1 (真のイナズマ線 S-curve overlay)** — VSCode版担当だが PS#3 先取り可
 
 ---
+
+### PS版#6 Session 23 (2026-04-21) — wbs.add_task instance required 化 (ALL leak 防止)
+
+- **commit**: 622a917b (fix + design handoff)
+- **背景**: S22 で wbs.* dispatch 復旧 → curl で `wbs.priority_for_instance:ps6` 確認すると TOP 3 すべて `instance:"all"` (ユーザー数 50/500/5000 goals)。add_task の default='all' leak が残存。
+- **Fix** (`supabase/functions/tools-hub/index.ts:890-922`):
+  - `instance` を required 化 (`body.instance ?? ""` + 空文字 reject)
+  - `validInstances` enum 11 値 (vscode/win/ps1-6/web/mobile/all) で検証
+  - typo ('windows' / 'PS6' 等) も 400 error 返却
+  - 'all' は明示指定のみ valid (全インスタンス責任 goal 用)
+- **既存 3 ALL tasks 処遇** (Win版 handoff):
+  - `docs/cross-instance-prs/20260421_wbs_all_tasks_split_design_win.md`
+  - 案 A (8 × 3 = 24 完全 split・schema 不要・膨張)
+  - 案 B (ALL milestone 昇格 + per-instance sub-task・parent_milestone_id 追加必要)
+  - 案 C (Gantt UI「他 instance 隠す」filter・schema 不要・意図未応答)
+  - user 判断後 Win版 or VSCode版 で実装
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): user 指摘 (ALL leak) 即応答 ✅
+- 原則 3 (優しい mentor): design 3 案提示で意思決定を支援 ✅
+- 原則 5 (商品=ユーザー価値): instance 個別 goal 可視化復活 ✅
+- 原則 6 (資本=時間): 数行修正で systemic leak 封じ ✅
+- 原則 7 (BS 原則): 見えない負債 (default='all' silent leak) 可視化 + 資産化 ✅
+- 原則 9 ([WORKDIR-ISOLATION]): ps6 worktree edit 厳守 ✅
+
+整合性 **6/9** ✅ (S22 fix の systemic complement)
+
+---
