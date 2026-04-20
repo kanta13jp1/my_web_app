@@ -128,7 +128,10 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('削除', style: TextStyle(color: Color(0xFFEF4444))),
+            child: const Text(
+              '削除',
+              style: TextStyle(color: Color(0xFFEF4444), height: 1.5),
+            ),
           ),
         ],
       ),
@@ -162,10 +165,10 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
           controller: ctrl,
           keyboardType: TextInputType.number,
           autofocus: true,
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white, height: 1.5),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+            hintStyle: const TextStyle(color: Color(0xFF6B7280), height: 1.5),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
@@ -179,7 +182,10 @@ class _PriceTrackerPageState extends State<PriceTrackerPage> {
               final v = int.tryParse(ctrl.text.trim());
               Navigator.pop(context, v);
             },
-            child: const Text('OK', style: TextStyle(color: Color(0xFFF97316))),
+            child: const Text(
+              'OK',
+              style: TextStyle(color: Color(0xFFF97316), height: 1.5),
+            ),
           ),
         ],
       ),
@@ -625,9 +631,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
       style: const TextStyle(color: Colors.white, height: 1.5),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+        labelStyle: const TextStyle(color: Color(0xFF94A3B8), height: 1.5),
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+        hintStyle: const TextStyle(color: Color(0xFF6B7280), height: 1.5),
         filled: true,
         fillColor: const Color(0xFF0A0A0A),
         border: OutlineInputBorder(
