@@ -12325,3 +12325,12 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - Orphan branch 2 件を統合後削除
 - **教訓**: 並行 dispatch 検出 — 本 instance の run は Step 4 で 422 "Title has already been used" を返したが workflow は success 扱い。先行 run のログを確認して実投稿 URL を確保する
 - **所要**: 約 4 分 (dispatch → rebase 含む)
+
+## PS版#1 Session 10 (2026-04-20 11:30 JST) — migration 連鎖修復
+- deploy-prod #24645236967 (commit e15db6e3) 失敗 → 20260420030000_seed_decart_ai_university.sql の E'...' が PostgreSQL で unterminated 判定
+  - 修復 f1d9d4ea: 3個の E'...' を $md$...$md$ dollar-quoted に変換 (escape 処理ゼロ + semicolon split 耐性)
+- deploy-prod #24645645436 失敗 → 20260420040000_extend_ai_hub_observability.sql の index 式に date_trunc (STABLE) 使用 (SQLSTATE 42P17)
+  - 修復 cfdbe9cb: (provider, created_at DESC) plain btree に変更 — heatmap GROUP BY は range scan で効く
+- deploy-prod #24645953625: ✅ success — 両 migration 適用済み
+
+教訓: E-string + 長文 markdown + code block は最初から dollar-quoted 既定 / CREATE INDEX 関数式は IMMUTABLE 必須
