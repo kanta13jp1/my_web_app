@@ -879,6 +879,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF059669),
     officialUrl: 'https://contextual.ai/',
   ),
+  'snorkel_ai': _ProviderMeta(
+    name: 'Snorkel AI',
+    emoji: '🏷️',
+    color: const Color(0xFF0EA5E9),
+    officialUrl: 'https://snorkel.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4585,6 +4591,50 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - RAG 2.0 blog: https://contextual.ai/introducing-rag2/
 - GLM blog: https://contextual.ai/blog/introducing-grounded-language-model
 - 価格: 無料 tier → \$50/月 self-serve → enterprise custom
+''',
+  'snorkel_ai': '''
+# Snorkel AI — weak supervision 発明者の「data-first AI」ラボ (\$238M / \$1.3B valuation)
+
+2019 年スタンフォード大 DAWN lab からスピンオフ、CEO **Alex Ratner**
+(スタンフォード PhD / weak supervision 原論文筆頭著者 VLDB 2017) が率いる
+企業向け AI データ開発プラットフォーム。「モデルは commodity、差別化はデータ」思想。
+
+## 既存 138 社との差別化
+| 観点 | Snorkel AI | Scale AI | Hugging Face |
+|------|-----------|----------|--------------|
+| 思想 | 🏷️ weak supervision (プログラマティック labeling) | 人手 labeling 大規模化 | モデル hub |
+| 出自 | Stanford DAWN lab (2016 原論文) | コンシューマ labeling | OSS community |
+| 核技術 | labeling functions → 確率的 label | 人手 + AI assist | model hosting |
+
+## 主要プロダクト (4 本柱)
+- **Snorkel Flow**: weak supervision ベース labeling + 訓練プラットフォーム
+- **GenFlow**: LLM instruction/SFT dataset 自動生成
+- **Evaluate**: LLM/Agent 評価ベンチマーク自動生成
+- **Expert DaaS**: 業種エキスパートによる高品質 dataset 供給
+
+## 資金調達
+- 累計 \$238M / 7 ラウンド / 19 投資家
+- 2021 Series C: \$85M at **\$1B valuation**
+- 2025-05 Series D: **\$100M at \$1.3B valuation** (Addition lead)
+
+## 市場文脈 (Gartner)
+- 2026 までに scalable data practice なしの AI プロジェクトの **60% 放棄**予測
+
+## OSS
+- github.com/snorkel-team/snorkel (Apache 2.0 / 5.9k+ ⭐)
+- labeling function + label model のコア公開
+
+## 自分株式会社での活用
+- daily-judgment: labeling functions で過去判断を弱監督データ化 → 未来判断の fine-tune
+- AI大学: GenFlow で 139 provider 差別化 instruction dataset 自動生成
+- user-manual: Evaluate で ai-hub routing の quality regression 自動検知
+
+## 試す
+- Web: https://snorkel.ai/
+- OSS: https://github.com/snorkel-team/snorkel
+- Docs: https://docs.snorkel.ai/
+- 原論文: https://arxiv.org/abs/1711.10160
+- 料金: OSS 無料 / Snorkel Flow enterprise custom
 ''',
 };
 

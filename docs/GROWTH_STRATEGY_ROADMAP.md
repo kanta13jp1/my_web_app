@@ -13698,3 +13698,88 @@ orphan branches: 全 pattern 閾値以下 (cleanup 不要)。
 **Philosophy**: 6/9 ✅ (原則 1 CEO 判断 / 2 習慣化強化 / 5 無料の価値可視化 / 6 2 検索で単価確定 / 7 BS 負債 framing / 8 昨日の自分超え)
 
 **次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 単価行 landed / audit round 3 (Cowork/Nova/Gemini FL/Replit/LINE) / Win版 Codex routing follow-up
+
+## 2026-04-20 PS版#3 S21 — AI大学 139 社化 (Snorkel AI 追加)
+
+**Why**: PS#3 = AI大学コンテンツ更新専任。S20 Contextual AI (138 社) の次の 139 社目として Snorkel AI を選定。weak supervision 発明者 Alex Ratner (Stanford DAWN lab) が率いる data-first AI プラットフォーム。2025-05 Series D \$100M at \$1.3B valuation で民間 AI data layer の決定版として再評価中。
+
+**候補選定**: S20 末尾 backlog から Haize Labs / Snorkel AI / Essential AI / Adept 後継 / Gradium / Vectara の 6 候補を evaluate。
+- **Haize Labs**: Anthropic/Scale AI/AI21 顧客 + ACG 攻撃 44% 成功率 → S22 候補に繰下
+- **Snorkel AI 採用理由**: (1) Stanford DAWN lab 発の実績・論文筆頭著者 CEO / (2) 4 プロダクト (Flow/GenFlow/Evaluate/Expert DaaS) = 成熟度最高 / (3) OSS snorkel 5.9k⭐ で開発者 reach あり / (4) \$1.3B valuation + Gartner 60% 放棄予測で市場追い風 / (5) 既存 138 社に「weak supervision」軸が空白
+
+**Step 0 評価: 8.5/9**
+
+| 観点 | 判定 |
+|------|------|
+| 公式サイト | ✅ snorkel.ai |
+| 最新モデル | ✅ Snorkel Flow + GenFlow + Evaluate + Expert DaaS |
+| ベンチマーク | ✅ Stanford DAWN 原論文 (VLDB 2017) |
+| API/SDK | ✅ Python SDK + Flow client |
+| 独自技術 | ✅ weak supervision (発明者自ら設計) |
+| OSS | 🟡 snorkel Python lib は Apache 2.0 / Flow platform は proprietary → **-0.5** |
+| CLI/SDK | ✅ Python |
+| 資金 | ✅ \$238M 累計 / Series D \$100M at \$1.3B |
+| 話題性 | ✅ Ratner = weak supervision 発明者 + Gartner 60% 放棄予測 |
+
+**変更ファイル (4)**:
+1. `supabase/migrations/20260420170000_seed_snorkel_ai_ai_university.sql` (new, 3 rows, \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列)
+4. `docs/GROWTH_STRATEGY_ROADMAP.md` (Session PS#3-S21 記録)
+
+Migration timestamp: **170000** 使用 (160000 WBS reassign の直後 / 150000 Thinking Machines)
+
+**Philosophy Alignment (9 原則)**:
+- 原則 1 (CEO 感): 過去判断を weak supervision で確率的 label 化 → 判断の定量化
+- 原則 3 (優しい mentor): labeling functions の宣言的表現で「なぜ」を残す
+- 原則 5 (商品=ユーザー価値): 人手 labeling 比 10-100x 高速 (Stanford 実証)
+- 原則 7 (資産=データ): 過去 memory/ROADMAP を weak supervision で永続資産化
+- 原則 8 (KPI=昨日の自分): 過去 LF で未来判断を fine-tune = 昨日の自分 delta 学習
+
+**戦略的次の一手**:
+- **ai-hub data.weak_supervision action 設計** (Win版 cross-instance-pr 候補)
+  - labeling_functions[] + texts[] を受け取り Snorkel LabelModel 呼び出し
+  - AI-DEV-23 原則 3 (trace_id + 5 秒超検出) を action に組込
+- **data.evaluate_model action 設計**: 複数 LLM 応答を rubric-based scoring
+- **memory/ の GenFlow 化**: 139 provider 比較の instruction dataset 自動生成
+
+**連続 8 session 実績 (S14-S21)**:
+
+| S | Provider | Step 0 |
+|---|----------|--------|
+| S14 | Prime Intellect | 8.5/9 |
+| S15 | Exa.ai | 8.5/9 |
+| S16 | Pleias AI | 8/9 |
+| S17 | Imbue | 8.5/9 |
+| S18 | Thinking Machines | 8/9 |
+| S19 | Kyutai | **9/9 ⭐** |
+| S20 | Contextual AI | 8/9 |
+| **S21** | **Snorkel AI** | **8.5/9** |
+
+**次回 PS#3 候補 (140 社目)**: Haize Labs (AI red-teaming / Anthropic・Scale AI・AI21 顧客) / Essential AI (監視継続) / Gradium (Kyutai spin-off \$70M seed 2025-12) / Vectara (RAG / Amr Awadallah)
+
+## PS版#5 Session 23 (2026-04-20 - EF cleanup phase 2: calendar-events)
+
+**Commit**: `d4f54037` — lib/pages/calendar_events_page.dart + audit doc
+
+**背景**: PS#6 S18 handoff (`docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` 合計 24 件・S22 で 1 件消化済) の残り 22 件のうち、home_tool_catalog 登録済 CRITICAL 6 件から 1 件着手。
+
+**対応**:
+- `_fetchMonth` — GET `?view=month&year&month` (multi-line invoke で S18 audit filter bug が見逃した pattern) → POST `{action: calendar.list}` へ置換。hub は全件返すため client 側の `_dateKey` month filter で吸収。
+- `_createEvent` — body 内 `action: create` → `calendar.create`
+- `_deleteEvent` — body 内 `action: delete, event_id` → `calendar.delete, id` (app-hub の deleteItem signature に合わせる)
+
+**検証**: `dart format` clean / `flutter analyze lib/pages/calendar_events_page.dart` No issues (7.8s)
+
+**進捗 (PS#5 範囲)**: 1/23 (4.3%) → **2/23 (8.7%)** — Section B を 0/13 → 1/13 で開始
+
+**残 CRITICAL 5 件** (home_tool_catalog 登録済・user-visible): time-tracker, goal-tracker, habit-tracker, reading-list, music-collaboration
+
+**備考**:
+- EF source `supabase/functions/calendar-events/` は削除保留 (PS#6 S18 handoff 「残 13 件 (B) の source 削除は PS#5 の Flutter 修正完了後まで見送り」方針)
+- `lib/main.dart` route `/calendar-events` と `home_tool_catalog.dart` id `calendar-events`、`edge_function_summary_card.dart` の static 表記は EF invoke ではないため手つかず
+
+**Philosophy Alignment (9 原則)**:
+- 原則 5 (商品=ユーザー価値): home から「カレンダー」機能が 404 で壊れていた経路を復旧
+- 原則 6 (資本=時間): silent fail の「気づかない時間漏れ」を即座に停止
+- 原則 7 (資産=負債): 二重実装 (EF + hub) を hub 単一に寄せ、負債 1 件消化
