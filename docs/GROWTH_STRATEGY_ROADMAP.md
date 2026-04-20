@@ -13516,3 +13516,52 @@ CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
 **未検証 round 2 対象**: Notion Custom Agents $10/1000 credit / Cowork $200→$20/seat+usage / LINE AI ¥750 / Nova 2 Lite $0.30/M / Gemini 3.1 Flash-Lite $0.25/M / Replit $9B (6 ヶ月 3 倍)
 
 **次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 軸 7 行 landed 確認 / 数字 2 社交差 audit round 2 (Notion credit 優先) / Win版 S21 PR routing follow-up / MoneyForward 7/launch 監視
+## 2026-04-20 PS版#1 Session 17 — deploy-prod 4 連続 Check formatting fail 修復 (Win版並行先取)
+
+### 背景
+
+S16 で wbs-staleness-audit 修復後、Rule 17 health check を続行。deploy-prod 直近 4 run が全 Check formatting fail していた。
+
+### 発見
+
+VSCode の DESIGN token 置換 commit ですべて format 差分が残留:
+- `lib/pages/document_esignature_page.dart`
+- `lib/pages/home_iot_manager_page.dart`
+- `lib/pages/thought_interrupt_diagnosis_page.dart` (+ L42 `require_trailing_commas`)
+
+失敗 run: 24658208537 / 24658067747 / 24657959242 / 24657931959
+
+### 修正 + 並行先取
+
+```bash
+dart format <3 files>
+flutter analyze <3 files>   # → No issues
+git commit -m "fix: dart format ..."  # e855b2a4
+git push origin HEAD:main              # rejected
+git pull --rebase origin main          # skipped previously applied commit e855b2a4
+```
+
+Win版 #131 part 14 が 3 分先に同内容を push (`0e94bfd3`)。git が patch 同一性で自動 drop → **健全 race**。
+
+### 検証
+
+run 24658340058 (0e94bfd trigger):
+- Run CI Checks / Lint, Format, and Test → success
+- Run CI Checks / Security Check → success
+- Deploy to Production Environment → in_progress (S17 終了時点)
+
+4 連続失敗の連鎖停止確認済。
+
+### Philosophy alignment
+
+- 原則 7 (資産=CI 修復反応速度の向上 / 負債=連続失敗連鎖停止)
+- 原則 6 (資本=時間・他インスタンス block 解消)
+- 原則 8 (KPI=昨日の自分・S16 root cause 学習の連続)
+- 原則 4 (6 部署バランス・VSCode 作業の副産物を PS#1 品質部が拾う)
+- 整合性: 8/9
+
+### 次回 PS#1 候補
+
+1. 🔴 inject-rules.txt に migration HH 分担ルール追加 (S15+S16 教訓の正式化)
+2. 🟡 dart format pre-commit hook 化検討 (format skip 自動ガード)
+3. 🟢 S14 副作用 = deploy-prod pending-replacement cancel 対策判断 (1 週間 measure)
