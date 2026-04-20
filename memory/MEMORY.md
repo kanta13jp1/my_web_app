@@ -3,6 +3,11 @@
 Master Brain のローカル索引。各ファイルは `memory/` 配下に置き、日付 + スコープで命名。
 NotebookLM Master Brain (jibun-master-brain ノートブック) にも同内容を蓄積する。
 
+## 2026-04-21 (VSCode版 — S-recovery / dart zombie cleanup)
+
+- `project_20260421_vscode_s_recovery.md` — 7h+ セッション異常 (dart zombie 11 本 + claude 暴走 2 本 + stale lock) → 15 min cleanup で復旧 / VSCode handoff PR done/ archive (0c729cc4)
+- `feedback_correction_20260421_dart_zombie_accumulation.md` — dart analyze 0 bytes 無限 hang は analysis-server zombie 疑い / 4h+ dart process kill テンプレ
+
 ## 2026-04-20 (VSCode版 — DESIGN token batch template)
 
 - `feedback_success_20260420_design_token_batch_template.md` — Python + dart fix + flutter analyze pipeline w/ full shade map (green/red/orange shade50-900) for 600+ Colors.X → hex replacements

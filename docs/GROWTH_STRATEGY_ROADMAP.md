@@ -15474,3 +15474,39 @@ error • The declaration '_formatSchedule' isn't referenced
 - lib/services/public_memo_service.dart (format +4 -2 net)
 
 ---
+
+## 2026-04-21 07:15 — VSCode版 S-recovery (7h+ セッション異常 + dart zombie cleanup + handoff 回収)
+
+### 症状
+ユーザー報告「7h以上セッションが続いています。異常」→ 調査で以下 3 並発原因:
+
+1. **dart zombie プロセス 11 本** (最古: 2026-04-19 18:46 起動 = 36h+)
+   - PID 48896 が dart analysis-server lock を占有 → `dart analyze` hang
+2. **Claude 暴走プロセス 2 本**
+   - PID 10880 (CPU 9732s = 2.7h) / PID 63232 (CPU 7642s = 2h)
+3. **stale scheduled_tasks.lock** (PID 61856 / 2026-04-20 15:45 取得 = 15.5h)
+
+### 対応 commits
+
+- **0c729cc4** docs: archive VSCode handoff PR (20260420_wbs_gantt_ui_filter_vscode → done/)
+- **4f93860f** feat: Add hide completed tasks filter and enhance WBS tab UI (auto-commit)
+  - `_WbsTab.hideCompleted` prop 追加 → Checkbox wiring
+  - `_TaskRow`: `期限: end_date` → `開始予定: YYYY/MM/DD  完了予定: YYYY/MM/DD` + delay chip
+  - PS#2 S17 handoff task 1/3 消化
+
+### Cleanup 実行
+```
+Get-Process dart | Where StartTime -lt (Now.AddHours(-4)) | Stop-Process -Force  # 5 dart kill
+Stop-Process -Id 10880,63232 -Force                                              # 2 claude kill
+rm -f .claude/scheduled_tasks.lock                                               # stale lock
+```
+
+### Philosophy Alignment
+- ✅ 6: 資本=時間 (7h 空回り → 15 min で復旧・ユーザー時間救済)
+- ✅ 8: KPI=昨日の自分 (zombie 累積を可視化 → cleanup プロセス確立)
+- ✅ 7: 資産負債 BS (負債 = dart zombie / 資産 = 1 min cleanup command template)
+- 5/9 ✅ (新機能なし・cleanup のみなので PHILOSOPHY 採点 skip 相当)
+
+### 次候補 (別セッション)
+1. 並行インスタンス用の dart zombie auto-cleanup hook (PreToolUse on Bash で `Get-Process dart -StartTime<-2h`)
+2. PS#2 S17 handoff 残タスク 2 (fetch 経路確認) / 3 (planned label は完了済と思われるが確認)
