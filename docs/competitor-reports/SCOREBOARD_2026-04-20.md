@@ -35,8 +35,8 @@
 | 11 | **openclaw** | OSS AI agent | 335K★ / 26M MAU / Peter Steinberger→OpenAI / NVIDIA NemoClaw 企業 wrapper (S13) | 🟠 | 日本語 + Flutter Web 即起動 vs CLI/chat bot | 定常 watchlist + OSS 連携余地 |
 | 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork 研究PV 01-30 / GA 02-24 / Pro $20 組込み 04-09 / 長文課金廃止 03-13 / Excel+Sheets+Gmail+Slack+DocuSign+FactSet (S14) / [S17] Computer Use 解禁 (Pro/Max・2026-04 build 以降): Claude が画面操作 (file/dev tool/browser) を直接実行 — Connectors > Browser > Screen の優先順 + Analytics API + OpenTelemetry + Enterprise pricing 改定 (flat $200 → $20/seat + usage-based)** | 🔴🔴 | **個人 6 部署 / Supabase 永続 / 日本語 first (3 軸)** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
 | 13 | **jobcan** | 勤怠 | DONUTS: AI 自動仕訳 2026-04-13 追加 / 25万社・300万ID (S13) | 🟡 | 個人向け勤怠 (カフェ勉時間計測) | 定常 watchlist |
-| 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M 1M context) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
-| 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
+| 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M input / $2.50/M output・1M context・2025-12-02 release・[S28] 7-source 検証済) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
+| 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite ($0.25/M input / $1.50/M output・preview 2026-03-19・[S28] 9-source 検証済) / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
 | 16 | **microsoft** | OS/AI | Azure Foundry 3 マルチモーダル AI (S8) | 🟠 | Flutter Web 軽量 vs 重量企業向け | 定常 watchlist |
 | 17 | **discord** | SNS/コミュニティ | Clyde AI = xAI Grok 駆動 (2025 刷新) / 150M MAU (S12) | 🟠 | 個人 AI vs コミュニティ AI | 定常 watchlist |
 | 18 | **line** | メッセージ (JP) | **LINE AI ¥750/月 無制限 / 人事AI 10ツール** | 🟠 | ダッシュボード vs 対話のみ | 20260420_line_ai_pricing.md (S9 発行予定) |
@@ -214,4 +214,44 @@ S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる
 → Win版 routing 判断結果が出たら LP 軸 7 を正式採用する
 
 **S24 補足**: 機能パリティ論は Computer Use のみ。**plugin ecosystem は Claude が Codex の約 20 倍優位**なので「どの AI を選ぶか」の答えは「plugin ecosystem で Claude、Computer Use は両方、自分株式会社は 6 部署軸で統合」が正確。SNS 弾 (S23 PR) の framing も「Claude 一強崩壊」ではなく「Claude 優位維持でも 6 部署軸は別問題」に訂正。
+
+---
+
+## [S28] 数字 2 社交差 audit round 4 — 軽量 LLM input/output 価格対比 (2026-04-20)
+
+**Why**: PS#4 S25-S27 の習慣化路線を継続。本 round では ai-hub routing 判断に直結する **Nova 2 Lite + Gemini 3.1 Flash-Lite** の input/output 単価を AWS 公式 + Google 公式 + 独立 pricing site 多数で検証。新発見 = output 価格の差。
+
+### 検証結果
+
+| Model | Input ($/M) | Output ($/M) | Release | Sources |
+|---|---|---|---|---|
+| **Nova 2 Lite** | $0.30 | **$2.50** | 2025-12-02 | aws.amazon.com/bedrock/pricing 公式 + pricepertoken + sim.ai + caylent + cloudprice + getmaxim + dev.to (7 sources) |
+| **Gemini 3.1 Flash-Lite** | $0.25 | **$1.50** | preview 2026-03-19 | blog.google + ai.google.dev 公式 + cloud.google.com + benchlm + openrouter + aipricing.guru + eweek + businessanalytics.substack + metacto (9 sources) |
+
+### Cross-comparison insight (新発見)
+
+- **Input 価格**: ほぼ拮抗 ($0.30 vs $0.25 = 16% 差)
+- **Output 価格**: **Gemini FL が 40% 安** ($1.50 vs $2.50)
+- 用途依存:
+  - **read-heavy** (要約/翻訳の input >> output): Nova 2 Lite + Gemini FL いずれも実質同等
+  - **write-heavy** (生成系の output >> input): **Gemini FL 圧倒的優位** (Nova 2 Lite の 60% コスト)
+  - **典型的 chat (input ≈ output)**: Gemini FL が overall 30% 安
+
+### ai-hub routing 提案 (Win版 へ handoff 推奨)
+
+- 既存: Nova 2 Lite を一律候補に置いていた (S9 placeholder)
+- 提案: **input-bound タスクは Nova 2 Lite (1M context 強み) / output-bound タスクは Gemini FL** で分割 routing
+- 自分株式会社の典型用途 (AI 大学コンテンツ生成 / blog 自動化) は output-bound → **Gemini FL を default に昇格** 検討
+- Win版 cross-instance-pr で routing 表更新依頼予定 (PS#4 S29 候補)
+
+### audit 累計 (S25-S28)
+
+- ✅ S25: Cursor valuation (5 ソース)
+- ✅ S26: Notion credit 単価 (公式 + 独立 = 2 ソース)
+- ✅ S27: Cowork pricing 構造 (公式 + 5 独立 = 6 ソース)
+- ✅ S28: Nova 2 Lite (7 ソース) + Gemini FL (9 ソース)
+
+→ 残 round: LINE AI ¥750/月 / Replit $9B (2 件)
+
+*更新: PS版#4 S28 audit round 4 完了 / Nova vs Gemini output 価格差 (40% 安) 発見 / ai-hub routing 提案 | 2026-04-20 夜 last 5*
 
