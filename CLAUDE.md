@@ -47,179 +47,58 @@ UIコンポーネントを新規作成・修正する際は、以下のファイ
 
 ---
 
-## 開発ルール (常に適用)
+## 開発ルール (詳細は ~/.claude/hooks/inject-rules.txt 参照)
 
-1. **`flutter analyze` を常に0エラー維持** — コード変更後は必ずチェック
-2. **`deno lint` を常に0エラー維持** — Edge Function 変更後は必ずチェック
-3. **`docs/GROWTH_STRATEGY_ROADMAP.md` を毎回更新** — 変更内容をセッション記録に追記
-4. **ダミーデータ禁止** — 必ずSupabaseのリアルデータを使用
-5. **Edge Functionファースト** — 複雑なロジックはバックエンドに移動
-6. **シンプルさ優先** — 明示的に依頼されていない機能は追加しない
-7. **EFハードキャップ: 50本以下 (Tier1/Tier2廃止)** — `deploy-prod.yml` にデプロイするEFは常に50本以下に維持する。Tier1/Tier2の分類は廃止。全てのEFはデプロイ済みとして管理する。新規機能追加時は必ず以下のいずれかの方法で対応すること: (a) **既存hubへのaction追加** (最優先 — EF数が増えない), (b) **既存EFのaction統合** (2本以上をhubに合流してスロット確保), (c) 新規EF作成は既存EFを統合して50本以下を維持した場合のみ許可。現在のhub構成: `core-hub`・`growth-hub`・`ai-hub`・`admin-hub`・`app-hub`・`schedule-hub`・`tools-hub`・`media-hub`・`enterprise-hub`・`social-commerce-hub`・`lifestyle-hub` + standalone 5本 (`get-home-dashboard`・`ai-assistant`・`growth-weekly-digest`・`guitar-recording-studio`・`local-election-intelligence`) = 計16本
-8. **毎セッション: Web/モバイル表示チェック（必須）** — セッション開始時または実装後に、本番URL `https://my-web-app-b67f4.web.app/` の主要ページをWebとモバイル両方の表示で確認し、レイアウト崩れ・テキスト切れ・ボタン重複・スクロール不具合を発見して修正する。特にホーム画面・AI大学・LP・ランキングページを重点確認する
-9. **毎セッション: GitHub Actions ワークフロー最適化チェック（必須）** — `.github/workflows/` を見直し、以下を確認・修正する: (a) 常にエラーになるステップ・ジョブを削除または無効化、(b) 同一ジョブの二重起動（push + workflow_call 競合など）を防ぐ、(c) timeout-minutes が実態と合っているか、(d) `continue-on-error: true` の乱用がデプロイ遅延を招いていないか。修正後は `docs/GROWTH_STRATEGY_ROADMAP.md` にセッション記録として追記する
-10. **毎セッション: `docs/` 戦略ドキュメント全件分析・開発計画反映** — 以下の常設ドキュメントを読み、(a) 矛盾・鮮度切れを修正、(b) 未着手タスク・ブロッカーを `COMPRESSED_PROMPT_V3.md` の「実装待ち」セクションに追記する。
-   - 対象: `docs/CICD_SETUP_GUIDE.md`, `docs/CONTRIBUTING.md`, `docs/MULTI_INSTANCE_COORDINATION.md`, `docs/README.md`, `docs/DESIGN_TOOLING_SETUP.md`, `docs/technical/*.md`, `docs/roadmaps/*.md`, `docs/user-docs/*.md`
-   - 除外 (自動生成・アーカイブ): `docs/daily-reports/`, `docs/cs-notes/`, `docs/blog-drafts/`, `docs/blog/`, `docs/competitor-reports/`, `docs/incident-reports/`, `docs/security-audit/`, `docs/archive/`, `docs/email-templates/`, `docs/weekly-drafts/`
-11. **毎セッション: AI大学コンテンツ → 開発ワークフロー反映（必須）** — `ai_university_content` テーブルの最新 `news` カテゴリ（または NotebookLM に蓄積した AI ニュース）を開発に活かす。以下の観点で評価し、有望なものは `GROWTH_STRATEGY_ROADMAP.md` の次回優先タスクに追記する:
-   - **モデルアップグレード**: 新モデル (例: Gemini 2.5 / Claude 4 / GPT-5) が利用可能になったら既存 EF (`ai-assistant`, `daily-judgment`, `gemini-election-analysis` など) のモデルパラメータを更新
-   - **新 API 機能の取り込み**: 音声生成 (Voxtral) / リアルタイム検索 (Perplexity Sonar) / 画像生成など新機能を既存機能に統合できないか検討
-   - **コスト最適化**: より安価・高速なモデルが登場したらバッチ処理 EF (`batch_analysis.py`, `competitor-monitoring` など) での採用を検討
-   - **差別化機能のヒント**: 競合 AI プロバイダーの新機能からユーザー価値を逆算し、未実装機能のアイデアとして追加
-   - **実施手順**: (1) `notebooklm ask "各プロバイダーの最新ニュースから開発に使えそうな機能・APIを抽出して"` → (2) 既存 EF・ページとの接続可能性を評価 → (3) 実装可能なものは即 ROADMAP へ追記 → (4) 今セッションで対応できるものは実装
+> **重要 (Win版#131 移行)**: 行動ルール (behavioral rules) は `~/.claude/hooks/inject-rules.txt` に
+> 移行済。UserPromptSubmit hook で毎ターン system-reminder として注入される。
+> CLAUDE.md には **facts (技術スタック / EF 一覧 / コマンド)** のみ残す。
+>
+> Distyl AI 研究: 指示 500 個 → 最高精度モデルで 68% 遵守。1 回読みの CLAUDE.md は
+> 訓練済みの癖に負ける。毎ターン強制注入の hook は system-reminder 形式で優先度高。
 
-12. **毎セッション: UI改善ツールチェーン実行（全インスタンス・必須）** — `Claude Code` × `Nanobanana API` × `Figma MCP` × `AIDesigner MCP` × `design-skills` サブエージェント × **`frontend-design` プラグイン** × **`Claude Design` (Anthropic Labs SaaS)** × `docs/DESIGN.md` を毎セッション組み合わせて UI を 1ページ以上改善する。詳細は `.github/COMPRESSED_PROMPT_V3.md` Rule 19/21 および `docs/DESIGN_TOOLING_SETUP.md`（正式手順書）参照。
+### inject-rules.txt 注入 rule (毎ターン system-reminder)
 
-   **改善ワークフロー（既存画面改善時）**:
-   1. **`design-skills` サブエージェント起動**: 主要ページ (ホーム / AI大学 / LP / ランキング) を `docs/DESIGN.md` (Orange+Indigo ダークテーマ) と照合し、デザイントークン違反・改善点を列挙
-   2. **Figma MCP** (`/design-review`): 既存デザインの余白・タイポ・コンポーネント構造を読み「今あるものに合わせる」基準を取得
-   3. **AIDesigner MCP** (`/design-component`): Desktop/Mobile 両方で改善案 2〜3 案を生成
-   4. **Nanobanana API**: カラーパレット・コンポーネント案を生成してデザイン候補を拡張
-   5. **`frontend-design` プラグイン (Anthropic 公式)**: distinctive な HTML/CSS プロトタイプを生成 (generic AI slop 回避)。Flutter 変換前の美学検証に使う
-   6. **`Claude Design` SaaS** (Pro/Max プラン): 複雑な画面は Web UI で視覚的に設計し **handoff bundle** を `/claude-design-handoff` に流し込む (Rule 21)
-   7. **実装**: 採用案を `lib/` に反映 → `flutter analyze 0エラー` → commit
+| Hook ルール | 内容 | 移行元 CLAUDE.md Rule |
+| --- | --- | --- |
+| `[INSTANCE]` | セッション冒頭で Win/PS/VSCode 確認 | — |
+| `[PHILOSOPHY-22]` | docs/PHILOSOPHY.md 9 原則チェック | Rule 17 (旧 22) |
+| `[AI-DEV-23]` | docs/AI_DEV_PRINCIPLES.md 7 原則チェック | Rule 18 (旧 23) |
+| `[AUTO-REPLY]` | author == 自分 で必ず skip + cap | — |
+| `[DART-FORMAT]` | dart format → flutter analyze 0 → push | Rule 1 + 2 |
+| `[REBASE]` | git fetch + log 確認 → pull --rebase | — |
+| `[WORKDIR-ISOLATION]` | 10 インスタンス別 worktree 必須 | — |
+| `[STASH-SAFETY]` | git stash 危険・WIP commit 推奨 | — |
+| `[CAVEMAN]` | 通信 fragments OK・code は normal | — |
+| `[MEMORY-DECAY]` | memory/ タイムスタンプ + shadow + cleanup | — |
+| `[WBS-SYNC]` | 毎セッション wbs.priority_for_instance + update_progress | — |
+| `[INSTANCE-ROLES]` | 10 インスタンス役割分担 | — |
+| `[CONCURRENCY]` | deploy-prod cancel-in-progress: false | — |
+| `[ROADMAP-LOG]` | docs/GROWTH_STRATEGY_ROADMAP.md 毎セッション末尾追記 | Rule 3 |
+| `[REAL-DATA]` | ダミーデータ禁止・Supabase リアルデータ使用 | Rule 4 |
+| `[EF-FIRST]` | 複雑ロジックは Edge Function に移動 | Rule 5 |
+| `[EF-CAP-50]` | deploy-prod EF ≤ 50・hub action 追加最優先 | Rule 7 |
+| `[NO-SCOPE-CREEP]` | 明示依頼ない機能を勝手に追加禁止 | Rule 6 |
+| `[UI-VERIFY]` | 毎セッション本番 UI チェック (Playwright + design-skills) | Rule 8 |
+| `[CONSTRAINT-LOG]` | 新制約発見 → instance-constraints.md + cross-instance-pr | Rule 15 |
 
-   **制約**: `docs/DESIGN.md` に反する提案は採用しない / `Theme.of(context)` + `ThemeService` を優先 / 日本語本文の `letter-spacing: 0`・`line-height: 1.7〜2.0` を維持
+### CLAUDE.md に残す Facts セクション (本ファイル下記参照)
 
-13. **毎セッション: 6 MCPプラグイン活用（Rule 20・必須）** — `.mcp.json` に設定済みの以下6プラグインを積極的に使う。APIキーはローカル設定済み (`.mcp.json` は `.gitignore` 管理、gitに含めない)。
+- 技術スタック / 競合 21 社
+- デザインシステム参照 (DESIGN.md / 競合別 DESIGN.md)
+- Multi-AI ワークフロー (インスタンス分担表)
+- Schedule 自動化タスク (cron 設定)
+- AI 大学キラーコンテンツ化方針
+- ディレクトリ構成 / EF 一覧
+- Rule 16 (Claude Design ワークフロー) — slash command 一覧 (facts)
+- Rule 13 (6 MCPプラグイン) — プラグイン早見表 (facts)
+- Rule 14 (バージョンチェック) — `/session-start-check` skill 委譲済
 
-   | プラグイン | 使用タイミング | 主なツール/コマンド |
-   | --- | --- | --- |
-   | **Playwright** | UI変更後の動作確認・E2Eテスト (Rule 8 自動化) | `playwright_navigate` / `playwright_click` / `playwright_screenshot` |
-   | **Context7** | 外部ライブラリ・API使用時 | プロンプトに `use context7` を付けると最新ドキュメント参照・ハルシネーション抑制 |
-   | **GitHub MCP** | PR作成・Issue操作 (Rule 9 補完) | `create_pull_request` / `list_issues` / `create_issue` |
-   | **Magic (21st.dev)** | UIコンポーネント新規生成 (Rule 12 補完) | `/ui <説明>` でデザイン品質の高いコンポーネントを生成 |
-   | **Code Review** | 実装後の自動レビュー | `code_review` ツールでセキュリティ・パフォーマンスを自動チェック |
-   | **Superpowers** | 構造化ワークフロー強化 | `superpowers:tdd` / `superpowers:debug` / `superpowers:plan` スキル |
+### 手動チェック (skill 化) — hook では強制せず
 
-   **活用方針**:
-   - Rule 8 (Web/モバイル確認) → **まず Playwright でスクリーンショット自動取得** してから手動確認を補完
-   - 外部ライブラリの使い方を調べるとき → `use context7` を先頭に付けて最新仕様を参照
-   - PR を作るとき → `gh` CLI の代わりに **GitHub MCP** を使うと会話の流れで直接作成可能
-   - 新しいUIウィジェットを作るとき → **Magic MCP** でベースを生成してから `docs/DESIGN.md` トークンを適用
-   - 実装が一段落したら → **Code Review MCP** でセキュリティ・品質チェックを自動実行
-
-14. **セッション開始時: ツールバージョンチェック（全インスタンス・必須）** — セッション冒頭で以下を実行する。バージョン変更があれば制約解消チェックと役割分担の見直しを行う。
-   - **デスクトップ版 (VSCode/Windowsアプリ/PowerShell)**: `PYTHONUTF8=1 python3 scripts/check_versions.py` を実行
-   - **WEB版**: `python3 scripts/check_versions.py --web` は不可 → 下記URLを WebFetch で確認し手動更新
-     - Claude Code: `https://github.com/anthropics/claude-code/releases`
-     - Gemini: `https://marketplace.visualstudio.com/items?itemName=google.geminicodeassist`
-   - **バージョン更新時の対応**:
-     1. `docs/tool-versions.md` を更新 (`--update` フラグで自動更新可)
-     2. `docs/tool-versions.md` の「制約解消チェックリスト」を確認
-     3. 解消された制約を `docs/instance-constraints.md` から削除
-     4. `.github/COMPRESSED_PROMPT_V3.md` の制約列を更新
-   - **新モデルリリース時** (例: `claude-sonnet-4-7` 等): `supabase/functions/ai-assistant/index.ts` の `DEFAULT_SYNTHESIS_MODEL` + 各 EF のモデルパラメータを更新する
-
-15. **制約・仕様変更を即記録（全インスタンス・必須）** — どのインスタンスでも新しい制約・モデル変更・モード仕様を発見したら即座に以下を実施する:
-   1. `docs/instance-constraints.md` の「制約発見ログ」に追記 (`| 日付 | インスタンス | 制約内容 | 代替手段 | セッション名 |`)
-   2. `.github/COMPRESSED_PROMPT_V3.md` の該当インスタンス行の制約列を更新
-   3. `memory/feedback_correction_YYYYMMDD.md` に記録
-   4. `docs/cross-instance-prs/YYYYMMDD_constraint.md` で他インスタンスへ周知
-   **対象範囲**: Claude モデル制限・WEB版の新たな不可操作・MCP ツール制限・GitHub Actions の仕様変更・外部AI (Copilot/Gemini/CODEX) のモデル変更すべてを含む
-
-16. **Rule 21: Claude Design ワークフロー統合（Windows版#94・全インスタンス）** — Anthropic 公式の 2 つのデザインプラグインを本プロジェクトのデザインワークフローに組み込む。両方ともインストール済み (2026-04-18 時点)。
-
-   **インストール済みツール**:
-   - **`frontend-design@claude-plugins-official`** (v=unknown): distinctive な HTML/CSS/React UI コード生成 (generic AI slop 回避)。Skill tool から `frontend-design:frontend-design` で呼出
-   - **`design@knowledge-work-plugins`** (v1.2.0): Anthropic Labs の Claude Design プラグイン。Claude Desktop / Claude Code 共用。6 slash commands + 9 MCP サーバー bundle
-
-   **`design@knowledge-work-plugins` で利用可能な slash commands**:
-   - `/design-critique` — UI 構造化レビュー (Figma URL / 画像 / 説明)
-   - `/design-handoff` — 開発者 handoff spec (トークン・breakpoint・state・a11y)
-   - `/design-system` — DESIGN.md audit / document / extend
-   - `/accessibility-review` — WCAG 2.1 AA 監査
-   - `/research-synthesis` — ユーザー調査統合
-   - `/user-research` — 調査ガイド生成
-
-   **bundle される MCP サーバー** (自動接続):
-   Figma / Notion / Slack / Linear / Asana / Atlassian / Intercom / Gmail / Google Calendar
-
-   **自作 `/claude-design-handoff` との使い分け**:
-   | 目的 | ツール |
-   | --- | --- |
-   | Figma URL → 開発者用 handoff spec 生成 | 公式 `/design-handoff` (Anthropic) |
-   | handoff 出力 → **Flutter widget skeleton + DESIGN.md 差分** | 自作 `/claude-design-handoff` (本プロジェクト固有) |
-   | UI 構造化レビュー | 公式 `/design-critique` |
-   | DESIGN.md 監査 | 公式 `/design-system audit` |
-   | WCAG 2.1 AA チェック | 公式 `/accessibility-review` |
-
-   **統合ワークフロー例** (新規画面追加時):
-   1. Figma でデザイン作成
-   2. `/design-critique <Figma URL>` で構造レビュー
-   3. `/accessibility-review <Figma URL>` で a11y チェック
-   4. `/design-handoff <Figma URL>` で開発者 spec 生成
-   5. Flutter 実装後 `/claude-design-handoff` で DESIGN.md トークン差分 + widget skeleton 生成
-   6. `flutter analyze 0 エラー` → commit
-
-   **使い分け基準表** (Rule 19 ツールチェーン全体):
-   | 用途 | ツール |
-   | --- | --- |
-   | Figma レビュー / a11y / handoff spec | `design@knowledge-work-plugins` (公式) |
-   | 既存デザイントークン準拠の widget 改善 | `design-skills` + Figma MCP + AIDesigner MCP (Rule 19 既存) |
-   | 新規 component の creative prototype | `frontend-design` プラグイン (HTML 生成) |
-   | handoff → Flutter + DESIGN.md 差分 | 自作 `/claude-design-handoff` |
-   | 1 画像だけ生成 | Nanobanana API (既存) |
-
-17. **Rule 22: 基本理念 9 原則に照らした方向性検証（Windowsアプリ版#97・全インスタンス・必須）** — `docs/PHILOSOPHY.md` の **9 原則** は自分株式会社の根本哲学であり、**全機能・改修・優先度判断はこの理念に照らして方向性が一致しているか必ず確認** する。
-
-   **9 原則 (要約)**:
-
-   1. **CEO 感** — ユーザーが最終決定権を握る (自動化のみは NG)
-   2. **ミッション駆動** — 機能はユーザーのミッション・コアバリューに紐付く
-   3. **優しい mentor** — AI/通知は監視・命令ではなく支援
-   4. **6 部署バランス** — R&D / 財務 / マーケ営業 / 人事 / 本社 (人事最優先・人事ダメ = 全部停止)
-   5. **商品 = ユーザーの価値** — 価値消費ではなく価値増大
-   6. **資本 = 時間** — 操作時間最小化・配分可視化
-   7. **資産 vs 負債バランスシート** — 資産増・負債減を意識
-   8. **KPI = 昨日の自分** — 他人比較より自己進捗
-   9. **ゴール = IPO/ウェルビーイング** — 短期 KPI より長期幸福感
-
-   **適用方法 (毎セッション)**:
-
-   1. **session-start-check** で 9 原則の見出しを確認
-   2. **新機能設計時**: 9 項目チェックリストを実施 (`docs/PHILOSOPHY.md` 末尾参照)
-      - 9項目中 **7+** ✅ → 即実装可
-      - **4-6** ✅ → 設計再考
-      - **3 以下** ✅ → 実装見送り or 大幅再設計
-   3. **wrap-up** で「今回の作業は philosophy にどう貢献するか」記録
-   4. **commit message** に任意で「Philosophy alignment: 原則 X, Y」記載
-   5. **新機能の commit 前**: 9 原則違反していないか自己レビュー
-
-   **重要**: この理念は動画 `videos/edit/output/A_full_with_subtitles.mp4` (NotebookLM 生成・6:42) から蒸留したサービス全体の根本哲学。短期 KPI 競争に陥ると競合 21 社の劣化コピーになる。差別化は **「ユーザー = CEO」「人生のフレームワーク」** という哲学そのもの。
-
-   **理念ずれ可能性のある既存機能** (要再評価):
-   - **競馬予想**: 部署不明・娯楽=価値増ではない可能性 → R&D「データサイエンス学習」枠で再定義検討
-   - **AI ランキング**: 他人比較中心 → 「昨日の自分」進捗を併設すべき
-   - **SNS 風機能 (もしあれば)**: 時間消費型なら原則 5/6 違反
-
-18. **Rule 23: AI 開発 7 原則 (Windowsアプリ版#100・全インスタンス・必須)** — `docs/AI_DEV_PRINCIPLES.md` の **AI 開発 7 原則** は AI エージェント・AI 機能の **実装方法 (how)** を規定する。**Rule 22 (PHILOSOPHY 9 原則 = what/why) と並列・両方クリアした機能のみ実装可**。
-
-   **AI 開発 7 原則 (要約)**:
-
-   1. **Auth Layer** — API キー source of truth 単一化・古い値の上書き防止
-   2. **Deny-by-default Security** — MVP 段階から認証・rate limit・入力検証
-   3. **Trace-based Observability** — `trace_id` + span + 5 秒超検出
-   4. **Cost Circuit Breaker** — 4 段階上限 (request/agent/business/platform) 自動遮断
-   5. **Team Memory + Effectiveness Score** — 成功失敗パターン蓄積・低スコア減衰・自動注入
-   6. **Checkpoint + Retry** — 中間状態保存・再試行ポリシー・dead letter queue
-   7. **Quality Gate (Sentinel + Warden)** — 自動出力前の事実確認 + 品質確認
-
-   **適用方法**:
-   - 新 AI 機能設計時: 7 項目チェックリスト実施 (`docs/AI_DEV_PRINCIPLES.md` 末尾参照)
-     - 6+ ✅ → 即実装可
-     - 4-5 ✅ → 設計再考
-     - 3 以下 ✅ → 実装見送り or 大幅再設計
-   - **PHILOSOPHY 9 原則 (Rule 22) と AI_DEV 7 原則 (Rule 23) 両方クリアした機能のみ実装可**
-   - 既存機能のスコア表は `docs/AI_DEV_PRINCIPLES.md` 「既存機能の評価」セクション参照
-
-   **重要**: AI 開発の安全な高速化は **強力な監視・制御・記憶の組み合わせ**で実現する。AI ツールで開発スピードが圧倒的に上がる一方、目に見えない欠陥 (API キー上書き・ハルシネーションループ・自動投稿スパム化等) が大きな代償を生む。
-
-   **要改善既存機能**:
-   - **competitor-monitoring** (3/7): Circuit breaker + retry + memory 強化
-   - **blog-publish** (2/7): Quality gate + circuit breaker 必須
-
-   **ソース**: NotebookLM Notebook [Perils of Invisible Defaults](https://notebooklm.google.com/notebook/7e39f060-7f61-4a31-babb-237da14f06aa) (AI エージェントで 1 日 23 ページ構築した開発者の実体験)
+- `/session-start-check` (Rule 14 + 10 + 並行衝突)
+- `/rule17-wf-health` (Rule 9 — PS版#1 専任)
+- `/blog-publish-cleanup` (T-1 関連 — PS版#2 専任)
+- `/wrap-up` (Rule 3 + Philosophy Alignment + 次回タスク提案)
 
 ---
 
