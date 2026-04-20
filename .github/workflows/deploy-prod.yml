@@ -189,7 +189,6 @@ jobs:
             personal-dashboard
             notify-feature-request
             user-feedback-collector
-            growth-acquisition
             growth-command-center
             growth-referral
             growth-share-signal
@@ -201,7 +200,6 @@ jobs:
             viral-share-engine
             x-media-post
             growth-automation-controller
-            landing-ab-test
             referral-program
             share-quote
             generate-quote-image
@@ -234,7 +232,6 @@ jobs:
             content-moderation
             user-activity-tracker
             department-reporting
-            admin-notification-hub
             issue-auto-resolver
             subscription-management
             subscription-billing
@@ -249,7 +246,6 @@ jobs:
             expense-tracker
             time-tracker
             automation-workflows
-            data-export-manager
             webhook-manager
             api-rate-limiter
             music-collaboration
@@ -267,7 +263,6 @@ jobs:
             weather-widget
             currency-converter
             markdown-renderer
-            gemini-election-analysis
             social-proof-generator
             contact-manager
             goal-tracker
