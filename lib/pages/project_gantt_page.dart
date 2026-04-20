@@ -184,6 +184,8 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
   // Filter
   String? _filterInstance;
   String? _filterMilestone;
+  // Win版#131 part 12: 未完了タスクのみフィルタ
+  bool _hideCompleted = false;
 
   // My projects (tab 2)
   List<Map<String, dynamic>> _projects = [];
@@ -350,6 +352,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             milestones: _milestones,
             tasks: _tasks,
             loading: _loadingWbs,
+            hideCompleted: _hideCompleted,
+            onToggleHideCompleted: (v) =>
+                setState(() => _hideCompleted = v ?? false),
+            filterInstance: _filterInstance,
+            onFilterInstance: (v) => setState(() => _filterInstance = v),
           ),
           _MyProjectsTab(
             projects: _projects,
@@ -1333,11 +1340,20 @@ class _GanttTimelineTab extends StatefulWidget {
   final List<WbsMilestone> milestones;
   final List<WbsTask> tasks;
   final bool loading;
+  // Win版#131 part 12: 未完了 only filter + instance filter (Gantt タブ)
+  final bool hideCompleted;
+  final ValueChanged<bool?> onToggleHideCompleted;
+  final String? filterInstance;
+  final ValueChanged<String?> onFilterInstance;
 
   const _GanttTimelineTab({
     required this.milestones,
     required this.tasks,
     required this.loading,
+    required this.hideCompleted,
+    required this.onToggleHideCompleted,
+    required this.filterInstance,
+    required this.onFilterInstance,
   });
 
   @override
@@ -1345,7 +1361,8 @@ class _GanttTimelineTab extends StatefulWidget {
 }
 
 class _GanttTimelineTabState extends State<_GanttTimelineTab> {
-  static const _leftPanelWidth = 340.0;
+  // Win版#131 part 12: 開始/完了/リカバリー列追加で 340 → 700 に拡張
+  static const _leftPanelWidth = 700.0;
   static const _rowHeight = 32.0;
   static const _headerHeight = 56.0;
   static const _dayWidth = 6.0;
@@ -1410,9 +1427,15 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   List<WbsTask> get _orderedTasks {
-    final list = [...widget.tasks];
+    var list = [...widget.tasks];
+    // Win版#131 part 12: 未完了 only filter + instance filter
+    if (widget.hideCompleted) {
+      list = list.where((t) => t.status != 'completed').toList();
+    }
+    if (widget.filterInstance != null) {
+      list = list.where((t) => t.instance == widget.filterInstance).toList();
+    }
     list.sort((a, b) {
-      // カテゴリ順 → 開始日順
       final catCmp = a.categoryOrder.compareTo(b.categoryOrder);
       if (catCmp != 0) return catCmp;
       final aStart = a.startDate ?? _timelineStart;
@@ -1561,6 +1584,28 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               height: 1.5,
             ),
           ),
+          const SizedBox(width: 16),
+          // Win版#131 part 12: 未完了 only toggle
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: widget.hideCompleted,
+                onChanged: widget.onToggleHideCompleted,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                activeColor: const Color(0xFFFF6B35),
+                visualDensity: VisualDensity.compact,
+              ),
+              const Text(
+                '未完了のみ',
+                style: TextStyle(
+                  color: Color(0xFFE2E8F0),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
           const Spacer(),
           Container(
             width: 10,
@@ -1643,6 +1688,33 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
               ),
             ),
           ),
+          // Win版#131 part 12: 開始/完了予定/担当/リカバリー列
+          SizedBox(
+            width: 80,
+            child: Text(
+              '開始予定',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: Text(
+              '完了予定',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
           SizedBox(
             width: 70,
             child: Text(
@@ -1654,6 +1726,18 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
+            ),
+          ),
+          SizedBox(
+            width: 180,
+            child: Text(
+              'リカバリー案 / 状態',
+              style: TextStyle(
+                color: Color(0xFFB0B0C0),
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
           ),
         ],
@@ -1780,14 +1864,117 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
                 ],
               ),
             ),
+            // Win版#131 part 12: 開始/完了予定/担当/リカバリー
+            SizedBox(
+              width: 80,
+              child: Text(
+                _formatDate(task.startDate),
+                style: const TextStyle(
+                  color: Color(0xFFB0B0C0),
+                  fontSize: 11,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(
+              width: 80,
+              child: Text(
+                _formatDate(task.endDate),
+                style: TextStyle(
+                  color: task.delayDays > 0
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFFB0B0C0),
+                  fontSize: 11,
+                  fontWeight:
+                      task.delayDays > 0 ? FontWeight.w700 : FontWeight.normal,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             SizedBox(
               width: 70,
               child: _instanceBadge(task),
+            ),
+            SizedBox(
+              width: 180,
+              child: _recoveryCell(task),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '—';
+    return '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+  }
+
+  Widget _recoveryCell(WbsTask task) {
+    if (task.status == 'completed') {
+      return const Padding(
+        padding: EdgeInsets.only(left: 4),
+        child: Text(
+          '✅ 完了',
+          style: TextStyle(
+            color: Color(0xFF4CAF50),
+            fontSize: 10,
+            height: 1.5,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (task.isDelayedNoPlan) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Text(
+          '⚠ ${task.delayDays}日遅延・未記入 (要対処)',
+          style: const TextStyle(
+            color: Color(0xFFEF4444),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (task.delayDays > 0 && task.recoveryPlan.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Text(
+          '🟠 ${task.delayDays}日遅延 / ${task.recoveryPlan}',
+          style: const TextStyle(
+            color: Color(0xFFF97316),
+            fontSize: 10,
+            height: 1.5,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    if (task.recoveryPlan.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Text(
+          task.recoveryPlan,
+          style: const TextStyle(
+            color: Color(0xFF9CA3AF),
+            fontSize: 10,
+            height: 1.5,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _instanceBadge(WbsTask task) {
@@ -2246,11 +2433,12 @@ class _LightningLinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeJoin = StrokeJoin.round;
 
-    final path = Path()..moveTo(points.first.dx, 0);
+    // 上下端は today vertical に固定 → 「今日のライン」が基準である事を明示
+    final path = Path()..moveTo(todayX, 0);
     for (final p in points) {
       path.lineTo(p.dx, p.dy);
     }
-    path.lineTo(points.last.dx, size.height);
+    path.lineTo(todayX, size.height);
     canvas.drawPath(path, paint);
 
     // 各 anchor に小さな○

@@ -126,6 +126,32 @@ MEMORY.md にも候補リストを記録すること。
 
 ---
 
+## Step 5.5: WBS-SYNC 必須更新 (Win版#131 part 12 / Option B)
+
+**全インスタンス必須**: 本セッションで進めた WBS タスクを `tools-hub:wbs.update_progress` で更新する。
+
+```bash
+INSTANCE=<vscode|win|ps1|ps2|ps3|ps4|ps5|ps6|web|mobile>
+
+# 完了 / 進行中 / 遅延 (recovery_plan 必須) / リスケ (end_date 更新)
+curl -s -X POST 'https://smmkxxavexumewbfaqpy.supabase.co/functions/v1/tools-hub' \
+  -H 'Authorization: Bearer <ANON_KEY>' -H 'Content-Type: application/json' \
+  -d '{"action":"wbs.update_progress","id":"<task_id>","progress":100,"status":"completed"}'
+```
+
+### 違反時
+
+- 翌日 06:00 JST の `wbs-staleness-audit.yml` GHA cron で検出
+- `docs/cross-instance-prs/<YYYYMMDD>_wbs_<instance>_overdue.md` 自動作成
+- PS版#1 が Rule17 health check で拾い上げて警告
+
+### スキップ条件
+
+- 本セッションで WBS タスクを 1 件も触っていない場合のみ (純粋 docs 修正のみ等)
+- それ以外は必ず実行
+
+---
+
 ## Step 6: 次回セッション タスク候補の提案（必須）
 
 **未完了タスクの有無に関わらず**、必ず次回実施タスク候補を提案する。

@@ -1,0 +1,123 @@
+name: WBS Staleness Audit
+
+# Win版#131 part 12 / Option C
+# 全インスタンスの WBS 更新有無を毎日 audit。
+# 過去 N 日間 wbs_tasks.updated_at が更新されていないインスタンスを検出 →
+# docs/cross-instance-prs/<YYYYMMDD>_wbs_<instance>_overdue.md を自動作成 → PR
+
+on:
+  schedule:
+    # 毎日 06:00 JST = 21:00 UTC (前日)
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+env:
+  STALE_DAYS: 3 # この日数以上更新が無いインスタンスを overdue 扱い
+  INSTANCES: 'vscode win ps1 ps2 ps3 ps4 ps5 ps6'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Audit per instance
+        id: audit
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          mkdir -p audit
+          OVERDUE_LIST=""
+
+          for INSTANCE in $INSTANCES; do
+            # 過去 STALE_DAYS 日間の wbs_tasks.updated_at が当該インスタンスにあるか
+            RESPONSE=$(curl -s -X POST "${SUPABASE_URL}/functions/v1/tools-hub" \
+              -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+              -H "Content-Type: application/json" \
+              -d "{\"action\":\"wbs.list_tasks\",\"instance\":\"${INSTANCE}\"}")
+            RECENT_COUNT=$(echo "$RESPONSE" | python3 -c "
+            import sys, json
+            from datetime import datetime, timezone, timedelta
+            d = json.load(sys.stdin)
+            tasks = d.get('tasks', [])
+            cutoff = datetime.now(timezone.utc) - timedelta(days=${STALE_DAYS})
+            recent = sum(1 for t in tasks
+                         if t.get('updated_at')
+                         and datetime.fromisoformat(t['updated_at'].replace('Z','+00:00')) > cutoff)
+            print(recent)
+            " 2>/dev/null || echo "0")
+
+            if [ "$RECENT_COUNT" = "0" ]; then
+              OVERDUE_LIST="$OVERDUE_LIST $INSTANCE"
+              echo "⚠ $INSTANCE: 過去 $STALE_DAYS 日 WBS 更新なし"
+            else
+              echo "✅ $INSTANCE: $RECENT_COUNT 件更新済み"
+            fi
+          done
+
+          echo "overdue_list=$OVERDUE_LIST" >> "$GITHUB_OUTPUT"
+
+      - name: Create cross-instance-pr for overdue instances
+        if: steps.audit.outputs.overdue_list != ''
+        env:
+          OVERDUE: ${{ steps.audit.outputs.overdue_list }}
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          mkdir -p docs/cross-instance-prs
+          BRANCH="wbs-staleness/${DATE}"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH"
+
+          for INSTANCE in $OVERDUE; do
+            FILE="docs/cross-instance-prs/${DATE}_wbs_${INSTANCE}_overdue.md"
+            cat > "$FILE" <<EOF
+          # WBS 更新が ${STALE_DAYS} 日以上滞っています — ${INSTANCE} 宛
+
+          - **検出日**: $(date -u +%Y-%m-%d)
+          - **検出元**: \`.github/workflows/wbs-staleness-audit.yml\` (Win版#131 part 12 / Option C)
+          - **対象**: \`${INSTANCE}\`
+          - **状況**: 過去 \`${STALE_DAYS}\` 日間 \`wbs_tasks.updated_at\` の更新ゼロ
+
+          ## 必須対応 (次セッション開始時)
+
+          1. \`tools-hub:wbs.priority_for_instance\` で TOP 5 取得
+          2. 着手タスクを \`wbs.update_progress\` で \`in_progress\` 化
+          3. 完了タスクを \`wbs.update_progress\` で \`completed\` 化
+          4. 遅延タスクは \`recovery_plan\` 必須記入
+          5. 新規発生は \`wbs.add_task\` で追加
+
+          ## WBS 表示
+
+          https://my-web-app-b67f4.web.app/project-gantt
+
+          ## 関連 rule
+
+          - \`[WBS-SYNC]\` (inject-rules.txt 毎ターン注入)
+          - wrap-up skill Step 5.5 (Win版#131 part 12 で追加)
+          EOF
+            git add "$FILE"
+          done
+
+          git commit -m "audit: WBS staleness — ${OVERDUE} overdue (>${STALE_DAYS} days)"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "audit: WBS staleness ${DATE} — overdue:${OVERDUE}" \
+            --body "Automated WBS staleness audit. ${STALE_DAYS}+ 日 WBS 更新が無いインスタンスを cross-instance-pr 化しました。" \
+            --label "wbs-audit,automated" \
+            --base main \
+            --head "$BRANCH" || true
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
