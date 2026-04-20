@@ -81,7 +81,11 @@ class _RecentFeaturesListState extends State<RecentFeaturesList> {
           return ActionChip(
             label: Text(
               label,
-              style: const TextStyle(fontSize: 12, height: 1.5),
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFFE5E7EB),
+                height: 1.5,
+              ),
             ),
             backgroundColor: const Color(0xFF1A1A1A),
             side: const BorderSide(color: Color(0xFF2A2A2A)),
