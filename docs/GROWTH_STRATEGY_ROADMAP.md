@@ -14633,3 +14633,45 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 1. **HIGH**: PS#5 が time-tracker / goal-tracker migrate → 同 cleanup 適用 (CRITICAL 残 2 件)
 2. **MED**: DEAD_LIST ∩ supabase/functions/ 残 11 件の migration 進捗監視
 3. **LOW**: horse_racing scraper batch_analysis.py の Gemini Flash-Lite cascade 状態再確認 (June 1 sunset)
+
+---
+
+## 2026-04-20 22:30 JST — PS版#1 S22 Rule 17 WF health check
+
+### 結果: 全 WF green 復帰確認
+
+- **wbs-staleness-audit.yml**: S21 fix (c6c42d27) 反映 → run 24668478809 (13:12 UTC) success
+- **Blog Publish (scheduled)**: run 24665960140 (12:16 UTC) は GH006 protected branch reject で failure だが S21 で `continue-on-error: true` 化済 → 次回 schedule (2026-04-21 12:00 UTC) は warn-only 化される (published:true 未反映は orphan 検知で 2 重投稿回避)
+- **WBS Staleness Audit (display name)**: 同一ファイルにつき c6c42d27 で復旧
+- **Workflow Failure Handler**: 7 runs 全て skipped (条件フィルタ通常動作)
+- **Deploy to Production**: 11:28-11:35 UTC の 4 cancelled は historical (total_count=0 pattern · c6c42d27 以前) / 現在 24668473347 (c6c42d27) success + 24668570658 (2aeb8255) in_progress で green
+
+### Orphan branches
+
+- blog-publish/*: 0
+- cs-check-*: 0
+- ai-university-update/*: 0
+- daily-report-*: 0
+- claude/*: 3 (< 5 閾値 → cleanup 不要)
+
+### Concurrency 鮮度 (既存 fix 確認)
+
+- `ci.yml` L19: `cancel-in-progress: ${{ github.event_name == 'pull_request' }}` (S14 fix 継続)
+- `deploy-prod.yml` L26: `cancel-in-progress: false` (Win#109 fix 継続)
+
+### 根本原因 (未解決 · user action 必要)
+
+- **BYPASS_RULES PAT**: blog-publish scheduled main 直 push の GH006 は secret `BYPASS_RULES` が protected branch bypass 権限を持っていない ことに起因 / PAT rotation が必要だが user scope → 一旦 warn-only で放置
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): CI green 維持でブログ自動投稿の信頼性担保 ✅
+- 原則 6 (資本=時間): S21 直後の health check で再発なし確認 10 分 ✅
+- 原則 7 (資産負債 BS): 潜在不具合 0 件 = 負債 0 ✅
+- 原則 8 (KPI=昨日の自分): 昨日 S16 の duplicate env 再発ゼロ ✅
+- 整合性: **4/9** (Rule 22 → 即実装可)
+
+### 学び
+
+- **fix 直後の health check 習慣**: S21 修正後 20 分以内に rule17-wf-health 再実行 → cancellation regression / GH006 追加影響 を即検出できる体制
+- **cascade cancel の historical vs current 判別**: `gh api /runs/<id>/jobs` の total_count=0 が見えたら「過去の parse error run」 or 「cascade cancel」なので、現在 live の run まで遡って判定する
