@@ -12754,3 +12754,20 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   - 40 本 backlog 完遂 = 最短 20-40 日 (1-2 本/日 ペース)
   - 無駄な probe dispatch でのトークン浪費を Gate 1 で事前阻止
 - Philosophy alignment: 原則 6 (資本=時間 — 429 無駄試行を skill 段階で阻止) / 原則 7 (資産=skill の信頼性向上・負債=誤前提を解消) / 原則 8 (KPI=昨日の自分 — S3 学習を即 skill に回収)
+
+---
+
+## PS版#2 Session 5 (2026-04-20 17:25 JST) — Notion 5/4 課金 D-14 弾 本A draft 作成 (PS#4 S19 handoff 消化)
+
+- **コミット**: (本セッション末で push)
+- **目的**: PS#4 S19 cross-instance-pr (`20260504_notion_paywall_d14.md`) の PS#2 タスク消化 — 本A (D-6 = 2026-04-28 dispatch) の JA+EN draft を作成 (B/C は条件変化リスクのため直前作成)
+- **新規 draft**:
+  - `docs/blog-drafts/2026-04-28-notion-custom-agents-paywall-vs-free-6-departments.md`
+  - `docs/blog-drafts/2026-04-28-notion-custom-agents-paywall-vs-free-6-departments-en.md`
+  - `published: false` で保存 → 2026-04-28 に t1-blog-dispatch で dev.to 投稿
+- **構成**: Notion Custom Agents 5/4 課金切替の事実 → credit 残高ウォッチ = 時間資本浪費 → 自分株式会社 6 部署統合モデル → 技術スタック (Supabase 16 hub + ai-hub 130+ provider) → 対比 4 軸 → 併用パターン (Notion=仕事 / 自分株式会社=健康・家計・日次 KPI)
+- **棄却条件**: (PR 既述) 無料期間延長 / 個人課金拡大 / Qiita 429 → 記事差し替え or X のみ
+- **Qiita rolling 制限**: 本A dev.to 単独で投入予定 (Qiita は 2026-04-23 以降の 1 本/日 ペースで別途 retry が妥当)
+- **本B / 本C**: 4/29 頃 / 5/01 頃に同スキームで draft 作成予定 (事前作成は条件変化リスクで無意味)
+- **関連 PR**: `docs/cross-instance-prs/20260504_notion_paywall_d14.md` (pending 継続 — B/C 残り + VSCode LP 補記待ち)
+- Philosophy alignment: 原則 2 (ミッション駆動 — S19 handoff を即消化) / 原則 5 (商品=価値 — 予測可能な無料を訴求) / 原則 6 (資本=時間 — credit watch 撲滅が主論旨) / 原則 8 (KPI=昨日の自分 — 課金不安で中断しない)
