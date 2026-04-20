@@ -12427,7 +12427,6 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Philosophy alignment: 原則 1 (CEO感 — アライメント user-side steering) / 原則 5 (商品=ユーザー価値 — 無検閲 OSS 重み) / 原則 7 (資産=分散学習 protocol 知識 = 陳腐化しにくい) / 原則 9 (ウェルビーイング — OSS 基盤の民主化)
 - **次回 PS#3 候補**: 132 社目 (Prime Intellect / Pleias AI) + 既存 130 社 news カテゴリ最新化
 
-
 ### Windowsアプリ版#131 セッション 部 7 + 8 (2026-04-20 15:30 JST) — deploy-prod 復旧 + AI大学 registry 同期
 
 #### Part 7: deploy-prod 5 連続失敗 → 修復
@@ -12464,3 +12463,25 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - PS#1 アクション: 観測のみ・追加修正不要 (並行 Win 修復が早かった)
 - 教訓: deploy-prod 失敗時は (a) commit log 時刻と run createdAt を必ず比較 (b) job log 取得は `gh api repos/.../actions/jobs/<id>/logs` (run-level の `--log-failed` は空が多い)
 - Philosophy alignment: 原則 6 (資本=時間 — 並行修復済を即検知して二重作業回避)
+
+## PS版#3 Session 14 (2026-04-20 15:00 JST) — AI大学 132 社化 (Prime Intellect 追加)
+- **migration**: `supabase/migrations/20260420070000_seed_prime_intellect_ai_university.sql` ($md$ tag / overview+models+api 3 行)
+- **UI**: `_providerMeta['prime_intellect']` (🧠 #1E40AF) + `_fallback` markdown (INTELLECT-3 / prime-rl / GPU マーケット)
+- **ai-university-update.yml**: Prime Intellect を seed-only コメント列に追加 (公式 API は 2026-04 時点 waitlist)
+- **Step 0 評価 9/9**:
+  1. ✅ 公式サイト (primeintellect.ai)
+  2. ✅ 最新モデル (INTELLECT-3 106B MoE / 12B active / 131K ctx / 2025-12)
+  3. ✅ ベンチマーク (AIME 2024 90.8% / LiveCodeBench SOTA-for-size)
+  4. ✅ API 利用可能 ($0.20/1M in — Gemini Flash 級)
+  5. ✅ 独自技術 (グローバル分散 RL / prime-rl fault-tolerant async)
+  6. ✅ OSS 公開 (HuggingFace PrimeIntellect/INTELLECT-3)
+  7. ✅ CLI/SDK (GitHub PrimeIntellect-ai/prime)
+  8. ✅ 資金調達 (Founders Fund リード Series A $15M)
+  9. ✅ 話題性 (arxiv 2512.16144 + 大手メディア複数報道)
+- **戦略意義**: 132 社目で **「分散 RL + GPU マーケット + OSS モデル」の 3 層垂直統合** 軸を追加
+  - 既存 Nous Research (分散 SFT) と補完関係 — Prime は RL 側で先行
+  - GPU マーケット $0.39/hr (4090) 〜 $3.99/hr (H200) は RunPod / Lambda と競合
+  - 「Too cheap to meter」ビジョン = 自分株式会社の AI コスト最適化戦略と整合
+  - INTELLECT-3 を ai-hub 経由で $0.20/M 呼出可 → daily-judgment / 競馬予想 reasoning のコスト削減候補
+- Philosophy alignment: 原則 6 (資本=時間 — AI コスト低減で操作時間最小化) / 原則 5 (商品=ユーザー価値 — OSS 重みで自己ホスト可) / 原則 1 (CEO 感 — prime-rl で独自 RL ジョブを走らせる権限) / 原則 7 (資産 — 分散 RL 知識 = 陳腐化しにくい基盤)
+- **次回 PS#3 候補**: 133 社目 (Pleias AI / Essential AI / Imbue / Exa.ai) + AI大学 news カテゴリ最新化バッチ

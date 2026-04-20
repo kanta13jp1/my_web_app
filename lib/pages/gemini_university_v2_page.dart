@@ -837,6 +837,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF0EA5E9),
     officialUrl: 'https://nousresearch.com/',
   ),
+  'prime_intellect': _ProviderMeta(
+    name: 'Prime Intellect',
+    emoji: '🧠',
+    color: const Color(0xFF1E40AF),
+    officialUrl: 'https://www.primeintellect.ai/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4273,6 +4279,36 @@ client = OpenAI(
 - HuggingFace OSS: https://huggingface.co/NousResearch
 - Discord (30,000+ 名): https://discord.gg/jqVphNsB4H
 - Hermes 4 Tech Report: https://arxiv.org/pdf/2508.18255
+''',
+  'prime_intellect': '''
+# Prime Intellect — 分散 RL で 106B MoE を訓練 (INTELLECT-3 / AIME 90.8%)
+
+2024 年設立、**「Open Superintelligence Stack」** を掲げる AI インフラ企業。
+GPU マーケットプレイス・分散 RL 基盤 (prime-rl)・INTELLECT 系列オープンモデルを垂直統合。
+
+## 主力モデル (2025-12 リリース)
+- **INTELLECT-3**: 106B MoE (12B active) / 131K ctx / **AIME 2024 90.8%**
+- **INTELLECT-2**: 32B / 初の分散 RL permissionless GPU 訓練
+- **INTELLECT-1**: 10B / 初の分散 SFT 実証
+
+## 既存 131 社との差別化
+| 観点 | Prime Intellect | Nous Research | 既存大手 |
+|------|----------------|---------------|---------|
+| 学習方式 | 🌐 グローバル分散 RL | Psyche 分散 SFT | 中央集権 GPU |
+| 価格 | 💰 \$0.20/1M in (INTELLECT-3) | \$0.20-2.00/M | \$5-15/M |
+| GPU マーケット | 🖥️ H200 \$3.99/hr pay-as-you-go | なし | なし |
+
+## Why？
+- RL スケーリング則の frontier-class 実証 (512×H200 で訓練)
+- 「Too cheap to meter」ビジョン — AI 計算のコモディティ化
+- prime-rl は fault-tolerant async RL を OSS 化
+
+## 試す
+- OpenRouter: https://openrouter.ai/primeintellect
+- HuggingFace OSS: https://huggingface.co/PrimeIntellect
+- prime-rl GitHub: https://github.com/PrimeIntellect-ai/prime-rl
+- Tech Report: https://arxiv.org/abs/2512.16144
+- GPU マーケット: https://www.primeintellect.ai/dashboard/
 ''',
 };
 
