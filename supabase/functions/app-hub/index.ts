@@ -294,8 +294,80 @@ serve(async (req: Request) => {
 
       // --- Time Tracker ---
       case "time.list": {
-        const items = await listItems(admin, "time_entry", userId);
-        return json({ success: true, entries: items });
+        const view = String(body.view ?? new URL(req.url).searchParams.get("view") ?? "today");
+        const now = new Date();
+        let since: Date;
+        if (view === "week") {
+          since = new Date(now);
+          since.setDate(since.getDate() - since.getDay());
+          since.setHours(0, 0, 0, 0);
+        } else if (view === "month") {
+          since = new Date(now.getFullYear(), now.getMonth(), 1);
+        } else {
+          since = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+        const { data, error: lerr } = await admin.from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "time_entry")
+          .filter("metadata->>user_id", "eq", userId)
+          .gte("created_at", since.toISOString())
+          .order("created_at", { ascending: false });
+        if (lerr) throw new Error(lerr.message);
+        const rows = data ?? [];
+        let totalHours = 0;
+        for (const e of rows) {
+          totalHours += Number((e.metadata as Record<string, unknown>)?.hours ?? 0);
+        }
+        const entries = rows.map((e) => ({
+          ...(e.metadata as Record<string, unknown>),
+          id: e.id,
+          recordedAt: e.created_at,
+        }));
+        const cap = view === "month" ? 160 : view === "week" ? 40 : 8;
+        return json({
+          success: true,
+          entries,
+          totalHours: Math.round(totalHours * 100) / 100,
+          overtimeAlert: totalHours > cap,
+        });
+      }
+
+      case "time.projects": {
+        const items = await listItems(admin, "time_entry", userId, 500);
+        const projectHours = new Map<string, number>();
+        for (const e of items) {
+          const meta = e.metadata as Record<string, unknown>;
+          const proj = String(meta?.project ?? "未分類");
+          const hours = Number(meta?.hours ?? 0);
+          projectHours.set(proj, (projectHours.get(proj) ?? 0) + hours);
+        }
+        const projects = [...projectHours.entries()]
+          .map(([name, hours]) => ({ name, hours: Math.round(hours * 100) / 100 }))
+          .sort((a, b) => b.hours - a.hours);
+        return json({ success: true, projects });
+      }
+
+      case "time.clock": {
+        const clockType = String(body.type ?? "clock_in");
+        const entry = await addItem(admin, "time_entry", userId, {
+          type: clockType,
+          timestamp: new Date().toISOString(),
+          hours: 0,
+        });
+        return json({ success: true, entry });
+      }
+
+      case "time.log_hours": {
+        const hours = Number(body.hours ?? 0);
+        if (hours <= 0) return json({ success: false, error: "hours required" }, 400);
+        const entry = await addItem(admin, "time_entry", userId, {
+          type: "manual",
+          project: body.project ?? "未分類",
+          hours,
+          memo: body.memo ?? "",
+          date: body.date ?? new Date().toISOString().slice(0, 10),
+        });
+        return json({ success: true, entry });
       }
 
       case "time.start": {

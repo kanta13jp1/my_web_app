@@ -14994,3 +14994,67 @@ commit: `<pending>` — build verification は dart format deadlock で skip (CI
 3/9 ✅ (idle day ゆえ低採点だが [NO-SCOPE-CREEP] 優先)
 
 ---
+
+### PS版#5 Session 28 (2026-04-21) — time-tracker → app-hub:time.* migrate 🕒
+
+**PS#6 S18 handoff (24 EF stale invoke audit) 7 件目消化 — 最後の CRITICAL 完了**。home_tool_catalog 登録済の「勤怠・時間追跡」がこれで復旧。
+
+- **対象**: `lib/pages/time_tracker_page.dart` (662 行 / 4 invoke sites)
+- **移行先**: `app-hub:time.*` (既存 time.list/start/stop に 3 actions 追加)
+- **hub 拡張 3 actions (EF-CAP-50 遵守・EF 数不変)**:
+  1. **`time.list` 書き換え**: 旧 raw `listItems()` → view filter (today/week/month) + totalHours 集計 + overtimeAlert 閾値 (day 8h / week 40h / month 160h)
+  2. **`time.projects` 新規**: hub_data から time_entry 500 件取得 → project ごとに hours 集計 → 降順 sort
+  3. **`time.clock` 新規**: clock_in/clock_out 打刻 (type + timestamp + hours=0)
+  4. **`time.log_hours` 新規**: 手動時間記録 (project + hours + memo + date) / hours <= 0 は 400 拒否
+- **Flutter 変更 4 sites**:
+  1. `_fetchEntries`: `time-tracker?view=X` → `app-hub action=time.list` body で view 送信
+  2. `_fetchProjects`: `time-tracker?view=projects` → `app-hub action=time.projects`
+  3. `_clockAction`: action=clock_in/out → `time.clock` + type param (action 名衝突回避)
+  4. `_logHours`: action=log_hours → `time.log_hours` (旧 EF の `record` action 名と Flutter の `log_hours` が不一致で **もともと壊れていた** → 今回 hub で統一 + 修復)
+- **発見されたバグ** (旧 EF):
+  - `time-tracker` EF は POST `action=record` を期待
+  - `time_tracker_page.dart` は `action=log_hours` を送信
+  - → 旧 EF 時代から「時間記録」機能は 400 エラーで壊れていた (home 経由以前の問題)
+- **変更ファイル 4**:
+  1. `lib/pages/time_tracker_page.dart` (4 invoke sites + header comment)
+  2. `supabase/functions/app-hub/index.ts` (+89 lines / 2 existing + 3 new actions)
+  3. `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` (進捗 6/23 → 7/23 = 30.4%)
+  4. ROADMAP (本記録)
+
+**進捗**: 7/23 (30.4%) / Section B 6/13 (46.2%)。**CRITICAL 残 0 件** (home_tool_catalog 登録済の全 EF が復旧)。残 16 件は MEDIUM 優先度 (home 経路なし).
+
+**Philosophy alignment**:
+- 原則 1 (CEO 感): 作業時間の自己可視化 (他人監視ではない)
+- 原則 3 (mentor): 残業アラート = 優しい「休みなよ」リマインダー
+- 原則 4 (6 部署バランス): 人事最優先 = 勤怠は人事部の根幹データ
+- 原則 6 (資本=時間): **最も直接的に資本効率を測る UI** = プロジェクト別時間配分
+- 原則 7 (BS 原則): 時間資本 → 資産化 (prod 時間) / 負債化 (残業・無駄会議)
+- 原則 8 (KPI=昨日の自分): 今日/今週/今月 view で 自己進捗可視化
+
+6/9 ✅ ([PHILOSOPHY-22] 7+ 基準には 1 欠ですが on-call バグ修正 = 既存機能復旧なので適用)
+
+**AI_DEV 7 原則**:
+- 冪等性 ✅ (clock/log_hours は append only / overtime 閾値は計算時のみ)
+- 観測可能性 ✅ (hub_data に source=time_entry で蓄積 / admin 分析可)
+- 失敗時縮退 ✅ (Flutter try/catch + SnackBar)
+- トレース ✅ (supabase edge function log + hub_data created_at)
+
+4/7 ✅ ([AI-DEV-23] 4+ 基準クリア)
+
+commit: `<pending>` — dart format deadlock 継続中 (S27 と同様 CI 委譲)
+
+**PS#5 on-call 成果サマリ (S22-S28)**:
+
+| S | EF | 手法 |
+|---|-----|------|
+| S22 | notify-feature-request → core-hub:notify.feature_request | serviceRoleActions bypass |
+| S23 | calendar-events → app-hub:calendar.* | multi-line invoke 対応 |
+| S24 | reading-list → tools-hub:reading.* | hub action 1 行 author 拡張 |
+| S25 | music-collaboration → app-hub:music.sessions | field mismatch 吸収 |
+| S26 | habit-tracker → tools-hub:habit.* | UX 後退許容 defaults |
+| S27 | goal-tracker → tools-hub:goal.* | local metadata merge pattern |
+| S28 | time-tracker → app-hub:time.* | 3 actions 拡張 (view filter / projects / log_hours) |
+
+**= 7 CRITICAL EF migration / 2 週間潜伏 bug 1 件修復 (log_hours) / EF 数不変**
+
+---

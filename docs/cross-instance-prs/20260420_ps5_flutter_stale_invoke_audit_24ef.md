@@ -81,23 +81,23 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | ~~music-collaboration~~ | ~~lib/pages/music_collaboration_page.dart:32~~ | **✅ PS#5 S25 完了** → app-hub:music.sessions (field mapping: title→metadata.name / collaborators→participants.length) |
 | poll-survey | lib/pages/poll_survey_page.dart:42,77,97 | tools-hub:poll.create / poll.vote |
 | ~~reading-list~~ | ~~lib/pages/reading_list_page.dart:32,150~~ | **✅ PS#5 S24 完了** → tools-hub:reading.list / reading.add (hub action 1 行 author 拡張) |
-| time-tracker | lib/pages/time_tracker_page.dart:52,76,96,164 | app-hub:time.start / time.list |
+| ~~time-tracker~~ | ~~lib/pages/time_tracker_page.dart:52,76,96,164~~ | **✅ PS#5 S28 完了** → app-hub:time.list (view filter + totalHours + overtimeAlert) / time.projects (aggregate) / time.clock (clock_in/out) / time.log_hours (新 actions 3 追加) |
 
 ### C. S16 既 handoff 済 (再掲・1 件)
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S27 goal-tracker 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S28 time-tracker 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 5 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker) | 38.5% |
+| B. 未削除 stale | 13 | 6 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker) | 46.2% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **6** | **26.1%** |
+| **合計 (PS#5 範囲)** | **23** | **7** | **30.4%** |
 
-**残 17 件** — PS#5 S27 で goal-tracker 消化 (B 5 件目)。CRITICAL 残 1 件 (time-tracker) + home_tool_catalog 未登録の B 7 件 残り。A 11 件 (削除済・修正のみ) は home 経路なしなので MEDIUM。
+**残 16 件** — PS#5 S28 で time-tracker 消化 (B 6 件目)。**CRITICAL 残 0 件** (home_tool_catalog 登録済の全 EF 移行完了)。B 7 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
 
 ## S20 audit 補正 (3 件)
 
