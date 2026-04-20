@@ -14809,3 +14809,26 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 1. Option A deploy 確認 (Win 実装後・SessionStart hook 動作テスト)
 2. wbs-staleness-audit.yml の cancellation regression 監視 (S16 再発防止)
 3. blog-publish BYPASS_RULES PAT rotation 要請 (user action)
+## [PS版#4 S30] 2026-04-20 夜 last — WBS/Gantt 大改修 Phase 2 master PR 起票 (T1-T9)
+
+ユーザー directive (WBS 更新されない + enforcement Phase 2 3案) に対し、PS#4 = 競合監視専任の scope を踏まえ **master PR 起票に徹する** 対応を実施。T1-T9 の 9 タスクに分解し VSCode 12h + Win 5.5h + PS#1 9h = 26.5h 見積。
+
+**既存実装 audit (Win版#131 part 13 で半分完成)**:
+- ✅ instance enum 13 値 / Schedule 10 件 + GHA 4 件 seed / recovery_plan 列 / `wbs_milestone_risk_view` / `_hideCompleted` 実装済
+- ⚠ planned vs actual 日付分離 / instance='all' 3 件残存 / UI discoverability 要改善
+
+**rebase 後発見 (並行作業の棲み分け明記)**:
+- PS#2 S17 (896b2fdc) = 3 tactical handoffs (T5/T8-A/T8-B subset)
+- PS#6 S22 (232b2783) = `wbs.*` unreachable 2 週間潜伏 bug の critical fix → **全タスク前提条件**
+- 本 PR = 戦略的 master / PS#2 S17 = tactical subset
+
+**3 未決定事項 (ユーザー判断要)**:
+1. T4: ALL タスク 10 instance explode or shared keep?
+2. T2: 遅延 recovery_plan empty = error か warning か?
+3. T1: 「イナズマ線」= classic progress line or S-curve overlay?
+
+**Philosophy 5/9 ✅** (CEO 感 / 役割分担 / 資本=時間 / BS 原則 / KPI=昨日)
+
+commit: 8e8c737d `docs(ps4-s30): WBS/Gantt 大改修 Phase 2 マスタータスク起票 (T1-T9)`
+
+---
