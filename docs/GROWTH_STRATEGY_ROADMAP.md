@@ -12502,3 +12502,23 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - 10:22 UTC 以降 Qiita 429 解除 → `2026-04-19-*` JA drafts を順次 dispatch
   - VSCode版が 2026-04-20 slug-based drafts 追加したら Step 1 から再実行
 - Philosophy alignment: 原則 6 (資本=時間 — Qiita rate limit 無駄打ち回避) / 原則 8 (KPI=昨日の自分 — 37 本/日 持続運営)
+
+## PS版#4 Session 17 (2026-04-20 15:35 JST) — 競合 3 大 delta (Notion 5/4 課金 / Cowork Computer Use / Slack Headless 360)
+- **commit**: 後続 (本セッション 1 commit でまとめ)
+- **更新**: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` — Notion/Slack/Claude Cowork/Cursor 4 行 delta + 「S17 戦略インパクト」3 セクション
+- **memory**: `memory/project_20260420_ps4_s17.md` 新規
+- **3 大 delta 概要**:
+  1. **Notion**: Custom Agents 試用無料 → **2026-05-04 から $10/1000 credit 課金開始**
+  2. **Claude Cowork**: **Computer Use Pro/Max 解禁** (画面操作直接実行) + Anthropic Enterprise pricing 改定 ($200 flat → $20/seat + usage-based)
+  3. **Slack TDX 2026** 詳報: Headless 360 / Agentforce Experience Layer (UI 分離) / Agent Script OSS / AgentExchange marketplace (14K+ agent)
+  4. **Cursor 再訂正**: $9.9B → $29.3B (Nov2025) → **$50B 噂 (Apr2026 a16z+Thrive+NVIDIA)** / $2B ARR / 2026 末 $6B run rate 予測
+- **当社差別化軸への影響**:
+  - 軸 5 (データ永続化) — Cowork Computer Use が session 揮発のため重要度上昇
+  - 軸 4 (無料・予測可能) — Anthropic Enterprise usage-based 化で「予測可能な無料」訴求強化
+  - 軸 2 (人生 6 部署) — Cowork は依然 knowledge-work 限定 → 優位性持続
+- **次回候補**:
+  1. 🟡 4/28 ごろ「Notion 課金 vs 自分株式会社 無料」SNS 弾 3 本 (PS#2 dispatch + VSCode LP)
+  2. 🟡 Slack AgentExchange 自分株式会社 agent 公開戦略 (Win版 cross-instance-pr 新規・既存 #20260419_slack_mcp_integration.md と統合)
+  3. 🟢 5/19-20 Google I/O 監視 (S10 placeholder 更新)
+- **cross-instance-pr 新規不要** — monitoring-only / 既存 PR 11 件で吸収可
+- **Philosophy alignment**: 原則 5 (Computer Use vs データ永続性) / 原則 6 (Notion 課金移行 = 時間消費の対比) / 原則 8 (KPI=昨日の自分 = 永続化前提)

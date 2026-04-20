@@ -22,10 +22,10 @@
 
 | # | 競合 | カテゴリ | 2026-04 最新動向 | 脅威度 | 差別化軸 | 対応担当 / Action |
 |---|------|---------|-----------------|-------|---------|------------------|
-| 1 | **notion** | ノート/ドキュメント | Workers for Agents Dev Preview (GA mid-2026) / **Custom Agents 35-50% コスト削減 (GPT-5.4 Mini/Nano + Haiku 4.5 で credit 10 分 1) + Autofill 連携 (S16)** | 🔴 | 日本語 + 6部署統合 + タグ | 20260421_notion_ai_lp_update.md → VSCode |
+| 1 | **notion** | ノート/ドキュメント | Workers for Agents Dev Preview (GA mid-2026) / **Custom Agents 35-50% コスト削減 (GPT-5.4 Mini/Nano + Haiku 4.5 で credit 10 分 1) + Autofill 連携 (S16) / [S17] 無料試用 2026-05-03 終了 → 2026-05-04 から $10/1000 credit 課金開始 (Business+Enterprise add-on)** | 🔴 | 日本語 + 6部署統合 + タグ | 20260421_notion_ai_lp_update.md → VSCode |
 | 2 | **evernote** | ノート | 無料プラン 50件制限判明 (前回1000件誤記) | 🟠 | Supabase 同期 + Notion import | LP 移行比較更新 → VSCode (done?) |
 | 3 | **moneyforward** | 家計/法人 | **AI Cowork = 法人バックオフィス専用 (2026-07 GA / Claude SDK+MCP) — 個人家計は対象外 (S14 住み分け確定)** | 🟠 | 個人 CEO vs 組織バックオフィス | 20260419_moneyforward_counter.md / `finance.personal_summary` 継続 → Win |
-| 4 | **slack** | チャット/仕事 | **TDX 2026 (04-15): 60+ MCP tool + Agentforce Vibes 2.0 (Claude Sonnet 4.5 default / Dev Edition 無料) / Agentforce 360 = Mobile+ChatGPT+Claude+Gemini+Teams 全対応 (S14)** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
+| 4 | **slack** | チャット/仕事 | **TDX 2026 (04-15): 60+ MCP tool + Agentforce Vibes 2.0 (Claude Sonnet 4.5 default / Dev Edition 無料) / Agentforce 360 = Mobile+ChatGPT+Claude+Gemini+Teams 全対応 (S14) / [S17] Headless 360 (everything は API/MCP/CLI) + Agentforce Experience Layer (UI 分離 → Slack/Mobile/ChatGPT/Claude/Gemini/Teams で同一 agent をネイティブ描画) + Agent Script OSS (github.com/salesforce/agentscript) + AgentExchange marketplace (10K Salesforce + 2.6K Slack + 1K agents 統合)** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
 | 5 | **chatwork** | チャット (JP) | kubell: BPaaS × AI agents 戦略 / GraphQL+Go 刷新 (S12) | 🟠 | 個人向け vs 中小企業向け | 定常 watchlist (住み分け明確) |
 | 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.1 Fast (ai-hub 登録済) / **Grok 4.3 beta 4-agent team (Grok+Harper+Benjamin+Lucas) SuperGrok Heavy 限定 — "AI 自己組織化" vs 自分株 "人間 CEO 指揮" (S16)** | 🟠 | SNS は価値消費・自分株は価値増大・CEO 感 (原則 1) | LP コピーに「人間 CEO vs AI 自己組織化」軸追加検討 → VSCode |
 | 7 | **animaworks** | アバター AI | 2026-04 新発表なし / Meta Avatars + MetaMe NPC-AI が主戦場 (S12) | 🟢 | フル 3D = philosophy 違反 | 定常 watchlist (深追い不要) |
@@ -33,7 +33,7 @@
 | 9 | **codex (OpenAI)** | 開発ツール | GPT-5 2026Q2 予測 | 🟢 | コーディングツール vs 人生フレームワーク | 定常 watchlist |
 | 10 | **netkeiba** | 競馬 | **UMAI予想ビルダー** (ユーザー独自モデル) | 🔴 | PS版#6 horse_racing 戦略再考必要 | S9 で戦略 pivot 示唆 → PS版#6 |
 | 11 | **openclaw** | OSS AI agent | 335K★ / 26M MAU / Peter Steinberger→OpenAI / NVIDIA NemoClaw 企業 wrapper (S13) | 🟠 | 日本語 + Flutter Web 即起動 vs CLI/chat bot | 定常 watchlist + OSS 連携余地 |
-| 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork 研究PV 01-30 / GA 02-24 / Pro $20 組込み 04-09 / 長文課金廃止 03-13 / Excel+Sheets+Gmail+Slack+DocuSign+FactSet (S14)** | 🔴🔴 | **個人 6 部署 / Supabase 永続 / 日本語 first (3 軸)** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
+| 12 | **claude-cowork** | **Anthropic 公式 AI エージェント** | **Claude Cowork 研究PV 01-30 / GA 02-24 / Pro $20 組込み 04-09 / 長文課金廃止 03-13 / Excel+Sheets+Gmail+Slack+DocuSign+FactSet (S14) / [S17] Computer Use 解禁 (Pro/Max・2026-04 build 以降): Claude が画面操作 (file/dev tool/browser) を直接実行 — Connectors > Browser > Screen の優先順 + Analytics API + OpenTelemetry + Enterprise pricing 改定 (flat $200 → $20/seat + usage-based)** | 🔴🔴 | **個人 6 部署 / Supabase 永続 / 日本語 first (3 軸)** | 20260420_claude_cowork_threat.md → VSCode+Win (S13・🔴 CRITICAL) |
 | 13 | **jobcan** | 勤怠 | DONUTS: AI 自動仕訳 2026-04-13 追加 / 25万社・300万ID (S13) | 🟡 | 個人向け勤怠 (カフェ勉時間計測) | 定常 watchlist |
 | 14 | **amazon** | EC/AWS | **Nova 2 Lite ($0.30/M 1M context) + Nova Act** | 🔴 | 個人 LP / Claude 採用 | 20260420_nova2_lite_integration.md → Win (S9) |
 | 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
@@ -115,7 +115,7 @@
 
 | 競合 | カテゴリ | 2026-04 動向 | 判定 | 住み分け根拠 |
 |------|---------|-------------|------|-------------|
-| **Cursor** (Anysphere) | AI コーディング IDE | **$9.9B 評価 / $500M ARR (2026-04 確定値・S16 訂正)** / 2M ユーザー / Fortune 500 の半数 ※S15 の $60B は別ラウンド噂値可能性 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
+| **Cursor** (Anysphere) | AI コーディング IDE | **$50B 調達協議中 (mid-04・S17 再訂正) / $2B ARR 達成 (Jan2025 $100M→16 ヶ月で 20倍) / 2026 末 $6B run rate 予測 / a16z+Thrive co-lead+NVIDIA strategic** ※前期 $9.9B (Jun2025) → $29.3B (Nov2025) → $50B 噂 (Apr2026) と 9 ヶ月で 5 倍 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
 | **Cognition** (Windsurf+Devin) | AI 開発エージェント | Windsurf + Devin 統合 / $10.2B 評価 / LogRocket SWE-Bench #1 | 🟢 watchlist | 自律 SWE エージェント vs 個人 CEO 6 部署 |
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
 | **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
@@ -127,3 +127,25 @@
 
 *更新: PS版#4 S15 watchlist backlog 3 社 (Cursor / Cognition / Lovable) + Claude Design 詳細 | 2026-04-20 深夜*
 *更新: PS版#4 S16 notion 🟠→🔴 (Custom Agents 10x コスト減) / x 🟢→🟠 (Grok 4.3 4-agent team) / Cursor ARR 訂正 + Replit $9B 追加 | 2026-04-20 深夜 late*
+*更新: PS版#4 S17 Notion 課金開始日 (2026-05-04) / Claude Cowork **Computer Use Pro/Max 解禁** + Enterprise pricing 改定 ($20/seat+usage) / Slack TDX **Headless 360 + Experience Layer + Agent Script OSS + AgentExchange** / Cursor 再訂正 ($9.9B→$50B 9 ヶ月で 5 倍・$2B ARR) | 2026-04-20*
+
+---
+
+## S17 戦略インパクト (3 大 delta)
+
+### 1. Notion 課金開始日が確定 — 2026-05-04
+- 5/3 まで Custom Agents 試用無料 → 5/4 から $10/1000 credit (Business/Enterprise add-on)
+- 自分株式会社の機会: **5/4 直前 (4/28 〜 5/3) に「Notion 課金移行 = $$$」の SEO/SNS 弾を投下** → 無料 6 部署統合への転換訴求
+- VSCode版 LP に「Notion Custom Agents 5/4 から $10/1000 credit 課金」比較行を追加検討
+
+### 2. Claude Cowork Computer Use 解禁 (Pro/Max・2026-04 build 以降)
+- Claude が画面操作 (file 開く/dev tool/browser) を直接実行 — Connectors > Browser > Screen 優先順
+- Pro $20/月 ユーザーは即時利用可能 (Team/Enterprise は除外)
+- 自分株式会社への影響: **「人生 6 部署統合」軸の優位は維持** (Cowork は依然 knowledge-work 専用) だが、 **「データ永続化」軸 (差別化軸 5)** が更に重要に — Computer Use は session 揮発のため
+- Anthropic Enterprise pricing 改定 ($200 flat → $20/seat + usage-based) で **Cowork 上位プランの月額予測が困難 → 「自分株式会社 = 完全無料・予測可能」の SNS 訴求弾**
+
+### 3. Slack TDX Headless 360 + Experience Layer (S14 詳報の追加詳細)
+- **Agentforce Experience Layer**: agent action と UI を分離 → 同一 agent が Slack/Mobile/ChatGPT/Claude/Gemini/Teams でネイティブ描画
+- **Agent Script OSS**: 言語仕様/grammar/parser/compiler 全公開 (github.com/salesforce/agentscript)
+- **AgentExchange marketplace**: Salesforce 10K + Slack 2.6K + Agentforce 1K = 14K+ 統合検索
+- 自分株式会社への対応: **Slack agent エコシステムに「逆輸入」検討** — `enterprise-hub` から Slack へ 6 部署サマリーを push する agent を Agent Script で書いて AgentExchange 公開 → 個人 CEO が法人 Slack で自分株式会社情報を扱える流入経路
