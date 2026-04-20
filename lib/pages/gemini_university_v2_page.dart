@@ -867,6 +867,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFF59E0B),
     officialUrl: 'https://thinkingmachines.ai/',
   ),
+  'kyutai': _ProviderMeta(
+    name: 'Kyutai',
+    emoji: '🗣️',
+    color: const Color(0xFF0055A4),
+    officialUrl: 'https://kyutai.org/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4496,6 +4502,46 @@ job = tm.finetune.create(
     job_name="jp-cs-v1",
 )
 ```
+''',
+  'kyutai': '''
+# Kyutai — フランス OSS voice AI ラボ (Moshi / Helium / \$330M)
+
+2023 年 11 月パリ創業、**完全 OSS** (CC-BY 4.0) の AI 研究所。
+創業資金 **€300M** (≒\$330M) を Xavier Niel (Iliad 創業者) +
+Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
+**非営利** / フランス政府応援 / 全成果物を論文+コード+ weights で公開。
+
+## 既存 136 社との差別化
+| 観点 | Kyutai | OpenAI (Voice) | ElevenLabs |
+|------|--------|----------------|------------|
+| duplex 同時発話 | ✅ 160ms 理論 / 200ms 実測 | ❌ turn-based | ❌ TTS only |
+| OSS | ✅ CC-BY 4.0 完全 OSS | ❌ | ❌ |
+| 自宅推論 | ✅ PyPI / MLX / Rust | ❌ API only | ❌ API only |
+| 資金 | €300M 非営利 | \$10B+ profit | \$250M |
+
+## 主要プロダクト
+- **Moshi** (2024-07): 世界初 OSS full-duplex voice AI / 7B Helium + Mimi codec
+- **Helium-1** (2025-01): 6 欧州言語 lightweight モデル / mobile 対応
+- **Unmute**: 音声模倣 / 70 感情スタイル
+- **Mimi**: ストリーミング neural audio codec (24kHz / 1.1 kbps)
+
+## 自分株式会社での活用
+- voice-memo EF: Moshi で duplex 会議録取得 → summary + next action 即生成
+- daily-judgment: 音声即入力 (duplex で「考えながら口にする」可能)
+- user-manual: Unmute で 70 感情付き tutorial 自動生成
+- vs OpenAI Voice Mode: **OSS + 自宅実行** で差別化
+
+## 資金調達
+- 創業 2023-11 / 資金 **€300M** (≒\$330M)
+- Backers: Xavier Niel / Rodolphe Saadé / Eric Schmidt
+- 非営利法人 / フランス政府応援 / CNRS + INRIA 研究連携
+
+## 試す
+- Web: https://kyutai.org/
+- GitHub: https://github.com/kyutai-labs/moshi
+- HuggingFace: https://huggingface.co/kyutai
+- Unmute demo: https://unmute.sh/
+- 論文: https://kyutai.org/Moshi.pdf
 ''',
 };
 

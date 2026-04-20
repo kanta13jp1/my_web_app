@@ -13101,6 +13101,7 @@ source dir `notify-feature-request/index.ts` は PS#5 の修正参照用に
 2. 🟡 残 live-dead 29 件の次バッチ (core-hub/growth-hub 領域 10-15 件処理可)
 3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
 
+<<<<<<< Updated upstream
 ## 2026-04-20 PS版#1 Session 16 — wbs-staleness-audit 8/8 parse error 根治 + Pleias 再衝突 修復
 
 ### 背景
@@ -13201,3 +13202,74 @@ SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 **Philosophy**: 6 (時間節約) / 7 (資産=負債削減) ✅
 
 **次回候補**: 残 live-dead 15 件程度 (ab-testing-manager / agent-department-manager / agent-performance-monitor / habit-tracker 系 + app-hub 未確認) / note-comments + pomodoro-timer Flutter 修正 handoff / horse_racing batch cron 健全性監視
+=======
+## Session PS#3-S19 (2026-04-20 20:20 JST) — AI大学 137 社化 (Kyutai)
+
+### サマリ
+
+PS#3 S18 (Thinking Machines 136 社目) に続き、**Kyutai** を 137 社目に追加。
+**Step 0 = 9/9 満点 (初)** — フランス OSS voice AI ラボ / €300M funding
+(Xavier Niel + Rodolphe Saadé + Eric Schmidt) / 全成果物 CC-BY 4.0 完全 OSS。
+
+### 主要プロダクト
+
+- **Moshi** (2024-07): 世界初 OSS full-duplex voice AI (7B Helium + Mimi) / 160ms 理論 / 200ms 実測 (L4 GPU)
+- **Helium-1** (2025-01): 6 欧州言語 lightweight モデル / mobile 実行可能
+- **Unmute**: 70 感情スタイル音声模倣
+- **Mimi**: ストリーミング neural audio codec (24kHz / 1.1 kbps)
+
+### Step 0 評価: 9/9 満点 (第 1 号)
+
+| 観点 | 判定 | 根拠 |
+|------|------|------|
+| 公式サイト | ✅ | kyutai.org |
+| 最新モデル | ✅ | Moshi / Helium-1 / Unmute 全 active |
+| ベンチマーク | ✅ | Moshi 論文 arxiv:2410.00037 |
+| API/SDK | ✅ | `pip install moshi` / moshi-mlx / Rust Candle |
+| 独自技術 | ✅ | full-duplex (turn-based 超越) / Mimi codec |
+| OSS | ✅ | CC-BY 4.0 + Apache 2.0 (weights 含む) |
+| CLI/SDK | ✅ | PyTorch / MLX / Rust 3 バックエンド |
+| 資金 | ✅ | €300M (≒\$330M) 非営利 |
+| 話題性 | ✅ | Xavier Niel + Eric Schmidt + Macron AI Summit |
+
+**初の 9/9 満点プロバイダー** (S14-S18 は 8-8.5/9)。
+
+### 変更ファイル (3)
+
+1. `supabase/migrations/20260420120000_seed_kyutai_ai_university.sql` (new, 3 rows: overview/models/api, \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列に kyutai 追加)
+
+Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking Machines rename; Win版 aca5cd54 で修復済の穴を埋める)。
+
+### Philosophy alignment (9 原則)
+
+- 原則 1 (CEO 感): OSS + 自宅実行で外注 (OpenAI Voice Mode) 依存を完全除去
+- 原則 5 (商品=ユーザー価値): duplex voice 会議録 (考えながら口に出す UX)
+- 原則 6 (資本=時間): OSS 無料 / 商用 OK (帰属のみ)
+- 原則 7 (資産): CC-BY 4.0 weights = 陳腐化ゼロ資産 (.safetensors 自社保有)
+- 原則 8 (KPI=昨日の自分): duplex 即入力で昨日より多く気付きを記録
+
+### 戦略的次の一手
+
+- **voice-memo EF 拡張**: Moshi duplex session を ai-hub に接続 (Win版 cross-instance-pr 候補)
+- **Helium-1 日本語 fine-tune 監視**: 6 欧州言語のみ対応 → Tinker (S18) と組合せで LoRA 訓練
+- **Unmute 70 感情 tutorial**: user_manual_page を Unmute で音声化
+
+### 次回 PS#3 候補 (138 社目)
+
+- Essential AI (監視継続)
+- Adept 後継 (Amazon 買収残党)
+- Contextual AI (RAG 特化 / Matt Zaharia)
+- Snorkel AI (data-centric AI)
+- Haize Labs (AI red-teaming)
+- Gradium (Kyutai spin-off / \$70M seed 2025-12 / 音声特化)
+
+### 教訓
+
+- 連続 6 session (S14→S19) で AI大学 132→137 社 (5 追加)
+- 初の Step 0 **9/9 満点** — 完全 OSS + 著名 backer + 複数 product 全公開 + 自宅実行可が揃うと満点
+- Migration timestamp collision は Win版 aca5cd54 が 150000 に rename 済 → 120000 空き確認
+- [NO-SCOPE-CREEP]: stash pop で無関係変更 7 件混入 → git checkout で Kyutai スコープに限定
+
+>>>>>>> Stashed changes
