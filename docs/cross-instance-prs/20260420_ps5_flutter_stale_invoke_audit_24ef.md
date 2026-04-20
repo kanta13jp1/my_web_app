@@ -73,7 +73,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | agent-department-manager | lib/pages/agent_department_manager_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | agent-performance-monitor | lib/pages/agent_performance_monitor_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | ~~calendar-events~~ | ~~lib/pages/calendar_events_page.dart:58,107,129~~ | **✅ PS#5 S23 完了** → app-hub:calendar.list / calendar.create / calendar.delete |
-| chat-messaging | lib/pages/team_chat_page.dart:46,74,98 | app-hub:chat.send / chat.list |
+| ~~chat-messaging~~ | ~~lib/pages/team_chat_page.dart:46,74,98~~ | **✅ PS#5 S29 完了** → app-hub:chat.list_channels / chat.get_messages / chat.send (+chat.create_channel) / 旧 EF action 名不一致 (list_channels/get_messages) 潜伏 bug 修復 |
 | competitor-feature-sync | lib/pages/competitor_feature_sync_page.dart:32,61 | enterprise-hub:competitor.sync |
 | ~~goal-tracker~~ | ~~lib/pages/goal_tracker_page.dart:66,70,99,135,156~~ | **✅ PS#5 S27 完了** → tools-hub:goal.list (clientside status filter) / goal.add (timeframe 1 行拡張) / goal.update (local metadata merge pattern for hub full-replace) |
 | ~~habit-tracker~~ | ~~lib/pages/habit_tracker_page.dart:39,63,82~~ | **✅ PS#5 S26 完了** → tools-hub:habit.list / habit.create / habit.checkin (UX 後退: streak/done_today defaults 0/false — hub stats 拡張は別 sub-task) |
@@ -87,17 +87,17 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 
 - `notify-feature-request` → lib/pages/admin/feedback_list_page.dart:79,84 → core-hub:notify.feature ✅ **PS#5 S22 完了 (6c03d816)**
 
-## 🟢 PS#5 進捗トラッカー (PS#5 S28 time-tracker 完了反映)
+## 🟢 PS#5 進捗トラッカー (PS#5 S29 chat-messaging 完了反映)
 
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 6 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker) | 46.2% |
+| B. 未削除 stale | 13 | 7 (calendar-events, reading-list, music-collaboration, habit-tracker, goal-tracker, time-tracker, chat-messaging) | 53.8% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **7** | **30.4%** |
+| **合計 (PS#5 範囲)** | **23** | **8** | **34.8%** |
 
-**残 16 件** — PS#5 S28 で time-tracker 消化 (B 6 件目)。**CRITICAL 残 0 件** (home_tool_catalog 登録済の全 EF 移行完了)。B 7 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
+**残 15 件** — PS#5 S29 で chat-messaging 消化 (B 7 件目・過半数達成)。**CRITICAL 残 0 件**。B 残 6 件 (home 未登録) + A 11 件 (削除済・修正のみ・home 経路なし) = MEDIUM 優先度のみ残存。
 
 ## S20 audit 補正 (3 件)
 

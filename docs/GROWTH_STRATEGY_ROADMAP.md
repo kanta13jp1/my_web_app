@@ -15186,3 +15186,74 @@ Files: lib/services/public_memo_service.dart / .github/workflows/issue-to-wbs.ym
 4. **2026-04-28**: Notion paywall 本A dispatch (D-6)
 5. **2026-05-02**: Notion paywall 本B dispatch (D-2)
 6. **2026-05-04**: Notion paywall 本C dispatch (D-0) + X 短文 6 本から 1〜2 本選定 post
+
+---
+
+## [PS版#5 S29] 2026-04-21 朝 — chat-messaging → app-hub:chat.* migrate (3 actions 拡張 + 潜伏 action 名不一致 bug 修復)
+
+PS#6 S18 Flutter stale invoke audit 24 EF handoff の **8 件目消化** = **Section B 7/13 (53.8%) 過半数達成**。
+
+### 対象
+
+- `lib/pages/team_chat_page.dart` (409 行 / 3 invoke sites)
+- 移行先: `app-hub:chat.*` (既存 2 actions + 新規 3 actions)
+
+### hub 拡張 3 actions (EF-CAP-50 遵守 / EF 数不変)
+
+1. **`chat.list_channels` 新規**: `hub_data source=chat_channel` から 50 件取得 → metadata スプレッド + createdAt 付与
+2. **`chat.create_channel` 新規**: `addItem(chat_channel)` with name/description/is_public/creator_id
+3. **`chat.get_messages` 新規**: `hub_data source=chat_message` + `metadata->>channel_id` filter → reverse 時系列 + sentAt 付与
+4. **`chat.send` 書き換え**: `body.channel_id ?? body.room_id` / `body.content ?? body.text` で旧引数互換
+
+### 発見された潜伏 bug
+
+- 旧 `chat-messaging` EF は GET `?view=channels/messages` dispatch を期待
+- Flutter は `POST body {action: list_channels/get_messages}` 送信 → **action 名不一致で silent 404**
+- 今回 hub 側で `chat.list_channels` / `chat.get_messages` action 名に統一 → 修復
+
+### Flutter 3 sites 変更
+
+| Site | Before | After |
+|------|--------|-------|
+| L45 `_fetchChannels` | `chat-messaging action=list_channels` | `app-hub action=chat.list_channels` |
+| L73 `_fetchMessages` | `chat-messaging action=get_messages` | `app-hub action=chat.get_messages` |
+| L97 `_sendMessage` | `chat-messaging action=send` | `app-hub action=chat.send` |
+
+### 進捗
+
+- **8/23 (34.8%)** / Section B 7/13 (53.8% = 過半数)
+- **CRITICAL 残 0 件** 継続
+- 残 15 件 = MEDIUM 優先度 (home 経路なし)
+
+### PS#5 on-call 成果サマリ (S22-S29 = 8 セッション連続)
+
+| S | EF | 新パターン |
+|---|-----|-----------|
+| S22 | notify-feature-request → core-hub | serviceRoleActions bypass |
+| S23 | calendar-events → app-hub | multi-line invoke 対応 |
+| S24 | reading-list → tools-hub | hub action 1 行拡張 (author) |
+| S25 | music-collaboration → app-hub | field mismatch 吸収 |
+| S26 | habit-tracker → tools-hub | UX 後退許容 defaults |
+| S27 | goal-tracker → tools-hub | local metadata merge |
+| S28 | time-tracker → app-hub | 3 actions 拡張 + 潜伏 bug 修復 |
+| S29 | chat-messaging → app-hub | 3 actions 拡張 + 潜伏 action 名不一致 修復 |
+
+**= 8 EF migration / 2 件潜伏 bug 修復 / EF 数不変 (CAP-50 遵守)**
+
+### Philosophy 6/9 ✅
+
+- 1 CEO 感 / 2 ミッション / 3 mentor / 4 6 部署 / 6 時間資本 / 7 BS
+
+### AI_DEV 4/7 ✅
+
+- 冪等性 / 観測可能性 / 失敗時縮退 / トレース
+
+### 次 (S30+)
+
+残 B 6 件 (home 経路なし MEDIUM):
+- ab-testing-manager / competitor-feature-sync / invoice-generator / poll-survey
+- agent-department-manager / agent-performance-monitor (PS#5 範囲外・Win/VSCode 担当)
+
+Files: lib/pages/team_chat_page.dart / supabase/functions/app-hub/index.ts (+89 行 chat.*) / docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md / memory/project_20260421_ps5_s29.md
+
+---

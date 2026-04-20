@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// チームチャット — Discord/LINE 対抗
-/// chat-messaging Edge Function と連携してリアルタイムチャンネルメッセージング
+/// app-hub:chat.* と連携してリアルタイムチャンネルメッセージング
 class TeamChatPage extends StatefulWidget {
   const TeamChatPage({super.key});
 
@@ -43,8 +43,8 @@ class _TeamChatPageState extends State<TeamChatPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'chat-messaging',
-        body: {'action': 'list_channels'},
+        'app-hub',
+        body: {'action': 'chat.list_channels'},
       );
       final data = res.data;
       if (data is Map && data['channels'] is List) {
@@ -71,8 +71,8 @@ class _TeamChatPageState extends State<TeamChatPage> {
   Future<void> _fetchMessages(String channelId) async {
     try {
       final res = await _supabase.functions.invoke(
-        'chat-messaging',
-        body: {'action': 'get_messages', 'channel_id': channelId},
+        'app-hub',
+        body: {'action': 'chat.get_messages', 'channel_id': channelId},
       );
       final data = res.data;
       if (data is Map && data['messages'] is List) {
@@ -95,9 +95,9 @@ class _TeamChatPageState extends State<TeamChatPage> {
     setState(() => _isSending = true);
     try {
       await _supabase.functions.invoke(
-        'chat-messaging',
+        'app-hub',
         body: {
-          'action': 'send_message',
+          'action': 'chat.send',
           'channel_id': _selectedChannelId,
           'content': text,
         },

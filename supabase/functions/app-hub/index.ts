@@ -191,18 +191,68 @@ serve(async (req: Request) => {
       }
 
       // --- Chat ---
+      case "chat.list_channels": {
+        const { data, error: cerr } = await admin.from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "chat_channel")
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (cerr) throw new Error(cerr.message);
+        const channels = (data ?? []).map((c) => ({
+          id: c.id,
+          ...(c.metadata as Record<string, unknown>),
+          createdAt: c.created_at,
+        }));
+        return json({ success: true, channels });
+      }
+
+      case "chat.create_channel": {
+        const name = String(body.name ?? "").trim();
+        if (!name) return json({ success: false, error: "name required" }, 400);
+        const channel = await addItem(admin, "chat_channel", userId, {
+          name,
+          description: body.description ?? "",
+          is_public: body.is_public ?? true,
+          creator_id: userId,
+        });
+        return json({ success: true, channelId: channel.id, channel });
+      }
+
+      case "chat.get_messages": {
+        const channelId = String(body.channel_id ?? "");
+        if (!channelId) return json({ success: false, error: "channel_id required" }, 400);
+        const limit = Number(body.limit ?? 50);
+        const { data, error: merr } = await admin.from("hub_data")
+          .select("id, metadata, created_at")
+          .eq("source", "chat_message")
+          .filter("metadata->>channel_id", "eq", channelId)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (merr) throw new Error(merr.message);
+        const messages = (data ?? []).reverse().map((m) => ({
+          id: m.id,
+          ...(m.metadata as Record<string, unknown>),
+          sentAt: m.created_at,
+        }));
+        return json({ success: true, messages });
+      }
+
       case "chat.list": {
         const items = await listItems(admin, "chat_message", userId);
         return json({ success: true, messages: items });
       }
 
       case "chat.send": {
+        const channelId = String(body.channel_id ?? body.room_id ?? "general");
+        const content = String(body.content ?? body.text ?? "").trim();
+        if (!content) return json({ success: false, error: "content required" }, 400);
         const message = await addItem(admin, "chat_message", userId, {
-          room_id: body.room_id ?? "general",
-          text: body.text,
+          channel_id: channelId,
+          content,
+          thread_id: body.thread_id ?? null,
           attachments: body.attachments ?? [],
         });
-        return json({ success: true, message });
+        return json({ success: true, messageId: message.id, message });
       }
 
       // --- Team Tasks ---
