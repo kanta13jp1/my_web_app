@@ -134,13 +134,13 @@ class _AiPresentationBuilderPageState extends State<AiPresentationBuilderPage> {
             if (_result != null) _buildResultCard(),
             if (_error != null)
               Card(
-                color: Colors.red.shade50,
+                color: const Color(0xFFFFEBEE),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Text(
                     _error!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),

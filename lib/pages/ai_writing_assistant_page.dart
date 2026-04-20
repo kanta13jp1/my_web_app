@@ -151,7 +151,7 @@ class _AiWritingAssistantPageState extends State<AiWritingAssistantPage> {
               Text(
                 _error!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   fontSize: 13,
                   height: 1.5,
                 ),
