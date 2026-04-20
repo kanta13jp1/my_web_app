@@ -12426,3 +12426,31 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   - uncensored stance (steering user-side) → Claude/GPT の RLHF 固定と対照的
 - Philosophy alignment: 原則 1 (CEO感 — アライメント user-side steering) / 原則 5 (商品=ユーザー価値 — 無検閲 OSS 重み) / 原則 7 (資産=分散学習 protocol 知識 = 陳腐化しにくい) / 原則 9 (ウェルビーイング — OSS 基盤の民主化)
 - **次回 PS#3 候補**: 132 社目 (Prime Intellect / Pleias AI) + 既存 130 社 news カテゴリ最新化
+
+
+### Windowsアプリ版#131 セッション 部 7 + 8 (2026-04-20 15:30 JST) — deploy-prod 復旧 + AI大学 registry 同期
+
+#### Part 7: deploy-prod 5 連続失敗 → 修復
+
+- **症状**: deploy-prod 5 連続失敗 (`9a17cea1` ← `ef771c9e` ← `c3460a1b` ← `1dbabcd6` ← `a203025f`)
+- **原因**: PS版#6 batch20-21 系 trailing_commas 修正で `const Color(...).shadeXX` から shade を除いた → `const` 内 `const` で **167 unnecessary_const errors**
+- **修復**: `dart fix --apply lib/` で 27 ファイル 167 件自動修正 + 1 件 require_trailing_commas 追加修正
+- commit: `470ed44f fix: dart fix --apply 168 unnecessary_const + 1 trailing_comma 修正`
+- 影響: lib/pages/* 多数 + lib/widgets/edge_function_summary_card / home_tier/* / note_editor/*
+
+#### Part 8: AI大学 registry 119→131 同期 (PS#3 S8-S13 追加分)
+
+- PS#3 が Session 8-13 で 12 seed migration 追加 (decart / goodfire / nous_research / qdrant / llamaindex / oxen / predibase / argilla / dify / lightning / roboflow / weave) → registry 未登録のため AI provider status page で見えない状態
+- `comm -13` diff で 12 件抽出 → `lib/models/ai_provider_registry.dart` に追加
+- フロンティア研究 3 + ベクター/RAG 3 + LLM Ops 6 のカテゴリで追加
+- commit: `222086d6 feat: AI大学 registry 119→131 — PS#3 S8-S13 seed 12 プロバイダーを registry に同期`
+
+### Philosophy Alignment (Win#131 part 7+8)
+
+- 主要実装: Part 7 (deploy 復旧) + Part 8 (registry 同期)
+- 該当原則: 6 (時間=deploy 5 連続失敗を 1 commit で復旧 = 数時間節約) + 7 (資産 = 過去の seed 投資が UI に正しく現れる) + 8 (KPI = 失敗ゼロ復活)
+- 整合性スコア: 8/9 ✅ (1 = ユーザー CEO 感は間接 / 他 8 項目は積極貢献)
+- 理念的貢献:
+  - Part 7 = on-call バグ修正 (Win版が PS版#1 担当領域に踏み込んで緊急対応)
+  - Part 8 = 過去 PS#3 セッションの投資 (12 seed) を即時 UI 反映
+- 懸念: PS版#6 batch script 自体に `dart fix → format → analyze` の 3 step 組込が必要 (再発防止)
