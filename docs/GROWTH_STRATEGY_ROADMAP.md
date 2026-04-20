@@ -12606,3 +12606,31 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
 - 整合性スコア: 7/9 ✅ (1 = ユーザー CEO 感は間接 / 5 (商品価値) 8 (KPI) 9 (welfare) は間接)
 - 理念的貢献: 複数 instance 並行 push 環境での GitHub App workflow protection を回避する仕組み確立
 - 懸念: GH_PAT が secrets に未設定の場合は GITHUB_TOKEN にフォールバック (動作するが workflow 変更を含む commit では同じ失敗)。secrets 設定が必須
+---
+
+## PS版#4 Session 18 (2026-04-20 夕方) — Slack AgentExchange 公開戦略を実装可能 PR に変換 (S17 next候補 #2 follow-up)
+
+- **コミット**: (本セッション末で push 予定)
+- **目的**: S17 で検出した「Slack AgentExchange (14K+ agent marketplace) を法人 Slack 内の個人 CEO 流入経路にする」戦略仮説を、Win版が即着手できる cross-instance-pr に落とし込む
+- **新規 PR**: `docs/cross-instance-prs/20260420_slack_agentexchange_publish.md`
+  - **agent 名**: 「Jibun Inc — Personal 6-Department Summary」
+  - **slash command**: `/jibun_summary` (24h 6 部署サマリー Slack カード) / `/jibun_dashboard` (web ディープリンク) / `/jibun_quick_log <部署> <内容>` (Supabase 永続化)
+  - **バックエンド**: `enterprise-hub` EF に `slack.agent_handler` action 1 個追加 → **新 EF 不要・[EF-CAP-50] 遵守**
+  - **配布**: AgentExchange Free (登録不要 / Pro 移行 = web 課金) / 「個人ツール・会社データ非接触」明示
+- **事前スコアリング**:
+  - Philosophy 6/9 ✅ (原則 1 CEO感 / 2 ミッション駆動 / 4 人事最優先 / 5 商品=価値 / 6 時間 / 8 KPI=昨日)
+  - AI-DEV 5/7 ✅ (1 Auth / 2 Deny / 3 Trace / 4 Cost CB / 6 Retry — 5 Memory N/A・7 Quality Gate 確定的出力で不要)
+  - **両方クリア → Win版判断可**
+- **Win版判断依頼 4 点**:
+  1. enterprise-hub スロット 1 個消費 OK ([EF-CAP-50])
+  2. 既存 cross-instance-prs/ 11 件中の優先度ランク
+  3. 6/30 までに OSS Agent Script 学習 + 公開申請完了の現実性
+  4. Agent Script 言語学習担当は Win版? VSCode版?
+- **棄却条件 3 点を PR 内に明記**: AgentExchange Salesforce Partner 必須 / 2026-Q3 サンセット / 「会社データ漏洩」誤解リスク高
+- **Backlink**: `memory/project_20260420_ps4_s17.md` (S17 戦略土台) + `docs/cross-instance-prs/20260419_slack_mcp_integration.md` (技術土台) + `docs/cross-instance-prs/20260420_slack_agentforce_threat.md` (LP 防御弾)
+- **次回 PS#4 候補 (S19+)**:
+  1. 🟡 Win版判断 follow-up (採用/棄却/保留 → SCOREBOARD 反映)
+  2. 🔴 **5/4 Notion 課金 D-2 弾** (4/28 ごろ SNS 3 本 + LP 1 行 — 5/4 接近で最高優先度上昇)
+  3. 🟢 5/19-20 Google I/O 監視 (S10 placeholder 更新)
+  4. 🟢 watchlist 継続 (Cursor / Cognition / Lovable / Replit / Anthropic Labs)
+- Philosophy alignment: 原則 2 (ミッション駆動 — handoff を組織意思決定化) / 原則 5 (商品=価値増大 — 法人 Slack 内で個人 KPI 表示) / 原則 6 (資本=時間 — Slack 内完結でツール切替ゼロ)
