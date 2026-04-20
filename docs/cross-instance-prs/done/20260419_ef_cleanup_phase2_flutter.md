@@ -27,15 +27,18 @@ ai-hub に追加した action:
 - `university.leaderboard` (limit param) — `ai_university_leaderboard` view から取得
 - `university.content_all` (limit param) — provider filter なし版 (admin 用)
 
-### S16 完了分 (2026-04-20)
+### S16-S17 完了分 (2026-04-20)
 
 | # | 旧 EF | 新 action | Flutter file | commit |
 |---|---|---|---|---|
 | 4 | data-export-manager | `admin-hub:data.export` + `data.export_available` (新規追加) | `lib/pages/data_backup_page.dart` | fa9004af |
+| 5 | gemini-election-analysis | `ai-hub:election.analyze` (置換: 旧 region/candidates 版を 700人必達 KPI 版に差し替え) | `lib/pages/election_management_dashboard.dart`, `lib/pages/election_victory_page.dart` | 01d18fe8 |
 
-備考: data_backup_page.dart は EF が未実装のテーブル (tasks/habits/finances/blog_posts) を request body に含めていた → EXPORT_TABLES 4 件 (profile/notes/feature_requests/notifications) に修正.
+備考:
+- data_backup_page.dart は EF が未実装のテーブル (tasks/habits/finances/blog_posts) を request body に含めていた → EXPORT_TABLES 4 件 (profile/notes/feature_requests/notifications) に修正.
+- ai-hub の旧 `election.analyze` (region/candidates 版) は Flutter caller 0 件で dead → 削除.
 
-### 残り 36 EFs (next session backlog)
+### 残り 35 EFs (next session backlog)
 
 全て Flutter から呼ばれているが try/catch + ローカル fallback あり → UX は graceful degraded.
 緊急度: 低 (silent fail でユーザーは気付かない)
@@ -45,8 +48,7 @@ ai-hub に追加した action:
 | 残数 | EF | Flutter ref count | 推奨 hub |
 |---|---|---|---|
 | 1 | growth-import-commit | 1 | growth-hub:import.commit (実装は別物・要 EF コード移植) |
-| 2 | gemini-election-analysis | 2 | ai-hub:election.analyze |
-| 2 | generate-daily-challenges | 2 | growth-hub:daily.challenges |
+| 2 | generate-daily-challenges | 2 | growth-hub:daily.challenges (※ 実 EF は generate-quote-image 化されており Flutter は generate 想定で broken) |
 | 2 | growth-import-preview | 2 | growth-hub:import.preview (実装は別物・要 EF コード移植) |
 | 2 | notify-feature-request | 2 | growth-hub:feature.notify |
 | 3 | admin-notification-hub | 3 | admin-hub:notify |
