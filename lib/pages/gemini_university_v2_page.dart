@@ -891,6 +891,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFFDC2626),
     officialUrl: 'https://haizelabs.com/',
   ),
+  'physical_intelligence': _ProviderMeta(
+    name: 'Physical Intelligence',
+    emoji: '🦾',
+    color: const Color(0xFF7C3AED),
+    officialUrl: 'https://physicalintelligence.company/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4680,6 +4686,47 @@ Rodolphe Saadé (CMA CGM CEO) + Eric Schmidt (ex Google CEO) が供出。
 - Cascade 技術詳解: https://blog.haizelabs.com/posts/cascade/
 - 論文 (ACG): https://arxiv.org/html/2411.01084v3
 - 料金: enterprise custom / OSS Sphynx 無料
+''',
+  'physical_intelligence': '''
+# Physical Intelligence (π) — robot foundation model の先端ラボ (\$11B valuation 交渉中)
+
+2024 年創業。CEO **Karol Hausman** (元 Google DeepMind) / チーフサイエンティスト
+**Sergey Levine** (UC Berkeley 教授 / Deep RL 第一人者)。
+「AI を hardware から decouple」が哲学。vision-language-action (VLA) foundation model。
+
+## 既存 140 社との差別化
+| 観点 | Physical Intelligence | Figure AI | 1X |
+|------|----------------------|-----------|-----|
+| レイヤー | 🦾 **foundation model** (hardware-agnostic) | humanoid hardware | humanoid (Neo) |
+| OSS | ✅ π-0 + π-0.5 weights + code Apache 2.0 | ❌ | ❌ |
+| 対応 robot | ALOHA / DROID / Franka / UR5 / xArm | Figure 02 専用 | Neo 専用 |
+
+## 主要モデル (3 世代)
+- **π-0** (2025-02): 3B transformer / PaliGemma ベース / flow-matching action
+- **π-0-FAST**: autoregressive 版 / FAST action tokenizer で高速
+- **π-0.5** (2025-late): open-world generalization / 未知の家で片付け等
+
+## 資金調達
+- Series A: **\$400M** (Jeff Bezos + OpenAI lead)
+- Series B: **\$600M** (CapitalG / Alphabet lead + Lux + Bond + Sequoia)
+- 2026-04 交渉中: **\$1B ラウンド @ valuation \$11B+**
+
+## OSS
+- GitHub: https://github.com/Physical-Intelligence/openpi
+- weights: Google Cloud Storage (Apache 2.0)
+- HuggingFace PyTorch port: https://huggingface.co/lerobot/pi0
+
+## 自分株式会社での活用
+- AI大学: robotics 軸空白 → 第 11 カテゴリ (embodied AI) 展開
+- daily-judgment: open-world generalization の訓練哲学を人生判断の事例汎化に応用
+- Snorkel AI (S21) ↔ Haize Labs (S22) ↔ Physical Intelligence (S23) で data → safety → embodied の 3 本柱完成
+
+## 試す
+- Web: https://physicalintelligence.company/ / https://pi.website/
+- π-0 blog: https://www.pi.website/blog/pi0
+- π-0.5 blog: https://www.physicalintelligence.company/blog/pi05
+- 論文 (π-0): arXiv 2410.24164
+- 料金: OSS 無料 (Apache 2.0 / code + weights 全公開)
 ''',
 };
 

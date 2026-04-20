@@ -14216,3 +14216,67 @@ orphan branches: 閾値以下 (cleanup 不要)。
 
 - **dev.to 4-tag silent truncation**: frontmatter に 5 tags 書いても警告ゼロで先頭 4 個のみ送信される = 「5 タグ書き = 1 タグを silent に捨てる」と同値 → タグ並びは価値順 sort 必須
 - **手動先頭 sort が適切な tier**: platform-specific truncation は「小さい最適化」なので hook 化より frontmatter 段で人間判断する方が早い (cf. schedule-hub EF change コスト)
+
+## 2026-04-20 PS版#3 S23 — AI大学 141 社化 (Physical Intelligence 追加 / Step 0 9/9 満点)
+
+**Why**: PS#3 = AI大学専任。S21 Snorkel (data) + S22 Haize (safety) の流れで「AI quality 軸」を固めた上で、既存 140 社に完全空白だった **embodied AI / robotics foundation model** 軸を埋める。Sergey Levine (Berkeley) + Karol Hausman (ex-DeepMind) 率いる Physical Intelligence は OSS + 資金 + 人材 + 技術すべてで最上位。
+
+**候補選定**: S22 backlog (Essential AI / Gradium / Vectara / Lakera / Adept 後継) を評価したが、**既存 140 社に完全空白のカテゴリ (embodied AI / VLA)** を優先する戦略判断で Physical Intelligence に軸変更。
+
+**採用理由**:
+  - (1) **カテゴリ完全空白**: 140 社で robotics foundation model ゼロ = 最大の情報 gap
+  - (2) **OSS 完全公開**: π-0 / π-0.5 weights + code Apache 2.0 (gs://openpi-assets/)
+  - (3) **Sergey Levine 要因**: Deep RL 第一人者 / Berkeley 教授 / Google Brain 元幹部
+  - (4) **資金力**: \$400M Series A + \$600M Series B + \$1B 交渉中 @ \$11B valuation
+  - (5) **戦略背景**: Anthropic (ChatGPT) / OpenAI が出資していて業界注目度 max
+
+**Step 0 評価: 9/9 (S19 Kyutai 以来 2 本目の満点)**
+
+| 観点 | 判定 |
+|------|------|
+| 公式 | ✅ physicalintelligence.company + pi.website |
+| 最新モデル | ✅ π-0 + π-0-FAST + π-0.5 |
+| ベンチマーク | ✅ 「most capable generalist robot policy」(公式) |
+| API/SDK | ✅ openpi + HuggingFace LeRobot port |
+| 独自技術 | ✅ VLA + flow-matching + open-world generalization |
+| OSS | ✅ code + weights Apache 2.0 (Google Cloud Storage 配布) |
+| CLI/SDK | ✅ Python / JAX + PyTorch |
+| 資金 | ✅ \$1B 累計 / \$11B valuation 交渉中 |
+| 話題性 | ✅ Levine + Bezos + OpenAI + Alphabet CapitalG |
+
+**変更ファイル (4)**:
+1. `supabase/migrations/20260420210000_seed_physical_intelligence_ai_university.sql` (new / 3 rows / \$md\$ tag)
+2. `lib/pages/gemini_university_v2_page.dart` (_providerMeta + _fallback / 🦾 emoji / #7C3AED purple)
+3. `.github/workflows/ai-university-update.yml` (seed-only コメント列)
+4. `docs/GROWTH_STRATEGY_ROADMAP.md` (Session PS#3-S23 記録)
+
+**Migration timestamp**: **210000** 使用。190000 は Win版 c1b1ec16 (WBS) と衝突検出 → `1ad5880b` で先発の自分 Haize Labs を 200000 に rename で回避。以降 200000 Haize / 210000 Physical Intelligence。
+
+**Philosophy Alignment (9 原則)**:
+- 原則 1 (CEO): 物理世界判断 (robotic control) の将来像を先取り学習
+- 原則 2 (ミッション駆動): 「AI を hardware から decouple」が Physical Intelligence の北極星 = 自分株式会社の「6 部署統合 AI」と構造同形
+- 原則 5 (商品=ユーザー価値): 家事 robot (π-0.5 が未知の家で片付け) は将来のウェルビーイング最大化 (原則 9) に直結
+- 原則 6 (資本=時間): OSS + 論文 URL で fact-check コストゼロ / 実機不要の simulation も即試用可
+- 原則 8 (KPI=昨日の自分): 「open-world generalization」の訓練哲学は「昨日の自分」の decision pattern 汎化そのもの
+
+**戦略的次の一手**:
+- AI大学に **第 11 カテゴリ「embodied AI」** 新設検討 (現状 10 カテゴリ: LLM / 推論 / video / image / voice / search / security / data / enterprise / science 等)
+- Snorkel (S21) ↔ Haize (S22) ↔ Physical Intelligence (S23) の「AI 3 本柱 (data-safety-embodied)」comparison ページを user-manual に追加
+- HuggingFace LeRobot port 経由で MuJoCo simulation を 1 回動かしてみる handoff (Win版 or 📱)
+
+**連続 10 session 実績 (S14-S23)**:
+
+| S | Provider | Step 0 |
+|---|----------|--------|
+| S14 | Prime Intellect | 8.5/9 |
+| S15 | Exa.ai | 8.5/9 |
+| S16 | Pleias AI | 8/9 |
+| S17 | Imbue | 8.5/9 |
+| S18 | Thinking Machines | 8/9 |
+| S19 | Kyutai | **9/9 ⭐** |
+| S20 | Contextual AI | 8/9 |
+| S21 | Snorkel AI | 8.5/9 |
+| S22 | Haize Labs | 7.5/9 |
+| **S23** | **Physical Intelligence** | **9/9 ⭐⭐** |
+
+**次回 PS#3 候補 (142 社目)**: Skild AI (CMU roboticists Pathak/Gupta / \$300M / Softbank) / Figure AI (humanoid \$675M) / 1X Technologies (Neo humanoid / OpenAI-backed) / **または S22 backlog 回帰** (Essential AI / Gradium / Vectara / Lakera AI)
