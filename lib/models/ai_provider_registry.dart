@@ -937,6 +937,107 @@ const List<AiProviderEntry> kAiProviderRegistry = [
     entryPoint: '(参考 — ML 実験管理・LLMOps 業界標準)',
     note: 'ML 実験管理・モデル監視・LLMOps の業界標準 (W&B Weave LLM 評価)',
   ),
+
+  // ===== PS版#3 Session 8-13 で seed 追加した 12 プロバイダー (Win版#131 part 8 で registry 同期) =====
+
+  // Decart — リアルタイム動画生成 ($3.1B)
+  AiProviderEntry(
+    id: 'decart',
+    displayName: 'Decart',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.premium,
+    entryPoint: '(未実装 — Oasis / MirageLSD API)',
+    note: r'世界初のリアルタイム動画生成 AI ($3.1B 評価額)',
+  ),
+  // Goodfire — Interpretability ($1.25B)
+  AiProviderEntry(
+    id: 'goodfire',
+    displayName: 'Goodfire',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Ember API / interpretability platform)',
+    note: r'AI Interpretability の最前線 ($1.25B 評価額・Anthropic 投資)',
+  ),
+  // Nous Research — 分散学習 + Hermes
+  AiProviderEntry(
+    id: 'nous_research',
+    displayName: 'Nous Research',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Hermes 4 / Psyche 分散学習)',
+    note: r'分散学習 Psyche × オープン Hermes モデル ($65M Paradigm)',
+  ),
+
+  // ===== ベクター / RAG / データインフラ =====
+  AiProviderEntry(
+    id: 'qdrant',
+    displayName: 'Qdrant',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.budget,
+    entryPoint: '(未実装 — Rust 製 OSS ベクター DB)',
+    note: 'ハイパフォーマンス・ベクター DB・セルフホスト可・ゼロコスト',
+  ),
+  AiProviderEntry(
+    id: 'llamaindex',
+    displayName: 'LlamaIndex',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — LLM アプリ向けデータフレームワーク)',
+    note: 'LLM アプリ向けデータフレームワーク (RAG の標準ツール・LangChain と双璧)',
+  ),
+  AiProviderEntry(
+    id: 'oxen',
+    displayName: 'Oxen AI',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — ML データ Git ライクバージョン管理)',
+    note: '機械学習データのための Git ライクなバージョン管理',
+  ),
+
+  // ===== LLM Ops / 開発プラットフォーム =====
+  AiProviderEntry(
+    id: 'predibase',
+    displayName: 'Predibase',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — LoRAX / 1 GPU で 1000+ アダプター)',
+    note: 'LoRA ファインチューニングを民主化する LLM 開発プラットフォーム',
+  ),
+  AiProviderEntry(
+    id: 'argilla',
+    displayName: 'Argilla',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — LLM アノテーション OSS)',
+    note: 'LLM 学習データのアノテーション・品質管理 OSS (RLHF/SFT・HF 統合)',
+  ),
+  AiProviderEntry(
+    id: 'dify',
+    displayName: 'Dify',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — ノーコード LLM ワークフロービルダー)',
+    note: 'ノーコードで LLM アプリを構築する OSS (GitHub ★80,000+)',
+  ),
+  AiProviderEntry(
+    id: 'lightning',
+    displayName: 'Lightning AI',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — Lightning Cloud / PyTorch Lightning)',
+    note: 'PyTorch Lightning 開発チームのクラウド AI 開発環境',
+  ),
+  AiProviderEntry(
+    id: 'roboflow',
+    displayName: 'Roboflow',
+    status: AiProviderStatus.notImplemented,
+    tier: AiProviderTier.performance,
+    entryPoint: '(未実装 — CV プラットフォーム / YOLO/SAM 統合)',
+    note: 'コンピュータビジョン AI の開発・デプロイ統合プラットフォーム (Universe 100,000+ データセット)',
+  ),
+  AiProviderEntry(
+    id: 'weave',
+    displayName: 'W&B Weave',
+    status: AiProviderStatus.notImplemented,
+    entryPoint: '(参考 — LLM デバッグ・評価・改善プラットフォーム)',
+    note: 'Weights & Biases 系 LLM アプリのデバッグ・評価・改善 (Weave Trace)',
+  ),
 ];
 
 /// ステータス別件数を集計
