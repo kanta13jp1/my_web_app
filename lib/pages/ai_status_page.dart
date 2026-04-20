@@ -290,7 +290,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                     child: Text(
                       'エラー: $_error',
                       style: const TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         height: 1.5,
                       ),
                     ),
@@ -347,8 +347,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
                             color: status == 'testing'
                                 ? const Color(0xFFFF6B35)
                                 : (status == 'success'
-                                    ? Colors.green
-                                    : Colors.red),
+                                    ? const Color(0xFF4CAF50)
+                                    : const Color(0xFFE53935)),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Colors.white,
@@ -392,7 +392,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: score >= 900
-                              ? Colors.green
+                              ? const Color(0xFF4CAF50)
                               : (score >= 500
                                   ? const Color(0xFFFF6B35)
                                   : const Color(0xFF9CA3AF)),
@@ -448,7 +448,7 @@ class _AiStatusPageState extends State<AiStatusPage> {
                   child: Text(
                     _testErrors[modelName]!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
@@ -694,10 +694,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
                       Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     totalScore >= 80
-                        ? Colors.green
+                        ? const Color(0xFF4CAF50)
                         : (totalScore >= 50
                             ? const Color(0xFFFF6B35)
-                            : Colors.red),
+                            : const Color(0xFFE53935)),
                   ),
                 ),
               ),
@@ -708,8 +708,10 @@ class _AiStatusPageState extends State<AiStatusPage> {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: totalScore >= 80
-                    ? Colors.green
-                    : (totalScore >= 50 ? const Color(0xFFFF6B35) : Colors.red),
+                    ? const Color(0xFF4CAF50)
+                    : (totalScore >= 50
+                        ? const Color(0xFFFF6B35)
+                        : const Color(0xFFE53935)),
                 height: 1.5,
               ),
             ),
@@ -789,13 +791,13 @@ class _AiStatusPageState extends State<AiStatusPage> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: passed
-            ? Colors.green.withValues(alpha: 0.08)
-            : Colors.red.withValues(alpha: 0.08),
+            ? const Color(0xFF4CAF50).withValues(alpha: 0.08)
+            : const Color(0xFFE53935).withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: passed
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.red.withValues(alpha: 0.3),
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.3)
+              : const Color(0xFFE53935).withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -806,7 +808,8 @@ class _AiStatusPageState extends State<AiStatusPage> {
               Icon(
                 passed ? Icons.check_circle : Icons.cancel,
                 size: 18,
-                color: passed ? Colors.green : Colors.red,
+                color:
+                    passed ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -824,7 +827,9 @@ class _AiStatusPageState extends State<AiStatusPage> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: passed ? Colors.green : Colors.red,
+                  color: passed
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),
