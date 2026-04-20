@@ -103,11 +103,11 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
   Color _statusColor(String? status) {
     switch (status) {
       case 'active':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'paused':
         return const Color(0xFFFF6B35);
       case 'error':
-        return Colors.red;
+        return const Color(0xFFE53935);
       default:
         return const Color(0xFF9CA3AF);
     }
@@ -151,7 +151,7 @@ class _WorkflowAutomationPageState extends State<WorkflowAutomationPage>
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,

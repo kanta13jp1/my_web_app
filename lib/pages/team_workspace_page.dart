@@ -187,7 +187,7 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],
@@ -231,7 +231,7 @@ class _TeamWorkspacePageState extends State<TeamWorkspacePage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFFE53935)),
             child: const Text('退出'),
           ),
         ],
@@ -534,7 +534,10 @@ class _TeamCard extends StatelessWidget {
                 ),
                 if (isOwner && onDelete != null)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFE53935),
+                    ),
                     tooltip: 'チームを削除',
                     onPressed: onDelete,
                   )

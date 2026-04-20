@@ -70,14 +70,14 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _errorMessage!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -124,7 +124,7 @@ class _VideoAdGeneratorPageState extends State<VideoAdGeneratorPage> {
                                 ),
                               ),
                               backgroundColor: status == 'ready'
-                                  ? Colors.green.shade100
+                                  ? const Color(0xFFC8E6C9)
                                   : const Color(0xFFFFE0B2),
                             ),
                           ),

@@ -185,7 +185,7 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -381,10 +381,10 @@ class _VirtualOrganizationPageState extends State<VirtualOrganizationPage>
         return const Color(0xFF3D5AFE);
       case 'completed':
       case 'done':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'error':
       case 'failed':
-        return Colors.red;
+        return const Color(0xFFE53935);
       default:
         return const Color(0xFFFF6B35);
     }

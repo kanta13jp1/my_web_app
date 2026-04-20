@@ -102,7 +102,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -132,7 +132,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
           Icons.people,
           'ユニーク訪問者',
           '$uniqueVisitors',
-          Colors.green,
+          const Color(0xFF4CAF50),
         ),
         _buildStatRow(
           Icons.timer,
@@ -144,7 +144,7 @@ class _SitemapAnalyticsPageState extends State<SitemapAnalyticsPage>
           Icons.exit_to_app,
           '直帰率',
           '${bounceRate.toStringAsFixed(1)}%',
-          Colors.red,
+          const Color(0xFFE53935),
         ),
         _buildStatRow(
           Icons.web,

@@ -568,7 +568,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
               dense: true,
               leading: Icon(
                 isPosted ? Icons.check_circle : Icons.edit_note,
-                color: isPosted ? Colors.green : const Color(0xFF6366F1),
+                color: isPosted ? const Color(0xFF4CAF50) : const Color(0xFF6366F1),
                 size: 22,
               ),
               title: Text(
@@ -595,7 +595,7 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isPosted
-                      ? Colors.green.withAlpha(20)
+                      ? const Color(0xFF4CAF50).withAlpha(20)
                       : const Color(0xFF6366F1).withAlpha(20),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -604,7 +604,8 @@ class _TechBlogTrackerPageState extends State<TechBlogTrackerPage> {
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isPosted ? Colors.green : const Color(0xFF6366F1),
+                    color:
+                        isPosted ? const Color(0xFF4CAF50) : const Color(0xFF6366F1),
                     height: 1.5,
                   ),
                 ),

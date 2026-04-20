@@ -55,12 +55,12 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
     switch (priority?.toLowerCase()) {
       case 'high':
       case '高':
-        return Colors.red;
+        return const Color(0xFFE53935);
       case 'medium':
       case '中':
         return const Color(0xFFFF6B35);
       default:
-        return Colors.green;
+        return const Color(0xFF4CAF50);
     }
   }
 
@@ -90,7 +90,7 @@ class _SmartInboxTriagePageState extends State<SmartInboxTriagePage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,

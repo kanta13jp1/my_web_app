@@ -460,7 +460,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         child: Text(
                           _errorMessage!,
                           style: const TextStyle(
-                            color: Colors.red,
+                            color: Color(0xFFE53935),
                             height: 1.5,
                           ),
                         ),
@@ -471,7 +471,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                         child: Text(
                           _successMessage!,
                           style: const TextStyle(
-                            color: Colors.green,
+                            color: Color(0xFF4CAF50),
                             height: 1.5,
                           ),
                         ),
@@ -529,7 +529,7 @@ class _ViralAdCampaignPageState extends State<ViralAdCampaignPage> {
                 final hasMetrics =
                     impressions != null || clicks != null || follows != null;
                 final statusColor = status == 'success'
-                    ? Colors.green
+                    ? const Color(0xFF4CAF50)
                     : status == 'dry_run'
                         ? const Color(0xFFFF6B35)
                         : Theme.of(context).colorScheme.error;
