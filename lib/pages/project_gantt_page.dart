@@ -1643,6 +1643,11 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     'flags': true,
   };
 
+  // 📱 narrow viewport では左パネルが 944px に膨らんで
+  // 右タイムライン (Expanded) が 0px になり Gantt が完全に見えなくなる。
+  // didChangeDependencies で 1 度だけ narrow 判定して列を最小構成に落とす。
+  bool _responsiveDefaultsApplied = false;
+
   double get _leftPanelWidth =>
       _colVisible.entries
           .where((e) => e.value)
@@ -1684,6 +1689,25 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       final target = (todayX - viewport / 3).clamp(0.0, maxScroll);
       _timelineHScroll.jumpTo(target);
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_responsiveDefaultsApplied) return;
+    final width = MediaQuery.of(context).size.width;
+    if (width < 700) {
+      // 📱 モバイル幅: 右タイムラインに最低 ~130px 残すため
+      //   # (32) + task (200) + flags (36) + padding(16) = 284px 構成
+      //   ユーザーは 列表示 トグルで後から追加可能。
+      _colVisible['startDate'] = false;
+      _colVisible['endDate'] = false;
+      _colVisible['instance'] = false;
+      _colVisible['progress'] = false;
+      _colVisible['remaining'] = false;
+      _colVisible['recovery'] = false;
+    }
+    _responsiveDefaultsApplied = true;
   }
 
   @override
