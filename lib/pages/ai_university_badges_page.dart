@@ -68,7 +68,7 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
                       Text(
                         'エラー: $_error',
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

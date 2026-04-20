@@ -94,7 +94,7 @@ class _AgentHubPageState extends State<AgentHubPage>
                   child: Text(
                     _error!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -148,7 +148,7 @@ class _DepartmentsTab extends StatelessWidget {
               label: Text('$agentCount / $maxAgents'),
               backgroundColor: agentCount >= maxAgents
                   ? const Color(0xFFFF6B35).withAlpha(30)
-                  : Colors.green.withAlpha(30),
+                  : const Color(0xFF4CAF50).withAlpha(30),
             ),
           ),
         );
