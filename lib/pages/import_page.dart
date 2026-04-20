@@ -492,7 +492,7 @@ class _ImportPageState extends State<ImportPage> {
                     const Icon(Icons.api),
                     const Spacer(),
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: Colors.green),
+                      const Icon(Icons.check_circle, color: Color(0xFF4CAF50)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -540,7 +540,7 @@ class _ImportPageState extends State<ImportPage> {
                     Icon(icon),
                     const Spacer(),
                     if (isSelected)
-                      const Icon(Icons.check_circle, color: Colors.green),
+                      const Icon(Icons.check_circle, color: Color(0xFF4CAF50)),
                   ],
                 ),
                 const SizedBox(height: 12),

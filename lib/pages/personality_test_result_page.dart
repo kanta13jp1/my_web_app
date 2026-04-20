@@ -49,7 +49,7 @@ class _PersonalityTestResultPageState extends State<PersonalityTestResultPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('結果の読み込みに失敗しました: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -244,7 +244,7 @@ ${_personalityType!.description}
                         children: [
                           const Icon(
                             Icons.check_circle,
-                            color: Colors.green,
+                            color: Color(0xFF4CAF50),
                             size: 20,
                           ),
                           const SizedBox(width: 8),

@@ -106,7 +106,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -143,7 +143,7 @@ class _RevenueForecasterPageState extends State<RevenueForecasterPage> {
                                 _forecast!['monthly_forecast']?.toString() ??
                                     '-',
                                 Icons.trending_up,
-                                Colors.green,
+                                const Color(0xFF4CAF50),
                               ),
                               _buildMetricCard(
                                 '四半期予測',

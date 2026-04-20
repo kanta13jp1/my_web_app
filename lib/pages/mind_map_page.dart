@@ -331,7 +331,7 @@ class _MindMapPageState extends State<MindMapPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('PNG のダウンロードに失敗しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     } finally {
@@ -590,7 +590,7 @@ class _MindMapPageState extends State<MindMapPage> {
               child: Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),

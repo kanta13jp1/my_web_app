@@ -241,7 +241,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
     final isDiscard = decision == 'DISCARD';
     final color = isDiscard
         ? const Color(0xFF3D5AFE)
-        : Colors.green; // Discard=Blue(Cool), Keep=Green(Safe)
+        : const Color(0xFF4CAF50); // Discard=Blue(Cool), Keep=Green(Safe)
 
     return Card(
       elevation: 4,
@@ -297,7 +297,7 @@ class _RealWorldDanshariPageState extends State<RealWorldDanshariPage> {
                         fontSize: 18,
                         color: (_result!['spark_joy_score'] as int) < 50
                             ? const Color(0xFF3D5AFE)
-                            : Colors.red,
+                            : const Color(0xFFE53935),
                         fontWeight: FontWeight.bold,
                         height: 1.5,
                       ),

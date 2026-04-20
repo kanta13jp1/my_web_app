@@ -437,12 +437,16 @@ class _KanbanBoardPageState extends State<KanbanBoardPage> {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                      Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: Color(0xFFE53935),
+                      ),
                       SizedBox(width: 8),
                       Text(
                         '削除',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

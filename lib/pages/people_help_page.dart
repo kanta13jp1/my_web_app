@@ -123,10 +123,10 @@ class _PeopleHelpPageState extends State<PeopleHelpPage> {
     final Color color;
     switch (status) {
       case 'approved':
-        color = Colors.green;
+        color = const Color(0xFF4CAF50);
         break;
       case 'declined':
-        color = Colors.redAccent;
+        color = const Color(0xFFE53935);
         break;
       default:
         color = const Color(0xFFFF6B35);

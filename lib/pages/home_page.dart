@@ -2895,7 +2895,7 @@ abstinence_slip_details: $slipDetailsText
             runSpacing: 8,
             children: [
               _CalendarLegend(color: Color(0xFF4CAF50), label: '収入'),
-              _CalendarLegend(color: Colors.red, label: '支出'),
+              _CalendarLegend(color: Color(0xFFE53935), label: '支出'),
             ],
           ),
           const SizedBox(height: 8),
@@ -4146,7 +4146,7 @@ abstinence_slip_details: $slipDetailsText
                     width: 16,
                     height: 16,
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       shape: BoxShape.circle,
                     ),
                     child: Center(

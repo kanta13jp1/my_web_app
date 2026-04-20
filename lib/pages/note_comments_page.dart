@@ -138,7 +138,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
               Text(
                 _errorMessage!,
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: Color(0xFFE53935),
                   height: 1.5,
                 ),
               ),
@@ -180,7 +180,7 @@ class _NoteCommentsPageState extends State<NoteCommentsPage> {
                                 ? IconButton(
                                     icon: const Icon(
                                       Icons.delete_outline,
-                                      color: Colors.red,
+                                      color: Color(0xFFE53935),
                                     ),
                                     tooltip: 'コメントを削除',
                                     onPressed: () {
