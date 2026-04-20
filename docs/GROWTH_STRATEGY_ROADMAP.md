@@ -12634,3 +12634,20 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   3. 🟢 5/19-20 Google I/O 監視 (S10 placeholder 更新)
   4. 🟢 watchlist 継続 (Cursor / Cognition / Lovable / Replit / Anthropic Labs)
 - Philosophy alignment: 原則 2 (ミッション駆動 — handoff を組織意思決定化) / 原則 5 (商品=価値増大 — 法人 Slack 内で個人 KPI 表示) / 原則 6 (資本=時間 — Slack 内完結でツール切替ゼロ)
+### PS版#6 S12 fix verification + worktree prune audit Session 13 (2026-04-20 16:18 JST) ✅
+
+- **S12 fix 本番検証完了**: deploy-prod run 24652999464 (AI大学 133 Exa.ai push) で新 cleanup step 実走
+  - `##[notice]cleanup deleted 0 stale EF(s)` — 178 potential → **0 実 delete call**
+  - 429 ThrottlerException ログ**ゼロ**
+  - Cleanup step 所要時間: 秒単位 (旧 178 delete ループは 10min 近く掛かっていた)
+  - Deploy to Production Environment: success / 全 job 緑
+- **stale worktree audit**: `.claude/worktrees/` 下 8 本 random-name worktree audit 実施 (`docs/cross-instance-prs/20260420_ps6_worktree_prune.md` で VSCode 版に handoff / commit d1b8af06)
+  - 5 本 `ahead=0` safe / 3 本 `ahead>0` の unique commit が別 SHA で main merge 済 (PR#293 / c6aa9c1d / PR#294) → 全 8 本 prune 可能
+  - アクティブ instance-* は保持 (ps1-6/vscode/win)
+- **新制約発見**: `ci.yml` concurrency `cancel-in-progress: true` が `workflow_call` 経由で deploy-prod に cascade → deploy-prod の `cancel-in-progress: false` が効かず並行 push で cancel 連鎖。PS#6 の run 24652679094 + Win#131 part9 24652897814 + VSCode 24652933964 が全て総数 0 job で即 cancelled (`"total_count":0,"jobs":[]`)
+  - 次セッション PS#1 (Rule17 WF health) に handoff 候補
+- **次回 PS#6 候補**:
+  1. ci.yml concurrency 修正 cross-instance-pr (PS#1 宛) — `group: ci-${{ github.workflow }}-${{ github.ref }}` で caller 差別化
+  2. live-dead 39 EF 整理 (S12 持ち越し)
+  3. horse_racing batch cron 長期健全性監視
+- Philosophy alignment: 原則 7 (資産=CI 安定 — 修正が本番で効くことを確認・負債解消) / 原則 8 (KPI=昨日の自分 — 178→0 API call の定量減) / 原則 6 (資本=時間 — 10min→秒単位)
