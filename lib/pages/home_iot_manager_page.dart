@@ -241,7 +241,8 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.auto_mode,
-              color: enabled ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
+              color:
+                  enabled ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: Text(
