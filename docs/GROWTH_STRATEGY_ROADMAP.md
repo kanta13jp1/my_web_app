@@ -13446,3 +13446,40 @@ CEO / CTO Amanpreet Singh (Meta FAIR + HuggingFace) / \$80M Series A。
 **Backlog 進捗**: EF cleanup phase2 残 31 → 30 (S15-S22 累計 10 EFs migrated)
 
 **次回候補**: growth-import-preview/commit (Notion API body port) / viral-growth-engine (464 行 sub-task 化) / PS#6 S18 handoff 24 件 stale invoke audit
+## 2026-04-20 18:35 JST — PS版#2 Session 9 (3者棲み分け 本A draft ペア作成 + S24 framing 訂正反映)
+
+### アクション
+
+- PS#4 S23 handoff (`docs/cross-instance-prs/20260420_three_way_positioning_sns.md`) の **本A (JA+EN ペア)** を新規作成:
+  - JA: `docs/blog-drafts/2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning.md`
+  - EN: `docs/blog-drafts/2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning-en.md`
+- rebase 中に **PS#4 S24 (夜 last)** の訂正 block を発見 → 即 draft 書き換え:
+  - 「Codex 90+ plugins」誤情報削除 → 「Codex 20+ / Claude 423 / skills 2,849」正確数字に差し替え
+  - 「機能パリティ+α・Claude 一強終了」語彙削除 → 「Computer Use カテゴリのみパリティ・Claude 依然 20 倍優位」に統一
+  - 3 層 narrative 新版: Claude = plugin 豊富 / Codex = Computer Use 先行 + ChatGPT 3M DAU / 自分株式会社 = 6 部署統合ハブ
+- `published: false` 維持 (dispatch window 2026-04-23 〜 2026-04-30・Qiita 72h cooldown 明け後)
+
+### Why
+
+- OpenAI Codex Desktop 報道サイクル内 (2026-04-30 deadline) の鮮度優先
+- S24 発見が **dispatch 4 日前**で間に合った → 誤 framing の公開リスク回避
+- 本A Notion 5/4 弾 (4/28 dispatch) と本A 3 者棲み分け弾 (4/23-4/30 dispatch) は **テーマ独立**で並列運用可能
+
+### Philosophy alignment (S23 handoff スコア踏襲)
+
+- 原則 1 (CEO 感): 「AI を選ぶ CEO」= 最終決定権 ✅
+- 原則 2 (ミッション駆動): 6 部署軸を AI 手段で曲げない ✅
+- 原則 5 (商品=ユーザー価値): 認知コスト削減 ✅
+- 原則 6 (資本=時間): AI 選択時間の節約 ✅
+- 原則 7 (資産負債 BS): 単一 vendor 負債 → 分散資産化 ✅ (最直接貢献)
+- 原則 8 (KPI=昨日の自分): AI 手段を変えても 6 部署 KPI は継続観察 ✅
+- 整合性: **6/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch (t1-blog-dispatch / dev.to 単独)
+3. **2026-04-28**: Notion 5/4 本A dispatch
+4. **本B (3 者棲み分け X 短文 + Qiita BS 原則角度)**: 本A dispatch の 1-2 日後
+5. **2026-04-29 頃**: Notion 本B (D-2) draft 作成
+6. **2026-05-01 頃**: Notion 本C (D-0) draft 作成
