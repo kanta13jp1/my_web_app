@@ -490,14 +490,14 @@ ${_compatibilityMatch.description}''';
                     Container(
                       margin: const EdgeInsets.only(top: 4),
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade100,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFC8E6C9),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.check,
                         size: 16,
-                        color: Colors.green.shade700,
+                        color: Color(0xFF388E3C),
                       ),
                     ),
                     const SizedBox(width: 12),

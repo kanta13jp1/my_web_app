@@ -124,7 +124,7 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -241,7 +241,7 @@ class _HomeIotManagerPageState extends State<HomeIotManagerPage>
           child: ListTile(
             leading: Icon(
               Icons.auto_mode,
-              color: enabled ? Colors.green : const Color(0xFF9CA3AF),
+              color: enabled ? const Color(0xFF4CAF50) : const Color(0xFF9CA3AF),
             ),
             title: Text(name),
             subtitle: Text(

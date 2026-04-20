@@ -70,7 +70,7 @@ class _DevelopmentAchievementsPageState
                       Text(
                         'エラー: $_error',
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),
@@ -93,7 +93,7 @@ class _DevelopmentAchievementsPageState
                         return ListTile(
                           leading: const Icon(
                             Icons.check_circle,
-                            color: Colors.green,
+                            color: Color(0xFF4CAF50),
                           ),
                           title: Text(
                             item['title']?.toString() ?? '(タイトルなし)',

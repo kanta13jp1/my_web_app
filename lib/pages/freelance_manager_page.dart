@@ -26,10 +26,10 @@ class _FreelanceManagerPageState extends State<FreelanceManagerPage>
   bool _saving = false;
 
   static const _statusColors = {
-    'active': Colors.green,
+    'active': Color(0xFF4CAF50),
     'completed': Color(0xFF3D5AFE),
     'pending': Color(0xFFFF6B35),
-    'cancelled': Colors.red,
+    'cancelled': Color(0xFFE53935),
   };
 
   @override

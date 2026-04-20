@@ -76,7 +76,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                 _buildMetric(
                   '登録送信',
                   channel['signupSubmits'],
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
                 const SizedBox(width: 16),
                 _buildMetric(
@@ -141,7 +141,7 @@ class _GrowthWeeklyDigestPageState extends State<GrowthWeeklyDigestPage> {
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),

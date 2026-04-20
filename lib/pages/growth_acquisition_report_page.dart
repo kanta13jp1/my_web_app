@@ -100,7 +100,7 @@ class _GrowthAcquisitionReportPageState
                     '$signups',
                     style: const TextStyle(
                       fontSize: 18,
-                      color: Colors.green,
+                      color: Color(0xFF4CAF50),
                       height: 1.5,
                     ),
                   ),
@@ -167,7 +167,7 @@ class _GrowthAcquisitionReportPageState
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),

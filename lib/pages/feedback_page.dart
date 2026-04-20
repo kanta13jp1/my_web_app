@@ -52,7 +52,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('フィードバックを受け付けました。ありがとうございます。'),
-          backgroundColor: Colors.green,
+          backgroundColor: Color(0xFF4CAF50),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -67,7 +67,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('投稿に失敗しました: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFE53935),
         ),
       );
     } finally {

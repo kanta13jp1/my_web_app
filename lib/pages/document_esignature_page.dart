@@ -115,7 +115,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -167,7 +167,7 @@ class _DocumentEsignaturePageState extends State<DocumentEsignaturePage>
           child: ListTile(
             leading: Icon(
               Icons.description,
-              color: pending ? const Color(0xFFFF6B35) : Colors.green,
+              color: pending ? const Color(0xFFFF6B35) : const Color(0xFF4CAF50),
               size: 32,
             ),
             title: Text(

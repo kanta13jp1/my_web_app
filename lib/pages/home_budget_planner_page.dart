@@ -29,8 +29,8 @@ class _HomeBudgetPlannerPageState extends State<HomeBudgetPlannerPage> {
     _Category('交通費', Icons.directions_car, Color(0xFF3D5AFE)),
     _Category('光熱費', Icons.bolt, Color(0xFFFFC107)),
     _Category('娯楽', Icons.sports_esports, Color(0xFF3D5AFE)),
-    _Category('医療', Icons.medical_services, Colors.red),
-    _Category('教育', Icons.school, Colors.green),
+    _Category('医療', Icons.medical_services, Color(0xFFE53935)),
+    _Category('教育', Icons.school, Color(0xFF4CAF50)),
     _Category('衣類', Icons.checkroom, Color(0xFFFF6B35)),
     _Category('その他', Icons.category, Color(0xFF9CA3AF)),
   ];
