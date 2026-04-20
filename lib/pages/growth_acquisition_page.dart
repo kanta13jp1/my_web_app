@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 成長獲得統合ページ
-/// Signal記録 + レポート生成 (growth-acquisition EF)
+/// Signal記録 + レポート生成 (growth-hub:acquisition.*)
 class GrowthAcquisitionPage extends StatefulWidget {
   const GrowthAcquisitionPage({super.key});
 
@@ -29,8 +29,8 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'growth-acquisition',
-        queryParameters: {'action': 'report', 'windowDays': '30'},
+        'growth-hub',
+        body: {'action': 'acquisition.touchpoint_report', 'windowDays': 30},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -48,8 +48,8 @@ class _GrowthAcquisitionPageState extends State<GrowthAcquisitionPage> {
   Future<void> _recordSignal(String signalKey) async {
     try {
       await _supabase.functions.invoke(
-        'growth-acquisition',
-        body: {'action': 'signal', 'signalKey': signalKey},
+        'growth-hub',
+        body: {'action': 'acquisition.signal', 'signalKey': signalKey},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

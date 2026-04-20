@@ -107,7 +107,11 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // Public actions that don't require auth
-    const publicActions = ["waitlist.notify"];
+    const publicActions = [
+      "waitlist.notify",
+      "acquisition.signal",
+      "acquisition.touchpoint_report",
+    ];
     let userId: string | null = null;
     if (!publicActions.includes(action)) {
       userId = await getUserId(req);
@@ -145,6 +149,128 @@ serve(async (req: Request) => {
           summary[channel] = (summary[channel] ?? 0) + 1;
         }
         return json({ success: true, summary });
+      }
+
+      // ─── Landing touchpoint signals (global / anonymous, app_analytics.source_details) ─
+      case "acquisition.signal": {
+        const SUPPORTED_SIGNALS = new Set([
+          "touch_landing", "touch_import", "touch_public_memo", "touch_referral",
+          "touch_comparison", "touch_guitar_gallery",
+          "import_preview_notion", "import_preview_evernote", "import_preview_markdown",
+          "import_signup_cta", "public_memo_signup_cta",
+          "signup_submit_landing", "signup_submit_import",
+          "signup_submit_public_memo", "signup_submit_referral",
+          "signup_submit_comparison", "signup_submit_guitar",
+        ]);
+        const signalKey = String(body.signalKey ?? "").trim();
+        if (!signalKey || !SUPPORTED_SIGNALS.has(signalKey)) {
+          return json({ success: false, error: "signalKey required / unsupported" }, 400);
+        }
+        const dateKey = typeof body.dateKey === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.dateKey)
+          ? body.dateKey
+          : (() => {
+              const d = new Date();
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+            })();
+        const { data: existing } = await admin
+          .from("app_analytics")
+          .select("date, source_details")
+          .eq("date", dateKey)
+          .maybeSingle();
+        if (!existing) {
+          await admin.from("app_analytics").upsert({
+            date: dateKey,
+            landing_views: 0,
+            conversions: 0,
+            share_count: 0,
+            source_details: { [signalKey]: 1 },
+          });
+        } else {
+          const details = (existing.source_details ?? {}) as Record<string, unknown>;
+          const next: Record<string, number> = {};
+          for (const [k, v] of Object.entries(details)) {
+            const n = typeof v === "number" ? v : Number(v);
+            if (Number.isFinite(n) && n > 0) next[k] = n;
+          }
+          next[signalKey] = (next[signalKey] ?? 0) + 1;
+          await admin.from("app_analytics").update({ source_details: next }).eq("date", dateKey);
+        }
+        return json({ success: true, signalKey, dateKey });
+      }
+
+      case "acquisition.touchpoint_report": {
+        const TOUCHPOINT_DEFS = [
+          { id: "landing", label: "Landing", touchSignal: "touch_landing", signupSignal: "signup_submit_landing" },
+          { id: "import", label: "Import", touchSignal: "touch_import", signupSignal: "signup_submit_import" },
+          { id: "public_memo", label: "Public memo", touchSignal: "touch_public_memo", signupSignal: "signup_submit_public_memo" },
+          { id: "referral", label: "Referral", touchSignal: "touch_referral", signupSignal: "signup_submit_referral" },
+          { id: "comparison", label: "Comparison", touchSignal: "touch_comparison", signupSignal: "signup_submit_comparison" },
+          { id: "guitar", label: "Guitar", touchSignal: "touch_guitar_gallery", signupSignal: "signup_submit_guitar" },
+        ];
+        const IMPORT_PREVIEW_DEFS = [
+          { id: "notion", label: "Notion previews", signalKey: "import_preview_notion" },
+          { id: "evernote", label: "Evernote previews", signalKey: "import_preview_evernote" },
+          { id: "markdown", label: "Markdown previews", signalKey: "import_preview_markdown" },
+        ];
+        const windowDaysRaw = typeof body.windowDays === "number" ? body.windowDays : Number(body.windowDays ?? 30);
+        const windowDays = Number.isFinite(windowDaysRaw)
+          ? Math.max(7, Math.min(90, Math.trunc(windowDaysRaw)))
+          : 30;
+        const endDate = new Date();
+        endDate.setHours(0, 0, 0, 0);
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - (windowDays - 1));
+        const fmt = (d: Date) =>
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const startKey = fmt(startDate);
+        const endKey = fmt(endDate);
+        const { data } = await admin
+          .from("app_analytics")
+          .select("date, source_details")
+          .gte("date", startKey)
+          .lte("date", endKey)
+          .order("date", { ascending: true });
+        const counts: Record<string, number> = {};
+        for (const row of data ?? []) {
+          const details = (row.source_details ?? {}) as Record<string, unknown>;
+          for (const [k, v] of Object.entries(details)) {
+            const n = typeof v === "number" ? v : Number(v);
+            if (Number.isFinite(n) && n > 0) counts[k] = (counts[k] ?? 0) + n;
+          }
+        }
+        const touchpoints = TOUCHPOINT_DEFS.map((def) => {
+          const touches = counts[def.touchSignal] ?? 0;
+          const signups = counts[def.signupSignal] ?? 0;
+          const rate = touches > 0 ? Math.round((signups / touches) * 1000) / 10 : 0;
+          return {
+            id: def.id,
+            touchpoint: def.label,
+            touches,
+            signups,
+            rate,
+          };
+        });
+        const totalTouches = touchpoints.reduce((a, b) => a + b.touches, 0);
+        const totalSignups = touchpoints.reduce((a, b) => a + b.signups, 0);
+        const conversionRate = totalTouches > 0
+          ? Math.round((totalSignups / totalTouches) * 1000) / 10
+          : 0;
+        const importPreviews = IMPORT_PREVIEW_DEFS.map((def) => ({
+          id: def.id,
+          label: def.label,
+          previewCount: counts[def.signalKey] ?? 0,
+        }));
+        return json({
+          success: true,
+          windowDays,
+          startDate: startKey,
+          endDate: endKey,
+          summary: { totalTouches, totalSignups, conversionRate },
+          touchpoints,
+          importPreviews,
+          importSignupCtaCount: counts["import_signup_cta"] ?? 0,
+          publicMemoSignupCtaCount: counts["public_memo_signup_cta"] ?? 0,
+        });
       }
 
       // ─── Command Center ─────────────────────────────────────────────────────
