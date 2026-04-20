@@ -248,7 +248,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
               const SizedBox(width: 8),
               ScaleTransition(
                 scale: _pulseAnim,
-                child: const Icon(Icons.mic, color: Colors.red, size: 16),
+                child:
+                    const Icon(Icons.mic, color: Color(0xFFE53935), size: 16),
               ),
             ],
           ],
@@ -267,11 +268,11 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
           if (_isListening)
             Container(
               width: double.infinity,
-              color: Colors.red.withAlpha(20),
+              color: const Color(0xFFE53935).withAlpha(20),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.mic, color: Colors.red, size: 16),
+                  const Icon(Icons.mic, color: Color(0xFFE53935), size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -474,11 +475,12 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                   onPressed: _toggleVoice,
                   icon: Icon(
                     _isListening ? Icons.mic : Icons.mic_none,
-                    color: _isListening ? Colors.red : Colors.white54,
+                    color:
+                        _isListening ? const Color(0xFFE53935) : Colors.white54,
                   ),
                   style: IconButton.styleFrom(
                     backgroundColor: _isListening
-                        ? Colors.red.withAlpha(30)
+                        ? const Color(0xFFE53935).withAlpha(30)
                         : Colors.transparent,
                   ),
                 ),

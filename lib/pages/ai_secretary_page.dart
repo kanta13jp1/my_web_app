@@ -220,7 +220,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('MAGI秘書との通信エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -283,7 +283,10 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('解析エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('解析エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     } finally {
@@ -434,7 +437,7 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('タスクが登録されました'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
       }
@@ -594,9 +597,9 @@ class _AISecretaryPageState extends State<AISecretaryPage> {
                                               const EdgeInsets.only(top: 4.0),
                                           child: Text(
                                             '(${_attemptLogs.length} MAGI attempts failed)',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 10,
-                                              color: Colors.red[300],
+                                              color: Color(0xFFE57373),
                                               height: 1.5,
                                             ),
                                           ),
