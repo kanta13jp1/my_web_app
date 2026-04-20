@@ -12373,3 +12373,14 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - 影響: 全インスタンス UserPromptSubmit hook が正しい現状を毎ターン注入
 - 残作業 (将来 PS#1): blog-publish 5/7→7/7 (retry policy + engagement score)
 - Philosophy alignment: 原則 6 (資本=時間 — rule 鮮度維持で誤判断ゼロ) + 原則 8 (KPI=昨日の自分 — 進捗可視化)
+---
+
+## 2026-04-20 PS版#4 S16 — 48h delta 監視 (Notion🔴 / Grok 4.3🟠 / Cursor ARR 訂正)
+
+- **Notion Custom Agents 🟠→🔴**: GPT-5.4 Mini/Nano + Haiku 4.5 で credit 10 分の 1 に削減 + Autofill 連携 → Notion AI が「安すぎて無料同等」知覚 → 自分株式会社「無料」軸の訴求圧迫
+- **xAI Grok 4.3 beta 🟢→🟠**: SuperGrok Heavy 限定 4-agent team (Grok+Harper+Benjamin+Lucas) — 「AI 自己組織化」 vs 自分株「人間 CEO 指揮」(Philosophy 原則 1) の差別化ポイント顕在化
+- **Cursor ARR 訂正**: S15 の $60B → 確定値 $9.9B 評価 / $500M ARR (別ラウンド噂値可能性) / Replit $3B→$9B (6 ヶ月 3 倍) 追加
+- **成果物**: `docs/competitor-reports/2026-04-20.md` S16 section + `SCOREBOARD_2026-04-20.md` 3 行更新
+- **cross-instance-pr 新規不要** — 全件 monitoring-only
+- **次回候補**: `ai-assistant` EF `DEFAULT_SYNTHESIS_MODEL` の Haiku 4.5 追従確認 → Win版委譲検討
+- Philosophy alignment: 原則 1 (CEO 感 — Grok 4.3 との構図明確化) / 原則 2 (ミッション駆動 — 監視対象の選別)

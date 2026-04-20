@@ -22,12 +22,12 @@
 
 | # | 競合 | カテゴリ | 2026-04 最新動向 | 脅威度 | 差別化軸 | 対応担当 / Action |
 |---|------|---------|-----------------|-------|---------|------------------|
-| 1 | **notion** | ノート/ドキュメント | Workers for Agents Dev Preview (GA mid-2026) | 🟠 | 日本語 + 6部署統合 + タグ | 20260421_notion_ai_lp_update.md → VSCode |
+| 1 | **notion** | ノート/ドキュメント | Workers for Agents Dev Preview (GA mid-2026) / **Custom Agents 35-50% コスト削減 (GPT-5.4 Mini/Nano + Haiku 4.5 で credit 10 分 1) + Autofill 連携 (S16)** | 🔴 | 日本語 + 6部署統合 + タグ | 20260421_notion_ai_lp_update.md → VSCode |
 | 2 | **evernote** | ノート | 無料プラン 50件制限判明 (前回1000件誤記) | 🟠 | Supabase 同期 + Notion import | LP 移行比較更新 → VSCode (done?) |
 | 3 | **moneyforward** | 家計/法人 | **AI Cowork = 法人バックオフィス専用 (2026-07 GA / Claude SDK+MCP) — 個人家計は対象外 (S14 住み分け確定)** | 🟠 | 個人 CEO vs 組織バックオフィス | 20260419_moneyforward_counter.md / `finance.personal_summary` 継続 → Win |
 | 4 | **slack** | チャット/仕事 | **TDX 2026 (04-15): 60+ MCP tool + Agentforce Vibes 2.0 (Claude Sonnet 4.5 default / Dev Edition 無料) / Agentforce 360 = Mobile+ChatGPT+Claude+Gemini+Teams 全対応 (S14)** | 🔴🔴 | 個人 × 6部署 × 日本語 × 無料 | 20260420_slack_agentforce_threat.md → VSCode (S9) |
 | 5 | **chatwork** | チャット (JP) | kubell: BPaaS × AI agents 戦略 / GraphQL+Go 刷新 (S12) | 🟠 | 個人向け vs 中小企業向け | 定常 watchlist (住み分け明確) |
-| 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.1 Fast (ai-hub 登録済) | 🟢 | SNS は価値消費・自分株は価値増大 | 定期 model update のみ |
+| 6 | **x (Twitter/xAI)** | SNS/AI | Grok 4.1 Fast (ai-hub 登録済) / **Grok 4.3 beta 4-agent team (Grok+Harper+Benjamin+Lucas) SuperGrok Heavy 限定 — "AI 自己組織化" vs 自分株 "人間 CEO 指揮" (S16)** | 🟠 | SNS は価値消費・自分株は価値増大・CEO 感 (原則 1) | LP コピーに「人間 CEO vs AI 自己組織化」軸追加検討 → VSCode |
 | 7 | **animaworks** | アバター AI | 2026-04 新発表なし / Meta Avatars + MetaMe NPC-AI が主戦場 (S12) | 🟢 | フル 3D = philosophy 違反 | 定常 watchlist (深追い不要) |
 | 8 | **claude-code** | 開発ツール | Opus 4.7 リリース (hours-long project) | 🟢 | Flutter Web 個人向けは別軸 | ai-hub synthesis 候補 (Win検討中) |
 | 9 | **codex (OpenAI)** | 開発ツール | GPT-5 2026Q2 予測 | 🟢 | コーディングツール vs 人生フレームワーク | 定常 watchlist |
@@ -115,9 +115,10 @@
 
 | 競合 | カテゴリ | 2026-04 動向 | 判定 | 住み分け根拠 |
 |------|---------|-------------|------|-------------|
-| **Cursor** (Anysphere) | AI コーディング IDE | $60B 評価 / $2B ARR / 2M ユーザー / Fortune 500 の半数 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
+| **Cursor** (Anysphere) | AI コーディング IDE | **$9.9B 評価 / $500M ARR (2026-04 確定値・S16 訂正)** / 2M ユーザー / Fortune 500 の半数 ※S15 の $60B は別ラウンド噂値可能性 | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
 | **Cognition** (Windsurf+Devin) | AI 開発エージェント | Windsurf + Devin 統合 / $10.2B 評価 / LogRocket SWE-Bench #1 | 🟢 watchlist | 自律 SWE エージェント vs 個人 CEO 6 部署 |
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
+| **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
 | **Anthropic Labs Claude Design** | AI デザイン SaaS | 2026-04-17 GA / prompt→prototype 2 回 / Canva CEO 署名の native 統合 / Pro $20+ | 🟠 ツール採用検討 | VSCode版 が `/claude-design-handoff` と併用判断 (Rule 21) |
 
 **扱い**: Cursor / Cognition / Lovable は **LP 比較表に追加しない**。理由:
@@ -125,3 +126,4 @@
 - 21社リストに入れると比較表が knowledge-work 寄りに傾き、差別化メッセージが弱まる
 
 *更新: PS版#4 S15 watchlist backlog 3 社 (Cursor / Cognition / Lovable) + Claude Design 詳細 | 2026-04-20 深夜*
+*更新: PS版#4 S16 notion 🟠→🔴 (Custom Agents 10x コスト減) / x 🟢→🟠 (Grok 4.3 4-agent team) / Cursor ARR 訂正 + Replit $9B 追加 | 2026-04-20 深夜 late*
