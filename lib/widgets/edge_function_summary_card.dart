@@ -603,6 +603,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/event-ticketing',
       'イベントチケットページ > イベント作成・チケット発行・参加者管理',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'discord-notifications',
+      'Discord通知管理',
+      true,
+      '/discord-notifications',
+      'Discord通知ページ > チャンネル設定・通知送信・履歴確認',
+    ),
+    _FnDef(
+      'family-sharing-manager',
+      'ファミリー共有管理',
+      true,
+      '/family-sharing',
+      'ファミリー共有ページ > メンバー招待・共有リスト・アクセス権限管理',
+    ),
+    _FnDef(
+      'meeting-manager',
+      'ミーティング管理',
+      true,
+      '/meeting-manager',
+      'ミーティング管理ページ > 会議スケジュール・議事録・参加者管理',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
