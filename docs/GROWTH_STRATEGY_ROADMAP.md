@@ -14878,3 +14878,49 @@ commit: 8e8c737d `docs(ps4-s30): WBS/Gantt 大改修 Phase 2 マスタータス�
 commit: `<pending>` — build verification は dart format deadlock で skip (CI に委譲・S17 parallel race pattern)
 
 ---
+
+## PS版#3 Session#26 — 2026-04-20 夜 → 2026-04-21: WBS/Gantt UI overhaul (本日線 + 未完了 + 列追加)
+
+**commit b544b44b** (83aaf7fb rebase landed to main)
+
+### 背景
+ユーザー directive (2026-04-20 夜): 「WBS/ガントチャートが更新されない / 本日線 = 2026/04/20 位置ズレ / 開始予定日・完了予定日・リカバリー案列追加 / 未完了フィルタ」。`docs/cross-instance-prs/20260420_wbs_gantt_overhaul_phase2.md` (PS#4 S30 起票) の T3 + T2-VSCode 部分を PS#3 (AI大学専任だが UI 空白埋め) が先取り実装。
+
+### 実装 5 サイト (`lib/pages/project_gantt_page.dart`)
+1. `_WbsTab` に `hideCompleted` + `onToggleHideCompleted` prop 追加 → `_filtered` getter で `status=='completed'` 除外 (WBS タブ にも Timeline と同じフィルタを適用)
+2. `_FilterRow` に `⏰Schedule` + `🤖GHA` チップ追加 — 既存 PS#1~#6/WEB/📱 に加えて自動化枠 2 種もフィルタ可
+3. `_FilterRow` 右端に `☐ 未完了のみ` toggle chip (GestureDetector + AnimatedContainer) 新設
+4. `_TaskRow` card 拡張: `_formatSchedule(startDate, endDate)` で「予定開始 〜 予定完了 (延滞 +N 日)」inline 表示 + `recoveryPlan` 行 orange / `isDelayedNoPlan` 時は赤「リカバリー案 未記入 (要対処)」警告
+5. `_GanttTimelineTabState.initState` + `WidgetsBinding.addPostFrameCallback` で `_timelineHScroll.jumpTo(todayX - viewport/3)` — 今日位置が viewport 左 1/3 に来るよう自動スクロール (起動時 offset=0 だと 2026-04-21 が viewport 右外へ出る bug 解消)
+
+### 遭遇した制約
+- `dart format` が `tail -5` pipe buffering で hang → 絶対パス + pipe なしで解消 / **Lesson**: bash background task + pipe は dart format だと buffering lock → パイプ除去テンプレ
+- rebase 後 flutter analyze で `prefer_const_constructors` / `prefer_const_literals_to_create_immutables` 2 error (line 1233-1234) → `const Row([ ... ])` 化で復旧
+- fetch で 4 upstream 取込 (Win版#131 part 22 filter chip / PS#4 S30 master PR / PS#1 S23 Option B / PS#5 S27) → conflict なく rebase 完了
+
+### Enforcement Phase 2 現況 audit (ユーザー要望 Option A/B/C)
+| Option | 担当 | 状態 | 証拠 |
+|---|---|---|---|
+| A: SessionStart hook auto-curl | Win版 | WIP | `docs/cross-instance-prs/20260420_wbs_enforcement_option_a_win.md` 起票済 |
+| B: wrap-up skill blocking | PS#1 | **完了** | `09f285f4 feat(ps1-s23): Option B — wrap-up skill で WBS-SYNC blocking 化` |
+| C: daily cron audit | PS#1 | **完了** | `.github/workflows/wbs-staleness-audit.yml` 稼働中 (06:00 JST daily / STALE_DAYS=3 / 8 instance 対応) |
+
+→ **Option B/C 既稼働**、Option A のみ Win版で進行中。ユーザー要望 3 案のうち 2 案実運用化済 = 当面の WBS-SYNC 強制化は機能中。
+
+### Philosophy 9 原則
+- 原則 3 (優しい mentor): 遅延タスク「リカバリー案未記入」赤警告 = 失敗の指摘ではなく改善フィードバック ✅
+- 原則 5 (商品=ユーザー価値): 本日線自動スクロール = 開くたびに現在位置確認ゼロ操作 ✅
+- 原則 6 (資本=時間): 未完了フィルタで completed ノイズ排除 = タスク判断時間短縮 ✅
+- 原則 7 (BS 原則): 遅延 = 負債 / リカバリー案 = 資産転換行動 可視化 ✅
+- 原則 8 (KPI=昨日の自分): 予定 vs 実績範囲表示で昨日比進捗即判定 ✅
+
+5/9 ✅ ([PHILOSOPHY-22] 5+ 基準クリア)
+
+### 次回候補 (PS#3 S27 以降)
+1. **Figure AI** (AI大学 144 社化) — humanoid robot / Brett Adcock / $39B valuation / Helix VLA — embodied AI 軸を Physical Intelligence S23 と対比可
+2. **Etched** — Sohu Transformer-only ASIC / $120M / Peter Thiel — hardware 軸空白埋め
+3. **Reflection AI** — autonomous coding agent / Misha Laskin DeepMind / $130M — vs Cognition Devin 対比軸
+4. **Glean** — enterprise search / Arvind Jain / $4.6B valuation
+5. **WBS/Gantt T1 (真のイナズマ線 S-curve overlay)** — VSCode版担当だが PS#3 先取り可
+
+---
