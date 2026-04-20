@@ -37,9 +37,11 @@ CREATE INDEX IF NOT EXISTS ai_hub_chat_logs_session_id_idx
 CREATE INDEX IF NOT EXISTS ai_hub_chat_logs_user_id_idx
   ON ai_hub_chat_logs (user_id, created_at DESC) WHERE user_id IS NOT NULL;
 
--- p50/p95 計算用 (provider × hour)
-CREATE INDEX IF NOT EXISTS ai_hub_chat_logs_provider_hour_idx
-  ON ai_hub_chat_logs (provider, date_trunc('hour', created_at));
+-- p50/p95 計算用 (provider × created_at)
+-- date_trunc('hour', timestamptz) は STABLE で index 化不可 → created_at で代替。
+-- heatmap_view の GROUP BY date_trunc は range scan で効く。
+CREATE INDEX IF NOT EXISTS ai_hub_chat_logs_provider_created_at_idx
+  ON ai_hub_chat_logs (provider, created_at DESC);
 
 COMMENT ON COLUMN ai_hub_chat_logs.latency_ms IS 'リクエストの応答時間 (ms)。p50/p95 集計に使用';
 COMMENT ON COLUMN ai_hub_chat_logs.trace_id   IS '分散トレース ID。LLM ↔ DB ↔ EF を跨いだ relate に使用';
