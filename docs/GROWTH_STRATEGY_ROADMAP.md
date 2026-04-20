@@ -12822,3 +12822,18 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
   4. 🟢 5/19-20 Google I/O 監視 (既存 placeholder は最新)
   5. 🟢 Cursor $50B 確定監視 (確定 → SNS 弾化)
 - Philosophy alignment: 原則 1 (CEO 的速度 — S18 を即 HOLD に変更) / 原則 2 (ミッション駆動 — 配布速度優先) / 原則 6 (資本=時間 — Partner 登録回避) / 原則 7 (BS — 短期負債 vs 即資産化)
+
+## PS版#1 Session 15 (2026-04-20 17:30 JST) — migration timestamp 衝突修復 + S14 副作用発覚
+
+- **コミット**: `47f8a53e` fix: migration timestamp collision — 20260420090000 Pleias→100000
+- **発見 1 (本質 bug)**: `supabase/migrations/20260420090000_*.sql` が 2 ファイル衝突
+  - `_extend_wbs_10_instances.sql` (Win#131 part 10 / 87ac82e3 先 applied)
+  - `_seed_pleias_ai_university.sql` (PS#3 S16 / cde56d24 後発 → **SQLSTATE 23505**)
+  - deploy-prod run 24655942480 が schema_migrations_pkey 重複で失敗 → Pleias を `20260420100000_` に rename
+- **発見 2 (S14 fix 副作用)**: `cancel-in-progress: false` でも **pending queue の run は新 push で replace-cancel される** GitHub 仕様
+  - ci.yml cascade は解消 (S14 効果あり) だが deploy-prod の pending cancel は残存
+  - 24656544074 (本修正の deploy) 自身が後発 Imbue commit に replace されて cancel → 24656559941 で統合 deploy
+  - 次回 PS#1 検討: group を SHA 分離 (並列許可) / 失敗 auto-rerun WF / 許容判断のいずれか
+- **Rule 17 WF health**: 全 WF 中 failure は Deploy to Production のみ (2 件・いずれも上記 migration 衝突起源)
+- **新規 memory**: `project_20260420_ps1_s15.md` + `feedback_success_20260420_migration_timestamp_collision.md`
+- Philosophy alignment: 原則 6 (資本=時間 — deploy 再試行時間削減) / 原則 7 (資産 — migration 衝突の即時解消・技術負債除去) / 整合性: 7/9
