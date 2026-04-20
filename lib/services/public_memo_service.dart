@@ -28,7 +28,8 @@ class PublicMemoService {
   }
 
   static String buildPublicMemoUrl(int memoId) {
-    return '$_functionBaseUrl/public-memo-share?id=$memoId';
+    // public-memo-share EF は hub統合時に削除済みのためアプリURLに切替 (Issue #607)
+    return buildPublicMemoAppUrl(memoId);
   }
 
   static String buildPublicMemoOgpUrl(int memoId) {
@@ -149,7 +150,7 @@ class PublicMemoService {
             'metadata': metadata,
             'is_public': true,
             'published_at': DateTime.now().toIso8601String(),
-          })
+          }, onConflict: 'note_id,user_id',)
           .select()
           .single();
 

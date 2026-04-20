@@ -765,26 +765,49 @@ serve(async (req) => {
         }
         case "wbs.project_overview": {
           // Win版#131 part 20: プロジェクト全体概観 (AI 報告用)
-          const { data, error } = await admin.from("wbs_project_overview_view")
-            .select("*").single();
-          if (error) throw new Error(error.message);
-          return json({ success: true, overview: data });
+          // Win版#131 part 23: defensive — view 未 deploy / 0 rows でも 200 返す
+          try {
+            const { data, error } = await admin
+              .from("wbs_project_overview_view")
+              .select("*").maybeSingle();
+            if (error) {
+              return json({ success: false, overview: null, error: error.message }, 200);
+            }
+            return json({ success: true, overview: data });
+          } catch (e) {
+            return json({ success: false, overview: null, error: String(e) }, 200);
+          }
         }
         case "wbs.auto_repair_dependencies": {
           // Win版#131 part 20: 依存関係スケジュール自動修復
-          const { data, error } = await admin.rpc(
-            "wbs_auto_repair_dependencies",
-          );
-          if (error) throw new Error(error.message);
-          return json({ success: true, repairs: data ?? [] });
+          // Win版#131 part 23: defensive — RPC 未 deploy でも 200 返す
+          try {
+            const { data, error } = await admin.rpc(
+              "wbs_auto_repair_dependencies",
+            );
+            if (error) {
+              return json({ success: false, repairs: [], error: error.message }, 200);
+            }
+            return json({ success: true, repairs: data ?? [] });
+          } catch (e) {
+            return json({ success: false, repairs: [], error: String(e) }, 200);
+          }
         }
         case "wbs.ai_status_report": {
           // Win版#131 part 20: AI による WBS 概観レポート生成
+          // Win版#131 part 23: defensive — view/RPC 失敗でも 200 返す
           // 1) overview view から health snapshot 取得
           // 2) ai-hub:provider.chat (groq) に prompt 投げる
           const { data: overview, error: oErr } = await admin
-            .from("wbs_project_overview_view").select("*").single();
-          if (oErr) throw new Error(oErr.message);
+            .from("wbs_project_overview_view").select("*").maybeSingle();
+          if (oErr) {
+            return json({
+              success: false,
+              report: "WBS overview view 未 deploy または読み込み失敗",
+              error: oErr.message,
+              snapshot: null,
+            }, 200);
+          }
           const { data: delayed } = await admin
             .from("wbs_delayed_tasks_view")
             .select("title, instance, delay_days, recovery_plan, recovery_status")
@@ -865,18 +888,30 @@ serve(async (req) => {
           return json({ success: true, updated: ok, total: results.length, results });
         }
         case "wbs.add_task": {
-          // body: { category, title, description?, instance?, priority?, end_date?, milestone_code? }
+          // body: { category, title, instance, description?, priority?, end_date?, milestone_code? }
+          // PS#6 S23 (2026-04-21): instance を required 化 (ALL leak 防止)
+          // 'all' は全インスタンス責任の goal のみ明示指定可 (user 要望: 原則は owner 1 instance)
           const category = String(body.category ?? "");
           const title = String(body.title ?? "");
+          const instance = String(body.instance ?? "");
+          const validInstances = [
+            "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
+            "web", "mobile", "all",
+          ];
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
+          }
+          if (!instance || !validInstances.includes(instance)) {
+            return json({
+              error: `instance required (one of: ${validInstances.join(", ")})`,
+            }, 400);
           }
           const { data, error } = await admin.from("wbs_tasks").insert({
             category,
             category_icon: String(body.category_icon ?? "📋"),
             title,
             description: body.description ?? null,
-            instance: String(body.instance ?? "all"),
+            instance,
             status: "pending",
             progress: 0,
             priority: String(body.priority ?? "medium"),
@@ -967,6 +1002,7 @@ serve(async (req) => {
       case "goal.add": {
         const item = await addItem(admin, "goal", userId, {
           title: body.title, description: body.description, deadline: body.deadline,
+          timeframe: body.timeframe ?? "short",
           status: "active", milestones: body.milestones ?? [],
         });
         return json({ success: true, goal: item });

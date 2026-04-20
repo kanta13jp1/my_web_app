@@ -62,25 +62,26 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
       _errorMessage = null;
     });
     try {
-      final activeRes = await _supabase.functions.invoke(
-        'goal-tracker',
-        queryParameters: {'view': 'active'},
+      final res = await _supabase.functions.invoke(
+        'tools-hub',
+        body: {'action': 'goal.list'},
       );
-      final completedRes = await _supabase.functions.invoke(
-        'goal-tracker',
-        queryParameters: {'view': 'completed'},
-      );
-
-      final activeData = activeRes.data;
-      final completedData = completedRes.data;
+      final data = res.data;
+      final allGoals = data is Map && data['goals'] is List
+          ? (data['goals'] as List).cast<Map<String, dynamic>>()
+          : <Map<String, dynamic>>[];
 
       setState(() {
-        _activeGoals = activeData is Map && activeData['goals'] is List
-            ? (activeData['goals'] as List).cast<Map<String, dynamic>>()
-            : [];
-        _completedGoals = completedData is Map && completedData['goals'] is List
-            ? (completedData['goals'] as List).cast<Map<String, dynamic>>()
-            : [];
+        _activeGoals = allGoals.where((g) {
+          final meta = g['metadata'] is Map ? g['metadata'] as Map : const {};
+          final status = meta['status']?.toString() ?? 'active';
+          return status == 'active';
+        }).toList();
+        _completedGoals = allGoals.where((g) {
+          final meta = g['metadata'] is Map ? g['metadata'] as Map : const {};
+          final status = meta['status']?.toString() ?? 'active';
+          return status == 'completed';
+        }).toList();
       });
     } catch (e) {
       if (mounted) setState(() => _errorMessage = '目標の取得に失敗しました: $e');
@@ -96,14 +97,21 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _supabase.functions.invoke(
-        'goal-tracker',
+        'tools-hub',
         body: {
-          'action': 'create',
+          'action': 'goal.add',
           'title': title,
           'description': _descCtrl.text.trim(),
           'timeframe': _selectedTimeframe,
           'deadline': _deadline?.toIso8601String(),
-          'milestones': _milestones.map((m) => {'title': m}).toList(),
+          'milestones': [
+            for (final m in _milestones)
+              {
+                'id': DateTime.now().microsecondsSinceEpoch.toString() + m,
+                'title': m,
+                'done': false,
+              },
+          ],
         },
       );
       if (!mounted) return;
@@ -125,20 +133,36 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
     }
   }
 
+  Map<String, dynamic>? _findGoalById(String goalId) {
+    for (final g in [..._activeGoals, ..._completedGoals]) {
+      if (g['id']?.toString() == goalId) return g;
+    }
+    return null;
+  }
+
   Future<void> _toggleMilestone(
     String goalId,
     String milestoneId,
     bool done,
   ) async {
     try {
+      final goal = _findGoalById(goalId);
+      if (goal == null) return;
+      final meta = goal['metadata'] is Map
+          ? Map<String, dynamic>.from(goal['metadata'] as Map)
+          : <String, dynamic>{};
+      final milestones =
+          (meta['milestones'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final updated = milestones.map((m) {
+        if (m['id']?.toString() == milestoneId) {
+          return {...m, 'done': done};
+        }
+        return m;
+      }).toList();
+      meta['milestones'] = updated;
       await _supabase.functions.invoke(
-        'goal-tracker',
-        body: {
-          'action': 'update_milestone',
-          'goal_id': goalId,
-          'milestone_id': milestoneId,
-          'done': done,
-        },
+        'tools-hub',
+        body: {'action': 'goal.update', 'id': goalId, ...meta},
       );
       await _fetchGoals();
     } catch (e) {
@@ -152,13 +176,15 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
 
   Future<void> _updateStatus(String goalId, String status) async {
     try {
+      final goal = _findGoalById(goalId);
+      if (goal == null) return;
+      final meta = goal['metadata'] is Map
+          ? Map<String, dynamic>.from(goal['metadata'] as Map)
+          : <String, dynamic>{};
+      meta['status'] = status;
       await _supabase.functions.invoke(
-        'goal-tracker',
-        body: {
-          'action': 'update_status',
-          'goal_id': goalId,
-          'status': status,
-        },
+        'tools-hub',
+        body: {'action': 'goal.update', 'id': goalId, ...meta},
       );
       await _fetchGoals();
     } catch (e) {
@@ -333,16 +359,20 @@ class _GoalTrackerPageState extends State<GoalTrackerPage>
   }
 
   Widget _buildGoalCard(Map<String, dynamic> goal, {bool isCompleted = false}) {
-    final goalId = goal['goal_id'] as String? ?? '';
-    final title = goal['title'] as String? ?? '';
-    final description = goal['description'] as String? ?? '';
-    final timeframe = goal['timeframe'] as String? ?? 'short';
-    final progress = (goal['progress'] as num?)?.toInt() ?? 0;
-    final milestoneDone = (goal['milestoneDone'] as num?)?.toInt() ?? 0;
-    final milestoneTotal = (goal['milestoneTotal'] as num?)?.toInt() ?? 0;
+    final goalId = goal['id']?.toString() ?? '';
+    final meta = goal['metadata'] is Map ? goal['metadata'] as Map : const {};
+    final title = meta['title']?.toString() ?? '';
+    final description = meta['description']?.toString() ?? '';
+    final timeframe = meta['timeframe']?.toString() ?? 'short';
     final milestones =
-        (goal['milestones'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    final deadline = goal['deadline'] as String?;
+        (meta['milestones'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final milestoneTotal = milestones.length;
+    final milestoneDone =
+        milestones.where((m) => m['done'] as bool? ?? false).length;
+    final progress = milestoneTotal > 0
+        ? ((milestoneDone / milestoneTotal) * 100).round()
+        : 0;
+    final deadline = meta['deadline']?.toString();
 
     final tfColor = _timeframeColors[timeframe] ?? const Color(0xFF607D8B);
     final tfLabel = _timeframeLabels[timeframe] ?? timeframe;

@@ -735,6 +735,87 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/music-collaboration',
       '音楽コラボページ > セッション一覧・参加・楽曲共有',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'changelog-manager',
+      'チェンジログ管理 (一覧/詳細)',
+      true,
+      '/changelog',
+      'チェンジログページ > 変更履歴一覧',
+    ),
+    _FnDef(
+      'travel-itinerary-planner',
+      '旅行プランナー (旅程管理)',
+      true,
+      '/travel-itinerary',
+      '旅行プランナーページ > 旅程作成・管理',
+    ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'dns-domain-manager',
+      'DNS・ドメイン管理',
+      true,
+      '/dns-domain-manager',
+      'DNS・ドメイン管理ページ > ドメイン一覧・DNSレコード設定',
+    ),
+    _FnDef(
+      'inventory-barcode',
+      '在庫・バーコード管理',
+      true,
+      '/inventory-barcode',
+      '在庫管理ページ > バーコードスキャン・在庫登録・一覧表示',
+    ),
+    _FnDef(
+      'legal-compliance-manager',
+      'リーガルコンプライアンス管理',
+      true,
+      '/legal-compliance',
+      'コンプライアンスページ > 規制要件確認・リスク管理・監査ログ',
+    ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'github-pr-manager',
+      'GitHub PR管理 (プルリクエスト一覧・レビュー)',
+      true,
+      '/github-pr',
+      'GitHub PRページ > PR一覧・レビュー・マージ管理',
+    ),
+    _FnDef(
+      'parking-reservation',
+      '駐車場予約管理',
+      true,
+      '/parking-reservation',
+      '駐車場予約ページ > 予約確認・空き状況・キャンセル管理',
+    ),
+    _FnDef(
+      'pet-care-manager',
+      'ペットケア管理',
+      true,
+      '/pet-care',
+      'ペットケアページ > ペット情報登録・ケアスケジュール・ワクチン記録',
+    ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'note-comments',
+      'ノートコメント管理 (コメント一覧・投稿)',
+      true,
+      '/note-comments',
+      'ノートコメントページ > コメント一覧・新規投稿',
+    ),
+    _FnDef(
+      'music-playlist-manager',
+      '音楽プレイリスト管理 (再生リスト作成・編集)',
+      true,
+      '/music-playlist-manager',
+      '音楽プレイリストページ > プレイリスト作成・曲追加・再生',
+    ),
+    _FnDef(
+      'photo-gallery-manager',
+      'フォトギャラリー管理 (写真アルバム・共有)',
+      true,
+      '/photo-gallery',
+      'フォトギャラリーページ > アルバム作成・写真アップロード・共有',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;

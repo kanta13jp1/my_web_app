@@ -25,6 +25,9 @@
 | 2026-04-20 | PS版#2 | Qiita 429 = **rolling 24h window ではなく >72h の長期 cooldown**。`qiita-retry` skill の旧 Gate 前提 (JST 00:00 固定リセット / 6h 429 → 12h wait) は誤り。4 本連続投稿 (2026-04-17) 後 72h 経過でも 429 継続 | (a) Gate 1: 直近 **72h 429=0** 確認 (b) 429 検出時は **72h wait** (c) burst **1 本/1h+** (d) 日次 **1-2 本/日** に縮小 — skill 3 段階 Gate 化済 (commit 71bc6810) | PS#2 S3 |
 | 2026-04-20 | PS版#2 | dev.to 422 "Title already used in last 5min" = 並行 instance collision (53 秒差 dispatch で発生) | `blog-publish.yml` 直前に **5 分以内 run の draft_path 一致 check** (skill Step 2.3)。collision 時は先発 run の URL 採用 + orphan 両方削除 | PS#2 S1 (別 session) |
 | 2026-04-20 | PS版#2 | dev.to 4-tag cap silent truncation (`schedule-hub/index.ts:303` `rawTags.slice(0,4)` / 警告 log ゼロ) = frontmatter に 5 tags 書くと 5 番目が silent drop | frontmatter は価値順 sort で 先頭 4 個に価値タグ寄せる (最具体 > カテゴリ > 業界 > 運動 > 汎用)。3 Notion EN drafts で `Notion,AI,SaaS,buildinpublic,webdev` 並び替え済 (commit 976eaf92) | PS#2 S14 |
+| 2026-04-20 | 全インスタンス (PS版#3 発見) | git-bash + cygwin Windows 環境で `cd <dir> && dart format <file> 2>&1 \| tail -N` を background task で起動すると stdout buffering lock → 180s timeout 3 連発で永久 hang | **絶対パス + pipe なし** テンプレ: `dart format C:/absolute/path/file.dart 2>&1` (同期 Bash)。exit code 判定のみなら `--set-exit-if-changed` 付加で pipe 完全禁止 | PS#3 S26 |
+| 2026-04-20 | 全インスタンス (PS版#3 発見) | ScheduleWakeup 連鎖で 8h+ セッション化 (1 session で user input 3 件・last-prompt 31 件・idle gap 2 回 × 3.5h = 7h 待機) | 深夜 JST 02-06 は ScheduleWakeup 呼出禁止。idle gap 3h+ 検知で wrap-up 実行し session 終了。`delaySeconds` 1800 超過禁止。wake 2 連続自動起動=停止サイン | PS#3 S26 |
+| 2026-04-20 | 全インスタンス (PS版#3 発見) | compaction 後 summary 継続セッションに新規大規模タスク投入 → context 再圧迫 → 再 compaction ループ | summary 継続時は wrap-up 済ませて 90 min 以内に session 終了。次タスクは新セッションで起動 | PS#3 S26 |
 
 ---
 

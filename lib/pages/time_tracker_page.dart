@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// 勤怠・時間追跡ページ
-/// time-tracker Edge Function と連携して作業時間を管理
+/// app-hub:time.* と連携して作業時間を管理
 /// ジョブカン・Toggl・Clockify競合
 class TimeTrackerPage extends StatefulWidget {
   const TimeTrackerPage({super.key});
@@ -49,8 +49,8 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
     });
     try {
       final response = await _supabase.functions.invoke(
-        'time-tracker',
-        queryParameters: {'view': _view},
+        'app-hub',
+        body: {'action': 'time.list', 'view': _view},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -73,8 +73,8 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
     setState(() => _isLoading = true);
     try {
       final response = await _supabase.functions.invoke(
-        'time-tracker',
-        queryParameters: {'view': 'projects'},
+        'app-hub',
+        body: {'action': 'time.projects'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['projects'] is List) {
@@ -93,8 +93,8 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
   Future<void> _clockAction(String action) async {
     try {
       await _supabase.functions.invoke(
-        'time-tracker',
-        body: {'action': action},
+        'app-hub',
+        body: {'action': 'time.clock', 'type': action},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -161,9 +161,9 @@ class _TimeTrackerPageState extends State<TimeTrackerPage>
     if (_projectCtrl.text.trim().isEmpty || hours <= 0) return;
     try {
       await _supabase.functions.invoke(
-        'time-tracker',
+        'app-hub',
         body: {
-          'action': 'log_hours',
+          'action': 'time.log_hours',
           'project': _projectCtrl.text.trim(),
           'hours': hours,
           'memo': _memoCtrl.text.trim(),

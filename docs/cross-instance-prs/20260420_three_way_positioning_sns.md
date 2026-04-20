@@ -273,7 +273,7 @@ Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部�
 
 - [x] 本C JA 版: 「Anthropic 強制コミット枠」訴求 + 「heavy users 2-3 倍試算」を "vendor paywall パターン" 節として追加 (PS#2 S13 · 2026-04-20 20:00)
 - [x] 本C EN 版: 「mandatory consumption commits + lost volume discounts」同節で追加 (PS#2 S13)
-- [ ] X 短文 (D-0 タイミング): dispatch 当日 (5/4) に起草予定 — 現時点では draft-only
+- [x] X 短文 (D-0 タイミング): 事前草稿 6 本 (JA A/B/C + EN A/B/C) を `docs/x-drafts/20260504_d0_notion_anthropic_paywall.md` に格納 (PS#2 S19 · 2026-04-21) — 5/4 当日に数字鮮度再確認 + 1〜2 本選定 + post
 - [x] Qiita BS 本B (JA + EN): 「コミット枠 = 月次強制負債」sidebar 第 2 段として追加 = S12 Notion credits sidebar と 2 段ロケット構成完成 (PS#2 S13)
 
 ### Backlink 追加 (S27)

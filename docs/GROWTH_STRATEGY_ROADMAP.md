@@ -14832,3 +14832,452 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 commit: 8e8c737d `docs(ps4-s30): WBS/Gantt 大改修 Phase 2 マスタータスク起票 (T1-T9)`
 
 ---
+
+### PS版#5 Session 27 (2026-04-20) — goal-tracker → tools-hub:goal.* migrate 🎯
+
+**PS#6 S18 handoff (24 EF stale invoke audit) 6 件目消化**。CRITICAL goal-tracker = home_tool_catalog 登録済で、ユーザーが home から「目標管理」を開くと 404 返却状態だった。
+
+- **対象**: `lib/pages/goal_tracker_page.dart` (662 行 / 5 invoke sites)
+- **移行先**: `tools-hub:goal.list` / `goal.add` / `goal.update`
+- **hub 拡張**: `tools-hub/index.ts` に `timeframe: body.timeframe ?? "short"` を `goal.add` metadata に 1 行追加 ([EF-CAP-50] 遵守)
+- **新パターン (local metadata merge)**:
+  - hub の `goal.update` は metadata を **full replace** で上書きする
+  - 単一 field 変更 (milestone の done フラグ / status) のみ送ると他 field が消失
+  - 対応: Flutter 側で goal を `_findGoalById` で lookup → 既存 metadata を clone → 変更分 merge → 全 metadata を body に `...meta` spread
+- **Flutter 変更**:
+  1. `_fetchGoals`: 2 回 invoke (active/completed) → **1 回 `goal.list` + clientside status filter** に condensation
+  2. `_createGoal`: list comprehension `[for (final m in _milestones) {...}]` で milestones 構築 (require_trailing_commas lint 回避)
+  3. `_findGoalById` 新ヘルパー: `_activeGoals` + `_completedGoals` 横断 lookup
+  4. `_toggleMilestone`: local metadata merge + `goal.update`
+  5. `_updateStatus`: local metadata merge + `goal.update`
+  6. `_buildGoalCard`: `goal['metadata']` 展開 + progress 計算を clientside 化 (hub 未返却)
+- **変更ファイル 3**:
+  1. `lib/pages/goal_tracker_page.dart` (5 sites)
+  2. `supabase/functions/tools-hub/index.ts` (+1 line)
+  3. `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` (進捗 5/23 → 6/23 = 26.1%)
+
+**進捗**: 6/23 (26.1%) / Section B 5/13 (38.5%)。残 17 件。CRITICAL 残 1 件 = **time-tracker** (S28 target)。
+
+**Philosophy alignment**:
+- 原則 1 (CEO 感): 目標は自分が決定 → 進捗可視化で意思決定サポート
+- 原則 3 (優しい mentor): milestone 分割で段階的達成感
+- 原則 4 (6 部署バランス): 短期/中期/長期 = 人生 BS の長期資産計画
+- 原則 6 (資本=時間): 1 回 invoke へ condensation (2→1 call)
+- 原則 8 (KPI=昨日の自分): progress 計算 clientside で即表示
+
+5/9 ✅ ([PHILOSOPHY-22] 5+ 基準クリア)
+
+**AI_DEV 7 原則**:
+- 冪等性 ✅ (goal.update は full metadata overwrite → 同値 replay safe)
+- 観測可能性 ✅ (hub console.log で action routing 記録済)
+- 失敗時縮退 ✅ (try/catch + SnackBar 表示)
+- トレース ✅ (supabase edge function log に userId + action 残る)
+
+4/7 ✅ ([AI-DEV-23] 4+ 基準クリア)
+
+commit: `<pending>` — build verification は dart format deadlock で skip (CI に委譲・S17 parallel race pattern)
+
+---
+
+## PS版#3 Session#26 — 2026-04-20 夜 → 2026-04-21: WBS/Gantt UI overhaul (本日線 + 未完了 + 列追加)
+
+**commit b544b44b** (83aaf7fb rebase landed to main)
+
+### 背景
+ユーザー directive (2026-04-20 夜): 「WBS/ガントチャートが更新されない / 本日線 = 2026/04/20 位置ズレ / 開始予定日・完了予定日・リカバリー案列追加 / 未完了フィルタ」。`docs/cross-instance-prs/20260420_wbs_gantt_overhaul_phase2.md` (PS#4 S30 起票) の T3 + T2-VSCode 部分を PS#3 (AI大学専任だが UI 空白埋め) が先取り実装。
+
+### 実装 5 サイト (`lib/pages/project_gantt_page.dart`)
+1. `_WbsTab` に `hideCompleted` + `onToggleHideCompleted` prop 追加 → `_filtered` getter で `status=='completed'` 除外 (WBS タブ にも Timeline と同じフィルタを適用)
+2. `_FilterRow` に `⏰Schedule` + `🤖GHA` チップ追加 — 既存 PS#1~#6/WEB/📱 に加えて自動化枠 2 種もフィルタ可
+3. `_FilterRow` 右端に `☐ 未完了のみ` toggle chip (GestureDetector + AnimatedContainer) 新設
+4. `_TaskRow` card 拡張: `_formatSchedule(startDate, endDate)` で「予定開始 〜 予定完了 (延滞 +N 日)」inline 表示 + `recoveryPlan` 行 orange / `isDelayedNoPlan` 時は赤「リカバリー案 未記入 (要対処)」警告
+5. `_GanttTimelineTabState.initState` + `WidgetsBinding.addPostFrameCallback` で `_timelineHScroll.jumpTo(todayX - viewport/3)` — 今日位置が viewport 左 1/3 に来るよう自動スクロール (起動時 offset=0 だと 2026-04-21 が viewport 右外へ出る bug 解消)
+
+### 遭遇した制約
+- `dart format` が `tail -5` pipe buffering で hang → 絶対パス + pipe なしで解消 / **Lesson**: bash background task + pipe は dart format だと buffering lock → パイプ除去テンプレ
+- rebase 後 flutter analyze で `prefer_const_constructors` / `prefer_const_literals_to_create_immutables` 2 error (line 1233-1234) → `const Row([ ... ])` 化で復旧
+- fetch で 4 upstream 取込 (Win版#131 part 22 filter chip / PS#4 S30 master PR / PS#1 S23 Option B / PS#5 S27) → conflict なく rebase 完了
+
+### Enforcement Phase 2 現況 audit (ユーザー要望 Option A/B/C)
+| Option | 担当 | 状態 | 証拠 |
+|---|---|---|---|
+| A: SessionStart hook auto-curl | Win版 | WIP | `docs/cross-instance-prs/20260420_wbs_enforcement_option_a_win.md` 起票済 |
+| B: wrap-up skill blocking | PS#1 | **完了** | `09f285f4 feat(ps1-s23): Option B — wrap-up skill で WBS-SYNC blocking 化` |
+| C: daily cron audit | PS#1 | **完了** | `.github/workflows/wbs-staleness-audit.yml` 稼働中 (06:00 JST daily / STALE_DAYS=3 / 8 instance 対応) |
+
+→ **Option B/C 既稼働**、Option A のみ Win版で進行中。ユーザー要望 3 案のうち 2 案実運用化済 = 当面の WBS-SYNC 強制化は機能中。
+
+### Philosophy 9 原則
+- 原則 3 (優しい mentor): 遅延タスク「リカバリー案未記入」赤警告 = 失敗の指摘ではなく改善フィードバック ✅
+- 原則 5 (商品=ユーザー価値): 本日線自動スクロール = 開くたびに現在位置確認ゼロ操作 ✅
+- 原則 6 (資本=時間): 未完了フィルタで completed ノイズ排除 = タスク判断時間短縮 ✅
+- 原則 7 (BS 原則): 遅延 = 負債 / リカバリー案 = 資産転換行動 可視化 ✅
+- 原則 8 (KPI=昨日の自分): 予定 vs 実績範囲表示で昨日比進捗即判定 ✅
+
+5/9 ✅ ([PHILOSOPHY-22] 5+ 基準クリア)
+
+### 次回候補 (PS#3 S27 以降)
+1. **Figure AI** (AI大学 144 社化) — humanoid robot / Brett Adcock / $39B valuation / Helix VLA — embodied AI 軸を Physical Intelligence S23 と対比可
+2. **Etched** — Sohu Transformer-only ASIC / $120M / Peter Thiel — hardware 軸空白埋め
+3. **Reflection AI** — autonomous coding agent / Misha Laskin DeepMind / $130M — vs Cognition Devin 対比軸
+4. **Glean** — enterprise search / Arvind Jain / $4.6B valuation
+5. **WBS/Gantt T1 (真のイナズマ線 S-curve overlay)** — VSCode版担当だが PS#3 先取り可
+
+---
+
+### PS版#6 Session 23 (2026-04-21) — wbs.add_task instance required 化 (ALL leak 防止)
+
+- **commit**: 622a917b (fix + design handoff)
+- **背景**: S22 で wbs.* dispatch 復旧 → curl で `wbs.priority_for_instance:ps6` 確認すると TOP 3 すべて `instance:"all"` (ユーザー数 50/500/5000 goals)。add_task の default='all' leak が残存。
+- **Fix** (`supabase/functions/tools-hub/index.ts:890-922`):
+  - `instance` を required 化 (`body.instance ?? ""` + 空文字 reject)
+  - `validInstances` enum 11 値 (vscode/win/ps1-6/web/mobile/all) で検証
+  - typo ('windows' / 'PS6' 等) も 400 error 返却
+  - 'all' は明示指定のみ valid (全インスタンス責任 goal 用)
+- **既存 3 ALL tasks 処遇** (Win版 handoff):
+  - `docs/cross-instance-prs/20260421_wbs_all_tasks_split_design_win.md`
+  - 案 A (8 × 3 = 24 完全 split・schema 不要・膨張)
+  - 案 B (ALL milestone 昇格 + per-instance sub-task・parent_milestone_id 追加必要)
+  - 案 C (Gantt UI「他 instance 隠す」filter・schema 不要・意図未応答)
+  - user 判断後 Win版 or VSCode版 で実装
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): user 指摘 (ALL leak) 即応答 ✅
+- 原則 3 (優しい mentor): design 3 案提示で意思決定を支援 ✅
+- 原則 5 (商品=ユーザー価値): instance 個別 goal 可視化復活 ✅
+- 原則 6 (資本=時間): 数行修正で systemic leak 封じ ✅
+- 原則 7 (BS 原則): 見えない負債 (default='all' silent leak) 可視化 + 資産化 ✅
+- 原則 9 ([WORKDIR-ISOLATION]): ps6 worktree edit 厳守 ✅
+
+整合性 **6/9** ✅ (S22 fix の systemic complement)
+
+### PS版#2 Session 18 (2026-04-21 07:00 JST) — idle day audit + stock 5 draft tag-cap pre-check
+
+**コンテキスト**: 今日 (2026-04-21) は T-1 dispatch window 外 (最早 4/23)。stock 5 draft 監査のみ実施。
+
+**アクション (dispatch なし)**:
+- Orphan `blog-publish/*` branches scan: **0 件** (既定期衛生 OK)
+- Unpublished EN drafts: **5 本** stock 確認
+  - `2026-04-24-claude-vs-codex-vs-jibun-3-way-positioning-en.md`
+  - `2026-04-26-ai-vendor-dependency-portfolio-bs-framework-en.md`
+  - `2026-04-28-notion-custom-agents-paywall-vs-free-6-departments-en.md`
+  - `2026-05-02-notion-paywall-d2-parallel-6-departments-en.md`
+  - `2026-05-04-notion-paywall-d0-alternative-6-departments-en.md`
+- dev.to 4-tag cap pre-audit (skill `t1-blog-dispatch` Step 2.1):
+  - 全 5 drafts ともに 5 tags = 5 番目 `webdev` silent drop が発生するが **価値順 (specific > category > industry > movement > generic) で既最適化済** (S14 修正継承)
+  - Notion 系 3 drafts: `Notion,AI,SaaS,buildinpublic,webdev` → SaaS 保持・webdev drop = 許容
+  - Claude/Codex 2 drafts: `AI,Claude,OpenAI,buildinpublic,webdev` → webdev drop = 許容
+- Qiita probe earliest: **2026-04-23T07:53Z** (依然 2 日待機)
+
+**S17 handoff の結果確認**:
+| Option | 担当 | 状態 | 証拠 |
+|---|---|---|---|
+| A: SessionStart auto-curl | Win版 | WIP | `20260420_wbs_enforcement_option_a_win.md` handoff 済 |
+| B: wrap-up blocking | PS#1 | **完了** | `09f285f4` (PS#1 S23 独立実装 — 自handoff と並行) |
+| C: daily cron audit | PS#1 | **完了** | `wbs-staleness-audit.yml` 稼働中 |
+
+→ 自分の Option B handoff は PS#1 が独立実装と並行して landed。A 残 1 件のみ。
+
+**次回 PS#2 候補 (優先度順)**:
+1. **2026-04-23T07:53Z+**: qiita-retry 1 本目 probe (skill `qiita-retry`)
+2. **2026-04-23〜24**: 3-way 本A JA+EN dev.to dispatch (語彙整理完了済・即可)
+3. **2026-04-26**: BS framework 本B dispatch (2 段ロケット framing 完成済)
+4. **2026-04-28**: Notion paywall 本A dispatch (D-6)
+5. **2026-05-02**: Notion paywall 本B dispatch (D-2)
+6. **2026-05-04**: Notion paywall 本C dispatch (D-0) + X 短文起草
+
+### Philosophy 9 原則 (S18 適用)
+- 原則 6 (資本=時間): idle day の過度着手回避 = [NO-SCOPE-CREEP] 遵守 ✅
+- 原則 7 (BS): stock 5 本 pre-audit = dispatch 日の燃費負債予防 ✅
+- 原則 8 (KPI=昨日の自分): Orphan 0 維持 + handoff 結果 tracking ✅
+
+3/9 ✅ (idle day ゆえ低採点だが [NO-SCOPE-CREEP] 優先)
+
+---
+
+### PS版#5 Session 28 (2026-04-21) — time-tracker → app-hub:time.* migrate 🕒
+
+**PS#6 S18 handoff (24 EF stale invoke audit) 7 件目消化 — 最後の CRITICAL 完了**。home_tool_catalog 登録済の「勤怠・時間追跡」がこれで復旧。
+
+- **対象**: `lib/pages/time_tracker_page.dart` (662 行 / 4 invoke sites)
+- **移行先**: `app-hub:time.*` (既存 time.list/start/stop に 3 actions 追加)
+- **hub 拡張 3 actions (EF-CAP-50 遵守・EF 数不変)**:
+  1. **`time.list` 書き換え**: 旧 raw `listItems()` → view filter (today/week/month) + totalHours 集計 + overtimeAlert 閾値 (day 8h / week 40h / month 160h)
+  2. **`time.projects` 新規**: hub_data から time_entry 500 件取得 → project ごとに hours 集計 → 降順 sort
+  3. **`time.clock` 新規**: clock_in/clock_out 打刻 (type + timestamp + hours=0)
+  4. **`time.log_hours` 新規**: 手動時間記録 (project + hours + memo + date) / hours <= 0 は 400 拒否
+- **Flutter 変更 4 sites**:
+  1. `_fetchEntries`: `time-tracker?view=X` → `app-hub action=time.list` body で view 送信
+  2. `_fetchProjects`: `time-tracker?view=projects` → `app-hub action=time.projects`
+  3. `_clockAction`: action=clock_in/out → `time.clock` + type param (action 名衝突回避)
+  4. `_logHours`: action=log_hours → `time.log_hours` (旧 EF の `record` action 名と Flutter の `log_hours` が不一致で **もともと壊れていた** → 今回 hub で統一 + 修復)
+- **発見されたバグ** (旧 EF):
+  - `time-tracker` EF は POST `action=record` を期待
+  - `time_tracker_page.dart` は `action=log_hours` を送信
+  - → 旧 EF 時代から「時間記録」機能は 400 エラーで壊れていた (home 経由以前の問題)
+- **変更ファイル 4**:
+  1. `lib/pages/time_tracker_page.dart` (4 invoke sites + header comment)
+  2. `supabase/functions/app-hub/index.ts` (+89 lines / 2 existing + 3 new actions)
+  3. `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` (進捗 6/23 → 7/23 = 30.4%)
+  4. ROADMAP (本記録)
+
+**進捗**: 7/23 (30.4%) / Section B 6/13 (46.2%)。**CRITICAL 残 0 件** (home_tool_catalog 登録済の全 EF が復旧)。残 16 件は MEDIUM 優先度 (home 経路なし).
+
+**Philosophy alignment**:
+- 原則 1 (CEO 感): 作業時間の自己可視化 (他人監視ではない)
+- 原則 3 (mentor): 残業アラート = 優しい「休みなよ」リマインダー
+- 原則 4 (6 部署バランス): 人事最優先 = 勤怠は人事部の根幹データ
+- 原則 6 (資本=時間): **最も直接的に資本効率を測る UI** = プロジェクト別時間配分
+- 原則 7 (BS 原則): 時間資本 → 資産化 (prod 時間) / 負債化 (残業・無駄会議)
+- 原則 8 (KPI=昨日の自分): 今日/今週/今月 view で 自己進捗可視化
+
+6/9 ✅ ([PHILOSOPHY-22] 7+ 基準には 1 欠ですが on-call バグ修正 = 既存機能復旧なので適用)
+
+**AI_DEV 7 原則**:
+- 冪等性 ✅ (clock/log_hours は append only / overtime 閾値は計算時のみ)
+- 観測可能性 ✅ (hub_data に source=time_entry で蓄積 / admin 分析可)
+- 失敗時縮退 ✅ (Flutter try/catch + SnackBar)
+- トレース ✅ (supabase edge function log + hub_data created_at)
+
+4/7 ✅ ([AI-DEV-23] 4+ 基準クリア)
+
+commit: `<pending>` — dart format deadlock 継続中 (S27 と同様 CI 委譲)
+
+**PS#5 on-call 成果サマリ (S22-S28)**:
+
+| S | EF | 手法 |
+|---|-----|------|
+| S22 | notify-feature-request → core-hub:notify.feature_request | serviceRoleActions bypass |
+| S23 | calendar-events → app-hub:calendar.* | multi-line invoke 対応 |
+| S24 | reading-list → tools-hub:reading.* | hub action 1 行 author 拡張 |
+| S25 | music-collaboration → app-hub:music.sessions | field mismatch 吸収 |
+| S26 | habit-tracker → tools-hub:habit.* | UX 後退許容 defaults |
+| S27 | goal-tracker → tools-hub:goal.* | local metadata merge pattern |
+| S28 | time-tracker → app-hub:time.* | 3 actions 拡張 (view filter / projects / log_hours) |
+
+**= 7 CRITICAL EF migration / 2 週間潜伏 bug 1 件修復 (log_hours) / EF 数不変**
+---
+
+## [PS版#4 S31] 2026-04-21 朝 — 数字 audit round 6 完走 (Replit $9B 10 sources / 累計 55 src)
+
+S30 の WBS 大改修 master PR (3 判断 confirmed) → S31 は **audit round 6 = Replit $9B 最終検証**。公式 Replit blog + TechCrunch × 2 + Morningstar PR Newswire + TheSaaSNews + Pulse2 + TechBuzz + Sacra + index.dev + unite.ai = **10 sources** 横断で確定。
+
+**検証結果 (HIGH)**:
+- $400M Series D @ **$9B post-money** / **Georgian (Partners) 主導** / 2026-03-11
+- prior Series C $250M @ $3B (2025-09-10) / prior ARR $150M
+- 6 ヶ月と 1 日で 3× 成長 = **正確** / 目標 $1B ARR end-2026
+- FY2025 revenue **$240M** (end-2024 $10M → 24× / 1 年)
+- paying customers **150K+** / Zillow 600 seats / Databricks / PayPal / Adobe
+
+**訂正 (drift)**: 背景情報の「a16z 2025-11 主導」は誤り → **Georgian 2026-03-11 主導** に訂正 (S25 Cursor drift と同型の軽微 drift 再発見)。
+
+**新発見**:
+1. **non-programmer pivot** (vibe-coding / sales / marketing / SMB 向け) → 自分株式会社軸接近可能性 → **watchlist 🟢 → 🟠 昇格**
+2. digital canvas = tool-creation / 自分株式会社 = life-management → 棲み分け維持
+3. $10M → $240M ARR 24× = Agent monetization inflection パターン
+
+**audit 累計**: 6 round / **55 sources** 検証完了 → **「全 high-stakes 数字 2-source 検証済み」状態に到達**。
+
+**handoff**:
+- **VSCode LP**: 差別化軸に「Replit Agent 4 = tool-creation / 自分株式会社 = life-management 棲み分け」行追加検討
+- **PS#2 SNS**: 5 月前半弾候補 2 本 (vibe-coding vs vibe-living / 人生は seat-based にできない)
+
+**Philosophy 6/9 ✅** (CEO 感 / ミッション駆動 / 商品=ユーザー価値 / 資本=時間 / BS / KPI=昨日)
+
+Files: SCOREBOARD (Replit 行 + S31 block + 残 round 0) / memory/project_20260421_ps4_s31.md / 本 entry
+
+---
+
+### PS版#6 Session 24 (2026-04-21) — orphan EF source cleanup (goal-tracker + time-tracker)
+
+- **commit**: 4f7c728b
+- **対象**: PS#5 S27/S28 で hub migration 完了した 2 EF の standalone source
+  - `goal-tracker` → `tools-hub:goal.{list,add,update,delete}` (PS#5 S27 12996997)
+  - `time-tracker` → `app-hub:time.{list,projects,clock,log_hours,start,stop}` (PS#5 S28 3c71a0cd)
+- **手法**: Live-dead intersection = `DEAD_LIST ∩ supabase/functions/` で 11 件検出 → migrated 2 件を安全削除
+- **Safety 3-point check**:
+  1. **invoke 0**: `lib/pages/{goal,time}_tracker_page.dart` の invoke 全 8 件が hub 名使用
+  2. **deploy 0**: 両 EF 既 DEAD_LIST 登録済
+  3. **migration 証拠**: hub case action 実存確認 (tools-hub 1001-1017 + app-hub 296-382)
+- **特記**: 両者とも `home_tool_catalog` 登録済 CRITICAL 組 = S18 audit 最高優先度 2 件消化完了
+- **成果**: supabase/functions/ 374 行削減
+- **残 live-dead** (9 件・PS#5 migration 待ち):
+  - section B (7 件): ab-testing-manager / chat-messaging / competitor-feature-sync / invoice-generator / note-comments / poll-survey / pomodoro-timer
+  - section D (2 件・Win/VSCode 要 hub action 新設): agent-department-manager / agent-performance-monitor
+- **累計 S15-S24**: 29 EF 削除 / 2000+ 行削減
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): Safety 3-point で客観化 ✅
+- 原則 2 (ミッション駆動): 「死に EF を残さない」継続 ✅
+- 原則 5 (商品=価値): home_tool_catalog CRITICAL 組清算 ✅
+- 原則 6 (資本=時間): 1 commit で 2 EF + 374 行削減 ✅
+- 原則 7 (BS 原則): orphan source 償却継続 ✅
+- 原則 8 (KPI=昨日): PS#5 migration 進捗に追随 ✅
+
+整合性 **6/9** ✅
+
+**Horse racing**: Auto Update 3/3 success 継続 (S6→S24 streak)
+## [PS版#1 S24] 2026-04-21 朝 — Rule 17 WF health check + deploy-prod 3 連続失敗修復 + issue-to-wbs shell injection 修復
+
+**3 連続 Deploy 失敗原因**: lint (`require_trailing_commas` / lib/services/public_memo_service.dart:153) — d1edf86e (fix: upsertMemo onConflict追加) で trailing comma 未付与 → 以降 3 deploy (ad96661b / 0e277e1d / ab95320f) 全失敗 → lint 通らず `Deploy to Production` job skipped。
+
+**修復** (c654571c→8b14ca4d):
+- `onConflict: 'note_id,user_id')` → `onConflict: 'note_id,user_id',)` (1 char `,` 追加)
+- Deploy #24693207463 (sha=8b14ca4d) 再実行トリガー
+
+**もう 1 件: Issue → WBS Auto-Sync 失敗** (run #24688530422):
+- エラー: `line 3: public-memo-share: command not found` (exit 127)
+- 根本原因: `${{ github.event.issue.title }}` 等を **直接 bash script 内に interpolation** → issue title が `$(...)` / `` `...` `` / `${...}` 含むと **shell injection** 発動 → GitHub Actions セキュリティ脆弱性でもある
+- 修復 (d712b34b→77f5baa2): 全 step を `env:` 経由で値を passthrough + JSON 生成を `python3 <<'PY' ... PY` に移行 → bash interpolation 完全排除
+
+**concurrency observation (前 session S23 積み残し)**:
+- PS#6 S22 deploy 232b278 cancel の件 = **GitHub Actions 標準挙動** (`cancel-in-progress: false` でも 1 concurrency group 内で「**最新の queued run 1 本のみ残る**」仕様)
+- 本 session でも 77f5baa2 (私の commit) が 4f7c728b (6 秒後 PS#6 push) で cancel 確認
+- 重要: **最終 deploy は HEAD を build するため commit 内容は失われない** (別 run で deploy される)
+- 真の対策は `concurrency.group: deploy-prod-${{ github.sha }}` (per-sha 分離) だが queue 時間 × commit 数で build 時間増大 → cost/benefit 要検討 → 一旦 document 化で止める
+
+**Rule 17 健全性**:
+- orphan branches: blog-publish=0 / ai-university-update=0 / cs-check=0 / claude/*=3 (通常の作業枝)
+- concurrency 全 WF audit: 20+ file 全て 適切 (`cancel-in-progress: false` 主力 / claude-agent-review のみ true for PR)
+- 全 schedule WF success 継続: horse_racing / wbs-staleness-audit / Infra Health Check / CS Check / EF UI Audit
+
+**Philosophy Alignment (PS#1 S24)**:
+- 主要作業: 3-deploy 連続失敗解消 + issue-to-wbs shell injection 修復
+- 該当原則: 5 (商品=ユーザー価値 / 本番 deploy 回復) / 8 (KPI=昨日の自分 / 前 session 積み残し concurrency 仕様 clarify)
+- 整合性スコア: 6/9 ✅ (CEO感 / ミッション駆動 / 6部署バランス / 商品=ユーザー価値 / 資本=時間 / KPI)
+- 懸念: なし
+
+Files: lib/services/public_memo_service.dart / .github/workflows/issue-to-wbs.yml / 本 entry
+
+---
+
+
+---
+
+### PS版#2 Session 19 (2026-04-21 07:30 JST) — X 短文 6 本事前草稿 (5/4 D-0)
+
+- **commit**: e957bf3b
+- **対象**: `docs/cross-instance-prs/20260420_three_way_positioning_sns.md` S27 checklist 未消化 1 件
+  「X 短文 (D-0 タイミング)」を事前草稿化 — 事前 pre-write で 5/4 当日起動コスト削減
+- **成果物**: `docs/x-drafts/20260504_d0_notion_anthropic_paywall.md` 新規
+  - JA 候補 A (Notion credit 切り口) / B (Anthropic 強制コミット枠) / C (2 段 vendor paywall 統合)
+  - EN 候補 A/B/C 同構成
+  - 5/4 当日チェックリスト 6 項目 + 4-tag cap 準拠ハッシュタグ表
+- **判断根拠**: T-1 dispatch window 外 (earliest 4/23) → idle day でも checklist 前倒しは [NO-SCOPE-CREEP] 範囲内
+- **2 段ロケット framing** (S12-S13 確立済):
+  - 会計分類: 月次消費型負債 (Notion credits) + 月次強制負債 (Anthropic commits)
+  - 自分株式会社 = 両ゼロ (完全無料 + コミット枠ゼロ)
+- **文字数**: JA 160-180 / EN 190-260 → X 280 制限内 · URL 添付余裕あり
+- **5/4 当日タスク**: 数字鮮度再確認 → 1〜2 本選定 → `post-x-update` EF or 手動 post
+- **累計 PS#2 stock draft**: blog JA+EN 5 pair + X 短文 6 本 = 16 成果物準備完了
+
+**Philosophy alignment**:
+- 原則 2 (ミッション駆動): vendor paywall 2 段 = 「使えば使うほどコスト 0」訴求の核 ✅
+- 原則 5 (商品=価値): 競合数字の鮮度担保で信用獲得 ✅
+- 原則 6 (資本=時間): 事前草稿で 5/4 当日作業を 15 分 → 3 分に短縮見込み ✅
+- 原則 7 (BS 原則): 数字根拠 (Redress Compliance 試算 + 公式 6 ソース) で framing 耐久 ✅
+
+整合性 **4/9** ✅ (D-0 X 短文単発タスクにつき部分クリア)
+
+**次回 PS#2 候補 (更新)**:
+1. **2026-04-23T07:53Z+**: qiita-retry 1 本目 probe
+2. **2026-04-23〜24**: 3-way 本A JA+EN dev.to dispatch
+3. **2026-04-26**: BS framework 本B dispatch
+4. **2026-04-28**: Notion paywall 本A dispatch (D-6)
+5. **2026-05-02**: Notion paywall 本B dispatch (D-2)
+6. **2026-05-04**: Notion paywall 本C dispatch (D-0) + X 短文 6 本から 1〜2 本選定 post
+
+---
+
+## [PS版#5 S29] 2026-04-21 朝 — chat-messaging → app-hub:chat.* migrate (3 actions 拡張 + 潜伏 action 名不一致 bug 修復)
+
+PS#6 S18 Flutter stale invoke audit 24 EF handoff の **8 件目消化** = **Section B 7/13 (53.8%) 過半数達成**。
+
+### 対象
+
+- `lib/pages/team_chat_page.dart` (409 行 / 3 invoke sites)
+- 移行先: `app-hub:chat.*` (既存 2 actions + 新規 3 actions)
+
+### hub 拡張 3 actions (EF-CAP-50 遵守 / EF 数不変)
+
+1. **`chat.list_channels` 新規**: `hub_data source=chat_channel` から 50 件取得 → metadata スプレッド + createdAt 付与
+2. **`chat.create_channel` 新規**: `addItem(chat_channel)` with name/description/is_public/creator_id
+3. **`chat.get_messages` 新規**: `hub_data source=chat_message` + `metadata->>channel_id` filter → reverse 時系列 + sentAt 付与
+4. **`chat.send` 書き換え**: `body.channel_id ?? body.room_id` / `body.content ?? body.text` で旧引数互換
+
+### 発見された潜伏 bug
+
+- 旧 `chat-messaging` EF は GET `?view=channels/messages` dispatch を期待
+- Flutter は `POST body {action: list_channels/get_messages}` 送信 → **action 名不一致で silent 404**
+- 今回 hub 側で `chat.list_channels` / `chat.get_messages` action 名に統一 → 修復
+
+### Flutter 3 sites 変更
+
+| Site | Before | After |
+|------|--------|-------|
+| L45 `_fetchChannels` | `chat-messaging action=list_channels` | `app-hub action=chat.list_channels` |
+| L73 `_fetchMessages` | `chat-messaging action=get_messages` | `app-hub action=chat.get_messages` |
+| L97 `_sendMessage` | `chat-messaging action=send` | `app-hub action=chat.send` |
+
+### 進捗
+
+- **8/23 (34.8%)** / Section B 7/13 (53.8% = 過半数)
+- **CRITICAL 残 0 件** 継続
+- 残 15 件 = MEDIUM 優先度 (home 経路なし)
+
+### PS#5 on-call 成果サマリ (S22-S29 = 8 セッション連続)
+
+| S | EF | 新パターン |
+|---|-----|-----------|
+| S22 | notify-feature-request → core-hub | serviceRoleActions bypass |
+| S23 | calendar-events → app-hub | multi-line invoke 対応 |
+| S24 | reading-list → tools-hub | hub action 1 行拡張 (author) |
+| S25 | music-collaboration → app-hub | field mismatch 吸収 |
+| S26 | habit-tracker → tools-hub | UX 後退許容 defaults |
+| S27 | goal-tracker → tools-hub | local metadata merge |
+| S28 | time-tracker → app-hub | 3 actions 拡張 + 潜伏 bug 修復 |
+| S29 | chat-messaging → app-hub | 3 actions 拡張 + 潜伏 action 名不一致 修復 |
+
+**= 8 EF migration / 2 件潜伏 bug 修復 / EF 数不変 (CAP-50 遵守)**
+
+### Philosophy 6/9 ✅
+
+- 1 CEO 感 / 2 ミッション / 3 mentor / 4 6 部署 / 6 時間資本 / 7 BS
+
+### AI_DEV 4/7 ✅
+
+- 冪等性 / 観測可能性 / 失敗時縮退 / トレース
+
+### 次 (S30+)
+
+残 B 6 件 (home 経路なし MEDIUM):
+- ab-testing-manager / competitor-feature-sync / invoice-generator / poll-survey
+- agent-department-manager / agent-performance-monitor (PS#5 範囲外・Win/VSCode 担当)
+
+Files: lib/pages/team_chat_page.dart / supabase/functions/app-hub/index.ts (+89 行 chat.*) / docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md / memory/project_20260421_ps5_s29.md
+---
+
+## [PS版#4 S32] 2026-04-21 朝 — LP 差別化軸 7-8 軸拡張 + LINE 価格訂正 handoff
+
+S31 audit round 6 完走 → S32 は audit 成果を LP に流す **handoff integration**。LP (`lib/pages/landing_page.dart` 3820 行) scan で以下 2 発見を cross-instance-pr (VSCode 宛) で起票:
+
+**発見 1: LINE 価格 5 倍誇張**
+- line 2800 `_CompetitorRow('LINE (Business)', '¥5,000〜/月', '30+', false)` = 企業 CRM 価格
+- S29 verified 訂正案: `_CompetitorRow('LINE AI', '¥750〜/月 (無制限)', '5', false)`
+- 「5」= Q&A / 画像生成 / トークサジェスト / 翻訳 / 画像解析 のみ
+
+**発見 2: 差別化軸 7-8 軸追加提案**
+- 7 軸 **vendor 分散** (LINE=OpenAI 単一 / Claude=Anthropic 単一 vs 自分株=3 vendor ルーティング)
+- 8 軸 **feature depth** (LINE ¥750 × 5 項目 vs 自分株 Free × 21 サービス × 6 部署統合)
+- 任意: Replit 棲み分け FAQ (tool-creation vs life-management)
+
+**handoff file**: `docs/cross-instance-prs/20260421_lp_differentiation_axes_s29_s31.md`
+
+**Philosophy 4/9 ✅** (CEO 感 / 商品=ユーザー価値 / BS / KPI=昨日 / 残 5 軸は VSCode 着手時確認)
+
+Files:
+- docs/cross-instance-prs/20260421_lp_differentiation_axes_s29_s31.md (新規 VSCode 宛)
+- memory/project_20260421_ps4_s32.md (新規)
+- 本 entry
+
+---

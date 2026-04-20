@@ -118,7 +118,7 @@
 | **Cursor** (Anysphere) | AI コーディング IDE | **$50B 調達協議中 (mid-04・S25 2 社検証済) / $2B ARR 達成 (Jan2025 $100M→13 ヶ月で 20倍・Feb2026 到達) / 2026 末 $6B run rate 予測 / a16z+Thrive co-lead+NVIDIA strategic+Battery Ventures (新規・S25 追加)** ※前期 $9.9B (Jun2025) → $29.3B (Nov2025) → $50B 噂 (Apr2026) と **10 ヶ月で 5 倍** | 🟢 watchlist | コーディングツール vs 人生フレームワーク — 領域不重複 |
 | **Cognition** (Windsurf+Devin) | AI 開発エージェント | Windsurf + Devin 統合 / $10.2B 評価 / LogRocket SWE-Bench #1 | 🟢 watchlist | 自律 SWE エージェント vs 個人 CEO 6 部署 |
 | **Lovable** | AI Web 生成 | $100M ARR を 8 ヶ月で達成 / $2B 評価 | 🟢 watchlist | "vibe coding" で Web 生成 vs 生活統合ダッシュボード |
-| **Replit** (S16 追加) | AI Web 開発環境 | $3B → **$9B 評価 (6 ヶ月で 3 倍)** / Q1 2026 AI funding $242B (VC 80%) 背景 | 🟢 watchlist | オンライン IDE vs 人生 6 部署 — 領域不重複 |
+| **Replit** (S16 追加 / S31 精密化) | AI Web 開発環境 | **$400M Series D @ $9B (2026-03-11 Georgian 主導)** — 前 $250M Series C @ $3B (2025-09-10) → 6 ヶ月と 1 日で 3× / ARR $10M (end-2024) → **$240M (FY2025) = 24×** / **150K+ paying / 目標 $1B ARR end-2026** / 新: **Replit Agent 4 + digital canvas** (vibe-coding for non-programmers) | 🟠 watchlist-upgraded | **pivot 警戒**: non-programmer 層獲得 (sales/marketing/SMB) で軸接近可能性 / IDE vs 人生 6 部署 の領域分離は維持 |
 | **Anthropic Labs Claude Design** | AI デザイン SaaS | 2026-04-17 GA / prompt→prototype 2 回 / Canva CEO 署名の native 統合 / Pro $20+ | 🟠 ツール採用検討 | VSCode版 が `/claude-design-handoff` と併用判断 (Rule 21) |
 | **OpenAI Codex Desktop** (S22 追加・S24 訂正) | AI 個人タスク自動化 | **2026-04-17 大型 update**: Computer Use (macOS sandbox VM・foreground 非干渉) + Multiple agents parallel + Memory preview + **20+ plugins (Box/Figma/Linear/Notion/Sentry/Slack/Gmail/HF・self-serve publish 未対応)** + In-app browser / 3M weekly devs / Computer Use は Claude とパリティ・**plugin ecosystem は Claude 優位 (423 vs 20+ = 約 20 倍)** | 🟠 **routing 判断待ち** | 個人 Mac の手先自動化 vs 人生 6 部署経営 — 領域不重複だが ai-hub routing に影響 |
 
@@ -252,7 +252,9 @@ S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる
 - ✅ S28: Nova 2 Lite (7 ソース) + Gemini FL (9 ソース)
 - ✅ **S29: LINE AI ¥750/月 (LYCorp 公式 + 6 独立 = 7 sources verified)**
 
-→ 残 round: Replit $9B (1 件)
+- ✅ **S31: Replit $9B (Georgian 主導 Series D) — 10 sources verified** (2026-04-21)
+
+→ 残 round: **0 件** (全 high-stakes 数字 2-source 検証済み状態に到達)
 
 ### [S29] audit round 5 — LINE AI ¥750/月 検証 (2025-09-10 launch)
 
@@ -289,3 +291,49 @@ S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる
 
 *更新: PS版#4 S29 audit round 5 完了 / LINE AI 7-source 確定 / feature-narrow 発見 | 2026-04-20 夜*
 
+
+### [S31] audit round 6 — Replit $9B 2-source triangulation (6 round 45→55 sources 完走)
+
+**手法**: TechCrunch × 2 + Replit 公式 blog + Morningstar PR Newswire + TheSaaSNews + Pulse2 + TechBuzz + Sacra + index.dev + unite.ai = 10 sources
+
+| Finding | Value | Confidence |
+|---|---|---|
+| Latest valuation | **$9B (post-money)** | **HIGH** (5 src) |
+| Round size | $400M Series D | **HIGH** (4 src) |
+| Lead investor | **Georgian (Partners)** ← NOT a16z | **HIGH** (3 src) |
+| Announcement date | **2026-03-11** | HIGH (2 src) |
+| Prior round | $250M Series C @ $3B (2025-09-10) | HIGH (3 src) |
+| Prior ARR (at $3B) | **$150M** (2025-09 時点) | HIGH (3 src) |
+| FY2025 revenue | **$240M** (from $10M end-2024 = 24× / 1 年) | MEDIUM (2 src・Forbes 原典未 fetch) |
+| 現在 ARR | **非開示** (目標 $1B end-2026) | HIGH (3 src) |
+| Paying customers | **150K+** | MEDIUM (2 src) |
+| 成長率 | $3B → $9B in **6 ヶ月 1 日 = 3×** 正確 | HIGH (5 src 全一致) |
+| Enterprise 事例 | Zillow (600 seats / 7K+ apps) / Databricks / PayPal / Adobe / Talkdesk | HIGH (公式) |
+| 新プロダクト | **Replit Agent 4 + digital canvas** (2026-03) — vibe-coding for non-programmers | HIGH (3 src) |
+
+**訂正 (背景 drift)**:
+- 背景情報「a16z 2025-11 主導」は誤り → 正しくは **Georgian 2026-03-11 主導**。a16z は continuing participant (S25 Cursor drift と同型の軽微 drift 再発見)
+
+**新発見 (差別化軸候補)**:
+1. **pivot: vibe-coding for non-programmers** (sales / marketing / SMB owners) → 自分株式会社の「非エンジニア向け 6 部署統合」と **軸接近可能性** → watchlist を 🟢 → 🟠 昇格
+2. digital canvas = tool-creation 領域 / 自分株式会社 = life-management 領域 → 棲み分け維持可
+3. Zillow 600 seats = **法人 B2B 化** / 自分株式会社 = **個人永続 OS** → 逆方向進化
+4. International expansion (Asia / ME GTM) → **日本語 UX + freee/MF 連携空白は依然維持**
+5. ARR $10M → $240M 24× in 1 年 = Agent launch の **monetization inflection** パターン / 自分株式会社も UX inflection 設計 pressure
+
+**自分株式会社 LP handoff 候補フレーズ**:
+- 「**Replit $9B (Georgian Series D)** = 開発者ツール創造 SaaS / 自分株式会社 Free = 非エンジニア**人生統合 OS** — 競合領域が異なる」
+- 「**Replit $10M → $240M ARR (24× / 1 年)** は Agent monetization inflection / 自分株式会社は **Edge Function AI 統合**で UX inflection 狙う — **永続化 $0 戦略**」
+- 「**Replit 150K paying (seat-based B2B)** vs 自分株式会社 **1 人 = 1 Notion+Slack+MF+X+Amazon 全統合** — scale 論理が違う」
+
+**PS#2 SNS 弾候補** (5 月前半):
+- 「Replit 6 ヶ月で $3B→$9B / ARR 24×。自分株式会社は永続化 $0 で別軸 — 人生は seat-based にできない」
+- 「Replit Agent 4 digital canvas = vibe-coding。自分株式会社 6 部署統合 = vibe-living. 創る vs 生きる」
+
+**watchlist 昇格**: 🟢 → 🟠 (non-programmer pivot で軸接近可能性 / 要 6 ヶ月観察)
+
+**audit 累計 6 round / 55 sources 到達** (S25 5 + S26 2 + S27 6 + S28 16 + S29 7 + S31 10 + 旧既知 9 = 55)
+
+→ **全 high-stakes 数字 2-source 検証済み状態に到達**
+
+*更新: PS版#4 S31 audit round 6 完了 / Replit 10-source 確定 / Georgian lead 訂正 / watchlist 🟢→🟠 昇格 | 2026-04-21 朝*
