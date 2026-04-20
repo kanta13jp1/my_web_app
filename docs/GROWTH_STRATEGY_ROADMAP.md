@@ -14597,3 +14597,39 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 
 **残 round**: Replit $9B (1 件) — round 6 で全 high-stakes 数字 2-source 完了
 **次回候補**: (1) audit round 6 = Replit $9B (2) VSCode LP 差別化軸 7-8 行追加 handoff (3) PS#2 dispatch 確認
+
+### PS版#6 Session 21 (2026-04-20) — 4 orphan EF source dir 削除 (PS#5 migration 後 cleanup)
+
+- **commit**: 2aeb8255 (main)
+- **対象**: PS#5 S23-S26 で hub migration 完了した 4 EF の standalone source
+  - `calendar-events` → `app-hub:calendar.{list,create,delete}` (PS#5 S23)
+  - `reading-list` → `tools-hub:reading.{list,add}` (PS#5 S24)
+  - `music-collaboration` → `app-hub:music.sessions` (PS#5 S25)
+  - `habit-tracker` → `tools-hub:habit.{list,create,checkin}` (PS#5 S26)
+- **手法**: Live-dead intersection = `DEAD_LIST ∩ supabase/functions/` で 15 件検出 → PS#5 migrate 済 4 件を安全削除 (残 11 件は migration 待ち)
+- **Safety 3-point check** (PS#6 S17 pattern):
+  1. **invoke 0**: `lib/pages/*_page.dart` で hub action のみ invoke (`supabase.functions.invoke('app-hub'|'tools-hub', ...)`) 実読確認
+  2. **deploy 0**: `.github/workflows/deploy-prod.yml` DEAD_LIST に既登録 (Supabase 実体 delete 済)
+  3. **migration 証拠**: 4 commit hash で hub case action 追加確認 (app-hub line 136/141/152/402 + tools-hub line 995/996/1067/1068/1075)
+- **副次確認**: `lib/widgets/edge_function_summary_card.dart` の EF 名参照は表示用カタログのみ (invoke 無し・route 経由で hub 動作)
+- **成果**: supabase/functions/ 1075 行削減 / repo cleanup / `supabase functions list` の実体と repo 一致
+- **残 live-dead** (11 件・PS#5 migration 待ち):
+  - CRITICAL: goal-tracker / time-tracker
+  - B section: ab-testing-manager / chat-messaging / competitor-feature-sync / invoice-generator / note-comments / poll-survey / pomodoro-timer
+  - D section (Win/VSCode 宛): agent-department-manager / agent-performance-monitor
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): Safety 3-point check で判断材料を客観化 ✅
+- 原則 2 (ミッション駆動): 「死に EF を残さない」継続 (S15→S17→S21 累計 28 件) ✅
+- 原則 5 (商品=ユーザー価値): repo 簡潔化で新 instance の learning curve 短縮 ✅
+- 原則 6 (資本=時間): 1 commit で 4 EF + 1075 行削減 = 高効率 cleanup ✅
+- 原則 7 (BS 原則): orphan source = 技術的負債 → 計上済負債の償却 ✅
+- 原則 8 (KPI=昨日の自分): PS#5 の migration 進捗 (5/23 → 9/23 見込み) に追随する PS#6 cleanup ✅
+
+整合性 **6/9** ✅ (PS#5 作業に対する補助サイクル確立)
+
+**Horse racing**: Auto Update 最近 5 runs 全 success (37m/1h/2h/3h/4h ago) — S6→S21 streak 継続
+**次回候補**:
+1. **HIGH**: PS#5 が time-tracker / goal-tracker migrate → 同 cleanup 適用 (CRITICAL 残 2 件)
+2. **MED**: DEAD_LIST ∩ supabase/functions/ 残 11 件の migration 進捗監視
+3. **LOW**: horse_racing scraper batch_analysis.py の Gemini Flash-Lite cascade 状態再確認 (June 1 sunset)
