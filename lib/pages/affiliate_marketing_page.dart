@@ -71,7 +71,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
               'コンバージョン',
               _summary!['total_conversions']?.toString() ?? '0',
               Icons.check_circle,
-              Colors.green,
+              const Color(0xFF4CAF50),
             ),
             _buildStat(
               '報酬合計',
@@ -139,7 +139,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                       child: Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -181,7 +181,7 @@ class _AffiliateMarketingPageState extends State<AffiliateMarketingPage> {
                           trailing: Chip(
                             label: Text(status),
                             backgroundColor: status == 'active'
-                                ? Colors.green[100]
+                                ? const Color(0xFFC8E6C9)
                                 : Theme.of(context)
                                     .colorScheme
                                     .surfaceContainerHighest,

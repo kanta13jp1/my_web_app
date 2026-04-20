@@ -72,7 +72,7 @@ class _AccessControlPageState extends State<AccessControlPage>
   Color _roleColor(String? role) {
     switch (role) {
       case 'admin':
-        return Colors.red;
+        return const Color(0xFFE53935);
       case 'manager':
         return const Color(0xFFFF6B35);
       case 'editor':
@@ -119,7 +119,7 @@ class _AccessControlPageState extends State<AccessControlPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
           const SizedBox(height: 12),
           Text(_errorMessage!),
           const SizedBox(height: 12),
@@ -225,7 +225,8 @@ class _AccessControlPageState extends State<AccessControlPage>
           child: ListTile(
             leading: Icon(
               isAllow ? Icons.check_circle : Icons.cancel,
-              color: isAllow ? Colors.green : Colors.red,
+              color:
+                  isAllow ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
             ),
             title: Text('$user  $action'),
             subtitle: resource.isNotEmpty ? Text(resource) : null,
