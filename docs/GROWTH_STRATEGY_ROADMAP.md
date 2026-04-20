@@ -15434,3 +15434,43 @@ Commit: 0104195a
 Files: supabase/migrations/20260421000000_seed_figure_ai_ai_university.sql
 
 ---
+
+### PS#1 S25 2026-04-21 08:00 — analyze unused_element fix (2-deploy cascade)
+
+**Trigger**: 朝の Rule17 WF health check → Deploy to Production 2 連続 fail 発見
+- run 24694027904 (dade0725 / Win#131 part14-15 ROADMAP)
+- run 24694882506 (ff36118b / PS#5 S30 ab-testing-manager migrate)
+
+**Root cause**:
+```
+error • The declaration '_formatSchedule' isn't referenced
+       • lib/pages/project_gantt_page.dart:1241:10 • unused_element
+```
+- 由来: commit 04402bc0 (Win版 #131 part 14-15 T2/T9/T4) が
+  `_GanttTab._formatSchedule` (9 行) の call site を別 widget に移したが
+  helper method 本体を削除し忘れ
+- Flutter CI は `--fatal-warnings` 実質運用 → `unused_element` でも exit 1
+- dade0725 / ff36118b / 0104195a 3 連続 deploy fail (ff36118/0104195 は同一原因引継ぎ)
+
+**Fix (commit 2c7c4348, rebased → main)**:
+1. dead method 削除 `lib/pages/project_gantt_page.dart:1241-1249` (9 lines)
+2. `dart format lib/services/public_memo_service.dart` 追随 (S24 trailing comma で upsert multi-line 化)
+
+**Observation**:
+- PS#5 の ff36118 は dade0725 を **pull --rebase せず** push した形跡あり
+  (= `_formatSchedule` 追加時点の main を知らずに commit)
+- 教訓: **push 前 `gh run list --workflow=deploy-prod.yml --limit 1` で直近 fail 確認**
+  → 既知 CI fail があれば先に fix を pull してから push する
+
+**Philosophy Alignment**:
+- 5 商品=ユーザー価値 (本番 deploy 停止解消) ✅
+- 8 KPI=昨日の自分 (Rule17 health 毎セッション実行) ✅
+- 整合性スコア: 6/9 ✅ (CEO感 / ミッション駆動 / 6部署バランス / 商品=ユーザー価値 / 資本=時間 / KPI)
+- 懸念: なし
+
+**Commit**: 2c7c4348 (→ main)
+**Files**:
+- lib/pages/project_gantt_page.dart (-9)
+- lib/services/public_memo_service.dart (format +4 -2 net)
+
+---
