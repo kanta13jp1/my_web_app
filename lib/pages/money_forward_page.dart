@@ -92,7 +92,7 @@ class _MoneyForwardPageState extends State<MoneyForwardPage>
                   ? data['message'].toString()
                   : 'データを取得しました',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF4CAF50),
           ),
         );
       }
@@ -226,14 +226,14 @@ class _DisconnectedView extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: const Color(0xFFFFEBEE),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
               ),
               child: Text(
                 errorMessage!,
-                style: TextStyle(
-                  color: Colors.red.shade700,
+                style: const TextStyle(
+                  color: Color(0xFFC62828),
                   height: 1.5,
                 ),
               ),
@@ -356,14 +356,14 @@ class _AccountsTab extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: const Color(0xFFFFEBEE),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+                border: Border.all(color: const Color(0xFFEF9A9A)),
               ),
               child: Text(
                 errorMessage!,
-                style: TextStyle(
-                  color: Colors.red.shade700,
+                style: const TextStyle(
+                  color: Color(0xFFC62828),
                   height: 1.5,
                 ),
               ),
@@ -523,10 +523,10 @@ class _TransactionsTab extends StatelessWidget {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor:
-                  isExpense ? Colors.red.shade50 : Colors.green.shade50,
+                  isExpense ? const Color(0xFFFFEBEE) : const Color(0xFFE8F5E9),
               child: Icon(
                 isExpense ? Icons.arrow_upward : Icons.arrow_downward,
-                color: isExpense ? Colors.red : Colors.green,
+                color: isExpense ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
                 size: 18,
               ),
             ),
@@ -542,7 +542,7 @@ class _TransactionsTab extends StatelessWidget {
               formatAmount(amount),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isExpense ? Colors.red : Colors.green,
+                color: isExpense ? const Color(0xFFE53935) : const Color(0xFF4CAF50),
                 height: 1.5,
               ),
             ),

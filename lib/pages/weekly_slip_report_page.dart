@@ -232,14 +232,14 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: const Color(0xFFFFEBEE),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: const Color(0xFFEF9A9A)),
         ),
         child: Text(
           _errorMessage!,
-          style: TextStyle(
-            color: Colors.red.shade700,
+          style: const TextStyle(
+            color: Color(0xFFC62828),
             fontSize: 13,
             height: 1.5,
           ),
@@ -257,8 +257,9 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
         : trend <= 0
             ? '▼${(trend.abs() * 100).round()}%改善'
             : '▲${(trend * 100).round()}%悪化';
-    final trendColor =
-        trend == null || trend <= 0 ? Colors.green : const Color(0xFFFF6B35);
+    final trendColor = trend == null || trend <= 0
+        ? const Color(0xFF4CAF50)
+        : const Color(0xFFFF6B35);
 
     return Row(
       children: [
@@ -340,7 +341,8 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             '${d.count}',
                             style: TextStyle(
                               fontSize: 10,
-                              color: isWorst ? Colors.red : Colors.black54,
+                              color:
+                                  isWorst ? const Color(0xFFE53935) : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
                               height: 1.5,
@@ -351,7 +353,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             height: 60 * ratio + 4,
                             decoration: BoxDecoration(
                               color: isWorst
-                                  ? Colors.red.shade400
+                                  ? const Color(0xFFEF5350)
                                   : _primaryColor.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(3),
                             ),
@@ -361,7 +363,8 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                             _dayNames[d.day],
                             style: TextStyle(
                               fontSize: 11,
-                              color: isWorst ? Colors.red : Colors.black54,
+                              color:
+                                  isWorst ? const Color(0xFFE53935) : Colors.black54,
                               fontWeight:
                                   isWorst ? FontWeight.bold : FontWeight.normal,
                               height: 1.5,
@@ -420,7 +423,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                           h.label,
                           style: TextStyle(
                             fontSize: 12,
-                            color: isWorst ? Colors.red : Colors.black54,
+                            color: isWorst ? const Color(0xFFE53935) : Colors.black54,
                             fontWeight:
                                 isWorst ? FontWeight.bold : FontWeight.normal,
                             height: 1.5,
@@ -443,7 +446,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                                 height: 18,
                                 decoration: BoxDecoration(
                                   color: isWorst
-                                      ? Colors.red.shade400
+                                      ? const Color(0xFFEF5350)
                                       : _primaryColor.withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
@@ -457,7 +460,7 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                         '${h.count}回',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isWorst ? Colors.red : Colors.black54,
+                          color: isWorst ? const Color(0xFFE53935) : Colors.black54,
                           fontWeight:
                               isWorst ? FontWeight.bold : FontWeight.normal,
                           height: 1.5,
@@ -523,14 +526,14 @@ class _WeeklySlipReportPageState extends State<WeeklySlipReportPage> {
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: rank == 1
-                          ? Colors.red.shade50
+                          ? const Color(0xFFFFEBEE)
                           : _primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${item.count}回',
                       style: TextStyle(
-                        color: rank == 1 ? Colors.red.shade700 : _primaryColor,
+                        color: rank == 1 ? const Color(0xFFC62828) : _primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                         height: 1.5,

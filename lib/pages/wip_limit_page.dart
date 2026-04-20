@@ -23,11 +23,11 @@ class _WipLimitPageState extends State<WipLimitPage> {
     ('📖', '勉強', Color(0xFF3D5AFE)),
     ('💻', 'プロジェクト', Color(0xFF3D5AFE)),
     ('🎮', 'ゲーム', Color(0xFF3D5AFE)),
-    ('📺', 'アニメ・ドラマ', Colors.red),
+    ('📺', 'アニメ・ドラマ', Color(0xFFE53935)),
     ('🎵', '音楽', Color(0xFFFF6B35)),
     ('🔧', 'スキル習得', Color(0xFFFF6B35)),
     ('📝', '資格・試験', Color(0xFF3D5AFE)),
-    ('🏋️', 'トレーニング', Colors.green),
+    ('🏋️', 'トレーニング', Color(0xFF4CAF50)),
     ('🗂️', 'その他', Color(0xFFB0B0B0)),
   ];
 
@@ -106,24 +106,24 @@ class _WipLimitPageState extends State<WipLimitPage> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: const Color(0xFFFFEBEE),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(color: const Color(0xFFEF9A9A)),
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.block,
-                            color: Colors.red.shade700,
+                            color: Color(0xFFC62828),
                             size: 20,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '⚠️ 「$selectedCategoryName」にはまだ消化中のものがあります。\n先にそれを完了させてください。',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.red.shade700,
+                                color: Color(0xFFC62828),
                                 height: 1.5,
                               ),
                             ),
@@ -218,7 +218,10 @@ class _WipLimitPageState extends State<WipLimitPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -256,7 +259,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 const Text(
                   '🎉 完了！次を始められます',
                   style: TextStyle(
-                    color: Colors.green,
+                    color: Color(0xFF4CAF50),
                     height: 1.5,
                   ),
                 ),
@@ -298,7 +301,10 @@ class _WipLimitPageState extends State<WipLimitPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('エラー: $e'),
+            backgroundColor: const Color(0xFFE53935),
+          ),
         );
       }
     }
@@ -454,7 +460,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color: isActive ? const Color(0xFFFFB74D) : Colors.green.shade200,
+          color: isActive ? const Color(0xFFFFB74D) : const Color(0xFFA5D6A7),
           width: isActive ? 1.5 : 1,
         ),
       ),
@@ -508,7 +514,7 @@ class _WipLimitPageState extends State<WipLimitPage> {
                       fontSize: 18,
                       fontWeight: FontWeight.w900,
                       color: progress >= 100
-                          ? Colors.green
+                          ? const Color(0xFF4CAF50)
                           : const Color(0xFFF57C00),
                       height: 1.5,
                     ),
@@ -534,7 +540,9 @@ class _WipLimitPageState extends State<WipLimitPage> {
                   backgroundColor:
                       Theme.of(context).colorScheme.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(
-                    progress >= 100 ? Colors.green : const Color(0xFFFF6B35),
+                    progress >= 100
+                        ? const Color(0xFF4CAF50)
+                        : const Color(0xFFFF6B35),
                   ),
                   minHeight: 6,
                 ),
@@ -543,9 +551,9 @@ class _WipLimitPageState extends State<WipLimitPage> {
                 const SizedBox(height: 4),
                 Text(
                   '消化完了: ${DateFormat('yyyy/MM/dd').format(completedAt.toLocal())}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    color: Colors.green.shade700,
+                    color: Color(0xFF388E3C),
                     height: 1.5,
                   ),
                 ),

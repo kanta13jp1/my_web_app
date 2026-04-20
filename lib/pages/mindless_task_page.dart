@@ -1030,8 +1030,10 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       return ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
-                        leading:
-                            const Icon(Icons.check_circle, color: Colors.green),
+                        leading: const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFF4CAF50),
+                        ),
                         title: Text(log.title),
                         subtitle: Text('$timeText 完了 / ${log.hourSlot}:00枠'),
                       );
@@ -1176,7 +1178,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
   Color _priorityColor(TaskPriority priority) {
     switch (priority) {
       case TaskPriority.a:
-        return Colors.redAccent;
+        return const Color(0xFFE53935);
       case TaskPriority.b:
         return const Color(0xFFFF6B35);
       case TaskPriority.c:
@@ -2127,7 +2129,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             remainingText,
             style: TextStyle(
               color: _remainingTasksToTarget == 0
-                  ? Colors.green
+                  ? const Color(0xFF4CAF50)
                   : Theme.of(context).colorScheme.onSurface,
               height: 1.5,
             ),
@@ -2168,7 +2170,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: _aPriorityMinimumDone ? Colors.green : Colors.redAccent,
+              color: _aPriorityMinimumDone
+                  ? const Color(0xFF4CAF50)
+                  : const Color(0xFFE53935),
               height: 1.5,
             ),
           ),
@@ -2196,8 +2200,8 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: _isCriticalLockActive
-              ? Colors.red.shade300
-              : Colors.green.shade300,
+              ? const Color(0xFFE57373)
+              : const Color(0xFF81C784),
         ),
       ),
       child: Column(
@@ -2207,7 +2211,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             children: [
               Icon(
                 _isCriticalLockActive ? Icons.lock : Icons.lock_open,
-                color: _isCriticalLockActive ? Colors.redAccent : Colors.green,
+                color: _isCriticalLockActive
+                    ? const Color(0xFFE53935)
+                    : const Color(0xFF4CAF50),
               ),
               const SizedBox(width: 6),
               const Expanded(
@@ -2235,7 +2241,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             statusText,
             style: TextStyle(
               fontSize: 12,
-              color: _isCriticalLockActive ? Colors.redAccent : Colors.green,
+              color: _isCriticalLockActive
+                  ? const Color(0xFFE53935)
+                  : const Color(0xFF4CAF50),
               fontWeight: FontWeight.w600,
               height: 1.5,
             ),
@@ -2335,14 +2343,14 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.shade100),
+        border: Border.all(color: const Color(0xFFFFCDD2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.phonelink_erase, color: Colors.red.shade700),
+              const Icon(Icons.phonelink_erase, color: Color(0xFFC62828)),
               const SizedBox(width: 6),
               const Expanded(
                 child: Text(
@@ -2411,7 +2419,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
     );
 
     final chipColor = completed
-        ? Colors.green
+        ? const Color(0xFF4CAF50)
         : scheduled
             ? _priorityColor(action.priority)
             : const Color(0xFF9CA3AF);
@@ -2689,7 +2697,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
             color: _todoFlowLogMode
                 ? const Color(0xFF3D5AFE)
                 : isCompleted
-                    ? Colors.green
+                    ? const Color(0xFF4CAF50)
                     : _priorityColor(
                         _parsePriority(task['content'] as String? ?? ''),
                       ),
@@ -2823,12 +2831,12 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       _buildTodoFlowStatPill(
                         label: '残り',
                         value: '$pendingCount 件',
-                        color: Colors.redAccent,
+                        color: const Color(0xFFE53935),
                       ),
                       _buildTodoFlowStatPill(
                         label: '完了',
                         value: '$_completedTasksToday 件',
-                        color: Colors.green,
+                        color: const Color(0xFF4CAF50),
                       ),
                       _buildTodoFlowStatPill(
                         label: 'ログ',
@@ -3252,7 +3260,7 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.07),
+                      color: const Color(0xFFE53935).withValues(alpha: 0.07),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -3260,13 +3268,13 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                         const Icon(
                           Icons.phone_android,
                           size: 16,
-                          color: Colors.redAccent,
+                          color: Color(0xFFE53935),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           'スマホ逸脱 $phoneSlipLabel',
                           style: const TextStyle(
-                            color: Colors.redAccent,
+                            color: Color(0xFFE53935),
                             height: 1.5,
                           ),
                         ),
@@ -3676,7 +3684,9 @@ class _MindlessTaskPageState extends State<MindlessTaskPage> {
                                                               : Icons
                                                                   .circle_outlined,
                                                       color: isDone
-                                                          ? Colors.green
+                                                          ? const Color(
+                                                              0xFF4CAF50,
+                                                            )
                                                           : isSuppressedByCriticalLock
                                                               ? const Color(
                                                                   0xFF607D8B,

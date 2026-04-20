@@ -1390,7 +1390,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     realitySnapshot.isStale ? 'キャッシュ表示中' : '最新取得済み',
                     color: realitySnapshot.isStale
                         ? const Color(0xFFFF6B35)
-                        : Colors.green,
+                        : const Color(0xFF4CAF50),
                   ),
                   _buildStatusChip(
                     '取得日時 ${_dateTimeFormat.format(realitySnapshot.fetchedAt.toLocal())}',
@@ -3522,13 +3522,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(winCount)}勝',
-                backgroundColor: Colors.green.withValues(alpha: 0.12),
-                foregroundColor: Colors.green.shade800,
+                backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                foregroundColor: const Color(0xFF2E7D32),
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(lossCount)}敗',
-                backgroundColor: Colors.red.withValues(alpha: 0.10),
-                foregroundColor: Colors.red.shade800,
+                backgroundColor: const Color(0xFFE53935).withValues(alpha: 0.10),
+                foregroundColor: const Color(0xFFC62828),
               ),
             ],
           ),
@@ -3536,14 +3536,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           _buildPastElectionOutcomeGroup(
             title: '当選',
             lines: winLines,
-            accentColor: Colors.green,
+            accentColor: const Color(0xFF4CAF50),
             emptyLabel: '当選記録はまだありません',
           ),
           const SizedBox(height: 8),
           _buildPastElectionOutcomeGroup(
             title: '落選',
             lines: lossLines,
-            accentColor: Colors.red,
+            accentColor: const Color(0xFFE53935),
             emptyLabel: '落選記録はまだありません',
           ),
         ],
@@ -3728,17 +3728,17 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             '${candidate.name} ${candidate.status}${candidate.votes > 0 ? ' (${candidate.votes}票)' : ''}',
             style: TextStyle(
               fontSize: 11,
-              color: isWin ? Colors.green.shade800 : Colors.red.shade800,
+              color: isWin ? const Color(0xFF2E7D32) : const Color(0xFFC62828),
               height: 1.5,
             ),
           ),
           backgroundColor: isWin
-              ? Colors.green.withValues(alpha: 0.12)
-              : Colors.red.withValues(alpha: 0.10),
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.12)
+              : const Color(0xFFE53935).withValues(alpha: 0.10),
           side: BorderSide(
             color: isWin
-                ? Colors.green.withValues(alpha: 0.35)
-                : Colors.red.withValues(alpha: 0.28),
+                ? const Color(0xFF4CAF50).withValues(alpha: 0.35)
+                : const Color(0xFFE53935).withValues(alpha: 0.28),
           ),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           padding: EdgeInsets.zero,
@@ -3827,13 +3827,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: hasWin
-            ? Colors.green.withValues(alpha: 0.06)
-            : Colors.red.withValues(alpha: 0.04),
+            ? const Color(0xFF4CAF50).withValues(alpha: 0.06)
+            : const Color(0xFFE53935).withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: hasWin
-              ? Colors.green.withValues(alpha: 0.25)
-              : Colors.red.withValues(alpha: 0.18),
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.25)
+              : const Color(0xFFE53935).withValues(alpha: 0.18),
         ),
       ),
       child: Column(
@@ -3854,7 +3854,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: hasWin ? Colors.green : Colors.red,
+                  color: hasWin ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -4251,9 +4251,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         ? '公式実数ベースでは残り ${_formatInt(snapshot!.actualNetIncreaseRequired)}人'
         : '計画基準は ${_formatInt(plan.currentLocalMembers)}人';
     final color = gap == 0 && overdue == 0
-        ? Colors.green
+        ? const Color(0xFF4CAF50)
         : overdue > 0 || gap != 0
-            ? Colors.red
+            ? const Color(0xFFE53935)
             : const Color(0xFFFF6B35);
 
     return Container(
@@ -4593,11 +4593,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     final dueSoon = plan.isEndorsementDueSoon(now);
     final reality = _realityForPrefecture(plan.prefecture);
     final accent = overdue
-        ? Colors.red
+        ? const Color(0xFFE53935)
         : dueSoon
             ? const Color(0xFFFF6B35)
             : plan.endorsementConfirmed
-                ? Colors.green
+                ? const Color(0xFF4CAF50)
                 : const Color(0xFF607D8B);
 
     return Card(
