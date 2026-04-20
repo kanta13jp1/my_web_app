@@ -241,7 +241,7 @@ class _DanshariPageState extends State<DanshariPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
                         Theme.of(context).colorScheme.surfaceContainerHigh,
-                    foregroundColor: Colors.red,
+                    foregroundColor: const Color(0xFFE53935),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     elevation: 0,
                   ),

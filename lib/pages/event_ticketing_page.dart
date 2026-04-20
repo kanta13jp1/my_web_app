@@ -139,7 +139,7 @@ class _EventTicketingPageState extends State<EventTicketingPage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

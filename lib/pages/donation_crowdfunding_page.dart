@@ -77,7 +77,7 @@ class _DonationCrowdfundingPageState extends State<DonationCrowdfundingPage> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

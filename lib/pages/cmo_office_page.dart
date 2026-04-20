@@ -206,7 +206,7 @@ class _CmoOfficePageState extends State<CmoOfficePage> {
                     'マーケフィードバック',
                     '要望や改善案を集めて、次の改善サイクルへつなげます。',
                     Icons.feedback,
-                    Colors.green,
+                    const Color(0xFF4CAF50),
                     _openFeedbackPage,
                     tileKey: const Key('cmo_office_feedback_action'),
                   ),

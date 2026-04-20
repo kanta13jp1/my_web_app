@@ -128,7 +128,7 @@ class _DocumentViewerPageState extends State<DocumentViewerPage> {
                       const Icon(
                         Icons.error_outline,
                         size: 64,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(

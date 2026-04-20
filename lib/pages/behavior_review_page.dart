@@ -573,7 +573,7 @@ class _BehaviorReviewPageState extends State<BehaviorReviewPage> {
       case '資産管理':
         return const _BehaviorReviewStyle(
           icon: Icons.payments_outlined,
-          color: Colors.redAccent,
+          color: Color(0xFFE53935),
         );
       case 'AI組織':
         return const _BehaviorReviewStyle(

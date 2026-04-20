@@ -135,7 +135,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                       leading: const Icon(Icons.folder),
                       title: Text(category['name'] ?? '名称未設定'),
                       trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
+                        icon:
+                            const Icon(Icons.delete, color: Color(0xFFE53935)),
                         onPressed: () => _deleteCategory(category['id']),
                       ),
                     );
