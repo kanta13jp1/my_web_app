@@ -1966,6 +1966,11 @@ serve(async (req: Request) => {
         const startTierIndex = requestedTier ? TIER_ORDER.indexOf(requestedTier) : 0;
         if (startTierIndex === -1) return json({ error: "invalid tier" }, 400);
 
+        // Win版#131 part 4: Observability — trace_id / session_id / latency 計測
+        const requestStartedAt = performance.now();
+        const traceId = String(body.trace_id ?? crypto.randomUUID());
+        const sessionId = body.session_id != null ? String(body.session_id) : null;
+
         let resultText: string | undefined;
         let usedProvider: string | undefined;
         let usedTier: Tier | undefined;
@@ -1988,19 +1993,51 @@ serve(async (req: Request) => {
         }
 
         if (!resultText || !usedProvider || !usedTier) {
+          // Win版#131 part 4: 失敗ケースも観測ログに記録 (flaky provider 検出のため)
+          try {
+            const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+            const inputChars = finalMessages
+              .map((m) => typeof m.content === "string" ? m.content.length : 0)
+              .reduce((a, b) => a + b, 0);
+            await admin.from("ai_hub_chat_logs").insert({
+              provider: "all",
+              tier: requestedTier ?? "auto",
+              success: false,
+              latency_ms: Math.round(performance.now() - requestStartedAt),
+              trace_id: traceId,
+              session_id: sessionId,
+              input_chars: inputChars,
+              error_message: "all tiers exhausted",
+              action: "provider.chat_auto",
+              status_code: 502,
+            });
+          } catch { /* ignore */ }
           return json({ success: false, status: "allProvidersFailed", message: "すべての Tier のプロバイダーが失敗しました" }, 502);
         }
 
-        // コスト記録 (best-effort、失敗してもレスポンスには影響しない)
+        // コスト + 観測データ記録 (best-effort、失敗してもレスポンスには影響しない)
+        // Win版#131 part 4: latency_ms / trace_id / session_id / input_chars / output_chars
+        const latencyMs = Math.round(performance.now() - requestStartedAt);
         try {
           const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] * (finalMessages.join("").length / 1000);
+          const inputChars = finalMessages
+            .map((m) => typeof m.content === "string" ? m.content.length : 0)
+            .reduce((a, b) => a + b, 0);
+          const outputChars = resultText?.length ?? 0;
+          const estimatedCost = TIER_COST_USD_PER_1K[usedTier] * (inputChars / 1000);
           await admin.from("ai_hub_chat_logs").insert({
             provider: usedProvider,
             tier: usedTier,
             success: true,
             estimated_cost_usd: estimatedCost,
             model: usedModel ?? null,
+            latency_ms: latencyMs,
+            trace_id: traceId,
+            session_id: sessionId,
+            input_chars: inputChars,
+            output_chars: outputChars,
+            action: "provider.chat_auto",
+            status_code: 200,
           });
         } catch { /* ignore logging errors */ }
 
@@ -2116,6 +2153,54 @@ serve(async (req: Request) => {
           if (recommendations.length >= 5) break;
         }
         return json({ success: true, recommendations });
+      }
+
+      // ── Observability (Win版#131 part 4 / NotebookLM f56cc07c) ────────────────
+      // SQL views (provider_health_view / provider_heatmap_view / session_trace_view)
+      // を Flutter から安全に参照するためのラッパー
+      case "observability.provider_health": {
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const { data, error } = await admin
+          .from("provider_health_view")
+          .select("*")
+          .order("total_requests", { ascending: false });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, providers: data ?? [] });
+      }
+      case "observability.heatmap": {
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const provider = body.provider as string | undefined;
+        let q = admin.from("provider_heatmap_view").select("*").limit(500);
+        if (provider) q = q.eq("provider", provider);
+        const { data, error } = await q;
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, cells: data ?? [] });
+      }
+      case "observability.sessions": {
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const limit = Math.min(Number(body.limit ?? 50), 200);
+        const { data, error } = await admin
+          .from("session_trace_view")
+          .select("*")
+          .order("started_at", { ascending: false })
+          .limit(limit);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, sessions: data ?? [] });
+      }
+      case "observability.session_steps": {
+        const sessionId = String(body.session_id ?? "");
+        if (!sessionId) return json({ error: "session_id required" }, 400);
+        const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+        const { data, error } = await admin
+          .from("ai_hub_chat_logs")
+          .select(
+            "id, provider, tier, action, success, latency_ms, status_code, error_message, " +
+            "input_chars, output_chars, estimated_cost_usd, model, trace_id, created_at",
+          )
+          .eq("session_id", sessionId)
+          .order("created_at", { ascending: true });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, steps: data ?? [] });
       }
 
       default:

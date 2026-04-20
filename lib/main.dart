@@ -52,6 +52,7 @@ import 'package:my_web_app/pages/thought_capture_page.dart';
 import 'package:my_web_app/pages/decision_check_page.dart';
 import 'package:my_web_app/pages/purchase_log_page.dart';
 import 'package:my_web_app/pages/price_tracker_page.dart';
+import 'package:my_web_app/pages/ai_observability_page.dart';
 import 'package:my_web_app/pages/conveni_store_page.dart';
 import 'package:my_web_app/pages/ai_search_page.dart';
 import 'package:my_web_app/pages/edge_function_status_page.dart';
@@ -603,6 +604,10 @@ class MyApp extends StatelessWidget {
           case '/price-tracker':
             return MaterialPageRoute(
               builder: (_) => const PriceTrackerPage(),
+            );
+          case '/ai-observability':
+            return MaterialPageRoute(
+              builder: (_) => const AiObservabilityPage(),
             );
           case '/conveni-store':
             return MaterialPageRoute(
