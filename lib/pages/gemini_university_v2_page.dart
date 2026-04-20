@@ -6256,12 +6256,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MarkdownBody(
-                  data: content,
-                  styleSheet: _mdStyle,
-                  onTapLink: (_, href, __) {
-                    if (href != null) _launchUrl(href);
-                  },
+                DefaultTextStyle.merge(
+                  style: const TextStyle(color: Color(0xFFE5E7EB)),
+                  child: MarkdownBody(
+                    data: content,
+                    styleSheet: _mdStyle,
+                    onTapLink: (_, href, __) {
+                      if (href != null) _launchUrl(href);
+                    },
+                  ),
                 ),
                 if (sourceUrl != null && sourceUrl.isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -6286,12 +6289,15 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       color: surface,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: MarkdownBody(
-          data: markdown,
-          styleSheet: _mdStyle,
-          onTapLink: (_, href, __) {
-            if (href != null) _launchUrl(href);
-          },
+        child: DefaultTextStyle.merge(
+          style: const TextStyle(color: Color(0xFFE5E7EB)),
+          child: MarkdownBody(
+            data: markdown,
+            styleSheet: _mdStyle,
+            onTapLink: (_, href, __) {
+              if (href != null) _launchUrl(href);
+            },
+          ),
         ),
       ),
     );
