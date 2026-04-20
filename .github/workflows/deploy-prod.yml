@@ -183,39 +183,25 @@ jobs:
             user-profile-manager
             onboarding-flow
             feature-request-manager
-            app-analytics-dashboard
-            system-status
-            personal-dashboard
             notify-feature-request
             user-feedback-collector
-            growth-command-center
             growth-referral
-            growth-share-signal
-            growth-achievement-summary
-            growth-import-preview
-            growth-import-commit
             get-growth-roadmap-progress
-            video-ad-generator
             viral-share-engine
             x-media-post
             growth-automation-controller
-            referral-program
             share-quote
             generate-quote-image
             seo-optimizer
             send-waitlist-notification
             viral-ad-generator
-            viral-growth-engine
             ai-search
             ai-suggest-tags
             ai-secretary
             ai-summarizer
             agent-hub
-            virtual-organization
             my-ai-agent
-            generate-daily-challenges
             trigger-analysis
-            analyze-reality
             get-admin-users
             submit-feedback
             get-support-tickets
