@@ -108,10 +108,10 @@ class _ElectionManagementDashboardState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Card(
-            color: Colors.red.shade50,
+            color: const Color(0xFFFFEBEE),
             elevation: 0,
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: Colors.red.shade200),
+              side: const BorderSide(color: Color(0xFFEF9A9A)),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Padding(
@@ -124,7 +124,7 @@ class _ElectionManagementDashboardState
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -150,7 +150,7 @@ class _ElectionManagementDashboardState
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.redAccent,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -158,7 +158,7 @@ class _ElectionManagementDashboardState
                   Text(
                     _monthlyKpi!['message'],
                     style: const TextStyle(
-                      color: Colors.redAccent,
+                      color: Color(0xFFE53935),
                       fontWeight: FontWeight.w600,
                       height: 1.5,
                     ),
@@ -167,7 +167,7 @@ class _ElectionManagementDashboardState
                   const Text(
                     '※万が一達成できなければ解党の覚悟で臨む“工程管理”の勝負です。',
                     style: TextStyle(
-                      color: Colors.red,
+                      color: Color(0xFFE53935),
                       height: 1.5,
                     ),
                   ),
@@ -331,8 +331,9 @@ class _ElectionManagementDashboardState
               barRods: [
                 BarChartRodData(
                   toY: count,
-                  color:
-                      count >= 700 ? Colors.redAccent : const Color(0xFF3D5AFE),
+                  color: count >= 700
+                      ? const Color(0xFFE53935)
+                      : const Color(0xFF3D5AFE),
                   width: 24,
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(4)),
@@ -441,11 +442,11 @@ class _ElectionManagementDashboardState
 
                       Color? tileColor;
                       if (candidateCount == 0) {
-                        tileColor = Colors.red.shade100;
+                        tileColor = const Color(0xFFFFCDD2);
                       } else if (candidateCount == 1) {
                         tileColor = const Color(0xFFFFECB3);
                       } else if (candidateCount >= 2) {
-                        tileColor = Colors.green.shade100;
+                        tileColor = const Color(0xFFC8E6C9);
                       }
 
                       final sDateStr = s['date']?.toString() ?? '';
@@ -652,10 +653,10 @@ class _ElectionManagementDashboardState
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: candidateCount == 0
-                                      ? Colors.redAccent
+                                      ? const Color(0xFFE53935)
                                       : (candidateCount == 1
                                           ? const Color(0xFFFFC107)
-                                          : Colors.green),
+                                          : const Color(0xFF4CAF50)),
                                 ),
                               ),
                             ] else ...[

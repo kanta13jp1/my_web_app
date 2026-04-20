@@ -176,7 +176,8 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('起動エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('起動エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     } finally {
@@ -549,7 +550,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.red,
+                    color: Color(0xFFE53935),
                     height: 1.5,
                   ),
                 ),
@@ -623,7 +624,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
       floatingActionButton: _tabController.index == 3
           ? FloatingActionButton.extended(
               onPressed: _showAddDialog,
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFE53935),
               icon: const Icon(Icons.add_comment, color: Colors.white),
               label: const Text('戦略投稿'),
             )
@@ -649,7 +650,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               markers: _candidates.map((cand) {
                 final prob = cand['win_probability'] as int? ?? 50;
                 final color = prob >= 80
-                    ? Colors.red
+                    ? const Color(0xFFE53935)
                     : (prob >= 50
                         ? const Color(0xFFFF6B35)
                         : const Color(0xFF3D5AFE));
@@ -718,11 +719,11 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                   else if (_lastBatchLog?['status'] == 'SUCCESS')
                     const Icon(
                       Icons.check_circle,
-                      color: Colors.green,
+                      color: Color(0xFF4CAF50),
                       size: 16,
                     )
                   else if (_lastBatchLog?['status'] == 'ERROR')
-                    const Icon(Icons.error, color: Colors.red, size: 16)
+                    const Icon(Icons.error, color: Color(0xFFE53935), size: 16)
                   else
                     const Icon(
                       Icons.access_time,
@@ -993,7 +994,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
                     const Text(
                       '過半数獲得圏内！',
                       style: TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         fontWeight: FontWeight.bold,
                         height: 1.5,
                       ),
@@ -1031,7 +1032,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
             0,
             100,
             (v) => setState(() => _swingCapture = v),
-            Colors.green,
+            const Color(0xFF4CAF50),
           ),
         ],
       ),
@@ -1119,12 +1120,13 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
           elevation: isS ? 4 : 1,
           color: isS
               ? (Theme.of(context).brightness == Brightness.dark
-                  ? Colors.red.withAlpha(40)
-                  : Colors.red.shade50)
+                  ? const Color(0xFFE53935).withAlpha(40)
+                  : const Color(0xFFFFEBEE))
               : Theme.of(context).colorScheme.surface,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isS ? Colors.red : const Color(0xFF3D5AFE),
+              backgroundColor:
+                  isS ? const Color(0xFFE53935) : const Color(0xFF3D5AFE),
               child: Text(
                 rank,
                 style: const TextStyle(
@@ -1173,7 +1175,7 @@ class _ElectionStrategyPageState extends State<ElectionStrategyPage>
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: score >= 80
-                      ? Colors.red.shade100
+                      ? const Color(0xFFFFCDD2)
                       : Theme.of(context).colorScheme.surfaceContainerHigh,
                   child: Text('$score'),
                 ),

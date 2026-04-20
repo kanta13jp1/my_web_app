@@ -193,7 +193,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -307,7 +308,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -325,7 +327,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -343,7 +345,8 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -521,7 +524,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: progress >= 1.0
-              ? [Colors.green.shade600, Colors.green.shade400]
+              ? [const Color(0xFF43A047), const Color(0xFF66BB6A)]
               : [const Color(0xFF303F9F), const Color(0xFF3F51B5)],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -643,7 +646,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: isCompleted
-              ? Colors.green.shade200
+              ? const Color(0xFFA5D6A7)
               : Theme.of(context).colorScheme.surfaceContainerHigh,
         ),
       ),
@@ -658,13 +661,12 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color:
-                      isCompleted ? Colors.green.shade50 : color.withAlpha(20),
+                  color: isCompleted ? const Color(0xFFE8F5E9) : color.withAlpha(20),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   isCompleted ? Icons.check_circle : Icons.circle_outlined,
-                  color: isCompleted ? Colors.green : color,
+                  color: isCompleted ? const Color(0xFF4CAF50) : color,
                   size: 24,
                 ),
               ),
@@ -737,7 +739,7 @@ class _DailyHabitsPageState extends State<DailyHabitsPage> {
                     child: Text(
                       '削除',
                       style: TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         height: 1.5,
                       ),
                     ),

@@ -284,7 +284,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -311,14 +312,15 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ 支払い完了を記録しました'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -336,7 +338,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -354,7 +356,8 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -501,13 +504,13 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.red.shade50,
+        color: const Color(0xFFFFEBEE),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.red.shade200),
+        border: Border.all(color: const Color(0xFFEF9A9A)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.warning_amber, color: Colors.red),
+          const Icon(Icons.warning_amber, color: Color(0xFFE53935)),
           const SizedBox(width: 10),
           Text(
             '⚠️ $count件の支払いが期日間近・超過です',
@@ -541,7 +544,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
           color: overdue
-              ? Colors.red.shade300
+              ? const Color(0xFFE57373)
               : (dueSoon
                   ? const Color(0xFFFFB74D)
                   : Theme.of(context).colorScheme.surfaceContainerHigh),
@@ -680,7 +683,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                     icon: const Icon(Icons.check_circle, size: 16),
                     label: const Text('支払い完了'),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.green,
+                      foregroundColor: const Color(0xFF4CAF50),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 4,
@@ -699,7 +702,7 @@ class _PaymentReminderPageState extends State<PaymentReminderPage> {
                       child: Text(
                         '削除',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

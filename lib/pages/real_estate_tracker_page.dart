@@ -169,7 +169,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('物件を登録しました'),
-              backgroundColor: Colors.green,
+              backgroundColor: Color(0xFF4CAF50),
             ),
           );
         }
@@ -177,7 +177,8 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -208,14 +209,15 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('収支を記録しました'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -396,7 +398,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                       const Icon(
                         Icons.error_outline,
                         size: 48,
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                       ),
                       const SizedBox(height: 8),
                       Text(_errorMessage!),
@@ -590,14 +592,15 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                     return ListTile(
                       leading: Icon(
                         isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                        color: isIncome ? Colors.green : Colors.red,
+                        color: isIncome ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                       ),
                       title: Text(label),
                       subtitle: desc.isNotEmpty ? Text(desc) : null,
                       trailing: Text(
                         '${isIncome ? '+' : '-'}¥${_fmt(amount.toDouble())}',
                         style: TextStyle(
-                          color: isIncome ? Colors.green : Colors.red,
+                          color:
+                              isIncome ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                           fontWeight: FontWeight.bold,
                           height: 1.5,
                         ),
@@ -647,7 +650,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   '総収入',
                   '¥${_fmt(totalIncome.toDouble())}',
                   Icons.trending_up,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
               ),
               const SizedBox(width: 8),
@@ -656,7 +659,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   '総支出',
                   '¥${_fmt(totalExpense.toDouble())}',
                   Icons.trending_down,
-                  Colors.red,
+                  const Color(0xFFE53935),
                 ),
               ),
             ],
@@ -669,7 +672,7 @@ class _RealEstateTrackerPageState extends State<RealEstateTrackerPage>
                   '純利益',
                   '¥${_fmt(netIncome.toDouble())}',
                   Icons.savings,
-                  netIncome >= 0 ? Colors.green : Colors.red,
+                  netIncome >= 0 ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
                 ),
               ),
               const SizedBox(width: 8),
