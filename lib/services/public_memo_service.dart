@@ -150,7 +150,7 @@ class PublicMemoService {
             'metadata': metadata,
             'is_public': true,
             'published_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'note_id,user_id')
+          }, onConflict: 'note_id,user_id',)
           .select()
           .single();
 
