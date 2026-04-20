@@ -6,6 +6,16 @@
 
 ---
 
+## ✅ Win版 完了ステッカー (2026-04-21 朝 Win版#131 part 14-15 / commit 04402bc0)
+
+- **T2-Win (3h)**: planned_start_date / planned_end_date 列 + wbs_delayed_tasks_view 書換 + recovery_plan trigger ✅
+- **T9-Win (0.5h)**: `wbs.milestone_risk` action 追加 ✅
+- **T4 (2h)**: owner_instance NOT NULL + 'all' 禁止 CHECK + wbs.add_task 拡張 ✅
+
+Win版分 5.5h 完遂。次 VSCode版 (T1 / T2-VSCode / T3 / T9-VSCode) / PS#1 (T5 / T6 / T7)。
+
+---
+
 ## 🔗 関連 handoff (rebase 後発見 — 2026-04-20 夜時点)
 
 PS#4 rebase 後、本 PR と並行して以下が既起票されていた。役割分担を明確化:

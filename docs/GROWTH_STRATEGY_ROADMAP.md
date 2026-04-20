@@ -15281,3 +15281,64 @@ Files:
 - 本 entry
 
 ---
+
+## [Win版 #131 part 14-15] 2026-04-21 朝 — WBS Phase 2 T2/T9/T4 (planned vs actual + milestone_risk + owner_instance 必須化)
+
+**起票元**: `docs/cross-instance-prs/20260420_wbs_gantt_overhaul_phase2.md` (T2-Win / T9-Win / T4)
+**依存前提**: PS#6 S22 (`232b2783` wbs.* unreachable fix) / PS#6 S23 (`622a917b` instance required)
+
+### T2-Win: planned vs actual 列分離 + recovery_plan error block
+
+- `wbs_tasks` に `planned_start_date` / `planned_end_date` 列追加 (計画値)
+- 既存 `start_date` / `end_date` は **actual** として維持 + backfill で planned = actual 初期コピー
+- `wbs_delayed_tasks_view` 書換: deadline = `COALESCE(planned_end_date, end_date)`
+- recovery_plan 必須 trigger `wbs_enforce_recovery_plan_trg`:
+  - 遅延 (deadline < today) + status != completed + recovery_plan 空 → RAISE EXCEPTION (ERRCODE=23514)
+  - 既存 delayed 行は "TBD — 遅延 detect 済" placeholder で backfill
+- EF level validation (defense-in-depth): `wbs.update_progress` が 400 事前返却 (`code: RECOVERY_PLAN_REQUIRED` + hint)
+
+### T9-Win: tools-hub に `wbs.milestone_risk` action 追加
+
+- `wbs_milestone_risk_view` (part 13 既存) を SELECT
+- risk_status (critical_overdue / over_capacity / tight / on_track) + remaining_hours / available_hours
+- defensive: view 失敗でも 200 返却 (VSCode版 T9-VSCode badge 表示の依存先)
+
+### T4: owner_instance NOT NULL + 'all' 禁止 CHECK
+
+- user 決裁 = **(A) shared keep + UI warning** (複製しない)
+- `owner_instance` NOT NULL 化 + CHECK 制約 (vscode/win/ps1-6/web/mobile/schedule/gha の 12 値 / 'all' 禁止)
+- backfill: NULL → instance / instance='all' → 'vscode' (primary owner)
+- `wbs.add_task` 拡張: `owner_instance` param 追加 (instance='all' 時は明示必須)
+- COMMENT で ALL タスク運用方針明文化 (共同責任でも primary owner 1 instance 必須)
+
+### Philosophy Alignment (Rule 17 旧 22)
+
+- 1 CEO 感 ✅ (遅延可視化 + recovery 強制で経営判断)
+- 2 ミッション ✅ (共同目標 50/500/5000 の owner 明示)
+- 3 mentor ✅ (recovery 空 → hint 付きエラーで改善方向提示)
+- 4 6 部署 ✅ (owner_instance で負荷可視化)
+- 5 商品 ✅ (WBS UX = SaaS 化ステップ)
+- 6 時間資本 ✅ (trigger + EF 両 block で誤更新防止)
+- 7 BS ✅ (遅延=負債 / recovery=資産転換)
+- 8 KPI ✅ (planned vs actual で昨日比)
+- 9 IPO/ウェルビーイング ✅ (過負荷警告で burnout 予防)
+→ **9/9 ✅**
+
+### AI-DEV (Rule 18 旧 23)
+
+- Auth / Deny-by-default / team memory / retry / QG → **6/7 ✅** (trace_id は既存継承)
+
+### 次 (VSCode版 handoff)
+
+本 PR Win版分完了 (5.5h 見積)。残:
+- **VSCode版** (12h): T1 (S-curve progress overlay) / T2-VSCode (Gantt 5 列 + recovery 編集 UI) / T3 (未完了 filter chip) / T9-VSCode (マイルストーン risk badge)
+- **PS#1** (9h): T5 (SessionStart hook) / T6 (wrap-up skill enforce) / T7 (daily staleness audit GHA)
+
+Files:
+- `supabase/migrations/20260421020000_wbs_planned_vs_actual.sql`
+- `supabase/migrations/20260421030000_wbs_all_task_ui_hint.sql`
+- `supabase/functions/tools-hub/index.ts` (+112 / -7)
+
+commit: `04402bc0`
+
+---
