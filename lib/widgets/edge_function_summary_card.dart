@@ -816,6 +816,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/photo-gallery',
       'フォトギャラリーページ > アルバム作成・写真アップロード・共有',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'screen-recorder',
+      'スクリーンレコーダー (録画・ダウンロード)',
+      true,
+      '/screen-recorder',
+      'スクリーンレコーダーページ > 録画開始・停止・ダウンロード',
+    ),
+    _FnDef(
+      'recruitment-job-board',
+      '採用・求人ボード管理',
+      true,
+      '/recruitment',
+      '採用求人ボードページ > 求人一覧・応募管理・ステータス更新',
+    ),
+    _FnDef(
+      'two-factor-auth',
+      '二要素認証 (2FA設定・管理)',
+      true,
+      '/two-factor-auth',
+      '二要素認証ページ > 認証設定・バックアップコード確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
