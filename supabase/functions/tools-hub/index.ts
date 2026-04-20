@@ -765,26 +765,49 @@ serve(async (req) => {
         }
         case "wbs.project_overview": {
           // Win版#131 part 20: プロジェクト全体概観 (AI 報告用)
-          const { data, error } = await admin.from("wbs_project_overview_view")
-            .select("*").single();
-          if (error) throw new Error(error.message);
-          return json({ success: true, overview: data });
+          // Win版#131 part 23: defensive — view 未 deploy / 0 rows でも 200 返す
+          try {
+            const { data, error } = await admin
+              .from("wbs_project_overview_view")
+              .select("*").maybeSingle();
+            if (error) {
+              return json({ success: false, overview: null, error: error.message }, 200);
+            }
+            return json({ success: true, overview: data });
+          } catch (e) {
+            return json({ success: false, overview: null, error: String(e) }, 200);
+          }
         }
         case "wbs.auto_repair_dependencies": {
           // Win版#131 part 20: 依存関係スケジュール自動修復
-          const { data, error } = await admin.rpc(
-            "wbs_auto_repair_dependencies",
-          );
-          if (error) throw new Error(error.message);
-          return json({ success: true, repairs: data ?? [] });
+          // Win版#131 part 23: defensive — RPC 未 deploy でも 200 返す
+          try {
+            const { data, error } = await admin.rpc(
+              "wbs_auto_repair_dependencies",
+            );
+            if (error) {
+              return json({ success: false, repairs: [], error: error.message }, 200);
+            }
+            return json({ success: true, repairs: data ?? [] });
+          } catch (e) {
+            return json({ success: false, repairs: [], error: String(e) }, 200);
+          }
         }
         case "wbs.ai_status_report": {
           // Win版#131 part 20: AI による WBS 概観レポート生成
+          // Win版#131 part 23: defensive — view/RPC 失敗でも 200 返す
           // 1) overview view から health snapshot 取得
           // 2) ai-hub:provider.chat (groq) に prompt 投げる
           const { data: overview, error: oErr } = await admin
-            .from("wbs_project_overview_view").select("*").single();
-          if (oErr) throw new Error(oErr.message);
+            .from("wbs_project_overview_view").select("*").maybeSingle();
+          if (oErr) {
+            return json({
+              success: false,
+              report: "WBS overview view 未 deploy または読み込み失敗",
+              error: oErr.message,
+              snapshot: null,
+            }, 200);
+          }
           const { data: delayed } = await admin
             .from("wbs_delayed_tasks_view")
             .select("title, instance, delay_days, recovery_plan, recovery_status")
