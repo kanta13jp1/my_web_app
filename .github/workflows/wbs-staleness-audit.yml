@@ -120,3 +120,71 @@ jobs:
             --label "wbs-audit,automated" \
             --base main \
             --head "$BRANCH" || true
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      # Win版#131 part 21: PS#5 不在 fallback - unassigned bug 4h+ 検出
+      - name: Detect unassigned bugs (4h+)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          # 4h 以上前から open + 未 assign + label=bug を抽出
+          CUTOFF=$(date -u -d "-4 hours" +%Y-%m-%dT%H:%M:%SZ)
+          OUT=$(gh issue list --repo "${{ github.repository }}" \
+            --state open --label bug --limit 50 \
+            --json number,title,createdAt,assignees,url \
+            --jq '[.[] | select(.assignees | length == 0) | select(.createdAt < "'"$CUTOFF"'")] | .[] | "\(.number)|\(.title)|\(.url)"')
+
+          if [ -z "$OUT" ]; then
+            echo "✅ unassigned bug 4h+ なし"
+            exit 0
+          fi
+
+          mkdir -p docs/cross-instance-prs
+          BRANCH="wbs-bug-escalate/${DATE}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$BRANCH" 2>/dev/null || git checkout "$BRANCH"
+
+          FILE="docs/cross-instance-prs/${DATE}_unassigned_bugs_escalate_ps1.md"
+          cat > "$FILE" <<EOF
+          # 🚨 PS#5 不在 → PS#1 escalate: unassigned bug 4h+ 蓄積
+
+          - **検出日時**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          - **検出元**: \`.github/workflows/wbs-staleness-audit.yml\` (Win版#131 part 21)
+
+          ## 対象 Issue (PS#5 が 4h 以内に reach できなかった bug)
+
+          $(echo "$OUT" | while IFS='|' read -r num title url; do echo "- [#$num] $title — $url"; done)
+
+          ## PS#1 アクション (Rule17 health check の流れで)
+
+          1. 各 Issue を確認
+          2. severity 判定 (critical/high/normal)
+          3. PS#5 にメンション (もし PS#5 まだ起動していれば)
+          4. 重い修正 → /cross-instance-pr to=win/vscode で再 escalate
+          5. 軽量 → 自分 (PS#1) で即修正
+
+          ## SLA
+
+          - critical: **2h 以内** に PS#1 直接修正
+          - high: 4h 以内 cross-instance-pr or PR
+          - normal: 翌日まで
+
+          ## 関連 rule
+
+          - \`[INSTANCE-ROLES]\` SLA section (inject-rules.txt)
+          - \`issue-to-wbs.yml\` (Issue → WBS auto-add)
+          EOF
+
+          git add "$FILE"
+          git commit -m "audit: unassigned bug 4h+ escalate to PS#1 (${DATE})" || exit 0
+          git push origin "$BRANCH" || exit 0
+
+          gh pr create \
+            --title "audit: PS#5 不在 → PS#1 escalate (${DATE})" \
+            --body "PS#5 が 4h 以内に reach できなかった unassigned bug を PS#1 にエスカレートします。" \
+            --label "wbs-audit,bug-escalate,automated" \
+            --base main \
+            --head "$BRANCH" || true

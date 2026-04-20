@@ -1,0 +1,137 @@
+name: Issue → WBS Auto-Sync
+
+# Win版#131 part 21
+# WEB版 / 📱スマホ版が起票した GitHub Issue を WBS タスクに自動同期。
+# - opened: tools-hub:wbs.add_task で WBS に追加 (instance=ps5, priority=high)
+# - closed: 該当 WBS タスクを completed 化
+
+on:
+  issues:
+    types: [opened, closed, reopened, edited]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Determine action
+        id: action
+        run: |
+          ACTION="${{ github.event.action }}"
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_URL="${{ github.event.issue.html_url }}"
+          LABELS=$(echo '${{ toJson(github.event.issue.labels) }}' | python3 -c "import json,sys; print(','.join(l['name'] for l in json.load(sys.stdin)))" 2>/dev/null || echo "")
+          AUTHOR="${{ github.event.issue.user.login }}"
+
+          # Severity 判定: label=critical/high → high / label=bug → medium / その他 → low
+          PRIORITY="low"
+          if echo "$LABELS" | grep -qiE "critical|p0"; then
+            PRIORITY="high"
+          elif echo "$LABELS" | grep -qiE "bug|high|p1"; then
+            PRIORITY="high"
+          elif echo "$LABELS" | grep -qiE "feature|enhancement|p2"; then
+            PRIORITY="medium"
+          fi
+
+          # Mobile/Web 判定 → owner_instance
+          OWNER_INSTANCE="ps5"  # default = on-call
+          if echo "$LABELS" | grep -qiE "mobile|ios|android"; then
+            OWNER_INSTANCE="ps5"  # mobile bug → ps5 (on-call) でトリアージ
+          fi
+
+          # End date: bug=今日+1日 / それ以外=今日+3日
+          if echo "$LABELS" | grep -qiE "bug|critical"; then
+            END_DATE=$(date -u -d "+1 day" +%Y-%m-%d)
+          else
+            END_DATE=$(date -u -d "+3 days" +%Y-%m-%d)
+          fi
+          START_DATE=$(date -u +%Y-%m-%d)
+
+          {
+            echo "action=$ACTION"
+            echo "issue_number=$ISSUE_NUMBER"
+            echo "issue_title=$ISSUE_TITLE"
+            echo "issue_url=$ISSUE_URL"
+            echo "labels=$LABELS"
+            echo "author=$AUTHOR"
+            echo "priority=$PRIORITY"
+            echo "owner_instance=$OWNER_INSTANCE"
+            echo "start_date=$START_DATE"
+            echo "end_date=$END_DATE"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Add task to WBS (on opened/reopened)
+        if: steps.action.outputs.action == 'opened' || steps.action.outputs.action == 'reopened'
+        run: |
+          TITLE="[Issue #${{ steps.action.outputs.issue_number }}] ${{ steps.action.outputs.issue_title }}"
+          DESC="GitHub Issue: ${{ steps.action.outputs.issue_url }} / 起票: ${{ steps.action.outputs.author }} / labels: ${{ steps.action.outputs.labels }}"
+          curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$(cat <<EOF
+          {
+            "action": "wbs.add_task",
+            "title": "$TITLE",
+            "description": "$DESC",
+            "instance": "${{ steps.action.outputs.owner_instance }}",
+            "owner_instance": "${{ steps.action.outputs.owner_instance }}",
+            "category": "🐛 Bug Fix",
+            "category_icon": "🐛",
+            "category_order": 99,
+            "status": "pending",
+            "progress": 0,
+            "start_date": "${{ steps.action.outputs.start_date }}",
+            "end_date": "${{ steps.action.outputs.end_date }}",
+            "priority": "${{ steps.action.outputs.priority }}",
+            "remaining_work": "1) WEB/📱 が screenshot で再現確認  2) PS#5 が即修正 (1行〜数行)  3) 重い場合は cross-instance-pr で win/vscode へ handoff"
+          }
+          EOF
+          )" || true
+          echo "✅ WBS task added for Issue #${{ steps.action.outputs.issue_number }}"
+
+      - name: Mark task completed (on closed)
+        if: steps.action.outputs.action == 'closed'
+        run: |
+          # WBS タスクを title prefix で検索 → completed 化
+          TITLE_PREFIX="[Issue #${{ steps.action.outputs.issue_number }}]"
+          # まず list_tasks で id を引く
+          TASK_ID=$(curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"action":"wbs.list_tasks","instance":"all"}' \
+            | python3 -c "import json,sys; data=json.load(sys.stdin); tasks=data.get('tasks',[]); print(next((t['id'] for t in tasks if t.get('title','').startswith('$TITLE_PREFIX')),''))")
+
+          if [ -n "$TASK_ID" ]; then
+            curl -s -X POST "$SUPABASE_URL/functions/v1/tools-hub" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{\"action\":\"wbs.update_progress\",\"id\":\"$TASK_ID\",\"progress\":100,\"status\":\"completed\"}" || true
+            echo "✅ WBS task $TASK_ID marked completed"
+          else
+            echo "⚠ No WBS task matched prefix $TITLE_PREFIX (Issue 起票前に WBS 作成?)"
+          fi
+
+      - name: Comment on Issue (on opened)
+        if: steps.action.outputs.action == 'opened'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ steps.action.outputs.issue_number }} \
+            --repo "${{ github.repository }}" \
+            --body "🤖 WBS に自動追加しました (instance: ${{ steps.action.outputs.owner_instance }} / priority: ${{ steps.action.outputs.priority }} / 期限: ${{ steps.action.outputs.end_date }})
+
+          - PS版#5 が **4 時間以内** にトリアージ (severity 判定 + assign)
+          - 軽量修正 (severity ≤ normal): **24 時間以内** に PR
+          - 重い修正: **24 時間以内** に \`cross-instance-pr\` で win / vscode に handoff
+
+          進捗: https://my-web-app-b67f4.web.app/project-gantt"
