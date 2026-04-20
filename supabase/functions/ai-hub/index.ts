@@ -1598,6 +1598,15 @@ serve(async (req: Request) => {
         return json({ success: true, content: data ?? [] });
       }
 
+      case "university.content_all": {
+        const limit = Math.min(Number(body.limit ?? 200), 500);
+        const { data } = await admin.from("ai_university_content")
+          .select("*")
+          .order("published_at", { ascending: false })
+          .limit(limit);
+        return json({ success: true, items: data ?? [] });
+      }
+
       case "university.upsert": {
         const { error } = await admin.from("ai_university_content").upsert(
           {
@@ -1620,6 +1629,14 @@ serve(async (req: Request) => {
           .eq("user_id", userId)
           .maybeSingle();
         return json({ success: true, streak: streak ?? null });
+      }
+
+      case "university.leaderboard": {
+        const limit = Math.min(Number(body.limit ?? 10), 100);
+        const { data } = await admin.from("ai_university_leaderboard")
+          .select("*")
+          .limit(limit);
+        return json({ success: true, leaderboard: data ?? [] });
       }
 
       case "university.streak_update": {

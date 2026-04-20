@@ -22,16 +22,17 @@ class _AiUniversityStreaksPageState extends State<AiUniversityStreaksPage> {
     });
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'ai-university-streaks',
-        body: {'action': 'get'},
+        'ai-hub',
+        body: {'action': 'university.streak'},
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
-        setState(() => _streak = data);
+        final streak = data['streak'];
+        setState(() => _streak = streak is Map<String, dynamic> ? streak : null);
       }
       final lb = await Supabase.instance.client.functions.invoke(
-        'ai-university-streaks',
-        body: {'action': 'leaderboard', 'limit': 10},
+        'ai-hub',
+        body: {'action': 'university.leaderboard', 'limit': 10},
       );
       final lbData = lb.data;
       if (lbData is Map && lbData['leaderboard'] is List) {

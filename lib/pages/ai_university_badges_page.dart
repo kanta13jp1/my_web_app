@@ -20,8 +20,8 @@ class _AiUniversityBadgesPageState extends State<AiUniversityBadgesPage> {
     });
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'ai-university-badges',
-        body: {'action': 'list'},
+        'ai-hub',
+        body: {'action': 'university.badges'},
       );
       final data = res.data;
       setState(() {

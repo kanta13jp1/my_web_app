@@ -12344,3 +12344,16 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - claude/* = 3 本 (worktree branches, 削除対象外)
 - 修正対象なし — 全 WF green / orphan 0
 - Philosophy alignment: 原則 6 (資本=時間 — WF 安定で再修復時間ゼロ)
+
+## PS版#5 Session 15 (2026-04-20 14:00 JST) — EF cleanup phase2 audit + 3 AI大学 migration
+- **発見**: 40 dead EF candidate 中 39 が production 404 確定 (memo-reactions のみ alive 400)
+- **migration 完了 3 EFs**:
+  - ai-university-badges → ai-hub:university.badges
+  - ai-university-streaks → ai-hub:university.streak + university.leaderboard (新規 action)
+  - ai-university-content → ai-hub:university.content_all (新規 action)
+- **ai-hub に 2 action 追加**: university.leaderboard / university.content_all
+- **flutter analyze**: 3 modified pages = no issues / deno lint = clean
+- **残り 37 EFs**: 全て try/catch + ローカル fallback あり → silent fail で UX graceful → 緊急度低
+- **次回 PS#5 推奨**: delete list cleanup + 小規模 5 EFs migration
+- **cross-instance-pr**: `done/20260419_ef_cleanup_phase2_flutter.md` に部分完了報告 + 残作業引継ぎ
+- Philosophy alignment: 原則 6 (資本=時間 — admin pages 復活で debug 時間短縮) / 原則 8 (KPI=昨日の自分 — streak/badges/content 動作復元)

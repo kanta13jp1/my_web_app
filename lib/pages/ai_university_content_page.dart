@@ -21,8 +21,8 @@ class _AiUniversityContentPageState extends State<AiUniversityContentPage> {
     });
     try {
       final res = await Supabase.instance.client.functions.invoke(
-        'ai-university-content',
-        method: HttpMethod.get,
+        'ai-hub',
+        body: {'action': 'university.content_all', 'limit': 200},
       );
       final data = res.data;
       setState(() {
