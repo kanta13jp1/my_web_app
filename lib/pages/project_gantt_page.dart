@@ -372,8 +372,11 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
             loading: _loadingWbs,
             filterInstance: _filterInstance,
             filterMilestone: _filterMilestone,
+            hideCompleted: _hideCompleted,
             onFilterInstance: (v) => setState(() => _filterInstance = v),
             onFilterMilestone: (v) => setState(() => _filterMilestone = v),
+            onToggleHideCompleted: (v) =>
+                setState(() => _hideCompleted = v ?? false),
           ),
           _GanttTimelineTab(
             milestones: _milestones,
@@ -413,8 +416,10 @@ class _WbsTab extends StatelessWidget {
   final bool loading;
   final String? filterInstance;
   final String? filterMilestone;
+  final bool hideCompleted;
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
+  final ValueChanged<bool?> onToggleHideCompleted;
 
   const _WbsTab({
     required this.milestones,
@@ -422,8 +427,10 @@ class _WbsTab extends StatelessWidget {
     required this.loading,
     required this.filterInstance,
     required this.filterMilestone,
+    required this.hideCompleted,
     required this.onFilterInstance,
     required this.onFilterMilestone,
+    required this.onToggleHideCompleted,
   });
 
   List<WbsTask> get _filtered => tasks.where((t) {
@@ -431,6 +438,9 @@ class _WbsTab extends StatelessWidget {
           return false;
         }
         if (filterMilestone != null && t.milestoneCode != filterMilestone) {
+          return false;
+        }
+        if (hideCompleted && t.status == 'completed') {
           return false;
         }
         return true;
@@ -505,8 +515,10 @@ class _WbsTab extends StatelessWidget {
           filterInstance: filterInstance,
           filterMilestone: filterMilestone,
           milestones: milestones,
+          hideCompleted: hideCompleted,
           onFilterInstance: onFilterInstance,
           onFilterMilestone: onFilterMilestone,
+          onToggleHideCompleted: onToggleHideCompleted,
         ),
         const SizedBox(height: 12),
 
@@ -741,15 +753,19 @@ class _FilterRow extends StatelessWidget {
   final String? filterInstance;
   final String? filterMilestone;
   final List<WbsMilestone> milestones;
+  final bool hideCompleted;
   final ValueChanged<String?> onFilterInstance;
   final ValueChanged<String?> onFilterMilestone;
+  final ValueChanged<bool?> onToggleHideCompleted;
 
   const _FilterRow({
     required this.filterInstance,
     required this.filterMilestone,
     required this.milestones,
+    required this.hideCompleted,
     required this.onFilterInstance,
     required this.onFilterMilestone,
+    required this.onToggleHideCompleted,
   });
 
   @override
@@ -844,6 +860,53 @@ class _FilterRow extends StatelessWidget {
             filterInstance,
             onFilterInstance,
             const Color(0xFFF97316),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            '⏰Schedule',
+            'schedule',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFFF59E0B),
+          ),
+          const SizedBox(width: 6),
+          _chip(
+            '🤖GHA',
+            'gha',
+            filterInstance,
+            onFilterInstance,
+            const Color(0xFF10B981),
+          ),
+          const SizedBox(width: 12),
+          // 未完了のみフィルタ
+          GestureDetector(
+            onTap: () => onToggleHideCompleted(!hideCompleted),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: hideCompleted
+                    ? const Color(0xFFFF6B35).withValues(alpha: 0.2)
+                    : const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: hideCompleted
+                      ? const Color(0xFFFF6B35)
+                      : const Color(0xFF333333),
+                ),
+              ),
+              child: Text(
+                hideCompleted ? '☑ 未完了のみ' : '☐ 未完了のみ',
+                style: TextStyle(
+                  color: hideCompleted
+                      ? const Color(0xFFFF6B35)
+                      : const Color(0xFF707070),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           const Text(
@@ -1095,7 +1158,7 @@ class _TaskRow extends StatelessWidget {
               ],
             ),
           ],
-          if (task.endDate != null) ...[
+          if (task.startDate != null || task.endDate != null) ...[
             const SizedBox(height: 4),
             Row(
               children: [
@@ -1106,10 +1169,81 @@ class _TaskRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '期限: ${task.endDate!.year}/${task.endDate!.month.toString().padLeft(2, '0')}/${task.endDate!.day.toString().padLeft(2, '0')}',
+                  _formatSchedule(task.startDate, task.endDate),
                   style: const TextStyle(
                     color: Color(0xFF505050),
                     fontSize: 10,
+                    height: 1.5,
+                  ),
+                ),
+                if (task.delayDays > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: task.isDelayedNoPlan
+                          ? const Color(0xFFEF4444)
+                          : const Color(0xFFF97316),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '⚠${task.delayDays}d遅延',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+          if (task.recoveryPlan.trim().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.build_outlined,
+                  size: 10,
+                  color: Color(0xFFF97316),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'リカバリー案: ${task.recoveryPlan}',
+                    style: const TextStyle(
+                      color: Color(0xFFF97316),
+                      fontSize: 10,
+                      height: 1.5,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ),
+              ],
+            ),
+          ] else if (task.isDelayedNoPlan) ...[
+            const SizedBox(height: 4),
+            const Row(
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 10,
+                  color: Color(0xFFEF4444),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'リカバリー案 未記入 (要対処)',
+                  style: TextStyle(
+                    color: Color(0xFFEF4444),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     height: 1.5,
                   ),
                 ),
@@ -1119,6 +1253,16 @@ class _TaskRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatSchedule(DateTime? start, DateTime? end) {
+    String fmt(DateTime d) =>
+        '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+    if (start != null && end != null) {
+      return '${fmt(start)} → ${fmt(end)}';
+    }
+    if (end != null) return '期限: ${fmt(end)}';
+    return '開始: ${fmt(start!)}';
   }
 }
 
@@ -1453,6 +1597,15 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
       if (_leftScroll.hasClients && _leftScroll.offset != _rightScroll.offset) {
         _leftScroll.jumpTo(_rightScroll.offset);
       }
+    });
+    // 初期表示で本日線を画面中央付近に配置 (todayX - viewportWidth / 3)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_timelineHScroll.hasClients) return;
+      final todayX = _dateToX(DateTime.now());
+      final viewport = _timelineHScroll.position.viewportDimension;
+      final maxScroll = _timelineHScroll.position.maxScrollExtent;
+      final target = (todayX - viewport / 3).clamp(0.0, maxScroll);
+      _timelineHScroll.jumpTo(target);
     });
   }
 
