@@ -15255,5 +15255,29 @@ PS#6 S18 Flutter stale invoke audit 24 EF handoff の **8 件目消化** = **Sec
 - agent-department-manager / agent-performance-monitor (PS#5 範囲外・Win/VSCode 担当)
 
 Files: lib/pages/team_chat_page.dart / supabase/functions/app-hub/index.ts (+89 行 chat.*) / docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md / memory/project_20260421_ps5_s29.md
+---
+
+## [PS版#4 S32] 2026-04-21 朝 — LP 差別化軸 7-8 軸拡張 + LINE 価格訂正 handoff
+
+S31 audit round 6 完走 → S32 は audit 成果を LP に流す **handoff integration**。LP (`lib/pages/landing_page.dart` 3820 行) scan で以下 2 発見を cross-instance-pr (VSCode 宛) で起票:
+
+**発見 1: LINE 価格 5 倍誇張**
+- line 2800 `_CompetitorRow('LINE (Business)', '¥5,000〜/月', '30+', false)` = 企業 CRM 価格
+- S29 verified 訂正案: `_CompetitorRow('LINE AI', '¥750〜/月 (無制限)', '5', false)`
+- 「5」= Q&A / 画像生成 / トークサジェスト / 翻訳 / 画像解析 のみ
+
+**発見 2: 差別化軸 7-8 軸追加提案**
+- 7 軸 **vendor 分散** (LINE=OpenAI 単一 / Claude=Anthropic 単一 vs 自分株=3 vendor ルーティング)
+- 8 軸 **feature depth** (LINE ¥750 × 5 項目 vs 自分株 Free × 21 サービス × 6 部署統合)
+- 任意: Replit 棲み分け FAQ (tool-creation vs life-management)
+
+**handoff file**: `docs/cross-instance-prs/20260421_lp_differentiation_axes_s29_s31.md`
+
+**Philosophy 4/9 ✅** (CEO 感 / 商品=ユーザー価値 / BS / KPI=昨日 / 残 5 軸は VSCode 着手時確認)
+
+Files:
+- docs/cross-instance-prs/20260421_lp_differentiation_axes_s29_s31.md (新規 VSCode 宛)
+- memory/project_20260421_ps4_s32.md (新規)
+- 本 entry
 
 ---
