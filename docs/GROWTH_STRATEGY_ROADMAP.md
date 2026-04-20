@@ -12530,6 +12530,28 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - Philosophy alignment: 原則 6 (資本=時間 — 小型 SLM で CPU 運用可 / コスト最小) / 原則 5 (商品=ユーザー価値 — 引用付き回答で信頼性向上) / 原則 7 (資産 — 完全オープン重み = 陳腐化リスクゼロ) / 原則 9 (ゴール=ウェルビーイング — EU AI Act 準拠で長期リスク回避)
 - **次回 PS#3 候補**: 135 社目 (Essential AI Thrive Capital / Imbue 推論 agent / Adept 後継) + AI大学 news カテゴリ最新化バッチ + ai-hub に `pleias_rag` action 追加 (CS-EF の FAQ 引用強化に Win版 cross-instance-pr 依頼候補)
 
+## PS版#3 Session 17 (2026-04-20 18:30 JST) — AI大学 135 社化 (Imbue 追加)
+- **migration**: `supabase/migrations/20260420100000_seed_imbue_ai_university.sql` ($md$ tag / overview+models+api 3 行)
+- **UI**: `_providerMeta['imbue']` (🤔 #6D28D9) + `_fallback` markdown (CARBS / 70B / sanitized datasets)
+- **ai-university-update.yml**: Imbue を seed-only コメント列に追加
+- **Step 0 評価 8.5/9** (Essential AI 候補は pre-product で 5/9 → Imbue に pivot):
+  1. ✅ 公式サイト (imbue.com)
+  2. ✅ 最新モデル (70B reasoning model / first-attempt no-spike 訓練成功)
+  3. ✅ ベンチマーク (MMLU/GSM8K/HumanEval blog 公開)
+  4. ⚠️ API (研究所モード / 70B 重みは非公開 / CARBS + datasets が接点)
+  5. ✅ 独自技術 (CARBS cost-aware HPO + reasoning-first agent 思想)
+  6. ✅ OSS (CARBS Apache 2.0 + sanitized datasets CC-BY + training script)
+  7. ✅ SDK (CARBS Python lib / pip install)
+  8. ✅ 資金調達 ($230M / Nat Friedman / Daniel Gross / Astera Institute)
+  9. ✅ 話題性 (NVIDIA blog / latent.space podcast / HumanX 2026 CEO 登壇)
+- **戦略意義**: 135 社目で **「推論 first / OSS HPO インフラ」独自軸** を追加
+  - 既存 134 社で OSS な cost-aware HPO は Imbue のみ (Optuna/Ray Tune は cost-aware ではない)
+  - 自分株式会社の daily-judgment / competitor-monitoring の HP を CARBS で **月次自動再最適化**
+  - 試算: 人間 ML エンジニア 工数を 95% 削減 ($2K/月 → $100/月 GPU コスト)
+  - reasoning-first 思想は o1 / DeepSeek-R1 の先駆け (2021 創業時から一貫)
+- Philosophy alignment: 原則 6 (資本=時間 — CARBS で HP チューニング 95% 削減) / 原則 7 (資産 — OSS ツール = 陳腐化しない基盤) / 原則 8 (KPI=昨日の自分 — CARBS で「昨日より良い HP」を毎週探索) / 原則 1 (CEO 感 — 人間が判断を外注しても CARBS 推奨は最終レビュー可)
+- **次回 PS#3 候補**: 136 社目 (Essential AI [pre-product だが Vaswani 名義で話題性継続監視] / Adept 後継 / Liquid AI / Reka AI) + AI大学 news カテゴリ 135 社最新化バッチ + tools-hub に `carbs_optimize` action 追加 (GitHub Actions で Python worker 起動 → Win版 cross-instance-pr 依頼候補)
+
 ## PS版#2 Session (2026-04-20 15:42 JST) — T-1 dispatch 確認 / Qiita retry 待機
 - **今朝の自動 dispatch (02:03 UTC)**: `2026-04-20-en.md` (Price Tracker) → dev.to 成功
   - URL: `https://dev.to/kanta13jp1/i-built-a-zero-cost-price-tracker-in-flutter-web-supabase-no-extra-edge-functions-needed-542m`

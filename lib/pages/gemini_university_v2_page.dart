@@ -855,6 +855,12 @@ final Map<String, _ProviderMeta> _providerMeta = {
     color: const Color(0xFF7C3AED),
     officialUrl: 'https://pleias.fr/',
   ),
+  'imbue': _ProviderMeta(
+    name: 'Imbue',
+    emoji: '🤔',
+    color: const Color(0xFF6D28D9),
+    officialUrl: 'https://imbue.com/',
+  ),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4398,6 +4404,44 @@ GPU マーケットプレイス・分散 RL 基盤 (prime-rl)・INTELLECT 系列
 - GitHub: https://github.com/Pleias/Pleias-Rag
 - 論文: https://arxiv.org/html/2504.18225v1
 - Common Corpus: https://huggingface.co/datasets/PleIAs/common_corpus
+''',
+  'imbue': '''
+# Imbue — 推論特化 AI エージェント研究所 (\$230M / CARBS OSS / 70B 自社訓練)
+
+2021 年 SF 創業、CEO **Kanjun Qiu** (Sourceful / Ought 出身)。
+「推論能力こそ agent のボトルネック」と公言し、
+pretrain 段階から **推論特化 70B モデル** + OSS ツール群で研究開発。
+
+## 既存 134 社との差別化
+| 観点 | Imbue | Anthropic | OpenAI |
+|------|-------|-----------|--------|
+| 設計思想 | 🤔 推論 first / agent 専用 pretrain | 安全性 first | AGI 汎用 |
+| HPO ツール | ✅ CARBS 完全 OSS | internal | internal |
+| Infra script | ✅ 70B bare-metal OSS | ❌ | ❌ |
+| オープンデータ | ✅ sanitized eval datasets | 部分 | ❌ |
+
+## 主な成果 (OSS)
+- **CARBS**: cost-aware Bayesian HPO (scale-up 時の HP 外挿可能)
+- **70B モデル**: first attempt で loss spike 0 訓練成功 (CARBS 実用実証)
+- **Sanitized Datasets**: MMLU/TruthfulQA/HumanEval の test-train leakage 除去版
+- **Bare-metal training script**: Nvidia DGX H100 cluster 向け完全 repo
+
+## 資金調達
+- Series A+B 累計 **\$230M**
+- Backers: Astera Institute / Nat Friedman / Daniel Gross / Lachy Groom
+
+## 自分株式会社での活用
+- daily-judgment: Claude/GPT 重み + temperature を CARBS で週次再最適化
+- competitor-monitoring: 各プロバイダー weight を cost/精度最適化
+- AI大学: プロバイダー ranking の re-weight 自動化
+- 人間 ML エンジニア工数を 95% 削減試算
+
+## 試す
+- Web: https://imbue.com/
+- Blog: https://imbue.com/blog/
+- CARBS GitHub: https://github.com/imbue-ai/carbs
+- HuggingFace: https://huggingface.co/imbue-ai
+- 70B 訓練記事: https://imbue.com/research/70b-intro/
 ''',
 };
 
