@@ -13594,3 +13594,46 @@ run 24658340058 (0e94bfd trigger):
 **Philosophy**: 3 (mentor=補正 handoff で再調査コスト削減) / 4 (越境指示回避=PS#5 優先順位は自律決定) / 5 (home 404 早期回復を側面支援) / 7 (見えない負債=line 番号漏れ可視化) ✅
 
 **次回候補**: PS#5 消化率 > 10% まで軽 session 継続 / horse_racing 25/25 目標 / Win/VSCode agent-*-manager migrate 追跡
+
+---
+
+## 2026-04-20 18:55 JST — PS版#2 Session 10 (3者棲み分け 本B draft ペア先行作成 + S24 正確数字反映)
+
+### アクション
+
+- PS#4 S23 handoff の **本B = Qiita BS 原則角度の長文** を JA+EN ペアで先行作成:
+  - JA: `docs/blog-drafts/2026-04-26-ai-vendor-dependency-portfolio-bs-framework.md`
+  - EN: `docs/blog-drafts/2026-04-26-ai-vendor-dependency-portfolio-bs-framework-en.md`
+- 本A (4/24 target・3 層住み分け地図) と **重複しない角度** = 「なぜ束ねるのが合理か」を会計 (BS) 的に語り直す長文
+- 本B の core:
+  - 単一 vendor 依存 = 流動性低い短期負債 (switching/price/availability/roadmap 4 軸リスク)
+  - 423 vs 20+ の plugin 差は「離脱コストが高い = ロックイン」の裏面として再解釈
+  - ai-hub routing + cost-hub 4 段階 CB + Supabase 永続化の 3 点で実装
+  - 個人 CEO BS T 字勘定で純資産を可視化
+- dispatch window: 2026-04-26 前後 (本A dispatch の 1-2 日後・S23 handoff 仕様準拠)
+- X 280 char 短文版は S23 handoff 内に既収録済 (別 file 不要)
+
+### Why
+
+- S23 handoff が本A/本B/Qiita 3 種セット前提なので、本B を pre-write すると dispatch 日が機械化できる
+- 本A dispatch 後に本B を書き始めると「鮮度勝負期間」を無駄にする (Codex 報道サイクル 4/30 deadline)
+- S24 (Codex 90→20+ plugin 訂正) + S25 (Cursor 数字精密化) 両方反映済 → dispatch 直前訂正ゼロ想定
+- S25 Cursor 数字 (13 ヶ月 / 10 ヶ月 / Battery Ventures) は本B に valuation 数字を含めない方針で自動回避
+
+### Philosophy alignment
+
+- 原則 1 (CEO 感): 個人 CEO の BS 観点で意思決定 ✅
+- 原則 5 (商品=ユーザー価値): AI 依存リスクの会計的可視化 ✅
+- 原則 6 (資本=時間): 事前 draft で dispatch 日の時間資本保全 ✅
+- 原則 7 (資産負債 BS): 本記事の core 概念そのもの ✅ (最直接貢献)
+- 原則 8 (KPI=昨日の自分): 本A に続く 1-2 日連投で継続性担保 ✅
+- 整合性: **5/9** (Rule 22 基準 → 即実装可)
+
+### 次回 PS#2 候補 (更新)
+
+1. **2026-04-23T07:53Z 以降**: qiita-retry 1本目 probe (Gate 1 自動 PASS)
+2. **2026-04-23 〜 2026-04-30**: 3 者棲み分け 本A dispatch (t1-blog-dispatch / dev.to 単独)
+3. **2026-04-26 前後**: 3 者棲み分け 本B dispatch (Qiita BS 角度)
+4. **2026-04-28**: Notion 5/4 本A dispatch
+5. **2026-04-29 頃**: Notion 本B (D-2) draft 作成
+6. **2026-05-01 頃**: Notion 本C (D-0) draft 作成
