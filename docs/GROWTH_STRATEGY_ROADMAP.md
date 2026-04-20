@@ -13101,7 +13101,6 @@ source dir `notify-feature-request/index.ts` は PS#5 の修正参照用に
 2. 🟡 残 live-dead 29 件の次バッチ (core-hub/growth-hub 領域 10-15 件処理可)
 3. 🟢 horse_racing batch cron 長期健全性 (10 連続 success 継続)
 
-<<<<<<< Updated upstream
 ## 2026-04-20 PS版#1 Session 16 — wbs-staleness-audit 8/8 parse error 根治 + Pleias 再衝突 修復
 
 ### 背景
@@ -13202,7 +13201,6 @@ SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY_PROD }}
 **Philosophy**: 6 (時間節約) / 7 (資産=負債削減) ✅
 
 **次回候補**: 残 live-dead 15 件程度 (ab-testing-manager / agent-department-manager / agent-performance-monitor / habit-tracker 系 + app-hub 未確認) / note-comments + pomodoro-timer Flutter 修正 handoff / horse_racing batch cron 健全性監視
-=======
 ## Session PS#3-S19 (2026-04-20 20:20 JST) — AI大学 137 社化 (Kyutai)
 
 ### サマリ
@@ -13272,7 +13270,6 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 - Migration timestamp collision は Win版 aca5cd54 が 150000 に rename 済 → 120000 空き確認
 - [NO-SCOPE-CREEP]: stash pop で無関係変更 7 件混入 → git checkout で Kyutai スコープに限定
 
->>>>>>> Stashed changes
 
 ---
 
@@ -13305,3 +13302,33 @@ Migration timestamp: 120000 使用 (110000 = Pleias rename / 150000 = Thinking M
 2. **2026-04-28**: 本A dispatch (t1-blog-dispatch / dev.to 単独)
 3. **2026-04-29 頃**: 本B (D-2) draft 作成
 4. **2026-05-01 頃**: 本C (D-0) draft 作成
+
+---
+
+## 2026-04-20 PS版#6 S18 — audit filter bug 発覚 / 24 件 stale invoke PS#5 緊急 handoff
+
+**Why**: 次 cleanup batch の raw grep で大量 page hit 発見 → S15-S17 の delete 判定 script (filter: `'invoke' in line`) が multi-line invoke の EF 名行を落としていた bug 発覚。既削除 23 件中 11 件 + 未削除候補 13 件 = 合計 24 件が Flutter stale invoke 残存。
+
+**Audit 結果**:
+- S15 (5 件): 全て clean ✅
+- S16 (5 件): daily-judgment + development-achievements の 2 件が残存 🔴
+- S17 (13 件): 9 件が残存 🔴
+- 未削除 13 件: 全件が残存 🔴
+- **合計 24 件 stale invoke**
+
+**Actions**:
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md` 新規 (緊急 handoff)
+  - A 削除済 11 件 (page 修正のみ)
+  - B 未削除 13 件 (page 修正 + source 削除)
+  - C S16 notify-feature-request (再掲)
+  - 各 EF の target hub:action を明記 (core/growth/ai/app/tools/enterprise-hub)
+- `memory/feedback_correction_20260420_ef_audit_filter_bug.md` 新規 (正しい audit pattern)
+- **新規 source 削除は PS#5 修正完了まで凍結**
+
+**Note**: 削除前から deploy 行は既に無かったため、Flutter page は削除前から 404 を受けていた可能性大 = PS#6 が新規に壊したのではなく、過去の hub 移行忘れを露呈させた。
+
+**Philosophy**: 3 (mentor=bug 公開) / 4 (越境責任正しい委任) / 5 (UX 24 件一括可視化) / 7 (負債可視化) ✅
+
+**学び**: solo instance の破壊的 script は 2 通りの script で同じ結論が出るか self-check 必要。grep filter は multi-line format で fragile。
+
+**次回候補**: PS#5 修正完了後の B 13 件 source 削除 / horse_racing batch cron 監視
