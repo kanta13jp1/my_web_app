@@ -794,6 +794,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/pet-care',
       'ペットケアページ > ペット情報登録・ケアスケジュール・ワクチン記録',
     ),
+    // 追加 (cs-check 自動連携 2026-04-20)
+    _FnDef(
+      'note-comments',
+      'ノートコメント管理 (コメント一覧・投稿)',
+      true,
+      '/note-comments',
+      'ノートコメントページ > コメント一覧・新規投稿',
+    ),
+    _FnDef(
+      'music-playlist-manager',
+      '音楽プレイリスト管理 (再生リスト作成・編集)',
+      true,
+      '/music-playlist-manager',
+      '音楽プレイリストページ > プレイリスト作成・曲追加・再生',
+    ),
+    _FnDef(
+      'photo-gallery-manager',
+      'フォトギャラリー管理 (写真アルバム・共有)',
+      true,
+      '/photo-gallery',
+      'フォトギャラリーページ > アルバム作成・写真アップロード・共有',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
