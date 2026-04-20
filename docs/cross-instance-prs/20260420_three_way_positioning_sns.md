@@ -213,3 +213,32 @@ Claude は plugin 豊富・Codex は Computer Use、自分株式会社は 6 部�
 
 - S24 memo: `memory/project_20260420_ps4_s24.md`
 - S21 PR (訂正 block): `docs/cross-instance-prs/20260420_openai_codex_desktop_threat.md`
+
+---
+
+## ⚡ ENRICHMENT (PS版#4 S26 · 2026-04-20 夜 last 3) — Notion credit 単価 2 社検証済
+
+**S24 教訓 (2 社交差検証) 自己適用 round 2**: Notion 「$10/1000 credit」だけでは SNS 弾として弱い → 1 回 run あたりの単価を公式 + 独立分析 2 社で検証。
+
+### 検証結果
+- 公式 (`notion.com/help/custom-agent-pricing`): 45-90 runs/1000 credits (= $0.11-$0.22/run)
+- 独立分析 (`matthiasfrank.de`): 30-60 runs/1000 credits (= $0.17-$0.33/run)
+- **Conservative 採用**: 30-90 runs/1000 credits = **1 回 run あたり $0.11-$0.33**
+
+### 本A/本B dispatch 用 SNS 弾強化フレーズ (追加採用推奨)
+
+- 「Notion で 1 日 10 回 agent を動かすと、月 **$33-$99 (約 5,000-15,000 円)**。自分株式会社は **$0 (完全無料)**」
+- 「credits は月次リセット = 使わなくても消える」= 固定費化してない usage pressure = 予測不能性の negative framing
+- 「1 回の Q&A で 10-30 円。複雑 workflow なら数十円」 (日本人向け実感ベース換算)
+
+### PS#2 dispatch 前チェックリスト (S26 追加)
+
+- [ ] 本A JA 版: 「月 $33-$99」訴求行を 1 行追加
+- [ ] 本A EN 版: 「$0.11-$0.33 per agent run」を数字根拠として追加
+- [ ] X 短文: 「credits 月次リセット = 使わなくても消える」1 文を差し込み可能か確認
+- [ ] Qiita 別角度: BS 原則 (資産負債) に絡めて「credits = 月次消費型負債」と framing 可
+
+### Backlink 追加 (S26)
+
+- S26 memo: `memory/project_20260420_ps4_s26.md`
+- SCOREBOARD 2 社検証 block: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` §S17 戦略インパクト 1

@@ -143,8 +143,14 @@
 
 ### 1. Notion 課金開始日が確定 — 2026-05-04
 - 5/3 まで Custom Agents 試用無料 → 5/4 から $10/1000 credit (Business/Enterprise add-on)
+- **[S26] 2 社交差 audit 済** (notion.com/help/custom-agent-pricing 公式 + matthiasfrank.de + connex.digital):
+  - **1 回 run あたりの credit 消費 = 約 11-33 credits** (= **$0.11-$0.33/run**)
+  - 公式「45-90 runs/1000 credits」 vs 独立分析「30-60 runs/1000 credits」 → conservative 採用で **30-90 runs/1000 credits** 範囲
+  - credits は月次リセット (roll over 不可) = 「使わなくても消える」pressure
+  - model/tool/steps により変動大 → 複雑 workflow で更にコスト悪化
 - 自分株式会社の機会: **5/4 直前 (4/28 〜 5/3) に「Notion 課金移行 = $$$」の SEO/SNS 弾を投下** → 無料 6 部署統合への転換訴求
-- VSCode版 LP に「Notion Custom Agents 5/4 から $10/1000 credit 課金」比較行を追加検討
+- **SNS 弾強化材料** (PS#2 本A 修正版 4/23+ dispatch 用): 「Notion で 1 日 10 回 agent を動かすと月 $33-$99。自分株式会社は $0 (完全無料)」
+- VSCode版 LP に「Notion Custom Agents 5/4 から $10/1000 credit 課金 (1 回 $0.11-$0.33)」比較行を追加検討
 
 ### 2. Claude Cowork Computer Use 解禁 (Pro/Max・2026-04 build 以降)
 - Claude が画面操作 (file 開く/dev tool/browser) を直接実行 — Connectors > Browser > Screen 優先順

@@ -13683,3 +13683,18 @@ orphan branches: 全 pattern 閾値以下 (cleanup 不要)。
 1. 🔴 dart format pre-commit hook 化提案 (inject-rules に replace_all 後 format 必須化)
 2. 🟡 migration HH 分担ルール追加 (S15+S16 教訓正式化)
 3. 🟢 S14 副作用測定継続 (1 週間後判断)
+## 2026-04-20 PS版#4 S26 — 数字 2 社交差 audit round 2 / Notion Custom Agent 1-run 単価確定
+
+**Why**: S25 で Cursor 数字に S24 教訓を自己適用 → S26 は round 2 で PS#2 本A 4/23+ dispatch に直接影響する Notion credit 単価を検証。$10/1000 credit は既知だが 1-run 単価 granularity を公式 + 独立 2 社で確定 → SNS 弾強化。
+
+**Actions**:
+- 2 並列 WebSearch: `notion.com/help/custom-agent-pricing` (公式 45-90 runs/1000 credits) + `matthiasfrank.de` (独立 30-60 runs/1000 credits) → **conservative 30-90 = $0.11-$0.33/run** 採用
+- SCOREBOARD §S17 戦略インパクト 1 に [S26] 2 社検証 block (SNS 弾強化材料明記)
+- `20260420_three_way_positioning_sns.md` 末尾に ENRICHMENT (S26) 追加: 本A JA「月 $33-$99 (5,000-15,000 円) vs 自分株式会社 $0」+ EN「$0.11-$0.33/run」+ negative framing「credits 月次リセット = 使わなくても消える」+ Qiita 別角度「BS 原則で credits = 月次消費型負債」
+- `memory/project_20260420_ps4_s26.md` 新規
+
+**新データ**: credits roll over 不可 = 月次 pressure / Business+Enterprise のみ / model-tool-steps により変動
+
+**Philosophy**: 6/9 ✅ (原則 1 CEO 判断 / 2 習慣化強化 / 5 無料の価値可視化 / 6 2 検索で単価確定 / 7 BS 負債 framing / 8 昨日の自分超え)
+
+**次回候補**: PS#2 本A 修正版 dispatch 確認 (4/23+) / VSCode LP 単価行 landed / audit round 3 (Cowork/Nova/Gemini FL/Replit/LINE) / Win版 Codex routing follow-up
