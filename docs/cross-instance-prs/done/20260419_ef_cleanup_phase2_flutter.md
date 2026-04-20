@@ -27,7 +27,7 @@ ai-hub に追加した action:
 - `university.leaderboard` (limit param) — `ai_university_leaderboard` view から取得
 - `university.content_all` (limit param) — provider filter なし版 (admin 用)
 
-### S16-S20 完了分 (2026-04-20)
+### S16-S21 完了分 (2026-04-20)
 
 | # | 旧 EF | 新 action | Flutter file | commit |
 |---|---|---|---|---|
@@ -36,13 +36,15 @@ ai-hub に追加した action:
 | 6 | landing-ab-test | `growth-hub:landing.list_variants` (新規追加: CTA+headline+CVR集計) | `lib/pages/landing_ab_test_page.dart` | a37ad4fc |
 | 7 | admin-notification-hub | `admin-hub:admin.notifications.{list,mark_read,summary}` (新規追加) + `admin.notify` severity/category 拡張 | `lib/pages/admin_notification_hub_page.dart` | 039a8239 |
 | 8 | growth-acquisition | `growth-hub:acquisition.signal` + `acquisition.touchpoint_report` (新規追加・publicActions) | `lib/pages/growth_acquisition_page.dart` | bf95ed3c |
+| 9 | generate-daily-challenges | `growth-hub:daily.challenges_generate` (新規追加・3 defaults upsert idempotent) | `lib/widgets/daily_challenge_card.dart`, `lib/services/ai_service.dart` | 0e08ae3e |
 
 備考:
 - data_backup_page.dart は EF が未実装のテーブル (tasks/habits/finances/blog_posts) を request body に含めていた → EXPORT_TABLES 4 件 (profile/notes/feature_requests/notifications) に修正.
 - ai-hub の旧 `election.analyze` (region/candidates 版) は Flutter caller 0 件で dead → 削除.
 - landing-ab-test の Flutter は `action: list` を送信 (EF 側 `action` 未対応 → silent fail) → growth-hub に新 action 追加で復活. 未使用機能 (assign/conversion/heatmap) は移植せず.
+- generate-daily-challenges の実 EF は `generate-quote-image` (SVG) — 名前だけ残存して Flutter は challenge generator 想定で broken. hub に `daily_challenges` テーブル upsert 実装.
 
-### 残り 32 EFs (next session backlog)
+### 残り 31 EFs (next session backlog)
 
 全て Flutter から呼ばれているが try/catch + ローカル fallback あり → UX は graceful degraded.
 緊急度: 低 (silent fail でユーザーは気付かない)
@@ -52,7 +54,6 @@ ai-hub に追加した action:
 | 残数 | EF | Flutter ref count | 推奨 hub |
 |---|---|---|---|
 | 1 | growth-import-commit | 1 | growth-hub:import.commit (実装は別物・要 EF コード移植) |
-| 2 | generate-daily-challenges | 2 | growth-hub:daily.challenges (※ 実 EF は generate-quote-image 化されており Flutter は generate 想定で broken) |
 | 2 | growth-import-preview | 2 | growth-hub:import.preview (実装は別物・要 EF コード移植) |
 | 2 | notify-feature-request | 2 | growth-hub:feature.notify |
 | 3 | viral-growth-engine | 3 | growth-hub:viral (464 行・大規模 = sub-task 推奨) |
