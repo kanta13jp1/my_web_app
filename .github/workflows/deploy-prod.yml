@@ -113,195 +113,201 @@ jobs:
         run: |
           # EFハードキャップ: 50本以下。Tier1/Tier2廃止。
           # 旧スタンドアロンEFを全削除 — 6つのmacro-hubに統合済み。
-          # Using || true so deleting a non-existent function never fails the CI.
-          # --- core-hub に統合 ---
-          supabase functions delete public-memo-share || true
-          supabase functions delete api-docs-generator || true
-          supabase functions delete api-key-manager || true
-          supabase functions delete audit-trail || true
-          supabase functions delete backup-restore || true
-          supabase functions delete changelog-manager || true
-          supabase functions delete ci-cd-pipeline || true
-          supabase functions delete cloud-storage-sync || true
-          supabase functions delete code-playground || true
-          supabase functions delete code-review-issues || true
-          supabase functions delete cohort-analysis || true
-          supabase functions delete compensation-manager || true
-          supabase functions delete compliance-checker || true
-          supabase functions delete content-versioning || true
-          supabase functions delete crm-sales-pipeline || true
-          supabase functions delete custom-dashboard-builder || true
-          supabase functions delete data-pipeline || true
-          supabase functions delete data-visualization || true
-          supabase functions delete document-collaboration || true
-          supabase functions delete edge-function-test-runner || true
-          supabase functions delete edge-function-ui-checker || true
-          supabase functions delete encrypted-messaging || true
-          supabase functions delete financial-report || true
-          supabase functions delete gantt-timeline-manager || true
-          supabase functions delete geo-checkin || true
-          supabase functions delete habit-gamification || true
-          supabase functions delete horse-racing-predictor || true
-          supabase functions delete integration-connector || true
-          supabase functions delete inventory-manager || true
-          supabase functions delete live-streaming || true
-          supabase functions delete marketplace || true
-          supabase functions delete marketplace-reviews || true
-          supabase functions delete multi-language || true
-          supabase functions delete news-rss-aggregator || true
-          supabase functions delete note-sharing-enhanced || true
-          supabase functions delete oauth-sso-provider || true
-          supabase functions delete ocr-document-scanner || true
-          supabase functions delete order-tracker || true
-          supabase functions delete payment-processor || true
-          supabase functions delete push-notification-manager || true
-          supabase functions delete rate-limiter-enhanced || true
-          supabase functions delete real-estate-tracker || true
-          supabase functions delete realtime-presence || true
-          supabase functions delete scheduled-notifications || true
-          supabase functions delete smart-home-automation || true
-          supabase functions delete smart-search || true
-          supabase functions delete social-stories || true
-          supabase functions delete spreadsheet-database || true
-          supabase functions delete status-page || true
-          supabase functions delete task-dependency || true
-          supabase functions delete user-onboarding || true
-          supabase functions delete video-audio-manager || true
-          supabase functions delete voice-memo-transcriber || true
-          supabase functions delete whiteboard-canvas || true
-          supabase functions delete wiki-database || true
-          # memo-reactions: standalone 復活 (Win版#85, IP-based 匿名リアクション)
-          # supabase functions delete memo-reactions || true
-          supabase functions delete get-ogp || true
-          supabase functions delete get-public-memo-ogp || true
-          supabase functions delete note-comments || true
-          supabase functions delete notification-center || true
-          supabase functions delete user-profile-manager || true
-          supabase functions delete onboarding-flow || true
-          supabase functions delete feature-request-manager || true
-          supabase functions delete app-analytics-dashboard || true
-          supabase functions delete development-achievements || true
-          supabase functions delete system-status || true
-          supabase functions delete personal-dashboard || true
-          supabase functions delete notify-feature-request || true
-          supabase functions delete user-feedback-collector || true
-          # --- growth-hub に統合 ---
-          supabase functions delete growth-acquisition || true
-          supabase functions delete growth-command-center || true
-          supabase functions delete growth-referral || true
-          supabase functions delete growth-share-signal || true
-          supabase functions delete growth-achievement-summary || true
-          supabase functions delete growth-import-preview || true
-          supabase functions delete growth-import-commit || true
-          supabase functions delete get-growth-roadmap-progress || true
-          supabase functions delete video-ad-generator || true
-          supabase functions delete viral-share-engine || true
-          supabase functions delete x-media-post || true
-          supabase functions delete growth-automation-controller || true
-          supabase functions delete landing-ab-test || true
-          supabase functions delete referral-program || true
-          supabase functions delete share-quote || true
-          supabase functions delete generate-quote-image || true
-          supabase functions delete seo-optimizer || true
-          supabase functions delete send-waitlist-notification || true
-          supabase functions delete viral-ad-generator || true
-          supabase functions delete viral-growth-engine || true
-          # --- ai-hub に統合 ---
-          supabase functions delete daily-judgment || true
-          supabase functions delete ai-search || true
-          supabase functions delete ai-suggest-tags || true
-          supabase functions delete ai-secretary || true
-          supabase functions delete ai-summarizer || true
-          supabase functions delete agent-hub || true
-          supabase functions delete virtual-organization || true
-          supabase functions delete my-ai-agent || true
-          supabase functions delete generate-daily-challenges || true
-          supabase functions delete trigger-analysis || true
-          supabase functions delete analyze-reality || true
-          # local-election-intelligence: standalone (complex scraping logic, kept separate)
-          supabase functions delete ai-university-content || true
-          supabase functions delete ai-university-streaks || true
-          supabase functions delete ai-university-badges || true
-          # --- admin-hub に統合 ---
-          supabase functions delete get-admin-users || true
-          supabase functions delete submit-feedback || true
-          supabase functions delete get-support-tickets || true
-          supabase functions delete get-competitor-features || true
-          supabase functions delete import-from-competitors || true
-          supabase functions delete health-check || true
-          supabase functions delete get-competitor-monitoring || true
-          supabase functions delete edge-function-coverage || true
-          supabase functions delete content-moderation || true
-          supabase functions delete user-activity-tracker || true
-          supabase functions delete department-reporting || true
-          supabase functions delete admin-notification-hub || true
-          supabase functions delete issue-auto-resolver || true
-          # --- app-hub に統合 ---
-          supabase functions delete subscription-management || true
-          supabase functions delete subscription-billing || true
-          supabase functions delete email-service || true
-          supabase functions delete gamification-engine || true
-          supabase functions delete calendar-events || true
-          supabase functions delete kanban-board || true
-          supabase functions delete chat-messaging || true
-          supabase functions delete team-task-manager || true
-          supabase functions delete team-collaboration-sync || true
-          supabase functions delete file-storage-manager || true
-          supabase functions delete expense-tracker || true
-          supabase functions delete time-tracker || true
-          supabase functions delete automation-workflows || true
-          supabase functions delete data-export-manager || true
-          supabase functions delete webhook-manager || true
-          supabase functions delete api-rate-limiter || true
-          supabase functions delete music-collaboration || true
-          # --- schedule-hub に統合 ---
-          supabase functions delete schedule-daily-digest || true
-          supabase functions delete schedule-manager || true
-          supabase functions delete post-x-update || true
-          supabase functions delete blog-post-manager || true
-          supabase functions delete blog-auto-publisher || true
-          # --- 旧Tier2整理 ---
-          supabase functions delete poll-survey || true
-          supabase functions delete reading-list || true
-          supabase functions delete password-generator || true
-          supabase functions delete clipboard-history || true
-          supabase functions delete quick-note || true
-          supabase functions delete pomodoro-timer || true
-          supabase functions delete weather-widget || true
-          supabase functions delete currency-converter || true
-          supabase functions delete markdown-renderer || true
-          supabase functions delete gemini-election-analysis || true
-          supabase functions delete social-proof-generator || true
-          supabase functions delete contact-manager || true
-          supabase functions delete goal-tracker || true
-          supabase functions delete template-library || true
-          supabase functions delete tag-manager || true
-          supabase functions delete habit-tracker || true
-          supabase functions delete bookmark-manager || true
-          supabase functions delete invoice-generator || true
-          supabase functions delete notification-preferences || true
-          supabase functions delete revenue-forecaster || true
-          supabase functions delete ab-testing-manager || true
-          supabase functions delete search-analytics || true
-          supabase functions delete competitor-feature-sync || true
-          supabase functions delete user-growth-analytics || true
-          supabase functions delete growth-acquisition-signal || true
-          supabase functions delete growth-acquisition-report || true
-          supabase functions delete schedule-task-monitor || true
-          supabase functions delete schedule-health-check || true
-          supabase functions delete schedule-result-tracker || true
-          supabase functions delete schedule-execution-logger || true
-          supabase functions delete agent-runtime-cycle || true
-          supabase functions delete agent-personality || true
-          supabase functions delete agent-department-manager || true
-          supabase functions delete agent-task-router || true
-          supabase functions delete agent-performance-monitor || true
-          supabase functions delete reply-support-request || true
-          # get-public-memo-preview: standalone 復活 (Win版#85, server-side OGP for /public-memo)
-          # supabase functions delete get-public-memo-preview || true
-          supabase functions delete development-stats || true
-          supabase functions delete check-competitor-updates || true
-          supabase functions delete viral-growth-pipeline || true
+          # 2026-04-20 PS版#6 S12: dynamic filter — Supabase に実存する EF のみ delete
+          # → 429 ThrottlerException 回避 (178 連続 API call → 実存分のみに削減)
+          DEAD_LIST=(
+            public-memo-share
+            api-docs-generator
+            api-key-manager
+            audit-trail
+            backup-restore
+            changelog-manager
+            ci-cd-pipeline
+            cloud-storage-sync
+            code-playground
+            code-review-issues
+            cohort-analysis
+            compensation-manager
+            compliance-checker
+            content-versioning
+            crm-sales-pipeline
+            custom-dashboard-builder
+            data-pipeline
+            data-visualization
+            document-collaboration
+            edge-function-test-runner
+            edge-function-ui-checker
+            encrypted-messaging
+            financial-report
+            gantt-timeline-manager
+            geo-checkin
+            habit-gamification
+            horse-racing-predictor
+            integration-connector
+            inventory-manager
+            live-streaming
+            marketplace
+            marketplace-reviews
+            multi-language
+            news-rss-aggregator
+            note-sharing-enhanced
+            oauth-sso-provider
+            ocr-document-scanner
+            order-tracker
+            payment-processor
+            push-notification-manager
+            rate-limiter-enhanced
+            real-estate-tracker
+            realtime-presence
+            scheduled-notifications
+            smart-home-automation
+            smart-search
+            social-stories
+            spreadsheet-database
+            status-page
+            task-dependency
+            user-onboarding
+            video-audio-manager
+            voice-memo-transcriber
+            whiteboard-canvas
+            wiki-database
+            get-ogp
+            get-public-memo-ogp
+            note-comments
+            notification-center
+            user-profile-manager
+            onboarding-flow
+            feature-request-manager
+            app-analytics-dashboard
+            development-achievements
+            system-status
+            personal-dashboard
+            notify-feature-request
+            user-feedback-collector
+            growth-acquisition
+            growth-command-center
+            growth-referral
+            growth-share-signal
+            growth-achievement-summary
+            growth-import-preview
+            growth-import-commit
+            get-growth-roadmap-progress
+            video-ad-generator
+            viral-share-engine
+            x-media-post
+            growth-automation-controller
+            landing-ab-test
+            referral-program
+            share-quote
+            generate-quote-image
+            seo-optimizer
+            send-waitlist-notification
+            viral-ad-generator
+            viral-growth-engine
+            daily-judgment
+            ai-search
+            ai-suggest-tags
+            ai-secretary
+            ai-summarizer
+            agent-hub
+            virtual-organization
+            my-ai-agent
+            generate-daily-challenges
+            trigger-analysis
+            analyze-reality
+            ai-university-content
+            ai-university-streaks
+            ai-university-badges
+            get-admin-users
+            submit-feedback
+            get-support-tickets
+            get-competitor-features
+            import-from-competitors
+            health-check
+            get-competitor-monitoring
+            edge-function-coverage
+            content-moderation
+            user-activity-tracker
+            department-reporting
+            admin-notification-hub
+            issue-auto-resolver
+            subscription-management
+            subscription-billing
+            email-service
+            gamification-engine
+            calendar-events
+            kanban-board
+            chat-messaging
+            team-task-manager
+            team-collaboration-sync
+            file-storage-manager
+            expense-tracker
+            time-tracker
+            automation-workflows
+            data-export-manager
+            webhook-manager
+            api-rate-limiter
+            music-collaboration
+            schedule-daily-digest
+            schedule-manager
+            post-x-update
+            blog-post-manager
+            blog-auto-publisher
+            poll-survey
+            reading-list
+            password-generator
+            clipboard-history
+            quick-note
+            pomodoro-timer
+            weather-widget
+            currency-converter
+            markdown-renderer
+            gemini-election-analysis
+            social-proof-generator
+            contact-manager
+            goal-tracker
+            template-library
+            tag-manager
+            habit-tracker
+            bookmark-manager
+            invoice-generator
+            notification-preferences
+            revenue-forecaster
+            ab-testing-manager
+            search-analytics
+            competitor-feature-sync
+            user-growth-analytics
+            growth-acquisition-signal
+            growth-acquisition-report
+            schedule-task-monitor
+            schedule-health-check
+            schedule-result-tracker
+            schedule-execution-logger
+            agent-runtime-cycle
+            agent-personality
+            agent-department-manager
+            agent-task-router
+            agent-performance-monitor
+            reply-support-request
+            development-stats
+            check-competitor-updates
+            viral-growth-pipeline
+          )
+          EXISTING=$(supabase functions list --output json 2>/dev/null | jq -r '.[] | (.slug // .name // empty)' 2>/dev/null || echo "")
+          if [ -z "$EXISTING" ]; then
+            echo "::warning::supabase functions list returned empty — skipping cleanup"
+            exit 0
+          fi
+          DELETED=0
+          for fn in "${DEAD_LIST[@]}"; do
+            if echo "$EXISTING" | grep -qx "$fn"; then
+              echo "deleting $fn"
+              supabase functions delete "$fn" || true
+              DELETED=$((DELETED+1))
+              sleep 0.3
+            fi
+          done
+          echo "::notice::cleanup deleted $DELETED stale EF(s)"
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 

@@ -12522,3 +12522,19 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
   3. 🟢 5/19-20 Google I/O 監視 (S10 placeholder 更新)
 - **cross-instance-pr 新規不要** — monitoring-only / 既存 PR 11 件で吸収可
 - **Philosophy alignment**: 原則 5 (Computer Use vs データ永続性) / 原則 6 (Notion 課金移行 = 時間消費の対比) / 原則 8 (KPI=昨日の自分 = 永続化前提)
+
+### PS版#6 deploy-prod cleanup dynamic filter Session 12 (2026-04-20 15:55 JST) ✅
+
+- **問題**: `deploy-prod.yml` Cleanup step で 178 連続 `supabase functions delete` → Supabase API が 429 ThrottlerException で連鎖失敗 (run 24651949296 確認)
+- **対応**: 静的な 178-line delete 列を **動的フィルタ** に置換
+  - `supabase functions list --output json` で実存 EF を 1 回取得
+  - bash 配列 `DEAD_LIST` と intersect → 実存分のみ `delete` + `sleep 0.3`
+  - 実存しないものは即スキップ → API 呼び出し激減
+  - list が空 (エラー等) の場合は `::warning::` 出して step success で抜ける (deploy を止めない)
+- **期待効果**: 178 API call → 実存 EF の N 件 (多くは 0〜数件) に削減 → 429 回避 + 10 分→秒単位に短縮
+- **変更ファイル**: `.github/workflows/deploy-prod.yml` (lines 112-306 置換・+195/-189)
+- **次回 PS#6 候補**:
+  1. 標準 supabase/functions/ に残っているが本来 DEAD_LIST にも載っている 39 EF (ai-university-{badges,streaks,content} 等) の整理 — hub action 完全移行後にディレクトリ削除
+  2. horse_racing batch cron 健全性長期監視
+  3. `.claude/worktrees/` stale worktree (blissful-nightingale-9170ec 等 random name) の `git worktree prune` 候補リスト作成
+- Philosophy alignment: 原則 6 (資本=時間 — deploy 時間短縮) / 原則 7 (資産=CI 安定) / 原則 4 (部署バランス — R&D と本社の信頼性担保)
