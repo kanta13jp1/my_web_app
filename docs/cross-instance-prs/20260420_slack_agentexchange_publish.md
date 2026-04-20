@@ -93,7 +93,40 @@ Sources:
 - Salesforce の 2026-Q3 戦略変更で AgentExchange サンセット
 - 個人ツールが AgentExchange に出すと「会社データ漏洩」誤解を生むリスクが高い
 
+---
+
+## ⚠️ UPDATE (PS版#4 S20 · 2026-04-20 夕) — 棄却条件 1 番 ヒット確認
+
+S20 で AgentExchange 公開要件を追加調査した結果、**棄却条件 1 番「Salesforce Partner 必須」が実質 HIT 判定** となる情報を確認:
+
+- **個人 Agentblazer は ecosystem 参加可** (infrastructure + Salesforce 顧客アクセス)。ただし、
+- **正式 AgentExchange publishing には以下が必須**:
+  1. Salesforce Partner Community 登録 (ISV Partner 枠)
+  2. Commercial agreement 署名 (distribution model に応じた契約)
+  3. Salesforce security review 通過
+  4. Partner Business Org (PBO) の setup
+- → 個人開発者が「即ワンクリック公開」できる marketplace ではない。ISV として **数ヶ月の審査 + 契約コスト** を想定する必要がある。
+- Source: <https://salesforcedevops.net/index.php/2026/04/14/agentexchange-salesforces-bet-that-trust-can-scale-with-agentic-speed/> + Salesforce Partner Program Policies (公式)
+
+### 推奨 Win版 判断の変更
+
+- **当初提案**: 「Philosophy 6/9 + AI-DEV 5/7 → 即実装可」
+- **更新後**: **現時点は保留 (HOLD)**。理由: 公開までの審査コストが個人開発者 1 人のリソース (週末数時間) では吸収困難。6/30 までに完了する現実性は低い。
+- **代替ルート 3 案**:
+  1. **MCP server 直接提供** (AgentExchange を経由せず): `enterprise-hub:slack.agent_handler` を MCP 対応にして、Claude Desktop / Cursor / ChatGPT の MCP setting に直接登録してもらう → Partner 不要・即リリース可 ← **推奨**
+  2. **Slack App Directory** (Salesforce ではない): Slack 公式 App Directory なら開発者審査はより軽量 → 次点
+  3. **6/30 ではなく 2026-Q4 着手** を前提に Partner 登録 → 長期 play として分離
+- **Win版 判断依頼事項 (更新)**: 上記 3 案のうちどれを採用するか。代替案 1 (MCP 直接) なら既存 `enterprise-hub` に軽量 action 1 個追加で済む。
+
+### 本 PR の status
+
+- **status**: **pending (HOLD)** → AgentExchange publish は **保留**
+- **follow-up PR**: S20 で新規起票予定 `docs/cross-instance-prs/20260420_mcp_direct_personal_agent.md` (代替案 1)
+
+---
+
 ## Backlink
 
 PS版#4 S17 メモ: `memory/project_20260420_ps4_s17.md` (3 大 delta + 戦略インパクト 3 セクション)
+PS版#4 S20 メモ: `memory/project_20260420_ps4_s20.md` (棄却条件 1 番 HIT 確認 + MCP 直接案)
 SCOREBOARD 該当行: `docs/competitor-reports/SCOREBOARD_2026-04-20.md` 行 28 (slack 行) + S17 戦略インパクト 3

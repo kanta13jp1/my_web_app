@@ -12771,3 +12771,32 @@ GITHUB_TOKEN へのフォールバックも残置 (workflow 変更を含まな�
 - **本B / 本C**: 4/29 頃 / 5/01 頃に同スキームで draft 作成予定 (事前作成は条件変化リスクで無意味)
 - **関連 PR**: `docs/cross-instance-prs/20260504_notion_paywall_d14.md` (pending 継続 — B/C 残り + VSCode LP 補記待ち)
 - Philosophy alignment: 原則 2 (ミッション駆動 — S19 handoff を即消化) / 原則 5 (商品=価値 — 予測可能な無料を訴求) / 原則 6 (資本=時間 — credit watch 撲滅が主論旨) / 原則 8 (KPI=昨日の自分 — 課金不安で中断しない)
+## PS版#4 Session 20 (2026-04-20 夕方) — 5 並列 delta scan + S18 HOLD 判定 + MCP 直接公開 代替 PR 起票
+
+- **コミット**: (本セッション末で push)
+- **目的**: S17 から 5-6 時間後の competitor delta scan を 5 並列 WebSearch で実施。最重要は **S18 AgentExchange PR の棄却条件 1 番 (Salesforce Partner 必須) 実質 HIT 判定** → 即 S18 HOLD + 代替案起票
+- **5 WebSearch サマリ**:
+  - **A. Notion**: 新発見 — credit 不足で live Custom Agent は "pause at next monthly service date" (無言停止リスク訴求材料追加)
+  - **B. AgentExchange 公開要件 (最重要)**: 個人 Agentblazer は ecosystem 参加可だが、正式 publishing は Salesforce Partner 登録 + commercial agreement + security review + PBO setup 必須 → S18 棄却条件 1 HIT
+  - **C. Claude Cowork**: 4/3 Windows 展開確定 + Dispatch remote orchestration + Enterprise analytics API/OpenTelemetry/RBAC (法人深耕加速 → 個人空白継続)
+  - **D. Cursor**: $50B は **未確定** ("in talks") — S17 表現正しい / a16z + Thrive co-lead 確定
+  - **E. Google I/O**: 5/19-20 確定・Gemini 4 spec (ARC-AGI2 84.6% / 2M context / sub-300ms) = 既存 placeholder と一致 → 更新不要
+- **S18 更新** (`docs/cross-instance-prs/20260420_slack_agentexchange_publish.md`):
+  - 棄却条件セクション下に `## ⚠️ UPDATE (PS版#4 S20)` ブロック追記
+  - status: pending → **HOLD**
+  - 代替ルート 3 案提示 (MCP 直接 [推奨] / Slack App Directory / Q4 着手)
+- **S20 新規 PR** (`docs/cross-instance-prs/20260420_mcp_direct_personal_agent.md`):
+  - 「Jibun Inc MCP Server」= 6 部署 agent を MCP 形式で直接公開
+  - tool 3 個 (jibun_summary / jibun_dashboard_link / jibun_quick_log)
+  - 配布: Claude Desktop / Cursor / ChatGPT / Gemini の MCP setting に URL 1 行追加のみ
+  - バックエンド: `enterprise-hub` に `mcp.jibun` action 1 個追加 ([EF-CAP-50] OK)
+  - 事前スコア: Philosophy 5/9 + AI-DEV 5/7 両クリア → 実装承認可
+  - 公開まで 1-2 週間 (AgentExchange 数ヶ月 vs)
+- **Win版 判断依頼**: S18 (HOLD) vs S20 (MCP 直接) のどちら採用 / 両方保留 / MCP tool 実装 scope (tool のみ先行か resource 同時か)
+- **次回 PS#4 候補 (S21+)**:
+  1. 🟡 Win版 S18 vs S20 判断 follow-up
+  2. 🟡 PS#2 本A dispatch フォロー (4/28 接近)
+  3. 🟢 Notion credit 不足 "pause" 挙動を S19 本A に追記候補
+  4. 🟢 5/19-20 Google I/O 監視 (既存 placeholder は最新)
+  5. 🟢 Cursor $50B 確定監視 (確定 → SNS 弾化)
+- Philosophy alignment: 原則 1 (CEO 的速度 — S18 を即 HOLD に変更) / 原則 2 (ミッション駆動 — 配布速度優先) / 原則 6 (資本=時間 — Partner 登録回避) / 原則 7 (BS — 短期負債 vs 即資産化)
