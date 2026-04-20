@@ -55,13 +55,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     });
     try {
       final res = await _supabase.functions.invoke(
-        'calendar-events',
-        method: HttpMethod.get,
-        queryParameters: {
-          'view': 'month',
-          'year': month.year.toString(),
-          'month': month.month.toString(),
-        },
+        'app-hub',
+        body: {'action': 'calendar.list'},
       );
       final data = res.data;
       final rawEvents = data is Map<String, dynamic> && data['events'] is List
@@ -104,9 +99,9 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
     try {
       final end = allDay ? startAt : startAt.add(const Duration(hours: 1));
       await _supabase.functions.invoke(
-        'calendar-events',
+        'app-hub',
         body: {
-          'action': 'create',
+          'action': 'calendar.create',
           'title': title,
           'description': description,
           'start_at': startAt.toIso8601String(),
@@ -126,8 +121,8 @@ class _CalendarEventsPageState extends State<CalendarEventsPage> {
   Future<void> _deleteEvent(String eventId) async {
     try {
       await _supabase.functions.invoke(
-        'calendar-events',
-        body: {'action': 'delete', 'event_id': eventId},
+        'app-hub',
+        body: {'action': 'calendar.delete', 'id': eventId},
       );
       await _fetchMonth(_focusedDay);
     } catch (e) {

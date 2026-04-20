@@ -72,7 +72,7 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | ab-testing-manager | lib/pages/ab_testing_manager_page.dart:42,68 | enterprise-hub:ab.create |
 | agent-department-manager | lib/pages/agent_department_manager_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
 | agent-performance-monitor | lib/pages/agent_performance_monitor_page.dart:32 | 🚨 **未 migrate** (Win/VSCode 要 action 追加・PS#5 範囲外) |
-| calendar-events | lib/pages/calendar_events_page.dart:58,107,129 | app-hub:calendar.create / calendar.list |
+| ~~calendar-events~~ | ~~lib/pages/calendar_events_page.dart:58,107,129~~ | **✅ PS#5 S23 完了** → app-hub:calendar.list / calendar.create / calendar.delete |
 | chat-messaging | lib/pages/team_chat_page.dart:46,74,98 | app-hub:chat.send / chat.list |
 | competitor-feature-sync | lib/pages/competitor_feature_sync_page.dart:32,61 | enterprise-hub:competitor.sync |
 | goal-tracker | lib/pages/goal_tracker_page.dart:66,70,99,135,156 | tools-hub:goal.* |
@@ -92,10 +92,10 @@ PS#6 は今 session で削除を見送った 13 件。**こちらも deploy 行�
 | セクション | 件数 | 完了 | 進捗率 |
 | --- | --- | --- | --- |
 | A. 削除済 stale | 11 | 0 | 0% |
-| B. 未削除 stale | 13 | 0 | 0% (agent-*-manager 2 件は D へ移動) |
+| B. 未削除 stale | 13 | 1 (calendar-events) | 7.7% |
 | C. notify-feature-request | 1 | 1 ✅ | 100% |
 | D. 未 migrate (Win/VSCode) | 2 | 0 | (PS#5 範囲外) |
-| **合計 (PS#5 範囲)** | **23** | **1** | **4.3%** |
+| **合計 (PS#5 範囲)** | **23** | **2** | **8.7%** |
 
 **残 22 件** — S22 完了後 PS#5 は S23/S24 で EF cleanup phase2 backlog (`9a535c6a`) に着手した模様。
 24-EF 修正と backlog migration の優先順位調整は PS#5 側判断だが、A/B は **home ダッシュボード 404** 直結なので backlog より先行推奨。
