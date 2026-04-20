@@ -27,8 +27,8 @@ UPDATE wbs_tasks SET instance = 'win', owner_instance = 'win'
 
 INSERT INTO development_achievements (title, description, completed_at)
 VALUES (
-  'WBS 残 ALL タスク追加 reassign (ai-hub/provider.chat/AIアシスタント)',
-  '本番 UI で 'ALL' 残存していた ai-hub provider.chat 全対応 / 画像系3社 / 残65社段階実装 / マルチモーダルAI / 画像生成統合 / 課金機能 / AIアシスタント Opus/Sonnet 等を Win に集約。残 ALL = ユーザー数達成のみ (全 instance 共同責任)。Win版#131 part 19。',
+  $md$WBS 残 ALL タスク追加 reassign (ai-hub/provider.chat/AIアシスタント)$md$,
+  $md$本番 UI で 'ALL' 残存していた ai-hub provider.chat 全対応 / 画像系3社 / 残65社段階実装 / マルチモーダルAI / 画像生成統合 / 課金機能 / AIアシスタント Opus/Sonnet 等を Win に集約。残 ALL = ユーザー数達成のみ (全 instance 共同責任)。Win版#131 part 19。$md$,
   '2026-04-20'
 )
 ON CONFLICT DO NOTHING;
