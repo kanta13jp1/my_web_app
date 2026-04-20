@@ -29,8 +29,8 @@ class _MusicCollaborationPageState extends State<MusicCollaborationPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'music-collaboration',
-        body: {'action': 'feed'},
+        'app-hub',
+        body: {'action': 'music.sessions'},
       );
       final data = response.data;
       if (data is Map<String, dynamic> && data['sessions'] is List) {
@@ -38,8 +38,6 @@ class _MusicCollaborationPageState extends State<MusicCollaborationPage> {
           () => _sessions =
               (data['sessions'] as List).cast<Map<String, dynamic>>(),
         );
-      } else if (data is List) {
-        setState(() => _sessions = data.cast<Map<String, dynamic>>());
       } else {
         setState(() => _sessions = []);
       }
@@ -93,20 +91,24 @@ class _MusicCollaborationPageState extends State<MusicCollaborationPage> {
                       itemCount: _sessions.length,
                       itemBuilder: (context, index) {
                         final session = _sessions[index];
+                        final meta = session['metadata'] is Map
+                            ? session['metadata'] as Map
+                            : const {};
+                        final title = meta['name']?.toString() ?? 'セッション';
+                        final status = meta['status']?.toString() ?? '';
+                        final participants = meta['participants'];
+                        final count =
+                            participants is List ? participants.length : null;
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: const Icon(Icons.people),
-                            title: Text(
-                              session['title']?.toString() ?? 'セッション',
-                            ),
-                            subtitle: Text(
-                              session['type']?.toString() ?? '',
-                            ),
-                            trailing: session['collaborators'] != null
+                            title: Text(title),
+                            subtitle: Text(status),
+                            trailing: count != null
                                 ? Chip(
                                     label: Text(
-                                      '${session['collaborators']} 人',
+                                      '$count 人',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         height: 1.5,
