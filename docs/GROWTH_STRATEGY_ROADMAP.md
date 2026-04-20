@@ -12285,3 +12285,24 @@ ai_quota_usage (tool, checked_at, usage_json, alert)
 - **失敗 WF**: deploy-prod 以外ゼロ (直近 20 runs で 1 success / 5 failure 、ただし failure はすべて修正 commit 以前のもの)
 - **memory 更新**: `feedback_success_20260420_stash_pop_conflict_resolver.md` に「dart format 忘れで Check formatting fail」「format split で trailing_commas 再発」の 2 失敗モードを追記
 - **教訓**: stash pop conflict 解消 → **Python resolver + `dart format` + `flutter analyze 0 エラー` の 3 点セットを 1 bash invoke で完結**。片方だけ commit すると deploy-prod が追加失敗して時間浪費
+
+## セッション記録: Claude Schedule daily-report (2026-04-20 00:24 UTC)
+
+### 実施内容
+- **日次レポート生成**: `docs/daily-reports/2026-04-20.md` 作成 (git ベースフォールバック、Supabase API 403)
+- **競合モニタリング**: `docs/competitor-reports/2026-04-20.md` 作成
+  - Notion: 3.4 Part2 — Views API (8EP)・Custom Agents 35-50%値下げ・ページ表示28%高速化
+  - Slack: 30新AI機能・MCP Server統合・Slackbot AI-skills
+  - GitHub: Copilot Claude Opus 4.7統合・`gh skill` CLI・Actions強化
+- **X投稿**: 失敗 (viral-growth-engine + post-x-update HTTP 403 Web環境制限)
+- **GitHub Issue自動修正**: auto-reviewラベルのIssue 0件 — スキップ
+- **schedule_task_runs**: curl Host not in allowlist — 記録スキップ
+
+### 次回優先タスク (競合動向より)
+| 優先度 | タスク | 担当 |
+|--------|-------|------|
+| 🔴 高 | `schedule-hub` EF に `ai_reschedule` アクション追加 (Notion Views API 対抗) | VSCode版 |
+| 🔴 高 | `enterprise-hub` EF に Slack webhook 受信アクション追加 | VSCode版 |
+| 🟡 中 | `ai-assistant` EF モデルを `claude-opus-4-7` へ更新 (GitHub Copilot 統合に合わせ) | Windows版 |
+| 🟡 中 | `gh skill publish` で `.claude/skills/` をGitHubマーケット公開 | PS版 |
+| 🟢 低 | GitHub Copilot データ学習オプトアウト確認 (2026-04-24 締切) | 手動 |
