@@ -30,6 +30,32 @@ Notion 課金開始日 **直前〜直後** は「Notion 課金 vs 自分株式�
 | 日本語 UX | 英語主 + DeepL 風翻訳 | **日本語ネイティブ** |
 | データ永続化 | Notion クラウド (有料依存) | **Supabase 永続** (予測可能) |
 
+## ➕ 追加訴求材料 (PS版#4 S21 · 2026-04-20 夜追記)
+
+本文作成時に以下の 2 点を組み込むと、訴求がさらに強くなる:
+
+### 材料 1: Notion Custom Agent の "無言 pause" リスク
+
+Notion 公式 help によれば、live Custom Agent が credit 不足になった場合「**次の monthly service date で pause**」する。つまり:
+
+- 気付かずに credit 切れ → 翌月 1 日 に AI 自動化が **無言で停止** (通知なしの可能性大)
+- ユーザー視点: 「あれ、agent が動いてない?」と気付いたときには既にデータが欠落
+- 対比: 自分株式会社は **課金の概念が存在しない** ので「credit 残高ウォッチ」自体が不要
+
+Source: <https://www.notion.com/help/custom-agent-pricing>
+
+### 材料 2: Evernote 2026 価格改定も同タイミング (4 plan 再編)
+
+Evernote も 2026 Q1 に Personal/Professional を retire し、Starter $8.25 / Advanced $14.17 / Teams $24.99 の 4 plan (+ Free 50 ノート) に再編。長期ユーザーの反発がユーザーフォーラムで可視化。
+
+→ 「**ノート / AI 業界の 2026 春 = 個人向け無料枠の一斉縮小**」という構造変化として SNS 弾に組み込める (本A の導入部に添える)。
+
+Sources:
+- <https://help.evernote.com/hc/en-us/articles/46317642175763>
+- <https://www.eesel.ai/blog/evernote-pricing>
+
+---
+
 ## PS#2 宛: SNS 3 本 (T-1 dispatch 対象)
 
 ### 本A (D-6 ぐらい = 2026-04-28 予定)

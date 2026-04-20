@@ -12872,3 +12872,30 @@ Pleias AI migration timestamp collision を検出し PS#3 に handoff。
 1. 🟡 live-dead 39 EF 整理 (S12 持ち越し backlog)
 2. 🟡 PS#1 ci.yml fix の長期安定性モニタ (24h+ cancel 率計測)
 3. 🟢 horse_racing batch cron 長期健全性 (median 118s / 10 連続 success)
+
+---
+
+## PS版#4 Session 21 (2026-04-20 夜) — 3 並列未スキャン競合 delta + OpenAI Codex Desktop 🔴 起票 + S19 追補
+
+- **コミット**: (本セッション末で push)
+- **目的**: S20 の 5 社 scan で漏れた 3 社 (Evernote / OpenAI Codex / MoneyForward ME) を追加スキャン。**🔴 OpenAI Codex Desktop 4/17 大型アップデート検出** → ai-hub routing 戦略判断 PR 起票
+- **3 並列 WebSearch サマリ**:
+  - **A. Evernote (🟠)**: Personal/Professional retire → Starter $8.25/Advanced $14.17/Teams $24.99/Free 50ノート / 長期ユーザー不満 / AI Search+Edit 有料限定 + Note Cleanup 5月 rollout
+  - **B. OpenAI Codex Desktop (🔴 最重要)**: 4/17 Computer Use (macOS, sandbox VM, ユーザー妨害なし) + Multiple agents parallel + Memory preview + **90+ plugins** (Atlassian/CircleCI/GitLab/Microsoft/MCP servers) + In-app browser / 3M weekly devs / → **Claude Code と機能パリティ+α** / 個人タスク自動化で **Claude 一強崩壊**
+  - **C. MoneyForward (🟠)**: 2026-07 "Money Forward AI Cowork" (法人 BO 自律運用) launch + AI Tax Filing + 消費税 Category Check Agent / 個人向け非対応 → S14 住み分け判定 🟠 正しい
+- **S19 PR 追補** (`docs/cross-instance-prs/20260504_notion_paywall_d14.md`):
+  - 「➕ 追加訴求材料 (S21 追記)」セクション追加
+  - 材料 1: Notion credit 不足で live agent 無言 "pause at next monthly service date"
+  - 材料 2: Evernote 4 plan 再編 → 「ノート業界 2026 春 = 個人向け無料枠一斉縮小」構造
+- **新規 PR** (`docs/cross-instance-prs/20260420_openai_codex_desktop_threat.md`):
+  - Win版: ai-hub routing 判断 4 点 (computer use/memory タスクの Codex 化 / Claude 依存分散 / plugin 活用 / [EF-CAP-50])
+  - VSCode版: LP 比較表に OpenAI Codex 行 + 差別化コピー「Codex = 手先自動化 / 自分株式会社 = 人生 6 部署経営」
+  - SNS 弾候補 (S22+ で素材化): 「Claude vs Codex vs 自分株式会社 — 3 者棲み分け」
+  - Philosophy 5/9 + AI-DEV 6/7 両クリア
+- **次回 PS#4 候補 (S22+)**:
+  1. 🔴 Win版 OpenAI Codex routing 判断 follow-up
+  2. 🟡 Win版 S18/S20 (AgentExchange/MCP) 判断 follow-up
+  3. 🟡 PS#2 本A dispatch (4/28) フォロー
+  4. 🟢 SNS 弾「Claude vs Codex vs 自分株式会社」素材化
+  5. 🟢 MoneyForward 7/AI Cowork launch pre-info 監視
+- Philosophy alignment: 原則 1 (CEO リスク管理) / 原則 2 (ミッション維持) / 原則 5 (ユーザー理解削減) / 原則 6 (時間資本最適化) / 原則 7 (単一 vendor 負債 → 分散資産)
