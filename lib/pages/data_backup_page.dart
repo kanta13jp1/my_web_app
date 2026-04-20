@@ -20,24 +20,27 @@ class _DataBackupPageState extends State<DataBackupPage> {
   List<Map<String, dynamic>> _backupHistory = [];
 
   static const _exportTargets = [
+    _ExportTarget('profile', 'プロフィール', Icons.person, Color(0xFF3D5AFE)),
     _ExportTarget('notes', 'ノート', Icons.note, Color(0xFFFFC107)),
-    _ExportTarget('tasks', 'タスク', Icons.task, Color(0xFF3D5AFE)),
-    _ExportTarget('habits', '習慣', Icons.loop, Colors.green),
     _ExportTarget(
-      'finances',
-      '財務',
-      Icons.account_balance_wallet,
+      'feature_requests',
+      '機能リクエスト',
+      Icons.lightbulb,
+      Colors.green,
+    ),
+    _ExportTarget(
+      'notifications',
+      '通知',
+      Icons.notifications,
       Color(0xFF3D5AFE),
     ),
-    _ExportTarget('blog_posts', 'ブログ', Icons.article, Color(0xFF3D5AFE)),
   ];
 
   final Set<String> _selected = {
+    'profile',
     'notes',
-    'tasks',
-    'habits',
-    'finances',
-    'blog_posts',
+    'feature_requests',
+    'notifications',
   };
 
   @override
@@ -76,10 +79,10 @@ class _DataBackupPageState extends State<DataBackupPage> {
     setState(() => _exporting = true);
     try {
       final resp = await _supabase.functions.invoke(
-        'data-export-manager',
+        'admin-hub',
         body: {
-          'action': 'backup',
-          'targets': _selected.toList(),
+          'action': 'data.export',
+          'tables': _selected.toList(),
         },
       );
       final data = resp.data;

@@ -309,6 +309,70 @@ serve(async (req: Request) => {
         return json({ success: true, item });
       }
 
+      // ---- Data export (GDPR portability) ----
+      case "data.export_available": {
+        const tables = [
+          { key: "profile", table: "user_profiles", label: "プロフィール" },
+          { key: "notes", table: "notes", label: "ノート" },
+          { key: "feature_requests", table: "feature_requests", label: "機能リクエスト" },
+          { key: "notifications", table: "app_notifications", label: "通知" },
+        ];
+        const counts: Array<{ key: string; label: string; count: number }> = [];
+        for (const t of tables) {
+          const { count } = await admin
+            .from(t.table)
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId);
+          counts.push({ key: t.key, label: t.label, count: count ?? 0 });
+        }
+        return json({ success: true, available: counts });
+      }
+
+      case "data.export": {
+        const exportTables = [
+          { key: "profile", table: "user_profiles" },
+          { key: "notes", table: "notes" },
+          { key: "feature_requests", table: "feature_requests" },
+          { key: "notifications", table: "app_notifications" },
+        ];
+        const requested: string[] | undefined = Array.isArray(body.tables)
+          ? body.tables
+          : undefined;
+        const targets = requested
+          ? exportTables.filter((t) => requested.includes(t.key))
+          : exportTables;
+        if (targets.length === 0) {
+          return json({ error: "No valid tables specified" }, 400);
+        }
+        const exportData: Record<string, unknown[]> = {};
+        let totalRecords = 0;
+        for (const t of targets) {
+          const { data } = await admin
+            .from(t.table)
+            .select("*")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+          exportData[t.key] = data ?? [];
+          totalRecords += (data ?? []).length;
+        }
+        const exportedAt = new Date().toISOString();
+        await addItem(admin, "data_export", userId, {
+          tables: targets.map((t) => t.key),
+          totalRecords,
+          exportedAt,
+        });
+        return json({
+          success: true,
+          export: {
+            format: "json",
+            exportedAt,
+            userId,
+            totalRecords,
+            data: exportData,
+          },
+        });
+      }
+
       // ---- Users list (admin) ----
       case "users.list": {
         const { data } = await admin.auth.admin.listUsers({
