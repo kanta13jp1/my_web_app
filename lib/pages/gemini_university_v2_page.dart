@@ -6205,6 +6205,17 @@ class _AiUniversityPageState extends State<AiUniversityPage>
       color: Color(0xFFB0B0B0),
       height: 1.5,
     ),
+    tableHead: const TextStyle(
+      color: Color(0xFFE5E7EB),
+      fontWeight: FontWeight.bold,
+    ),
+    tableBody: const TextStyle(color: Color(0xFFE5E7EB), height: 1.6),
+    tableBorder: TableBorder.all(
+      color: const Color(0xFF2A2A2A),
+      width: 1,
+    ),
+    tableCellsPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    tableHeadAlign: TextAlign.start,
   );
 
   Widget _buildContentCard(
