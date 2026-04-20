@@ -14437,3 +14437,69 @@ orphan branches: 閾値以下 (cleanup 不要)。
 整合性 **6/9** ✅ (並列効率化 + 多角化リスク管理 両立)
 
 **次回候補**: (1) Win版 ai-hub routing PR follow-up (2) audit round 5 = LINE AI ¥750 or Replit $9B のどちらか (3) PS#2 本A/B/C dispatch 確認 (4/23+/5/2/5/4)
+## 🛠️ PS版#1 Session 20 (2026-04-20 20:32 JST) — wbs-staleness-audit duplicate env regression 検出 + 即修復
+
+### 検出
+
+Rule 17 WF health check で `wbs-staleness-audit.yml` が 4 連続 failure:
+- 24664122729 (6cdb8de) / 24664104941 (a0964f5) / 24664088109 (a625b21) / 24663999817 (625c778) 全て failure
+- `gh run view --log-failed` → `log not found` + `jobs=null` = GHA yml parse error pattern (S16 再発)
+- `gh workflow run wbs-staleness-audit.yml` 明示 dispatch → `HTTP 422: failed to parse workflow: (Line: 123, Col: 9): 'env' is already defined`
+
+### Root cause
+
+b2e065b4 (Win版#131 part 21 "Issue→WBS + SLA") で `Create cross-instance-pr for overdue instances` step に:
+- **既存 line 72**: `env:` block (`OVERDUE` + `GH_TOKEN`)
+- **追加 line 123**: `env:` block (`GH_TOKEN` 単独) ← `run:` の **後ろ** に追記
+  → 同一 step に 2 つの `env:` block → parse error
+
+S16 (4e70f7cb) と同一パターンの再発 (別 step への block 重複 version)。
+
+### 修正 (commit 867f8cc3)
+
+line 123-124 の後付け `env:` block を削除 (GH_TOKEN は line 74 で既定義):
+```diff
+             --head "$BRANCH" || true
+-        env:
+-          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+       # Win版#131 part 21: PS#5 不在 fallback
+```
+
+### 検証
+
+- `python -c "import yaml; yaml.safe_load(...)"` = parse OK
+- `gh workflow run wbs-staleness-audit.yml` → 24664239246 `in_progress` (event=workflow_dispatch) → 422 解消確認
+
+### b2e065b 他 (副次) デプロイ結果
+
+- run 24663527751 (b2e065b4 Win#131 part 21) = Deploy to Production **success** (Haize rename 200000 + wbs_progress migrations 両 applied)
+- Rule17 health 再集計: deploy-prod 直近 3 runs 成功・wbs-staleness-audit は 867f8cc3 で復旧中・horse_racing 継続 success
+
+### Philosophy alignment
+
+- 原則 5 (商品=ユーザー価値): WBS 陳腐化監査 WF 復旧 → 全インスタンスの WBS 同期健全性回復
+- 原則 6 (資本=時間): 2 line 削除 + commit push で復旧 (EF deploy 不要)
+- 原則 7 (資産負債 BS): `jobs=null + log not found = yml parse error` 診断パターン (S16) が PS#1 memory に蓄積済 → S20 で即適用・検索 30 秒で判定
+- 原則 8 (KPI=昨日の自分): S16 で同一仕組み修復済 → S20 は pattern matching 10 分完了
+- 整合性: **8/9** (Rule 22 基準)
+
+### commit 一覧 (S20)
+
+- `867f8cc3` fix: wbs-staleness-audit — duplicate `env:` in Create PR step 削除 (Win版#131 part 21 regression)
+
+### cancel-in-progress regression (S14 後) 調査 — S21 送り
+
+S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出 (24663451842 / 24663500361 / 24663237882):
+- `.github/workflows/deploy-prod.yml` = `cancel-in-progress: false` 確認済 → 設定は正しい
+- triggering_actor = `kanta13jp1` = 単なる push author (cancel source ではない)
+- 仮説: GHA concurrency group が `main` 単独で共有されている可能性 / 別 workflow の concurrency 衝突の可能性
+- **S21 候補 #1** で重点調査予定
+
+### 次回 PS#1 候補
+
+1. 🔴 **deploy-prod cancel-in-progress regression 調査** (S14 後に 3 runs が 1-5min 後 cancelled 再現) — concurrency group 共有仮説検証
+2. 🟡 migration 事前 lint CI 追加 (S19 候補 #1 の継続 — psql --dry-run / sqlfluff)
+3. 🟡 `jobs=null + log 404` 診断 skill 化 (S16+S20 同一パターン 2 回検出 → rule17-wf-health skill に判定 step 追加)
+4. 🟢 S14 副作用 = pending-replacement cancel 1 週間測定 (継続)
+5. 🟢 inject-rules.txt 鮮度更新 — S19-S20 の feedback_correction を `[CONSTRAINT-LOG]` に反映
