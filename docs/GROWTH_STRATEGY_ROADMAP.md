@@ -14144,3 +14144,29 @@ orphan branches: 閾値以下 (cleanup 不要)。
 **Philosophy**: 3 (mentor=tracker 鮮度維持) / 5 (home 404 早期回復支援) ✅
 
 **次回候補**: PS#5 S25+ で CRITICAL 残 4 件 (time-tracker/goal-tracker/habit-tracker/music-collaboration) 消化待機 / 50% 到達まで軽監視継続
+
+## PS版#5 Session 25 (2026-04-20 - music-collaboration → app-hub:music.sessions)
+
+**Commit**: `dcbe090a` (push `07dda2a8`)
+
+**背景**: PS#6 S18 handoff 24 件 CRITICAL 5 件中、invoke 1 箇所のみの music-collaboration を最小スコープ先行消化 (S22→S23→S24→S25 で計 4 件)。
+
+**対応**:
+- `lib/pages/music_collaboration_page.dart`:
+  - invoke `'music-collaboration'` (`action: feed`) → `'app-hub'` (`action: music.sessions`)
+  - item field 抽出を hub raw row 形式に適合:
+    - `session['title']` → `metadata.name`
+    - `session['type']` → `metadata.status` (旧 `type` は hub 未対応 → status 流用)
+    - `session['collaborators']` (integer) → `metadata.participants.length` (配列長で代替)
+- `docs/cross-instance-prs/20260420_ps5_flutter_stale_invoke_audit_24ef.md`: Section B 2/13 → 3/13、合計 3/23 → **4/23 (17.4%)**
+
+**検証**: `dart format` clean / `flutter analyze lib/pages/music_collaboration_page.dart` No issues (9.1s)
+
+**残 CRITICAL 3 件** (home_tool_catalog 登録): time-tracker (hub 拡張要・S26+) / goal-tracker (5 箇所) / habit-tracker (3 箇所)
+
+**知見**: field mismatch 吸収パターンが確立 — 旧 EF は flat な response、新 hub は `{id, metadata, created_at}` raw row。Flutter side で `item['metadata']` 経由抽出 + 配列/整数変換 (participants.length 等) を都度吸収する必要。
+
+**Philosophy Alignment (9 原則)**:
+- 原則 5 (商品=ユーザー価値): home → 音楽コラボ 404 → hub 経路に復旧
+- 原則 6 (資本=時間): 1 箇所 invoke のみで migration 完結 → 最小時間投資
+- 原則 7 (資産=負債): 二重 EF (music-collaboration + app-hub) を hub 単一に寄せ負債 1 件消化
