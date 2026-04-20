@@ -36,8 +36,8 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
     });
     try {
       final response = await _supabase.functions.invoke(
-        'habit-tracker',
-        body: {'action': 'list'},
+        'tools-hub',
+        body: {'action': 'habit.list'},
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
@@ -60,9 +60,9 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
     setState(() => _isLoading = true);
     try {
       await _supabase.functions.invoke(
-        'habit-tracker',
+        'tools-hub',
         body: {
-          'action': 'create',
+          'action': 'habit.create',
           'name': name,
           'frequency': _selectedFrequency,
         },
@@ -79,8 +79,8 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
   Future<void> _checkIn(String habitId) async {
     try {
       await _supabase.functions.invoke(
-        'habit-tracker',
-        body: {'action': 'checkin', 'habit_id': habitId},
+        'tools-hub',
+        body: {'action': 'habit.checkin', 'habit_id': habitId},
       );
       await _fetchHabits();
     } catch (e) {
@@ -221,6 +221,9 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                       itemCount: _habits.length,
                       itemBuilder: (context, index) {
                         final habit = _habits[index];
+                        final meta = habit['metadata'] is Map
+                            ? habit['metadata'] as Map
+                            : const {};
                         final streak = (habit['streak'] as num?)?.toInt() ?? 0;
                         final doneToday = habit['done_today'] as bool? ?? false;
                         return Card(
@@ -235,7 +238,7 @@ class _HabitTrackerPageState extends State<HabitTrackerPage> {
                                 size: 20,
                               ),
                             ),
-                            title: Text(habit['name'] as String? ?? ''),
+                            title: Text(meta['name']?.toString() ?? ''),
                             subtitle: Text('ストリーク: $streak 日'),
                             trailing: IconButton(
                               icon: Icon(
