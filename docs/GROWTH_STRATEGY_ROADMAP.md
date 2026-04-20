@@ -14568,3 +14568,32 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 - **checklist 消化の監査習慣**: 未着手項目を放置せず、dispatch 直近になる前に audit → 3 件中 2 件は実作業ゼロ (既完了の確認のみ) だった
 - **rebuttal 文脈でも誤情報数字は削除が安全**: 「誤りとして引用」でも skim される可能性があるので、正確な数字のみ本文に残す
 - **PS#2 管轄境界**: 「本A dispatch 前に VSCode LP 統一」は checklist 上 PS#2 依頼に含まれるが、実作業は VSCode instance スコープ → checklist 側で明示マーク
+
+### PS版#4 Session 29 (2026-04-20) — 数字 2 社交差 audit round 5 (LINE AI ¥750/月 7 sources)
+
+- **対象**: LINE AI ¥750/月 — 日本市場の個人ユーザー直接競合
+- **手法**: LYCorp 公式 press release + ITmedia/Impress Watch/Ketai Watch/Appllio/SHIFT AI TIMES/LINE Help Center = 7 sources 並列検証
+- **確定値**:
+  - 月額 **¥750 税込** (無制限・最高 tier) / launch **2025-09-10**
+  - モデル **OpenAI GPT-4o + GPT-4o mini** (in-house/Google でなく OpenAI 単一依存)
+  - 無料 **3 回/日/機能別** / LYPプレミアム ¥508 bundle **10 回/日**
+  - 機能範囲 **narrow**: Q&A / 画像生成 / トークサジェスト / 翻訳 / 画像解析 のみ
+  - **欠落機能**: code interpreter / deep research / custom GPTs / agent = 全て無し
+  - 価格史: ¥990 (旧) → ¥200 (2024) → ¥750 (2025-09-10)
+- **新発見**: feature-narrow (機能範囲の狭さ) + OpenAI 単一依存 + LYPプレミアム ¥508 bundle segment 分離
+- **成果物**: SCOREBOARD #18 line 行更新 + [S29] audit round 5 block (差別化軸 5 項目 + PS#2 SNS 弾候補 + VSCode LP 拡張提案)
+- **自分株式会社差別化軸 5 項目**: (1) 6 部署統合 vs 対話単体 (2) feature depth (3) Supabase 永続化 (4) Free vs ¥750 (5) multi-vendor 分散
+- **audit 累計**: S25 (5 src) → S26 (2 src) → S27 (6 src) → S28 (16 src) → **S29 (7 src) = 5 round / 45 sources**
+
+**Philosophy alignment** (本 session):
+- 原則 1 (CEO 感): OpenAI 単一依存 vs multi-vendor 分散 = 経営判断材料化 ✅
+- 原則 2 (ミッション駆動): 2-source triangulation 習慣を round 5 継続 ✅
+- 原則 5 (商品=ユーザー価値): feature-narrow 発見 = ai-hub feature depth 訴求材料 ✅
+- 原則 6 (資本=時間): 1 agent 呼び出しで 7 source 並列検証 ✅
+- 原則 7 (BS 原則): vendor 分散 = 障害耐性 resident 化 ✅
+- 原則 8 (KPI=昨日の自分): S25 (1 社) → S29 (5 社 / 45 src) 累積成長 ✅
+
+整合性 **6/9** ✅ (日本市場競合精度確定 + vendor lock 発見 両立)
+
+**残 round**: Replit $9B (1 件) — round 6 で全 high-stakes 数字 2-source 完了
+**次回候補**: (1) audit round 6 = Replit $9B (2) VSCode LP 差別化軸 7-8 行追加 handoff (3) PS#2 dispatch 確認

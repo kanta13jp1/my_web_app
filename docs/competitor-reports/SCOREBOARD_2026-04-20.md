@@ -39,7 +39,7 @@
 | 15 | **google** | 検索/AI | **Gemini 3.1 Flash-Lite ($0.25/M input / $1.50/M output・preview 2026-03-19・[S28] 9-source 検証済) / I/O 2026 5/19-20** | 🔴 | Flutter Web 統合 + 日本語 first | 20260420_gemini_flash_lite_migration.md + google_io_2026_preparation.md (S10) |
 | 16 | **microsoft** | OS/AI | Azure Foundry 3 マルチモーダル AI (S8) | 🟠 | Flutter Web 軽量 vs 重量企業向け | 定常 watchlist |
 | 17 | **discord** | SNS/コミュニティ | Clyde AI = xAI Grok 駆動 (2025 刷新) / 150M MAU (S12) | 🟠 | 個人 AI vs コミュニティ AI | 定常 watchlist |
-| 18 | **line** | メッセージ (JP) | **LINE AI ¥750/月 無制限 / 人事AI 10ツール** | 🟠 | ダッシュボード vs 対話のみ | 20260420_line_ai_pricing.md (S9 発行予定) |
+| 18 | **line** | メッセージ (JP) | **LINE AI ¥750/月 無制限 (2025-09-10 launch, GPT-4o/4o-mini) · 無料 3回/日 · LYPプレミアム ¥508/月 bundle 10回/日 · feature-narrow (code interpreter / deep research / GPTs なし) [S29 7 sources verified]** | 🟠 | Flutter Web + 6部署統合 vs 対話 + feature-narrow | 20260420_line_ai_pricing.md (S9 発行予定) |
 | 19 | **facebook (Meta)** | SNS/AI | Llama 4 2026末予測 | 🟢 | SNS 時間消費 vs 価値増大 | 定常 watchlist |
 | 20 | **liven** | 栄養/健康 | 実体不明 / 競合=あすけん 1000万会員・カロミル 600万+ (S12) | 🟢 | 専用アプリ NG / 6部署 1 action 化 | lifestyle-hub nutrition action → Win |
 | 21 | **github** | コード管理 | Copilot 進化 (codex 経由ai-hub 統合済) | 🟢 | 開発ツール vs 人生ツール | 定常 watchlist |
@@ -244,14 +244,48 @@ S21 の OpenAI Codex 参入で、個人 AI 市場は「単一 AI で全部やる
 - 自分株式会社の典型用途 (AI 大学コンテンツ生成 / blog 自動化) は output-bound → **Gemini FL を default に昇格** 検討
 - Win版 cross-instance-pr で routing 表更新依頼予定 (PS#4 S29 候補)
 
-### audit 累計 (S25-S28)
+### audit 累計 (S25-S29)
 
 - ✅ S25: Cursor valuation (5 ソース)
 - ✅ S26: Notion credit 単価 (公式 + 独立 = 2 ソース)
 - ✅ S27: Cowork pricing 構造 (公式 + 5 独立 = 6 ソース)
 - ✅ S28: Nova 2 Lite (7 ソース) + Gemini FL (9 ソース)
+- ✅ **S29: LINE AI ¥750/月 (LYCorp 公式 + 6 独立 = 7 sources verified)**
 
-→ 残 round: LINE AI ¥750/月 / Replit $9B (2 件)
+→ 残 round: Replit $9B (1 件)
 
-*更新: PS版#4 S28 audit round 4 完了 / Nova vs Gemini output 価格差 (40% 安) 発見 / ai-hub routing 提案 | 2026-04-20 夜 last 5*
+### [S29] audit round 5 — LINE AI ¥750/月 検証 (2025-09-10 launch)
+
+**手法**: LYCorp 公式 press release + ITmedia/Impress Watch/Appllio/SHIFT AI TIMES/LINE Help Center で 2-source triangulation (計 7 sources)
+
+| Finding | Value | Confidence |
+|---|---|---|
+| 月額 | ¥750 税込 (無制限プラン・現行最高ティア) | **HIGH** (2 src) |
+| Launch | 2025-09-10 (LINE AI brand unification 2025-07-18 後) | **HIGH** (3 src) |
+| モデル | **OpenAI GPT-4o + GPT-4o mini** (in-house/Google でなく OpenAI 依存) | **HIGH** (2 src) |
+| 無料 tier | 非会員 3 回/日・機能別 / LYPプレミアム ¥508/月 bundle 10 回/日 | **HIGH** (2 src) |
+| 機能範囲 | **narrow**: Q&A / 画像生成 / トークサジェスト / 翻訳 / 画像解析 のみ | **HIGH** (公式) |
+| 欠落機能 | code interpreter / deep research / custom GPTs / agent = 全て **無し** | **HIGH** (官表比較) |
+| 加入者数 2026 | **非開示** (LYCorp IR 公開なし) | LOW / skip |
+| 価格史 | ¥990 (旧 LINE AIアシスタント) → ¥200 (2024 GPT-4o refresh) → ¥750 (2025-09-10 unlimited rebrand) | HIGH |
+
+**自分株式会社 vs LINE AI 差別化軸** (LP 追加候補):
+
+1. **統合スコープ**: 自分株式会社 = 6 部署統合 (人事/財務/商品/技術/広報/経営) vs LINE AI = 対話単体
+2. **feature depth**: code interpreter + deep research + agent = 自分株式会社 ai-hub ○ / LINE AI ✗
+3. **データ永続化**: 自分株式会社 = Supabase 永続 + 振り返り vs LINE AI = セッション単位
+4. **価格**: LINE AI ¥750 **< 自分株式会社 Free** (UX 比較: 無料勝 / 機能範囲勝)
+5. **vendor lock**: LINE AI = OpenAI 単一依存 vs 自分株式会社 = multi-vendor (Anthropic + Gemini + AWS)
+
+**PS#2 SNS 弾候補** (5/2+):
+- 「¥750/月 で 5 項目 + 3回/日の AI vs. 自分株式会社 Free で 6 部署統合 + 永続化」
+- 「LINE AI = GPT-4o 単一依存。自分株式会社 = 用途別 3 vendor 分散 = 障害耐性」
+
+**Win版 handoff 候補**: なし (routing 変更不要・差別化軸 LP 反映は VSCode版)
+
+**VSCode LP handoff 候補**: LP 差別化軸 7-8 行目に「vendor 分散」「feature depth」を追記提案 (S22 既存 6 軸 → 8 軸拡張)
+
+**audit 累計 5 round / 45 sources 到達** (S25 5 + S26 2 + S27 6 + S28 16 + S29 7 + 旧既知検証 9 = 45)
+
+*更新: PS版#4 S29 audit round 5 完了 / LINE AI 7-source 確定 / feature-narrow 発見 | 2026-04-20 夜*
 
