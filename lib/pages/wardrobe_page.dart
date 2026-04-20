@@ -184,7 +184,7 @@ class _WardrobePageState extends State<WardrobePage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('「${item.name}」を着用記録しました'),
-            backgroundColor: Colors.green[700],
+            backgroundColor: const Color(0xFF388E3C),
           ),
         );
       }
@@ -207,7 +207,7 @@ class _WardrobePageState extends State<WardrobePage>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             child: const Text('削除'),
           ),
         ],
@@ -489,7 +489,7 @@ class _WardrobePageState extends State<WardrobePage>
                 Icon(
                   Icons.schedule,
                   size: 12,
-                  color: isOld ? Colors.red : const Color(0xFF9CA3AF),
+                  color: isOld ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
                 ),
                 const SizedBox(width: 4),
                 Text(
@@ -498,7 +498,7 @@ class _WardrobePageState extends State<WardrobePage>
                       : '着用記録なし',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isOld ? Colors.red : const Color(0xFF9CA3AF),
+                    color: isOld ? const Color(0xFFE53935) : const Color(0xFF9CA3AF),
                     height: 1.5,
                   ),
                 ),
@@ -508,13 +508,13 @@ class _WardrobePageState extends State<WardrobePage>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
-                      color: Colors.red[50],
+                      color: const Color(0xFFFFEBEE),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
                       '長期未使用',
                       style: TextStyle(
-                        color: Colors.red,
+                        color: Color(0xFFE53935),
                         fontSize: 10,
                         height: 1.5,
                       ),
@@ -530,7 +530,7 @@ class _WardrobePageState extends State<WardrobePage>
                 _actionBtn(
                   '着用',
                   Icons.check,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                   () => _markWorn(item),
                 ),
                 const SizedBox(width: 6),
@@ -551,7 +551,7 @@ class _WardrobePageState extends State<WardrobePage>
                 _actionBtn(
                   '処分',
                   Icons.delete_outline,
-                  Colors.red,
+                  const Color(0xFFE53935),
                   () => _updateStatus(item, 'discard'),
                 ),
                 const Spacer(),
@@ -661,7 +661,8 @@ class _WardrobePageState extends State<WardrobePage>
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _summaryItem('総数', '$total件', const Color(0xFF795548)),
-                      _summaryItem('保持', '${counts['keep']}件', Colors.green),
+                      _summaryItem(
+                          '保持', '${counts['keep']}件', const Color(0xFF4CAF50),),
                       _summaryItem(
                         '寄付',
                         '${counts['donate']}件',
@@ -672,7 +673,8 @@ class _WardrobePageState extends State<WardrobePage>
                         '${counts['sell']}件',
                         const Color(0xFFFF6B35),
                       ),
-                      _summaryItem('処分', '${counts['discard']}件', Colors.red),
+                      _summaryItem(
+                          '処分', '${counts['discard']}件', const Color(0xFFE53935),),
                     ],
                   ),
                 ],
@@ -746,8 +748,8 @@ class _WardrobePageState extends State<WardrobePage>
                                   item.lastWornAt != null
                                       ? '${DateTime.now().difference(item.lastWornAt!).inDays}日前'
                                       : '記録なし',
-                                  style: TextStyle(
-                                    color: Colors.red[400],
+                                  style: const TextStyle(
+                                    color: Color(0xFFEF5350),
                                     fontSize: 12,
                                     height: 1.5,
                                   ),
@@ -906,13 +908,13 @@ class _WardrobePageState extends State<WardrobePage>
   Color _statusColor(String status) {
     switch (status) {
       case 'keep':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'donate':
         return const Color(0xFF3D5AFE);
       case 'sell':
         return const Color(0xFFFF6B35);
       case 'discard':
-        return Colors.red;
+        return const Color(0xFFE53935);
       default:
         return const Color(0xFF9CA3AF);
     }
@@ -931,9 +933,9 @@ class _WardrobePageState extends State<WardrobePage>
       case 'ブルー':
         return const Color(0xFF3D5AFE);
       case 'グリーン':
-        return Colors.green;
+        return const Color(0xFF4CAF50);
       case 'レッド':
-        return Colors.red;
+        return const Color(0xFFE53935);
       case 'ブラウン':
         return const Color(0xFF795548);
       case 'ベージュ':

@@ -178,14 +178,14 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
+                    color: const Color(0xFFFFEBEE),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
+                    border: Border.all(color: const Color(0xFFEF9A9A)),
                   ),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(
-                      color: Colors.red.shade700,
+                    style: const TextStyle(
+                      color: Color(0xFFC62828),
                       height: 1.5,
                     ),
                   ),
@@ -197,23 +197,23 @@ class _SlackNotificationPageState extends State<SlackNotificationPage> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: const Color(0xFFE8F5E9),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
+                    border: Border.all(color: const Color(0xFFA5D6A7)),
                   ),
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.check_circle_outline,
-                        color: Colors.green.shade700,
+                        color: Color(0xFF388E3C),
                         size: 18,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _successMessage!,
-                          style: TextStyle(
-                            color: Colors.green.shade700,
+                          style: const TextStyle(
+                            color: Color(0xFF388E3C),
                             height: 1.5,
                           ),
                         ),
@@ -379,7 +379,7 @@ class _HistoryTile extends StatelessWidget {
       child: ListTile(
         leading: Icon(
           success ? Icons.check_circle : Icons.error_outline,
-          color: success ? Colors.green : Colors.red,
+          color: success ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
           size: 20,
         ),
         title: Text(
@@ -399,7 +399,7 @@ class _HistoryTile extends StatelessWidget {
         trailing: Text(
           success ? '成功' : '失敗',
           style: TextStyle(
-            color: success ? Colors.green : Colors.red,
+            color: success ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
             fontSize: 12,
             fontWeight: FontWeight.bold,
             height: 1.5,

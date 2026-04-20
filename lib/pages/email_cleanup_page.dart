@@ -207,7 +207,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('エラー: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: const Color(0xFFE53935),
           ),
         );
       }
@@ -315,14 +315,15 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ メール整理を記録しました'),
-            backgroundColor: Colors.green,
+            backgroundColor: Color(0xFF4CAF50),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -342,7 +343,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
             child: const Text('キャンセル'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFE53935)),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('削除'),
           ),
@@ -361,7 +362,8 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -430,8 +432,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(
-          color:
-              progress >= 1.0 ? Colors.green.shade200 : const Color(0xFFC5CAE9),
+          color: progress >= 1.0 ? const Color(0xFFA5D6A7) : const Color(0xFFC5CAE9),
         ),
       ),
       child: ExpansionTile(
@@ -439,14 +440,14 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: progress >= 1.0
-                ? Colors.green.shade50
-                : const Color(0xFFEDE7F6),
+            color:
+                progress >= 1.0 ? const Color(0xFFE8F5E9) : const Color(0xFFEDE7F6),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             progress >= 1.0 ? Icons.check_circle : Icons.checklist,
-            color: progress >= 1.0 ? Colors.green : const Color(0xFF4338CA),
+            color:
+                progress >= 1.0 ? const Color(0xFF4CAF50) : const Color(0xFF4338CA),
           ),
         ),
         title: Text(
@@ -694,7 +695,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
+                      color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
@@ -702,7 +703,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Colors.green,
+                        color: Color(0xFF4CAF50),
                         height: 1.5,
                       ),
                     ),
@@ -735,7 +736,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                     icon: const Icon(Icons.check_circle, size: 16),
                     label: const Text('整理完了'),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.green,
+                      foregroundColor: const Color(0xFF4CAF50),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 6,
@@ -752,7 +753,7 @@ class _EmailCleanupPageState extends State<EmailCleanupPage> {
                       child: Text(
                         '削除',
                         style: TextStyle(
-                          color: Colors.red,
+                          color: Color(0xFFE53935),
                           height: 1.5,
                         ),
                       ),

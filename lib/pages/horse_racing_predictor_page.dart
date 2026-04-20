@@ -228,7 +228,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                         size: 64,
                         color: _errorType == ErrorType.network
                             ? const Color(0xFFFF6B35)
-                            : Colors.red,
+                            : const Color(0xFFE53935),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -564,7 +564,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
     Color statusColor;
     String statusLabel;
     if (hasResult) {
-      statusColor = isCorrect == true ? Colors.green : Colors.red;
+      statusColor = isCorrect == true ? const Color(0xFF4CAF50) : const Color(0xFFE53935);
       statusLabel = isCorrect == true ? '的中' : '外れ';
     } else if (status == 'scheduled') {
       statusColor = const Color(0xFFFF6B35);
@@ -724,7 +724,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                     if (prevFinish == 1) {
                       prevColor = const Color(0xFFFFD700);
                     } else if (prevFinish != null && prevFinish <= 3) {
-                      prevColor = Colors.green;
+                      prevColor = const Color(0xFF4CAF50);
                     } else if (prevFinish != null && prevFinish <= 5) {
                       prevColor = Colors.white70;
                     }
@@ -789,11 +789,15 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (isCorrect == true ? Colors.green : Colors.red)
+                  color: (isCorrect == true
+                          ? const Color(0xFF4CAF50)
+                          : const Color(0xFFE53935))
                       .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: (isCorrect == true ? Colors.green : Colors.red)
+                    color: (isCorrect == true
+                            ? const Color(0xFF4CAF50)
+                            : const Color(0xFFE53935))
                         .withValues(alpha: 0.3),
                   ),
                 ),
@@ -804,15 +808,18 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                       children: [
                         Icon(
                           isCorrect == true ? Icons.check_circle : Icons.cancel,
-                          color: isCorrect == true ? Colors.green : Colors.red,
+                          color: isCorrect == true
+                              ? const Color(0xFF4CAF50)
+                              : const Color(0xFFE53935),
                           size: 16,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           isCorrect == true ? '3連単 的中!' : '外れ',
                           style: TextStyle(
-                            color:
-                                isCorrect == true ? Colors.green : Colors.red,
+                            color: isCorrect == true
+                                ? const Color(0xFF4CAF50)
+                                : const Color(0xFFE53935),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                             height: 1.5,
@@ -823,7 +830,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                           Text(
                             '配当 ¥${NumberFormat('#,###').format(trifectaPaid)}',
                             style: const TextStyle(
-                              color: Colors.green,
+                              color: Color(0xFF4CAF50),
                               fontWeight: FontWeight.bold,
                               height: 1.5,
                             ),
@@ -1045,16 +1052,17 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ),
           );
         } else if (isCorrect == true) {
-          cardBg = Colors.green.withValues(alpha: 0.06);
+          cardBg = const Color(0xFF4CAF50).withValues(alpha: 0.06);
           trailing = Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 20),
+              const Icon(Icons.check_circle,
+                  color: Color(0xFF4CAF50), size: 20,),
               if (trifectaPaid != null)
                 Text(
                   '¥${NumberFormat('#,###').format(trifectaPaid)}',
                   style: const TextStyle(
-                    color: Colors.green,
+                    color: Color(0xFF4CAF50),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     height: 1.5,
@@ -1063,8 +1071,9 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
             ],
           );
         } else {
-          cardBg = Colors.red.withValues(alpha: 0.04);
-          trailing = const Icon(Icons.cancel, color: Colors.red, size: 20);
+          cardBg = const Color(0xFFE53935).withValues(alpha: 0.04);
+          trailing =
+              const Icon(Icons.cancel, color: Color(0xFFE53935), size: 20);
         }
         return Card(
           color: cardBg,
@@ -1203,7 +1212,7 @@ class _HorseRacingPredictorPageState extends State<HorseRacingPredictorPage>
                   '的中回数',
                   '$hits回',
                   Icons.check_circle,
-                  Colors.green,
+                  const Color(0xFF4CAF50),
                 ),
               ),
             ],

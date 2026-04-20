@@ -112,7 +112,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -178,7 +179,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -235,7 +237,8 @@ class _PrisonModePageState extends State<PrisonModePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('エラー: $e'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('エラー: $e'), backgroundColor: const Color(0xFFE53935),),
         );
       }
     }
@@ -355,7 +358,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                         borderRadius: BorderRadius.circular(10),
                         side: BorderSide(
                           color: done
-                              ? Colors.green.shade200
+                              ? const Color(0xFFA5D6A7)
                               : Theme.of(context)
                                   .colorScheme
                                   .surfaceContainerHigh,
@@ -366,7 +369,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                         leading: Icon(
                           done ? Icons.check_circle : s.$3,
                           color: done
-                              ? Colors.green
+                              ? const Color(0xFF4CAF50)
                               : Theme.of(context).colorScheme.onSurfaceVariant,
                           size: 22,
                         ),
@@ -407,7 +410,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: paidOff
-              ? [Colors.green.shade600, Colors.green.shade400]
+              ? [const Color(0xFF43A047), const Color(0xFF66BB6A)]
               : isActive
                   ? [
                       Theme.of(context).colorScheme.onSurface,
@@ -534,7 +537,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isPaidOff
-              ? Colors.green.shade300
+              ? const Color(0xFF81C784)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
         ),
       ),
@@ -547,7 +550,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
               children: [
                 Icon(
                   isPaidOff ? Icons.check_circle : Icons.account_balance,
-                  color: isPaidOff ? Colors.green : Colors.red.shade700,
+                  color: isPaidOff ? const Color(0xFF4CAF50) : const Color(0xFFC62828),
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -573,7 +576,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
               '残高: ¥${_formatNumber(remaining)} / ¥${_formatNumber(original)}',
               style: TextStyle(
                 fontSize: 12,
-                color: isPaidOff ? Colors.green : Colors.red.shade700,
+                color: isPaidOff ? const Color(0xFF4CAF50) : const Color(0xFFC62828),
                 fontWeight: FontWeight.w600,
                 height: 1.5,
               ),
@@ -586,7 +589,7 @@ class _PrisonModePageState extends State<PrisonModePage> {
                 backgroundColor:
                     Theme.of(context).colorScheme.surfaceContainerHigh,
                 valueColor: AlwaysStoppedAnimation(
-                  isPaidOff ? Colors.green : const Color(0xFFFFA000),
+                  isPaidOff ? const Color(0xFF4CAF50) : const Color(0xFFFFA000),
                 ),
                 minHeight: 6,
               ),
