@@ -14503,3 +14503,21 @@ S20 中に 3 runs が 1-5 min 後に cancelled されるパターン継続検出
 3. 🟡 `jobs=null + log 404` 診断 skill 化 (S16+S20 同一パターン 2 回検出 → rule17-wf-health skill に判定 step 追加)
 4. 🟢 S14 副作用 = pending-replacement cancel 1 週間測定 (継続)
 5. 🟢 inject-rules.txt 鮮度更新 — S19-S20 の feedback_correction を `[CONSTRAINT-LOG]` に反映
+
+## 🛠️ PS版#1 Session 20 close 追記 (2026-04-20 20:45 JST) — dispatch 24664239246 結果
+
+867f8cc3 fix 後の workflow_dispatch test run:
+- **Parse error 解消確認**: `jobs=null` → `jobs=[audit]` (yml 正常 parse)
+- **Job-level 別バグ 2 件露出** (parse fix の scope 外):
+  1. 全 8 instance overdue 誤検出: log `OVERDUE: vscode win ps1 ps2 ps3 ps4 ps5 ps6` → `wbs.list_tasks` の timestamp 比較が 0 返却 (python parse 失敗 or tools-hub 応答問題)
+  2. push rejected: `wbs-staleness/20260420` branch が prev scheduled run で既存 → audit 2 回目が `fetch first` エラー
+- **[NO-SCOPE-CREEP] 遵守**: parse fix のみ commit 済。上記 2 件は S21+ 送り (次回候補 #2 に追加)
+
+### 次回 PS#1 候補 (S20 最終版)
+
+1. 🔴 deploy-prod cancel-in-progress regression 調査
+2. 🔴 wbs-staleness-audit 全 8 instance overdue 誤検出 + branch collision push rejection
+3. 🟡 migration 事前 lint CI 追加
+4. 🟡 `jobs=null + log 404` 診断 step を rule17-wf-health skill に追加
+5. 🟢 S14 副作用測定継続
+6. 🟢 inject-rules.txt 鮮度更新
