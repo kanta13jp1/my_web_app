@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../services/growth_mission_service.dart';
 
 /// 紹介プログラムページ
 ///
-/// ユーザーの紹介コードを表示し、SNS シェアで友達を誘う導線を提供する。
-/// `growth-hub` Edge Function (action: referral.list/create) でコードを取得・生成する。
+/// 紹介コード・紹介実績・招待リンクを `GrowthMissionService` に集約し、
+/// landing/referral/growth dashboard と同じ紹介データを表示する。
 class ReferralPage extends StatefulWidget {
   const ReferralPage({super.key});
 
@@ -14,13 +17,16 @@ class ReferralPage extends StatefulWidget {
 }
 
 class _ReferralPageState extends State<ReferralPage> {
-  final _supabase = Supabase.instance.client;
-  bool _loading = true;
-  String? _referralCode;
-  int _referralCount = 0;
-  String? _error;
+  final GrowthMissionService _growthService = const GrowthMissionService();
 
-  static const _siteUrl = 'https://my-web-app-b67f4.web.app';
+  bool _loading = true;
+  String? _error;
+  String? _pendingReferralCode;
+  ReferralGrowthSnapshot _snapshot = const ReferralGrowthSnapshot.empty();
+
+  bool get _isSignedIn => Supabase.instance.client.auth.currentUser != null;
+
+  String? get _inviteUrl => _snapshot.inviteUrl;
 
   @override
   void initState() {
@@ -33,60 +39,64 @@ class _ReferralPageState extends State<ReferralPage> {
       _loading = true;
       _error = null;
     });
+
     try {
-      final resp = await _supabase.functions.invoke(
-        'growth-hub',
-        body: {'action': 'referral.list'},
-      );
-      final data = resp.data as Map<String, dynamic>?;
-      if (data != null && data['success'] == true) {
-        final items = (data['items'] as List<dynamic>?) ?? [];
-        if (items.isNotEmpty) {
-          final meta = (items.first as Map<String, dynamic>)['metadata']
-                  as Map<String, dynamic>? ??
-              {};
-          setState(() {
-            _referralCode = meta['code']?.toString();
-            _referralCount = items.length;
-          });
-        } else {
-          // コードなし → ユーザーIDから生成
-          final uid = _supabase.auth.currentUser?.id;
-          if (uid != null) {
-            setState(() => _referralCode = uid.substring(0, 8).toUpperCase());
-          }
-        }
+      await _growthService.capturePendingReferralFromUri();
+      if (_isSignedIn) {
+        await _growthService.applyPendingReferralIfPossible();
       }
-    } catch (e) {
-      // Edge Function が未実装 or 失敗の場合はユーザーIDからコードを生成
-      final uid = _supabase.auth.currentUser?.id;
-      if (uid != null) {
-        setState(() {
-          _referralCode = uid.substring(0, 8).toUpperCase();
-        });
-      } else {
-        setState(() => _error = '紹介コードの取得に失敗しました');
-      }
+
+      final pendingCode = await _growthService.loadPendingReferralCode();
+      final snapshot = await _growthService.loadReferralSnapshot();
+      if (!mounted) return;
+      setState(() {
+        _pendingReferralCode = pendingCode;
+        _snapshot = snapshot;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _error = '紹介情報の取得に失敗しました: $error');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  String get _referralLink => '$_siteUrl/?ref=${_referralCode ?? ''}';
-
-  void _copyLink() {
-    Clipboard.setData(ClipboardData(text: _referralLink));
+  Future<void> _copyInviteLink() async {
+    final inviteUrl = _inviteUrl;
+    if (inviteUrl == null) return;
+    await Clipboard.setData(ClipboardData(text: inviteUrl));
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('紹介リンクをコピーしました'),
-        duration: Duration(seconds: 2),
+      const SnackBar(content: Text('紹介リンクをコピーしました')),
+    );
+  }
+
+  Future<void> _shareInvite() async {
+    final inviteUrl = _inviteUrl;
+    if (inviteUrl == null) return;
+    final text = '''
+自分株式会社を一緒に試してみませんか？
+
+Notion・Evernote・MoneyForward・Slack・X の機能を1つに統合したAIライフマネジメントアプリです。
+
+招待リンク:
+$inviteUrl
+''';
+    await SharePlus.instance.share(
+      ShareParams(
+        subject: '自分株式会社への招待',
+        text: text,
       ),
     );
   }
 
+  void _goToLanding() {
+    Navigator.of(context).pushReplacementNamed('/');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -94,7 +104,7 @@ class _ReferralPageState extends State<ReferralPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _load,
+            onPressed: _loading ? null : _load,
             tooltip: '更新',
           ),
         ],
@@ -102,312 +112,321 @@ class _ReferralPageState extends State<ReferralPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: Color(0xFFE53935),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(_error!),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _load,
-                        child: const Text('再試行'),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
+              ? _buildError()
+              : ListView(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ヒーローバナー
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Column(
-                          children: [
-                            Icon(
-                              Icons.people_alt,
-                              size: 48,
-                              color: Colors.white,
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              '友達を誘って一緒に使おう',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Notion・Evernote・MoneyForwardを\n1つに統合した AI ライフマネジメントを体験',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
-                                height: 1.5,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // 紹介実績
-                      if (_referralCount > 0) ...[
-                        Card(
-                          color: isDark
-                              ? const Color(0xFF022C22).withAlpha(180)
-                              : const Color(0xFFECFDF5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.emoji_events,
-                                  color: Color(0xFF059669),
-                                  size: 32,
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '$_referralCount 人を招待済み！',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF065F46),
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                    const Text(
-                                      'ありがとうございます 🎉',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF059669),
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // 紹介リンク
-                      Text(
-                        'あなたの紹介リンク',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? const Color(0xFFD1D5DB)
-                              : const Color(0xFF374151),
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF303030)
-                              : const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isDark
-                                ? const Color(0xFF374151)
-                                : const Color(0xFFE5E7EB),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _referralLink,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontFamily: 'monospace',
-                                  color: isDark
-                                      ? const Color(0xFFD1D5DB)
-                                      : Colors.black87,
-                                  height: 1.5,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy, size: 18),
-                              onPressed: _copyLink,
-                              tooltip: 'コピー',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 32,
-                                minHeight: 32,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_referralCode != null) ...[
-                        Text(
-                          '招待コード: $_referralCode',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? const Color(0xFF9CA3AF)
-                                : const Color(0xFF4B5563),
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-
-                      // シェアボタン
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          icon: const Icon(Icons.copy),
-                          label: const Text('リンクをコピー'),
-                          onPressed: _copyLink,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF6366F1),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // 3ステップ説明
-                      Text(
-                        'かんたん3ステップ',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildStep(
-                        1,
-                        '紹介リンクを送る',
-                        'LINEやXで友達に送るだけ',
-                        Icons.send,
-                        const Color(0xFF6366F1),
-                        isDark,
-                      ),
-                      _buildStep(
-                        2,
-                        '友達が登録する',
-                        'リンクから無料で登録',
-                        Icons.person_add,
-                        const Color(0xFF8B5CF6),
-                        isDark,
-                      ),
-                      _buildStep(
-                        3,
-                        '一緒に使い始める',
-                        'メモ・資産管理・AI機能が全部無料',
-                        Icons.check_circle,
-                        const Color(0xFF10B981),
-                        isDark,
-                      ),
-                      const SizedBox(height: 24),
-
-                      // 特徴ハイライト
-                      Text(
-                        '自分株式会社でできること',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
-                          height: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildFeatureChip(
-                            '📝 Notionライクなメモ',
-                            isDark,
-                          ),
-                          _buildFeatureChip('💰 資産管理', isDark),
-                          _buildFeatureChip('🤖 AI秘書', isDark),
-                          _buildFeatureChip('📋 テンプレート17種', isDark),
-                          _buildFeatureChip('📈 競合進捗バー', isDark),
-                          _buildFeatureChip('🔗 公開メモシェア', isDark),
-                          _buildFeatureChip('📚 習慣トラッカー', isDark),
-                          _buildFeatureChip('🏆 ストリーク記録', isDark),
-                        ],
-                      ),
-                      const SizedBox(height: 40),
+                  children: [
+                    _buildHero(colorScheme),
+                    const SizedBox(height: 18),
+                    if (!_isSignedIn) ...[
+                      _buildGuestInviteNotice(colorScheme),
+                      const SizedBox(height: 18),
+                    ] else ...[
+                      _buildStats(colorScheme),
+                      const SizedBox(height: 18),
+                      _buildInviteLink(colorScheme),
+                      const SizedBox(height: 18),
                     ],
-                  ),
+                    _buildSteps(colorScheme),
+                    const SizedBox(height: 18),
+                    _buildRewards(colorScheme),
+                  ],
                 ),
     );
   }
 
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Color(0xFFE53935)),
+            const SizedBox(height: 12),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('再試行'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHero(ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.group_add_outlined,
+            size: 36,
+            color: colorScheme.onPrimaryContainer,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '紹介リンクで初回体験までつなげる',
+            style: TextStyle(
+              color: colorScheme.onPrimaryContainer,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '招待リンクには紹介コードとUTMを付与します。友達がリンクから登録すると、紹介実績として集計されます。',
+            style: TextStyle(
+              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.82),
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGuestInviteNotice(ColorScheme colorScheme) {
+    final pendingCode = _pendingReferralCode;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            pendingCode == null ? 'ログインすると紹介コードを発行できます' : '招待コードを受け取りました',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            pendingCode == null
+                ? 'Magic Linkでログインすると、あなた専用の紹介リンクと紹介実績が表示されます。'
+                : 'コード $pendingCode は保存済みです。ログイン後に紹介経由登録として自動反映します。',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: _goToLanding,
+            icon: const Icon(Icons.login),
+            label: const Text('無料で始める'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStats(ColorScheme colorScheme) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            colorScheme,
+            label: '招待合計',
+            value: '${_snapshot.totalReferrals}',
+            icon: Icons.people_alt_outlined,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildStatCard(
+            colorScheme,
+            label: '登録完了',
+            value: '${_snapshot.successfulReferrals}',
+            icon: Icons.verified_outlined,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(
+    ColorScheme colorScheme, {
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: colorScheme.primary),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInviteLink(ColorScheme colorScheme) {
+    final inviteUrl = _inviteUrl;
+    final code = _snapshot.referralCode;
+    if (inviteUrl == null || code == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '紹介コードを生成できませんでした。更新してもう一度お試しください。',
+          style: TextStyle(color: colorScheme.onErrorContainer),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'あなたの紹介リンク',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    inviteUrl,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _copyInviteLink,
+                  icon: const Icon(Icons.copy),
+                  tooltip: 'コピー',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '招待コード: $code',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: _copyInviteLink,
+                  icon: const Icon(Icons.copy),
+                  label: const Text('コピー'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _shareInvite,
+                  icon: const Icon(Icons.ios_share),
+                  label: const Text('共有'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSteps(ColorScheme colorScheme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '紹介フロー',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+        const SizedBox(height: 10),
+        _buildStep(colorScheme, 1, 'リンクを送る', 'LINE・X・Slackなどで招待リンクを共有します。'),
+        _buildStep(colorScheme, 2, '友達が登録する', '紹介コードは端末に保存され、ログイン後に紐づきます。'),
+        _buildStep(colorScheme, 3, '実績が増える', '登録完了した紹介は、グロースダッシュボードにも反映されます。'),
+      ],
+    );
+  }
+
   Widget _buildStep(
-    int step,
+    ColorScheme colorScheme,
+    int index,
     String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    bool isDark,
+    String body,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withAlpha(20),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$step',
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  height: 1.5,
-                ),
+          CircleAvatar(
+            radius: 15,
+            backgroundColor: colorScheme.primaryContainer,
+            child: Text(
+              '$index',
+              style: TextStyle(
+                color: colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -418,49 +437,46 @@ class _ReferralPageState extends State<ReferralPage> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black87,
-                    height: 1.5,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  body,
                   style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF4B5563),
+                    color: colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
               ],
             ),
           ),
-          Icon(icon, color: color, size: 20),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureChip(String label, bool isDark) {
+  Widget _buildRewards(ColorScheme colorScheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
-        ),
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: isDark ? const Color(0xFFE5E7EB) : Colors.black87,
-          height: 1.5,
-        ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.workspace_premium_outlined, color: colorScheme.secondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '報酬設計は 1 登録完了 = 500 bonus points を基準にしています。次の実装でランキングと報酬表示を広げます。',
+              style: TextStyle(
+                color: colorScheme.onSecondaryContainer,
+                height: 1.6,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

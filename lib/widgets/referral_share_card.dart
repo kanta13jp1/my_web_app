@@ -48,8 +48,9 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
     }
   }
 
-  String get _shareUrl =>
-      _referralCode != null ? '$_baseUrl/?ref=$_referralCode' : _baseUrl;
+  String get _shareUrl => _referralCode != null
+      ? GrowthMissionService.buildInviteUrlForCode(_referralCode!)
+      : _baseUrl;
 
   Future<void> _copyLink() async {
     await Clipboard.setData(ClipboardData(text: _shareUrl));
@@ -60,10 +61,10 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
   }
 
   void _shareToX() {
-    final text = 'スマホでギター録音できる！🎸\n'
-        '自分株式会社 — Notion・Slack・MoneyForwardなど21競合の機能を1アプリに統合。完全無料👇\n'
+    final text = '自分株式会社を一緒に試してみませんか？\n'
+        'Notion・Evernote・MoneyForward・Slack・Xなど21競合の機能を1アプリに統合。完全無料👇\n'
         '$_shareUrl\n'
-        '#ギター録音 #buildinpublic #FlutterWeb #自分株式会社';
+        '#buildinpublic #FlutterWeb #自分株式会社';
     final intentUrl =
         'https://x.com/intent/tweet?text=${Uri.encodeComponent(text)}';
     web.window.open(intentUrl, '_blank');
@@ -71,7 +72,7 @@ class _ReferralShareCardState extends State<ReferralShareCard> {
 
   void _nativeShare() {
     try {
-      const text = 'スマホでギター録音＋21SaaS統合の自分株式会社を試してみよう！完全無料。';
+      const text = '21SaaS統合の自分株式会社を試してみよう！完全無料。';
       web.window.navigator.share(
         web.ShareData(title: '自分株式会社', text: text, url: _shareUrl),
       );
