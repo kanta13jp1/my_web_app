@@ -57,8 +57,7 @@ class _AiUniversityRankingPageState extends State<AiUniversityRankingPage> {
             (entry) => entry.totalCorrect > 0 || entry.providersStudied > 0,
           )
           .toList();
-      final hasPendingPublicRows =
-          mappedEntries.isNotEmpty && entries.isEmpty;
+      final hasPendingPublicRows = mappedEntries.isNotEmpty && entries.isEmpty;
 
       final leaderboardUserIds = entries
           .map((entry) => entry.userId)

@@ -15629,3 +15629,23 @@ Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
 1. 変更をローカル起動で再キャプチャし、LP ヒーローと AI大学ヘッダーの最終見た目を確認
 2. `core-hub` / `growth-hub` の 401 を本番未ログイン時の想定どおりか切り分け
 3. NotebookLM 用の UTF-8 ラッパーコマンドを session-start hook か PowerShell 関数に固定化
+
+## 2026-04-21 Codex WBS 更新
+
+### 実施内容
+
+- 本番 `project-gantt` の live WBS を Supabase 経由で再確認し、今回こちらで引き継いだ他担当タスクを洗い出した
+- `NotebookLM Master Brain完全活用` は `ps1` 担当だったため、`instance` / `owner_instance` を `vscode` に変更して Codex 側へ引き継いだ
+- 今回の対応内容に合わせて、本番 WBS の進捗を更新した
+  - `NotebookLM Master Brain完全活用`: 40% → 70%
+  - `DESIGN.md全ページ準拠 60%達成`: 55% → 60%
+  - `モバイルレスポンシブ完全対応`: 60% → 65%
+  - `LP最適化 (120のこと完全掲載)`: 65% → 70%
+- ローカル文書 `docs/WBS.md` も本番状態に合わせて同期した
+
+### 確認メモ
+
+- 本番 WBS 取得: `wbs.list_tasks` を `limit=200` で実行し 73 件取得
+- 本番 DB 更新: `supabase db query --linked` で直接更新
+- 更新後に対象 4 タスクの `instance / owner_instance / progress / status` を再照会して反映を確認
+- `git diff --check` は通過
