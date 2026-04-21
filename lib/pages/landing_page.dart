@@ -792,26 +792,29 @@ $input
           // プライマリ CTA
           SizedBox(
             height: 56,
-            child: FilledButton.icon(
-              key: const Key('landing_register_button'),
-              onPressed: _scrollToAuthSection,
-              icon: const Icon(Icons.rocket_launch, size: 18),
-              label: const Text(
-                '無料で始める（30秒）',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  height: 1.4,
+            child: Tooltip(
+              message: 'アカウントを作成して提案を保存できます。登録は30秒程度です。',
+              child: FilledButton.icon(
+                key: const Key('landing_register_button'),
+                onPressed: _scrollToAuthSection,
+                icon: const Icon(Icons.rocket_launch, size: 18),
+                label: const Text(
+                  '無料で始める',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFF6B35),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF6B35),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                  shadowColor: const Color(0xFFFF6B35),
                 ),
-                elevation: 0,
-                shadowColor: const Color(0xFFFF6B35),
               ),
             ),
           ),
@@ -819,22 +822,25 @@ $input
           // セカンダリ CTA
           SizedBox(
             height: 48,
-            child: OutlinedButton.icon(
-              key: const Key('landing_trial_scroll_button'),
-              onPressed: _scrollToTrialSection,
-              icon: const Icon(Icons.play_circle_outline, size: 18),
-              label: const Text(
-                '登録なしで1件試す',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  height: 1.5,
+            child: Tooltip(
+              message: '登録不要でAI提案を1件試せます。',
+              child: OutlinedButton.icon(
+                key: const Key('landing_trial_scroll_button'),
+                onPressed: _scrollToTrialSection,
+                icon: const Icon(Icons.play_circle_outline, size: 18),
+                label: const Text(
+                  '登録なしで1件試す',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF6B35),
-                side: const BorderSide(color: Color(0xFFFF6B35)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFF6B35),
+                  side: const BorderSide(color: Color(0xFFFF6B35)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
