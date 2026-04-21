@@ -5,6 +5,49 @@
 -- The remaining work is a workflow smoke test to confirm the token still has
 -- the necessary bypass permission.
 
+-- Some remote migration histories marked the WBS extension migrations as
+-- applied without actually running their DDL. Keep this first pending Codex
+-- WBS migration self-healing so later progress updates can use these columns
+-- and the Codex owner value.
+ALTER TABLE wbs_tasks
+  ADD COLUMN IF NOT EXISTS estimated_hours numeric(6,1) DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS owner_instance text,
+  ADD COLUMN IF NOT EXISTS recovery_plan text DEFAULT '',
+  ADD COLUMN IF NOT EXISTS recovery_planned_at timestamptz,
+  ADD COLUMN IF NOT EXISTS rescheduled_count int NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS remaining_work text DEFAULT '',
+  ADD COLUMN IF NOT EXISTS depends_on uuid[] DEFAULT '{}'::uuid[],
+  ADD COLUMN IF NOT EXISTS depends_on_titles text[] DEFAULT '{}'::text[],
+  ADD COLUMN IF NOT EXISTS auto_recovery_applied boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS planned_start_date date,
+  ADD COLUMN IF NOT EXISTS planned_end_date date;
+
+UPDATE wbs_tasks
+SET owner_instance = CASE
+  WHEN instance = 'windows' THEN 'win'
+  WHEN instance = 'ps' THEN 'ps1'
+  WHEN instance = 'all' THEN 'vscode'
+  WHEN instance IN (
+    'vscode', 'win',
+    'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile',
+    'schedule', 'gha'
+  ) THEN instance
+  ELSE 'vscode'
+END
+WHERE owner_instance IS NULL
+   OR owner_instance IN ('windows', 'ps', 'all');
+
+ALTER TABLE wbs_tasks DROP CONSTRAINT IF EXISTS wbs_tasks_owner_instance_check;
+ALTER TABLE wbs_tasks ADD CONSTRAINT wbs_tasks_owner_instance_check
+  CHECK (owner_instance IN (
+    'vscode', 'win',
+    'ps1', 'ps2', 'ps3', 'ps4', 'ps5', 'ps6',
+    'web', 'mobile',
+    'schedule', 'gha',
+    'codex'
+  )) NOT VALID;
+
 UPDATE wbs_tasks
 SET
   owner_instance = 'codex',
