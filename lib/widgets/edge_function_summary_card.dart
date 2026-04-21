@@ -838,6 +838,28 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/two-factor-auth',
       '二要素認証ページ > 認証設定・バックアップコード確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-21)
+    _FnDef(
+      'line-notifications',
+      'LINE通知管理 (メッセージ送信・履歴)',
+      true,
+      '/line-notifications',
+      'LINE通知ページ > チャンネル設定・メッセージ送信・送信履歴確認',
+    ),
+    _FnDef(
+      'vehicle-fleet-manager',
+      '車両フリート管理 (車両登録・運行管理)',
+      true,
+      '/vehicle-fleet',
+      '車両管理ページ > 車両一覧・走行履歴・メンテナンス記録',
+    ),
+    _FnDef(
+      'video-meeting-manager',
+      'ビデオ会議管理 (会議室・録画管理)',
+      true,
+      '/video-meeting',
+      'ビデオ会議ページ > 会議室一覧・参加者管理・録画確認',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
