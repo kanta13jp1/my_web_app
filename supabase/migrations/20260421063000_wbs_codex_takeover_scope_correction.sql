@@ -39,7 +39,8 @@ WHERE status <> 'completed'
     'E2Eテスト整備 (Playwright)',
     'エラー監視強化 (Sentry連携)',
     '画像生成統合',
-    'マルチモーダルAI'
+    'マルチモーダルAI',
+    'AI大学 100社達成'
   );
 
 UPDATE wbs_tasks
