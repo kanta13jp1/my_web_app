@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-21 Codex (AI University 100 providers 引継ぎ)
+> **最終更新**: 2026-04-21 Codex (SEO改善 sitemap/meta tags 引継ぎ)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -12,7 +12,7 @@
   `競合比較ページ最新化` / `Webパフォーマンス最適化 (LCP < 2.5s)` /
   `BYPASS_RULES secret設定` / `オンボーディング最適化` / `紹介プログラム実装` /
   `E2Eテスト整備 (Playwright)` / `エラー監視強化 (Sentry連携)` /
-  `画像生成統合` / `マルチモーダルAI` / `AI大学 100社達成`
+  `画像生成統合` / `マルチモーダルAI` / `AI大学 100社達成` / `SEO改善 (sitemap・meta tags)`
 - 過去の「未完了タスク全件を Codex に集約」方針は過剰なため、後続 migration で担当を各 lane owner に戻す。
 
 ## マイルストーン概要 (ユーザー可視)
@@ -103,7 +103,7 @@
 | タスク | 状態 | 進捗 | α/β/v1 |
 |---|---|---|---|
 | LP最適化 (120のこと完全掲載) | 🟡進行中 | 70% | α |
-| SEO改善 (sitemap・meta tags) | 🟡進行中 | 80% | α |
+| SEO改善 (sitemap・meta tags) (Codex引継ぎ) | 🟡進行中 | 85% | α |
 | オンボーディング最適化 (Codex引継ぎ) | 🟡進行中 | 35% | β |
 | 紹介プログラム実装 (Codex引継ぎ) | 🟡進行中 | 25% | β |
 | **ユーザー数50人達成 (α版目標)** | 🟡進行中 | 8% | α |

@@ -1,20 +1,30 @@
 User-agent: *
 Allow: /
-Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
-Host: my-web-app-b67f4.web.app
-# robots.txt for 自分株式会社
-# https://my-web-app-b67f4.web.app/
-
-User-agent: *
-Allow: /
 Allow: /gemini-university
-Allow: /danshari
-Allow: /shared/
+Allow: /ai-university
+Allow: /ai-university-content
+Allow: /ai-university-ranking
+Allow: /ai-university-voice
+Allow: /project-gantt
+Allow: /referral
 Allow: /public-memo
+Allow: /public-memos
+Allow: /public-guitar-gallery
+Allow: /philosophy
+Allow: /ai-dev-principles
+Allow: /vs-
 
-# Authenticated and internal routes
+# Authenticated, admin, and operational surfaces should not be indexed.
 Disallow: /home
 Disallow: /admin
+Disallow: /admin-feedback
+Disallow: /admin-notifications
 Disallow: /settings
+Disallow: /profile-settings
+Disallow: /support-tickets
+Disallow: /quota-dashboard
+Disallow: /blog-management
+Disallow: /api-playground
 
 Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
+Host: my-web-app-b67f4.web.app

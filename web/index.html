@@ -353,6 +353,9 @@
         <a class="secondary" href="https://my-web-app-b67f4.web.app/gemini-university">Gemini University</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/feature-requests">機能リクエスト</a>
         <a class="secondary" href="https://my-web-app-b67f4.web.app/danshari">断捨離ツール</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/project-gantt">WBSガントチャート</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/ai-dev-principles">AI開発原則</a>
+        <a class="secondary" href="https://my-web-app-b67f4.web.app/public-guitar-gallery">公開ギャラリー</a>
       </nav>
       <p class="seo-loading">Loading application...</p>
       <noscript>
@@ -379,9 +382,90 @@
         if (el) el.setAttribute('content', content);
       }
 
+      function setCanonical(url) {
+        var link = document.querySelector('link[rel="canonical"]');
+        if (link) link.setAttribute('href', url);
+      }
+
+      function applyRouteMeta(meta) {
+        var url = 'https://my-web-app-b67f4.web.app' + path;
+        document.title = meta.title;
+        setMeta('description', meta.desc);
+        setMeta('og:title', meta.title);
+        setMeta('og:description', meta.desc);
+        setMeta('og:url', url);
+        setMeta('twitter:title', meta.title);
+        setMeta('twitter:description', meta.desc);
+        setMeta('twitter:url', url);
+        setCanonical(url);
+      }
+
       var params = new URLSearchParams(window.location.search);
       var path = window.location.pathname;
       var memoId = params.get('id');
+      var normalizedPath = path.replace(/\/$/, '') || '/';
+
+      var routeMeta = {
+        '/project-gantt': {
+          title: 'WBSガントチャート | 自分株式会社',
+          desc: '自分株式会社の開発WBS、マイルストーン、担当、進捗を公開するプロジェクトガントチャート。Claude、Codex、PowerShell、VSCodeの並行開発状況を確認できます。'
+        },
+        '/ai-university': {
+          title: 'AI大学 | 自分株式会社',
+          desc: 'AIツール、AIプロバイダー、実務ユースケースを学べる無料のAI大学。クイズ、ランキング、バッジで継続学習できます。'
+        },
+        '/ai-university-content': {
+          title: 'AI大学 コンテンツ一覧 | 自分株式会社',
+          desc: 'AI大学の学習コンテンツ、プロバイダー解説、クイズ教材を一覧できる公開ページです。'
+        },
+        '/ai-university-ranking': {
+          title: 'AI大学ランキング | 自分株式会社',
+          desc: 'AI大学の学習進捗、ストリーク、バッジ獲得状況をランキング形式で確認できます。'
+        },
+        '/ai-university-voice': {
+          title: 'AI大学 音声学習 | 自分株式会社',
+          desc: 'AI大学の内容を音声で学習するためのページ。移動中や作業中でもAIリテラシーを積み上げられます。'
+        },
+        '/ai-image-generator': {
+          title: 'AI画像生成 | 自分株式会社',
+          desc: 'OpenAI画像生成とメディア管理を統合したAI画像生成ツール。サイズ、スタイル、生成履歴をまとめて扱えます。'
+        },
+        '/referral': {
+          title: '紹介プログラム | 自分株式会社',
+          desc: '自分株式会社の紹介コード、招待リンク、紹介実績を確認できる紹介プログラムページです。'
+        },
+        '/public-guitar-gallery': {
+          title: '公開ギターギャラリー | 自分株式会社',
+          desc: 'ユーザーが公開したギター録音を一覧できるギャラリー。再生、いいね、人気順の発見に対応しています。'
+        },
+        '/development-achievements': {
+          title: '開発実績 | 自分株式会社',
+          desc: '自分株式会社の開発履歴、実装済み機能、改善ログを公開する開発実績ページです。'
+        },
+        '/ui-design-status': {
+          title: 'UIデザイン準拠状況 | 自分株式会社',
+          desc: 'DESIGN.md準拠状況、主要画面のUI改善進捗、デザインシステム適用状況を確認できます。'
+        },
+        '/edge-functions': {
+          title: 'Edge Functions一覧 | 自分株式会社',
+          desc: 'Supabase Edge Functionsの統合状況、Hub構成、公開APIの稼働状況を確認できるページです。'
+        },
+        '/ai-provider-status': {
+          title: 'AIプロバイダーステータス | 自分株式会社',
+          desc: 'AIプロバイダー連携状況、モデル対応、接続状態を確認できる運用ステータスページです。'
+        },
+        '/app-hub': {
+          title: 'アプリハブ | 自分株式会社',
+          desc: '自分株式会社に統合された生活、仕事、学習、成長管理ツールを一覧できるアプリハブです。'
+        },
+        '/agent-hub': {
+          title: 'AIエージェントハブ | 自分株式会社',
+          desc: 'AIエージェント、部署別AI、ワークフロー自動化機能を一覧できるエージェントハブです。'
+        }
+      };
+
+      var publicRouteMeta = routeMeta[normalizedPath];
+      if (publicRouteMeta) applyRouteMeta(publicRouteMeta);
 
       // Competitor comparison pages: individual OGP per /vs-{competitor} route
       var competitorMeta = {
