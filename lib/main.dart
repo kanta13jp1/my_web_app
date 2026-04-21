@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -273,15 +275,6 @@ Future<void> main() async {
   usePathUrlStrategy();
 
   final NotificationService notificationService = NotificationService();
-  await notificationService.init();
-  final prefs = await SharedPreferences.getInstance();
-  final saturdayReminderEnabled =
-      prefs.getBool('stock_tasks_saturday_reminder_enabled') ?? true;
-  if (saturdayReminderEnabled) {
-    await notificationService.scheduleSaturdayReminder();
-  } else {
-    await notificationService.cancelSaturdayReminder();
-  }
 
   await Supabase.initialize(
     url: 'https://smmkxxavexumewbfaqpy.supabase.co',
@@ -302,6 +295,35 @@ Future<void> main() async {
       child: const MyApp(),
     ),
   );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(_configureStartupNotifications(notificationService));
+  });
+}
+
+Future<void> _configureStartupNotifications(
+  NotificationService notificationService,
+) async {
+  try {
+    await notificationService.init();
+    final prefs = await SharedPreferences.getInstance();
+    final saturdayReminderEnabled =
+        prefs.getBool('stock_tasks_saturday_reminder_enabled') ?? true;
+    if (saturdayReminderEnabled) {
+      await notificationService.scheduleSaturdayReminder();
+    } else {
+      await notificationService.cancelSaturdayReminder();
+    }
+  } catch (error, stackTrace) {
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: error,
+        stack: stackTrace,
+        library: 'startup',
+        context: ErrorDescription('while configuring notification reminders'),
+      ),
+    );
+  }
 }
 
 class _AuthenticatedHomePage extends StatelessWidget {

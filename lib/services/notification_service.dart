@@ -8,35 +8,50 @@ class NotificationService {
   static const int saturdayReminderId = 0;
   static const int abstinenceReminderId = 1001;
   static const int abstinenceRecoveryReminderId = 1002;
+  Future<void>? _initFuture;
+  bool _initialized = false;
 
-  Future<void> init() async {
-    // Initialize timezone
-    tz.initializeTimeZones();
+  Future<void> init() {
+    if (_initialized) return Future<void>.value();
+    return _initFuture ??= _init();
+  }
 
-    // Android initialization
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+  Future<void> _init() async {
+    try {
+      // Initialize timezone
+      tz.initializeTimeZones();
 
-    // iOS initialization
-    const DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+      // Android initialization
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+      // iOS initialization
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    await flutterLocalNotificationsPlugin.initialize(
-      settings: initializationSettings,
-    );
+      const InitializationSettings initializationSettings =
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+
+      await flutterLocalNotificationsPlugin.initialize(
+        settings: initializationSettings,
+      );
+      _initialized = true;
+    } finally {
+      if (!_initialized) {
+        _initFuture = null;
+      }
+    }
   }
 
   Future<void> scheduleSaturdayReminder() async {
+    await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'someday_tasks_reminder_channel',
@@ -62,6 +77,7 @@ class NotificationService {
   }
 
   Future<void> cancelSaturdayReminder() async {
+    await init();
     await flutterLocalNotificationsPlugin.cancel(id: saturdayReminderId);
   }
 
@@ -70,6 +86,7 @@ class NotificationService {
     int hour = 21,
     int minute = 0,
   }) async {
+    await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'abstinence_guard_reminder_channel',
@@ -95,6 +112,7 @@ class NotificationService {
   }
 
   Future<void> cancelAbstinenceReminder({int id = abstinenceReminderId}) async {
+    await init();
     await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
@@ -102,6 +120,7 @@ class NotificationService {
     int id = abstinenceRecoveryReminderId,
     DateTime? dueAt,
   }) async {
+    await init();
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'abstinence_recovery_reminder_channel',
@@ -139,6 +158,7 @@ class NotificationService {
   Future<void> cancelAbstinenceRecoveryReminder({
     int id = abstinenceRecoveryReminderId,
   }) async {
+    await init();
     await flutterLocalNotificationsPlugin.cancel(id: id);
   }
 
@@ -180,6 +200,7 @@ class NotificationService {
   }
 
   Future<void> cancelAllNotifications() async {
+    await init();
     await flutterLocalNotificationsPlugin.cancelAll();
   }
 }
