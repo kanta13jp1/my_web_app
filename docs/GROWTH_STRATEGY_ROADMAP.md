@@ -15649,3 +15649,32 @@ Step 0 score: 9/9 (公式 API / OSS nix / SaaS + free / education 領域浸透)
 - 本番 DB 更新: `supabase db query --linked` で直接更新
 - 更新後に対象 4 タスクの `instance / owner_instance / progress / status` を再照会して反映を確認
 - `git diff --check` は通過
+
+## 2026-04-21 WEB版 日次レポート (Claude Schedule Agent)
+
+### 実施内容
+
+- **daily-report Schedule タスク実行** (WEB版 / 2026-04-21 00:22 UTC)
+  - `docs/daily-reports/2026-04-21.md` にスケジュール実行セクションを追記
+  - メトリクス取得: Supabase EF への外部通信がサンドボックス DNS 制限でブロック → ベストエフォート集計
+  - ユーザー数: 4名 (roadmap 最終確認値 2026-04-16)
+
+- **X 投稿**: `viral-growth-engine` / `post-x-update` EF ともに到達不可 (サンドボックス制限)
+  - 投稿予定テキストを daily-report に記録済み → VSCode版/PS版での再実行を推奨
+
+- **競合モニタリング** (WebSearch 補足調査): `docs/competitor-reports/2026-04-21.md` に追記
+  - **Notion** (2026-04-14〜17): Custom Agents 35〜50%コスト削減 / AI Meeting Notes カスタム設定 / Mail & Calendar 設定統合 / 日本語アカデミー対応
+  - **Slack** (2026-03-31〜): 30 AI新機能発表 / 再利用可能 AI スキル / MCP サーバー / Semantic Search Pro 解放
+  - **GitHub** (2026-04): Claude Opus 4.7 Copilot 対応 / `gh skill` CLI Public Preview / ステータスページ刷新
+
+- **GitHub Issue 自動修正**: `auto-review` ラベル付きオープン Issue 0件 — 対応不要
+
+- **Schedule Health Monitor**: git log より CS チェックが毎時実行中 (正常稼働確認)
+  - `schedule_task_runs` への記録: REST API 到達不可 (同上サンドボックス制限)
+
+### 競合アクション提案
+
+1. **Notion Mail & Calendar 統合 GA (2026-04-17)** → `schedule-hub` EF を Google Calendar API と繋ぐスプリントを開始
+2. **Slack MCP サーバー登場** → `slack-hub` EF 実装を前倒し。Slack ↔ 自分株式会社 双方向同期で差別化
+3. **GitHub `gh skill` Public Preview** → `.claude/skills/` エコシステムを公開化して GitHub エコシステムと連携する機会
+
