@@ -218,15 +218,56 @@ serve(async (req) => {
       case "image.generate": {
         const openaiKey = Deno.env.get("OPENAI_API_KEY") ?? "";
         if (!openaiKey) return json({ error: "OPENAI_API_KEY not configured" }, 503);
+        const prompt = String(body.prompt ?? "").trim();
+        if (!prompt) return json({ error: "prompt required" }, 400);
+
+        const allowedSizes = ["1024x1024", "1024x1792", "1792x1024"];
+        const requestedSize = String(body.size ?? "1024x1024");
+        const size = allowedSizes.includes(requestedSize) ? requestedSize : "1024x1024";
+        const requestedStyle = String(body.style ?? "vivid");
+        const style = requestedStyle === "natural" ? "natural" : "vivid";
+
         const res = await fetch("https://api.openai.com/v1/images/generations", {
           method: "POST",
           headers: { "Authorization": `Bearer ${openaiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt: body.prompt, n: 1, size: body.size ?? "1024x1024", model: "dall-e-3" }),
+          body: JSON.stringify({
+            prompt,
+            n: 1,
+            size,
+            style,
+            model: "dall-e-3",
+            response_format: "url",
+          }),
         });
-        const result = await res.json() as { data?: Array<{ url: string }> };
-        const imageUrl = result.data?.[0]?.url ?? "";
-        await addItem(admin, "ai_image", userId, { prompt: body.prompt, url: imageUrl });
-        return json({ success: true, url: imageUrl, prompt: body.prompt });
+        const raw = await res.text();
+        let result: { data?: Array<{ url?: string; revised_prompt?: string }>; error?: { message?: string } };
+        try {
+          result = JSON.parse(raw);
+        } catch {
+          return json({ success: false, error: "OpenAI image response was not JSON", detail: raw.slice(0, 500) }, 502);
+        }
+        if (!res.ok) {
+          return json({
+            success: false,
+            error: result.error?.message ?? `OpenAI image generation failed (${res.status})`,
+            detail: raw.slice(0, 500),
+          }, 502);
+        }
+
+        const generated = result.data?.[0];
+        const imageUrl = generated?.url ?? "";
+        if (!imageUrl) return json({ success: false, error: "OpenAI image URL was empty" }, 502);
+
+        const item = await addItem(admin, "ai_image", userId, {
+          prompt,
+          url: imageUrl,
+          size,
+          style,
+          provider: "openai",
+          model: "dall-e-3",
+          revised_prompt: generated?.revised_prompt ?? null,
+        });
+        return json({ success: true, image: item, url: imageUrl, prompt, size, style });
       }
       case "image.list": return json({ success: true, images: await listItems(admin, "ai_image", userId) });
 

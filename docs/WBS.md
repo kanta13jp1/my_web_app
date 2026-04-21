@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-21 Codex (Sentry error monitoring 引継ぎ)
+> **最終更新**: 2026-04-21 Codex (AI image generation 統合引継ぎ)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -11,7 +11,8 @@
   `DESIGN.md全ページ準拠 60%達成` / `モバイルレスポンシブ完全対応` /
   `競合比較ページ最新化` / `Webパフォーマンス最適化 (LCP < 2.5s)` /
   `BYPASS_RULES secret設定` / `オンボーディング最適化` / `紹介プログラム実装` /
-  `E2Eテスト整備 (Playwright)` / `エラー監視強化 (Sentry連携)`
+  `E2Eテスト整備 (Playwright)` / `エラー監視強化 (Sentry連携)` /
+  `画像生成統合`
 - 過去の「未完了タスク全件を Codex に集約」方針は過剰なため、後続 migration で担当を各 lane owner に戻す。
 
 ## マイルストーン概要 (ユーザー可視)
@@ -77,14 +78,14 @@
 | 競合比較ページ最新化 (Codex引継ぎ) | 🟡進行中 | 85% | α |
 | 課金機能実装 (Stripe) | ⚪未着手 | 0% | v1 |
 
-### 🤖 カテゴリ5: AI統合 — **PS版 + VSCode版 担当**
+### 🤖 カテゴリ5: AI統合 — **PS版 + VSCode版 / Codex 一時引継ぎ**
 
 | タスク | 担当 | 状態 | 進捗 | α/β/v1 |
 |---|---|---|---|---|
 | ai-hub 502エラー根本修正 | PS | ✅完了 | 100% | α |
 | ai-hub provider.chat 全対応 | PS+Win | 🟡進行中 | 20% | β | (13/78社実装 — Windows#74で OpenAI互換8+独自3+特殊2 追加)
 | AIアシスタント Opus4.7/Sonnet4.6更新 | VSCode | 🟡進行中 | 80% | α |
-| 画像生成統合 | PS | ⚪未着手 | 0% | v1 |
+| 画像生成統合 | Codex | 🟡進行中 | 35% | v1 |
 | マルチモーダルAI | VSCode | ⚪未着手 | 0% | v1 |
 
 ### 📈 カテゴリ6: グロース自動化 — **PS版 + Codex 担当**
@@ -192,3 +193,4 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - 紹介プログラム実装 (Codex引継ぎ・現 25%)
 - E2Eテスト整備 (Playwright) (Codex引継ぎ・現 20%)
 - エラー監視強化 (Sentry連携) (Codex引継ぎ・現 25%)
+- 画像生成統合 (Codex引継ぎ・現 35%)

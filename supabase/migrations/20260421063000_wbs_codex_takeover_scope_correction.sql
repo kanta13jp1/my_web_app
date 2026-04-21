@@ -37,7 +37,8 @@ WHERE status <> 'completed'
     'オンボーディング最適化',
     '紹介プログラム実装',
     'E2Eテスト整備 (Playwright)',
-    'エラー監視強化 (Sentry連携)'
+    'エラー監視強化 (Sentry連携)',
+    '画像生成統合'
   );
 
 UPDATE wbs_tasks
