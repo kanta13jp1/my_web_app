@@ -379,9 +379,9 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
         title: Text(
           '開発ロードマップ & WBS',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -578,15 +578,15 @@ class _WbsTab extends StatelessWidget {
             Text(
               '未完了のみ',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF9CA3AF),
-                  ),
+                color: const Color(0xFF9CA3AF),
+              ),
             ),
             const SizedBox(width: 16),
             Text(
               '表示: ${_filtered.length} / ${tasks.length} 件',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: const Color(0xFF707070),
-                  ),
+                color: const Color(0xFF707070),
+              ),
             ),
           ],
         ),
@@ -648,17 +648,16 @@ class _OverallProgressCard extends StatelessWidget {
                   children: [
                     Text(
                       '自分株式会社 開発WBS',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       '$taskCount タスク',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: const Color(0xFF707070),
-                          ),
+                        color: const Color(0xFF707070),
+                      ),
                     ),
                   ],
                 ),

@@ -326,8 +326,15 @@ Future<void> _configureStartupNotifications(
   }
 }
 
-class _AuthenticatedHomePage extends StatelessWidget {
+class _AuthenticatedHomePage extends StatefulWidget {
   const _AuthenticatedHomePage();
+
+  @override
+  State<_AuthenticatedHomePage> createState() => _AuthenticatedHomePageState();
+}
+
+class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
+  late final Future<bool> _showOnboardingFuture = _shouldShowOnboarding();
 
   Future<bool> _shouldShowOnboarding() async {
     try {
@@ -349,7 +356,7 @@ class _AuthenticatedHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: _shouldShowOnboarding(),
+      future: _showOnboardingFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(

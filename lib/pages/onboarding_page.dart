@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -9,11 +12,21 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
+  static const _progressKeyPrefix = 'onboarding_progress_page';
+
   final PageController _pageController = PageController();
   final TextEditingController _nameController = TextEditingController();
   int _currentPage = 0;
   bool _isLoading = false;
   bool _onboardingDone = false; // 就任承諾完了フラグ（4ページ目表示制御）
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_restoreSavedProgress());
+    });
+  }
 
   @override
   void dispose() {
@@ -61,6 +74,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         }).eq('user_id', user.id);
       } catch (_) {}
 
+      await _clearSavedProgress();
+
       if (mounted) {
         setState(() => _onboardingDone = true);
         // 4ページ目（スタートガイド）へ
@@ -79,6 +94,51 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
+  Future<String> _progressKey() async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null || userId.isEmpty) return _progressKeyPrefix;
+    return '${_progressKeyPrefix}_$userId';
+  }
+
+  Future<void> _restoreSavedProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedPage = prefs.getInt(await _progressKey());
+    if (!mounted || savedPage == null) return;
+
+    final page = savedPage.clamp(0, 2);
+    if (page == _currentPage) return;
+
+    setState(() => _currentPage = page);
+    _pageController.jumpToPage(page);
+  }
+
+  Future<void> _saveProgress(int page) async {
+    if (page < 0 || page > 2) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(await _progressKey(), page);
+  }
+
+  Future<void> _clearSavedProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(await _progressKey());
+  }
+
+  void _goToPreviousPage() {
+    if (_currentPage <= 0 || _isLoading) return;
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _goToNextPage() {
+    if (_currentPage >= 2 || _isLoading) return;
+    _pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,7 +150,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                onPageChanged: (index) => setState(() => _currentPage = index),
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() => _currentPage = index);
+                  unawaited(_saveProgress(index));
+                },
                 children: [
                   _buildPhilosophyPage(),
                   _buildBoardMemberPage(),
@@ -486,37 +550,44 @@ class _OnboardingPageState extends State<OnboardingPage> {
             }),
           ),
           // ボタン
-          if (_currentPage < 2)
-            ElevatedButton(
-              onPressed: () {
-                _pageController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: const Text('次へ'),
-            )
-          else
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _finishOnboarding,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3D5AFE),
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.verified_user),
-              label: const Text('就任を承諾して開始'),
-            ),
+          Row(
+            children: [
+              if (_currentPage > 0)
+                TextButton(
+                  onPressed: _isLoading ? null : _goToPreviousPage,
+                  child: const Text('戻る'),
+                ),
+              const SizedBox(width: 8),
+              if (_currentPage < 2)
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _goToNextPage,
+                  child: const Text('次へ'),
+                )
+              else
+                ElevatedButton.icon(
+                  onPressed: _isLoading ? null : _finishOnboarding,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3D5AFE),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.verified_user),
+                  label: const Text('就任を承諾して開始'),
+                ),
+            ],
+          ),
         ],
       ),
     );

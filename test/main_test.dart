@@ -179,6 +179,29 @@ void main() {
       expect(find.byType(HomePage), findsOneWidget);
     });
 
+    testWidgets('オンボーディングは保存済みページから再開できること', (WidgetTester tester) async {
+      // Arrange
+      final mockUser = MockUser();
+      when(mockGoTrueClient.currentUser).thenReturn(mockUser);
+      when(mockUser.id).thenReturn('test-user-id');
+      SharedPreferences.setMockInitialValues({
+        'onboarding_progress_page_test-user-id': 1,
+      });
+
+      // Act
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: OnboardingPage(),
+        ),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('最強の経営布陣'), findsOneWidget);
+      expect(find.text('戻る'), findsOneWidget);
+    });
+
     testWidgets('テーマ設定が反映されていること', (WidgetTester tester) async {
       // Arrange: ダークモードを強制
       when(mockThemeService.getFlutterThemeMode()).thenReturn(ThemeMode.dark);

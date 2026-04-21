@@ -1144,7 +1144,7 @@ $input
 
   Future<void> _shareOnX() async {
     const siteUrl = 'https://my-web-app-b67f4.web.app/';
-    final userCount = _totalUsers > 0 ? '登録者$_totalUsers人突破！' : '';
+    final userCount = _totalUsers > 10 ? '登録者$_totalUsers人突破！' : '';
     final text = 'スマホでギター録音＋21のSaaSを1アプリに統合。'
         '自分株式会社 $userCount\n'
         '完全無料で使えます👇\n'
@@ -1300,7 +1300,7 @@ $input
         icon: Icons.people_alt_outlined,
         color: const Color(0xFF7986CB),
         bgColor: const Color(0xFF3D5AFE).withValues(alpha: 0.15),
-        value: _totalUsers > 0 ? '$_totalUsers' : '–',
+        value: _totalUsers > 10 ? '$_totalUsers' : '–',
         label: '登録ユーザー数',
       ),
       (
