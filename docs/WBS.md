@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-21 Codex (referral program 引継ぎ)
+> **最終更新**: 2026-04-21 Codex (Playwright E2E 引継ぎ)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -10,7 +10,8 @@
 - Codex 担当対象:
   `DESIGN.md全ページ準拠 60%達成` / `モバイルレスポンシブ完全対応` /
   `競合比較ページ最新化` / `Webパフォーマンス最適化 (LCP < 2.5s)` /
-  `BYPASS_RULES secret設定` / `オンボーディング最適化` / `紹介プログラム実装`
+  `BYPASS_RULES secret設定` / `オンボーディング最適化` / `紹介プログラム実装` /
+  `E2Eテスト整備 (Playwright)`
 - 過去の「未完了タスク全件を Codex に集約」方針は過剰なため、後続 migration で担当を各 lane owner に戻す。
 
 ## マイルストーン概要 (ユーザー可視)
@@ -115,7 +116,7 @@
 | flutter analyze 0エラー常時維持 | VSCode | 🟡進行中 | 85% | α |
 | deno lint 0エラー維持 | PS | 🟡進行中 | 85% | α |
 | Webパフォーマンス最適化 | Codex | 🟡進行中 | 40% | β |
-| E2Eテスト整備 (Playwright) | VSCode | ⚪未着手 | 0% | v1 |
+| E2Eテスト整備 (Playwright) | Codex | 🟡進行中 | 20% | v1 |
 | エラー監視強化 (Sentry連携) | PS | ⚪未着手 | 0% | v1 |
 
 ---
@@ -189,3 +190,4 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - deploy-prod 成功率 100%維持
 - オンボーディング最適化 (Codex引継ぎ・現 35%)
 - 紹介プログラム実装 (Codex引継ぎ・現 25%)
+- E2Eテスト整備 (Playwright) (Codex引継ぎ・現 20%)

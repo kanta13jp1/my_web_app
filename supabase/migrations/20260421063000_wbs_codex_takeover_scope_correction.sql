@@ -34,7 +34,9 @@ WHERE status <> 'completed'
     '競合比較ページ最新化',
     'Webパフォーマンス最適化 (LCP < 2.5s)',
     'BYPASS_RULES secret設定',
-    'オンボーディング最適化'
+    'オンボーディング最適化',
+    '紹介プログラム実装',
+    'E2Eテスト整備 (Playwright)'
   );
 
 UPDATE wbs_tasks
