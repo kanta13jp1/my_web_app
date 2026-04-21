@@ -980,7 +980,10 @@ serve(async (req) => {
             "vscode", "win", "ps1", "ps2", "ps3", "ps4", "ps5", "ps6",
             "web", "mobile", "schedule", "gha", "all",
           ];
-          const validOwnerInstances = validInstances.filter((v) => v !== "all");
+          const validOwnerInstances = [
+            ...validInstances.filter((v) => v !== "all"),
+            "codex",
+          ];
           if (!category || !title) {
             return json({ error: "category and title required" }, 400);
           }

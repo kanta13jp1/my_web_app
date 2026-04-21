@@ -52,6 +52,7 @@ class WbsTask {
   final DateTime? endDate;
   final String? milestoneCode;
   final String priority;
+  final String ownerInstance;
   // Win版#131 part 10: 遅延リカバリー対応
   final String recoveryPlan;
   final int rescheduledCount;
@@ -73,6 +74,7 @@ class WbsTask {
     this.endDate,
     this.milestoneCode,
     required this.priority,
+    this.ownerInstance = '',
     this.recoveryPlan = '',
     this.rescheduledCount = 0,
     this.remainingWork = '',
@@ -97,6 +99,8 @@ class WbsTask {
             : null,
         milestoneCode: m['milestone_code'] as String?,
         priority: m['priority'] as String? ?? 'medium',
+        ownerInstance: m['owner_instance'] as String? ??
+            (m['instance'] as String? ?? 'all'),
         recoveryPlan: (m['recovery_plan'] as String?) ?? '',
         rescheduledCount: (m['rescheduled_count'] as int?) ?? 0,
         remainingWork: (m['remaining_work'] as String?) ?? '',
@@ -133,6 +137,7 @@ class WbsTask {
       };
 
   String get instanceLabel => switch (instance) {
+        'codex' => 'Codex',
         'vscode' => 'VSCode版',
         'win' => 'Win版',
         'windows' => 'Win版',
@@ -152,6 +157,7 @@ class WbsTask {
       };
 
   Color get instanceColor => switch (instance) {
+        'codex' => const Color(0xFF10B981),
         'vscode' => const Color(0xFF007ACC),
         'win' => const Color(0xFF00BCF2),
         'windows' => const Color(0xFF00BCF2),
@@ -168,6 +174,44 @@ class WbsTask {
         'schedule' => const Color(0xFFEAB308),
         'gha' => const Color(0xFF6B7280),
         _ => const Color(0xFFEF4444), // 'all' = 警告色 (要 explode)
+      };
+
+  String get ownerLabel => switch (ownerInstance) {
+        'codex' => 'Codex',
+        'vscode' => 'VSCode版',
+        'win' => 'Win版',
+        'windows' => 'Win版',
+        'ps1' => 'PS版#1',
+        'ps2' => 'PS版#2',
+        'ps3' => 'PS版#3',
+        'ps4' => 'PS版#4',
+        'ps5' => 'PS版#5',
+        'ps6' => 'PS版#6',
+        'ps' => 'PS版',
+        'web' => 'WEB版',
+        'mobile' => '📱スマホ版',
+        'schedule' => '⏰ Schedule',
+        'gha' => '🔧 GHA',
+        _ => '未割当',
+      };
+
+  Color get ownerColor => switch (ownerInstance) {
+        'codex' => const Color(0xFF10B981),
+        'vscode' => const Color(0xFF007ACC),
+        'win' => const Color(0xFF00BCF2),
+        'windows' => const Color(0xFF00BCF2),
+        'ps1' => const Color(0xFF4B0082),
+        'ps2' => const Color(0xFF6A0DAD),
+        'ps3' => const Color(0xFF8B5CF6),
+        'ps4' => const Color(0xFFA855F7),
+        'ps5' => const Color(0xFFC084FC),
+        'ps6' => const Color(0xFFDAB6FC),
+        'ps' => const Color(0xFF4B0082),
+        'web' => const Color(0xFF22C55E),
+        'mobile' => const Color(0xFFF97316),
+        'schedule' => const Color(0xFFEAB308),
+        'gha' => const Color(0xFF6B7280),
+        _ => const Color(0xFF707070),
       };
 }
 
@@ -332,13 +376,12 @@ class _ProjectGanttPageState extends State<ProjectGanttPage>
       backgroundColor: const Color(0xFF0A0A0A),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text(
+        title: Text(
           '開発ロードマップ & WBS',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            height: 1.5,
-          ),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -532,22 +575,18 @@ class _WbsTab extends StatelessWidget {
               visualDensity: VisualDensity.compact,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            const Text(
+            Text(
               '未完了のみ',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 12,
-                height: 1.5,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF9CA3AF),
+                  ),
             ),
             const SizedBox(width: 16),
             Text(
               '表示: ${_filtered.length} / ${tasks.length} 件',
-              style: const TextStyle(
-                color: Color(0xFF707070),
-                fontSize: 11,
-                height: 1.5,
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: const Color(0xFF707070),
+                  ),
             ),
           ],
         ),
@@ -607,22 +646,19 @@ class _OverallProgressCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '自分株式会社 開発WBS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        height: 1.5,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                     ),
                     Text(
                       '$taskCount タスク',
-                      style: const TextStyle(
-                        color: Color(0xFF707070),
-                        fontSize: 12,
-                        height: 1.5,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: const Color(0xFF707070),
+                          ),
                     ),
                   ],
                 ),
@@ -1142,6 +1178,26 @@ class _TaskRow extends StatelessWidget {
                   ),
                 ),
               ),
+              if (task.ownerInstance != task.instance) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: task.ownerColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '担当 ${task.ownerLabel}',
+                    style: TextStyle(
+                      color: task.ownerColor,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2733,17 +2789,21 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
   }
 
   Widget _instanceBadge(WbsTask task) {
+    final label = _instanceBadgeLabel(task);
+    final badgeColor = task.ownerInstance != task.instance
+        ? task.ownerColor
+        : task.instanceColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: task.instanceColor.withValues(alpha: 0.18),
+        color: badgeColor.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(4),
       ),
       alignment: Alignment.center,
       child: Text(
-        _shortInstance(task.instance),
+        label,
         style: TextStyle(
-          color: task.instanceColor,
+          color: badgeColor,
           fontSize: 10,
           fontWeight: FontWeight.w600,
           height: 1.5,
@@ -2752,10 +2812,30 @@ class _GanttTimelineTabState extends State<_GanttTimelineTab> {
     );
   }
 
+  String _instanceBadgeLabel(WbsTask task) {
+    final lane = _shortInstance(task.instance);
+    final owner = _shortInstance(task.ownerInstance);
+    if (owner.isEmpty || owner == lane) return lane;
+    return '$lane→$owner';
+  }
+
   String _shortInstance(String i) => switch (i) {
-        'vscode' => 'VSCode',
-        'windows' => 'Windows',
-        'ps' => 'PowerShell',
+        'codex' => 'CX',
+        'vscode' => 'VS',
+        'win' => 'Win',
+        'windows' => 'Win',
+        'ps1' => 'P1',
+        'ps2' => 'P2',
+        'ps3' => 'P3',
+        'ps4' => 'P4',
+        'ps5' => 'P5',
+        'ps6' => 'P6',
+        'ps' => 'PS',
+        'web' => 'WEB',
+        'mobile' => 'MOB',
+        'schedule' => 'SCH',
+        'gha' => 'GHA',
+        'all' => 'ALL',
         _ => 'ALL',
       };
 

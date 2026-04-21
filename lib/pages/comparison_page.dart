@@ -950,6 +950,29 @@ class _ComparisonShell extends StatefulWidget {
 
 class _ComparisonShellState extends State<_ComparisonShell> {
   static const _acquisitionService = GrowthAcquisitionService();
+  static const _pageBackground = Color(0xFF080812);
+  static const _surfacePrimary = Color(0xFF12131E);
+  static const _surfaceSecondary = Color(0xFF171A27);
+  static const _surfaceMuted = Color(0xFF1F2333);
+  static const _borderColor = Color(0xFF2A3044);
+  static const _textPrimary = Color(0xFFF5F7FB);
+  static const _textSecondary = Color(0xFFB2BDD3);
+  static const _textMuted = Color(0xFF7E8AA6);
+  static const _orange = Color(0xFFFF6B35);
+  static const _indigo = Color(0xFF3D5AFE);
+
+  static const _featuredCompetitorKeys = <String>[
+    'notion',
+    'evernote',
+    'moneyforward',
+    'slack',
+    'google',
+    'github',
+    'claude-code',
+    'codex',
+    'line',
+    'discord',
+  ];
 
   @override
   void initState() {
@@ -958,19 +981,77 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   }
 
   _CompetitorInfo get _info => widget.info;
+  bool get _hasImportSupport =>
+      widget.competitorKey == 'notion' || widget.competitorKey == 'evernote';
+  int get _sharedFeatureCount => _info.features
+      .where((feature) => feature.competitorHas && feature.weHave)
+      .length;
+  int get _ourAdvantageCount => _info.features
+      .where((feature) => !feature.competitorHas && feature.weHave)
+      .length;
+
+  List<MapEntry<String, _CompetitorInfo>> get _relatedCompetitors {
+    final seen = <String>{widget.competitorKey};
+    final orderedKeys = <String>[
+      ..._featuredCompetitorKeys,
+      ..._competitorInfo.keys,
+    ];
+    final items = <MapEntry<String, _CompetitorInfo>>[];
+
+    for (final key in orderedKeys) {
+      if (!seen.add(key)) {
+        continue;
+      }
+      final info = _competitorInfo[key];
+      if (info == null) {
+        continue;
+      }
+      items.add(MapEntry(key, info));
+      if (items.length >= 6) {
+        break;
+      }
+    }
+
+    return items;
+  }
+
+  String get _switchStepTitle =>
+      _hasImportSupport ? '既存データをそのまま移行' : '${_info.name} から30秒で乗り換え開始';
+
+  String get _switchStepBody => _hasImportSupport
+      ? '${_info.name} のデータをインポートしながら、今の資産を崩さず移行できます。'
+      : 'まずは無料で始めて、${_info.name} では分散していた作業を1か所に集約できます。';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHero(context),
-            _buildPainPoints(),
-            _buildFeatureTable(),
-            _buildCta(context),
-          ],
+      backgroundColor: _pageBackground,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              _info.accentColor.withValues(alpha: 0.12),
+              _pageBackground,
+              _pageBackground,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHero(context),
+                _buildOutcomeCards(),
+                _buildPainPoints(),
+                _buildFeatureTable(),
+                _buildSwitchPlan(context),
+                _buildRelatedComparisons(context),
+                _buildCta(context),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -979,83 +1060,214 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   Widget _buildHero(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _info.accentColor.withValues(alpha: 0.1),
-            const Color(0xFF1A1A1A),
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Column(
-            children: [
-              Text(
-                _info.emoji,
-                style: const TextStyle(
-                  fontSize: 48,
-                  height: 1.5,
-                ),
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: Container(
+            decoration: BoxDecoration(
+              color: _surfacePrimary,
+              borderRadius: BorderRadius.circular(32),
+              border: Border.all(
+                color: _info.accentColor.withValues(alpha: 0.26),
               ),
-              const SizedBox(height: 16),
-              Text(
-                '${_info.name} の代わりに\n自分株式会社を使う',
-                style: const TextStyle(
-                  fontFamily: 'NotoSansJP',
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
+              boxShadow: [
+                BoxShadow(
+                  color: _info.accentColor.withValues(alpha: 0.15),
+                  blurRadius: 36,
+                  offset: const Offset(0, 18),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _info.tagline,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF9CA3AF),
-                  height: 1.6,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
+              ],
+            ),
+            padding: const EdgeInsets.all(28),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 760;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _buildTag(
+                          icon: Icons.compare_arrows_rounded,
+                          label: '21競合比較',
+                          backgroundColor:
+                              _info.accentColor.withValues(alpha: 0.18),
+                          foregroundColor: _textPrimary,
+                        ),
+                        _buildTag(
+                          icon: Icons.search_rounded,
+                          label: _info.searchKeyword,
+                          backgroundColor: _surfaceMuted,
+                          foregroundColor: _textSecondary,
+                        ),
+                        if (_hasImportSupport)
+                          _buildTag(
+                            icon: Icons.publish_rounded,
+                            label: 'インポート対応',
+                            backgroundColor: _orange.withValues(alpha: 0.18),
+                            foregroundColor: _textPrimary,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      '${_info.emoji} ${_info.name} の代わりに\n自分株式会社を使う',
+                      style: const TextStyle(
+                        fontFamily: 'NotoSansJP',
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.96,
+                        color: _textPrimary,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      _info.tagline,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: _textSecondary,
+                        height: 1.75,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 14,
+                      children: [
+                        _buildMetricCard(
+                          icon: Icons.layers_rounded,
+                          label: '共通コア機能',
+                          value: '$_sharedFeatureCount個',
+                          accent: _info.accentColor,
+                        ),
+                        _buildMetricCard(
+                          icon: Icons.auto_awesome_rounded,
+                          label: '乗り換えメリット',
+                          value: '+$_ourAdvantageCount個',
+                          accent: _indigo,
+                        ),
+                        _buildMetricCard(
+                          icon: _hasImportSupport
+                              ? Icons.move_down_rounded
+                              : Icons.timer_rounded,
+                          label: _hasImportSupport ? '移行方法' : '開始時間',
+                          value: _hasImportSupport ? 'データ引継ぎ可' : '30秒で開始',
+                          accent: _orange,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 26),
+                    if (compact)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildPrimaryHeroButton(context),
+                          const SizedBox(height: 12),
+                          _buildSecondaryHeroButton(context),
+                        ],
+                      )
+                    else
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _buildPrimaryHeroButton(context),
+                          _buildSecondaryHeroButton(context),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: _surfaceSecondary,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _borderColor),
+                      ),
+                      child: const Wrap(
+                        spacing: 12,
+                        runSpacing: 10,
+                        children: [
+                          _BenefitPill(
+                            icon: Icons.check_circle_outline_rounded,
+                            label: 'タスク・ノート・習慣を横断',
+                          ),
+                          _BenefitPill(
+                            icon: Icons.savings_outlined,
+                            label: '無料で比較しながら移行',
+                          ),
+                          _BenefitPill(
+                            icon: Icons.psychology_alt_outlined,
+                            label: 'AIが今日の最優先を整理',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOutcomeCards() {
+    final cards = [
+      _buildOutcomeCard(
+        icon: Icons.hub_rounded,
+        title: '${_info.name} だけでは足りない作業をひとつに集約',
+        body: 'ノート・タスク・財務・習慣・AI大学まで、別アプリで分かれていた流れをまとめます。',
+        accent: _info.accentColor,
+      ),
+      _buildOutcomeCard(
+        icon: Icons.currency_yen_rounded,
+        title: 'まず無料で始めて、必要になってから広げる',
+        body: '比較検討の段階でも登録しやすく、月額の積み上がりを気にせず試せます。',
+        accent: _orange,
+      ),
+      _buildOutcomeCard(
+        icon: Icons.auto_graph_rounded,
+        title: 'AI が「今日やること」を1件に絞る',
+        body: '${_info.name} の単機能では埋まらない、判断・実行・振り返りまでを一気通貫で支援します。',
+        accent: _indigo,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 760) {
+                return Column(
+                  children: cards
+                      .map(
+                        (card) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: card,
+                        ),
+                      )
+                      .toList(),
+                );
+              }
+
+              return Row(
                 children: [
-                  FilledButton.icon(
-                    onPressed: () => Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/', (_) => false),
-                    icon: const Icon(Icons.rocket_launch, size: 18),
-                    label: const Text('無料で始める（30秒）'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed('/import'),
-                    icon: const Icon(Icons.upload_file, size: 18),
-                    label: Text('${_info.name} からインポート'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
-                      ),
-                    ),
-                  ),
+                  for (var i = 0; i < cards.length; i++) ...[
+                    Expanded(child: cards[i]),
+                    if (i != cards.length - 1) const SizedBox(width: 12),
+                  ],
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -1067,45 +1279,78 @@ class _ComparisonShellState extends State<_ComparisonShell> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${_info.name} の不満はありませんか？',
+                '${_info.name} を使っていて詰まりやすいポイント',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  height: 1.5,
+                  letterSpacing: 0.72,
+                  color: _textPrimary,
+                  height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
-              ..._info.painPoints.map(
-                (p) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '😤',
-                        style: TextStyle(
-                          fontSize: 18,
-                          height: 1.5,
+              const SizedBox(height: 10),
+              const Text(
+                '今のツールで十分そうに見えても、日々の運用ではここがボトルネックになりがちです。',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _textSecondary,
+                  height: 1.7,
+                ),
+              ),
+              const SizedBox(height: 18),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final compact = constraints.maxWidth < 760;
+                  final items = <Widget>[];
+
+                  for (var i = 0; i < _info.painPoints.length; i++) {
+                    items.add(
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: _surfacePrimary,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _borderColor),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
                         child: Text(
-                          p,
+                          '${i + 1}. ${_info.painPoints[i]}',
                           style: const TextStyle(
                             fontSize: 14,
-                            height: 1.6,
+                            color: _textSecondary,
+                            height: 1.7,
                           ),
                         ),
                       ),
+                    );
+                  }
+
+                  if (compact) {
+                    return Column(
+                      children: items
+                          .map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: item,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      for (var i = 0; i < items.length; i++) ...[
+                        Expanded(child: items[i]),
+                        if (i != items.length - 1) const SizedBox(width: 12),
+                      ],
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
@@ -1116,11 +1361,10 @@ class _ComparisonShellState extends State<_ComparisonShell> {
 
   Widget _buildFeatureTable() {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+          constraints: const BoxConstraints(maxWidth: 1040),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1129,111 +1373,272 @@ class _ComparisonShellState extends State<_ComparisonShell> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  height: 1.5,
+                  letterSpacing: 0.72,
+                  color: _textPrimary,
+                  height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
-              Table(
-                columnWidths: const {
-                  0: FlexColumnWidth(3),
-                  1: FlexColumnWidth(1),
-                  2: FlexColumnWidth(1),
-                },
-                children: [
-                  TableRow(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          '機能',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,
-                          ),
-                        ),
+              const SizedBox(height: 10),
+              Text(
+                '${_info.name} と共通で持っている核は残しつつ、自分株式会社側の追加メリットを見える化しています。',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: _textSecondary,
+                  height: 1.7,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                decoration: BoxDecoration(
+                  color: _surfacePrimary,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: _borderColor),
+                ),
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          _info.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          '自分株式会社',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF4F46E5),
-                            height: 1.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ],
-                  ),
-                  ..._info.features.map(
-                    (f) => TableRow(
                       decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                        color: _surfaceSecondary,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
+                        children: [
+                          const Expanded(
+                            flex: 5,
+                            child: Text(
+                              '比較項目',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: _textPrimary,
+                                height: 1.5,
+                              ),
+                            ),
                           ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              _info.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: _textSecondary,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const Expanded(
+                            flex: 2,
+                            child: Text(
+                              '自分株式会社',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: _indigo,
+                                height: 1.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final feature in _info.features)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _FeatureRowCard(
+                          feature: feature,
+                          competitorName: _info.name,
+                          accentColor: _info.accentColor,
                         ),
                       ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwitchPlan(BuildContext context) {
+    final steps = [
+      _buildStepCard(
+        number: '01',
+        title: _switchStepTitle,
+        body: _switchStepBody,
+        accent: _info.accentColor,
+      ),
+      _buildStepCard(
+        number: '02',
+        title: '今日の最重要タスクを AI に任せる',
+        body: 'ノート・タスク・習慣・財務を横断して、今やるべき1件を先に見つけられます。',
+        accent: _indigo,
+      ),
+      _buildStepCard(
+        number: '03',
+        title: '必要になった機能だけ横に増やす',
+        body: '${_info.name} 単体では届かない資産管理・AI大学・部署AIまで、後から同じアプリ内で広げられます。',
+        accent: _orange,
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: _surfacePrimary,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: _borderColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '乗り換えの進め方',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.72,
+                    color: _textPrimary,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '一気に全部を置き換えなくても大丈夫です。まず入口をひとつにして、そこから必要な機能を足していけます。',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _textSecondary,
+                    height: 1.7,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 760) {
+                      return Column(
+                        children: steps
+                            .map(
+                              (step) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: step,
+                              ),
+                            )
+                            .toList(),
+                      );
+                    }
+
+                    return Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 12,
-                          ),
-                          child: Text(
-                            f.feature,
+                        for (var i = 0; i < steps.length; i++) ...[
+                          Expanded(child: steps[i]),
+                          if (i != steps.length - 1) const SizedBox(width: 12),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    _buildPrimaryHeroButton(context),
+                    _buildSecondaryHeroButton(context),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRelatedComparisons(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '他の比較ページも見る',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.72,
+                  color: _textPrimary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                '比較検討の途中なら、近いカテゴリの競合ページもすぐ見比べられます。',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _textSecondary,
+                  height: 1.7,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: _relatedCompetitors.map((entry) {
+                  final key = entry.key;
+                  final info = entry.value;
+                  return InkWell(
+                    onTap: () => Navigator.of(context).pushNamed('/vs-$key'),
+                    borderRadius: BorderRadius.circular(18),
+                    child: Ink(
+                      width: 190,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _surfacePrimary,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: _borderColor),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${info.emoji} ${info.name}',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: _textPrimary,
                               height: 1.5,
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Center(
-                            child: Text(
-                              f.competitorHas ? '✅' : '❌',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.5,
-                              ),
+                          const SizedBox(height: 8),
+                          Text(
+                            info.searchKeyword,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _textSecondary,
+                              height: 1.6,
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Center(
-                            child: Text(
-                              f.weHave ? '✅' : '❌',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
             ],
           ),
@@ -1245,58 +1650,496 @@ class _ComparisonShellState extends State<_ComparisonShell> {
   Widget _buildCta(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: const Color(0xFF4F46E5),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Column(
-            children: [
-              const Text(
-                '今すぐ無料で始める',
-                style: TextStyle(
-                  fontFamily: 'NotoSansJP',
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFE5E7EB),
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _info.accentColor.withValues(alpha: 0.9),
+                  _indigo,
+                ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'クレジットカード不要。30秒で登録完了。',
-                style: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 14,
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: () => Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/', (_) => false),
-                icon: const Icon(Icons.rocket_launch, size: 18),
-                label: const Text(
-                  '無料で自分株式会社を始める',
-                  style: TextStyle(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              children: [
+                Text(
+                  '次は ${_info.name} の代替を\n実際に試す番です',
+                  style: const TextStyle(
+                    fontFamily: 'NotoSansJP',
+                    fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    height: 1.5,
+                    color: _textPrimary,
+                    letterSpacing: 0.96,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _hasImportSupport
+                      ? '既存データを残したまま移行できます。まずは無料で登録して、必要ならインポートから始めてください。'
+                      : 'クレジットカード不要。比較しながら試して、必要な機能だけあとから広げられます。',
+                  style: const TextStyle(
+                    color: Color(0xFFE5E7EB),
+                    fontSize: 14,
+                    height: 1.8,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => Navigator.of(context)
+                          .pushNamedAndRemoveUntil('/', (_) => false),
+                      icon: const Icon(Icons.rocket_launch, size: 18),
+                      label: const Text(
+                        '無料で自分株式会社を始める',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _textPrimary,
+                        foregroundColor: _indigo,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).pushNamed(
+                        _hasImportSupport ? '/import' : '/',
+                      ),
+                      icon: Icon(
+                        _hasImportSupport
+                            ? Icons.upload_file_rounded
+                            : Icons.dashboard_customize_rounded,
+                        size: 18,
+                      ),
+                      label: Text(
+                        _hasImportSupport
+                            ? '${_info.name} からインポート'
+                            : 'ホームで全機能を見る',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _textPrimary,
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTag({
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: foregroundColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: foregroundColor,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color accent,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 170),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _surfaceSecondary,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withValues(alpha: 0.34)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: _textMuted,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _textPrimary,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOutcomeCard({
+    required IconData icon,
+    required String title,
+    required String body,
+    required Color accent,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _surfacePrimary,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: accent),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _textPrimary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _textSecondary,
+              height: 1.7,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepCard({
+    required String number,
+    required String title,
+    required String body,
+    required Color accent,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: _surfaceSecondary,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            number,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: accent,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: _textPrimary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 13,
+              color: _textSecondary,
+              height: 1.7,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryHeroButton(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: () =>
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
+      icon: const Icon(Icons.rocket_launch, size: 18),
+      label: const Text('無料で始める（30秒）'),
+      style: FilledButton.styleFrom(
+        backgroundColor: _indigo,
+        foregroundColor: _textPrimary,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      ),
+    );
+  }
+
+  Widget _buildSecondaryHeroButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () =>
+          Navigator.of(context).pushNamed(_hasImportSupport ? '/import' : '/'),
+      icon: Icon(
+        _hasImportSupport
+            ? Icons.upload_file_rounded
+            : Icons.dashboard_customize_rounded,
+        size: 18,
+      ),
+      label: Text(_hasImportSupport ? '${_info.name} からインポート' : 'ホームで全機能を見る'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _textPrimary,
+        side: const BorderSide(color: _borderColor),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      ),
+    );
+  }
+}
+
+class _BenefitPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _BenefitPill({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: _ComparisonShellState._pageBackground,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _ComparisonShellState._borderColor),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: _ComparisonShellState._textSecondary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: _ComparisonShellState._textSecondary,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRowCard extends StatelessWidget {
+  final _FeatureComparison feature;
+  final String competitorName;
+  final Color accentColor;
+
+  const _FeatureRowCard({
+    required this.feature,
+    required this.competitorName,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget buildStatus(String label, bool value, Color highlight) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: highlight.withValues(alpha: value ? 0.16 : 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: highlight.withValues(alpha: value ? 0.3 : 0.18),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              value ? Icons.check_circle_rounded : Icons.cancel_rounded,
+              size: 18,
+              color: value ? highlight : _ComparisonShellState._textMuted,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: value
+                    ? _ComparisonShellState._textPrimary
+                    : _ComparisonShellState._textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 640;
+
+        if (compact) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _ComparisonShellState._surfaceSecondary,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  feature.feature,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: _ComparisonShellState._textPrimary,
+                    height: 1.6,
                   ),
                 ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFE5E7EB),
-                  foregroundColor: const Color(0xFF4F46E5),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 16,
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    buildStatus(
+                      competitorName,
+                      feature.competitorHas,
+                      accentColor,
+                    ),
+                    buildStatus(
+                      '自分株式会社',
+                      feature.weHave,
+                      _ComparisonShellState._indigo,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: _ComparisonShellState._surfaceSecondary,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: Text(
+                  feature.feature,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: _ComparisonShellState._textPrimary,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: buildStatus(
+                    competitorName,
+                    feature.competitorHas,
+                    accentColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: buildStatus(
+                    '自分株式会社',
+                    feature.weHave,
+                    _ComparisonShellState._indigo,
                   ),
                 ),
               ),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
