@@ -860,6 +860,21 @@ class _EdgeFunctionSummaryCardState extends State<EdgeFunctionSummaryCard> {
       '/video-meeting',
       'ビデオ会議ページ > 会議室一覧・参加者管理・録画確認',
     ),
+    // 追加 (cs-check 自動連携 2026-04-21)
+    _FnDef(
+      'viral-video-generator',
+      'バイラル動画ジェネレーター (AI動画企画生成)',
+      true,
+      '/viral-video-generator',
+      'バイラル動画ページ > プロンプト入力でバイラル動画企画生成',
+    ),
+    _FnDef(
+      'viral-video-ad-generator',
+      'バイラル動画広告ジェネレーター (AI広告動画生成)',
+      true,
+      '/viral-ad-generator',
+      'バイラル広告ジェネレーターページ > ターゲット設定・AI広告動画企画生成',
+    ),
   ];
 
   int get _withUiCount => _functions.where((f) => f.hasUi).length;
