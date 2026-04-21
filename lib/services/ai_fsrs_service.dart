@@ -29,8 +29,14 @@ class AiFsrsService {
 
   /// grade: 1=Again, 2=Hard, 3=Good, 4=Easy
   static String gradeLabel(int grade) {
-    const labels = {1: 'また明日', 2: '難しい', 3: '覚えた', 4: '簡単'};
-    return labels[grade] ?? '';
+    const labels = {1: 'もう一度', 2: '難しい', 3: '覚えた', 4: '簡単'};
+    return labels[normalizeGrade(grade)] ?? '';
+  }
+
+  static int normalizeGrade(int grade) {
+    if (grade < 1) return 1;
+    if (grade > 4) return 4;
+    return grade;
   }
 
   Future<List<FsrsCard>> getNextCards(String provider, {int limit = 10}) async {
@@ -66,7 +72,7 @@ class AiFsrsService {
           'action': 'quiz.fsrs_grade',
           'provider': provider,
           'question_id': questionId,
-          'grade': grade,
+          'grade': normalizeGrade(grade),
         },
       );
       final data = response.data as Map<String, dynamic>?;
@@ -84,11 +90,17 @@ class AiFsrsService {
     }
   }
 
-  static String nextDueLabel(DateTime nextDue) {
-    final now = DateTime.now();
-    final diff = nextDue.difference(now).inDays;
+  static String nextDueLabel(DateTime nextDue, {DateTime? now}) {
+    final today = _dateOnly(now ?? DateTime.now());
+    final dueDay = _dateOnly(nextDue);
+    final diff = dueDay.difference(today).inDays;
     if (diff <= 0) return '今日';
     if (diff == 1) return '明日';
     return '$diff日後';
+  }
+
+  static DateTime _dateOnly(DateTime value) {
+    final local = value.toLocal();
+    return DateTime(local.year, local.month, local.day);
   }
 }
