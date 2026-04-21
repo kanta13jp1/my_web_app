@@ -17,6 +17,7 @@ import '../services/local_election_plan_service.dart';
 import '../services/local_election_reality_service.dart';
 import '../services/local_election_share_service.dart';
 import '../services/public_memo_service.dart';
+import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
 import '../widgets/election_x_post_composer_dialog.dart';
@@ -3522,12 +3523,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(winCount)}勝',
-                backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                backgroundColor:
+                    const Color(0xFF4CAF50).withValues(alpha: 0.12),
                 foregroundColor: const Color(0xFF2E7D32),
               ),
               _buildPastElectionRecordChip(
                 label: '${_formatInt(lossCount)}敗',
-                backgroundColor: const Color(0xFFE53935).withValues(alpha: 0.10),
+                backgroundColor:
+                    const Color(0xFFE53935).withValues(alpha: 0.10),
                 foregroundColor: const Color(0xFFC62828),
               ),
             ],
@@ -3854,7 +3857,9 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: hasWin ? const Color(0xFF4CAF50) : const Color(0xFFE53935),
+                  color: hasWin
+                      ? const Color(0xFF4CAF50)
+                      : const Color(0xFFE53935),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -4310,10 +4315,13 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
         final regionalChart = ElectionRegionalKpiChart(
           prefectures: topPrefectures,
         );
+        final japanMap = ElectionJapanMap(prefectures: plan.prefectures);
 
         if (stacked) {
           return Column(
             children: [
+              japanMap,
+              const SizedBox(height: 16),
               progressChart,
               const SizedBox(height: 16),
               regionalChart,
@@ -4321,12 +4329,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           );
         }
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
           children: [
-            Expanded(child: progressChart),
-            const SizedBox(width: 16),
-            Expanded(child: regionalChart),
+            japanMap,
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: progressChart),
+                const SizedBox(width: 16),
+                Expanded(child: regionalChart),
+              ],
+            ),
           ],
         );
       },
