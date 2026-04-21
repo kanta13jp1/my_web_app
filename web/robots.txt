@@ -1,3 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
+Host: my-web-app-b67f4.web.app
 # robots.txt for 自分株式会社
 # https://my-web-app-b67f4.web.app/
 

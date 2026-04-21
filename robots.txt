@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Sitemap: https://my-web-app-b67f4.web.app/sitemap.xml
+Host: my-web-app-b67f4.web.app
