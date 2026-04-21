@@ -112,6 +112,7 @@ import 'package:my_web_app/pages/notifications_page.dart';
 import 'package:my_web_app/pages/wardrobe_page.dart';
 import 'package:my_web_app/services/gamification_service.dart';
 import 'package:my_web_app/services/growth_mission_service.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:my_web_app/pages/carbon_footprint_tracker_page.dart';
@@ -282,23 +283,25 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtbWt4eGF2ZXh1bWV3YmZhcXB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2OTExNzYsImV4cCI6MjA3NjI2NzE3Nn0.U2OsYRYFvbpu2QjTwXulJ67v9wouMMpn0y9B9K5-WHw',
   );
 
-  // Flutter/Dart エラーを自動でフィードバックEFに送信
-  ErrorReporter.instance.install();
+  // Flutter/Dart エラーを自動で Sentry + フィードバックEF に送信
+  await ErrorReporter.instance.install(
+    appRunner: () {
+      runApp(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ThemeService()),
+            ChangeNotifierProvider(create: (_) => GamificationService()),
+            Provider<NotificationService>(create: (_) => notificationService),
+          ],
+          child: const MyApp(),
+        ),
+      );
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeService()),
-        ChangeNotifierProvider(create: (_) => GamificationService()),
-        Provider<NotificationService>(create: (_) => notificationService),
-      ],
-      child: const MyApp(),
-    ),
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_configureStartupNotifications(notificationService));
+      });
+    },
   );
-
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(_configureStartupNotifications(notificationService));
-  });
 }
 
 Future<void> _configureStartupNotifications(
@@ -374,6 +377,9 @@ class _AuthenticatedHomePageState extends State<_AuthenticatedHomePage> {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static final SentryNavigatorObserver? _sentryNavigatorObserver =
+      ErrorReporter.instance.sentryEnabled ? SentryNavigatorObserver() : null;
+
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
@@ -396,7 +402,10 @@ class MyApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('ja'), Locale('en')],
       locale: const Locale('ja'),
-      navigatorObservers: <NavigatorObserver>[_growthPresenceObserver],
+      navigatorObservers: <NavigatorObserver>[
+        _growthPresenceObserver,
+        if (_sentryNavigatorObserver != null) _sentryNavigatorObserver!,
+      ],
       onGenerateRoute: (settings) {
         final uri = Uri.parse(settings.name ?? '/');
 

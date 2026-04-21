@@ -1,11 +1,12 @@
 // lib/utils/error_reporter.dart
 //
-// Flutter エラー → submit-feedback EF への自動報告
+// Flutter エラー → Sentry + submit-feedback EF への自動報告
 //
 // 仕組み:
 //   1. FlutterError.onError   … Flutterフレームワークエラー
 //   2. PlatformDispatcher.onError … 未捕捉 Dart ランタイムエラー
 //   3. AppLogger.error 経由  … 明示的に記録されたエラー
+//   4. SENTRY_DSN dart-define … 本番Sentryプロジェクトへ送信
 //
 // 保護策:
 //   - ログイン済みユーザーのみ送信
@@ -13,9 +14,12 @@
 //   - セッション内の最大送信数: 10件
 //   - 報告中の再帰ループを防ぐフラグ
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
 import '../main.dart';
 
 class ErrorReporter {
@@ -23,27 +27,115 @@ class ErrorReporter {
   static final ErrorReporter instance = ErrorReporter._();
 
   static const int _maxPerSession = 10;
+  static const String _sentryDsn = String.fromEnvironment('SENTRY_DSN');
+  static const String _sentryEnvironment =
+      String.fromEnvironment('SENTRY_ENVIRONMENT');
+  static const String _sentryRelease = String.fromEnvironment('SENTRY_RELEASE');
+  static const bool _sentryDebug = bool.fromEnvironment('SENTRY_DEBUG');
+  static const int _sentryTracesSampleRatePercent = int.fromEnvironment(
+    'SENTRY_TRACES_SAMPLE_RATE_PERCENT',
+  );
 
   final Set<String> _seen = {};
   int _count = 0;
   bool _isReporting = false;
+  bool _handlersInstalled = false;
+  bool _sentryEnabled = false;
 
   // ignore: unused_field
   FlutterExceptionHandler? _previousFlutterHandler;
+  ErrorCallback? _previousPlatformHandler;
+  StreamSubscription<dynamic>? _authSubscription;
 
-  /// `main()` の Supabase.initialize() 直後に呼ぶ
-  void install() {
+  bool get sentryEnabled => _sentryEnabled;
+
+  bool get _hasSentryDsn => _sentryDsn.trim().isNotEmpty;
+
+  /// `main()` の Supabase.initialize() 直後に呼ぶ。
+  /// SENTRY_DSN が設定されていれば、Sentry の zone 内で appRunner を実行する。
+  Future<void> install({
+    required FutureOr<void> Function() appRunner,
+  }) async {
+    if (_handlersInstalled) {
+      await appRunner();
+      return;
+    }
+
+    var appRunnerStarted = false;
+    Future<void> guardedAppRunner() async {
+      appRunnerStarted = true;
+      _sentryEnabled = true;
+      _watchAuthChanges();
+      _syncSentryUser();
+      _installFlutterHandlers();
+      await appRunner();
+    }
+
+    if (_hasSentryDsn) {
+      try {
+        await SentryFlutter.init(
+          _configureSentry,
+          appRunner: guardedAppRunner,
+        );
+        return;
+      } catch (error) {
+        _sentryEnabled = false;
+        debugPrint('Sentry initialization failed: $error');
+      }
+    }
+
+    if (!appRunnerStarted) {
+      _installFlutterHandlers();
+      await appRunner();
+    }
+  }
+
+  void _configureSentry(SentryFlutterOptions options) {
+    final environment = _sentryEnvironment.trim().isNotEmpty
+        ? _sentryEnvironment.trim()
+        : (kReleaseMode ? 'production' : 'development');
+    final tracesSampleRatePercent =
+        _sentryTracesSampleRatePercent.clamp(0, 100).toDouble();
+
+    options
+      ..dsn = _sentryDsn.trim()
+      ..environment = environment
+      ..debug = _sentryDebug
+      ..sendDefaultPii = false;
+
+    if (_sentryRelease.trim().isNotEmpty) {
+      options.release = _sentryRelease.trim();
+    }
+    if (tracesSampleRatePercent > 0) {
+      options.tracesSampleRate = tracesSampleRatePercent / 100;
+    }
+  }
+
+  void _installFlutterHandlers() {
+    if (_handlersInstalled) return;
+    _handlersInstalled = true;
+
     _previousFlutterHandler = FlutterError.onError;
     FlutterError.onError = (FlutterErrorDetails details) {
+      _syncSentryUser();
       _previousFlutterHandler?.call(details);
       report(
         details.exceptionAsString(),
         stackTrace: details.stack,
+        captureSentry: false,
       );
     };
 
+    _previousPlatformHandler = PlatformDispatcher.instance.onError;
     PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-      report(error.toString(), stackTrace: stack);
+      _syncSentryUser();
+      _previousPlatformHandler?.call(error, stack);
+      report(
+        error.toString(),
+        error: error,
+        stackTrace: stack,
+        captureSentry: _previousPlatformHandler == null,
+      );
       return false; // 既存のクラッシュハンドラを妨げない
     };
   }
@@ -53,11 +145,17 @@ class ErrorReporter {
     String message, {
     dynamic error,
     StackTrace? stackTrace,
+    bool captureSentry = true,
   }) {
     if (_isReporting) return;
     _isReporting = true;
     try {
-      _scheduleReport(message, error: error, stackTrace: stackTrace);
+      _scheduleReport(
+        message,
+        error: error,
+        stackTrace: stackTrace,
+        captureSentry: captureSentry,
+      );
     } finally {
       _isReporting = false;
     }
@@ -67,19 +165,28 @@ class ErrorReporter {
     String message, {
     dynamic error,
     StackTrace? stackTrace,
+    bool captureSentry = true,
   }) {
+    // エラーフィンガープリント（最初の120文字）
+    final fullMessage = error != null ? '$message: $error' : message;
+    final fingerprint = fullMessage.substring(0, min(120, fullMessage.length));
+    if (_seen.contains(fingerprint)) return;
+    _seen.add(fingerprint);
+
+    if (captureSentry) {
+      _captureSentryException(
+        fullMessage,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
     // ログイン確認
     final user = supabase.auth.currentUser;
     if (user == null) return;
 
     // スロットリング
     if (_count >= _maxPerSession) return;
-
-    // エラーフィンガープリント（最初の120文字）
-    final fullMessage = error != null ? '$message: $error' : message;
-    final fingerprint = fullMessage.substring(0, min(120, fullMessage.length));
-    if (_seen.contains(fingerprint)) return;
-    _seen.add(fingerprint);
     _count++;
 
     // スタックトレース（最初の6行）
@@ -105,5 +212,57 @@ class ErrorReporter {
         // 報告失敗は無視（無限ループ防止）
       }
     });
+  }
+
+  void _captureSentryException(
+    String message, {
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    if (!_sentryEnabled) return;
+
+    _syncSentryUser();
+    unawaited(
+      Sentry.captureException(
+        error ?? message,
+        stackTrace: stackTrace,
+        withScope: (scope) async {
+          await scope.setTag('error_reporter.source', 'app_logger');
+          await scope.setContexts('error_reporter', {'message': message});
+        },
+      ),
+    );
+  }
+
+  void _watchAuthChanges() {
+    _authSubscription ??= supabase.auth.onAuthStateChange.listen((_) {
+      _syncSentryUser();
+    });
+  }
+
+  void _syncSentryUser() {
+    if (!_sentryEnabled) return;
+
+    final user = supabase.auth.currentUser;
+    unawaited(
+      Future<void>.sync(
+        () => Sentry.configureScope((scope) async {
+          await scope.setTag(
+            'supabase.auth',
+            user == null ? 'anonymous' : 'authenticated',
+          );
+          if (user == null) {
+            await scope.setUser(null);
+            return;
+          }
+          await scope.setUser(
+            SentryUser(
+              id: user.id,
+              email: user.email,
+            ),
+          );
+        }),
+      ),
+    );
   }
 }

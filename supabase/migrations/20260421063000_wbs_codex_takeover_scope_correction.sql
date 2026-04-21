@@ -36,7 +36,8 @@ WHERE status <> 'completed'
     'BYPASS_RULES secret設定',
     'オンボーディング最適化',
     '紹介プログラム実装',
-    'E2Eテスト整備 (Playwright)'
+    'E2Eテスト整備 (Playwright)',
+    'エラー監視強化 (Sentry連携)'
   );
 
 UPDATE wbs_tasks
