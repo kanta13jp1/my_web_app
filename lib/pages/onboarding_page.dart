@@ -83,6 +83,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
           duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
         );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('就任手続きが完了しました。経営コックピットへ案内します…')),
+        );
+        // 自動でホームへ遷移（短い遅延）
+        Future.delayed(const Duration(milliseconds: 1200), () {
+          if (!mounted) return;
+          Navigator.of(context).pushReplacementNamed('/home');
+        });
       }
     } catch (e) {
       if (!mounted) return;
