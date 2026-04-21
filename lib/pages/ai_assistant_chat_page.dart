@@ -1,9 +1,12 @@
 // lib/pages/ai_assistant_chat_page.dart
 // Voice AI チャットページ — Web Speech API + ai-hub my_agent.chat
 import 'dart:async';
+import 'dart:convert';
 import 'dart:js_interop';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:web/web.dart' as web;
 
@@ -20,7 +23,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
   final _inputCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
 
-  List<Map<String, String>> _messages = [];
+  List<_ChatMessage> _messages = [];
+  _ChatImageAttachment? _selectedImage;
   bool _isLoading = false;
   bool _isListening = false;
   bool _speechSupported = true;
@@ -124,14 +128,26 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       final data = res.data as Map<String, dynamic>?;
       if (data != null && data['success'] == true) {
         final history = data['history'] as List<dynamic>? ?? [];
-        final msgs = <Map<String, String>>[];
+        final msgs = <_ChatMessage>[];
         for (final rawItem in history.reversed) {
           final item = rawItem as Map<String, dynamic>;
           final meta = item['metadata'] as Map<String, dynamic>? ?? {};
           final msg = meta['message'] as String? ?? '';
           final resp = meta['response'] as String? ?? '';
-          if (msg.isNotEmpty) msgs.add({'role': 'user', 'content': msg});
-          if (resp.isNotEmpty) msgs.add({'role': 'assistant', 'content': resp});
+          final hasImage = meta['has_image'] == true;
+          final imageName = meta['image_name']?.toString();
+          if (msg.isNotEmpty) {
+            msgs.add(
+              _ChatMessage(
+                role: 'user',
+                content: msg,
+                attachmentName: hasImage ? imageName : null,
+              ),
+            );
+          }
+          if (resp.isNotEmpty) {
+            msgs.add(_ChatMessage(role: 'assistant', content: resp));
+          }
         }
         if (mounted) setState(() => _messages = msgs);
         _scrollToBottom();
@@ -143,11 +159,21 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
 
   Future<void> _sendMessage() async {
     final text = _inputCtrl.text.trim();
-    if (text.isEmpty || _isLoading) return;
+    final image = _selectedImage;
+    if ((text.isEmpty && image == null) || _isLoading) return;
+    final displayText = text.isEmpty ? 'この画像を分析してください' : text;
 
     setState(() {
-      _messages.add({'role': 'user', 'content': text});
+      _messages.add(
+        _ChatMessage(
+          role: 'user',
+          content: displayText,
+          attachmentName: image?.name,
+          imageBytes: image?.bytes,
+        ),
+      );
       _inputCtrl.clear();
+      _selectedImage = null;
       _isLoading = true;
     });
     _scrollToBottom();
@@ -155,13 +181,21 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     try {
       final res = await _supabase.functions.invoke(
         'ai-hub',
-        body: {'action': 'my_agent.chat', 'message': text},
+        body: {
+          'action': 'my_agent.chat',
+          'message': displayText,
+          if (image != null) ...{
+            'imageBase64': image.base64,
+            'mimeType': image.mimeType,
+            'imageName': image.name,
+          },
+        },
       );
       final data = res.data as Map<String, dynamic>?;
       final response = data?['response'] as String? ?? 'エラーが発生しました。';
       if (mounted) {
         setState(() {
-          _messages.add({'role': 'assistant', 'content': response});
+          _messages.add(_ChatMessage(role: 'assistant', content: response));
           _isLoading = false;
         });
         _scrollToBottom();
@@ -169,12 +203,53 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add({'role': 'assistant', 'content': 'エラーが発生しました: $e'});
+          _messages.add(
+            _ChatMessage(role: 'assistant', content: 'エラーが発生しました: $e'),
+          );
           _isLoading = false;
         });
         _scrollToBottom();
       }
     }
+  }
+
+  Future<void> _pickImage() async {
+    if (_isLoading) return;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+      final file = result?.files.single;
+      final bytes = file?.bytes;
+      if (file == null || bytes == null || bytes.isEmpty) return;
+      const maxBytes = 4 * 1024 * 1024;
+      if (bytes.length > maxBytes) {
+        _showSnackBar('4MB以下の画像を選択してください');
+        return;
+      }
+      setState(() {
+        _selectedImage = _ChatImageAttachment(
+          name: file.name,
+          mimeType: _detectMimeType(file),
+          bytes: bytes,
+          base64: base64Encode(bytes),
+        );
+      });
+    } catch (e) {
+      _showSnackBar('画像を選択できませんでした: $e');
+    }
+  }
+
+  String _detectMimeType(PlatformFile file) {
+    final extension = file.extension?.toLowerCase();
+    return switch (extension) {
+      'png' => 'image/png',
+      'webp' => 'image/webp',
+      'gif' => 'image/gif',
+      _ => 'image/jpeg',
+    };
   }
 
   void _toggleVoice() {
@@ -300,8 +375,8 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                       }
                       final msg = _messages[i];
                       return _buildMessageBubble(
-                        msg['content'] ?? '',
-                        isUser: msg['role'] == 'user',
+                        msg,
+                        isUser: msg.role == 'user',
                       );
                     },
                   ),
@@ -339,7 +414,7 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
     );
   }
 
-  Widget _buildMessageBubble(String text, {required bool isUser}) {
+  Widget _buildMessageBubble(_ChatMessage message, {required bool isUser}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -367,13 +442,60 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
                   bottomRight: Radius.circular(isUser ? 4 : 16),
                 ),
               ),
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: isUser ? Colors.white : Colors.white.withAlpha(230),
-                  fontSize: 14,
-                  height: 1.5,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (message.imageBytes != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          message.imageBytes!,
+                          width: 220,
+                          height: 128,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    )
+                  else if (message.attachmentName != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.image_outlined,
+                            size: 16,
+                            color: Colors.white70,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              message.attachmentName!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  Text(
+                    message.content,
+                    style: TextStyle(
+                      color:
+                          isUser ? Colors.white : Colors.white.withAlpha(230),
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -427,86 +549,167 @@ class _AiAssistantChatPageState extends State<AiAssistantChatPage>
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _inputCtrl,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  height: 1.5,
+            if (_selectedImage != null) ...[
+              _buildSelectedImagePreview(_selectedImage!),
+              const SizedBox(height: 8),
+            ],
+            Row(
+              children: [
+                IconButton(
+                  onPressed: _isLoading ? null : _pickImage,
+                  tooltip: '画像を添付',
+                  icon: const Icon(Icons.image_outlined, color: Colors.white54),
                 ),
-                decoration: InputDecoration(
-                  hintText: 'メッセージを入力...',
-                  hintStyle:
-                      const TextStyle(color: Colors.white38, height: 1.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Colors.white12),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Colors.white12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: _orange, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF2A2A2A), // surface3
-                ),
-                onSubmitted: (_) => _sendMessage(),
-                maxLines: 3,
-                minLines: 1,
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (_speechSupported)
-              ScaleTransition(
-                scale: _isListening
-                    ? _pulseAnim
-                    : const AlwaysStoppedAnimation(1.0),
-                child: IconButton(
-                  onPressed: _toggleVoice,
-                  icon: Icon(
-                    _isListening ? Icons.mic : Icons.mic_none,
-                    color:
-                        _isListening ? const Color(0xFFE53935) : Colors.white54,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: _isListening
-                        ? const Color(0xFFE53935).withAlpha(30)
-                        : Colors.transparent,
-                  ),
-                ),
-              ),
-            const SizedBox(width: 4),
-            IconButton(
-              onPressed: _isLoading ? null : _sendMessage,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: _orange,
-                        strokeWidth: 2,
+                const SizedBox(width: 4),
+                Expanded(
+                  child: TextField(
+                    controller: _inputCtrl,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: _selectedImage == null
+                          ? 'メッセージを入力...'
+                          : '画像について質問...',
+                      hintStyle:
+                          const TextStyle(color: Colors.white38, height: 1.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: Colors.white12),
                       ),
-                    )
-                  : const Icon(Icons.send_rounded, color: _orange),
-              style: IconButton.styleFrom(
-                backgroundColor: _orange.withAlpha(20),
-              ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(color: _orange, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF2A2A2A), // surface3
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                    maxLines: 3,
+                    minLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (_speechSupported)
+                  ScaleTransition(
+                    scale: _isListening
+                        ? _pulseAnim
+                        : const AlwaysStoppedAnimation(1.0),
+                    child: IconButton(
+                      onPressed: _toggleVoice,
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: _isListening
+                            ? const Color(0xFFE53935)
+                            : Colors.white54,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: _isListening
+                            ? const Color(0xFFE53935).withAlpha(30)
+                            : Colors.transparent,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 4),
+                IconButton(
+                  onPressed: _isLoading ? null : _sendMessage,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: _orange,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(Icons.send_rounded, color: _orange),
+                  style: IconButton.styleFrom(
+                    backgroundColor: _orange.withAlpha(20),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildSelectedImagePreview(_ChatImageAttachment image) {
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Image.memory(
+            image.bytes,
+            width: 44,
+            height: 44,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            image.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ),
+        IconButton(
+          onPressed:
+              _isLoading ? null : () => setState(() => _selectedImage = null),
+          tooltip: '添付を削除',
+          icon: const Icon(Icons.close, color: Colors.white54, size: 18),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChatMessage {
+  const _ChatMessage({
+    required this.role,
+    required this.content,
+    this.attachmentName,
+    this.imageBytes,
+  });
+
+  final String role;
+  final String content;
+  final String? attachmentName;
+  final Uint8List? imageBytes;
+}
+
+class _ChatImageAttachment {
+  const _ChatImageAttachment({
+    required this.name,
+    required this.mimeType,
+    required this.bytes,
+    required this.base64,
+  });
+
+  final String name;
+  final String mimeType;
+  final Uint8List bytes;
+  final String base64;
 }
 
 class _TypingDots extends StatefulWidget {

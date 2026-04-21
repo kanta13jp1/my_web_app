@@ -42,6 +42,12 @@ type ProviderConfig = {
   parseResponse: (data: unknown) => string;
 };
 
+type InlineImage = {
+  base64: string;
+  mimeType: string;
+  name: string | null;
+};
+
 function pick(obj: unknown, ...path: (string | number)[]): unknown {
   let cur: unknown = obj;
   for (const key of path) {
@@ -491,6 +497,29 @@ function asNumber(value: unknown, fallback = 0): number {
     if (Number.isFinite(parsed)) return parsed;
   }
   return fallback;
+}
+
+function parseInlineImage(body: Record<string, unknown>): { image?: InlineImage; error?: string; status?: number } {
+  const rawImage = asString(body.imageBase64);
+  if (!rawImage) return {};
+  const dataUrlMatch = rawImage.match(/^data:([^;]+);base64,(.+)$/);
+  const requestedMimeType = dataUrlMatch?.[1] ?? asString(body.mimeType);
+  const mimeType = requestedMimeType || "image/jpeg";
+  if (!mimeType.startsWith("image/")) {
+    return { error: "mimeType must be an image/* type", status: 400 };
+  }
+  const base64 = (dataUrlMatch?.[2] ?? rawImage).replace(/\s/g, "");
+  if (!base64) return { error: "imageBase64 required", status: 400 };
+  if (base64.length > 6_000_000) {
+    return { error: "imageBase64 is too large", status: 413 };
+  }
+  return {
+    image: {
+      base64,
+      mimeType,
+      name: asString(body.imageName) || null,
+    },
+  };
 }
 
 type CompanyBuilderCriterion = {
@@ -1253,15 +1282,28 @@ async function _deleteItem(admin: SupabaseClient, source: string, userId: string
   if (error) throw new Error(error.message);
 }
 
-async function callGemini(prompt: string, apiKey: string): Promise<string> {
+async function callGemini(prompt: string, apiKey: string, image?: InlineImage): Promise<string> {
+  const parts: Record<string, unknown>[] = [{ text: prompt }];
+  if (image) {
+    parts.push({
+      inline_data: {
+        mime_type: image.mimeType,
+        data: image.base64,
+      },
+    });
+  }
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+      body: JSON.stringify({ contents: [{ parts }] }),
     }
   );
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(`Gemini ${res.status}: ${errorText.slice(0, 500)}`);
+  }
   const data = await res.json() as { candidates?: [{ content: { parts: [{ text: string }] } }] };
   return data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 }
@@ -1408,15 +1450,29 @@ serve(async (req: Request) => {
       case "my_agent.chat": {
         const geminiKey = Deno.env.get("GEMINI_API_KEY") ?? "";
         if (!geminiKey) return json({ error: "GEMINI_API_KEY not configured" }, 503);
+        const message = asString(body.message) || "この画像を分析してください";
+        const parsedImage = parseInlineImage(body);
+        if (parsedImage.error) return json({ error: parsedImage.error }, parsedImage.status ?? 400);
+        const image = parsedImage.image;
         const history = await listItems(admin, "my_agent_history", userId!, 10);
         const recentContext = history.map((h) => {
           const m = h.metadata as Record<string, unknown>;
           return `User: ${m.message}\nAgent: ${m.response}`;
         }).join("\n");
-        const prompt = `あなたは個人AIエージェントです。${recentContext ? "履歴:\n" + recentContext + "\n\n" : ""}ユーザーメッセージ: ${body.message}`;
-        const response = await callGemini(prompt, geminiKey);
-        await addItem(admin, "my_agent_history", userId!, { message: body.message, response });
-        return json({ success: true, response });
+        const imageInstruction = image
+          ? "\n添付画像も確認し、見えている内容・文脈・ユーザーの質問に関係する示唆を含めて回答してください。"
+          : "";
+        const prompt = `あなたは個人AIエージェントです。${recentContext ? "履歴:\n" + recentContext + "\n\n" : ""}ユーザーメッセージ: ${message}${imageInstruction}`;
+        const response = await callGemini(prompt, geminiKey, image);
+        await addItem(admin, "my_agent_history", userId!, {
+          message,
+          response,
+          has_image: Boolean(image),
+          image_mime_type: image?.mimeType ?? null,
+          image_name: image?.name ?? null,
+          image_base64_chars: image?.base64.length ?? 0,
+        });
+        return json({ success: true, response, multimodal: Boolean(image) });
       }
 
       case "my_agent.history": {
@@ -2113,12 +2169,14 @@ serve(async (req: Request) => {
         } catch {
           return json({ error: "Invalid base64 audio data" }, 400);
         }
+        const audioBody = new ArrayBuffer(audioBytes.byteLength);
+        new Uint8Array(audioBody).set(audioBytes);
         const dgResp = await fetch(
           `https://api.deepgram.com/v1/listen?language=${language}&model=nova-2&punctuate=true`,
           {
             method: "POST",
             headers: { "Authorization": `Token ${deepgramKey}`, "Content-Type": "audio/webm" },
-            body: audioBytes,
+            body: audioBody,
           },
         );
         if (!dgResp.ok) {
