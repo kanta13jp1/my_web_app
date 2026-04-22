@@ -1,6 +1,8 @@
 // ignore_for_file: require_trailing_commas
 
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'dart:math'; // ← ★この1行を追加してください！
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -60,6 +62,7 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   bool _flowsDone = false;
   bool _mustTasksDone = false;
   bool _isLoadingClosing = false;
+  bool _isFetchingSmbc = false;
 
   // --- 資産・負債（ストック）用変数 ---
   Map<String, TextEditingController> _controllers = {};
@@ -1453,6 +1456,63 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   // ==========================================
   // 1 & 2. 資産・負債の記録（ストック）
   // ==========================================
+
+  Future<void> _fetchSmbcDataFromSheet() async {
+    setState(() => _isFetchingSmbc = true);
+    try {
+      final url = Uri.parse('https://docs.google.com/spreadsheets/d/1WZlHr6YWG8ZbT9r-wXtYPEdPT5E4b47PSpNSNl8A1MM/export?format=csv&gid=0');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final String csvData = utf8.decode(response.bodyBytes);
+        final lines = const LineSplitter().convert(csvData);
+        for (int i = 0; i < lines.length; i++) {
+          final line = lines[i];
+          final cols = line.split(',');
+          if (cols.length >= 6 && RegExp(r'^\d{4}/\d{1,2}/\d{1,2}$').hasMatch(cols[1])) {
+            final balanceStr = cols[5].trim();
+            final balance = double.tryParse(balanceStr);
+            if (balance != null) {
+              const smbcName = '三井住友銀行';
+              if (!_assetTypes.contains(smbcName)) {
+                setState(() {
+                  _assetTypes.add(smbcName);
+                  _initControllers();
+                  _updateLastUpdatedDates();
+                  _sortAssetTypes();
+                });
+              }
+              setState(() {
+                _controllers[smbcName]?.text = balance.toStringAsFixed(0);
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$smbcNameの残高をシートから取得しました: ¥${balance.toStringAsFixed(0)}'),
+                    backgroundColor: const Color(0xFF047857),
+                  ),
+                );
+              }
+              return;
+            }
+          }
+        }
+        throw Exception('残高データが見つかりませんでした');
+      } else {
+        throw Exception('HTTP ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('データ取得に失敗しました: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingSmbc = false);
+      }
+    }
+  }
+
   Future<void> _loadDataFromSupabase() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -4655,6 +4715,18 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
                   onPressed: _showAddAssetDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('項目を追加'),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _isFetchingSmbc ? null : _fetchSmbcDataFromSheet,
+                  icon: _isFetchingSmbc
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_download, color: Color(0xFF0D9488)),
+                  label: const Text('三井住友から取得'),
                 ),
               ],
             ),
