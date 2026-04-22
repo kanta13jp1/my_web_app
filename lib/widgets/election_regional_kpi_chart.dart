@@ -10,18 +10,15 @@ import 'package:printing/printing.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/local_election_plan.dart';
-import '../widgets/election_kpi_edit_dialog.dart';
 
 class ElectionRegionalKpiChart extends StatefulWidget {
   final List<LocalElectionPrefecturePlan> prefectures;
   final GlobalKey? pieChartKey;
-  final VoidCallback? onDataUpdated;
 
   const ElectionRegionalKpiChart({
     super.key,
     required this.prefectures,
     this.pieChartKey,
-    this.onDataUpdated,
   });
 
   @override
@@ -692,44 +689,6 @@ class _ElectionRegionalKpiChartState extends State<ElectionRegionalKpiChart> {
                   subtitle: Text(
                     '現職維持: ${p.incumbentRetentionTarget}名 / 新人擁立: ${p.newCandidateTarget}名',
                   ),
-                  trailing: const Icon(
-                    Icons.edit,
-                    size: 16,
-                    color: Color(0xFFB0B0B0),
-                  ),
-                  onTap: () async {
-                    try {
-                      final supabase = Supabase.instance.client;
-                      final data = await supabase
-                          .from('election_regional_kpis')
-                          .select()
-                          .eq('region', p.prefecture)
-                          .maybeSingle();
-
-                      if (data != null && context.mounted) {
-                        final result = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) =>
-                              ElectionKpiEditDialog(initialData: data),
-                        );
-                        if (result == true && context.mounted) {
-                          Navigator.pop(context); // 一覧ダイアログを閉じる
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('データを更新しました。最新状態を反映します...'),
-                            ),
-                          );
-                          widget.onDataUpdated?.call();
-                        }
-                      } else if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('編集データが見つかりませんでした')),
-                        );
-                      }
-                    } catch (e) {
-                      debugPrint('編集ダイアログエラー: $e');
-                    }
-                  },
                 );
               },
             ),

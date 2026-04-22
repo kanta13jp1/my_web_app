@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (統一地方選 AI自動KPI更新)
+> **最終更新**: 2026-04-22 Codex (統一地方選 AI自動更新専用UI)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -24,6 +24,7 @@
 - WBS DB 反映: migration `20260422083000_wbs_codex_election_kpi_map.sql` で owner_instance=Codex、進捗を DESIGN 66% / モバイル 71% に更新。
 - 追加改善: 日本地図UIに海面背景、地域ラベル、選択中県連バッジ、重点度バーを追加。migration `20260422093000_wbs_codex_election_map_ui_polish.sql` で DESIGN 67% / モバイル 72% に更新。
 - AI連携強化: `local-election-intelligence` の実態データをユーザー入力なしで県連KPIへ反映。現職人数、目標擁立数、予定選挙数、公認期限、AI自動更新メモを保存する。migration `20260422100000_wbs_codex_election_ai_auto_sync.sql` で AI統合進捗を記録。
+- 入力UI撤去: 県連KPI編集、テンプレート再適用、月次表からのKPI編集、投稿本文編集導線を外し、AI自動更新専用の読み取り中心UIへ変更。migration `20260422103000_wbs_codex_election_readonly_ai_sync.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -98,6 +99,7 @@
 | 画像生成統合 | Codex | 🟡進行中 | 35% | v1 |
 | マルチモーダルAI | Codex | 🟡進行中 | 30% | v1 |
 | 統一地方選 AI自動KPI更新 | Codex | ✅完了 | 100% | α |
+| 統一地方選 AI自動更新専用UI | Codex | ✅完了 | 100% | α |
 
 ### 📈 カテゴリ6: グロース自動化 — **PS版 + Codex 担当**
 
@@ -184,6 +186,7 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - ✅ 選挙チャートWidgetテストの文字化け期待値を修正し、KPIマップ回帰テストを追加
 - ✅ 日本地図UIに海面背景・地域ラベル・選択中県連バッジ・重点度バーを追加
 - ✅ 統一地方選AI連携を強化し、各県連の現職人数・目標擁立数・予定選挙数・公認期限を自動更新
+- ✅ 手入力でKPIを変更できるUIを撤去し、キャッシュ済みAIデータも初期表示時に自動同期
 
 ## 直近完了項目 (2026-04-17 Windows版#74)
 

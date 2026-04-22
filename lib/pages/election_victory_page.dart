@@ -20,7 +20,6 @@ import '../services/public_memo_service.dart';
 import '../widgets/election_japan_map.dart';
 import '../widgets/election_progress_chart.dart';
 import '../widgets/election_regional_kpi_chart.dart';
-import '../widgets/election_x_post_composer_dialog.dart';
 
 class ElectionVictoryPage extends StatefulWidget {
   final bool publicView;
@@ -122,7 +121,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
-  String _memberSearchQuery = '';
   int _visibleMemberCount = _memberPageSize;
   List<LocalElectionRealityHistoryPoint> _realityHistory =
       const <LocalElectionRealityHistoryPoint>[];
@@ -162,9 +160,18 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return;
     }
 
-    final plan = results[0] as LocalElectionPlanDashboard;
+    var plan = results[0] as LocalElectionPlanDashboard;
     final cachedSnapshot = results[1] as LocalElectionRealitySnapshot?;
     final cachedHistory = results[2] as List<LocalElectionRealityHistoryPoint>;
+
+    if (!_isPublicView && cachedSnapshot != null && cachedSnapshot.hasData) {
+      plan = await _service.savePlan(
+        _service.buildAutoUpdatedPlan(plan, cachedSnapshot),
+      );
+      if (!mounted) {
+        return;
+      }
+    }
 
     setState(() {
       _plan = plan;
@@ -202,18 +209,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   Future<void> _refreshAll() async {
     await _loadPlan();
     await _refreshRealityData(showSnackBar: false, forceRefresh: true);
-  }
-
-  Future<void> _savePlan(LocalElectionPlanDashboard plan) async {
-    final saved = await _service.savePlan(
-      plan.copyWith(updatedAt: DateTime.now()),
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _plan = saved;
-    });
   }
 
   void _syncMemberSelection(LocalElectionRealitySnapshot? snapshot) {
@@ -318,7 +313,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
               member.assemblyCategory != _selectedMemberAssemblyCategory) {
             return false;
           }
-          return _resolveRosterMember(member).matchesQuery(_memberSearchQuery);
+          return true;
         })
         .map(_resolveRosterMember)
         .toList();
@@ -737,237 +732,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
-  Future<void> _syncRealityIntoPlan() async {
-    final plan = _plan;
-    final snapshot = _realitySnapshot;
-    if (plan == null || snapshot == null || !snapshot.hasData) {
-      return;
-    }
-
-    await _savePlan(_service.buildAutoUpdatedPlan(plan, snapshot));
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('最新の公式実数とAI推定KPIを計画へ反映しました')),
-    );
-  }
-
-  Future<void> _resetPlan(LocalElectionPlanTemplate template) async {
-    final shouldReset = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('テンプレートを再適用'),
-        content: Text(
-          template == LocalElectionPlanTemplate.focused
-              ? '重点配分テンプレートで現在の県連配分を上書きします。'
-              : '均等配分テンプレートで現在の県連配分を上書きします。',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('上書きする'),
-          ),
-        ],
-      ),
-    );
-    if (shouldReset != true) {
-      return;
-    }
-
-    final plan = await _service.resetPlan(template: template);
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _plan = plan;
-      _selectedRegion = _allLabel;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          template == LocalElectionPlanTemplate.focused
-              ? '重点配分テンプレートに戻しました'
-              : '均等配分テンプレートに戻しました',
-        ),
-      ),
-    );
-  }
-
-  Future<void> _editPrefecture(LocalElectionPrefecturePlan target) async {
-    final additionalController = TextEditingController(
-      text: '${target.additionalSeatTarget}',
-    );
-    final retentionController = TextEditingController(
-      text: '${target.incumbentRetentionTarget}',
-    );
-    final focusController = TextEditingController(
-      text: '${target.focusMunicipalityCount}',
-    );
-    final newCandidateController = TextEditingController(
-      text: '${target.newCandidateTarget}',
-    );
-    final supportController = TextEditingController(
-      text: '${target.closeRaceSupportRounds}',
-    );
-    final notesController = TextEditingController(text: target.notes);
-    var selectedDeadline =
-        planningMonthKeys.contains(target.endorsementDeadlineMonth)
-            ? target.endorsementDeadlineMonth
-            : planningMonthKeys.first;
-    var endorsementConfirmed = target.endorsementConfirmed;
-
-    final updated = await showDialog<LocalElectionPrefecturePlan>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: Text('${target.prefecture} 県連プラン'),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: 420,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildNumberField(
-                      controller: additionalController,
-                      label: '純増目標',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumberField(
-                      controller: retentionController,
-                      label: '現職維持目標',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumberField(
-                      controller: focusController,
-                      label: '重点自治体数',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumberField(
-                      controller: newCandidateController,
-                      label: '新人擁立数',
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDeadline,
-                      decoration: const InputDecoration(
-                        labelText: '公認内定期限',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: [
-                        for (final monthKey in planningMonthKeys)
-                          DropdownMenuItem<String>(
-                            value: monthKey,
-                            child: Text(formatMonthKey(monthKey)),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value == null) {
-                          return;
-                        }
-                        setDialogState(() {
-                          selectedDeadline = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _buildNumberField(
-                      controller: supportController,
-                      label: '接戦区支援回数',
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile.adaptive(
-                      contentPadding: EdgeInsets.zero,
-                      value: endorsementConfirmed,
-                      title: const Text('公認内定済み'),
-                      subtitle: const Text('月次管理表の期限超過アラートから除外'),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          endorsementConfirmed = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: notesController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'メモ',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('キャンセル'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                    target.copyWith(
-                      additionalSeatTarget: _parsePositiveInt(
-                        additionalController.text,
-                      ),
-                      incumbentRetentionTarget: _parsePositiveInt(
-                        retentionController.text,
-                      ),
-                      focusMunicipalityCount: _parsePositiveInt(
-                        focusController.text,
-                      ),
-                      newCandidateTarget: _parsePositiveInt(
-                        newCandidateController.text,
-                      ),
-                      endorsementDeadlineMonth: selectedDeadline,
-                      closeRaceSupportRounds: _parsePositiveInt(
-                        supportController.text,
-                      ),
-                      endorsementConfirmed: endorsementConfirmed,
-                      notes: notesController.text.trim(),
-                    ),
-                  );
-                },
-                child: const Text('保存'),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-
-    additionalController.dispose();
-    retentionController.dispose();
-    focusController.dispose();
-    newCandidateController.dispose();
-    supportController.dispose();
-    notesController.dispose();
-
-    if (updated == null || _plan == null) {
-      return;
-    }
-
-    final next = [
-      for (final item in _plan!.prefectures)
-        if (item.prefecture == updated.prefecture) updated else item,
-    ];
-    await _savePlan(_plan!.copyWith(prefectures: next));
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${updated.prefecture} の計画を保存しました')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
@@ -1009,26 +773,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   )
                 : const Icon(Icons.cloud_sync_outlined),
           ),
-          if (!_isPublicView)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'focused') {
-                  _resetPlan(LocalElectionPlanTemplate.focused);
-                } else if (value == 'balanced') {
-                  _resetPlan(LocalElectionPlanTemplate.balanced);
-                }
-              },
-              itemBuilder: (context) => const [
-                PopupMenuItem<String>(
-                  value: 'focused',
-                  child: Text('重点配分テンプレートへ戻す'),
-                ),
-                PopupMenuItem<String>(
-                  value: 'balanced',
-                  child: Text('均等配分テンプレートへ戻す'),
-                ),
-              ],
-            ),
         ],
       ),
       body: _isLoading || plan == null
@@ -1253,15 +997,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             .where((item) => item.currentMembers > 0)
             .length
         : 0;
-    final needsSync = hasSnapshot &&
-        (realitySnapshot.officialCurrentLocalMembers !=
-                plan.currentLocalMembers ||
-            realitySnapshot.official2023FirstHalfWins !=
-                plan.previousUnifiedElectionFirstHalfWins ||
-            realitySnapshot.official2023SecondHalfWins !=
-                plan.previousUnifiedElectionSecondHalfWins ||
-            !plan.prefectures.any((item) => item.autoUpdatedAt.isNotEmpty));
-
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -1343,23 +1078,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                                 : null,
                         child: const Text('X共有'),
                       ),
-                    if (realitySnapshot != null &&
-                        realitySnapshot.hasScheduleData)
-                      FilledButton.icon(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF1DA1F2),
-                        ),
-                        onPressed: realitySnapshot.hasData
-                            ? () => ElectionXPostComposerDialog.show(
-                                  context,
-                                  snapshot: realitySnapshot,
-                                  shareService: _shareService,
-                                  publishedMemo: _publishedRealityMemo,
-                                )
-                            : null,
-                        icon: const Icon(Icons.schedule_send, size: 16),
-                        label: const Text('週末選挙投稿'),
-                      ),
                     FilledButton.tonalIcon(
                       onPressed: _isRealityLoading
                           ? null
@@ -1376,12 +1094,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                           : const Icon(Icons.refresh),
                       label: Text(_isRealityLoading ? '取得中' : '最新取得'),
                     ),
-                    if (needsSync && !_isPublicView)
-                      FilledButton.tonalIcon(
-                        onPressed: _syncRealityIntoPlan,
-                        icon: const Icon(Icons.sync_alt),
-                        label: const Text('計画へ反映'),
-                      ),
                   ],
                 ),
               ],
@@ -1413,6 +1125,11 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     _buildStatusChip(
                       '県連KPI自動更新済み',
                       color: const Color(0xFF10B981),
+                    ),
+                  if (!_isPublicView)
+                    _buildStatusChip(
+                      'AI自動更新専用',
+                      color: const Color(0xFF7C3AED),
                     ),
                 ],
               ),
@@ -4001,22 +3718,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                 },
               ),
             ),
-            SizedBox(
-              width: 280,
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _memberSearchQuery = value.trim();
-                    _visibleMemberCount = _memberPageSize;
-                  });
-                },
-                decoration: const InputDecoration(
-                  labelText: '名前・自治体・プロフィールで検索',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.search),
-                ),
-              ),
-            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -4653,12 +4354,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                     ],
                   ),
                 ),
-                if (!_isPublicView)
-                  FilledButton.tonalIcon(
-                    onPressed: () => _editPrefecture(plan),
-                    icon: const Icon(Icons.edit),
-                    label: const Text('編集'),
-                  ),
               ],
             ),
             const SizedBox(height: 12),
@@ -4806,20 +4501,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ),
           Expanded(child: Text(text)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNumberField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
       ),
     );
   }
@@ -5039,11 +4720,6 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       return '+${_formatInt(value)}';
     }
     return _formatInt(value);
-  }
-
-  int _parsePositiveInt(String raw) {
-    final value = int.tryParse(raw.trim()) ?? 0;
-    return clampPositiveInt(value);
   }
 }
 
