@@ -11,10 +11,13 @@ import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:my_web_app/models/debt_repayment_plan.dart';
+import 'package:my_web_app/models/kgi_csf_kpi.dart';
+import 'package:my_web_app/services/asset_waste_training_ai_service.dart';
 import 'package:my_web_app/services/asset_watchlist_service.dart';
 import 'package:my_web_app/services/debt_lockdown_service.dart';
 import 'package:my_web_app/services/debt_repayment_planner_service.dart';
 import 'package:my_web_app/services/waste_tracking_service.dart';
+import 'package:my_web_app/widgets/kgi_csf_kpi_panel.dart';
 
 enum AssetManagementInitialFocus {
   overview,
@@ -124,6 +127,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   final DebtLockdownService _debtLockdownService = const DebtLockdownService();
   final DebtRepaymentPlannerService _debtRepaymentPlanner =
       const DebtRepaymentPlannerService();
+  final AssetWasteTrainingAiService _wasteTrainingAiService =
+      const AssetWasteTrainingAiService();
   bool _isGeneratingDebtPlan = false;
   String? _debtPlanMarkdown;
   DateTime? _debtPlanGeneratedAt;
@@ -134,6 +139,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   DebtLockdownSnapshot? _debtLockdownSnapshot;
   bool _isLoadingDebtLockdown = false;
   double? _debtLockdownLoadedForDebt;
+  Future<AssetWasteTrainingAiReview>? _wasteTrainingAiReviewFuture;
+  String? _wasteTrainingAiReviewKey;
 
   final List<Color> _colors = [
     const Color(0xFF6366F1),
@@ -434,6 +441,136 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
   String _formatSignedYen(num value) {
     final sign = value >= 0 ? '+' : '-';
     return '$sign¥${NumberFormat('#,###').format(value.abs().round())}';
+  }
+
+  AssetWasteTrainingSnapshot _buildWasteTrainingSnapshot() {
+    final currentMonth = _monthStart(_now);
+    final flows = _flowsForMonth(currentMonth);
+    var totalExpense = 0;
+    var wasteExpense = 0;
+    var expenseEntryCount = 0;
+    var wasteEntryCount = 0;
+    final wasteDateKeys = <String>{};
+
+    for (final item in flows) {
+      final actionType = item['action_type']?.toString() ?? '';
+      if (!_isExpenseActionType(actionType)) {
+        continue;
+      }
+      final amount = ((item['amount'] as num?)?.toDouble() ?? 0).abs().round();
+      totalExpense += amount;
+      expenseEntryCount += 1;
+
+      final description = item['description']?.toString() ?? '';
+      final parsed = _parseFlowDescription(description, actionType: actionType);
+      if (parsed.wasteCategory == null) {
+        continue;
+      }
+
+      wasteExpense += amount;
+      wasteEntryCount += 1;
+      final occurredAt = DateTime.tryParse(
+        item['occurred_at']?.toString() ?? '',
+      )?.toLocal();
+      if (occurredAt != null) {
+        wasteDateKeys.add(_dateOnly(occurredAt));
+      }
+    }
+
+    final elapsedDays = _isSameMonth(currentMonth, _now)
+        ? _now.day
+        : DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
+    final lockdown = _debtLockdownSnapshot;
+    return AssetWasteTrainingSnapshot(
+      month: currentMonth,
+      monitoredAt: _now,
+      totalExpense: totalExpense,
+      wasteExpense: wasteExpense,
+      expenseEntryCount: expenseEntryCount,
+      wasteEntryCount: wasteEntryCount,
+      noWasteDays: max(0, elapsedDays - wasteDateKeys.length),
+      elapsedDays: max(1, elapsedDays),
+      ruleCompletedCount: lockdown?.completedRuleCount ?? 0,
+      ruleTargetCount:
+          lockdown?.rules.length ?? DebtLockdownService.builtinRules.length,
+      todayViolationCount: lockdown?.todayViolations.length ?? 0,
+      compliantStreakDays: lockdown?.currentCompliantStreakDays ?? 0,
+      lockdownActive: lockdown?.isActive ?? false,
+    );
+  }
+
+  KgiCsfKpiPlan _buildWasteTrainingPlan(
+    AssetWasteTrainingSnapshot snapshot,
+  ) {
+    final zeroWasteTarget = max(1, snapshot.elapsedDays);
+    final ruleTarget = max(1, snapshot.ruleTargetCount);
+    final violationClear = snapshot.todayViolationCount == 0 ? 1 : 0;
+    return KgiCsfKpiPlan(
+      domain: '資産管理 / 浪費抑制トレーニング',
+      kgi: '浪費しない力を鍛え、判断力と純資産を高める',
+      actualLabel: '${snapshot.disciplineScore}点',
+      targetLabel: '100点',
+      progress: snapshot.trainingProgress,
+      metrics: <KgiCsfKpiMetric>[
+        KgiCsfKpiMetric.number(
+          csf: '欲望を記録で可視化する',
+          kpi: '今月の浪費ゼロ日',
+          actual: snapshot.noWasteDays,
+          target: zeroWasteTarget,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '目的外支出を即時に減らす',
+          kpi: '非浪費支出率',
+          actual: snapshot.wasteControlScore,
+          target: 100,
+          unit: '点',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '毎日レビューして改善する',
+          kpi: 'ロックダウン日課達成',
+          actual: snapshot.ruleCompletedCount,
+          target: ruleTarget,
+          unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '逸脱をその日のうちに戻す',
+          kpi: '本日の違反ゼロ',
+          actual: violationClear,
+          target: 1,
+          unit: '日',
+        ),
+      ],
+    );
+  }
+
+  Future<AssetWasteTrainingAiReview> _wasteTrainingReviewFor(
+    AssetWasteTrainingSnapshot snapshot,
+  ) {
+    final key = snapshot.cacheKey;
+    final current = _wasteTrainingAiReviewFuture;
+    if (current == null || _wasteTrainingAiReviewKey != key) {
+      _wasteTrainingAiReviewKey = key;
+      _wasteTrainingAiReviewFuture =
+          _wasteTrainingAiService.generateReview(snapshot);
+    }
+    return _wasteTrainingAiReviewFuture!;
+  }
+
+  String _wasteTrainingNextAction(AssetWasteTrainingSnapshot snapshot) {
+    if (snapshot.todayViolationCount > 0) {
+      return '今日の逸脱を1件ずつ見直し、次に同じ刺激が来たときの代替行動を1つだけ決めてください。';
+    }
+    if (snapshot.wasteEntryCount > 0) {
+      return '今月の浪費カテゴリを見て、最も金額が大きい1カテゴリだけを翌7日間の禁止ルールにしてください。';
+    }
+    if (!snapshot.lockdownActive) {
+      return '浪費抑制を毎日の訓練にするため、借金ロックダウンを有効化して日課チェックを開始してください。';
+    }
+    if (snapshot.ruleCompletedCount < snapshot.ruleTargetCount) {
+      return '今日のロックダウン日課を未達成の項目から1つだけ終わらせ、明日の判断力を先に守ってください。';
+    }
+    return '浪費ゼロの判断が続いています。次は固定費かサブスクを1件見直して、訓練成果を純資産へ移してください。';
   }
 
   Map<String, double?> _netWorthByOverviewMonth(List<DateTime> months) {
@@ -3448,6 +3585,8 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
             _buildMonthlyFlowFirstCard(),
             const SizedBox(height: 16),
             _buildMonthlyFlowPrimaryActionBar(),
+            const SizedBox(height: 16),
+            _buildWasteTrainingAiCard(),
             const SizedBox(height: 24),
             _buildDeadlineChecklistCard(), // 締切チェックリスト
             const SizedBox(height: 16),
@@ -3602,6 +3741,226 @@ class _AssetManagementPageState extends State<AssetManagementPage> {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
+      ),
+    );
+  }
+
+  Widget _buildWasteTrainingAiCard() {
+    final training = _buildWasteTrainingSnapshot();
+    final plan = _buildWasteTrainingPlan(training);
+    final reviewFuture = _wasteTrainingReviewFor(training);
+    final wasteRatioLabel = '${(training.wasteRatio * 100).round()}%';
+
+    return Card(
+      key: const Key('asset_waste_training_ai_card'),
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFCCFBF1)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.psychology_alt_outlined,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI浪費抑制トレーニング',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          height: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'お金を浪費しないことは、欲望を観察し、判断力と自己制御を鍛える能力開発トレーニングです。',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            KgiCsfKpiPanel(
+              plan: plan,
+              accentColor: const Color(0xFF0F766E),
+              initiallyExpanded: true,
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildOverviewStatChip(
+                  label: '浪費額',
+                  value: _formatYen(training.wasteExpense),
+                  color: const Color(0xFFB91C1C),
+                ),
+                _buildOverviewStatChip(
+                  label: '浪費比率',
+                  value: wasteRatioLabel,
+                  color: const Color(0xFFF97316),
+                ),
+                _buildOverviewStatChip(
+                  label: '浪費ゼロ日',
+                  value: '${training.noWasteDays}/${training.elapsedDays}日',
+                  color: const Color(0xFF0F766E),
+                ),
+                _buildOverviewStatChip(
+                  label: '日課達成',
+                  value:
+                      '${training.ruleCompletedCount}/${training.ruleTargetCount}件',
+                  color: const Color(0xFF2563EB),
+                ),
+                _buildOverviewStatChip(
+                  label: '連続達成',
+                  value: '${training.compliantStreakDays}日',
+                  color: const Color(0xFF7C3AED),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FutureBuilder<AssetWasteTrainingAiReview>(
+              future: reviewFuture,
+              builder: (context, snapshot) {
+                final review = snapshot.data;
+                final isLoading =
+                    snapshot.connectionState == ConnectionState.waiting &&
+                        review == null;
+                return _buildWasteTrainingReviewBox(
+                  review: review,
+                  isLoading: isLoading,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF99F6E4)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.trending_up,
+                    color: Color(0xFF0F766E),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _wasteTrainingNextAction(training),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF134E4A),
+                        fontWeight: FontWeight.w700,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWasteTrainingReviewBox({
+    required AssetWasteTrainingAiReview? review,
+    required bool isLoading,
+  }) {
+    final source = review?.source ?? 'ai-hub provider.chat';
+    final summary = review?.summary ?? 'AIが現在の支出・浪費・日課達成を分析しています。';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              if (isLoading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  review?.isFallback == true
+                      ? Icons.auto_awesome_motion_outlined
+                      : Icons.auto_awesome,
+                  size: 18,
+                  color: const Color(0xFF2563EB),
+                ),
+              const SizedBox(width: 8),
+              const Text(
+                'AI現状分析',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  height: 1.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                source,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF64748B),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF334155),
+              height: 1.55,
+            ),
+          ),
+        ],
       ),
     );
   }
