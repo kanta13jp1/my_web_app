@@ -6,6 +6,7 @@ import 'kgi_csf_kpi_panel.dart';
 class LifeWasteEliminationPanel extends StatelessWidget {
   final LifeWasteEliminationReport report;
   final LifeWasteAiReview? aiReview;
+  final LifeWasteMonitoringSummary? monitoringSummary;
   final bool isAiReviewLoading;
   final bool isDark;
   final bool isCompact;
@@ -14,6 +15,7 @@ class LifeWasteEliminationPanel extends StatelessWidget {
     super.key,
     required this.report,
     this.aiReview,
+    this.monitoringSummary,
     this.isAiReviewLoading = false,
     this.isDark = false,
     this.isCompact = false,
@@ -102,6 +104,11 @@ class LifeWasteEliminationPanel extends StatelessWidget {
             _AiReviewBox(
               review: aiReview,
               isLoading: isAiReviewLoading,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
+            _MonitoringBox(
+              summary: monitoringSummary,
               isDark: isDark,
             ),
             const SizedBox(height: 14),
@@ -291,6 +298,156 @@ class _AiReviewBox extends StatelessWidget {
               color: textColor,
               fontSize: 12,
               height: 1.55,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonitoringBox extends StatelessWidget {
+  final LifeWasteMonitoringSummary? summary;
+  final bool isDark;
+
+  const _MonitoringBox({
+    required this.summary,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = summary ?? LifeWasteMonitoringSummary.empty();
+    final border =
+        isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
+    final color = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final textColor = isDark ? Colors.white : const Color(0xFF334155);
+    final accent =
+        data.hasAlerts ? const Color(0xFFDC2626) : const Color(0xFF0F766E);
+    final latest = data.latest;
+    final delta = data.scoreDelta;
+    final deltaLabel = delta == 0
+        ? '前回比 0'
+        : delta > 0
+            ? '前回比 +$delta'
+            : '前回比 $delta';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                data.hasAlerts
+                    ? Icons.warning_amber_rounded
+                    : Icons.monitor_heart_outlined,
+                color: accent,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '定期モニタリング',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1.5,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                latest == null
+                    ? '履歴なし'
+                    : '履歴${data.historyDays}日 / ${latest.wasteFreeScore}点 / $deltaLabel',
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.64),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (data.alerts.isEmpty)
+            Text(
+              latest == null
+                  ? '今日のライフ資本スナップショットを保存すると、継続低下の監視を開始します。'
+                  : '2日以上続く80%未満のライフ資本はありません。今の判断を明日も再現します。',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 12,
+                height: 1.55,
+              ),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final alert in data.alerts.take(3))
+                  _MonitoringAlertChip(
+                    alert: alert,
+                    isDark: isDark,
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MonitoringAlertChip extends StatelessWidget {
+  final LifeWasteMonitoringAlert alert;
+  final bool isDark;
+
+  const _MonitoringAlertChip({
+    required this.alert,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        alert.critical ? const Color(0xFFDC2626) : const Color(0xFFF59E0B);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 180, maxWidth: 360),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.14 : 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.26)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            alert.title,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            alert.detail,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 11,
+              height: 1.45,
             ),
           ),
         ],

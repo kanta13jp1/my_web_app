@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/services/life_waste_elimination_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
   test('buildReport creates six KGI/CSF/KPI resource signals', () {
     final report = const LifeWasteEliminationService().buildReport(
       monitoredAt: DateTime(2026, 4, 22, 9, 15),
@@ -66,5 +71,55 @@ void main() {
 
     expect(fallback.isFallback, isTrue);
     expect(fallback.source, 'local-kpi-engine');
+  });
+
+  test('recordDailySnapshot persists history and alerts repeated waste',
+      () async {
+    const service = LifeWasteEliminationService();
+    final day1 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 21, 9),
+      timeSlipCount: 3,
+      abstinenceSlipCount: 1,
+      abstinenceTimeSavedMinutes: 0,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 18000,
+      pendingCriticalTaskCount: 4,
+      coreRitualDoneCount: 0,
+      coreRitualTarget: 3,
+      todayCompletedCount: 0,
+      yesterdayCompletedCount: 3,
+      featureTotal: 10,
+      featureImproveCount: 4,
+      featureProgress: 0.4,
+    );
+    final day2 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 22, 9),
+      timeSlipCount: 2,
+      abstinenceSlipCount: 1,
+      abstinenceTimeSavedMinutes: 10,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 12000,
+      pendingCriticalTaskCount: 3,
+      coreRitualDoneCount: 1,
+      coreRitualTarget: 3,
+      todayCompletedCount: 1,
+      yesterdayCompletedCount: 3,
+      featureTotal: 10,
+      featureImproveCount: 4,
+      featureProgress: 0.5,
+    );
+
+    await service.recordDailySnapshot(day1);
+    final summary = await service.recordDailySnapshot(day2);
+    final reloaded = await service.loadMonitoringSummary();
+
+    expect(summary.historyDays, 2);
+    expect(summary.alerts, isNotEmpty);
+    expect(
+      summary.alerts.any((alert) => alert.detail.contains('2日連続')),
+      isTrue,
+    );
+    expect(reloaded.historyDays, 2);
+    expect(reloaded.latest?.dateKey, '2026-04-22');
   });
 }

@@ -88,6 +88,8 @@ class _HomePageState extends State<HomePage> {
   late Future<int> _timeWasteSlipCountFuture;
   Future<LifeWasteAiReview>? _lifeWasteAiReviewFuture;
   String? _lifeWasteAiReviewKey;
+  Future<LifeWasteMonitoringSummary>? _lifeWasteMonitoringFuture;
+  String? _lifeWasteMonitoringKey;
   final LifeWasteEliminationService _lifeWasteEliminationService =
       const LifeWasteEliminationService();
   final LifeWasteAiReviewService _lifeWasteAiReviewService =
@@ -5324,12 +5326,24 @@ abstinence_slip_details: $slipDetailsText
           featureImproveCount: featureReport.improveCount,
           featureProgress: featureReport.portfolioPlan.displayProgress,
         );
-        return FutureBuilder<LifeWasteAiReview>(
-          future: _lifeWasteReviewFor(report),
+        return FutureBuilder<List<dynamic>>(
+          future: Future.wait<dynamic>([
+            _lifeWasteReviewFor(report),
+            _lifeWasteMonitoringFor(report),
+          ]),
           builder: (context, reviewSnapshot) {
+            final reviewData = reviewSnapshot.data;
+            final review = reviewData != null && reviewData.isNotEmpty
+                ? reviewData[0] as LifeWasteAiReview
+                : null;
+            final monitoringSummary =
+                reviewData != null && reviewData.length > 1
+                    ? reviewData[1] as LifeWasteMonitoringSummary
+                    : null;
             return LifeWasteEliminationPanel(
               report: report,
-              aiReview: reviewSnapshot.data,
+              aiReview: review,
+              monitoringSummary: monitoringSummary,
               isAiReviewLoading:
                   reviewSnapshot.connectionState == ConnectionState.waiting &&
                       !reviewSnapshot.hasData,
@@ -5353,6 +5367,19 @@ abstinence_slip_details: $slipDetailsText
           _lifeWasteAiReviewService.generateReview(report);
     }
     return _lifeWasteAiReviewFuture!;
+  }
+
+  Future<LifeWasteMonitoringSummary> _lifeWasteMonitoringFor(
+    LifeWasteEliminationReport report,
+  ) {
+    final key = report.cacheKey;
+    final current = _lifeWasteMonitoringFuture;
+    if (current == null || _lifeWasteMonitoringKey != key) {
+      _lifeWasteMonitoringKey = key;
+      _lifeWasteMonitoringFuture =
+          _lifeWasteEliminationService.recordDailySnapshot(report);
+    }
+    return _lifeWasteMonitoringFuture!;
   }
 
   Widget _buildOfficeKpiSummary(
