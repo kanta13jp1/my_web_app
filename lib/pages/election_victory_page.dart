@@ -804,9 +804,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   const SizedBox(height: 24),
                   _buildRegionFilter(plan),
                   const SizedBox(height: 12),
-                  ...plan
-                      .prefecturesForRegion(_selectedRegion)
-                      .map(_buildPrefectureCard),
+                  _buildPrefectureAccordion(plan),
                   const SizedBox(height: 24),
                   Text(
                     '注記: 実データは公式議員ページと2023年の公式選挙結果ページを '
@@ -3751,23 +3749,103 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             icon: Icons.info_outline,
           )
         else
-          Column(
-            children: [
-              for (final member in visibleMembers) _buildMemberCard(member),
-              if (filteredMembers.length > visibleMembers.length)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: OutlinedButton.icon(
-                    onPressed: _showMoreMembers,
-                    icon: const Icon(Icons.expand_more),
-                    label: Text(
-                      'さらに ${_formatInt((filteredMembers.length - visibleMembers.length).clamp(0, _memberPageSize))} 人表示',
-                    ),
-                  ),
-                ),
-            ],
+          _buildMemberRosterAccordion(
+            visibleMembers: visibleMembers,
+            totalFilteredCount: filteredMembers.length,
           ),
       ],
+    );
+  }
+
+  Widget _buildMemberRosterAccordion({
+    required List<LocalElectionLegislatorProfile> visibleMembers,
+    required int totalFilteredCount,
+  }) {
+    final grouped = <String, List<LocalElectionLegislatorProfile>>{};
+    for (final member in visibleMembers) {
+      grouped.putIfAbsent(member.prefecture, () => []).add(member);
+    }
+    final entries = grouped.entries.toList()
+      ..sort((left, right) => left.key.compareTo(right.key));
+
+    return Column(
+      children: [
+        for (var index = 0; index < entries.length; index++)
+          _buildMemberRosterGroup(
+            prefecture: entries[index].key,
+            members: entries[index].value,
+            initiallyExpanded: entries.length <= 2 || index == 0,
+          ),
+        if (totalFilteredCount > visibleMembers.length)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OutlinedButton.icon(
+              onPressed: _showMoreMembers,
+              icon: const Icon(Icons.expand_more),
+              label: Text(
+                'さらに ${_formatInt((totalFilteredCount - visibleMembers.length).clamp(0, _memberPageSize))} 人表示',
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildMemberRosterGroup({
+    required String prefecture,
+    required List<LocalElectionLegislatorProfile> members,
+    required bool initiallyExpanded,
+  }) {
+    final prefecturalCount =
+        members.where((item) => item.assemblyCategory == 'prefectural').length;
+    final municipalCount =
+        members.where((item) => item.assemblyCategory == 'municipal').length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: initiallyExpanded,
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+            childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+            title: Text(
+              '$prefecture ${_formatInt(members.length)}人',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _buildMiniStatChip(
+                    '都道府県議',
+                    prefecturalCount,
+                    color: const Color(0xFF2563EB),
+                  ),
+                  _buildMiniStatChip(
+                    '市区町村議',
+                    municipalCount,
+                    color: const Color(0xFF0F766E),
+                  ),
+                ],
+              ),
+            ),
+            children: members.map(_buildMemberCard).toList(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -3931,31 +4009,48 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   }
 
   Widget _buildSourceSection(LocalElectionRealitySnapshot snapshot) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '公式ソース',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
-        const SizedBox(height: 10),
-        for (final source in snapshot.sources)
-          Card(
-            margin: const EdgeInsets.only(bottom: 10),
-            child: ListTile(
-              title: Text(source.label),
-              subtitle: Text(
-                source.note.isEmpty
-                    ? source.url
-                    : '${source.note}\n${source.url}',
-              ),
-              trailing: const Icon(Icons.open_in_new),
-              onTap: () => _openUrl(source.url),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+          title: Text(
+            '公式ソース',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
           ),
-      ],
+          subtitle: Text(
+            '${_formatInt(snapshot.sources.length)}件の取得元',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          children: [
+            for (final source in snapshot.sources)
+              Card(
+                margin: const EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  title: Text(source.label),
+                  subtitle: Text(
+                    source.note.isEmpty
+                        ? source.url
+                        : '${source.note}\n${source.url}',
+                  ),
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => _openUrl(source.url),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -4314,6 +4409,128 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Widget _buildPrefectureAccordion(LocalElectionPlanDashboard plan) {
+    final selectedPrefectures = plan.prefecturesForRegion(_selectedRegion);
+    if (selectedPrefectures.isEmpty) {
+      return _buildInlineNotice(
+        '表示できる県連KPIがありません。',
+        color: const Color(0xFF607D8B),
+        icon: Icons.info_outline,
+      );
+    }
+
+    if (_selectedRegion != _allLabel) {
+      return _buildPrefectureRegionGroup(
+        title: '$_selectedRegion ${_formatInt(selectedPrefectures.length)}県連',
+        prefectures: selectedPrefectures,
+        initiallyExpanded: true,
+      );
+    }
+
+    final regions = plan.regionLabels.where((label) => label != _allLabel);
+    return Column(
+      children: [
+        for (final region in regions)
+          _buildPrefectureRegionGroup(
+            title:
+                '$region ${_formatInt(plan.prefecturesForRegion(region).length)}県連',
+            prefectures: plan.prefecturesForRegion(region),
+            initiallyExpanded: region == selectedPrefectures.first.region,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPrefectureRegionGroup({
+    required String title,
+    required List<LocalElectionPrefecturePlan> prefectures,
+    required bool initiallyExpanded,
+  }) {
+    final additionalTotal = prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.additionalSeatTarget,
+    );
+    final newCandidateTotal = prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.newCandidateTarget,
+    );
+    final currentMembersTotal = prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.currentMembers,
+    );
+    final scheduledTotal = prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.scheduledElectionCount,
+    );
+    final now = DateTime.now();
+    final overdueCount =
+        prefectures.where((item) => item.isEndorsementOverdue(now)).length;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          border:
+              Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: initiallyExpanded,
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            childrenPadding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+            title: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _buildMiniStatChip(
+                    '現職',
+                    currentMembersTotal,
+                    color: const Color(0xFF0891B2),
+                  ),
+                  _buildMiniStatChip(
+                    '純増',
+                    additionalTotal,
+                    color: const Color(0xFF0F766E),
+                  ),
+                  _buildMiniStatChip(
+                    '新人',
+                    newCandidateTotal,
+                    color: const Color(0xFF7C3AED),
+                  ),
+                  _buildMiniStatChip(
+                    '予定選挙',
+                    scheduledTotal,
+                    suffix: '件',
+                    color: const Color(0xFF2563EB),
+                  ),
+                  if (overdueCount > 0)
+                    _buildMiniStatChip(
+                      '期限超過',
+                      overdueCount,
+                      color: const Color(0xFFE53935),
+                    ),
+                ],
+              ),
+            ),
+            children: prefectures.map(_buildPrefectureCard).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPrefectureCard(LocalElectionPrefecturePlan plan) {
     final now = DateTime.now();
     final overdue = plan.isEndorsementOverdue(now);
@@ -4434,6 +4651,30 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           color: chipColor.withValues(alpha: 0.95),
           fontWeight: FontWeight.w600,
           height: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniStatChip(
+    String label,
+    int value, {
+    required Color color,
+    String suffix = '人',
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        '$label ${_formatInt(value)}$suffix',
+        style: TextStyle(
+          color: color.withValues(alpha: 0.95),
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
         ),
       ),
     );
