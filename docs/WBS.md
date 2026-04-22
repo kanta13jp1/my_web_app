@@ -280,3 +280,6 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - 実着手タスクのみCodex担当へ変更: 「全機能生命資本フィードバックKPI」をCodex担当として完了。
 - 対応内容: 低ハードル1手の完了・観察履歴を7日間KPIとして集計し、全機能AI戦略モニター、ポートフォリオKGI/CSF/KPI、AIレビューの文脈へ反映。習慣化するまで次へ広げない判断を数値化。
 - WBS DB反映: migration `20260423103000_wbs_codex_feature_focus_feedback.sql`。
+- 実着手タスクのみCodex担当へ変更: 「全機能生命資本習慣化解放ゲート」をCodex担当として完了。
+- 対応内容: 低ハードル1手を完了3日分または3日継続まで固定し、解放条件を満たすまで新しい継続タスクを増やさない判定を追加。UI、KGI/CSF/KPI、AIレビューに解放状態を表示。
+- WBS DB反映: migration `20260423113000_wbs_codex_feature_habit_unlock.sql`。

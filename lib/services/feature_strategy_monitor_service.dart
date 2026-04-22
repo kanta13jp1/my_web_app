@@ -648,42 +648,76 @@ class FeatureStrategyMonitorService {
           });
     if (coveredSummaries.isEmpty) return null;
 
-    final targetSummary = coveredSummaries.first;
-    final candidates = signals
-        .where((signal) => signal.lifeCapitalResource == targetSummary.resource)
+    final activeUnstableSignals = signals
+        .where(
+          (signal) =>
+              signal.focusActionStats.hasHistory &&
+              !signal.focusActionStats.isHabitStable,
+        )
         .toList()
       ..sort((a, b) {
-        final byHurdle = _focusHurdleScore(b).compareTo(_focusHurdleScore(a));
-        if (byHurdle != 0) return byHurdle;
+        final byEvidence = b.focusActionStats.habitEvidenceDays
+            .compareTo(a.focusActionStats.habitEvidenceDays);
+        if (byEvidence != 0) return byEvidence;
+        final byClosed = b.focusActionStats.closedDaysLast7
+            .compareTo(a.focusActionStats.closedDaysLast7);
+        if (byClosed != 0) return byClosed;
         return a.progress.compareTo(b.progress);
       });
+    final signal =
+        activeUnstableSignals.isNotEmpty ? activeUnstableSignals.first : null;
+    final targetSummary = signal == null
+        ? coveredSummaries.first
+        : coveredSummaries.firstWhere(
+            (summary) => summary.resource == signal.lifeCapitalResource,
+            orElse: () => coveredSummaries.first,
+          );
+    final candidates = signal == null
+        ? (signals
+            .where(
+              (item) => item.lifeCapitalResource == targetSummary.resource,
+            )
+            .toList()
+          ..sort((a, b) {
+            final byHurdle =
+                _focusHurdleScore(b).compareTo(_focusHurdleScore(a));
+            if (byHurdle != 0) return byHurdle;
+            return a.progress.compareTo(b.progress);
+          }))
+        : <FeatureStrategySignal>[signal];
     if (candidates.isEmpty) return null;
 
-    final signal = candidates.first;
+    final selectedSignal = candidates.first;
     final parkedResourceCount = math.max(0, coveredSummaries.length - 1);
     final parkedFeatureCount = signals
-        .where((item) => item.lifeCapitalResource != signal.lifeCapitalResource)
+        .where(
+          (item) =>
+              item.lifeCapitalResource != selectedSignal.lifeCapitalResource,
+        )
         .length;
-    final action = _buildFocusAction(signal);
-    final actionStats = signal.focusActionStats;
+    final action = _buildFocusAction(selectedSignal);
+    final actionStats = selectedSignal.focusActionStats;
+    final gateText = actionStats.isHabitStable
+        ? '3日分の定着条件を満たしたため、次の資本へ広げられます。'
+        : '習慣化の解放条件まであと${actionStats.remainingUnlockDays}日です。新しい継続タスクは追加せず、この1手を固定します。';
     final historyText = actionStats.hasHistory
         ? '直近7日で完了${actionStats.completedDaysLast7}日、観察${actionStats.deferredDaysLast7}日、継続${actionStats.currentStreakDays}日です。'
         : 'まだ完了履歴がないため、今日の1手を最初の習慣化ログにします。';
     final rationale =
-        '${targetSummary.label}の平均進捗が最も低いため、${signal.featureName}だけを先に習慣化します。他の資本は観察に回します。$historyText';
+        '${targetSummary.label}の平均進捗が最も低いため、${selectedSignal.featureName}だけを先に習慣化します。他の資本は観察に回します。$historyText$gateText';
 
     return FeatureStrategyFocusRecommendation(
-      resource: signal.lifeCapitalResource,
+      resource: selectedSignal.lifeCapitalResource,
       label: targetSummary.label,
-      featureId: signal.featureId,
-      featureName: signal.featureName,
-      sectionName: signal.sectionName,
-      csf: signal.wasteReductionCsf,
+      featureId: selectedSignal.featureId,
+      featureName: selectedSignal.featureName,
+      sectionName: selectedSignal.sectionName,
+      csf: selectedSignal.wasteReductionCsf,
       kpi: '今日の低ハードル実行 1回',
       action: action,
       rationale: rationale,
-      monitoringCadence: signal.monitoringCadence,
-      progress: signal.progress,
+      monitoringCadence: selectedSignal.monitoringCadence,
+      progress: selectedSignal.progress,
       parkedResourceCount: parkedResourceCount,
       parkedFeatureCount: parkedFeatureCount,
       actionStats: actionStats,
@@ -692,10 +726,10 @@ class FeatureStrategyMonitorService {
         kgi: '${targetSummary.label}の浪費を減らす入口を1つだけ習慣化する',
         actualLabel: '${actionStats.completedDaysLast7}日完了',
         targetLabel: '7日中3日',
-        progress: signal.progress,
+        progress: selectedSignal.progress,
         metrics: <KgiCsfKpiMetric>[
           KgiCsfKpiMetric.number(
-            csf: signal.wasteReductionCsf,
+            csf: selectedSignal.wasteReductionCsf,
             kpi: '今日実行する低ハードル行動',
             actual: 1,
             target: 1,
@@ -716,6 +750,13 @@ class FeatureStrategyMonitorService {
             unit: '日',
           ),
           KgiCsfKpiMetric.number(
+            csf: '定着後に次へ進む',
+            kpi: '解放条件の達成日数',
+            actual: actionStats.habitEvidenceDays,
+            target: FeatureStrategyFocusActionStats.habitUnlockDays,
+            unit: '日',
+          ),
+          KgiCsfKpiMetric.number(
             csf: '同時進行を止める',
             kpi: '観察に回した資本',
             actual: parkedResourceCount,
@@ -724,7 +765,7 @@ class FeatureStrategyMonitorService {
           ),
           KgiCsfKpiMetric.number(
             csf: '定期モニタリング',
-            kpi: '${signal.monitoringCadence}レビュー対象',
+            kpi: '${selectedSignal.monitoringCadence}レビュー対象',
             actual: 1,
             target: 1,
             unit: '件',
@@ -794,6 +835,8 @@ class FeatureStrategyMonitorService {
     );
     final selectedFocusStreak =
         focusRecommendation?.actionStats.currentStreakDays ?? 0;
+    final selectedFocusEvidence =
+        focusRecommendation?.actionStats.habitEvidenceDays ?? 0;
 
     return KgiCsfKpiPlan(
       domain: '全機能AI戦略',
@@ -863,6 +906,13 @@ class FeatureStrategyMonitorService {
           kpi: '選定中1手の継続日数',
           actual: selectedFocusStreak,
           target: 3,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '解放条件を満たすまで固定',
+          kpi: '次へ進むための習慣化証跡',
+          actual: selectedFocusEvidence,
+          target: FeatureStrategyFocusActionStats.habitUnlockDays,
           unit: '日',
         ),
         KgiCsfKpiMetric.number(

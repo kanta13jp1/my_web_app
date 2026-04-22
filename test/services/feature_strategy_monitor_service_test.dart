@@ -67,11 +67,14 @@ void main() {
       contains('浪費'),
     );
     expect(report.focusRecommendation, isNotNull);
+    expect(report.focusRecommendation!.featureId, 'asset-training');
     expect(report.focusRecommendation!.action, contains('今日'));
+    expect(report.focusRecommendation!.rationale, contains('あと1日'));
     expect(
       report.focusRecommendation!.actionStats.completedDaysLast7,
-      greaterThanOrEqualTo(0),
+      2,
     );
+    expect(report.focusRecommendation!.actionStats.isHabitStable, isFalse);
     expect(report.focusActionsCompletedLast7, 2);
     expect(
       report.focusRecommendation!.parkedResourceCount,
@@ -84,6 +87,10 @@ void main() {
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('7日内の低ハードル完了'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('次へ進むための習慣化証跡'),
     );
     expect(
       report.consolidationCandidates.single.summary,

@@ -12,6 +12,8 @@ enum FeatureLifeCapitalResource {
 }
 
 class FeatureStrategyFocusActionStats {
+  static const int habitUnlockDays = 3;
+
   final String featureId;
   final int completedDaysLast7;
   final int deferredDaysLast7;
@@ -40,6 +42,17 @@ class FeatureStrategyFocusActionStats {
   bool get hasHistory => closedDaysLast7 > 0 || currentStreakDays > 0;
   double get completionRateLast7 => completedDaysLast7 / 7;
   double get closeRateLast7 => closedDaysLast7 / 7;
+  int get habitEvidenceDays => currentStreakDays > completedDaysLast7
+      ? currentStreakDays
+      : completedDaysLast7;
+  int get remainingUnlockDays {
+    final remaining = habitUnlockDays - habitEvidenceDays;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  bool get isHabitStable => remainingUnlockDays == 0;
+  String get unlockStatusLabel =>
+      isHabitStable ? '次へ進める' : '固定 あと$remainingUnlockDays日';
 }
 
 class FeatureStrategyCatalogItem {

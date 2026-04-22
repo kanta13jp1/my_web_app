@@ -123,6 +123,8 @@ void main() {
     expect(stats.completedDaysLast7, 2);
     expect(stats.deferredDaysLast7, 1);
     expect(stats.currentStreakDays, 1);
+    expect(stats.isHabitStable, isFalse);
+    expect(stats.remainingUnlockDays, 1);
     expect(stats.closeRateLast7, greaterThan(0));
   });
 
@@ -143,5 +145,28 @@ void main() {
 
     expect(stats['life-command']!.completedDaysLast7, 1);
     expect(stats['life-command']!.deferredDaysLast7, 0);
+  });
+
+  test('focus stats unlock after three completed days', () async {
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 21, 8),
+    );
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 22, 8),
+    );
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 23, 8),
+    );
+
+    final stats = await service.loadStatsByFeatureIds(
+      <String>['life-command'],
+      now: DateTime(2026, 4, 23, 21),
+    );
+
+    expect(stats['life-command']!.isHabitStable, isTrue);
+    expect(stats['life-command']!.unlockStatusLabel, '次へ進める');
   });
 }

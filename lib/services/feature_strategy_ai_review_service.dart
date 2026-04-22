@@ -71,6 +71,7 @@ class FeatureStrategyAiReviewService {
             '(CSF=${focus.csf}, 7日完了=${focus.actionStats.completedDaysLast7}日, '
             '観察=${focus.actionStats.deferredDaysLast7}日, '
             '継続=${focus.actionStats.currentStreakDays}日, '
+            '解放=${focus.actionStats.unlockStatusLabel}, '
             '保留=${focus.parkedResourceCount}資本/${focus.parkedFeatureCount}機能)';
 
     return '''
@@ -78,6 +79,7 @@ class FeatureStrategyAiReviewService {
 以下の全機能KGI/CSF/KPIモニタリング結果を読み、現状分析、最重要CSF、次の改善アクション、類似機能の統合判断を日本語で3行以内にまとめてください。
 特にライフマネジメントでは、時間・お金・健康・体力・知能・集中力の浪費をなくすことを最重要課題として扱ってください。
 継続系タスクは同時に広げず、今日の低ハードル1手を優先し、他は観察に回してください。
+低ハードル1手は完了3日分または3日継続まで固定し、解放条件を満たすまで新しい継続タスクを増やさないでください。
 総機能数: ${report.totalFeatures}
 順調: ${report.onTrackCount}
 要観察: ${report.watchCount}

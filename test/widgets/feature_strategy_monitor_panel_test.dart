@@ -60,6 +60,7 @@ void main() {
     expect(find.text('今日の低ハードル1手'), findsWidgets);
     await tester.pump();
     expect(find.textContaining('7日完了'), findsWidgets);
+    expect(find.textContaining('固定 あと'), findsWidgets);
     expect(find.text('1手完了'), findsOneWidget);
     await tester.ensureVisible(find.text('1手完了'));
     await tester.pump();

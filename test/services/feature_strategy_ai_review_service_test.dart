@@ -16,6 +16,7 @@ void main() {
         expect(body['message'].toString(), contains('類似機能の統合候補'));
         expect(body['message'].toString(), contains('今日の低ハードル1手'));
         expect(body['message'].toString(), contains('低ハードル完了(7日)'));
+        expect(body['message'].toString(), contains('解放条件'));
         expect(body['message'].toString(), contains('同時に広げず'));
         return {
           'success': true,

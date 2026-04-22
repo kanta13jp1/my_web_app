@@ -572,7 +572,26 @@ class _FocusRecommendationCard extends StatelessWidget {
                 color: const Color(0xFF2563EB),
                 dark: dark,
               ),
+              _StatusPill(
+                label: recommendation.actionStats.unlockStatusLabel,
+                color: recommendation.actionStats.isHabitStable
+                    ? const Color(0xFF059669)
+                    : const Color(0xFFDC2626),
+                dark: dark,
+              ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            recommendation.actionStats.isHabitStable
+                ? '定着条件を満たしました。次の弱い生命資本へ広げてもよい状態です。'
+                : '定着までは他の継続タスクを増やさず、この1手だけを固定します。',
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
           ),
           const SizedBox(height: 8),
           KgiCsfKpiPanel(
