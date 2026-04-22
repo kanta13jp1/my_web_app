@@ -58,19 +58,31 @@ class FeatureStrategyAiReviewService {
           '${candidate.featureNames.join(' / ')} '
           '(共通軸=${candidate.sharedAxis})';
     }).join('\n');
+    final lifeCapitalLines = report.lifeCapitalSummaries.map((summary) {
+      return '- ${summary.label}: ${summary.featureCount}機能, '
+          '浪費削減高=${summary.highImpactFeatureCount}機能, '
+          '進捗=${(summary.averageProgress * 100).round()}%, '
+          '詰まり=${summary.bottleneckFeatureName}';
+    }).join('\n');
 
     return '''
 あなたはプロダクト全体のAI戦略レビュー担当です。
 以下の全機能KGI/CSF/KPIモニタリング結果を読み、現状分析、最重要CSF、次の改善アクション、類似機能の統合判断を日本語で3行以内にまとめてください。
+特にライフマネジメントでは、時間・お金・健康・体力・知能・集中力の浪費をなくすことを最重要課題として扱ってください。
 総機能数: ${report.totalFeatures}
 順調: ${report.onTrackCount}
 要観察: ${report.watchCount}
 改善優先: ${report.improveCount}
 統合候補: ${report.consolidationCount}
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
+生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
+浪費削減高スコア機能: ${report.highWasteReductionCount}
 
 セクション別:
 $sectionLines
+
+生命資本別:
+$lifeCapitalLines
 
 改善優先キュー:
 $priorityLines

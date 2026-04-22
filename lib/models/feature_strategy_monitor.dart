@@ -2,6 +2,15 @@ import 'kgi_csf_kpi.dart';
 
 enum FeatureStrategyStatus { onTrack, watch, improve }
 
+enum FeatureLifeCapitalResource {
+  time,
+  money,
+  health,
+  stamina,
+  intelligence,
+  focus,
+}
+
 class FeatureStrategyCatalogItem {
   final String id;
   final String sectionId;
@@ -34,6 +43,10 @@ class FeatureStrategySignal {
   final int metadataScore;
   final int recentUsageScore;
   final int improvementScore;
+  final FeatureLifeCapitalResource lifeCapitalResource;
+  final int wasteReductionScore;
+  final String wasteReductionCsf;
+  final String monitoringCadence;
 
   const FeatureStrategySignal({
     required this.featureId,
@@ -49,6 +62,10 @@ class FeatureStrategySignal {
     required this.metadataScore,
     required this.recentUsageScore,
     required this.improvementScore,
+    required this.lifeCapitalResource,
+    required this.wasteReductionScore,
+    required this.wasteReductionCsf,
+    required this.monitoringCadence,
   });
 
   double get progress => plan.displayProgress;
@@ -77,16 +94,42 @@ class FeatureConsolidationCandidate {
       '$sharedAxis を軸に ${featureNames.join(' / ')} を $canonicalFeatureName へ統合候補化';
 }
 
+class FeatureLifeCapitalSummary {
+  final FeatureLifeCapitalResource resource;
+  final String label;
+  final int featureCount;
+  final int highImpactFeatureCount;
+  final double averageProgress;
+  final String topFeatureName;
+  final String bottleneckFeatureName;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureLifeCapitalSummary({
+    required this.resource,
+    required this.label,
+    required this.featureCount,
+    required this.highImpactFeatureCount,
+    required this.averageProgress,
+    required this.topFeatureName,
+    required this.bottleneckFeatureName,
+    required this.plan,
+  });
+
+  bool get hasCoverage => featureCount > 0;
+}
+
 class FeatureStrategyReport {
   final DateTime monitoredAt;
   final List<FeatureStrategySignal> signals;
   final List<FeatureConsolidationCandidate> consolidationCandidates;
+  final List<FeatureLifeCapitalSummary> lifeCapitalSummaries;
   final KgiCsfKpiPlan portfolioPlan;
 
   const FeatureStrategyReport({
     required this.monitoredAt,
     required this.signals,
     required this.consolidationCandidates,
+    required this.lifeCapitalSummaries,
     required this.portfolioPlan,
   });
 
@@ -95,6 +138,7 @@ class FeatureStrategyReport {
       monitoredAt: monitoredAt,
       signals: const <FeatureStrategySignal>[],
       consolidationCandidates: const <FeatureConsolidationCandidate>[],
+      lifeCapitalSummaries: const <FeatureLifeCapitalSummary>[],
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
         kgi: '全機能をAI分析とKGI/CSF/KPI監視に接続する',
@@ -112,9 +156,23 @@ class FeatureStrategyReport {
   int get watchCount => _countByStatus(FeatureStrategyStatus.watch);
   int get improveCount => _countByStatus(FeatureStrategyStatus.improve);
   int get consolidationCount => consolidationCandidates.length;
+  int get highWasteReductionCount =>
+      signals.where((signal) => signal.wasteReductionScore >= 3).length;
 
   double get aiCoverageRatio =>
       totalFeatures == 0 ? 0 : monitoredFeatures / totalFeatures;
+  double get lifeCapitalCoverageRatio => lifeCapitalSummaries.isEmpty
+      ? 0
+      : lifeCapitalSummaries.where((item) => item.hasCoverage).length /
+          FeatureLifeCapitalResource.values.length;
+
+  FeatureLifeCapitalSummary? get weakestLifeCapitalSummary {
+    final covered =
+        lifeCapitalSummaries.where((summary) => summary.hasCoverage).toList();
+    if (covered.isEmpty) return null;
+    covered.sort((a, b) => a.averageProgress.compareTo(b.averageProgress));
+    return covered.first;
+  }
 
   List<FeatureStrategySignal> get prioritySignals {
     final items = signals.where((signal) {

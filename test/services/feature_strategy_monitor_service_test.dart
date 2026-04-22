@@ -41,6 +41,22 @@ void main() {
     expect(report.portfolioPlan.kgi, contains('全機能'));
     expect(report.consolidationCandidates, hasLength(1));
     expect(
+      report.lifeCapitalSummaries,
+      hasLength(FeatureLifeCapitalResource.values.length),
+    );
+    expect(report.lifeCapitalCoverageRatio, greaterThan(0));
+    expect(report.highWasteReductionCount, greaterThan(0));
+    expect(
+      report.signals
+          .singleWhere((signal) => signal.featureId == 'asset-training')
+          .lifeCapitalResource,
+      FeatureLifeCapitalResource.money,
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.csf).join(' / '),
+      contains('浪費'),
+    );
+    expect(
       report.consolidationCandidates.single.summary,
       contains('タスクボード'),
     );

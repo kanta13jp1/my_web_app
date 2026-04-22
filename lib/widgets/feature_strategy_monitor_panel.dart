@@ -75,7 +75,7 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。類似機能は統合候補として抽象化し、迷わず使える導線へ寄せます。',
+            'ホームの全機能を対象に、AI分析、KGI、CSF、KPI、改善アクションを自動生成して横断監視します。時間・お金・健康・体力・知能・集中力の浪費を減らす軸で整理し、類似機能は統合候補として抽象化します。',
             style: TextStyle(
               color: mutedColor,
               fontSize: isCompact ? 12 : 13,
@@ -97,7 +97,7 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
           const SizedBox(height: 14),
           LayoutBuilder(
             builder: (context, constraints) {
-              final columns = isCompact || constraints.maxWidth < 720 ? 2 : 4;
+              final columns = isCompact || constraints.maxWidth < 720 ? 2 : 3;
               final gap = isCompact ? 8.0 : 10.0;
               final width =
                   (constraints.maxWidth - gap * (columns - 1)) / columns;
@@ -120,6 +120,21 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
                     dark: isDark,
                   ),
                   _SummaryTile(
+                    label: '生命資本',
+                    value:
+                        '${(report.lifeCapitalCoverageRatio * 100).round()}%',
+                    color: const Color(0xFF059669),
+                    width: width,
+                    dark: isDark,
+                  ),
+                  _SummaryTile(
+                    label: '浪費削減',
+                    value: '${report.highWasteReductionCount}',
+                    color: const Color(0xFFF97316),
+                    width: width,
+                    dark: isDark,
+                  ),
+                  _SummaryTile(
                     label: '要観察',
                     value: '${report.watchCount}',
                     color: const Color(0xFFF59E0B),
@@ -138,6 +153,12 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
+          _LifeCapitalAccordion(
+            summaries: report.lifeCapitalSummaries,
+            dark: isDark,
+            compact: isCompact,
+          ),
+          const SizedBox(height: 8),
           _SignalAccordion(
             title: 'AI改善キュー',
             subtitle: priorities.isEmpty
@@ -377,6 +398,164 @@ class _SignalAccordion extends StatelessWidget {
   }
 }
 
+class _LifeCapitalAccordion extends StatelessWidget {
+  final List<FeatureLifeCapitalSummary> summaries;
+  final bool dark;
+  final bool compact;
+
+  const _LifeCapitalAccordion({
+    required this.summaries,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final border =
+        dark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE5E7EB);
+    final titleColor = dark ? Colors.white : const Color(0xFF111827);
+    final subtitleColor =
+        dark ? Colors.white.withValues(alpha: 0.62) : const Color(0xFF64748B);
+    final coveredCount =
+        summaries.where((summary) => summary.hasCoverage).length;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 0 : 2,
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(
+            compact ? 10 : 12,
+            0,
+            compact ? 10 : 12,
+            compact ? 10 : 12,
+          ),
+          leading: const Icon(Icons.self_improvement, color: Color(0xFF059669)),
+          title: Text(
+            '生命資本・浪費ゼロKPI',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 13 : 14,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            '$coveredCount/6資本をAI分析とKGI/CSF/KPIで監視',
+            style: TextStyle(
+              color: subtitleColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          children: [
+            for (final summary in summaries) ...[
+              _LifeCapitalRow(
+                summary: summary,
+                dark: dark,
+                compact: compact,
+              ),
+              if (summary != summaries.last) const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LifeCapitalRow extends StatelessWidget {
+  final FeatureLifeCapitalSummary summary;
+  final bool dark;
+  final bool compact;
+
+  const _LifeCapitalRow({
+    required this.summary,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF64748B);
+    final color = _lifeCapitalColor(summary.resource);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 10 : 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.15 : 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                summary.label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: '${summary.featureCount}機能',
+                color: color,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '高効果 ${summary.highImpactFeatureCount}',
+                color: const Color(0xFFF97316),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '${(summary.averageProgress * 100).round()}%',
+                color: const Color(0xFF2563EB),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary.hasCoverage
+                ? '伸びている機能: ${summary.topFeatureName} / 先に低ハードル化: ${summary.bottleneckFeatureName}'
+                : 'この資本を守る導線がまだありません。既存機能に紐づけるか、重複機能を統合して入口を作ります。',
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          KgiCsfKpiPanel(
+            plan: summary.plan,
+            accentColor: color,
+            dense: true,
+            dark: dark,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ConsolidationAccordion extends StatelessWidget {
   final List<FeatureConsolidationCandidate> candidates;
   final bool dark;
@@ -591,6 +770,16 @@ class _SignalRow extends StatelessWidget {
                 color: const Color(0xFF2563EB),
                 dark: dark,
               ),
+              _StatusPill(
+                label: _lifeCapitalLabel(signal.lifeCapitalResource),
+                color: _lifeCapitalColor(signal.lifeCapitalResource),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '浪費削減 ${signal.wasteReductionScore}/5',
+                color: const Color(0xFFF97316),
+                dark: dark,
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -600,6 +789,16 @@ class _SignalRow extends StatelessWidget {
               color: labelColor,
               fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.w600,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'CSF: ${signal.wasteReductionCsf} / 監視頻度: ${signal.monitoringCadence}',
+            style: TextStyle(
+              color: labelColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
               height: 1.45,
             ),
           ),
@@ -665,5 +864,27 @@ String _statusLabel(FeatureStrategyStatus status) {
     FeatureStrategyStatus.onTrack => '順調',
     FeatureStrategyStatus.watch => '要観察',
     FeatureStrategyStatus.improve => '改善優先',
+  };
+}
+
+String _lifeCapitalLabel(FeatureLifeCapitalResource resource) {
+  return switch (resource) {
+    FeatureLifeCapitalResource.time => '時間',
+    FeatureLifeCapitalResource.money => 'お金',
+    FeatureLifeCapitalResource.health => '健康',
+    FeatureLifeCapitalResource.stamina => '体力',
+    FeatureLifeCapitalResource.intelligence => '知能',
+    FeatureLifeCapitalResource.focus => '集中力',
+  };
+}
+
+Color _lifeCapitalColor(FeatureLifeCapitalResource resource) {
+  return switch (resource) {
+    FeatureLifeCapitalResource.time => const Color(0xFF0891B2),
+    FeatureLifeCapitalResource.money => const Color(0xFF0F766E),
+    FeatureLifeCapitalResource.health => const Color(0xFF16A34A),
+    FeatureLifeCapitalResource.stamina => const Color(0xFFEA580C),
+    FeatureLifeCapitalResource.intelligence => const Color(0xFF7C3AED),
+    FeatureLifeCapitalResource.focus => const Color(0xFF2563EB),
   };
 }
