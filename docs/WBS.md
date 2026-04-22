@@ -271,3 +271,9 @@ WHERE title = 'ai-hub provider.chat 全対応';
 - 実着手タスクのみCodex担当へ変更: 「全機能AI戦略モニタリング 類似機能抽象化」をCodex担当として完了。
 - 対応内容: 全機能のAI分析/KGI/CSF/KPI/定期モニタリングに、類似機能の統合候補を自動抽出するモデルを追加。ライフ浪費ゼロ司令塔、資産浪費トレーニング、全機能戦略モニタリングの文字化け文言も修正。
 - WBS DB反映: migration `20260422183000_wbs_codex_feature_consolidation_monitor.sql`。
+
+# Codex追記 2026-04-23
+
+- 実着手タスクのみCodex担当へ変更: 「全機能生命資本フォーカス完了ループ」をCodex担当として完了。
+- 対応内容: 全機能AI戦略モニターの「今日の低ハードル1手」を、完了または今日は観察として記録できるようにし、継続日数を表示。継続系タスクを広げすぎず、習慣化するまで1手に絞る改善ループへ更新。
+- WBS DB反映: migration `20260423093000_wbs_codex_feature_focus_completion.sql`。

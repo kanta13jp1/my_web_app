@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_web_app/models/feature_strategy_monitor.dart';
 import 'package:my_web_app/services/feature_strategy_monitor_service.dart';
 import 'package:my_web_app/widgets/feature_strategy_monitor_panel.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('FeatureStrategyMonitorPanel renders portfolio and queues', (
     tester,
   ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     final report = const FeatureStrategyMonitorService().buildReport(
       catalog: const <FeatureStrategyCatalogItem>[
         FeatureStrategyCatalogItem(
@@ -56,6 +58,13 @@ void main() {
     expect(find.text('生命資本'), findsOneWidget);
     expect(find.text('浪費削減'), findsOneWidget);
     expect(find.text('今日の低ハードル1手'), findsWidgets);
+    await tester.pump();
+    expect(find.text('1手完了'), findsOneWidget);
+    await tester.ensureVisible(find.text('1手完了'));
+    await tester.pump();
+    await tester.tap(find.text('1手完了'));
+    await tester.pumpAndSettle();
+    expect(find.text('完了済み'), findsOneWidget);
     expect(find.text('生命資本・浪費ゼロKPI'), findsOneWidget);
     expect(find.text('AI戦略レビュー'), findsOneWidget);
     expect(find.text('AI改善キュー'), findsOneWidget);

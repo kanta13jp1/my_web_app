@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/feature_strategy_monitor.dart';
+import '../services/feature_strategy_focus_action_service.dart';
 import 'kgi_csf_kpi_panel.dart';
 
-class FeatureStrategyMonitorPanel extends StatelessWidget {
+class FeatureStrategyMonitorPanel extends StatefulWidget {
   final FeatureStrategyReport report;
   final FeatureStrategyAiReview? aiReview;
   final bool isDark;
@@ -19,7 +20,128 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
   });
 
   @override
+  State<FeatureStrategyMonitorPanel> createState() =>
+      _FeatureStrategyMonitorPanelState();
+}
+
+class _FeatureStrategyMonitorPanelState
+    extends State<FeatureStrategyMonitorPanel> {
+  final FeatureStrategyFocusActionService _focusActionService =
+      const FeatureStrategyFocusActionService();
+
+  FeatureStrategyFocusActionState? _focusActionState;
+  bool _focusActionLoading = false;
+  String? _focusActionError;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusActionLoading = widget.report.focusRecommendation != null;
+    _loadFocusActionState(showLoading: false);
+  }
+
+  @override
+  void didUpdateWidget(covariant FeatureStrategyMonitorPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldFeatureId = oldWidget.report.focusRecommendation?.featureId;
+    final nextFeatureId = widget.report.focusRecommendation?.featureId;
+    if (oldFeatureId != nextFeatureId) {
+      _loadFocusActionState();
+    }
+  }
+
+  Future<void> _loadFocusActionState({bool showLoading = true}) async {
+    final recommendation = widget.report.focusRecommendation;
+    if (recommendation == null) {
+      if (!mounted) return;
+      setState(() {
+        _focusActionState = null;
+        _focusActionLoading = false;
+        _focusActionError = null;
+      });
+      return;
+    }
+
+    if (showLoading && mounted) {
+      setState(() {
+        _focusActionLoading = true;
+        _focusActionError = null;
+      });
+    }
+
+    try {
+      final state = await _focusActionService.loadState(recommendation);
+      if (!mounted ||
+          widget.report.focusRecommendation?.featureId !=
+              recommendation.featureId) {
+        return;
+      }
+      setState(() {
+        _focusActionState = state;
+        _focusActionLoading = false;
+        _focusActionError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _focusActionLoading = false;
+        _focusActionError = '今日の1手の記録を読み込めませんでした';
+      });
+    }
+  }
+
+  Future<void> _markFocusActionCompleted() async {
+    final recommendation = widget.report.focusRecommendation;
+    if (recommendation == null || _focusActionLoading) return;
+    setState(() {
+      _focusActionLoading = true;
+      _focusActionError = null;
+    });
+    try {
+      final state = await _focusActionService.markCompleted(recommendation);
+      if (!mounted) return;
+      setState(() {
+        _focusActionState = state;
+        _focusActionLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _focusActionLoading = false;
+        _focusActionError = '完了を保存できませんでした';
+      });
+    }
+  }
+
+  Future<void> _deferFocusAction() async {
+    final recommendation = widget.report.focusRecommendation;
+    if (recommendation == null || _focusActionLoading) return;
+    setState(() {
+      _focusActionLoading = true;
+      _focusActionError = null;
+    });
+    try {
+      final state = await _focusActionService.deferToday(recommendation);
+      if (!mounted) return;
+      setState(() {
+        _focusActionState = state;
+        _focusActionLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _focusActionLoading = false;
+        _focusActionError = '観察扱いを保存できませんでした';
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final report = widget.report;
+    final aiReview = widget.aiReview;
+    final isDark = widget.isDark;
+    final isCompact = widget.isCompact;
     const accent = Color(0xFF7C3AED);
     final surface = isDark ? const Color(0xFF111827) : Colors.white;
     final border =
@@ -92,7 +214,7 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
           ),
           if (aiReview != null) ...[
             const SizedBox(height: 12),
-            _AiReviewBox(review: aiReview!, accent: accent, dark: isDark),
+            _AiReviewBox(review: aiReview, accent: accent, dark: isDark),
           ],
           const SizedBox(height: 14),
           LayoutBuilder(
@@ -158,6 +280,11 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
               recommendation: report.focusRecommendation!,
               dark: isDark,
               compact: isCompact,
+              actionState: _focusActionState,
+              actionLoading: _focusActionLoading,
+              actionError: _focusActionError,
+              onComplete: _markFocusActionCompleted,
+              onDefer: _deferFocusAction,
             ),
             const SizedBox(height: 8),
           ],
@@ -328,11 +455,21 @@ class _FocusRecommendationCard extends StatelessWidget {
   final FeatureStrategyFocusRecommendation recommendation;
   final bool dark;
   final bool compact;
+  final FeatureStrategyFocusActionState? actionState;
+  final bool actionLoading;
+  final String? actionError;
+  final VoidCallback? onComplete;
+  final VoidCallback? onDefer;
 
   const _FocusRecommendationCard({
     required this.recommendation,
     required this.dark,
     required this.compact,
+    required this.actionState,
+    required this.actionLoading,
+    required this.actionError,
+    required this.onComplete,
+    required this.onDefer,
   });
 
   @override
@@ -422,9 +559,146 @@ class _FocusRecommendationCard extends StatelessWidget {
             dense: true,
             dark: dark,
           ),
+          const SizedBox(height: 10),
+          _FocusActionControls(
+            state: actionState,
+            loading: actionLoading,
+            error: actionError,
+            color: color,
+            dark: dark,
+            compact: compact,
+            onComplete: onComplete,
+            onDefer: onDefer,
+          ),
         ],
       ),
     );
+  }
+}
+
+class _FocusActionControls extends StatelessWidget {
+  final FeatureStrategyFocusActionState? state;
+  final bool loading;
+  final String? error;
+  final Color color;
+  final bool dark;
+  final bool compact;
+  final VoidCallback? onComplete;
+  final VoidCallback? onDefer;
+
+  const _FocusActionControls({
+    required this.state,
+    required this.loading,
+    required this.error,
+    required this.color,
+    required this.dark,
+    required this.compact,
+    required this.onComplete,
+    required this.onDefer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF64748B);
+    final completed = state?.completed ?? false;
+    final deferred = state?.deferred ?? false;
+    final streak = state?.completionStreakDays ?? 0;
+
+    if (completed || deferred) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _StatusPill(
+            label: completed ? _completedLabel(streak) : '今日は観察',
+            color:
+                completed ? const Color(0xFF059669) : const Color(0xFFF59E0B),
+            dark: dark,
+          ),
+          Text(
+            completed
+                ? '今日の1手を閉じました。次は明日のモニタリングで再選定します。'
+                : '今日は広げず、現状観察だけにします。',
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+              height: 1.45,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed: loading ? null : onComplete,
+              icon: loading
+                  ? SizedBox(
+                      width: compact ? 14 : 16,
+                      height: compact ? 14 : 16,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle_outline, size: 18),
+              label: const Text('1手完了'),
+              style: FilledButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 12 : 14,
+                  vertical: compact ? 9 : 11,
+                ),
+                textStyle: TextStyle(
+                  fontSize: compact ? 12 : 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: loading ? null : onDefer,
+              icon: const Icon(Icons.visibility_outlined, size: 18),
+              label: const Text('今日は観察'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: color,
+                side: BorderSide(color: color.withValues(alpha: 0.42)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 12 : 14,
+                  vertical: compact ? 9 : 11,
+                ),
+                textStyle: TextStyle(
+                  fontSize: compact ? 12 : 13,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (error != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            error!,
+            style: TextStyle(
+              color: const Color(0xFFDC2626),
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _completedLabel(int streak) {
+    if (streak <= 1) return '完了済み';
+    return '完了済み $streak日継続';
   }
 }
 
