@@ -3,9 +3,23 @@
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/local_election_plan.dart';
 import '../models/local_election_reality.dart';
 import '../models/public_memo.dart';
-import 'public_memo_service.dart';
+
+typedef LocalElectionMemoPublisher = Future<PublicMemo?> Function({
+  required int noteId,
+  required String userId,
+  required String title,
+  String? content,
+  String? category,
+  Map<String, dynamic> metadata,
+});
+
+typedef LocalElectionMemoLoader = Future<PublicMemo?> Function({
+  required int noteId,
+  required String userId,
+});
 
 class LocalElectionShareDraft {
   final int noteId;
@@ -59,13 +73,16 @@ class LocalElectionShareService {
   );
 
   final SupabaseClient _supabase;
-  final PublicMemoService _publicMemoService;
+  final LocalElectionMemoPublisher? _publishMemo;
+  final LocalElectionMemoLoader? _loadMemo;
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
 
   LocalElectionShareService(
     this._supabase, {
-    PublicMemoService? publicMemoService,
-  }) : _publicMemoService = publicMemoService ?? PublicMemoService(_supabase);
+    LocalElectionMemoPublisher? publishMemo,
+    LocalElectionMemoLoader? loadMemo,
+  })  : _publishMemo = publishMemo,
+        _loadMemo = loadMemo;
 
   Future<PublicMemo?> publishSnapshot({
     required LocalElectionRealitySnapshot snapshot,
@@ -80,7 +97,11 @@ class LocalElectionShareService {
       snapshot: snapshot,
       members: members,
     );
-    return _publicMemoService.upsertMemo(
+    final publishMemo = _publishMemo;
+    if (publishMemo == null) {
+      return null;
+    }
+    return publishMemo(
       noteId: draft.noteId,
       userId: userId,
       title: draft.title,
@@ -97,7 +118,11 @@ class LocalElectionShareService {
     if (userId == null) {
       return null;
     }
-    return _publicMemoService.getUserPublicMemoByNoteId(
+    final loadMemo = _loadMemo;
+    if (loadMemo == null) {
+      return null;
+    }
+    return loadMemo(
       noteId: buildSyntheticNoteId(snapshot),
       userId: userId,
     );
@@ -186,6 +211,67 @@ class LocalElectionShareService {
       <String, String>{
         'text': buildXShareBody(snapshot: snapshot),
         'url': publicUrl,
+      },
+    );
+  }
+
+  String buildPrefectureKpiXShareText({
+    required LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+    required String publicUrl,
+  }) {
+    final body = buildPrefectureKpiXShareBody(
+      plan: plan,
+      reality: reality,
+    );
+    if (publicUrl.isEmpty) {
+      return body;
+    }
+    return '$body\n\n$publicUrl';
+  }
+
+  String buildPrefectureKpiXShareBody({
+    required LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+  }) {
+    final currentMembers = reality?.currentMembers ?? plan.currentMembers;
+    final realityCdpMembers = reality?.cdpLocalMembers ?? 0;
+    final cdpMembers = plan.cdpLocalMembers >= realityCdpMembers
+        ? plan.cdpLocalMembers
+        : realityCdpMembers;
+    final gap = cdpMembers - currentMembers;
+
+    final lines = <String>[
+      '${plan.prefecture} 県連KPI',
+      '現職 $currentMembers人 / 純増目標 ${plan.additionalSeatTarget}人 / 新人 ${plan.newCandidateTarget}人',
+      '重点自治体 ${plan.focusMunicipalityCount} / 予定選挙 ${plan.scheduledElectionCount}件 / 支援 ${plan.closeRaceSupportRounds}回',
+      plan.endorsementConfirmed
+          ? '公認内定済み'
+          : '公認内定期限 ${formatMonthKey(plan.endorsementDeadlineMonth)}',
+      if (cdpMembers > 0)
+        '立憲参考 $cdpMembers人 / 地力差 ${_formatPrefectureKpiGap(gap)}',
+      if (reality != null)
+        '公式内訳 都道府県議 ${reality.prefecturalAssemblyMembers} / 市区町村議 ${reality.municipalAssemblyMembers}',
+      '#統一地方選 #国民民主党',
+    ];
+
+    return lines.join('\n').trim();
+  }
+
+  Uri buildPrefectureKpiXShareIntentUri({
+    required LocalElectionPrefecturePlan plan,
+    LocalElectionPrefectureReality? reality,
+    required String publicUrl,
+  }) {
+    return Uri.https(
+      'x.com',
+      '/intent/tweet',
+      <String, String>{
+        'text': buildPrefectureKpiXShareBody(
+          plan: plan,
+          reality: reality,
+        ),
+        if (publicUrl.isNotEmpty) 'url': publicUrl,
       },
     );
   }
@@ -640,6 +726,16 @@ class LocalElectionShareService {
       return '🟡 ';
     }
     return '';
+  }
+
+  String _formatPrefectureKpiGap(int gap) {
+    if (gap > 0) {
+      return '立憲+$gap';
+    }
+    if (gap < 0) {
+      return '国民+${-gap}';
+    }
+    return '同数';
   }
 
   DateTime _normalizeDate(DateTime dt) => DateTime(dt.year, dt.month, dt.day);

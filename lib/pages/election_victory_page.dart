@@ -36,6 +36,8 @@ class ElectionVictoryPage extends StatefulWidget {
 class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   static const String _allLabel = 'すべて';
   static const String _allAssemblyCategories = 'all';
+  static const String _publicLocalElectionDashboardUrl =
+      'https://my-web-app-b67f4.web.app/public/local-election-700';
   static const int _memberPageSize = 24;
   static const int _lowPresenceThreshold = 4;
   static const int _pastElectionOutcomeAccordionThreshold = 4;
@@ -99,8 +101,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   final GlobalKey _scheduleSectionKey =
       GlobalKey(debugLabel: 'scheduleCalendar');
   final GlobalKey _rosterSectionKey = GlobalKey(debugLabel: 'memberRoster');
+  late final PublicMemoService _publicMemoService =
+      PublicMemoService(Supabase.instance.client);
   late final LocalElectionShareService _shareService =
-      LocalElectionShareService(Supabase.instance.client);
+      LocalElectionShareService(
+    Supabase.instance.client,
+    publishMemo: _publicMemoService.upsertMemo,
+    loadMemo: _publicMemoService.getUserPublicMemoByNoteId,
+  );
   final DateFormat _dateTimeFormat = DateFormat('yyyy/MM/dd HH:mm', 'ja_JP');
   final DateFormat _dateOnlyFormat = DateFormat('yyyy/MM/dd', 'ja_JP');
   final NumberFormat _numberFormat = NumberFormat('#,##0', 'ja_JP');
@@ -118,6 +126,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
   bool _isGeminiLoading = false;
   String? _realityError;
   String? _geminiAnalysisResult;
+  bool _appliedInitialPrefectureFilter = false;
   String _selectedRegion = _allLabel;
   String _selectedMemberPrefecture = _allLabel;
   String _selectedMemberAssemblyCategory = _allAssemblyCategories;
@@ -178,6 +187,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
       _realitySnapshot = cachedSnapshot;
       _realityHistory = cachedHistory;
       _publishedRealityMemo = null;
+      _applyInitialPrefectureFilter(plan);
       if (!plan.regionLabels.contains(_selectedRegion)) {
         _selectedRegion = _allLabel;
       }
@@ -199,11 +209,31 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     }
     setState(() {
       _plan = plan;
+      _applyInitialPrefectureFilter(plan);
       if (!plan.regionLabels.contains(_selectedRegion)) {
         _selectedRegion = _allLabel;
       }
       _isLoading = false;
     });
+  }
+
+  void _applyInitialPrefectureFilter(LocalElectionPlanDashboard plan) {
+    if (_appliedInitialPrefectureFilter) {
+      return;
+    }
+    _appliedInitialPrefectureFilter = true;
+    final requestedPrefecture = Uri.base.queryParameters['prefecture']?.trim();
+    if (requestedPrefecture == null || requestedPrefecture.isEmpty) {
+      return;
+    }
+
+    final target = _normalizePrefectureKey(requestedPrefecture);
+    for (final item in plan.prefectures) {
+      if (_normalizePrefectureKey(item.prefecture) == target) {
+        _selectedRegion = item.region;
+        return;
+      }
+    }
   }
 
   Future<void> _refreshAll() async {
@@ -732,6 +762,72 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
     );
   }
 
+  Future<void> _copyPrefectureKpiForX(
+    LocalElectionPrefecturePlan plan,
+  ) async {
+    final text = _shareService.buildPrefectureKpiXShareText(
+      plan: plan,
+      reality: _realityForPrefecture(plan.prefecture),
+      publicUrl: _prefecturePublicDashboardUrl(plan),
+    );
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${plan.prefecture}県連のX投稿文をコピーしました')),
+    );
+  }
+
+  Future<void> _sharePrefectureKpiOnX(
+    LocalElectionPrefecturePlan plan,
+  ) async {
+    final reality = _realityForPrefecture(plan.prefecture);
+    final publicUrl = _prefecturePublicDashboardUrl(plan);
+    final uri = _shareService.buildPrefectureKpiXShareIntentUri(
+      plan: plan,
+      reality: reality,
+      publicUrl: publicUrl,
+    );
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched) {
+      final text = _shareService.buildPrefectureKpiXShareText(
+        plan: plan,
+        reality: reality,
+        publicUrl: publicUrl,
+      );
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${plan.prefecture}県連のX投稿画面を開けなかったため、投稿文をコピーしました',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${plan.prefecture}県連のX投稿画面を開きました')),
+    );
+  }
+
+  String _prefecturePublicDashboardUrl(LocalElectionPrefecturePlan plan) {
+    return Uri.parse(_publicLocalElectionDashboardUrl).replace(
+      queryParameters: <String, String>{
+        'prefecture': plan.prefecture,
+      },
+    ).toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final plan = _plan;
@@ -977,7 +1073,7 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
           ),
           const SizedBox(height: 8),
           SelectableText(
-            'https://my-web-app-b67f4.web.app/public/local-election-700',
+            _publicLocalElectionDashboardUrl,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: const Color(0xFF1D4ED8),
                   fontWeight: FontWeight.w700,
@@ -4717,6 +4813,23 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                       Text(plan.region),
                     ],
                   ),
+                ),
+                const SizedBox(width: 8),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: [
+                    IconButton(
+                      tooltip: '${plan.prefecture}県連KPIのX投稿文をコピー',
+                      onPressed: () => _copyPrefectureKpiForX(plan),
+                      icon: const Icon(Icons.content_copy),
+                    ),
+                    IconButton.filledTonal(
+                      tooltip: '${plan.prefecture}県連KPIをXで共有',
+                      onPressed: () => _sharePrefectureKpiOnX(plan),
+                      icon: const Icon(Icons.alternate_email),
+                    ),
+                  ],
                 ),
               ],
             ),

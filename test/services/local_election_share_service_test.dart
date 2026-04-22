@@ -2,6 +2,7 @@
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_share_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -197,6 +198,88 @@ void main() {
     expect(
       uri.queryParameters['text'],
       contains('国民民主党の地方議員数'),
+    );
+  });
+
+  test('buildPrefectureKpiXShareText summarizes prefecture KPI and CDP gap',
+      () {
+    const plan = LocalElectionPrefecturePlan(
+      prefecture: '東京都',
+      region: '関東',
+      additionalSeatTarget: 12,
+      incumbentRetentionTarget: 43,
+      focusMunicipalityCount: 20,
+      newCandidateTarget: 15,
+      endorsementDeadlineMonth: '2026-09',
+      closeRaceSupportRounds: 8,
+      currentMembers: 43,
+      scheduledElectionCount: 3,
+      cdpLocalMembers: 83,
+    );
+    const reality = LocalElectionPrefectureReality(
+      prefecture: '東京都',
+      sourceUrl: 'https://example.com/tokyo',
+      currentMembers: 45,
+      prefecturalAssemblyMembers: 9,
+      municipalAssemblyMembers: 36,
+      cdpLocalMembers: 83,
+    );
+
+    final shareText = service.buildPrefectureKpiXShareText(
+      plan: plan,
+      reality: reality,
+      publicUrl:
+          'https://example.com/public/local-election-700?prefecture=tokyo',
+    );
+
+    expect(shareText, contains('東京都 県連KPI'));
+    expect(shareText, contains('現職 45人'));
+    expect(shareText, contains('純増目標 12人'));
+    expect(shareText, contains('予定選挙 3件'));
+    expect(shareText, contains('公認内定期限 2026/09'));
+    expect(shareText, contains('立憲参考 83人'));
+    expect(shareText, contains('地力差 立憲+38'));
+    expect(shareText, contains('都道府県議 9 / 市区町村議 36'));
+    expect(
+        shareText, contains('https://example.com/public/local-election-700'));
+  });
+
+  test('buildPrefectureKpiXShareIntentUri separates prefecture body and URL',
+      () {
+    const plan = LocalElectionPrefecturePlan(
+      prefecture: '香川県',
+      region: '四国',
+      additionalSeatTarget: 5,
+      incumbentRetentionTarget: 23,
+      focusMunicipalityCount: 9,
+      newCandidateTarget: 7,
+      endorsementDeadlineMonth: '2026-08',
+      closeRaceSupportRounds: 4,
+      currentMembers: 23,
+      scheduledElectionCount: 2,
+      cdpLocalMembers: 20,
+      endorsementConfirmed: true,
+    );
+
+    final uri = service.buildPrefectureKpiXShareIntentUri(
+      plan: plan,
+      publicUrl:
+          'https://example.com/public/local-election-700?prefecture=kagawa',
+    );
+
+    expect(
+      '${uri.scheme}://${uri.host}${uri.path}',
+      'https://x.com/intent/tweet',
+    );
+    expect(
+      uri.queryParameters['url'],
+      'https://example.com/public/local-election-700?prefecture=kagawa',
+    );
+    expect(uri.queryParameters['text'], contains('香川県 県連KPI'));
+    expect(uri.queryParameters['text'], contains('公認内定済み'));
+    expect(
+      uri.queryParameters['text'],
+      isNot(contains('https://example.com/public/local-election-700')),
     );
   });
 
