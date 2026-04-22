@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (統一地方選 公開URL/一括共有ノート)
+> **最終更新**: 2026-04-22 Codex (統一地方選 KGI/CSF/KPI設計)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -29,6 +29,7 @@
 - 立憲比較/UX改善: `local-election-intelligence` が立憲民主党公式「自治体議員」情報から県別地方議員数を自動集計し、統一地方選700必達管理室にベンチマーク、県別カード、地図詳細として反映。migration `20260422113000_wbs_codex_election_cdp_benchmark.sql` で反映。
 - 県連KPI X共有: 県連KPIの共有文生成と公開URL導線を追加。最終UIは下記の一括共有ノート方式へ統合。migration `20260422115000_wbs_codex_election_prefecture_x_share.sql` で反映。
 - 公開URL/一括共有ノート: `/local-election-700` を未ログイン時も公開ビューとして直接参照できるようにし、X共有は県連別ではなく全県連KPIを1つの共有ノートにまとめてリンク共有する導線へ変更。migration `20260422123000_wbs_codex_election_public_bulk_share.sql` で反映。
+- KGI/CSF/KPI設計: 各県連のKGIを「統一地方選後の地方議員到達数」として設定し、KGI達成のCSFごとに数値KPI・進捗・残数を自動算出。画面カードと一括共有ノートへ反映。migration `20260422124500_wbs_codex_election_kgi_csf_kpi.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -67,8 +68,8 @@
 
 | タスク | 状態 | 進捗 | α/β/v1 |
 |---|---|---|---|
-| DESIGN.md全ページ準拠 60%達成 (Codex引継ぎ) | 🟡進行中 | 71% | α |
-| モバイルレスポンシブ完全対応 (Codex引継ぎ) | 🟡進行中 | 76% | α |
+| DESIGN.md全ページ準拠 60%達成 (Codex引継ぎ) | 🟡進行中 | 72% | α |
+| モバイルレスポンシブ完全対応 (Codex引継ぎ) | 🟡進行中 | 77% | α |
 | タイポグラフィ統一 (Codex引継ぎ) | 🟡進行中 | 65% | β |
 | DESIGN.md全ページ準拠 100%達成 | ⚪未着手 | 0% | v1 |
 
@@ -108,6 +109,7 @@
 | 統一地方選 立憲比較/UX改善 | Codex | ✅完了 | 100% | α |
 | 統一地方選 県連KPI X共有 | Codex | ✅完了 | 100% | α |
 | 統一地方選 公開URL/一括共有ノート | Codex | ✅完了 | 100% | α |
+| 統一地方選 KGI/CSF/KPI設計 | Codex | ✅完了 | 100% | α |
 
 ### 📈 カテゴリ6: グロース自動化 — **PS版 + Codex 担当**
 

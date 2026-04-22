@@ -302,7 +302,7 @@ class LocalElectionShareService {
   }) {
     return [
       '統一地方選700 県連KPI一覧',
-      '全${plan.prefectures.length}県連の現職人数、純増目標、新人擁立、予定選挙、公認期限、立憲参考値を公開ノートにまとめました。',
+      '全${plan.prefectures.length}県連のKGI、CSF、KPI、現職人数、候補者進捗、公認期限、立憲参考値を公開ノートにまとめました。',
       '現職 ${plan.currentLocalMembers}人 / 700まで残り${plan.requiredNetIncrease}人',
       '純増目標 ${plan.allocatedNetIncrease}人 / 新人 ${plan.totalNewCandidateTarget}人',
       '#統一地方選 #国民民主党',
@@ -821,16 +821,22 @@ class LocalElectionShareService {
               'prefecture': item.prefecture,
               'region': item.region,
               'currentMembers': item.currentMembers,
+              'kgiTargetLocalMembers': item.kgiTargetLocalMembers,
+              'kgiGapMembers': item.kgiGapMembers,
+              'kgiProgressRatio': item.kgiProgressRatio,
               'additionalSeatTarget': item.additionalSeatTarget,
               'incumbentRetentionTarget': item.incumbentRetentionTarget,
               'focusMunicipalityCount': item.focusMunicipalityCount,
               'newCandidateTarget': item.newCandidateTarget,
+              'announcedCandidateCount': item.announcedCandidateCount,
+              'confirmedCandidateCount': item.confirmedCandidateCount,
               'scheduledElectionCount': item.scheduledElectionCount,
               'endorsementDeadlineMonth': item.endorsementDeadlineMonth,
               'endorsementConfirmed': item.endorsementConfirmed,
               'closeRaceSupportRounds': item.closeRaceSupportRounds,
               'cdpLocalMembers': item.cdpLocalMembers,
               'cdpMemberGap': item.cdpMemberGap,
+              'csfKpis': item.csfKpis.map((kpi) => kpi.toJson()).toList(),
             },
           )
           .toList(),
@@ -928,10 +934,14 @@ class LocalElectionShareService {
     final segments = <String>[
       '${plan.prefecture}(${plan.region})',
       '現職$currentMembers人',
+      'KGI${plan.kgiTargetLocalMembers}人(残${plan.kgiGapMembers}人)',
+      'CSF/KPI ${plan.csfKpis.map((item) => item.compactLabel).join('; ')}',
       '純増${plan.additionalSeatTarget}人',
       '現職維持${plan.incumbentRetentionTarget}人',
       '重点自治体${plan.focusMunicipalityCount}',
       '新人${plan.newCandidateTarget}人',
+      '確認済み候補者${plan.announcedCandidateCount}人',
+      '公認/予定候補${plan.confirmedCandidateCount}人',
       '予定選挙${plan.scheduledElectionCount}件',
       plan.endorsementConfirmed
           ? '公認内定済み'

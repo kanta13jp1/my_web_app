@@ -170,6 +170,8 @@ void main() {
           closeRaceSupportRounds: 8,
           currentMembers: 43,
           scheduledElectionCount: 3,
+          announcedCandidateCount: 6,
+          confirmedCandidateCount: 4,
           cdpLocalMembers: 83,
         ),
         LocalElectionPrefecturePlan(
@@ -183,6 +185,8 @@ void main() {
           closeRaceSupportRounds: 4,
           currentMembers: 23,
           scheduledElectionCount: 2,
+          announcedCandidateCount: 3,
+          confirmedCandidateCount: 2,
           cdpLocalMembers: 20,
           endorsementConfirmed: true,
         ),
@@ -338,6 +342,9 @@ void main() {
     expect(draft.content, contains('公開ダッシュボード:'));
     expect(draft.content, contains('全県連KPI'));
     expect(draft.content, contains('東京都(関東)'));
+    expect(draft.content, contains('KGI55人'));
+    expect(draft.content, contains('CSF/KPI'));
+    expect(draft.content, contains('確認済み候補者6人'));
     expect(draft.content, contains('純増12人'));
     expect(draft.content, contains('立憲参考83人'));
     expect(draft.content, contains('月次KPI'));
@@ -346,6 +353,11 @@ void main() {
       LocalElectionShareService.planDashboardMetadataType,
     );
     expect(draft.metadata['prefectures'], isA<List<dynamic>>());
+    final prefectures = draft.metadata['prefectures'] as List<dynamic>;
+    final tokyoMetadata =
+        Map<String, dynamic>.from(prefectures.first as Map<dynamic, dynamic>);
+    expect(tokyoMetadata['kgiTargetLocalMembers'], 55);
+    expect(tokyoMetadata['csfKpis'], isA<List<dynamic>>());
   });
 
   test('buildPlanDashboardXShareIntentUri shares one public note link', () {
@@ -362,6 +374,8 @@ void main() {
     expect(
         uri.queryParameters['url'], 'https://example.com/public-memo?id=700');
     expect(uri.queryParameters['text'], contains('全2県連'));
+    expect(uri.queryParameters['text'], contains('KGI'));
+    expect(uri.queryParameters['text'], contains('CSF'));
     expect(uri.queryParameters['text'], contains('現職 333人'));
     expect(
       uri.queryParameters['text'],

@@ -21,6 +21,8 @@ void main() {
     expect(plan.requiredNetIncrease, 360);
     expect(plan.allocatedNetIncrease, 360);
     expect(plan.allocationGap, 0);
+    expect(plan.prefectures.first.kgiTargetLocalMembers, greaterThan(0));
+    expect(plan.prefectures.first.csfKpis, hasLength(5));
     expect(plan.monthlyCheckpoints, hasLength(12));
     expect(
       plan.monthlyCheckpoints.last.cumulativeNewCandidateTarget,
@@ -30,6 +32,7 @@ void main() {
       plan.buildClipboardSummary(),
       contains('対象期間: 2026年4月 - 2027年3月'),
     );
+    expect(plan.buildClipboardSummary(), contains('KGI'));
   });
 
   test('saving an edited prefecture persists values and confirmation state',
@@ -208,8 +211,14 @@ void main() {
     );
     expect(updatedTokyo.incumbentRetentionTarget, 20);
     expect(updatedTokyo.scheduledElectionCount, 2);
+    expect(updatedTokyo.announcedCandidateCount, 2);
+    expect(updatedTokyo.confirmedCandidateCount, 2);
     expect(updatedTokyo.endorsementDeadlineMonth, '2026-07');
     expect(updatedTokyo.newCandidateTarget, greaterThanOrEqualTo(3));
+    expect(
+      updatedTokyo.csfKpis.firstWhere((item) => item.csf == '候補者パイプライン').actual,
+      2,
+    );
     expect(updatedTokyo.notes, contains('AI自動更新'));
     expect(updatedTokyo.autoUpdatedAt, now.toIso8601String());
     expect(updatedAichi.currentMembers, 12);

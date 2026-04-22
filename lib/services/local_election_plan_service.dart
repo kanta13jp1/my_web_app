@@ -132,6 +132,8 @@ class LocalElectionPlanService {
           closeRaceSupportRounds: supportRounds,
           currentMembers: currentMembers,
           scheduledElectionCount: scheduledElectionCount,
+          announcedCandidateCount: stats.kokuminCandidateCount,
+          confirmedCandidateCount: stats.confirmedCandidateCount,
           cdpLocalMembers: cdpLocalMembers,
           cdpSourceUrl: cdpSourceUrl,
           autoUpdatedAt: updatedAt.toIso8601String(),
@@ -264,6 +266,10 @@ class LocalElectionPlanService {
           closeRaceSupportRounds: clampPositiveInt(item.closeRaceSupportRounds),
           currentMembers: clampPositiveInt(item.currentMembers),
           scheduledElectionCount: clampPositiveInt(item.scheduledElectionCount),
+          announcedCandidateCount:
+              clampPositiveInt(item.announcedCandidateCount),
+          confirmedCandidateCount:
+              clampPositiveInt(item.confirmedCandidateCount),
           cdpLocalMembers: clampPositiveInt(item.cdpLocalMembers),
           cdpSourceUrl: item.cdpSourceUrl.trim(),
           endorsementDeadlineMonth:

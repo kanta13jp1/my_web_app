@@ -11,6 +11,8 @@ class LocalElectionPrefecturePlan {
   final int closeRaceSupportRounds;
   final int currentMembers;
   final int scheduledElectionCount;
+  final int announcedCandidateCount;
+  final int confirmedCandidateCount;
   final int cdpLocalMembers;
   final String cdpSourceUrl;
   final String autoUpdatedAt;
@@ -28,6 +30,8 @@ class LocalElectionPrefecturePlan {
     required this.closeRaceSupportRounds,
     this.currentMembers = 0,
     this.scheduledElectionCount = 0,
+    this.announcedCandidateCount = 0,
+    this.confirmedCandidateCount = 0,
     this.cdpLocalMembers = 0,
     this.cdpSourceUrl = '',
     this.autoUpdatedAt = '',
@@ -48,6 +52,8 @@ class LocalElectionPrefecturePlan {
       closeRaceSupportRounds: _readInt(json['closeRaceSupportRounds']),
       currentMembers: _readInt(json['currentMembers']),
       scheduledElectionCount: _readInt(json['scheduledElectionCount']),
+      announcedCandidateCount: _readInt(json['announcedCandidateCount']),
+      confirmedCandidateCount: _readInt(json['confirmedCandidateCount']),
       cdpLocalMembers: _readInt(json['cdpLocalMembers']),
       cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
       autoUpdatedAt: (json['autoUpdatedAt'] as String? ?? '').trim(),
@@ -68,6 +74,8 @@ class LocalElectionPrefecturePlan {
       'closeRaceSupportRounds': closeRaceSupportRounds,
       'currentMembers': currentMembers,
       'scheduledElectionCount': scheduledElectionCount,
+      'announcedCandidateCount': announcedCandidateCount,
+      'confirmedCandidateCount': confirmedCandidateCount,
       'cdpLocalMembers': cdpLocalMembers,
       'cdpSourceUrl': cdpSourceUrl,
       'autoUpdatedAt': autoUpdatedAt,
@@ -87,6 +95,8 @@ class LocalElectionPrefecturePlan {
     int? closeRaceSupportRounds,
     int? currentMembers,
     int? scheduledElectionCount,
+    int? announcedCandidateCount,
+    int? confirmedCandidateCount,
     int? cdpLocalMembers,
     String? cdpSourceUrl,
     String? autoUpdatedAt,
@@ -109,6 +119,10 @@ class LocalElectionPrefecturePlan {
       currentMembers: currentMembers ?? this.currentMembers,
       scheduledElectionCount:
           scheduledElectionCount ?? this.scheduledElectionCount,
+      announcedCandidateCount:
+          announcedCandidateCount ?? this.announcedCandidateCount,
+      confirmedCandidateCount:
+          confirmedCandidateCount ?? this.confirmedCandidateCount,
       cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
       cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
       autoUpdatedAt: autoUpdatedAt ?? this.autoUpdatedAt,
@@ -147,11 +161,98 @@ class LocalElectionPrefecturePlan {
 
   bool get hasCdpComparison => cdpLocalMembers > 0;
 
+  int get kgiTargetLocalMembers =>
+      incumbentRetentionTarget + additionalSeatTarget;
+
+  int get kgiGapMembers => math.max(0, kgiTargetLocalMembers - currentMembers);
+
+  double get kgiProgressRatio => kgiTargetLocalMembers <= 0
+      ? 0
+      : (currentMembers / kgiTargetLocalMembers).clamp(0, 1).toDouble();
+
+  String get kgiStatement => '2027統一地方選後に地方議員$kgiTargetLocalMembers人を達成';
+
+  List<LocalElectionCsfKpi> get csfKpis => <LocalElectionCsfKpi>[
+        LocalElectionCsfKpi(
+          csf: '現職基盤の維持',
+          kpiLabel: '現職維持対象',
+          target: incumbentRetentionTarget,
+          actual: math.min(currentMembers, incumbentRetentionTarget),
+          unit: '人',
+        ),
+        LocalElectionCsfKpi(
+          csf: '候補者パイプライン',
+          kpiLabel: '確認済み候補者',
+          target: newCandidateTarget,
+          actual: announcedCandidateCount,
+          unit: '人',
+        ),
+        LocalElectionCsfKpi(
+          csf: '重点自治体攻略',
+          kpiLabel: '予定選挙の捕捉',
+          target: focusMunicipalityCount,
+          actual: scheduledElectionCount,
+          unit: '件',
+        ),
+        LocalElectionCsfKpi(
+          csf: '公認決定の前倒し',
+          kpiLabel: '公認/予定候補',
+          target: newCandidateTarget,
+          actual: confirmedCandidateCount,
+          unit: '人',
+        ),
+        LocalElectionCsfKpi(
+          csf: '接戦区支援の実行',
+          kpiLabel: '支援ラウンド',
+          target: closeRaceSupportRounds,
+          actual: math.min(
+            closeRaceSupportRounds,
+            scheduledElectionCount + confirmedCandidateCount,
+          ),
+          unit: '回',
+        ),
+      ];
+
   static int _readInt(Object? value) {
     if (value is int) {
       return value;
     }
     return int.tryParse('$value') ?? 0;
+  }
+}
+
+class LocalElectionCsfKpi {
+  final String csf;
+  final String kpiLabel;
+  final int target;
+  final int actual;
+  final String unit;
+
+  const LocalElectionCsfKpi({
+    required this.csf,
+    required this.kpiLabel,
+    required this.target,
+    required this.actual,
+    required this.unit,
+  });
+
+  int get remaining => math.max(0, target - actual);
+
+  double get progressRatio =>
+      target <= 0 ? 0 : (actual / target).clamp(0, 1).toDouble();
+
+  String get compactLabel => '$csf: $kpiLabel $actual/$target$unit';
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'csf': csf,
+      'kpiLabel': kpiLabel,
+      'target': target,
+      'actual': actual,
+      'unit': unit,
+      'remaining': remaining,
+      'progressRatio': progressRatio,
+    };
   }
 }
 
@@ -478,7 +579,9 @@ class LocalElectionPlanDashboard {
       '',
       '重点県連:',
       for (final item in topPriorityPrefectures())
-        '- ${item.prefecture}: 純増${item.additionalSeatTarget}, '
+        '- ${item.prefecture}: KGI${item.kgiTargetLocalMembers}, '
+            '残${item.kgiGapMembers}, '
+            '純増${item.additionalSeatTarget}, '
             '現職維持${item.incumbentRetentionTarget}, '
             '重点自治体${item.focusMunicipalityCount}, '
             '新人${item.newCandidateTarget}, '

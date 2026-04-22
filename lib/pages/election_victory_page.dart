@@ -4778,6 +4778,8 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   ),
               ],
             ),
+            const SizedBox(height: 12),
+            _buildKgiCsfKpiPanel(plan),
             if (reality != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -4795,6 +4797,94 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildKgiCsfKpiPanel(LocalElectionPrefecturePlan plan) {
+    const accent = Color(0xFF2563EB);
+    return Container(
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          leading: const Icon(Icons.flag_outlined, color: accent),
+          title: Text(
+            'KGI ${_formatInt(plan.kgiTargetLocalMembers)}人 / 残り${_formatInt(plan.kgiGapMembers)}人',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              height: 1.4,
+            ),
+          ),
+          subtitle: Text(
+            plan.kgiStatement,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          children: [
+            LinearProgressIndicator(
+              value: plan.kgiProgressRatio,
+              minHeight: 8,
+              backgroundColor: accent.withValues(alpha: 0.12),
+              color: accent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            const SizedBox(height: 12),
+            for (final item in plan.csfKpis) _buildCsfKpiRow(item),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCsfKpiRow(LocalElectionCsfKpi item) {
+    const accent = Color(0xFF0F766E);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  item.csf,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Text(
+                '${_formatInt(item.actual)}/${_formatInt(item.target)}${item.unit}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: accent,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${item.kpiLabel} / 残り${_formatInt(item.remaining)}${item.unit}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: item.progressRatio,
+            minHeight: 6,
+            backgroundColor: accent.withValues(alpha: 0.12),
+            color: accent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ],
       ),
     );
   }
