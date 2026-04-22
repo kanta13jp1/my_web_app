@@ -74,7 +74,8 @@ void main() {
     expect(find.text('愛知'), findsOneWidget);
   });
 
-  testWidgets('ElectionJapanMap renders national KPI map and detail panel', (
+  testWidgets('ElectionJapanMap renders national KGI/KPI map and detail panel',
+      (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -87,15 +88,22 @@ void main() {
       ),
     );
 
-    expect(find.text('全国KPIマップ'), findsOneWidget);
-    expect(find.text('都道府県別の純増・新人擁立・公認期限を地図で俯瞰'), findsOneWidget);
+    expect(find.text('全国KGI/KPIマップ'), findsOneWidget);
+    expect(find.text('都道府県別の現職維持・新人当選目標・公認期限を地図で俯瞰'), findsOneWidget);
     expect(find.text('日本地図UI'), findsOneWidget);
     expect(find.text('東京 選択中'), findsOneWidget);
-    expect(find.text('東京都 KPI'), findsOneWidget);
+    expect(find.text('KGI 36 / KPI 14'), findsOneWidget);
+    expect(find.text('東京都 KGI/KPI'), findsOneWidget);
     expect(find.text('重点度'), findsOneWidget);
-    expect(find.text('純増目標'), findsOneWidget);
+    expect(find.text('KGI目標'), findsWidgets);
+    expect(find.text('KPI実績'), findsWidgets);
     expect(find.text('現職人数'), findsOneWidget);
     expect(find.text('立憲地方議員'), findsOneWidget);
+    expect(find.text('現職維持目標'), findsOneWidget);
+    expect(find.text('現職維持数'), findsOneWidget);
+    expect(find.text('新人当選目標'), findsOneWidget);
+    expect(find.text('新人当選数'), findsOneWidget);
+    expect(find.text('新人擁立予定'), findsWidgets);
     expect(find.text('予定選挙'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);

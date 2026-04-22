@@ -191,20 +191,30 @@ class LocalElectionPrefecturePlan {
   int get kgiTargetLocalMembers =>
       incumbentRetentionTarget + additionalSeatTarget;
 
+  int get newElectionTarget => additionalSeatTarget;
+
+  int get incumbentRetentionActual =>
+      math.min(currentMembers, incumbentRetentionTarget);
+
+  int get newElectionActual =>
+      math.max(0, currentMembers - incumbentRetentionTarget);
+
+  int get kpiActualLocalMembers => incumbentRetentionActual + newElectionActual;
+
   int get kgiGapMembers => math.max(0, kgiTargetLocalMembers - currentMembers);
 
   double get kgiProgressRatio => kgiTargetLocalMembers <= 0
       ? 0
       : (currentMembers / kgiTargetLocalMembers).clamp(0, 1).toDouble();
 
-  String get kgiStatement => '2027統一地方選後に地方議員$kgiTargetLocalMembers人を達成';
+  String get kgiStatement => '2027統一地方選後に地方議員$kgiTargetLocalMembers人を維持・獲得する';
 
   List<LocalElectionCsfKpi> get csfKpis => <LocalElectionCsfKpi>[
         LocalElectionCsfKpi(
           csf: '現職基盤の維持',
           kpiLabel: '現職維持対象',
           target: incumbentRetentionTarget,
-          actual: math.min(currentMembers, incumbentRetentionTarget),
+          actual: incumbentRetentionActual,
           unit: '人',
         ),
         LocalElectionCsfKpi(

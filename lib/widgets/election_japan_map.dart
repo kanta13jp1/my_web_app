@@ -43,8 +43,8 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     var score = -1;
     for (var i = 0; i < widget.prefectures.length; i++) {
       final item = widget.prefectures[i];
-      final currentScore = item.additionalSeatTarget * 3 +
-          item.newCandidateTarget * 2 +
+      final currentScore = item.kgiTargetLocalMembers * 2 +
+          item.kpiActualLocalMembers +
           item.closeRaceSupportRounds;
       if (currentScore > score) {
         score = currentScore;
@@ -61,11 +61,31 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     }
 
     final theme = Theme.of(context);
-    final totalAdditional = widget.prefectures.fold<int>(
+    final totalKgiTarget = widget.prefectures.fold<int>(
       0,
-      (sum, item) => sum + item.additionalSeatTarget,
+      (sum, item) => sum + item.kgiTargetLocalMembers,
     );
-    final totalNew = widget.prefectures.fold<int>(
+    final totalKpiActual = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.kpiActualLocalMembers,
+    );
+    final totalRetentionTarget = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.incumbentRetentionTarget,
+    );
+    final totalRetentionActual = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.incumbentRetentionActual,
+    );
+    final totalNewElectionTarget = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.newElectionTarget,
+    );
+    final totalNewElectionActual = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.newElectionActual,
+    );
+    final totalNewCandidateTarget = widget.prefectures.fold<int>(
       0,
       (sum, item) => sum + item.newCandidateTarget,
     );
@@ -102,14 +122,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '全国KPIマップ',
+                        '全国KGI/KPIマップ',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           height: 1.5,
                         ),
                       ),
                       Text(
-                        '都道府県別の純増・新人擁立・公認期限を地図で俯瞰',
+                        '都道府県別の現職維持・新人当選目標・公認期限を地図で俯瞰',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],
@@ -120,16 +140,26 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             const SizedBox(height: 16),
             KgiCsfKpiPanel(
               plan: KgiCsfKpiPlan(
-                domain: '全国県連KPI',
-                kgi: '47県連の純増計画を700人達成へ接続する',
-                actualLabel: '純増$totalAdditional / 新人$totalNew',
+                domain: '全国県連KGI/KPI',
+                kgi: '現職維持目標と新人当選目標を700人達成へ接続する',
+                actualLabel: 'KPI実績$totalKpiActual / KGI目標$totalKgiTarget',
                 targetLabel: '700人必達',
+                progress: totalKgiTarget <= 0
+                    ? 0
+                    : (totalKpiActual / totalKgiTarget).clamp(0, 1).toDouble(),
                 metrics: <KgiCsfKpiMetric>[
                   KgiCsfKpiMetric.number(
-                    csf: '候補者擁立',
-                    kpi: '新人擁立目標',
-                    actual: totalNew,
-                    target: totalAdditional,
+                    csf: '現職基盤の維持',
+                    kpi: '現職維持数',
+                    actual: totalRetentionActual,
+                    target: totalRetentionTarget,
+                    unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '新人当選の創出',
+                    kpi: '新人当選数',
+                    actual: totalNewElectionActual,
+                    target: totalNewElectionTarget,
                     unit: '人',
                   ),
                   KgiCsfKpiMetric.number(
@@ -140,10 +170,10 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                     unit: '件',
                   ),
                   KgiCsfKpiMetric.number(
-                    csf: '県連配分',
-                    kpi: '純増配分',
-                    actual: totalAdditional,
-                    target: 360,
+                    csf: '候補者パイプライン',
+                    kpi: '新人擁立予定',
+                    actual: totalNewCandidateTarget,
+                    target: totalNewElectionTarget,
                     unit: '人',
                   ),
                 ],
@@ -156,14 +186,19 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               runSpacing: 8,
               children: [
                 _MetricChip(
-                  label: '純増配分',
-                  value: totalAdditional.toString(),
+                  label: 'KGI目標',
+                  value: totalKgiTarget.toString(),
                   color: const Color(0xFF2563EB),
                 ),
                 _MetricChip(
-                  label: '新人擁立',
-                  value: totalNew.toString(),
+                  label: 'KPI実績',
+                  value: totalKpiActual.toString(),
                   color: const Color(0xFF7C3AED),
+                ),
+                _MetricChip(
+                  label: '新人擁立予定',
+                  value: totalNewCandidateTarget.toString(),
+                  color: const Color(0xFF0891B2),
                 ),
                 _MetricChip(
                   label: '重点自治体',
@@ -210,7 +245,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       1,
       (max, item) => math.max(
         max,
-        item.additionalSeatTarget + item.newCandidateTarget,
+        item.kgiTargetLocalMembers,
       ),
     );
     final safeIndex = math.min(_selectedIndex, widget.prefectures.length - 1);
@@ -271,7 +306,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                       _SelectedMapBadge(
                         label: '${selectedTile.shortName} 選択中',
                         value:
-                            '純増${selectedPlan.additionalSeatTarget} / 新人${selectedPlan.newCandidateTarget}',
+                            'KGI ${selectedPlan.kgiTargetLocalMembers} / KPI ${selectedPlan.kpiActualLocalMembers}',
                       ),
                     ],
                   ),
@@ -317,8 +352,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
         ? widget.prefectures[tile.index]
         : null;
     final selected = tile.index == _selectedIndex;
-    final total =
-        plan == null ? 0 : plan.additionalSeatTarget + plan.newCandidateTarget;
+    final total = plan == null ? 0 : plan.kgiTargetLocalMembers;
     final color = _tileColor(context, plan, maxLoad);
     final foreground =
         ThemeData.estimateBrightnessForColor(color) == Brightness.dark
@@ -338,13 +372,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       child: Tooltip(
         message: plan == null
             ? tile.name
-            : '${tile.name}: 純増${plan.additionalSeatTarget} / 新人${plan.newCandidateTarget} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
+            : '${tile.name}: KGI${plan.kgiTargetLocalMembers} / KPI${plan.kpiActualLocalMembers} / 期限${formatMonthKey(plan.endorsementDeadlineMonth)}',
         child: Semantics(
           button: true,
           selected: selected,
           label: plan == null
               ? tile.name
-              : '${tile.name} 純増${plan.additionalSeatTarget} 新人${plan.newCandidateTarget}',
+              : '${tile.name} KGI${plan.kgiTargetLocalMembers} KPI${plan.kpiActualLocalMembers}',
           child: Material(
             color: color,
             borderRadius: BorderRadius.circular(6),
@@ -443,7 +477,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
             children: [
               Expanded(
                 child: Text(
-                  '${tile.name} KPI',
+                  '${tile.name} KGI/KPI',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     height: 1.5,
@@ -483,10 +517,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               MapEntry('現職人数', '${plan.currentMembers}'),
               if (plan.cdpLocalMembers > 0)
                 MapEntry('立憲地方議員', '${plan.cdpLocalMembers}'),
-              MapEntry('純増目標', '${plan.additionalSeatTarget}'),
-              MapEntry('新人擁立', '${plan.newCandidateTarget}'),
+              MapEntry('KGI目標', '${plan.kgiTargetLocalMembers}'),
+              MapEntry('KPI実績', '${plan.kpiActualLocalMembers}'),
+              MapEntry('現職維持目標', '${plan.incumbentRetentionTarget}'),
+              MapEntry('現職維持数', '${plan.incumbentRetentionActual}'),
+              MapEntry('新人当選目標', '${plan.newElectionTarget}'),
+              MapEntry('新人当選数', '${plan.newElectionActual}'),
+              MapEntry('新人擁立予定', '${plan.newCandidateTarget}'),
               MapEntry('予定選挙', '${plan.scheduledElectionCount}件'),
-              MapEntry('現職維持', '${plan.incumbentRetentionTarget}'),
               MapEntry('重点自治体', '${plan.focusMunicipalityCount}'),
               MapEntry('接戦支援', '${plan.closeRaceSupportRounds}回'),
               MapEntry('公認期限', formatMonthKey(plan.endorsementDeadlineMonth)),
@@ -521,8 +559,8 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     BuildContext context,
     LocalElectionPrefecturePlan plan,
   ) {
-    final score = plan.additionalSeatTarget +
-        plan.newCandidateTarget +
+    final score = plan.kgiTargetLocalMembers +
+        plan.kpiActualLocalMembers +
         plan.closeRaceSupportRounds;
     final ratio = (score / 72).clamp(0.0, 1.0).toDouble();
     final color = ratio >= 0.72
@@ -642,7 +680,7 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
     if (plan.isEndorsementDueSoon(now)) {
       return const Color(0xFFFCD34D);
     }
-    final total = plan.additionalSeatTarget + plan.newCandidateTarget;
+    final total = plan.kgiTargetLocalMembers;
     final ratio = (total / maxLoad).clamp(0.0, 1.0);
     final base = plan.endorsementConfirmed
         ? const Color(0xFF16A34A)
