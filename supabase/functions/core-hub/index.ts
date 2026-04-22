@@ -76,6 +76,159 @@ async function deleteItem(
   if (error) throw new Error(error.message);
 }
 
+function textValue(value: unknown, maxLength = 4000): string {
+  return String(value ?? "").trim().slice(0, maxLength);
+}
+
+function normalizePriority(value: unknown): "high" | "medium" | "low" {
+  const priority = textValue(value, 20).toLowerCase();
+  return priority === "high" || priority === "low" ? priority : "medium";
+}
+
+function estimateFeatureRequestHours(priority: "high" | "medium" | "low"): number {
+  if (priority === "high") return 6;
+  if (priority === "low") return 2;
+  return 4;
+}
+
+async function getUserEmail(
+  admin: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  try {
+    const { data } = await admin.auth.admin.getUserById(userId);
+    return data.user?.email ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function buildFeatureRequestBody(params: {
+  title: string;
+  description: string;
+  expectedOutcome: string;
+  category: string;
+  priority: string;
+  userId: string;
+  userEmail: string;
+  createdAt: string;
+}): string {
+  const lines = [
+    "Home画面の追加要望フォームから登録されました。",
+    "",
+    "## 要望",
+    params.description,
+    "",
+    "## 期待する成果",
+    params.expectedOutcome || "未入力",
+    "",
+    "## 分類",
+    `- カテゴリ: ${params.category}`,
+    `- 優先度: ${params.priority}`,
+    `- 登録者: ${params.userEmail || params.userId}`,
+    `- 登録日時: ${params.createdAt}`,
+    "",
+    "## WBS連携",
+    "このIssue作成後、同じ内容をWBSのユーザー要望タスクとして登録します。",
+  ];
+  return lines.join("\n");
+}
+
+async function createGitHubIssue(params: {
+  title: string;
+  body: string;
+}): Promise<Record<string, unknown>> {
+  const token = Deno.env.get("GITHUB_PAT") ??
+    Deno.env.get("GITHUB_TOKEN") ??
+    Deno.env.get("GH_TOKEN") ??
+    "";
+  const repo = Deno.env.get("GITHUB_REPO") ??
+    Deno.env.get("GITHUB_REPOSITORY") ??
+    "kanta13jp1/my_web_app";
+
+  if (token === "" || repo === "") {
+    return {
+      skipped: true,
+      error: "GitHub token or repository is not configured",
+    };
+  }
+
+  const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "jibun-app-feature-request-form",
+    },
+    body: JSON.stringify({
+      title: `[追加要望] ${params.title}`,
+      body: params.body,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return {
+      skipped: false,
+      status: res.status,
+      error: String((data as Record<string, unknown>).message ?? "GitHub API error"),
+    };
+  }
+  const issue = data as Record<string, unknown>;
+  return {
+    number: issue.number,
+    html_url: issue.html_url,
+    title: issue.title,
+  };
+}
+
+async function createFeatureRequestWbsTask(
+  admin: SupabaseClient,
+  params: {
+    title: string;
+    description: string;
+    expectedOutcome: string;
+    category: string;
+    priority: "high" | "medium" | "low";
+    issueUrl: string;
+    issueNumber: number | null;
+  },
+): Promise<Record<string, unknown>> {
+  const issueLine = params.issueUrl
+    ? `GitHub Issue: ${params.issueUrl}`
+    : "GitHub Issue: creation skipped or failed. Check core-hub response metadata.";
+  const descriptionLines = [
+    params.description,
+    "",
+    `カテゴリ: ${params.category}`,
+    `期待する成果: ${params.expectedOutcome || "未入力"}`,
+    issueLine,
+  ];
+
+  const { data, error } = await admin.from("wbs_tasks").insert({
+    category: "ユーザー要望",
+    category_icon: "REQ",
+    category_order: 90,
+    title: `[追加要望] ${params.title}`,
+    description: descriptionLines.join("\n"),
+    instance: "vscode",
+    owner_instance: "vscode",
+    status: "pending",
+    progress: 0,
+    milestone_code: "beta",
+    priority: params.priority,
+    remaining_work: issueLine,
+    recovery_plan:
+      "追加要望フォームから自動登録。Issue内容を確認し、優先度と担当をWBS上で調整する。",
+    estimated_hours: estimateFeatureRequestHours(params.priority),
+  }).select("id, title, status, owner_instance").single();
+  if (error) {
+    return { error: error.message };
+  }
+  return { ...data, github_issue_number: params.issueNumber };
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -336,6 +489,127 @@ serve(async (req: Request) => {
           vote: body.vote ?? 1,
         });
         return json({ success: true, item });
+      }
+
+      case "feature_request.submit": {
+        const title = textValue(body.title, 120);
+        const description = textValue(body.description, 4000);
+        const expectedOutcome = textValue(
+          body.expected_outcome ?? body.expectedOutcome,
+          1000,
+        );
+        const category = textValue(body.category, 80) || "機能追加";
+        const priority = normalizePriority(body.priority);
+        if (title.length < 3) {
+          return json({ error: "title must be at least 3 characters" }, 400);
+        }
+        if (description.length < 10) {
+          return json({ error: "description must be at least 10 characters" }, 400);
+        }
+
+        const createdAt = new Date().toISOString();
+        const userEmail = await getUserEmail(admin, userId);
+        const issueBody = buildFeatureRequestBody({
+          title,
+          description,
+          expectedOutcome,
+          category,
+          priority,
+          userId,
+          userEmail,
+          createdAt,
+        });
+        const githubIssue = await createGitHubIssue({
+          title,
+          body: issueBody,
+        });
+        const issueUrl = textValue(githubIssue.html_url, 400);
+        const issueNumber = Number(githubIssue.number ?? 0) || null;
+
+        const wbsTask = await createFeatureRequestWbsTask(admin, {
+          title,
+          description,
+          expectedOutcome,
+          category,
+          priority,
+          issueUrl,
+          issueNumber,
+        });
+
+        let publicFeatureRequest: Record<string, unknown> | null = null;
+        let publicFeatureRequestError = "";
+        const publicInsert = await admin.from("feature_requests").insert({
+          user_id: userId,
+          email: userEmail || null,
+          title,
+          description,
+          votes: 1,
+          status: "open",
+        }).select("id, title, status").single();
+        if (publicInsert.error) {
+          const retry = await admin.from("feature_requests").insert({
+            email: userEmail || null,
+            title,
+            description,
+            votes: 1,
+            status: "open",
+          }).select("id, title, status").single();
+          if (retry.error) {
+            publicFeatureRequestError = retry.error.message;
+          } else {
+            publicFeatureRequest = retry.data;
+          }
+        } else {
+          publicFeatureRequest = publicInsert.data;
+        }
+
+        let appFeedback: Record<string, unknown> | null = null;
+        let appFeedbackError = "";
+        const feedbackInsert = await admin.from("app_feedback").insert({
+          user_id: userId,
+          category: "feature",
+          content: issueBody,
+          status: "new",
+          github_issue_number: issueNumber,
+          github_issue_url: issueUrl || null,
+          user_email: userEmail || null,
+        }).select("id, status, github_issue_number, github_issue_url").single();
+        if (feedbackInsert.error) {
+          appFeedbackError = feedbackInsert.error.message;
+        } else {
+          appFeedback = feedbackInsert.data;
+        }
+
+        const item = await addItem(admin, "feature_request_user", userId, {
+          title,
+          description,
+          expected_outcome: expectedOutcome,
+          category,
+          priority,
+          status: "open",
+          source: "home_feature_request_form",
+          created_at: createdAt,
+          github_issue: githubIssue,
+          wbs_task: wbsTask,
+          feature_request: publicFeatureRequest,
+          feature_request_error: publicFeatureRequestError || undefined,
+          app_feedback: appFeedback,
+          app_feedback_error: appFeedbackError || undefined,
+        });
+
+        const issueCreated = issueUrl !== "";
+        const wbsCreated = !("error" in wbsTask);
+        return json({
+          success: issueCreated && wbsCreated,
+          partialSuccess: issueCreated || wbsCreated,
+          item,
+          githubIssue,
+          wbsTask,
+          featureRequest: publicFeatureRequest,
+          featureRequestError: publicFeatureRequestError,
+          appFeedback,
+          appFeedbackError,
+        });
       }
 
       // ---- User feedback ----

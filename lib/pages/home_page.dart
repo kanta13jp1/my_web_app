@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -110,6 +111,14 @@ class _HomePageState extends State<HomePage> {
   DateTime? _calendarMonthAnchor;
   DateTime? _selectedCalendarDate;
   int _notifUnreadCount = 0;
+  final _featureRequestFormKey = GlobalKey<FormState>();
+  final _featureRequestTitleController = TextEditingController();
+  final _featureRequestDescriptionController = TextEditingController();
+  final _featureRequestOutcomeController = TextEditingController();
+  String _featureRequestCategory = '機能追加';
+  String _featureRequestPriority = 'medium';
+  bool _isSubmittingFeatureRequest = false;
+  Map<String, dynamic>? _lastFeatureRequestSubmission;
 
   @override
   void initState() {
@@ -119,6 +128,14 @@ class _HomePageState extends State<HomePage> {
     _selectedCalendarDate = today;
     _reloadHomeSignals();
     _fetchNotifUnreadCount();
+  }
+
+  @override
+  void dispose() {
+    _featureRequestTitleController.dispose();
+    _featureRequestDescriptionController.dispose();
+    _featureRequestOutcomeController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchNotifUnreadCount() async {
@@ -203,6 +220,71 @@ class _HomePageState extends State<HomePage> {
     await _timeWasteSlipCountFuture;
     await _featureStrategyReportFuture;
     await _featureStrategyAiReviewFuture;
+  }
+
+  Future<void> _submitHomeFeatureRequest() async {
+    if (!(_featureRequestFormKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isSubmittingFeatureRequest = true;
+      _lastFeatureRequestSubmission = null;
+    });
+
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'feature_request.submit',
+          'title': _featureRequestTitleController.text.trim(),
+          'description': _featureRequestDescriptionController.text.trim(),
+          'expected_outcome': _featureRequestOutcomeController.text.trim(),
+          'category': _featureRequestCategory,
+          'priority': _featureRequestPriority,
+        },
+      );
+      final rawData = response.data;
+      if (rawData is! Map) {
+        throw const FormatException('Invalid feature request response');
+      }
+      final data = Map<String, dynamic>.from(rawData);
+      final success = data['success'] == true;
+      final partialSuccess = data['partialSuccess'] == true;
+      if (!success && !partialSuccess) {
+        throw Exception(data['error'] ?? '追加要望の登録に失敗しました');
+      }
+      if (!mounted) return;
+      setState(() {
+        _lastFeatureRequestSubmission = data;
+        _featureRequestTitleController.clear();
+        _featureRequestDescriptionController.clear();
+        _featureRequestOutcomeController.clear();
+        _featureRequestCategory = '機能追加';
+        _featureRequestPriority = 'medium';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? '追加要望をGitHub IssueとWBSに登録しました'
+                : '追加要望を登録しました。一部の外部連携は設定確認が必要です',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('追加要望の登録に失敗しました: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmittingFeatureRequest = false);
+      }
+    }
   }
 
   String get _todayKey => DateFormat('yyyy-MM-dd').format(_now());
@@ -4632,6 +4714,14 @@ abstinence_slip_details: $slipDetailsText
                             _buildFeatureStrategyMonitor(isDark, isCompact),
                             const SizedBox(height: 24),
                             _buildSectionHeader(
+                              '追加要望フォーム',
+                              Icons.add_task_outlined,
+                              const Color(0xFF0F766E),
+                              key: const Key('home_section_feature_request'),
+                            ),
+                            _buildHomeFeatureRequestForm(isDark, isCompact),
+                            const SizedBox(height: 24),
+                            _buildSectionHeader(
                               'KPI SUMMARY',
                               Icons.show_chart,
                               const Color(0xFF3D5AFE),
@@ -5264,6 +5354,309 @@ abstinence_slip_details: $slipDetailsText
           isCompact: isCompact,
         );
       },
+    );
+  }
+
+  Map<String, dynamic> _dynamicMap(Object? value) {
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return const {};
+  }
+
+  Widget _buildHomeFeatureRequestForm(bool isDark, bool isCompact) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final submission = _lastFeatureRequestSubmission;
+    final githubIssue = _dynamicMap(submission?['githubIssue']);
+    final wbsTask = _dynamicMap(submission?['wbsTask']);
+    final issueUrl = (githubIssue['html_url'] ?? '').toString();
+    final issueNumber = githubIssue['number'];
+    final wbsTaskTitle = (wbsTask['title'] ?? '').toString();
+    final hasWbsTask = wbsTaskTitle.isNotEmpty && wbsTask['error'] == null;
+    const categories = [
+      '機能追加',
+      'UX改善',
+      '不具合',
+      'AI連携',
+      'データ連携',
+      'その他',
+    ];
+    const priorityLabels = {
+      'high': '高',
+      'medium': '中',
+      'low': '低',
+    };
+    final fieldBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: colorScheme.outlineVariant),
+    );
+
+    Widget dropdowns() {
+      final categoryField = DropdownButtonFormField<String>(
+        key: ValueKey('feature-request-category-$_featureRequestCategory'),
+        initialValue: _featureRequestCategory,
+        decoration: InputDecoration(
+          labelText: '分類',
+          prefixIcon: const Icon(Icons.category_outlined),
+          border: fieldBorder,
+          enabledBorder: fieldBorder,
+          isDense: true,
+        ),
+        items: [
+          for (final category in categories)
+            DropdownMenuItem(value: category, child: Text(category)),
+        ],
+        onChanged: _isSubmittingFeatureRequest
+            ? null
+            : (value) {
+                if (value != null) {
+                  setState(() => _featureRequestCategory = value);
+                }
+              },
+      );
+      final priorityField = DropdownButtonFormField<String>(
+        key: ValueKey('feature-request-priority-$_featureRequestPriority'),
+        initialValue: _featureRequestPriority,
+        decoration: InputDecoration(
+          labelText: '優先度',
+          prefixIcon: const Icon(Icons.priority_high_outlined),
+          border: fieldBorder,
+          enabledBorder: fieldBorder,
+          isDense: true,
+        ),
+        items: [
+          for (final entry in priorityLabels.entries)
+            DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+        ],
+        onChanged: _isSubmittingFeatureRequest
+            ? null
+            : (value) {
+                if (value != null) {
+                  setState(() => _featureRequestPriority = value);
+                }
+              },
+      );
+
+      if (isCompact) {
+        return Column(
+          children: [
+            categoryField,
+            const SizedBox(height: 10),
+            priorityField,
+          ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: categoryField),
+          const SizedBox(width: 10),
+          Expanded(child: priorityField),
+        ],
+      );
+    }
+
+    return Card(
+      elevation: 0,
+      color: isDark ? const Color(0xFF111827) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFDDE8E4),
+        ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isCompact ? 14 : 18),
+        child: Form(
+          key: _featureRequestFormKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F766E).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.add_comment_outlined,
+                      color: Color(0xFF0F766E),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '追加要望をIssue/WBS化',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            height: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          '登録するとGitHub Issueを発行し、WBSのユーザー要望タスクにも追加します。',
+                          style: TextStyle(fontSize: 12, height: 1.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _featureRequestTitleController,
+                enabled: !_isSubmittingFeatureRequest,
+                textInputAction: TextInputAction.next,
+                decoration: InputDecoration(
+                  labelText: '要望タイトル',
+                  hintText: '例: カレンダーから習慣の優先度を調整したい',
+                  prefixIcon: const Icon(Icons.title_outlined),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
+                ),
+                validator: (value) {
+                  final text = value?.trim() ?? '';
+                  if (text.length < 3) return '3文字以上で入力してください';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              dropdowns(),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _featureRequestDescriptionController,
+                enabled: !_isSubmittingFeatureRequest,
+                minLines: 3,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  labelText: '内容',
+                  hintText: '困っていること、使いたい場面、現在の回避策など',
+                  alignLabelWithHint: true,
+                  prefixIcon: const Icon(Icons.notes_outlined),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
+                ),
+                validator: (value) {
+                  final text = value?.trim() ?? '';
+                  if (text.length < 10) return '10文字以上で入力してください';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _featureRequestOutcomeController,
+                enabled: !_isSubmittingFeatureRequest,
+                minLines: 2,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: '期待する成果',
+                  hintText: 'この機能で何が速く、楽に、確実になるか',
+                  alignLabelWithHint: true,
+                  prefixIcon: const Icon(Icons.check_circle_outline),
+                  border: fieldBorder,
+                  enabledBorder: fieldBorder,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Align(
+                alignment: Alignment.centerRight,
+                child: FilledButton.icon(
+                  onPressed: _isSubmittingFeatureRequest
+                      ? null
+                      : _submitHomeFeatureRequest,
+                  icon: _isSubmittingFeatureRequest
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.send_outlined),
+                  label: Text(_isSubmittingFeatureRequest ? '登録中' : '登録する'),
+                ),
+              ),
+              if (submission != null) ...[
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.task_alt,
+                            color: Color(0xFF047857),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            submission['success'] == true ? '登録完了' : '一部登録完了',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF065F46),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        issueNumber == null
+                            ? 'GitHub Issue: 外部連携設定を確認してください'
+                            : 'GitHub Issue: #$issueNumber',
+                        style: const TextStyle(
+                          color: Color(0xFF065F46),
+                          height: 1.5,
+                        ),
+                      ),
+                      Text(
+                        hasWbsTask
+                            ? 'WBS: $wbsTaskTitle'
+                            : 'WBS: 登録状況を確認してください',
+                        style: const TextStyle(
+                          color: Color(0xFF065F46),
+                          height: 1.5,
+                        ),
+                      ),
+                      if (issueUrl.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: issueUrl),
+                            );
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Issue URLをコピーしました'),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.copy, size: 16),
+                          label: const Text('Issue URLコピー'),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 
