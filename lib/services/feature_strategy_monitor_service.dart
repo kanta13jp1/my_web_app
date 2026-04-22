@@ -10,6 +10,8 @@ class FeatureStrategyMonitorService {
     required List<FeatureStrategyCatalogItem> catalog,
     required List<String> recentToolIds,
     Map<String, String> sectionNamesById = const <String, String>{},
+    Map<String, FeatureStrategyFocusActionStats> focusActionStatsByFeatureId =
+        const <String, FeatureStrategyFocusActionStats>{},
     DateTime? monitoredAt,
   }) {
     final checkedAt = monitoredAt ?? DateTime.now();
@@ -19,6 +21,8 @@ class FeatureStrategyMonitorService {
         entry: entry,
         sectionName: sectionNamesById[entry.sectionId] ?? entry.sectionId,
         recentToolIds: recentToolIds,
+        focusActionStats: focusActionStatsByFeatureId[entry.id] ??
+            FeatureStrategyFocusActionStats.empty(entry.id),
         monitoredAt: checkedAt,
       );
     }).toList();
@@ -65,6 +69,7 @@ class FeatureStrategyMonitorService {
     required FeatureStrategyCatalogItem entry,
     required String sectionName,
     required List<String> recentToolIds,
+    required FeatureStrategyFocusActionStats focusActionStats,
     required DateTime monitoredAt,
   }) {
     final metadataScore = _metadataScore(entry);
@@ -75,12 +80,17 @@ class FeatureStrategyMonitorService {
       resource: lifeCapitalResource,
       recentUsageScore: recentUsageScore,
     );
-    const improvementScore = 1;
+    final improvementScore = focusActionStats.hasHistory ? 2 : 1;
+    final habitProgress = math.max(
+      focusActionStats.closeRateLast7,
+      math.min(1, focusActionStats.currentStreakDays / 3),
+    );
     final progress = _averageProgress(
       metadataScore / 3,
       recentUsageScore / 2,
-      improvementScore,
+      improvementScore / 2,
       wasteReductionScore / 5,
+      habitProgress,
     );
     final status = _resolveStatus(
       entry: entry,
@@ -116,6 +126,20 @@ class FeatureStrategyMonitorService {
           unit: '件',
         ),
         KgiCsfKpiMetric.number(
+          csf: '低ハードルから習慣化する',
+          kpi: '7日内の1手完了',
+          actual: focusActionStats.completedDaysLast7,
+          target: 3,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '広げすぎを防ぐ',
+          kpi: '7日内の完了または観察',
+          actual: focusActionStats.closedDaysLast7,
+          target: 5,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
           csf: _lifeCapitalCsf(lifeCapitalResource),
           kpi: '浪費削減スコア',
           actual: wasteReductionScore,
@@ -147,6 +171,7 @@ class FeatureStrategyMonitorService {
       wasteReductionScore: wasteReductionScore,
       wasteReductionCsf: _lifeCapitalCsf(lifeCapitalResource),
       monitoringCadence: _monitoringCadence(entry, lifeCapitalResource),
+      focusActionStats: focusActionStats,
     );
   }
 
@@ -165,8 +190,8 @@ class FeatureStrategyMonitorService {
     return 0;
   }
 
-  double _averageProgress(num a, num b, num c, num d) {
-    return ((a + b + c + d) / 4).clamp(0, 1).toDouble();
+  double _averageProgress(num a, num b, num c, num d, num e) {
+    return ((a + b + c + d + e) / 5).clamp(0, 1).toDouble();
   }
 
   FeatureStrategyStatus _resolveStatus({
@@ -640,8 +665,12 @@ class FeatureStrategyMonitorService {
         .where((item) => item.lifeCapitalResource != signal.lifeCapitalResource)
         .length;
     final action = _buildFocusAction(signal);
+    final actionStats = signal.focusActionStats;
+    final historyText = actionStats.hasHistory
+        ? '直近7日で完了${actionStats.completedDaysLast7}日、観察${actionStats.deferredDaysLast7}日、継続${actionStats.currentStreakDays}日です。'
+        : 'まだ完了履歴がないため、今日の1手を最初の習慣化ログにします。';
     final rationale =
-        '${targetSummary.label}の平均進捗が最も低いため、${signal.featureName}だけを先に習慣化します。他の資本は観察に回します。';
+        '${targetSummary.label}の平均進捗が最も低いため、${signal.featureName}だけを先に習慣化します。他の資本は観察に回します。$historyText';
 
     return FeatureStrategyFocusRecommendation(
       resource: signal.lifeCapitalResource,
@@ -657,11 +686,12 @@ class FeatureStrategyMonitorService {
       progress: signal.progress,
       parkedResourceCount: parkedResourceCount,
       parkedFeatureCount: parkedFeatureCount,
+      actionStats: actionStats,
       plan: KgiCsfKpiPlan(
         domain: '${targetSummary.label} / 今日の1手',
         kgi: '${targetSummary.label}の浪費を減らす入口を1つだけ習慣化する',
-        actualLabel: '1機能選定',
-        targetLabel: '1機能',
+        actualLabel: '${actionStats.completedDaysLast7}日完了',
+        targetLabel: '7日中3日',
         progress: signal.progress,
         metrics: <KgiCsfKpiMetric>[
           KgiCsfKpiMetric.number(
@@ -670,6 +700,20 @@ class FeatureStrategyMonitorService {
             actual: 1,
             target: 1,
             unit: '件',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '習慣化まで広げない',
+            kpi: '7日内の1手完了',
+            actual: actionStats.completedDaysLast7,
+            target: 3,
+            unit: '日',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '定期モニタリング',
+            kpi: '現在の継続日数',
+            actual: actionStats.currentStreakDays,
+            target: 3,
+            unit: '日',
           ),
           KgiCsfKpiMetric.number(
             csf: '同時進行を止める',
@@ -740,6 +784,16 @@ class FeatureStrategyMonitorService {
     final highWasteReductionCount =
         signals.where((signal) => signal.wasteReductionScore >= 3).length;
     final focusSelected = focusRecommendation == null ? 0 : 1;
+    final completedFocusActionsLast7 = signals.fold<int>(
+      0,
+      (sum, signal) => sum + signal.focusActionStats.completedDaysLast7,
+    );
+    final closedFocusActionsLast7 = signals.fold<int>(
+      0,
+      (sum, signal) => sum + signal.focusActionStats.closedDaysLast7,
+    );
+    final selectedFocusStreak =
+        focusRecommendation?.actionStats.currentStreakDays ?? 0;
 
     return KgiCsfKpiPlan(
       domain: '全機能AI戦略',
@@ -789,6 +843,27 @@ class FeatureStrategyMonitorService {
           actual: focusSelected,
           target: 1,
           unit: '件',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '習慣化まで広げない',
+          kpi: '7日内の低ハードル完了',
+          actual: completedFocusActionsLast7,
+          target: 3,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定期的なモニタリングと改善',
+          kpi: '7日内の完了または観察',
+          actual: closedFocusActionsLast7,
+          target: 5,
+          unit: '日',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '定着後に次へ進む',
+          kpi: '選定中1手の継続日数',
+          actual: selectedFocusStreak,
+          target: 3,
+          unit: '日',
         ),
         KgiCsfKpiMetric.number(
           csf: '類似機能の抽象化',

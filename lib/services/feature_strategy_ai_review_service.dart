@@ -68,7 +68,10 @@ class FeatureStrategyAiReviewService {
     final focusLine = focus == null
         ? '未選定'
         : '${focus.label} / ${focus.featureName}: ${focus.action} '
-            '(CSF=${focus.csf}, 保留=${focus.parkedResourceCount}資本/${focus.parkedFeatureCount}機能)';
+            '(CSF=${focus.csf}, 7日完了=${focus.actionStats.completedDaysLast7}日, '
+            '観察=${focus.actionStats.deferredDaysLast7}日, '
+            '継続=${focus.actionStats.currentStreakDays}日, '
+            '保留=${focus.parkedResourceCount}資本/${focus.parkedFeatureCount}機能)';
 
     return '''
 あなたはプロダクト全体のAI戦略レビュー担当です。
@@ -83,6 +86,9 @@ class FeatureStrategyAiReviewService {
 全体KGI進捗: ${(report.portfolioPlan.displayProgress * 100).round()}%
 生命資本カバー: ${(report.lifeCapitalCoverageRatio * 100).round()}%
 浪費削減高スコア機能: ${report.highWasteReductionCount}
+低ハードル完了(7日): ${report.focusActionsCompletedLast7}
+低ハードル観察(7日): ${report.focusActionsDeferredLast7}
+選定1手の継続日数: ${report.focusActionStreakDays}
 
 セクション別:
 $sectionLines

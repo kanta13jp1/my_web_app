@@ -34,6 +34,16 @@ void main() {
         'work': '仕事',
         'money': 'お金',
       },
+      focusActionStatsByFeatureId: const <String,
+          FeatureStrategyFocusActionStats>{
+        'asset-training': FeatureStrategyFocusActionStats(
+          featureId: 'asset-training',
+          completedDaysLast7: 2,
+          deferredDaysLast7: 1,
+          currentStreakDays: 2,
+          lastCompletedAt: null,
+        ),
+      },
       monitoredAt: DateTime(2026, 4, 22, 9, 15),
     );
 
@@ -59,12 +69,21 @@ void main() {
     expect(report.focusRecommendation, isNotNull);
     expect(report.focusRecommendation!.action, contains('今日'));
     expect(
+      report.focusRecommendation!.actionStats.completedDaysLast7,
+      greaterThanOrEqualTo(0),
+    );
+    expect(report.focusActionsCompletedLast7, 2);
+    expect(
       report.focusRecommendation!.parkedResourceCount,
       greaterThanOrEqualTo(0),
     );
     expect(
       report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
       contains('今日の低ハードル1手'),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('7日内の低ハードル完了'),
     );
     expect(
       report.consolidationCandidates.single.summary,

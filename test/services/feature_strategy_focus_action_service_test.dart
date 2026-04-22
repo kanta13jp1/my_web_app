@@ -20,6 +20,13 @@ void main() {
     progress: 0.4,
     parkedResourceCount: 5,
     parkedFeatureCount: 12,
+    actionStats: FeatureStrategyFocusActionStats(
+      featureId: 'life-command',
+      completedDaysLast7: 0,
+      deferredDaysLast7: 0,
+      currentStreakDays: 0,
+      lastCompletedAt: null,
+    ),
     plan: KgiCsfKpiPlan(
       domain: '時間 / 今日の1手',
       kgi: '低ハードル行動を習慣化する',
@@ -90,5 +97,51 @@ void main() {
     expect(deferred.completed, isFalse);
     expect(deferred.deferred, isTrue);
     expect(deferred.completionStreakDays, 0);
+  });
+
+  test('loadStatsByFeatureIds summarizes seven-day completion feedback',
+      () async {
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 21, 8),
+    );
+    await service.deferToday(
+      recommendation,
+      now: DateTime(2026, 4, 22, 8),
+    );
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 23, 8),
+    );
+
+    final statsByFeature = await service.loadStatsByFeatureIds(
+      <String>['life-command'],
+      now: DateTime(2026, 4, 23, 21),
+    );
+    final stats = statsByFeature['life-command']!;
+
+    expect(stats.completedDaysLast7, 2);
+    expect(stats.deferredDaysLast7, 1);
+    expect(stats.currentStreakDays, 1);
+    expect(stats.closeRateLast7, greaterThan(0));
+  });
+
+  test('markCompleted removes same-day defer history', () async {
+    await service.deferToday(
+      recommendation,
+      now: DateTime(2026, 4, 23, 8),
+    );
+    await service.markCompleted(
+      recommendation,
+      now: DateTime(2026, 4, 23, 9),
+    );
+
+    final stats = await service.loadStatsByFeatureIds(
+      <String>['life-command'],
+      now: DateTime(2026, 4, 23, 21),
+    );
+
+    expect(stats['life-command']!.completedDaysLast7, 1);
+    expect(stats['life-command']!.deferredDaysLast7, 0);
   });
 }

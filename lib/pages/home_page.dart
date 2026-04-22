@@ -17,6 +17,7 @@ import '../services/ai_service.dart';
 import '../services/abstinence_guard_store.dart';
 import '../services/completion_goal_service.dart';
 import '../services/feature_strategy_ai_review_service.dart';
+import '../services/feature_strategy_focus_action_service.dart';
 import '../services/feature_strategy_monitor_service.dart';
 import '../services/home_tool_usage_service.dart';
 import '../services/life_waste_elimination_service.dart';
@@ -171,7 +172,8 @@ class _HomePageState extends State<HomePage> {
 
   void _reloadRecentToolSignals() {
     _recentToolIdsFuture = HomeToolUsageService.loadRecentToolIds();
-    _featureStrategyReportFuture = _recentToolIdsFuture.then((recentToolIds) {
+    _featureStrategyReportFuture =
+        _recentToolIdsFuture.then((recentToolIds) async {
       final catalog = _buildHomeToolCatalog().map((entry) {
         return FeatureStrategyCatalogItem(
           id: entry.id,
@@ -185,10 +187,16 @@ class _HomePageState extends State<HomePage> {
       final sectionNamesById = {
         for (final section in homeToolSections) section.id: section.title,
       };
+      final actionStats =
+          await const FeatureStrategyFocusActionService().loadStatsByFeatureIds(
+        catalog.map((entry) => entry.id),
+        now: _now(),
+      );
       return const FeatureStrategyMonitorService().buildReport(
         catalog: catalog,
         recentToolIds: recentToolIds,
         sectionNamesById: sectionNamesById,
+        focusActionStatsByFeatureId: actionStats,
         monitoredAt: _now(),
       );
     });

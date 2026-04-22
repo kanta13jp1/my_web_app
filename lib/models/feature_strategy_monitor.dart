@@ -11,6 +11,37 @@ enum FeatureLifeCapitalResource {
   focus,
 }
 
+class FeatureStrategyFocusActionStats {
+  final String featureId;
+  final int completedDaysLast7;
+  final int deferredDaysLast7;
+  final int currentStreakDays;
+  final DateTime? lastCompletedAt;
+
+  const FeatureStrategyFocusActionStats({
+    required this.featureId,
+    required this.completedDaysLast7,
+    required this.deferredDaysLast7,
+    required this.currentStreakDays,
+    required this.lastCompletedAt,
+  });
+
+  factory FeatureStrategyFocusActionStats.empty(String featureId) {
+    return FeatureStrategyFocusActionStats(
+      featureId: featureId,
+      completedDaysLast7: 0,
+      deferredDaysLast7: 0,
+      currentStreakDays: 0,
+      lastCompletedAt: null,
+    );
+  }
+
+  int get closedDaysLast7 => completedDaysLast7 + deferredDaysLast7;
+  bool get hasHistory => closedDaysLast7 > 0 || currentStreakDays > 0;
+  double get completionRateLast7 => completedDaysLast7 / 7;
+  double get closeRateLast7 => closedDaysLast7 / 7;
+}
+
 class FeatureStrategyCatalogItem {
   final String id;
   final String sectionId;
@@ -47,6 +78,7 @@ class FeatureStrategySignal {
   final int wasteReductionScore;
   final String wasteReductionCsf;
   final String monitoringCadence;
+  final FeatureStrategyFocusActionStats focusActionStats;
 
   const FeatureStrategySignal({
     required this.featureId,
@@ -66,6 +98,7 @@ class FeatureStrategySignal {
     required this.wasteReductionScore,
     required this.wasteReductionCsf,
     required this.monitoringCadence,
+    required this.focusActionStats,
   });
 
   double get progress => plan.displayProgress;
@@ -132,6 +165,7 @@ class FeatureStrategyFocusRecommendation {
   final double progress;
   final int parkedResourceCount;
   final int parkedFeatureCount;
+  final FeatureStrategyFocusActionStats actionStats;
   final KgiCsfKpiPlan plan;
 
   const FeatureStrategyFocusRecommendation({
@@ -148,6 +182,7 @@ class FeatureStrategyFocusRecommendation {
     required this.progress,
     required this.parkedResourceCount,
     required this.parkedFeatureCount,
+    required this.actionStats,
     required this.plan,
   });
 }
@@ -195,6 +230,20 @@ class FeatureStrategyReport {
   int get consolidationCount => consolidationCandidates.length;
   int get highWasteReductionCount =>
       signals.where((signal) => signal.wasteReductionScore >= 3).length;
+  int get focusActionsCompletedLast7 => signals.fold<int>(
+        0,
+        (sum, signal) => sum + signal.focusActionStats.completedDaysLast7,
+      );
+  int get focusActionsDeferredLast7 => signals.fold<int>(
+        0,
+        (sum, signal) => sum + signal.focusActionStats.deferredDaysLast7,
+      );
+  int get focusActionStreakDays => focusRecommendation == null
+      ? 0
+      : focusRecommendation!.actionStats.currentStreakDays;
+  double get focusActionCompletionRateLast7 => signals.isEmpty
+      ? 0
+      : (focusActionsCompletedLast7 / 7).clamp(0, 1).toDouble();
 
   double get aiCoverageRatio =>
       totalFeatures == 0 ? 0 : monitoredFeatures / totalFeatures;

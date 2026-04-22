@@ -59,6 +59,7 @@ void main() {
     expect(find.text('浪費削減'), findsOneWidget);
     expect(find.text('今日の低ハードル1手'), findsWidgets);
     await tester.pump();
+    expect(find.textContaining('7日完了'), findsWidgets);
     expect(find.text('1手完了'), findsOneWidget);
     await tester.ensureVisible(find.text('1手完了'));
     await tester.pump();

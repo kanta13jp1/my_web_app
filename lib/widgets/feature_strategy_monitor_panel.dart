@@ -553,6 +553,28 @@ class _FocusRecommendationCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _StatusPill(
+                label: '7日完了 ${recommendation.actionStats.completedDaysLast7}日',
+                color: const Color(0xFF059669),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '観察 ${recommendation.actionStats.deferredDaysLast7}日',
+                color: const Color(0xFFF59E0B),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '継続 ${recommendation.actionStats.currentStreakDays}日',
+                color: const Color(0xFF2563EB),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           KgiCsfKpiPanel(
             plan: recommendation.plan,
             accentColor: color,
