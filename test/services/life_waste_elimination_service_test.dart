@@ -118,9 +118,17 @@ void main() {
 
     expect(summary.historyDays, 2);
     expect(summary.alerts, isNotEmpty);
+    expect(summary.habitGate?.focusResource, LifeWasteResource.time);
+    expect(summary.habitGate?.microHabit, contains('アプリ'));
     expect(summary.notificationQueued, isTrue);
     expect(alertRepository.routedAlerts, hasLength(1));
     expect(alertRepository.routedAlerts.single, isNotEmpty);
+    expect(
+      alertRepository.routedAlerts.single
+          .where((alert) => alert.resource != null)
+          .every((alert) => alert.resource == summary.habitGate?.focusResource),
+      isTrue,
+    );
     expect(
       summary.alerts.any((alert) => alert.detail.contains('2日連続')),
       isTrue,
@@ -132,6 +140,53 @@ void main() {
 
     expect(duplicateSummary.notificationQueued, isFalse);
     expect(alertRepository.routedAlerts, hasLength(1));
+  });
+
+  test('habit gate keeps one low-hurdle task until it stabilizes', () async {
+    const service = LifeWasteEliminationService();
+    final day1 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 21, 9),
+      timeSlipCount: 3,
+      abstinenceSlipCount: 0,
+      abstinenceTimeSavedMinutes: 0,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 0,
+      pendingCriticalTaskCount: 0,
+      coreRitualDoneCount: 3,
+      coreRitualTarget: 3,
+      todayCompletedCount: 5,
+      yesterdayCompletedCount: 4,
+      featureTotal: 10,
+      featureImproveCount: 0,
+      featureProgress: 1,
+    );
+    final day2 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 22, 9),
+      timeSlipCount: 0,
+      abstinenceSlipCount: 0,
+      abstinenceTimeSavedMinutes: 40,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 25000,
+      pendingCriticalTaskCount: 0,
+      coreRitualDoneCount: 3,
+      coreRitualTarget: 3,
+      todayCompletedCount: 5,
+      yesterdayCompletedCount: 4,
+      featureTotal: 10,
+      featureImproveCount: 0,
+      featureProgress: 1,
+    );
+
+    final first = await service.recordDailySnapshot(day1);
+    final second = await service.recordDailySnapshot(day2);
+
+    expect(first.habitGate?.focusResource, LifeWasteResource.time);
+    expect(second.habitGate?.focusResource, LifeWasteResource.time);
+    expect(
+      second.habitGate?.parkedResources,
+      contains(LifeWasteResource.money),
+    );
+    expect(second.habitGate?.currentStreakDays, 1);
   });
 
   test('recordDailySnapshot keeps alerts when notification routing fails',

@@ -107,6 +107,11 @@ class LifeWasteEliminationPanel extends StatelessWidget {
               isDark: isDark,
             ),
             const SizedBox(height: 14),
+            _HabitGateBox(
+              gate: monitoringSummary?.habitGate,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 14),
             _MonitoringBox(
               summary: monitoringSummary,
               isDark: isDark,
@@ -119,6 +124,7 @@ class LifeWasteEliminationPanel extends StatelessWidget {
                 final width = columns == 1
                     ? constraints.maxWidth
                     : (constraints.maxWidth - spacing) / 2;
+                final habitGate = monitoringSummary?.habitGate;
                 return Wrap(
                   spacing: spacing,
                   runSpacing: spacing,
@@ -128,6 +134,10 @@ class LifeWasteEliminationPanel extends StatelessWidget {
                         width: width,
                         child: _ResourceSignalTile(
                           signal: signal,
+                          isHabitFocus:
+                              habitGate?.focusResource == signal.resource,
+                          isParked: habitGate != null &&
+                              habitGate.focusResource != signal.resource,
                           isDark: isDark,
                         ),
                       ),
@@ -151,7 +161,8 @@ class LifeWasteEliminationPanel extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      report.nextAction,
+                      monitoringSummary?.habitGate?.microHabit ??
+                          report.nextAction,
                       style: TextStyle(
                         color: isDark ? Colors.white : const Color(0xFF0F172A),
                         fontSize: 12,
@@ -300,6 +311,125 @@ class _AiReviewBox extends StatelessWidget {
               height: 1.55,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HabitGateBox extends StatelessWidget {
+  final LifeWasteHabitGate? gate;
+  final bool isDark;
+
+  const _HabitGateBox({
+    required this.gate,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = gate;
+    final border =
+        isDark ? Colors.white.withValues(alpha: 0.10) : const Color(0xFFE2E8F0);
+    final color = isDark ? const Color(0xFF111827) : const Color(0xFFF8FAFC);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        isDark ? Colors.white.withValues(alpha: 0.68) : const Color(0xFF475569);
+    final accent = data?.habitized == true
+        ? const Color(0xFF0F766E)
+        : const Color(0xFF2563EB);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.filter_1_outlined, color: accent, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                '習慣化ゲート',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  height: 1.5,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withValues(alpha: 0.24)),
+                ),
+                child: Text(
+                  data == null
+                      ? '準備中'
+                      : data.habitized
+                          ? '次へ進める'
+                          : 'これだけ',
+                  style: TextStyle(
+                    color: accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            data?.microHabit ?? '今日の低ハードル行動を選定しています。',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: data?.progress ?? 0,
+              minHeight: 6,
+              backgroundColor: accent.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            data == null
+                ? 'あれもこれも同時に始めず、最小行動を1つだけ固定します。'
+                : '${data.focusLabel}を${data.currentStreakDays}/${data.targetStreakDays}日継続中。${data.proofLabel}。他は観察のみ: ${data.parkedLabel}',
+            style: TextStyle(
+              color: subColor,
+              fontSize: 11,
+              height: 1.55,
+            ),
+          ),
+          if (data?.habitized == true && data?.nextUnlockLabel != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              '次に追加する候補: ${data!.nextUnlockLabel}',
+              style: TextStyle(
+                color: accent,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                height: 1.5,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -461,10 +591,14 @@ class _MonitoringAlertChip extends StatelessWidget {
 
 class _ResourceSignalTile extends StatelessWidget {
   final LifeWasteResourceSignal signal;
+  final bool isHabitFocus;
+  final bool isParked;
   final bool isDark;
 
   const _ResourceSignalTile({
     required this.signal,
+    this.isHabitFocus = false,
+    this.isParked = false,
     required this.isDark,
   });
 
@@ -513,6 +647,31 @@ class _ResourceSignalTile extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: (isHabitFocus ? color : subColor)
+                    .withValues(alpha: isHabitFocus ? 0.12 : 0.08),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                isHabitFocus
+                    ? '今週の1件'
+                    : isParked
+                        ? '観察のみ'
+                        : '候補',
+                style: TextStyle(
+                  color: isHabitFocus ? color : subColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  height: 1.4,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 8),
           ClipRRect(

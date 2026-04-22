@@ -59,6 +59,80 @@ String _alertNotificationKey(
   return '${snapshot.dateKey}:$resource:$level:${alert.consecutiveDays}';
 }
 
+String _microHabitFor(LifeWasteResource resource) {
+  return switch (resource) {
+    LifeWasteResource.time => '作業開始前に、惰性で開くアプリを1つだけ閉じる',
+    LifeWasteResource.money => '次の支出前に10秒止まり、能力が上がる支出かだけ確認する',
+    LifeWasteResource.health => '次の食事か休憩を1つだけ先に決める',
+    LifeWasteResource.stamina => '2分で終わる最小タスクを1件だけ完了する',
+    LifeWasteResource.intelligence => '学習・思考系の機能を1つだけ開いて1行残す',
+    LifeWasteResource.focus => '25分だけ、成果物が残る作業を1つに絞る',
+  };
+}
+
+String _habitProofFor(LifeWasteResource resource) {
+  return switch (resource) {
+    LifeWasteResource.time => '時間スコア60点以上で達成扱い',
+    LifeWasteResource.money => 'お金スコア60点以上で達成扱い',
+    LifeWasteResource.health => '健康スコア60点以上で達成扱い',
+    LifeWasteResource.stamina => '体力スコア60点以上で達成扱い',
+    LifeWasteResource.intelligence => '知能スコア60点以上で達成扱い',
+    LifeWasteResource.focus => '集中力スコア60点以上で達成扱い',
+  };
+}
+
+int _habitDifficultyFor(LifeWasteResource resource) {
+  return switch (resource) {
+    LifeWasteResource.time => 1,
+    LifeWasteResource.money => 1,
+    LifeWasteResource.health => 2,
+    LifeWasteResource.stamina => 2,
+    LifeWasteResource.intelligence => 3,
+    LifeWasteResource.focus => 3,
+  };
+}
+
+class _LifeWasteHabitGateState {
+  final LifeWasteResource focusResource;
+  final String startedDateKey;
+  final Set<LifeWasteResource> masteredResources;
+
+  const _LifeWasteHabitGateState({
+    required this.focusResource,
+    required this.startedDateKey,
+    required this.masteredResources,
+  });
+
+  factory _LifeWasteHabitGateState.fromJson(Map<String, dynamic> json) {
+    final mastered = <LifeWasteResource>{};
+    final rawMastered = json['masteredResources'];
+    if (rawMastered is List) {
+      for (final item in rawMastered) {
+        final resource = _resourceByName('$item');
+        if (resource != null) {
+          mastered.add(resource);
+        }
+      }
+    }
+    return _LifeWasteHabitGateState(
+      focusResource:
+          _resourceByName('${json['focusResource']}') ?? LifeWasteResource.time,
+      startedDateKey: '${json['startedDateKey'] ?? ''}',
+      masteredResources: mastered,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'focusResource': focusResource.name,
+      'startedDateKey': startedDateKey,
+      'masteredResources': [
+        for (final resource in masteredResources) resource.name,
+      ],
+    };
+  }
+}
+
 class LifeWasteResourceSignal {
   final LifeWasteResource resource;
   final String label;
@@ -363,17 +437,57 @@ class LifeWasteMonitoringAlert {
   });
 }
 
+class LifeWasteHabitGate {
+  final LifeWasteResource focusResource;
+  final String focusLabel;
+  final String microHabit;
+  final String proofLabel;
+  final int currentStreakDays;
+  final int targetStreakDays;
+  final bool habitized;
+  final List<LifeWasteResource> parkedResources;
+  final String? nextUnlockLabel;
+
+  const LifeWasteHabitGate({
+    required this.focusResource,
+    required this.focusLabel,
+    required this.microHabit,
+    required this.proofLabel,
+    required this.currentStreakDays,
+    required this.targetStreakDays,
+    required this.habitized,
+    required this.parkedResources,
+    this.nextUnlockLabel,
+  });
+
+  double get progress {
+    if (targetStreakDays <= 0) {
+      return 0;
+    }
+    return (currentStreakDays / targetStreakDays).clamp(0, 1).toDouble();
+  }
+
+  String get parkedLabel {
+    if (parkedResources.isEmpty) {
+      return '追加候補なし';
+    }
+    return parkedResources.map(_resourceLabel).join('・');
+  }
+}
+
 class LifeWasteMonitoringSummary {
   final List<LifeWasteDailySnapshot> snapshots;
   final List<LifeWasteMonitoringAlert> alerts;
   final bool cloudSynced;
   final int notificationQueuedCount;
+  final LifeWasteHabitGate? habitGate;
 
   const LifeWasteMonitoringSummary({
     required this.snapshots,
     required this.alerts,
     this.cloudSynced = false,
     this.notificationQueuedCount = 0,
+    this.habitGate,
   });
 
   factory LifeWasteMonitoringSummary.empty({bool cloudSynced = false}) {
@@ -389,6 +503,7 @@ class LifeWasteMonitoringSummary {
     List<LifeWasteMonitoringAlert>? alerts,
     bool? cloudSynced,
     int? notificationQueuedCount,
+    LifeWasteHabitGate? habitGate,
   }) {
     return LifeWasteMonitoringSummary(
       snapshots: snapshots ?? this.snapshots,
@@ -396,6 +511,7 @@ class LifeWasteMonitoringSummary {
       cloudSynced: cloudSynced ?? this.cloudSynced,
       notificationQueuedCount:
           notificationQueuedCount ?? this.notificationQueuedCount,
+      habitGate: habitGate ?? this.habitGate,
     );
   }
 
@@ -433,9 +549,12 @@ class LifeWasteEliminationService {
   static const _snapshotHistoryKey = 'life_waste_daily_snapshots_v1';
   static const _alertNotificationHistoryKey =
       'life_waste_alert_notification_history_v1';
+  static const _habitGateStateKey = 'life_waste_habit_gate_state_v1';
   static const _maxSnapshotHistoryDays = 30;
   static const _alertThresholdScore = 80;
   static const _consecutiveAlertDays = 2;
+  static const _habitCompletionThresholdScore = 60;
+  static const _habitTargetStreakDays = 7;
 
   LifeWasteEliminationReport buildReport({
     required DateTime monitoredAt,
@@ -599,7 +718,11 @@ class LifeWasteEliminationService {
     await _writeSnapshots(store, trimmed);
     final repository = snapshotRepository;
     if (repository == null) {
-      final summary = _buildMonitoringSummary(trimmed);
+      final summary = await _buildMonitoringSummary(
+        trimmed,
+        store: store,
+        report: report,
+      );
       final queuedCount = await _queueAlertNotifications(store, summary);
       return summary.copyWith(notificationQueuedCount: queuedCount);
     }
@@ -611,13 +734,22 @@ class LifeWasteEliminationService {
       );
       final merged = _mergeSnapshots(trimmed, remote);
       await _writeSnapshots(store, merged);
-      final summary = _buildMonitoringSummary(merged, cloudSynced: true);
+      final summary = await _buildMonitoringSummary(
+        merged,
+        store: store,
+        report: report,
+        cloudSynced: true,
+      );
       final queuedCount = await _queueAlertNotifications(store, summary);
       return summary.copyWith(notificationQueuedCount: queuedCount);
     } catch (_) {
       // Local monitoring must keep working even when cloud sync is unavailable.
     }
-    final summary = _buildMonitoringSummary(trimmed);
+    final summary = await _buildMonitoringSummary(
+      trimmed,
+      store: store,
+      report: report,
+    );
     final queuedCount = await _queueAlertNotifications(store, summary);
     return summary.copyWith(notificationQueuedCount: queuedCount);
   }
@@ -629,7 +761,7 @@ class LifeWasteEliminationService {
     final local = _readSnapshots(store);
     final repository = snapshotRepository;
     if (repository == null) {
-      return _buildMonitoringSummary(local);
+      return _buildMonitoringSummary(local, store: store);
     }
 
     try {
@@ -639,12 +771,16 @@ class LifeWasteEliminationService {
       if (remote.isNotEmpty) {
         final merged = _mergeSnapshots(local, remote);
         await _writeSnapshots(store, merged);
-        return _buildMonitoringSummary(merged, cloudSynced: true);
+        return _buildMonitoringSummary(
+          merged,
+          store: store,
+          cloudSynced: true,
+        );
       }
     } catch (_) {
       // Fall back to local history if the user is offline or not signed in.
     }
-    return _buildMonitoringSummary(local);
+    return _buildMonitoringSummary(local, store: store);
   }
 
   Future<int> _queueAlertNotifications(
@@ -658,10 +794,21 @@ class LifeWasteEliminationService {
     }
 
     final sentKeys = _readAlertNotificationKeys(store);
-    final pendingAlerts = summary.alerts
+    final focusResource = summary.habitGate?.focusResource;
+    final routedAlerts = focusResource == null
+        ? summary.alerts
+        : summary.alerts
+            .where(
+              (alert) =>
+                  alert.resource == focusResource ||
+                  (alert.resource == null && alert.critical),
+            )
+            .toList(growable: false);
+    final pendingAlerts = routedAlerts
         .where(
           (alert) => !sentKeys.contains(_alertNotificationKey(latest, alert)),
         )
+        .take(2)
         .toList(growable: false);
     if (pendingAlerts.isEmpty) {
       return 0;
@@ -769,10 +916,12 @@ class LifeWasteEliminationService {
         : sorted.sublist(sorted.length - _maxSnapshotHistoryDays);
   }
 
-  LifeWasteMonitoringSummary _buildMonitoringSummary(
+  Future<LifeWasteMonitoringSummary> _buildMonitoringSummary(
     List<LifeWasteDailySnapshot> snapshots, {
+    required SharedPreferences store,
+    LifeWasteEliminationReport? report,
     bool cloudSynced = false,
-  }) {
+  }) async {
     if (snapshots.isEmpty) {
       return LifeWasteMonitoringSummary.empty(cloudSynced: cloudSynced);
     }
@@ -818,11 +967,165 @@ class LifeWasteEliminationService {
       }
     }
 
+    final habitGate = await _resolveHabitGate(
+      store: store,
+      snapshots: snapshots,
+      report: report,
+    );
+
     return LifeWasteMonitoringSummary(
       snapshots: List<LifeWasteDailySnapshot>.unmodifiable(snapshots),
       alerts: List<LifeWasteMonitoringAlert>.unmodifiable(alerts),
       cloudSynced: cloudSynced,
+      habitGate: habitGate,
     );
+  }
+
+  Future<LifeWasteHabitGate> _resolveHabitGate({
+    required SharedPreferences store,
+    required List<LifeWasteDailySnapshot> snapshots,
+    LifeWasteEliminationReport? report,
+  }) async {
+    final latest = snapshots.last;
+    final stored = _readHabitGateState(store);
+    var mastered = <LifeWasteResource>{...?stored?.masteredResources};
+    var focus = stored?.focusResource;
+    var startedDateKey = stored?.startedDateKey;
+
+    focus ??= _selectHabitFocus(
+      snapshots: snapshots,
+      report: report,
+      masteredResources: mastered,
+    );
+    startedDateKey = startedDateKey?.trim().isNotEmpty == true
+        ? startedDateKey
+        : latest.dateKey;
+
+    var streak = _habitStreakDays(snapshots, focus);
+    if (streak >= _habitTargetStreakDays &&
+        !mastered.contains(focus) &&
+        mastered.length < LifeWasteResource.values.length - 1) {
+      mastered = {...mastered, focus};
+      final nextFocus = _selectHabitFocus(
+        snapshots: snapshots,
+        report: report,
+        masteredResources: mastered,
+      );
+      if (nextFocus != focus) {
+        focus = nextFocus;
+        startedDateKey = latest.dateKey;
+        streak = _habitStreakDays(snapshots, focus);
+      }
+    }
+
+    await _writeHabitGateState(
+      store,
+      _LifeWasteHabitGateState(
+        focusResource: focus,
+        startedDateKey: startedDateKey ?? latest.dateKey,
+        masteredResources: mastered,
+      ),
+    );
+
+    final parkedResources = LifeWasteResource.values
+        .where((resource) => resource != focus && !mastered.contains(resource))
+        .toList(growable: false);
+    final nextUnlock = _selectHabitFocus(
+      snapshots: snapshots,
+      report: report,
+      masteredResources: {...mastered, focus},
+    );
+
+    return LifeWasteHabitGate(
+      focusResource: focus,
+      focusLabel: _resourceLabel(focus),
+      microHabit: _microHabitFor(focus),
+      proofLabel: _habitProofFor(focus),
+      currentStreakDays: streak.clamp(0, _habitTargetStreakDays).toInt(),
+      targetStreakDays: _habitTargetStreakDays,
+      habitized: streak >= _habitTargetStreakDays,
+      parkedResources: parkedResources,
+      nextUnlockLabel: nextUnlock == focus ? null : _resourceLabel(nextUnlock),
+    );
+  }
+
+  LifeWasteResource _selectHabitFocus({
+    required List<LifeWasteDailySnapshot> snapshots,
+    required Set<LifeWasteResource> masteredResources,
+    LifeWasteEliminationReport? report,
+  }) {
+    final latest = snapshots.last;
+    final signalByResource = {
+      for (final signal in report?.signals ?? const <LifeWasteResourceSignal>[])
+        signal.resource: signal,
+    };
+    final candidates = LifeWasteResource.values
+        .where((resource) => !masteredResources.contains(resource))
+        .toList();
+    if (candidates.isEmpty) {
+      return latest.priorityResource;
+    }
+
+    candidates.sort((a, b) {
+      final aScore = latest.resourceScores[a] ?? 100;
+      final bScore = latest.resourceScores[b] ?? 100;
+      final aNeeds = aScore < _alertThresholdScore ||
+          (signalByResource[a]?.needsIntervention ?? false);
+      final bNeeds = bScore < _alertThresholdScore ||
+          (signalByResource[b]?.needsIntervention ?? false);
+      final needCompare = (aNeeds ? 0 : 1).compareTo(bNeeds ? 0 : 1);
+      if (needCompare != 0) {
+        return needCompare;
+      }
+      final difficultyCompare =
+          _habitDifficultyFor(a).compareTo(_habitDifficultyFor(b));
+      if (difficultyCompare != 0) {
+        return difficultyCompare;
+      }
+      return aScore.compareTo(bScore);
+    });
+    return candidates.first;
+  }
+
+  int _habitStreakDays(
+    List<LifeWasteDailySnapshot> snapshots,
+    LifeWasteResource resource,
+  ) {
+    var streak = 0;
+    for (final snapshot in snapshots.reversed) {
+      final score = snapshot.resourceScores[resource] ?? 100;
+      if (score >= _habitCompletionThresholdScore) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  _LifeWasteHabitGateState? _readHabitGateState(SharedPreferences store) {
+    final raw = store.getString(_habitGateStateKey);
+    if (raw == null || raw.trim().isEmpty) {
+      return null;
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) {
+        return null;
+      }
+      return _LifeWasteHabitGateState.fromJson(
+        Map<String, dynamic>.from(decoded),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _writeHabitGateState(
+    SharedPreferences store,
+    _LifeWasteHabitGateState state,
+  ) async {
+    await store.setString(_habitGateStateKey, jsonEncode(state.toJson()));
   }
 
   double _timeWasteScore({
