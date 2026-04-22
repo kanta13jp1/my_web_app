@@ -764,6 +764,10 @@ class LocalElectionShareService {
       ..writeln('- 現職維持目標: ${plan.totalIncumbentRetentionTarget}人')
       ..writeln('- 重点自治体: ${plan.totalFocusMunicipalityCount}')
       ..writeln('- 新人擁立: ${plan.totalNewCandidateTarget}人')
+      ..writeln(
+        '- 想定当選率: ${LocalElectionPrefecturePlan.assumedCandidateWinRatePercent}%',
+      )
+      ..writeln('- 現状当選率: ${plan.currentCandidateWinRateLabel}')
       ..writeln('- 予定支援回数: ${plan.totalCloseRaceSupportRounds}回')
       ..writeln('- 公認内定済み県連: '
           '${plan.confirmedEndorsementCount}/${plan.prefectures.length}')
@@ -812,6 +816,9 @@ class LocalElectionShareService {
       'totalIncumbentRetentionTarget': plan.totalIncumbentRetentionTarget,
       'totalFocusMunicipalityCount': plan.totalFocusMunicipalityCount,
       'totalNewCandidateTarget': plan.totalNewCandidateTarget,
+      'assumedCandidateWinRatePercent':
+          LocalElectionPrefecturePlan.assumedCandidateWinRatePercent,
+      'currentCandidateWinRatePercent': plan.currentCandidateWinRatePercent,
       'totalCloseRaceSupportRounds': plan.totalCloseRaceSupportRounds,
       'confirmedEndorsementCount': plan.confirmedEndorsementCount,
       'totalCdpLocalMembers': plan.totalCdpLocalMembers,
@@ -828,6 +835,7 @@ class LocalElectionShareService {
               'incumbentRetentionTarget': item.incumbentRetentionTarget,
               'focusMunicipalityCount': item.focusMunicipalityCount,
               'newCandidateTarget': item.newCandidateTarget,
+              'candidateWinRatePercent': item.currentCandidateWinRatePercent,
               'announcedCandidateCount': item.announcedCandidateCount,
               'confirmedCandidateCount': item.confirmedCandidateCount,
               'scheduledElectionCount': item.scheduledElectionCount,
@@ -943,7 +951,8 @@ class LocalElectionShareService {
       '純増${plan.additionalSeatTarget}人',
       '現職維持${plan.incumbentRetentionTarget}人',
       '重点自治体${plan.focusMunicipalityCount}',
-      '新人${plan.newCandidateTarget}人',
+      '新人擁立目標${plan.newCandidateTarget}人',
+      '現状当選率${plan.currentCandidateWinRateLabel}',
       '県連代表${plan.prefectureChairName.isEmpty ? '公式未確認' : plan.prefectureChairName}',
       '幹事長${plan.prefectureSecretaryGeneralName.isEmpty ? '公式未確認' : plan.prefectureSecretaryGeneralName}',
       '確認済み候補者${plan.announcedCandidateCount}人',

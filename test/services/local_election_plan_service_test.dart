@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_web_app/models/local_election_plan.dart';
 import 'package:my_web_app/models/local_election_reality.dart';
 import 'package:my_web_app/services/local_election_plan_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,7 +23,13 @@ void main() {
     expect(plan.allocatedNetIncrease, 360);
     expect(plan.allocationGap, 0);
     expect(plan.prefectures.first.kgiTargetLocalMembers, greaterThan(0));
-    expect(plan.prefectures.first.csfKpis, hasLength(5));
+    expect(plan.prefectures.first.csfKpis, hasLength(6));
+    expect(
+      plan.prefectures.first.newCandidateTarget,
+      LocalElectionPrefecturePlan.candidateTargetForElectionTarget(
+        plan.prefectures.first.newElectionTarget,
+      ),
+    );
     final tokyo =
         plan.prefectures.firstWhere((item) => item.prefecture == '東京');
     expect(tokyo.prefectureChairName, '川合孝典');
@@ -279,14 +286,20 @@ void main() {
     );
     expect(updatedTokyo.incumbentRetentionTarget, 20);
     expect(updatedTokyo.newElectionTarget, 20);
+    expect(updatedTokyo.newCandidateTarget, 25);
+    expect(updatedTokyo.currentCandidateWinRatePercent, 0);
+    expect(updatedTokyo.notes, contains('現状当選率0%'));
     expect(updatedTokyo.scheduledElectionCount, 2);
     expect(updatedTokyo.announcedCandidateCount, 2);
     expect(updatedTokyo.confirmedCandidateCount, 2);
     expect(updatedTokyo.endorsementDeadlineMonth, '2026-07');
-    expect(updatedTokyo.newCandidateTarget, greaterThanOrEqualTo(3));
     expect(
       updatedTokyo.csfKpis.firstWhere((item) => item.csf == '候補者パイプライン').actual,
       2,
+    );
+    expect(
+      updatedTokyo.csfKpis.firstWhere((item) => item.csf == '当選率管理').target,
+      80,
     );
     expect(updatedTokyo.notes, contains('AI自動更新'));
     expect(updatedTokyo.autoUpdatedAt, now.toIso8601String());
@@ -295,10 +308,11 @@ void main() {
     expect(updatedAichi.scheduledElectionCount, 1);
     expect(updatedAichi.incumbentRetentionTarget, 12);
     expect(updatedAichi.newElectionTarget, 12);
+    expect(updatedAichi.newCandidateTarget, 15);
     expect(updatedTottori.currentMembers, 0);
     expect(updatedTottori.incumbentRetentionTarget, 0);
     expect(updatedTottori.newElectionTarget, 1);
-    expect(updatedTottori.newCandidateTarget, lessThanOrEqualTo(2));
+    expect(updatedTottori.newCandidateTarget, 2);
     expect(updatedTottori.kgiTargetLocalMembers, 1);
   });
 }

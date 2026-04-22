@@ -89,6 +89,13 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
       0,
       (sum, item) => sum + item.newCandidateTarget,
     );
+    final totalAnnouncedCandidates = widget.prefectures.fold<int>(
+      0,
+      (sum, item) => sum + item.announcedCandidateCount,
+    );
+    final currentWinRateLabel = totalAnnouncedCandidates <= 0
+        ? '-'
+        : '${((totalNewElectionActual / totalAnnouncedCandidates) * 100).round().clamp(0, 100)}%';
     final totalFocus = widget.prefectures.fold<int>(
       0,
       (sum, item) => sum + item.focusMunicipalityCount,
@@ -171,10 +178,23 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   ),
                   KgiCsfKpiMetric.number(
                     csf: '候補者パイプライン',
-                    kpi: '新人擁立予定',
-                    actual: totalNewCandidateTarget,
-                    target: totalNewElectionTarget,
+                    kpi: '新人擁立数',
+                    actual: totalAnnouncedCandidates,
+                    target: totalNewCandidateTarget,
                     unit: '人',
+                  ),
+                  KgiCsfKpiMetric.number(
+                    csf: '当選率管理',
+                    kpi: '現状当選率',
+                    actual: totalAnnouncedCandidates <= 0
+                        ? 0
+                        : ((totalNewElectionActual / totalAnnouncedCandidates) *
+                                100)
+                            .round()
+                            .clamp(0, 100),
+                    target: LocalElectionPrefecturePlan
+                        .assumedCandidateWinRatePercent,
+                    unit: '%',
                   ),
                 ],
               ),
@@ -196,9 +216,14 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
                   color: const Color(0xFF7C3AED),
                 ),
                 _MetricChip(
-                  label: '新人擁立予定',
+                  label: '新人擁立目標',
                   value: totalNewCandidateTarget.toString(),
                   color: const Color(0xFF0891B2),
+                ),
+                _MetricChip(
+                  label: '現状当選率',
+                  value: currentWinRateLabel,
+                  color: const Color(0xFFB45309),
                 ),
                 _MetricChip(
                   label: '重点自治体',
@@ -523,7 +548,11 @@ class _ElectionJapanMapState extends State<ElectionJapanMap> {
               MapEntry('現職維持数', '${plan.incumbentRetentionActual}'),
               MapEntry('新人当選目標', '${plan.newElectionTarget}'),
               MapEntry('新人当選数', '${plan.newElectionActual}'),
-              MapEntry('新人擁立予定', '${plan.newCandidateTarget}'),
+              MapEntry('新人擁立目標', '${plan.newCandidateTarget}'),
+              MapEntry(
+                '現状当選率',
+                '${plan.currentCandidateWinRateLabel} / 想定80%',
+              ),
               MapEntry('予定選挙', '${plan.scheduledElectionCount}件'),
               MapEntry('重点自治体', '${plan.focusMunicipalityCount}'),
               MapEntry('接戦支援', '${plan.closeRaceSupportRounds}回'),

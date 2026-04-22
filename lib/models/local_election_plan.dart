@@ -13,6 +13,7 @@ class LocalElectionPrefecturePlan {
   final int scheduledElectionCount;
   final int announcedCandidateCount;
   final int confirmedCandidateCount;
+  final int candidateWinRatePercent;
   final int cdpLocalMembers;
   final String cdpSourceUrl;
   final String prefectureChairName;
@@ -35,6 +36,7 @@ class LocalElectionPrefecturePlan {
     this.scheduledElectionCount = 0,
     this.announcedCandidateCount = 0,
     this.confirmedCandidateCount = 0,
+    this.candidateWinRatePercent = 0,
     this.cdpLocalMembers = 0,
     this.cdpSourceUrl = '',
     this.prefectureChairName = '',
@@ -60,6 +62,7 @@ class LocalElectionPrefecturePlan {
       scheduledElectionCount: _readInt(json['scheduledElectionCount']),
       announcedCandidateCount: _readInt(json['announcedCandidateCount']),
       confirmedCandidateCount: _readInt(json['confirmedCandidateCount']),
+      candidateWinRatePercent: _readInt(json['candidateWinRatePercent']),
       cdpLocalMembers: _readInt(json['cdpLocalMembers']),
       cdpSourceUrl: (json['cdpSourceUrl'] as String? ?? '').trim(),
       prefectureChairName:
@@ -88,6 +91,7 @@ class LocalElectionPrefecturePlan {
       'scheduledElectionCount': scheduledElectionCount,
       'announcedCandidateCount': announcedCandidateCount,
       'confirmedCandidateCount': confirmedCandidateCount,
+      'candidateWinRatePercent': candidateWinRatePercent,
       'cdpLocalMembers': cdpLocalMembers,
       'cdpSourceUrl': cdpSourceUrl,
       'prefectureChairName': prefectureChairName,
@@ -112,6 +116,7 @@ class LocalElectionPrefecturePlan {
     int? scheduledElectionCount,
     int? announcedCandidateCount,
     int? confirmedCandidateCount,
+    int? candidateWinRatePercent,
     int? cdpLocalMembers,
     String? cdpSourceUrl,
     String? prefectureChairName,
@@ -141,6 +146,8 @@ class LocalElectionPrefecturePlan {
           announcedCandidateCount ?? this.announcedCandidateCount,
       confirmedCandidateCount:
           confirmedCandidateCount ?? this.confirmedCandidateCount,
+      candidateWinRatePercent:
+          candidateWinRatePercent ?? this.candidateWinRatePercent,
       cdpLocalMembers: cdpLocalMembers ?? this.cdpLocalMembers,
       cdpSourceUrl: cdpSourceUrl ?? this.cdpSourceUrl,
       prefectureChairName: prefectureChairName ?? this.prefectureChairName,
@@ -193,11 +200,36 @@ class LocalElectionPrefecturePlan {
 
   int get newElectionTarget => additionalSeatTarget;
 
+  static int candidateTargetForElectionTarget(int electionTarget) {
+    if (electionTarget <= 0) {
+      return 0;
+    }
+    return (electionTarget * 5 + 3) ~/ 4;
+  }
+
+  static const int assumedCandidateWinRatePercent = 80;
+
   int get incumbentRetentionActual =>
       math.min(currentMembers, incumbentRetentionTarget);
 
   int get newElectionActual =>
       math.max(0, currentMembers - incumbentRetentionTarget);
+
+  int get currentCandidateWinRatePercent {
+    if (announcedCandidateCount <= 0) {
+      return 0;
+    }
+    if (candidateWinRatePercent > 0 || newElectionActual == 0) {
+      return candidateWinRatePercent.clamp(0, 100).toInt();
+    }
+    return ((newElectionActual / announcedCandidateCount) * 100)
+        .round()
+        .clamp(0, 100)
+        .toInt();
+  }
+
+  String get currentCandidateWinRateLabel =>
+      announcedCandidateCount <= 0 ? '-' : '$currentCandidateWinRatePercent%';
 
   int get kpiActualLocalMembers => incumbentRetentionActual + newElectionActual;
 
@@ -223,6 +255,13 @@ class LocalElectionPrefecturePlan {
           target: newCandidateTarget,
           actual: announcedCandidateCount,
           unit: '人',
+        ),
+        LocalElectionCsfKpi(
+          csf: '当選率管理',
+          kpiLabel: '現状当選率',
+          target: assumedCandidateWinRatePercent,
+          actual: currentCandidateWinRatePercent,
+          unit: '%',
         ),
         LocalElectionCsfKpi(
           csf: '重点自治体攻略',
@@ -438,6 +477,24 @@ class LocalElectionPlanDashboard {
         (sum, item) => sum + item.newCandidateTarget,
       );
 
+  int get totalAnnouncedCandidateCount => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.announcedCandidateCount,
+      );
+
+  int get totalNewElectionActual => prefectures.fold<int>(
+        0,
+        (sum, item) => sum + item.newElectionActual,
+      );
+
+  int get currentCandidateWinRatePercent => totalAnnouncedCandidateCount <= 0
+      ? 0
+      : ((totalNewElectionActual / totalAnnouncedCandidateCount) * 100).round();
+
+  String get currentCandidateWinRateLabel => totalAnnouncedCandidateCount <= 0
+      ? '-'
+      : '$currentCandidateWinRatePercent%';
+
   int get totalCloseRaceSupportRounds => prefectures.fold<int>(
         0,
         (sum, item) => sum + item.closeRaceSupportRounds,
@@ -605,6 +662,8 @@ class LocalElectionPlanDashboard {
       '現職維持目標合計: $totalIncumbentRetentionTarget',
       '重点自治体合計: $totalFocusMunicipalityCount',
       '新人擁立合計: $totalNewCandidateTarget',
+      '想定当選率: ${LocalElectionPrefecturePlan.assumedCandidateWinRatePercent}%',
+      '現状当選率: $currentCandidateWinRateLabel',
       '接戦区支援回数合計: $totalCloseRaceSupportRounds',
       '公認内定済み県連: $confirmedEndorsementCount / ${prefectures.length}',
       '期限超過県連: ${overdueEndorsementCount()}',
@@ -622,6 +681,7 @@ class LocalElectionPlanDashboard {
             '現職維持${item.incumbentRetentionTarget}, '
             '重点自治体${item.focusMunicipalityCount}, '
             '新人${item.newCandidateTarget}, '
+            '当選率${item.currentCandidateWinRateLabel}, '
             '内定期限${item.endorsementDeadlineMonth}, '
             '支援${item.closeRaceSupportRounds}回',
     ];

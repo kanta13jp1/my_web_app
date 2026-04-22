@@ -4871,7 +4871,14 @@ class _ElectionVictoryPageState extends State<ElectionVictoryPage> {
                   '重点自治体',
                   _formatInt(plan.focusMunicipalityCount),
                 ),
-                _buildMetricChip('新人', _formatInt(plan.newCandidateTarget)),
+                _buildMetricChip(
+                  '新人擁立',
+                  _formatInt(plan.newCandidateTarget),
+                ),
+                _buildMetricChip(
+                  '現状当選率',
+                  plan.currentCandidateWinRateLabel,
+                ),
                 _buildMetricChip(
                   '公認内定期限',
                   formatMonthKey(plan.endorsementDeadlineMonth),

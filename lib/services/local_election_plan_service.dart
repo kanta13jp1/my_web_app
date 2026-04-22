@@ -102,10 +102,16 @@ class LocalElectionPlanService {
       final cdpSourceUrl = reality?.cdpSourceUrl ?? current.cdpSourceUrl;
       final scheduledElectionCount = stats.scheduledElectionCount;
       final additionalTarget = additionalTargets[index];
-      final candidateTarget = _realisticCandidateTarget(
-        currentMembers: currentMembers,
-        newElectionTarget: additionalTarget,
-        stats: stats,
+      final batchNewWins = current.autoUpdatedAt.trim().isEmpty
+          ? 0
+          : math.max(0, currentMembers - current.currentMembers);
+      final candidateWinRatePercent = _candidateWinRatePercent(
+        wins: batchNewWins,
+        candidates: stats.kokuminCandidateCount,
+      );
+      final candidateTarget =
+          LocalElectionPrefecturePlan.candidateTargetForElectionTarget(
+        additionalTarget,
       );
       final focusCount = _realisticFocusMunicipalityCount(
         currentMembers: currentMembers,
@@ -129,6 +135,7 @@ class LocalElectionPlanService {
           scheduledElectionCount: scheduledElectionCount,
           announcedCandidateCount: stats.kokuminCandidateCount,
           confirmedCandidateCount: stats.confirmedCandidateCount,
+          candidateWinRatePercent: candidateWinRatePercent,
           cdpLocalMembers: cdpLocalMembers,
           cdpSourceUrl: cdpSourceUrl,
           autoUpdatedAt: updatedAt.toIso8601String(),
@@ -140,6 +147,7 @@ class LocalElectionPlanService {
             stats: stats,
             currentMembers: currentMembers,
             cdpLocalMembers: cdpLocalMembers,
+            candidateWinRatePercent: candidateWinRatePercent,
             updatedAt: updatedAt,
           ),
         ),
@@ -177,12 +185,10 @@ class LocalElectionPlanService {
                     ? 3
                     : 2),
       );
-      final newCandidateTarget = additionalTarget +
-          (seed.tier == 1
-              ? 3
-              : seed.tier == 2
-                  ? 2
-                  : 1);
+      final newCandidateTarget =
+          LocalElectionPrefecturePlan.candidateTargetForElectionTarget(
+        additionalTarget,
+      );
       final retentionTarget = math.max(
         1,
         (additionalTarget *
@@ -263,7 +269,10 @@ class LocalElectionPlanService {
             item.incumbentRetentionTarget,
           ),
           focusMunicipalityCount: clampPositiveInt(item.focusMunicipalityCount),
-          newCandidateTarget: clampPositiveInt(item.newCandidateTarget),
+          newCandidateTarget:
+              LocalElectionPrefecturePlan.candidateTargetForElectionTarget(
+            item.newElectionTarget,
+          ),
           closeRaceSupportRounds: clampPositiveInt(item.closeRaceSupportRounds),
           currentMembers: clampPositiveInt(item.currentMembers),
           scheduledElectionCount: clampPositiveInt(item.scheduledElectionCount),
@@ -271,6 +280,9 @@ class LocalElectionPlanService {
               clampPositiveInt(item.announcedCandidateCount),
           confirmedCandidateCount:
               clampPositiveInt(item.confirmedCandidateCount),
+          candidateWinRatePercent: clampPositiveInt(
+            item.candidateWinRatePercent,
+          ).clamp(0, 100).toInt(),
           cdpLocalMembers: clampPositiveInt(item.cdpLocalMembers),
           cdpSourceUrl: item.cdpSourceUrl.trim(),
           prefectureChairName: item.prefectureChairName.trim().isNotEmpty
@@ -515,31 +527,14 @@ class LocalElectionPlanService {
     return hasFootholdChance ? 1 : 0;
   }
 
-  int _realisticCandidateTarget({
-    required int currentMembers,
-    required int newElectionTarget,
-    required _AutoScheduleStats stats,
+  int _candidateWinRatePercent({
+    required int wins,
+    required int candidates,
   }) {
-    if (currentMembers <= 0) {
-      if (newElectionTarget > 0) {
-        return math.max(1, math.min(2, stats.scheduledElectionCount));
-      }
-      return stats.kokuminCandidateCount > 0 ? 1 : 0;
+    if (candidates <= 0) {
+      return 0;
     }
-    final immediatePressure = stats.kokuminCandidateCount +
-        stats.redAlertCount +
-        (stats.yellowAlertCount > 0 ? 1 : 0);
-    final ceiling = math.max(
-      newElectionTarget,
-      currentMembers +
-          math.min(3, stats.redAlertCount + stats.yellowAlertCount),
-    );
-    return math
-        .min(
-          ceiling,
-          math.max(newElectionTarget, immediatePressure),
-        )
-        .toInt();
+    return ((wins / candidates) * 100).round().clamp(0, 100).toInt();
   }
 
   int _realisticFocusMunicipalityCount({
@@ -610,6 +605,7 @@ class LocalElectionPlanService {
     required _AutoScheduleStats stats,
     required int currentMembers,
     required int cdpLocalMembers,
+    required int candidateWinRatePercent,
     required DateTime updatedAt,
   }) {
     final manualLines = currentNotes
@@ -623,7 +619,8 @@ class LocalElectionPlanService {
         '立憲$cdpLocalMembers人 / '
         '予定選挙${stats.scheduledElectionCount}件 / '
         '未擁立${stats.redAlertCount}件 / '
-        '単騎${stats.yellowAlertCount}件 ($date)';
+        '単騎${stats.yellowAlertCount}件 / '
+        '現状当選率$candidateWinRatePercent% ($date)';
     return <String>[...manualLines, autoLine].join('\n');
   }
 

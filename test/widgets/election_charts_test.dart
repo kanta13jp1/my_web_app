@@ -103,7 +103,8 @@ void main() {
     expect(find.text('現職維持数'), findsOneWidget);
     expect(find.text('新人当選目標'), findsOneWidget);
     expect(find.text('新人当選数'), findsOneWidget);
-    expect(find.text('新人擁立予定'), findsWidgets);
+    expect(find.text('新人擁立目標'), findsWidgets);
+    expect(find.text('現状当選率'), findsWidgets);
     expect(find.text('予定選挙'), findsOneWidget);
     expect(find.text('公認期限'), findsOneWidget);
     expect(find.text('高負荷'), findsOneWidget);
