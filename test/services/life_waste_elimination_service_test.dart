@@ -122,4 +122,80 @@ void main() {
     expect(reloaded.historyDays, 2);
     expect(reloaded.latest?.dateKey, '2026-04-22');
   });
+
+  test('recordDailySnapshot syncs and merges cloud history', () async {
+    final remoteSnapshot = LifeWasteDailySnapshot(
+      dateKey: '2026-04-21',
+      monitoredAt: DateTime(2026, 4, 21, 9),
+      wasteFreeScore: 82,
+      resourceScores: const {
+        LifeWasteResource.time: 82,
+        LifeWasteResource.money: 88,
+        LifeWasteResource.health: 90,
+      },
+      priorityResource: LifeWasteResource.time,
+      nextAction: '前日の重点行動',
+    );
+    final repository = _FakeSnapshotRepository(
+      remoteSnapshots: [remoteSnapshot],
+    );
+    final service = LifeWasteEliminationService(
+      snapshotRepository: repository,
+    );
+    final report = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 22, 9),
+      timeSlipCount: 0,
+      abstinenceSlipCount: 0,
+      abstinenceTimeSavedMinutes: 60,
+      abstinenceMoneySaved: 5000,
+      moneyWaste: 0,
+      pendingCriticalTaskCount: 0,
+      coreRitualDoneCount: 3,
+      coreRitualTarget: 3,
+      todayCompletedCount: 6,
+      yesterdayCompletedCount: 5,
+      featureTotal: 10,
+      featureImproveCount: 0,
+      featureProgress: 1,
+    );
+
+    final summary = await service.recordDailySnapshot(report);
+    final reloaded = await service.loadMonitoringSummary();
+
+    expect(repository.upserted, hasLength(1));
+    expect(repository.upserted.single.dateKey, '2026-04-22');
+    expect(summary.cloudSynced, isTrue);
+    expect(summary.historyDays, 2);
+    expect(summary.snapshots.map((snapshot) => snapshot.dateKey), [
+      '2026-04-21',
+      '2026-04-22',
+    ]);
+    expect(reloaded.cloudSynced, isTrue);
+    expect(reloaded.historyDays, 2);
+  });
+}
+
+class _FakeSnapshotRepository implements LifeWasteSnapshotRepository {
+  final List<LifeWasteDailySnapshot> remoteSnapshots;
+  final List<LifeWasteDailySnapshot> upserted = [];
+
+  _FakeSnapshotRepository({
+    required this.remoteSnapshots,
+  });
+
+  @override
+  Future<List<LifeWasteDailySnapshot>> loadRecentSnapshots({
+    int limit = 30,
+  }) async {
+    return remoteSnapshots.take(limit).toList();
+  }
+
+  @override
+  Future<void> upsertDailySnapshot(LifeWasteDailySnapshot snapshot) async {
+    upserted.add(snapshot);
+    remoteSnapshots
+      ..removeWhere((item) => item.dateKey == snapshot.dateKey)
+      ..add(snapshot)
+      ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
+  }
 }

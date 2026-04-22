@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (ライフ資本日次スナップショット + 継続低下アラート)
+> **最終更新**: 2026-04-22 Codex (統一地方選 県連別現実目標再調整)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -31,6 +31,7 @@
 - 公開URL/一括共有ノート: `/local-election-700` を未ログイン時も公開ビューとして直接参照できるようにし、X共有は県連別ではなく全県連KPIを1つの共有ノートにまとめてリンク共有する導線へ変更。migration `20260422123000_wbs_codex_election_public_bulk_share.sql` で反映。
 - KGI/CSF/KPI設計: 各県連のKGIを「統一地方選後の地方議員到達数」として設定し、KGI達成のCSFごとに数値KPI・進捗・残数を自動算出。画面カードと一括共有ノートへ反映。migration `20260422124500_wbs_codex_election_kgi_csf_kpi.sql` で反映。
 - 全体KGI/CSF/KPI表示基盤: KPI表示を共通のKGI/CSF/KPIパネルに寄せ、ホーム、個人ダッシュボード、財務、CMO、バイラル指標、統一地方選チャートへ併記。国民民主党地方議員集計機能は残存テストで保護。migration `20260422131000_wbs_codex_global_kgi_csf_kpi.sql` で反映。
+- 統一地方選 県連別現実目標再調整: 県連別KGI/KPIの現職維持目標を実際の現職数に合わせ、新人当選目標は現職数を基準に全体700人到達へ補正。現職0県は予定選挙や候補確認がある場合のみ小さな足場目標に留める。migration `20260422195000_wbs_codex_election_realistic_targets.sql` で反映。
 - 県連役員表示: 県連代表・県連幹事長・出典URLを県連カードと共有メタデータへ追加。公式確認できた県から初期値を入れ、未確認県は公式未確認として表示。migration `20260422133000_wbs_codex_election_prefecture_officers.sql` で反映。
 - 地方議員集計ノート化導線: `国民民主党 地方議員集計` の既存ノート生成機能を画面ボタンから直接実行できるようにし、全県連KPIノートとリンクコピー導線を分離。migration `20260422141000_wbs_codex_election_snapshot_note_button.sql` で反映。
 - 資産管理 銀行CSV取得改善: `資産管理 (MoneyForward対抗)` を今回実際に着手する範囲だけCodexへ引き継ぎ。GoogleシートCSV取得を共通化し、三井住友/じぶん銀行の取得失敗を明示、ボタン列をモバイルでも折り返せるUIに改善。migration `20260422143000_wbs_codex_asset_bank_csv_import.sql` で反映。
@@ -40,6 +41,7 @@
 - 資産管理 浪費抑制AIトレーニング: 資産管理画面に「浪費しないことは能力を高める訓練」というKGI/CSF/KPIパネルを追加し、支出・浪費カテゴリ・借金ロックダウン日課からKPIを自動算出。`ai-hub provider.chat`で現状分析と次アクションを生成し、AI失敗時はローカルKPIエンジンにフォールバック。migration `20260422160000_wbs_codex_asset_waste_training_ai.sql` で反映。
 - ライフ浪費ゼロ司令塔 + AI抽象化: 類似していた `ai-hub provider.chat` 呼び出しを `AiHubChatService` に共通化し、ホームに時間・お金・健康・体力・知能・集中力の浪費を同じKGI/CSF/KPIで監視する「ライフ浪費ゼロ司令塔」を追加。AIが現状分析・最重要CSF・次アクション・次回モニタリング観点を生成し、失敗時はローカルKPIエンジンへフォールバック。migration `20260422170000_wbs_codex_life_waste_command_center.sql` で反映。
 - ライフ資本日次スナップショット + 継続低下アラート: 時間・お金・健康・体力・知能・集中力のライフ資本スコアを30日分ローカル保存し、2日以上80%未満が続く資本をホームでアラート表示。migration `20260422190000_wbs_codex_life_capital_snapshots.sql` で反映。
+- ライフ資本スナップショット Supabase同期: ログイン済みユーザーのライフ資本日次スナップショットをSupabaseへ同期し、端末内履歴とクラウド履歴をマージ。未ログイン・同期失敗時は端末内履歴で継続する。migration `20260422193000_create_life_capital_daily_snapshots.sql` / `20260422194000_wbs_codex_life_capital_cloud_sync.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 
@@ -104,6 +106,7 @@
 | 資産管理 浪費抑制AIトレーニング | ✅完了 | 100% | β |
 | ライフ浪費ゼロ司令塔 + AI抽象化 | ✅完了 | 100% | β |
 | ライフ資本日次スナップショット + 継続低下アラート | ✅完了 | 100% | β |
+| ライフ資本スナップショット Supabase同期 | ✅完了 | 100% | β |
 | 競合比較ページ最新化 (Codex引継ぎ) | 🟡進行中 | 85% | α |
 | 課金機能実装 (Stripe) | ⚪未着手 | 0% | v1 |
 
@@ -123,6 +126,7 @@
 | 統一地方選 県連KPI X共有 | Codex | ✅完了 | 100% | α |
 | 統一地方選 公開URL/一括共有ノート | Codex | ✅完了 | 100% | α |
 | 統一地方選 KGI/CSF/KPI設計 | Codex | ✅完了 | 100% | α |
+| 統一地方選 県連別現実目標再調整 | Codex | ✅完了 | 100% | α |
 | 全体KGI/CSF/KPI表示基盤 | Codex | ✅完了 | 100% | α |
 | 全機能AI戦略モニタリング基盤 | Codex | ✅完了 | 100% | α |
 | 全機能AI戦略レビュー実AI連携 | Codex | ✅完了 | 100% | α |

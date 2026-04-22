@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/kgi_csf_kpi.dart';
 import 'ai_hub_chat_service.dart';
@@ -200,6 +201,17 @@ class LifeWasteDailySnapshot {
     );
   }
 
+  factory LifeWasteDailySnapshot.fromSupabaseRow(Map<String, dynamic> row) {
+    return LifeWasteDailySnapshot.fromJson({
+      'dateKey': row['snapshot_date'],
+      'monitoredAt': row['monitored_at'],
+      'wasteFreeScore': row['waste_free_score'],
+      'resourceScores': row['resource_scores'],
+      'priorityResource': row['priority_resource'],
+      'nextAction': row['next_action'],
+    });
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'dateKey': dateKey,
@@ -211,6 +223,77 @@ class LifeWasteDailySnapshot {
       'priorityResource': priorityResource.name,
       'nextAction': nextAction,
     };
+  }
+}
+
+abstract class LifeWasteSnapshotRepository {
+  Future<void> upsertDailySnapshot(LifeWasteDailySnapshot snapshot);
+
+  Future<List<LifeWasteDailySnapshot>> loadRecentSnapshots({
+    int limit = 30,
+  });
+}
+
+class SupabaseLifeWasteSnapshotRepository
+    implements LifeWasteSnapshotRepository {
+  final SupabaseClient? client;
+
+  const SupabaseLifeWasteSnapshotRepository({this.client});
+
+  SupabaseClient get _client => client ?? Supabase.instance.client;
+
+  @override
+  Future<void> upsertDailySnapshot(LifeWasteDailySnapshot snapshot) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      return;
+    }
+
+    await _client.from('life_capital_daily_snapshots').upsert(
+      {
+        'user_id': userId,
+        'snapshot_date': snapshot.dateKey,
+        'monitored_at': snapshot.monitoredAt.toUtc().toIso8601String(),
+        'waste_free_score': snapshot.wasteFreeScore,
+        'resource_scores': {
+          for (final entry in snapshot.resourceScores.entries)
+            entry.key.name: entry.value,
+        },
+        'priority_resource': snapshot.priorityResource.name,
+        'next_action': snapshot.nextAction,
+      },
+      onConflict: 'user_id,snapshot_date',
+    );
+  }
+
+  @override
+  Future<List<LifeWasteDailySnapshot>> loadRecentSnapshots({
+    int limit = 30,
+  }) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      return const <LifeWasteDailySnapshot>[];
+    }
+
+    final rows = await _client
+        .from('life_capital_daily_snapshots')
+        .select(
+          'snapshot_date, monitored_at, waste_free_score, resource_scores, '
+          'priority_resource, next_action',
+        )
+        .eq('user_id', userId)
+        .order('snapshot_date', ascending: false)
+        .limit(limit);
+    final snapshots = rows
+        .whereType<Map>()
+        .map(
+          (row) => LifeWasteDailySnapshot.fromSupabaseRow(
+            Map<String, dynamic>.from(row),
+          ),
+        )
+        .toList()
+      ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
+    return snapshots;
   }
 }
 
@@ -233,16 +316,19 @@ class LifeWasteMonitoringAlert {
 class LifeWasteMonitoringSummary {
   final List<LifeWasteDailySnapshot> snapshots;
   final List<LifeWasteMonitoringAlert> alerts;
+  final bool cloudSynced;
 
   const LifeWasteMonitoringSummary({
     required this.snapshots,
     required this.alerts,
+    this.cloudSynced = false,
   });
 
-  factory LifeWasteMonitoringSummary.empty() {
-    return const LifeWasteMonitoringSummary(
+  factory LifeWasteMonitoringSummary.empty({bool cloudSynced = false}) {
+    return LifeWasteMonitoringSummary(
       snapshots: <LifeWasteDailySnapshot>[],
       alerts: <LifeWasteMonitoringAlert>[],
+      cloudSynced: cloudSynced,
     );
   }
 
@@ -267,7 +353,11 @@ class LifeWasteMonitoringSummary {
 }
 
 class LifeWasteEliminationService {
-  const LifeWasteEliminationService();
+  final LifeWasteSnapshotRepository? snapshotRepository;
+
+  const LifeWasteEliminationService({
+    this.snapshotRepository,
+  });
 
   static const _snapshotHistoryKey = 'life_waste_daily_snapshots_v1';
   static const _maxSnapshotHistoryDays = 30;
@@ -427,19 +517,29 @@ class LifeWasteEliminationService {
     final store = prefs ?? await SharedPreferences.getInstance();
     final snapshots = _readSnapshots(store);
     final today = LifeWasteDailySnapshot.fromReport(report);
-    final next = <LifeWasteDailySnapshot>[
+    final trimmed = _trimSnapshots(<LifeWasteDailySnapshot>[
       for (final snapshot in snapshots)
         if (snapshot.dateKey != today.dateKey) snapshot,
       today,
-    ]..sort((a, b) => a.dateKey.compareTo(b.dateKey));
-    final trimmed = next.length <= _maxSnapshotHistoryDays
-        ? next
-        : next.sublist(next.length - _maxSnapshotHistoryDays);
+    ]);
 
-    await store.setString(
-      _snapshotHistoryKey,
-      jsonEncode(trimmed.map((item) => item.toJson()).toList()),
-    );
+    await _writeSnapshots(store, trimmed);
+    final repository = snapshotRepository;
+    if (repository == null) {
+      return _buildMonitoringSummary(trimmed);
+    }
+
+    try {
+      await repository.upsertDailySnapshot(today);
+      final remote = await repository.loadRecentSnapshots(
+        limit: _maxSnapshotHistoryDays,
+      );
+      final merged = _mergeSnapshots(trimmed, remote);
+      await _writeSnapshots(store, merged);
+      return _buildMonitoringSummary(merged, cloudSynced: true);
+    } catch (_) {
+      // Local monitoring must keep working even when cloud sync is unavailable.
+    }
     return _buildMonitoringSummary(trimmed);
   }
 
@@ -447,7 +547,25 @@ class LifeWasteEliminationService {
     SharedPreferences? prefs,
   }) async {
     final store = prefs ?? await SharedPreferences.getInstance();
-    return _buildMonitoringSummary(_readSnapshots(store));
+    final local = _readSnapshots(store);
+    final repository = snapshotRepository;
+    if (repository == null) {
+      return _buildMonitoringSummary(local);
+    }
+
+    try {
+      final remote = await repository.loadRecentSnapshots(
+        limit: _maxSnapshotHistoryDays,
+      );
+      if (remote.isNotEmpty) {
+        final merged = _mergeSnapshots(local, remote);
+        await _writeSnapshots(store, merged);
+        return _buildMonitoringSummary(merged, cloudSynced: true);
+      }
+    } catch (_) {
+      // Fall back to local history if the user is offline or not signed in.
+    }
+    return _buildMonitoringSummary(local);
   }
 
   List<LifeWasteDailySnapshot> _readSnapshots(SharedPreferences store) {
@@ -475,11 +593,54 @@ class LifeWasteEliminationService {
     }
   }
 
-  LifeWasteMonitoringSummary _buildMonitoringSummary(
+  Future<void> _writeSnapshots(
+    SharedPreferences store,
+    List<LifeWasteDailySnapshot> snapshots,
+  ) async {
+    await store.setString(
+      _snapshotHistoryKey,
+      jsonEncode(snapshots.map((item) => item.toJson()).toList()),
+    );
+  }
+
+  List<LifeWasteDailySnapshot> _mergeSnapshots(
+    List<LifeWasteDailySnapshot> local,
+    List<LifeWasteDailySnapshot> remote,
+  ) {
+    final byDate = <String, LifeWasteDailySnapshot>{};
+    void put(LifeWasteDailySnapshot snapshot) {
+      final existing = byDate[snapshot.dateKey];
+      if (existing == null ||
+          snapshot.monitoredAt.isAfter(existing.monitoredAt)) {
+        byDate[snapshot.dateKey] = snapshot;
+      }
+    }
+
+    for (final snapshot in local) {
+      put(snapshot);
+    }
+    for (final snapshot in remote) {
+      put(snapshot);
+    }
+    return _trimSnapshots(byDate.values.toList());
+  }
+
+  List<LifeWasteDailySnapshot> _trimSnapshots(
     List<LifeWasteDailySnapshot> snapshots,
   ) {
+    final sorted = List<LifeWasteDailySnapshot>.from(snapshots)
+      ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
+    return sorted.length <= _maxSnapshotHistoryDays
+        ? sorted
+        : sorted.sublist(sorted.length - _maxSnapshotHistoryDays);
+  }
+
+  LifeWasteMonitoringSummary _buildMonitoringSummary(
+    List<LifeWasteDailySnapshot> snapshots, {
+    bool cloudSynced = false,
+  }) {
     if (snapshots.isEmpty) {
-      return LifeWasteMonitoringSummary.empty();
+      return LifeWasteMonitoringSummary.empty(cloudSynced: cloudSynced);
     }
 
     final alerts = <LifeWasteMonitoringAlert>[];
@@ -526,6 +687,7 @@ class LifeWasteEliminationService {
     return LifeWasteMonitoringSummary(
       snapshots: List<LifeWasteDailySnapshot>.unmodifiable(snapshots),
       alerts: List<LifeWasteMonitoringAlert>.unmodifiable(alerts),
+      cloudSynced: cloudSynced,
     );
   }
 

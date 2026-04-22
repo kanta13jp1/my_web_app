@@ -100,8 +100,12 @@ void main() {
     const service = LocalElectionPlanService();
     final prefs = await SharedPreferences.getInstance();
     final plan = await service.loadPlan(prefs: prefs);
-    final tokyo = plan.prefectures[12];
-    final aichi = plan.prefectures[22];
+    final tokyo =
+        plan.prefectures.firstWhere((item) => item.prefecture == '東京');
+    final aichi =
+        plan.prefectures.firstWhere((item) => item.prefecture == '愛知');
+    final tottori =
+        plan.prefectures.firstWhere((item) => item.prefecture == '鳥取');
     final now = DateTime(2026, 4, 22, 9);
 
     final updated = service.buildAutoUpdatedPlan(
@@ -140,6 +144,15 @@ void main() {
             municipalAssemblyMembers: 10,
             cdpLocalMembers: 38,
             cdpSourceUrl: 'https://cdp-japan.jp/members/prefecture/aichi',
+          ),
+          LocalElectionPrefectureReality(
+            prefecture: tottori.prefecture,
+            sourceUrl: 'https://example.com/tottori',
+            currentMembers: 0,
+            prefecturalAssemblyMembers: 0,
+            municipalAssemblyMembers: 0,
+            cdpLocalMembers: 2,
+            cdpSourceUrl: 'https://cdp-japan.jp/members/prefecture/tottori',
           ),
         ],
         members: const <LocalElectionLegislatorProfile>[],
@@ -192,6 +205,54 @@ void main() {
             kokuminCandidateStatuses: const <String>['予定'],
             kokuminCandidateXHandles: const <String>[],
           ),
+          LocalElectionScheduleEntry(
+            electionName: 'Tottori city A',
+            prefecture: tottori.prefecture,
+            municipality: 'City A',
+            electionCategory: 'city',
+            voteDate: '2026-08-09',
+            announcementDate: '2026-07-31',
+            detailUrl: 'https://example.com/tottori-a',
+            officialCandidateSourceUrl: '',
+            seatCount: 20,
+            totalCandidateCount: 25,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Tottori city B',
+            prefecture: tottori.prefecture,
+            municipality: 'City B',
+            electionCategory: 'city',
+            voteDate: '2026-09-06',
+            announcementDate: '2026-08-28',
+            detailUrl: 'https://example.com/tottori-b',
+            officialCandidateSourceUrl: '',
+            seatCount: 18,
+            totalCandidateCount: 24,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+          ),
+          LocalElectionScheduleEntry(
+            electionName: 'Tottori city C',
+            prefecture: tottori.prefecture,
+            municipality: 'City C',
+            electionCategory: 'city',
+            voteDate: '2026-10-18',
+            announcementDate: '2026-10-09',
+            detailUrl: 'https://example.com/tottori-c',
+            officialCandidateSourceUrl: '',
+            seatCount: 12,
+            totalCandidateCount: 16,
+            kokuminCandidateCount: 0,
+            kokuminCandidateNames: const <String>[],
+            kokuminCandidateStatuses: const <String>[],
+            kokuminCandidateXHandles: const <String>[],
+          ),
         ],
       ),
       now: now,
@@ -203,10 +264,13 @@ void main() {
     final updatedAichi = updated.prefectures.firstWhere(
       (item) => item.prefecture == aichi.prefecture,
     );
+    final updatedTottori = updated.prefectures.firstWhere(
+      (item) => item.prefecture == tottori.prefecture,
+    );
 
     expect(updated.currentLocalMembers, 346);
-    expect(updated.allocatedNetIncrease, 354);
-    expect(updated.allocationGap, 0);
+    expect(updated.allocatedNetIncrease, 33);
+    expect(updated.allocationGap, 321);
     expect(updatedTokyo.currentMembers, 20);
     expect(updatedTokyo.cdpLocalMembers, 64);
     expect(
@@ -214,6 +278,7 @@ void main() {
       'https://cdp-japan.jp/members/prefecture/tokyo',
     );
     expect(updatedTokyo.incumbentRetentionTarget, 20);
+    expect(updatedTokyo.newElectionTarget, 20);
     expect(updatedTokyo.scheduledElectionCount, 2);
     expect(updatedTokyo.announcedCandidateCount, 2);
     expect(updatedTokyo.confirmedCandidateCount, 2);
@@ -228,5 +293,12 @@ void main() {
     expect(updatedAichi.currentMembers, 12);
     expect(updatedAichi.cdpLocalMembers, 38);
     expect(updatedAichi.scheduledElectionCount, 1);
+    expect(updatedAichi.incumbentRetentionTarget, 12);
+    expect(updatedAichi.newElectionTarget, 12);
+    expect(updatedTottori.currentMembers, 0);
+    expect(updatedTottori.incumbentRetentionTarget, 0);
+    expect(updatedTottori.newElectionTarget, 1);
+    expect(updatedTottori.newCandidateTarget, lessThanOrEqualTo(2));
+    expect(updatedTottori.kgiTargetLocalMembers, 1);
   });
 }

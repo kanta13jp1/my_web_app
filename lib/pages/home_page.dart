@@ -91,7 +91,9 @@ class _HomePageState extends State<HomePage> {
   Future<LifeWasteMonitoringSummary>? _lifeWasteMonitoringFuture;
   String? _lifeWasteMonitoringKey;
   final LifeWasteEliminationService _lifeWasteEliminationService =
-      const LifeWasteEliminationService();
+      const LifeWasteEliminationService(
+    snapshotRepository: SupabaseLifeWasteSnapshotRepository(),
+  );
   final LifeWasteAiReviewService _lifeWasteAiReviewService =
       LifeWasteAiReviewService();
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();

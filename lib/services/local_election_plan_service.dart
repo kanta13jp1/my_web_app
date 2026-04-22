@@ -102,29 +102,24 @@ class LocalElectionPlanService {
       final cdpSourceUrl = reality?.cdpSourceUrl ?? current.cdpSourceUrl;
       final scheduledElectionCount = stats.scheduledElectionCount;
       final additionalTarget = additionalTargets[index];
-      final candidateTarget = math.max(
-        additionalTarget,
-        stats.kokuminCandidateCount +
-            stats.redAlertCount +
-            stats.yellowAlertCount,
+      final candidateTarget = _realisticCandidateTarget(
+        currentMembers: currentMembers,
+        newElectionTarget: additionalTarget,
+        stats: stats,
       );
-      final focusCount = math.max(
-        2,
-        math.max(currentMembers, scheduledElectionCount + stats.redAlertCount),
+      final focusCount = _realisticFocusMunicipalityCount(
+        currentMembers: currentMembers,
+        stats: stats,
       );
-      final supportRounds = math.max(
-        2,
-        scheduledElectionCount +
-            stats.redAlertCount * 2 +
-            stats.yellowAlertCount,
+      final supportRounds = _realisticSupportRounds(
+        currentMembers: currentMembers,
+        stats: stats,
       );
 
       prefectures.add(
         current.copyWith(
           additionalSeatTarget: additionalTarget,
-          incumbentRetentionTarget: currentMembers > 0
-              ? currentMembers
-              : current.incumbentRetentionTarget,
+          incumbentRetentionTarget: currentMembers,
           focusMunicipalityCount: focusCount,
           newCandidateTarget: candidateTarget,
           endorsementDeadlineMonth: stats.earliestEndorsementMonth ??
@@ -384,22 +379,106 @@ class LocalElectionPlanService {
     Map<String, _AutoScheduleStats> scheduleStatsByPrefecture,
   ) {
     final total = math.max(0, snapshot.actualNetIncreaseRequired);
-    if (total == 0 || plan.prefectures.isEmpty) {
+    if (plan.prefectures.isEmpty) {
       return List<int>.filled(plan.prefectures.length, 0);
     }
 
-    final weights = <double>[
-      for (final item in plan.prefectures)
-        _autoTargetWeight(
-          item,
-          realitiesByPrefecture[_prefectureKey(item.prefecture)],
-          scheduleStatsByPrefecture[_prefectureKey(item.prefecture)] ??
-              _AutoScheduleStats.empty,
+    final baseTargets = <int>[];
+    final adjustmentWeights = <double>[];
+    for (final item in plan.prefectures) {
+      final key = _prefectureKey(item.prefecture);
+      final reality = realitiesByPrefecture[key];
+      final stats = scheduleStatsByPrefecture[key] ?? _AutoScheduleStats.empty;
+      final currentMembers = reality?.currentMembers ?? item.currentMembers;
+      final cdpLocalMembers = reality?.cdpLocalMembers ?? item.cdpLocalMembers;
+      baseTargets.add(
+        _baseNewElectionTarget(
+          currentMembers: currentMembers,
+          cdpLocalMembers: cdpLocalMembers,
+          stats: stats,
         ),
+      );
+      adjustmentWeights.add(
+        _autoTargetWeight(item, reality, stats),
+      );
+    }
+
+    final hasCompleteReality = plan.prefectures.every(
+      (item) =>
+          realitiesByPrefecture.containsKey(_prefectureKey(item.prefecture)),
+    );
+    final baseTotal = baseTargets.fold<int>(0, (sum, value) => sum + value);
+    final targetTotal = hasCompleteReality ? total : baseTotal;
+    if (targetTotal <= 0) {
+      return List<int>.filled(plan.prefectures.length, 0);
+    }
+
+    return _fitTargetsToTotal(
+      baseTargets: baseTargets,
+      targetTotal: targetTotal,
+      adjustmentWeights: adjustmentWeights,
+    );
+  }
+
+  List<int> _fitTargetsToTotal({
+    required List<int> baseTargets,
+    required int targetTotal,
+    required List<double> adjustmentWeights,
+  }) {
+    final baseTotal = baseTargets.fold<int>(0, (sum, value) => sum + value);
+    if (baseTotal == targetTotal) {
+      return baseTargets;
+    }
+    if (baseTotal <= 0) {
+      return _allocateByWeight(adjustmentWeights, targetTotal);
+    }
+    if (baseTotal < targetTotal) {
+      final additions = _allocateByWeight(
+        adjustmentWeights,
+        targetTotal - baseTotal,
+      );
+      return <int>[
+        for (var index = 0; index < baseTargets.length; index++)
+          baseTargets[index] + additions[index],
+      ];
+    }
+
+    final minimums = <int>[
+      for (final target in baseTargets) target > 0 ? 1 : 0,
     ];
+    final minimumTotal = minimums.fold<int>(0, (sum, value) => sum + value);
+    if (targetTotal <= minimumTotal) {
+      return _allocateByWeight(
+        baseTargets.map((value) => value.toDouble()).toList(),
+        targetTotal,
+      );
+    }
+
+    final surplusWeights = <double>[
+      for (var index = 0; index < baseTargets.length; index++)
+        math.max(0, baseTargets[index] - minimums[index]).toDouble(),
+    ];
+    final surplus = _allocateByWeight(
+      surplusWeights,
+      targetTotal - minimumTotal,
+    );
+    return <int>[
+      for (var index = 0; index < baseTargets.length; index++)
+        minimums[index] + surplus[index],
+    ];
+  }
+
+  List<int> _allocateByWeight(List<double> weights, int total) {
+    if (total <= 0 || weights.isEmpty) {
+      return List<int>.filled(weights.length, 0);
+    }
     final totalWeight = weights.fold<double>(0, (sum, value) => sum + value);
     if (totalWeight <= 0) {
-      return _allocateAdditionalTargets(LocalElectionPlanTemplate.balanced);
+      final result = List<int>.filled(weights.length, 0);
+      for (var index = 0; index < total; index++) {
+        result[index % result.length]++;
+      }
+      return result;
     }
 
     final rawShares = <double>[
@@ -419,6 +498,77 @@ class LocalElectionPlanService {
       remainder--;
     }
     return floors;
+  }
+
+  int _baseNewElectionTarget({
+    required int currentMembers,
+    required int cdpLocalMembers,
+    required _AutoScheduleStats stats,
+  }) {
+    if (currentMembers > 0) {
+      return currentMembers;
+    }
+    final hasFootholdChance = stats.confirmedCandidateCount > 0 ||
+        stats.kokuminCandidateCount > 0 ||
+        stats.scheduledElectionCount >= 3 ||
+        (stats.scheduledElectionCount > 0 && cdpLocalMembers >= 5);
+    return hasFootholdChance ? 1 : 0;
+  }
+
+  int _realisticCandidateTarget({
+    required int currentMembers,
+    required int newElectionTarget,
+    required _AutoScheduleStats stats,
+  }) {
+    if (currentMembers <= 0) {
+      if (newElectionTarget > 0) {
+        return math.max(1, math.min(2, stats.scheduledElectionCount));
+      }
+      return stats.kokuminCandidateCount > 0 ? 1 : 0;
+    }
+    final immediatePressure = stats.kokuminCandidateCount +
+        stats.redAlertCount +
+        (stats.yellowAlertCount > 0 ? 1 : 0);
+    final ceiling = math.max(
+      newElectionTarget,
+      currentMembers +
+          math.min(3, stats.redAlertCount + stats.yellowAlertCount),
+    );
+    return math
+        .min(
+          ceiling,
+          math.max(newElectionTarget, immediatePressure),
+        )
+        .toInt();
+  }
+
+  int _realisticFocusMunicipalityCount({
+    required int currentMembers,
+    required _AutoScheduleStats stats,
+  }) {
+    if (currentMembers <= 0) {
+      return math.max(1, math.min(2, stats.scheduledElectionCount));
+    }
+    return math.max(
+      2,
+      math.min(
+        currentMembers,
+        math.max(stats.scheduledElectionCount, stats.redAlertCount + 1),
+      ),
+    );
+  }
+
+  int _realisticSupportRounds({
+    required int currentMembers,
+    required _AutoScheduleStats stats,
+  }) {
+    final pressure = stats.scheduledElectionCount +
+        stats.redAlertCount * 2 +
+        stats.yellowAlertCount;
+    if (currentMembers <= 0) {
+      return math.max(1, math.min(3, pressure));
+    }
+    return math.max(2, math.min(currentMembers + 2, pressure));
   }
 
   double _autoTargetWeight(
