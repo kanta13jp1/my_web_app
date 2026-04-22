@@ -14,6 +14,8 @@ void main() {
         expect(body['provider'], 'deepinfra');
         expect(body['message'].toString(), contains('総機能数'));
         expect(body['message'].toString(), contains('類似機能の統合候補'));
+        expect(body['message'].toString(), contains('今日の低ハードル1手'));
+        expect(body['message'].toString(), contains('同時に広げず'));
         return {
           'success': true,
           'text': '改善優先の機能を週次レビューへ集約し、未利用導線をAI推薦へ戻します。',

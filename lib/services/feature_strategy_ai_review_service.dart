@@ -64,11 +64,17 @@ class FeatureStrategyAiReviewService {
           '進捗=${(summary.averageProgress * 100).round()}%, '
           '詰まり=${summary.bottleneckFeatureName}';
     }).join('\n');
+    final focus = report.focusRecommendation;
+    final focusLine = focus == null
+        ? '未選定'
+        : '${focus.label} / ${focus.featureName}: ${focus.action} '
+            '(CSF=${focus.csf}, 保留=${focus.parkedResourceCount}資本/${focus.parkedFeatureCount}機能)';
 
     return '''
 あなたはプロダクト全体のAI戦略レビュー担当です。
 以下の全機能KGI/CSF/KPIモニタリング結果を読み、現状分析、最重要CSF、次の改善アクション、類似機能の統合判断を日本語で3行以内にまとめてください。
 特にライフマネジメントでは、時間・お金・健康・体力・知能・集中力の浪費をなくすことを最重要課題として扱ってください。
+継続系タスクは同時に広げず、今日の低ハードル1手を優先し、他は観察に回してください。
 総機能数: ${report.totalFeatures}
 順調: ${report.onTrackCount}
 要観察: ${report.watchCount}
@@ -83,6 +89,9 @@ $sectionLines
 
 生命資本別:
 $lifeCapitalLines
+
+今日の低ハードル1手:
+$focusLine
 
 改善優先キュー:
 $priorityLines

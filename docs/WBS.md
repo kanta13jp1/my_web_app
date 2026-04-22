@@ -1,6 +1,6 @@
 # 自分株式会社 開発 WBS (Work Breakdown Structure)
 
-> **最終更新**: 2026-04-22 Codex (ライフ資本習慣化ゲート)
+> **最終更新**: 2026-04-23 Codex (全機能生命資本フォーカスゲート)
 > **参照**: サイト上の `/project-gantt` ページでリアルタイム確認可能  
 > **DB**: `wbs_milestones` + `wbs_tasks` テーブル (migration 20260417180000 / 20260417190000 / 20260417200000)
 
@@ -45,6 +45,13 @@
 - ライフ資本スナップショット Supabase同期: ログイン済みユーザーのライフ資本日次スナップショットをSupabaseへ同期し、端末内履歴とクラウド履歴をマージ。未ログイン・同期失敗時は端末内履歴で継続する。migration `20260422193000_create_life_capital_daily_snapshots.sql` / `20260422194000_wbs_codex_life_capital_cloud_sync.sql` で反映。
 - ライフ資本アラート通知導線: 継続低下アラートを既存通知センターへ重複防止付きで送信し、通知からホームのライフ浪費ゼロ司令塔へ戻れるようにする。migration `20260422201000_wbs_codex_life_capital_alert_notifications.sql` で反映。
 - ライフ資本習慣化ゲート: 継続系タスクを同時多発させず、時間・お金・健康・体力・知能・集中力のうち低ハードルの1件だけを7日継続するまで固定。他の改善は観察のみとし、通知もフォーカス資本を優先する。migration `20260422202000_wbs_codex_life_capital_habit_gate.sql` で反映。
+- 全機能生命資本KGI/CSF/KPIモニター: HomeToolCatalog 全機能を時間・お金・健康・体力・知能・集中力の生命資本へ分類し、浪費削減CSF/KPI、監視頻度、AIレビュー文脈、折りたたみ式サマリを追加。migration `20260422213000_wbs_codex_feature_life_capital_strategy.sql` で反映。
+
+## Codex 引き継ぎメモ (2026-04-23)
+
+- 今回実際に着手したタスクのみ Codex 担当に追加:
+  `全機能生命資本フォーカスゲート`
+- 全機能生命資本フォーカスゲート: 全機能AI戦略モニターで、最も弱い生命資本から今日の低ハードル1手を自動選定。他の資本・機能は観察に回し、継続系タスクの同時多発を防ぐ。AIレビューにもこのフォーカス情報を渡し、Homeにフォーカスカードとして表示。migration `20260423090000_wbs_codex_feature_focus_gate.sql` で反映。
 
 ## マイルストーン概要 (ユーザー可視)
 

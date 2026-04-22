@@ -118,11 +118,46 @@ class FeatureLifeCapitalSummary {
   bool get hasCoverage => featureCount > 0;
 }
 
+class FeatureStrategyFocusRecommendation {
+  final FeatureLifeCapitalResource resource;
+  final String label;
+  final String featureId;
+  final String featureName;
+  final String sectionName;
+  final String csf;
+  final String kpi;
+  final String action;
+  final String rationale;
+  final String monitoringCadence;
+  final double progress;
+  final int parkedResourceCount;
+  final int parkedFeatureCount;
+  final KgiCsfKpiPlan plan;
+
+  const FeatureStrategyFocusRecommendation({
+    required this.resource,
+    required this.label,
+    required this.featureId,
+    required this.featureName,
+    required this.sectionName,
+    required this.csf,
+    required this.kpi,
+    required this.action,
+    required this.rationale,
+    required this.monitoringCadence,
+    required this.progress,
+    required this.parkedResourceCount,
+    required this.parkedFeatureCount,
+    required this.plan,
+  });
+}
+
 class FeatureStrategyReport {
   final DateTime monitoredAt;
   final List<FeatureStrategySignal> signals;
   final List<FeatureConsolidationCandidate> consolidationCandidates;
   final List<FeatureLifeCapitalSummary> lifeCapitalSummaries;
+  final FeatureStrategyFocusRecommendation? focusRecommendation;
   final KgiCsfKpiPlan portfolioPlan;
 
   const FeatureStrategyReport({
@@ -130,6 +165,7 @@ class FeatureStrategyReport {
     required this.signals,
     required this.consolidationCandidates,
     required this.lifeCapitalSummaries,
+    required this.focusRecommendation,
     required this.portfolioPlan,
   });
 
@@ -139,6 +175,7 @@ class FeatureStrategyReport {
       signals: const <FeatureStrategySignal>[],
       consolidationCandidates: const <FeatureConsolidationCandidate>[],
       lifeCapitalSummaries: const <FeatureLifeCapitalSummary>[],
+      focusRecommendation: null,
       portfolioPlan: const KgiCsfKpiPlan(
         domain: '全機能AI戦略',
         kgi: '全機能をAI分析とKGI/CSF/KPI監視に接続する',

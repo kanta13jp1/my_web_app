@@ -56,6 +56,16 @@ void main() {
       report.portfolioPlan.metrics.map((metric) => metric.csf).join(' / '),
       contains('浪費'),
     );
+    expect(report.focusRecommendation, isNotNull);
+    expect(report.focusRecommendation!.action, contains('今日'));
+    expect(
+      report.focusRecommendation!.parkedResourceCount,
+      greaterThanOrEqualTo(0),
+    );
+    expect(
+      report.portfolioPlan.metrics.map((metric) => metric.kpi).join(' / '),
+      contains('今日の低ハードル1手'),
+    );
     expect(
       report.consolidationCandidates.single.summary,
       contains('タスクボード'),

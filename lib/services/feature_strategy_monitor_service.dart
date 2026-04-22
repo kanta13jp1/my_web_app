@@ -28,16 +28,22 @@ class FeatureStrategyMonitorService {
       sectionNamesById: sectionNamesById,
     );
     final lifeCapitalSummaries = _buildLifeCapitalSummaries(signals);
+    final focusRecommendation = _buildFocusRecommendation(
+      signals: signals,
+      lifeCapitalSummaries: lifeCapitalSummaries,
+    );
 
     return FeatureStrategyReport(
       monitoredAt: checkedAt,
       signals: signals,
       consolidationCandidates: consolidationCandidates,
       lifeCapitalSummaries: lifeCapitalSummaries,
+      focusRecommendation: focusRecommendation,
       portfolioPlan: _buildPortfolioPlan(
         signals,
         consolidationCandidates,
         lifeCapitalSummaries,
+        focusRecommendation,
       ),
     );
   }
@@ -604,10 +610,110 @@ class FeatureStrategyMonitorService {
     );
   }
 
+  FeatureStrategyFocusRecommendation? _buildFocusRecommendation({
+    required List<FeatureStrategySignal> signals,
+    required List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
+  }) {
+    final coveredSummaries =
+        lifeCapitalSummaries.where((summary) => summary.hasCoverage).toList()
+          ..sort((a, b) {
+            final byProgress = a.averageProgress.compareTo(b.averageProgress);
+            if (byProgress != 0) return byProgress;
+            return a.featureCount.compareTo(b.featureCount);
+          });
+    if (coveredSummaries.isEmpty) return null;
+
+    final targetSummary = coveredSummaries.first;
+    final candidates = signals
+        .where((signal) => signal.lifeCapitalResource == targetSummary.resource)
+        .toList()
+      ..sort((a, b) {
+        final byHurdle = _focusHurdleScore(b).compareTo(_focusHurdleScore(a));
+        if (byHurdle != 0) return byHurdle;
+        return a.progress.compareTo(b.progress);
+      });
+    if (candidates.isEmpty) return null;
+
+    final signal = candidates.first;
+    final parkedResourceCount = math.max(0, coveredSummaries.length - 1);
+    final parkedFeatureCount = signals
+        .where((item) => item.lifeCapitalResource != signal.lifeCapitalResource)
+        .length;
+    final action = _buildFocusAction(signal);
+    final rationale =
+        '${targetSummary.label}の平均進捗が最も低いため、${signal.featureName}だけを先に習慣化します。他の資本は観察に回します。';
+
+    return FeatureStrategyFocusRecommendation(
+      resource: signal.lifeCapitalResource,
+      label: targetSummary.label,
+      featureId: signal.featureId,
+      featureName: signal.featureName,
+      sectionName: signal.sectionName,
+      csf: signal.wasteReductionCsf,
+      kpi: '今日の低ハードル実行 1回',
+      action: action,
+      rationale: rationale,
+      monitoringCadence: signal.monitoringCadence,
+      progress: signal.progress,
+      parkedResourceCount: parkedResourceCount,
+      parkedFeatureCount: parkedFeatureCount,
+      plan: KgiCsfKpiPlan(
+        domain: '${targetSummary.label} / 今日の1手',
+        kgi: '${targetSummary.label}の浪費を減らす入口を1つだけ習慣化する',
+        actualLabel: '1機能選定',
+        targetLabel: '1機能',
+        progress: signal.progress,
+        metrics: <KgiCsfKpiMetric>[
+          KgiCsfKpiMetric.number(
+            csf: signal.wasteReductionCsf,
+            kpi: '今日実行する低ハードル行動',
+            actual: 1,
+            target: 1,
+            unit: '件',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '同時進行を止める',
+            kpi: '観察に回した資本',
+            actual: parkedResourceCount,
+            target: parkedResourceCount,
+            unit: '資本',
+          ),
+          KgiCsfKpiMetric.number(
+            csf: '定期モニタリング',
+            kpi: '${signal.monitoringCadence}レビュー対象',
+            actual: 1,
+            target: 1,
+            unit: '件',
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _focusHurdleScore(FeatureStrategySignal signal) {
+    var score = signal.recentUsageScore * 30 + signal.metadataScore * 10;
+    if (!signal.requiresClearDeck) score += 20;
+    if (signal.status == FeatureStrategyStatus.watch) score += 8;
+    if (signal.status == FeatureStrategyStatus.improve) score += 4;
+    score += math.max(0, 5 - signal.wasteReductionScore);
+    return score;
+  }
+
+  String _buildFocusAction(FeatureStrategySignal signal) {
+    if (signal.recentUsageScore == 0) {
+      return '${signal.featureName}を今日1回だけ開き、最初の入力または確認を1つ完了する';
+    }
+    if (signal.status == FeatureStrategyStatus.improve) {
+      return '${signal.featureName}の改善KPIを5分だけ見直し、次回の1アクションを保存する';
+    }
+    return '${signal.featureName}を今日の通常導線で1回使い、成果KPIを更新する';
+  }
+
   KgiCsfKpiPlan _buildPortfolioPlan(
     List<FeatureStrategySignal> signals,
     List<FeatureConsolidationCandidate> consolidationCandidates,
     List<FeatureLifeCapitalSummary> lifeCapitalSummaries,
+    FeatureStrategyFocusRecommendation? focusRecommendation,
   ) {
     final total = signals.length;
     if (total == 0) {
@@ -633,6 +739,7 @@ class FeatureStrategyMonitorService {
         lifeCapitalSummaries.where((summary) => summary.hasCoverage).length;
     final highWasteReductionCount =
         signals.where((signal) => signal.wasteReductionScore >= 3).length;
+    final focusSelected = focusRecommendation == null ? 0 : 1;
 
     return KgiCsfKpiPlan(
       domain: '全機能AI戦略',
@@ -675,6 +782,13 @@ class FeatureStrategyMonitorService {
           actual: highWasteReductionCount,
           target: total,
           unit: '機能',
+        ),
+        KgiCsfKpiMetric.number(
+          csf: '同時進行を止める',
+          kpi: '今日の低ハードル1手の選定',
+          actual: focusSelected,
+          target: 1,
+          unit: '件',
         ),
         KgiCsfKpiMetric.number(
           csf: '類似機能の抽象化',

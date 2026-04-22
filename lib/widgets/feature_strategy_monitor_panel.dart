@@ -153,6 +153,14 @@ class FeatureStrategyMonitorPanel extends StatelessWidget {
             },
           ),
           const SizedBox(height: 12),
+          if (report.focusRecommendation != null) ...[
+            _FocusRecommendationCard(
+              recommendation: report.focusRecommendation!,
+              dark: isDark,
+              compact: isCompact,
+            ),
+            const SizedBox(height: 8),
+          ],
           _LifeCapitalAccordion(
             summaries: report.lifeCapitalSummaries,
             dark: isDark,
@@ -311,6 +319,110 @@ class _SummaryTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FocusRecommendationCard extends StatelessWidget {
+  final FeatureStrategyFocusRecommendation recommendation;
+  final bool dark;
+  final bool compact;
+
+  const _FocusRecommendationCard({
+    required this.recommendation,
+    required this.dark,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _lifeCapitalColor(recommendation.resource);
+    final titleColor = dark ? Colors.white : const Color(0xFF0F172A);
+    final subColor =
+        dark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF64748B);
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(compact ? 12 : 14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: dark ? 0.16 : 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Icon(Icons.flag_circle, size: 20, color: color),
+              Text(
+                '今日の低ハードル1手',
+                style: TextStyle(
+                  color: titleColor,
+                  fontSize: compact ? 13 : 14,
+                  fontWeight: FontWeight.w900,
+                  height: 1.35,
+                ),
+              ),
+              _StatusPill(
+                label: recommendation.label,
+                color: color,
+                dark: dark,
+              ),
+              _StatusPill(
+                label: recommendation.monitoringCadence,
+                color: const Color(0xFF2563EB),
+                dark: dark,
+              ),
+              _StatusPill(
+                label: '保留 ${recommendation.parkedResourceCount}資本',
+                color: const Color(0xFFF97316),
+                dark: dark,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${recommendation.sectionName} / ${recommendation.featureName}',
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 13 : 15,
+              fontWeight: FontWeight.w900,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recommendation.action,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: compact ? 12 : 13,
+              fontWeight: FontWeight.w800,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            recommendation.rationale,
+            style: TextStyle(
+              color: subColor,
+              fontSize: compact ? 11 : 12,
+              fontWeight: FontWeight.w600,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          KgiCsfKpiPanel(
+            plan: recommendation.plan,
+            accentColor: color,
+            dense: true,
+            dark: dark,
+          ),
+        ],
       ),
     );
   }

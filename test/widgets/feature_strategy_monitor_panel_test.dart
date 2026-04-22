@@ -55,6 +55,7 @@ void main() {
     expect(find.text('AI監視率'), findsOneWidget);
     expect(find.text('生命資本'), findsOneWidget);
     expect(find.text('浪費削減'), findsOneWidget);
+    expect(find.text('今日の低ハードル1手'), findsWidgets);
     expect(find.text('生命資本・浪費ゼロKPI'), findsOneWidget);
     expect(find.text('AI戦略レビュー'), findsOneWidget);
     expect(find.text('AI改善キュー'), findsOneWidget);
