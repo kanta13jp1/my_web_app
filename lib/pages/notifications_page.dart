@@ -27,6 +27,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'marketing': _NotifMeta(Icons.campaign, Color(0xFFEC4899), 'お知らせ'),
     'blog_published': _NotifMeta(Icons.article, Color(0xFF8B5CF6), 'ブログ'),
     'agent_report': _NotifMeta(Icons.smart_toy, Color(0xFF06B6D4), 'エージェント'),
+    'life_capital':
+        _NotifMeta(Icons.monitor_heart_outlined, Color(0xFFDC2626), 'ライフKPI'),
   };
 
   @override

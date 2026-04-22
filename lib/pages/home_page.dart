@@ -93,6 +93,7 @@ class _HomePageState extends State<HomePage> {
   final LifeWasteEliminationService _lifeWasteEliminationService =
       const LifeWasteEliminationService(
     snapshotRepository: SupabaseLifeWasteSnapshotRepository(),
+    alertNotificationRepository: SupabaseLifeWasteAlertNotificationRepository(),
   );
   final LifeWasteAiReviewService _lifeWasteAiReviewService =
       LifeWasteAiReviewService();
@@ -5379,7 +5380,14 @@ abstinence_slip_details: $slipDetailsText
     if (current == null || _lifeWasteMonitoringKey != key) {
       _lifeWasteMonitoringKey = key;
       _lifeWasteMonitoringFuture =
-          _lifeWasteEliminationService.recordDailySnapshot(report);
+          _lifeWasteEliminationService.recordDailySnapshot(report).then(
+        (summary) {
+          if (summary.notificationQueued) {
+            unawaited(_fetchNotifUnreadCount());
+          }
+          return summary;
+        },
+      );
     }
     return _lifeWasteMonitoringFuture!;
   }

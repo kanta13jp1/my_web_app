@@ -75,7 +75,10 @@ void main() {
 
   test('recordDailySnapshot persists history and alerts repeated waste',
       () async {
-    const service = LifeWasteEliminationService();
+    final alertRepository = _FakeAlertNotificationRepository();
+    final service = LifeWasteEliminationService(
+      alertNotificationRepository: alertRepository,
+    );
     final day1 = service.buildReport(
       monitoredAt: DateTime(2026, 4, 21, 9),
       timeSlipCount: 3,
@@ -115,12 +118,66 @@ void main() {
 
     expect(summary.historyDays, 2);
     expect(summary.alerts, isNotEmpty);
+    expect(summary.notificationQueued, isTrue);
+    expect(alertRepository.routedAlerts, hasLength(1));
+    expect(alertRepository.routedAlerts.single, isNotEmpty);
     expect(
       summary.alerts.any((alert) => alert.detail.contains('2日連続')),
       isTrue,
     );
     expect(reloaded.historyDays, 2);
     expect(reloaded.latest?.dateKey, '2026-04-22');
+
+    final duplicateSummary = await service.recordDailySnapshot(day2);
+
+    expect(duplicateSummary.notificationQueued, isFalse);
+    expect(alertRepository.routedAlerts, hasLength(1));
+  });
+
+  test('recordDailySnapshot keeps alerts when notification routing fails',
+      () async {
+    final alertRepository = _FakeAlertNotificationRepository(shouldThrow: true);
+    final service = LifeWasteEliminationService(
+      alertNotificationRepository: alertRepository,
+    );
+    final day1 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 21, 9),
+      timeSlipCount: 3,
+      abstinenceSlipCount: 1,
+      abstinenceTimeSavedMinutes: 0,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 18000,
+      pendingCriticalTaskCount: 4,
+      coreRitualDoneCount: 0,
+      coreRitualTarget: 3,
+      todayCompletedCount: 0,
+      yesterdayCompletedCount: 3,
+      featureTotal: 10,
+      featureImproveCount: 4,
+      featureProgress: 0.4,
+    );
+    final day2 = service.buildReport(
+      monitoredAt: DateTime(2026, 4, 22, 9),
+      timeSlipCount: 2,
+      abstinenceSlipCount: 1,
+      abstinenceTimeSavedMinutes: 10,
+      abstinenceMoneySaved: 0,
+      moneyWaste: 12000,
+      pendingCriticalTaskCount: 3,
+      coreRitualDoneCount: 1,
+      coreRitualTarget: 3,
+      todayCompletedCount: 1,
+      yesterdayCompletedCount: 3,
+      featureTotal: 10,
+      featureImproveCount: 4,
+      featureProgress: 0.5,
+    );
+
+    await service.recordDailySnapshot(day1);
+    final summary = await service.recordDailySnapshot(day2);
+
+    expect(summary.alerts, isNotEmpty);
+    expect(summary.notificationQueued, isFalse);
   });
 
   test('recordDailySnapshot syncs and merges cloud history', () async {
@@ -197,5 +254,26 @@ class _FakeSnapshotRepository implements LifeWasteSnapshotRepository {
       ..removeWhere((item) => item.dateKey == snapshot.dateKey)
       ..add(snapshot)
       ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
+  }
+}
+
+class _FakeAlertNotificationRepository
+    implements LifeWasteAlertNotificationRepository {
+  final bool shouldThrow;
+  final routedSnapshots = <LifeWasteDailySnapshot>[];
+  final routedAlerts = <List<LifeWasteMonitoringAlert>>[];
+
+  _FakeAlertNotificationRepository({this.shouldThrow = false});
+
+  @override
+  Future<void> upsertMonitoringAlerts({
+    required LifeWasteDailySnapshot snapshot,
+    required List<LifeWasteMonitoringAlert> alerts,
+  }) async {
+    if (shouldThrow) {
+      throw StateError('notification unavailable');
+    }
+    routedSnapshots.add(snapshot);
+    routedAlerts.add(List<LifeWasteMonitoringAlert>.from(alerts));
   }
 }

@@ -211,6 +211,7 @@ serve(async (req: Request) => {
             title: meta["title"] ?? "",
             message: meta["message"] ?? "",
             type: meta["type"] ?? "info",
+            link: meta["link"] ?? "",
             is_read: !!(meta["read"] as boolean),
             created_at: row.created_at,
           };
@@ -226,10 +227,29 @@ serve(async (req: Request) => {
       }
 
       case "notification.create": {
+        const dedupeKey = String(body.dedupeKey ?? body.dedupe_key ?? "")
+          .trim();
+        if (dedupeKey) {
+          const { data: existing, error: existingErr } = await admin
+            .from("hub_data")
+            .select("id, metadata, created_at")
+            .eq("source", "notification")
+            .filter("metadata->>user_id", "eq", userId)
+            .filter("metadata->>dedupe_key", "eq", dedupeKey)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (existingErr) return json({ error: existingErr.message }, 400);
+          if (existing) {
+            return json({ success: true, item: existing, deduped: true });
+          }
+        }
         const item = await addItem(admin, "notification", userId, {
           title: body.title,
           message: body.message,
           type: body.type ?? "info",
+          link: body.link ?? "",
+          dedupe_key: dedupeKey || undefined,
           read: false,
         });
         return json({ success: true, item });

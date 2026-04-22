@@ -332,6 +332,8 @@ class _MonitoringBox extends StatelessWidget {
             ? '前回比 +$delta'
             : '前回比 $delta';
     final syncLabel = data.cloudSynced ? 'クラウド同期' : '端末内保存';
+    final notificationLabel =
+        data.notificationQueued ? ' / 通知${data.notificationQueuedCount}件' : '';
 
     return Container(
       width: double.infinity,
@@ -366,8 +368,8 @@ class _MonitoringBox extends StatelessWidget {
               const Spacer(),
               Text(
                 latest == null
-                    ? syncLabel
-                    : '$syncLabel / 履歴${data.historyDays}日 / ${latest.wasteFreeScore}点 / $deltaLabel',
+                    ? '$syncLabel$notificationLabel'
+                    : '$syncLabel$notificationLabel / 履歴${data.historyDays}日 / ${latest.wasteFreeScore}点 / $deltaLabel',
                 style: TextStyle(
                   color: textColor.withValues(alpha: 0.64),
                   fontSize: 10,

@@ -50,6 +50,15 @@ String _resourceLabel(LifeWasteResource resource) {
   };
 }
 
+String _alertNotificationKey(
+  LifeWasteDailySnapshot snapshot,
+  LifeWasteMonitoringAlert alert,
+) {
+  final resource = alert.resource?.name ?? 'overall';
+  final level = alert.critical ? 'critical' : 'warning';
+  return '${snapshot.dateKey}:$resource:$level:${alert.consecutiveDays}';
+}
+
 class LifeWasteResourceSignal {
   final LifeWasteResource resource;
   final String label;
@@ -234,6 +243,13 @@ abstract class LifeWasteSnapshotRepository {
   });
 }
 
+abstract class LifeWasteAlertNotificationRepository {
+  Future<void> upsertMonitoringAlerts({
+    required LifeWasteDailySnapshot snapshot,
+    required List<LifeWasteMonitoringAlert> alerts,
+  });
+}
+
 class SupabaseLifeWasteSnapshotRepository
     implements LifeWasteSnapshotRepository {
   final SupabaseClient? client;
@@ -297,6 +313,40 @@ class SupabaseLifeWasteSnapshotRepository
   }
 }
 
+class SupabaseLifeWasteAlertNotificationRepository
+    implements LifeWasteAlertNotificationRepository {
+  final SupabaseClient? client;
+
+  const SupabaseLifeWasteAlertNotificationRepository({this.client});
+
+  SupabaseClient get _client => client ?? Supabase.instance.client;
+
+  @override
+  Future<void> upsertMonitoringAlerts({
+    required LifeWasteDailySnapshot snapshot,
+    required List<LifeWasteMonitoringAlert> alerts,
+  }) async {
+    if (_client.auth.currentUser?.id == null || alerts.isEmpty) {
+      return;
+    }
+
+    for (final alert in alerts) {
+      await _client.functions.invoke(
+        'core-hub',
+        body: {
+          'action': 'notification.create',
+          'title': 'ライフ資本アラート: ${alert.title}',
+          'message':
+              '${snapshot.dateKey} / ${alert.detail} 次の行動: ${snapshot.nextAction}',
+          'type': 'life_capital',
+          'link': '/home',
+          'dedupeKey': _alertNotificationKey(snapshot, alert),
+        },
+      );
+    }
+  }
+}
+
 class LifeWasteMonitoringAlert {
   final LifeWasteResource? resource;
   final String title;
@@ -317,11 +367,13 @@ class LifeWasteMonitoringSummary {
   final List<LifeWasteDailySnapshot> snapshots;
   final List<LifeWasteMonitoringAlert> alerts;
   final bool cloudSynced;
+  final int notificationQueuedCount;
 
   const LifeWasteMonitoringSummary({
     required this.snapshots,
     required this.alerts,
     this.cloudSynced = false,
+    this.notificationQueuedCount = 0,
   });
 
   factory LifeWasteMonitoringSummary.empty({bool cloudSynced = false}) {
@@ -329,6 +381,21 @@ class LifeWasteMonitoringSummary {
       snapshots: <LifeWasteDailySnapshot>[],
       alerts: <LifeWasteMonitoringAlert>[],
       cloudSynced: cloudSynced,
+    );
+  }
+
+  LifeWasteMonitoringSummary copyWith({
+    List<LifeWasteDailySnapshot>? snapshots,
+    List<LifeWasteMonitoringAlert>? alerts,
+    bool? cloudSynced,
+    int? notificationQueuedCount,
+  }) {
+    return LifeWasteMonitoringSummary(
+      snapshots: snapshots ?? this.snapshots,
+      alerts: alerts ?? this.alerts,
+      cloudSynced: cloudSynced ?? this.cloudSynced,
+      notificationQueuedCount:
+          notificationQueuedCount ?? this.notificationQueuedCount,
     );
   }
 
@@ -342,6 +409,8 @@ class LifeWasteMonitoringSummary {
 
   bool get hasAlerts => alerts.isNotEmpty;
 
+  bool get notificationQueued => notificationQueuedCount > 0;
+
   int get scoreDelta {
     final current = latest;
     final before = previous;
@@ -354,12 +423,16 @@ class LifeWasteMonitoringSummary {
 
 class LifeWasteEliminationService {
   final LifeWasteSnapshotRepository? snapshotRepository;
+  final LifeWasteAlertNotificationRepository? alertNotificationRepository;
 
   const LifeWasteEliminationService({
     this.snapshotRepository,
+    this.alertNotificationRepository,
   });
 
   static const _snapshotHistoryKey = 'life_waste_daily_snapshots_v1';
+  static const _alertNotificationHistoryKey =
+      'life_waste_alert_notification_history_v1';
   static const _maxSnapshotHistoryDays = 30;
   static const _alertThresholdScore = 80;
   static const _consecutiveAlertDays = 2;
@@ -526,7 +599,9 @@ class LifeWasteEliminationService {
     await _writeSnapshots(store, trimmed);
     final repository = snapshotRepository;
     if (repository == null) {
-      return _buildMonitoringSummary(trimmed);
+      final summary = _buildMonitoringSummary(trimmed);
+      final queuedCount = await _queueAlertNotifications(store, summary);
+      return summary.copyWith(notificationQueuedCount: queuedCount);
     }
 
     try {
@@ -536,11 +611,15 @@ class LifeWasteEliminationService {
       );
       final merged = _mergeSnapshots(trimmed, remote);
       await _writeSnapshots(store, merged);
-      return _buildMonitoringSummary(merged, cloudSynced: true);
+      final summary = _buildMonitoringSummary(merged, cloudSynced: true);
+      final queuedCount = await _queueAlertNotifications(store, summary);
+      return summary.copyWith(notificationQueuedCount: queuedCount);
     } catch (_) {
       // Local monitoring must keep working even when cloud sync is unavailable.
     }
-    return _buildMonitoringSummary(trimmed);
+    final summary = _buildMonitoringSummary(trimmed);
+    final queuedCount = await _queueAlertNotifications(store, summary);
+    return summary.copyWith(notificationQueuedCount: queuedCount);
   }
 
   Future<LifeWasteMonitoringSummary> loadMonitoringSummary({
@@ -566,6 +645,61 @@ class LifeWasteEliminationService {
       // Fall back to local history if the user is offline or not signed in.
     }
     return _buildMonitoringSummary(local);
+  }
+
+  Future<int> _queueAlertNotifications(
+    SharedPreferences store,
+    LifeWasteMonitoringSummary summary,
+  ) async {
+    final repository = alertNotificationRepository;
+    final latest = summary.latest;
+    if (repository == null || latest == null || summary.alerts.isEmpty) {
+      return 0;
+    }
+
+    final sentKeys = _readAlertNotificationKeys(store);
+    final pendingAlerts = summary.alerts
+        .where(
+          (alert) => !sentKeys.contains(_alertNotificationKey(latest, alert)),
+        )
+        .toList(growable: false);
+    if (pendingAlerts.isEmpty) {
+      return 0;
+    }
+
+    try {
+      await repository.upsertMonitoringAlerts(
+        snapshot: latest,
+        alerts: pendingAlerts,
+      );
+      sentKeys.addAll(
+        pendingAlerts.map((alert) => _alertNotificationKey(latest, alert)),
+      );
+      await _writeAlertNotificationKeys(store, sentKeys);
+      return pendingAlerts.length;
+    } catch (_) {
+      // Monitoring is the primary feature; notification delivery is best effort.
+      return 0;
+    }
+  }
+
+  Set<String> _readAlertNotificationKeys(SharedPreferences store) {
+    final raw = store.getStringList(_alertNotificationHistoryKey);
+    if (raw == null) {
+      return <String>{};
+    }
+    return raw.where((item) => item.trim().isNotEmpty).toSet();
+  }
+
+  Future<void> _writeAlertNotificationKeys(
+    SharedPreferences store,
+    Set<String> keys,
+  ) async {
+    final recent = keys.toList()..sort((a, b) => b.compareTo(a));
+    await store.setStringList(
+      _alertNotificationHistoryKey,
+      recent.take(120).toList(growable: false),
+    );
   }
 
   List<LifeWasteDailySnapshot> _readSnapshots(SharedPreferences store) {
